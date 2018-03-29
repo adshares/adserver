@@ -8,8 +8,8 @@ Blockchain Revolution in Advertising
 
 ## Roadmap
 
-  * [Milestones](/adshares/server/milestones)
-  * [Projects](/adshares/server/projects)
+  * [Milestones](https://github.com/adshares/server/milestones)
+  * [Projects](https://github.com/adshares/server/projects)
 
 ## Credits
 
