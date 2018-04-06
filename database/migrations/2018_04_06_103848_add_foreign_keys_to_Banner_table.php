@@ -14,7 +14,7 @@ class AddForeignKeysToBannerTable extends Migration {
 	{
 		Schema::table('banners', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id')->references('id')->on('campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
