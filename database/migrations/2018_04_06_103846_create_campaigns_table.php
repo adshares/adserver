@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateCampaignTable extends Migration {
+class CreateCampaignsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -14,8 +14,8 @@ class CreateCampaignTable extends Migration {
 	{
 		Schema::create('campaigns', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('user_id');
+			$table->bigIncrements('id');
+			$table->bigInteger('user_id')->unsigned();
 			$table->binary('uuid', 16);
 			$table->string('landing_url', 1024);
 			$table->decimal('max_cpm');

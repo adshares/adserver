@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class AddForeignKeysToBannerTable extends Migration {
+class AddForeignKeysToBannersTable extends Migration {
 
 	/**
 	 * Run the migrations.

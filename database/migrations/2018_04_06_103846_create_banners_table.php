@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateBannerTable extends Migration {
+class CreateBannersTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -14,8 +14,8 @@ class CreateBannerTable extends Migration {
 	{
 		Schema::create('banners', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('campaign_id');
+			$table->bigIncrements('id');
+			$table->bigInteger('campaign_id')->unsigned();
 			$table->binary('creative_contents', 16777215);
 			$table->binary('uuid', 16);
 			$table->string('creative_type', 32);

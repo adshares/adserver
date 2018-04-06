@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class AddForeignKeysToCampaignTable extends Migration {
+class AddForeignKeysToCampaignsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -28,7 +28,7 @@ class AddForeignKeysToCampaignTable extends Migration {
 	{
 		Schema::table('campaigns', function(Blueprint $table)
 		{
-			$table->dropForeign('FK_E663708BA76ED395');
+			$table->dropForeign('??');
 		});
 	}
 
