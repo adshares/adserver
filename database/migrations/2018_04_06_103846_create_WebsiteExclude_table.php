@@ -12,7 +12,7 @@ class CreateWebsiteExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('WebsiteExclude', function(Blueprint $table)
+		Schema::create('website_exclude', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('website_id')->index('IDX_BEDA59518F45C82');
@@ -32,7 +32,7 @@ class CreateWebsiteExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('WebsiteExclude');
+		Schema::drop('website_exclude');
 	}
 
 }

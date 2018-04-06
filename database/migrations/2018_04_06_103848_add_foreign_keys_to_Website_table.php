@@ -12,9 +12,9 @@ class AddForeignKeysToWebsiteTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('Website', function(Blueprint $table)
+		Schema::table('website', function(Blueprint $table)
 		{
-			$table->foreign('user_id', 'FK_88D2647BA76ED395')->references('id')->on('User')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('user_id', 'FK_88D2647BA76ED395')->references('id')->on('user')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToWebsiteTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('Website', function(Blueprint $table)
+		Schema::table('website', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_88D2647BA76ED395');
 		});

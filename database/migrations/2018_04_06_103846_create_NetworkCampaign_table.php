@@ -12,7 +12,7 @@ class CreateNetworkCampaignTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkCampaign', function(Blueprint $table)
+		Schema::create('network_campaign', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('advertiser_id');
@@ -38,7 +38,7 @@ class CreateNetworkCampaignTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkCampaign');
+		Schema::drop('network_campaign');
 	}
 
 }

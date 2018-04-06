@@ -12,7 +12,7 @@ class CreateNetworkCampaignModifierTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkCampaignModifier', function(Blueprint $table)
+		Schema::create('network_campaign_modifier', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('campaign_id')->index('IDX_D08C8FC6F639F774');
@@ -33,7 +33,7 @@ class CreateNetworkCampaignModifierTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkCampaignModifier');
+		Schema::drop('network_campaign_modifier');
 	}
 
 }

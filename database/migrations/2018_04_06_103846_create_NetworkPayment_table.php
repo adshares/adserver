@@ -12,7 +12,7 @@ class CreateNetworkPaymentTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkPayment', function(Blueprint $table)
+		Schema::create('network_payment', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->binary('receiver_address', 6);
@@ -35,7 +35,7 @@ class CreateNetworkPaymentTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkPayment');
+		Schema::drop('network_payment');
 	}
 
 }

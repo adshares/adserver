@@ -12,7 +12,7 @@ class CreateWebsiteTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('Website', function(Blueprint $table)
+		Schema::create('website', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('user_id')->nullable()->index('IDX_88D2647BA76ED395');
@@ -28,7 +28,7 @@ class CreateWebsiteTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('Website');
+		Schema::drop('website');
 	}
 
 }

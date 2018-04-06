@@ -12,9 +12,9 @@ class AddForeignKeysToNetworkCampaignExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('NetworkCampaignExclude', function(Blueprint $table)
+		Schema::table('network_campaign_exclude', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_E0FF72B3F639F774')->references('id')->on('NetworkCampaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id', 'FK_E0FF72B3F639F774')->references('id')->on('network_campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToNetworkCampaignExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('NetworkCampaignExclude', function(Blueprint $table)
+		Schema::table('network_campaign_exclude', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_E0FF72B3F639F774');
 		});

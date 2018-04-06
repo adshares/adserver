@@ -12,9 +12,9 @@ class AddForeignKeysToZoneTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('Zone', function(Blueprint $table)
+		Schema::table('zone', function(Blueprint $table)
 		{
-			$table->foreign('website_id', 'FK_D96F3918F45C82')->references('id')->on('Website')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('website_id', 'FK_D96F3918F45C82')->references('id')->on('website')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToZoneTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('Zone', function(Blueprint $table)
+		Schema::table('zone', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_D96F3918F45C82');
 		});

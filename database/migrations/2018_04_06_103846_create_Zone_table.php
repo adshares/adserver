@@ -12,7 +12,7 @@ class CreateZoneTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('Zone', function(Blueprint $table)
+		Schema::create('zone', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('website_id')->nullable()->index('IDX_D96F3918F45C82');
@@ -30,7 +30,7 @@ class CreateZoneTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('Zone');
+		Schema::drop('zone');
 	}
 
 }

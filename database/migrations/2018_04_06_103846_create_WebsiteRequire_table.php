@@ -12,7 +12,7 @@ class CreateWebsiteRequireTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('WebsiteRequire', function(Blueprint $table)
+		Schema::create('website_require', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('website_id')->index('IDX_284925A418F45C82');
@@ -32,7 +32,7 @@ class CreateWebsiteRequireTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('WebsiteRequire');
+		Schema::drop('website_require');
 	}
 
 }

@@ -12,9 +12,9 @@ class AddForeignKeysToNetworkCampaignModifierTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('NetworkCampaignModifier', function(Blueprint $table)
+		Schema::table('network_campaign_modifier', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_D08C8FC6F639F774')->references('id')->on('NetworkCampaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id', 'FK_D08C8FC6F639F774')->references('id')->on('network_campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToNetworkCampaignModifierTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('NetworkCampaignModifier', function(Blueprint $table)
+		Schema::table('network_campaign_modifier', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_D08C8FC6F639F774');
 		});

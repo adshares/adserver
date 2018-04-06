@@ -12,7 +12,7 @@ class CreateEventLogTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('EventLog', function(Blueprint $table)
+		Schema::create('event_log', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->binary('cid', 16);
@@ -43,7 +43,7 @@ class CreateEventLogTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('EventLog');
+		Schema::drop('event_log');
 	}
 
 }

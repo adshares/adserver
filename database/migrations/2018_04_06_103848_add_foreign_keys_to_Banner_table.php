@@ -12,9 +12,9 @@ class AddForeignKeysToBannerTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('Banner', function(Blueprint $table)
+		Schema::table('banner', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_6831BDD1F639F774')->references('id')->on('Campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id', 'FK_6831BDD1F639F774')->references('id')->on('campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToBannerTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('Banner', function(Blueprint $table)
+		Schema::table('banner', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_6831BDD1F639F774');
 		});

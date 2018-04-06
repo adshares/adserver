@@ -12,7 +12,7 @@ class CreateNetworkHostTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkHost', function(Blueprint $table)
+		Schema::create('network_host', function(Blueprint $table)
 		{
 			$table->binary('address', 6)->primary();
 			$table->string('host', 128);
@@ -35,7 +35,7 @@ class CreateNetworkHostTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkHost');
+		Schema::drop('network_host');
 	}
 
 }

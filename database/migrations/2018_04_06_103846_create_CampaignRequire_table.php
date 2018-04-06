@@ -12,7 +12,7 @@ class CreateCampaignRequireTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('CampaignRequire', function(Blueprint $table)
+		Schema::create('campaign_require', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('campaign_id')->index('IDX_222EFE64F639F774');
@@ -32,7 +32,7 @@ class CreateCampaignRequireTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('CampaignRequire');
+		Schema::drop('campaign_require');
 	}
 
 }

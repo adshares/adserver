@@ -12,7 +12,7 @@ class CreateNetworkEventLogTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkEventLog', function(Blueprint $table)
+		Schema::create('network_event_log', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->binary('cid', 16);
@@ -41,7 +41,7 @@ class CreateNetworkEventLogTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkEventLog');
+		Schema::drop('network_event_log');
 	}
 
 }

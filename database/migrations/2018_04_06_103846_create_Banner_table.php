@@ -12,7 +12,7 @@ class CreateBannerTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('Banner', function(Blueprint $table)
+		Schema::create('banner', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('campaign_id')->index('IDX_6831BDD1F639F774');
@@ -34,7 +34,7 @@ class CreateBannerTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('Banner');
+		Schema::drop('banner');
 	}
 
 }

@@ -12,9 +12,9 @@ class AddForeignKeysToWebsiteExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('WebsiteExclude', function(Blueprint $table)
+		Schema::table('website_exclude', function(Blueprint $table)
 		{
-			$table->foreign('website_id', 'FK_BEDA59518F45C82')->references('id')->on('Website')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('website_id', 'FK_BEDA59518F45C82')->references('id')->on('website')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToWebsiteExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('WebsiteExclude', function(Blueprint $table)
+		Schema::table('website_exclude', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_BEDA59518F45C82');
 		});

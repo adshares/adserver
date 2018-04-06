@@ -12,7 +12,7 @@ class CreateNetworkBannerTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('NetworkBanner', function(Blueprint $table)
+		Schema::create('network_banner', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('campaign_id')->index('IDX_9F6DA3E4F639F774');
@@ -36,7 +36,7 @@ class CreateNetworkBannerTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('NetworkBanner');
+		Schema::drop('network_banner');
 	}
 
 }

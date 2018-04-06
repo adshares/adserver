@@ -12,7 +12,7 @@ class CreateCampaignModifierTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('CampaignModifier', function(Blueprint $table)
+		Schema::create('campaign_modifier', function(Blueprint $table)
 		{
 			$table->integer('id', true);
 			$table->integer('campaign_id')->index('IDX_9904BD87F639F774');
@@ -33,7 +33,7 @@ class CreateCampaignModifierTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('CampaignModifier');
+		Schema::drop('campaign_modifier');
 	}
 
 }

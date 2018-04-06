@@ -12,9 +12,9 @@ class AddForeignKeysToCampaignModifierTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('CampaignModifier', function(Blueprint $table)
+		Schema::table('campaign_modifier', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_9904BD87F639F774')->references('id')->on('Campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id', 'FK_9904BD87F639F774')->references('id')->on('campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToCampaignModifierTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('CampaignModifier', function(Blueprint $table)
+		Schema::table('campaign_modifier', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_9904BD87F639F774');
 		});

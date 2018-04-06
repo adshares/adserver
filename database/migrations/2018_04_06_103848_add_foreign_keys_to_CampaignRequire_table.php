@@ -12,9 +12,9 @@ class AddForeignKeysToCampaignRequireTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('CampaignRequire', function(Blueprint $table)
+		Schema::table('campaign_require', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_222EFE64F639F774')->references('id')->on('Campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id', 'FK_222EFE64F639F774')->references('id')->on('campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,7 +26,7 @@ class AddForeignKeysToCampaignRequireTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('CampaignRequire', function(Blueprint $table)
+		Schema::table('campaign_require', function(Blueprint $table)
 		{
 			$table->dropForeign('FK_222EFE64F639F774');
 		});
