@@ -12,10 +12,10 @@ class CreateCampaignTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('campaign', function(Blueprint $table)
+		Schema::create('campaigns', function(Blueprint $table)
 		{
 			$table->integer('id', true);
-			$table->integer('user_id')->index('IDX_E663708BA76ED395');
+			$table->integer('user_id');
 			$table->binary('uuid', 16);
 			$table->string('landing_url', 1024);
 			$table->decimal('max_cpm');
@@ -35,7 +35,7 @@ class CreateCampaignTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('campaign');
+		Schema::drop('campaigns');
 	}
 
 }
