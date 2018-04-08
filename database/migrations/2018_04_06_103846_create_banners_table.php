@@ -23,6 +23,8 @@ class CreateBannersTable extends Migration {
 			$table->integer('creative_width');
 			$table->integer('creative_height');
 			$table->dateTime('modify_time');
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 

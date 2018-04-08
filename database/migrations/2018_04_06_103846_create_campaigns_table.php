@@ -24,6 +24,8 @@ class CreateCampaignsTable extends Migration {
 			$table->dateTime('time_start');
 			$table->dateTime('time_end');
 			$table->integer('require_count');
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 
