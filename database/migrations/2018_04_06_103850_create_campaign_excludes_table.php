@@ -16,14 +16,22 @@ class CreateCampaignExcludesTable extends Migration {
 		{
 			$table->bigIncrements('id');
 			$table->bigInteger('campaign_id')->unsigned();
-			$table->binary('name', 64);
-			$table->binary('min', 64);
-			$table->binary('max', 64);
+			$table->binary('name', 64);				// REQ CUSTOM ALTER
+			$table->binary('min', 64);  			// REQ CUSTOM ALTER
+			$table->binary('max', 64);  			// REQ CUSTOM ALTER
+
 			$table->timestamps();
 			$table->softDeletes();
-			// TODO: add these indexes (191 chars max)
-			// $table->index(['campaign_id','name','min'], 'min');
-			// $table->index(['campaign_id','name','max'], 'max');
+		});
+
+		DB::statement("ALTER TABLE campaign_excludes MODIFY name varbinary(64)");
+		DB::statement("ALTER TABLE campaign_excludes MODIFY min varbinary(64)");
+		DB::statement("ALTER TABLE campaign_excludes MODIFY max varbinary(64)");
+
+		Schema::table('campaign_excludes', function(Blueprint $table)
+		{
+			$table->index(['campaign_id','name','min'], 'min');
+			$table->index(['campaign_id','name','max'], 'max');
 		});
 	}
 

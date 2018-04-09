@@ -16,7 +16,7 @@ class CreateCampaignsTable extends Migration {
 		{
 			$table->bigIncrements('id');
 			$table->bigInteger('user_id')->unsigned();
-			$table->binary('uuid', 16);
+			$table->binary('uuid', 16); // REQ CUSTOM ALTER
 			$table->string('landing_url', 1024);
 			$table->decimal('max_cpm');
 			$table->decimal('max_cpc');
@@ -24,9 +24,12 @@ class CreateCampaignsTable extends Migration {
 			$table->dateTime('time_start');
 			$table->dateTime('time_end');
 			$table->integer('require_count');
+
 			$table->timestamps();
 			$table->softDeletes();
 		});
+
+		DB::statement("ALTER TABLE campaigns MODIFY uuid varbinary(16)");
 	}
 
 

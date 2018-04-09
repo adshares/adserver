@@ -16,16 +16,22 @@ class CreateBannersTable extends Migration {
 		{
 			$table->bigIncrements('id');
 			$table->bigInteger('campaign_id')->unsigned();
-			$table->binary('creative_contents', 16777215);
-			$table->binary('uuid', 16);
+			$table->binary('creative_contents',16777215); // REQ CUSTOM ALTER
+			$table->binary('uuid', 16); // REQ CUSTOM ALTER
 			$table->string('creative_type', 32);
-			$table->binary('creative_sha1', 20);
+			$table->binary('creative_sha1', 20); // REQ CUSTOM ALTER
 			$table->integer('creative_width');
 			$table->integer('creative_height');
-			$table->dateTime('modify_time');
+
+			$table->dateTime('modify_time'); // TODO: to be removed (?)
+
 			$table->timestamps();
 			$table->softDeletes();
 		});
+
+		DB::statement("ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB");
+		DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16)");
+		DB::statement("ALTER TABLE banners MODIFY creative_sha1 varbinary(20)");
 	}
 
 
