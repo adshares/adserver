@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateZoneTable extends Migration {
+class CreateZonesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,10 +12,10 @@ class CreateZoneTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('zone', function(Blueprint $table)
+		Schema::create('zones', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('website_id')->nullable()->index('IDX_D96F3918F45C82');
+			$table->bigIncrements('id');
+			$table->bigInteger('website_id')->unsigned()->nullable();
 			$table->string('name', 32);
 			$table->integer('width');
 			$table->integer('height');
@@ -30,7 +30,7 @@ class CreateZoneTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('zone');
+		Schema::drop('zones');
 	}
 
 }

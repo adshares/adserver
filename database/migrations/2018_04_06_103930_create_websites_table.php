@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateWebsiteTable extends Migration {
+class CreateWebsitesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,10 +12,10 @@ class CreateWebsiteTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('website', function(Blueprint $table)
+		Schema::create('websites', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('user_id')->nullable()->index('IDX_88D2647BA76ED395');
+			$table->bigIncrements('id');
+			$table->bigInteger('user_id')->unsigned()->nullable();
 			$table->string('host', 64);
 		});
 	}
@@ -28,7 +28,7 @@ class CreateWebsiteTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('website');
+		Schema::drop('websites');
 	}
 
 }

@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class AddForeignKeysToWebsiteRequireTable extends Migration {
+class AddForeignKeysToWebsiteRequiresTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,9 +12,9 @@ class AddForeignKeysToWebsiteRequireTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('website_require', function(Blueprint $table)
+		Schema::table('website_requires', function(Blueprint $table)
 		{
-			$table->foreign('website_id', 'FK_284925A418F45C82')->references('id')->on('website')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('website_id')->references('id')->on('websites')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,9 +26,9 @@ class AddForeignKeysToWebsiteRequireTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('wbsite_require', function(Blueprint $table)
+		Schema::table('website_requires', function(Blueprint $table)
 		{
-			$table->dropForeign('FK_284925A418F45C82');
+			$table->dropForeign(['website_id']);
 		});
 	}
 

@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateWebsiteExcludeTable extends Migration {
+class CreateWebsiteExcludesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,13 +12,24 @@ class CreateWebsiteExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('website_exclude', function(Blueprint $table)
+		Schema::create('website_excludes', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('website_id')->index('IDX_BEDA59518F45C82');
+			$table->bigIncrements('id');
+			$table->bigInteger('website_id')->unsigned();
 			$table->binary('name', 64);
 			$table->binary('min', 64);
 			$table->binary('max', 64);
+
+			$table->timestamps();
+			$table->softDeletes();
+		});
+
+		DB::statement("ALTER TABLE website_excludes MODIFY name varbinary(64)");
+		DB::statement("ALTER TABLE website_excludes MODIFY min varbinary(64)");
+		DB::statement("ALTER TABLE website_excludes MODIFY max varbinary(64)");
+
+		Schema::table('website_excludes', function(Blueprint $table)
+		{
 			$table->index(['website_id','name','min'], 'min');
 			$table->index(['website_id','name','max'], 'max');
 		});
@@ -32,7 +43,7 @@ class CreateWebsiteExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('website_exclude');
+		Schema::drop('website_excludes');
 	}
 
 }
