@@ -12,10 +12,10 @@ class CreateCampaignExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('campaign_exclude', function(Blueprint $table)
+		Schema::create('campaign_excludes', function(Blueprint $table)
 		{
 			$table->integer('id', true);
-			$table->integer('campaign_id')->index('IDX_18A7E55F639F774');
+			$table->integer('campaign_id');
 			$table->binary('name', 64);
 			$table->binary('min', 64);
 			$table->binary('max', 64);
@@ -32,7 +32,7 @@ class CreateCampaignExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('campaign_exclude');
+		Schema::drop('campaign_excludes');
 	}
 
 }

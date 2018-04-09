@@ -14,7 +14,7 @@ class AddForeignKeysToCampaignExcludeTable extends Migration {
 	{
 		Schema::table('campaign_exclude', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_18A7E55F639F774')->references('id')->on('campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -28,7 +28,7 @@ class AddForeignKeysToCampaignExcludeTable extends Migration {
 	{
 		Schema::table('campaign_exclude', function(Blueprint $table)
 		{
-			$table->dropForeign('FK_18A7E55F639F774');
+			$table->dropForeign('???');
 		});
 	}
 
