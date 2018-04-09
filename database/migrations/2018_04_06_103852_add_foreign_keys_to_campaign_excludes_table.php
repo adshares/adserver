@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class AddForeignKeysToCampaignExcludeTable extends Migration {
+class AddForeignKeysToCampaignExcludesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,7 +12,7 @@ class AddForeignKeysToCampaignExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('campaign_exclude', function(Blueprint $table)
+		Schema::table('campaign_excludes', function(Blueprint $table)
 		{
 			$table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
