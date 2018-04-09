@@ -24,6 +24,9 @@ class CreateNetworkHostsTable extends Migration {
 			$table->float('credibility', 10, 0);
 			$table->float('score', 10, 0);
 			$table->integer('last_seen')->unsigned();
+
+			$table->timestamps();
+			$table->softDeletes();
 		});
 
 		DB::statement("ALTER TABLE network_hosts MODIFY address varbinary(6)");
