@@ -16,9 +16,9 @@ class CreateCampaignExcludesTable extends Migration {
 		{
 			$table->bigIncrements('id');
 			$table->bigInteger('campaign_id')->unsigned();
-			$table->binary('name', 64);				// REQ CUSTOM ALTER
-			$table->binary('min', 64);  			// REQ CUSTOM ALTER
-			$table->binary('max', 64);  			// REQ CUSTOM ALTER
+			$table->binary('name', 64); // REQ CUSTOM ALTER
+			$table->binary('min', 64); // REQ CUSTOM ALTER
+			$table->binary('max', 64); // REQ CUSTOM ALTER
 
 			$table->timestamps();
 			$table->softDeletes();
