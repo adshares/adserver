@@ -2,12 +2,14 @@
 
 namespace App;
 
+use App\ModelTraits\AutomateMutators;
 use App\ModelTraits\BinHex;
 
 use Illuminate\Database\Eloquent\Model;
 
 class Campaign extends Model
 {
+    use AutomateMutators;
     use BinHex;
 
     /**
@@ -27,13 +29,12 @@ class Campaign extends Model
     protected $hidden = [
     ];
 
-    public function getUuidAttribute($value)
-    {
-        return $this->binHexAccessor($value);
-    }
-
-    public function setUuidAttribute($value)
-    {
-        return $this->binHexMutator($value);
-    }
+    /**
+    * The attributes that use some ModelTraits with mutator settings automation
+    *
+    * @var array
+    */
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
 }

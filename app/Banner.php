@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\ModelTraits\AutomateMutators;
 use App\ModelTraits\BinHex;
 
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 class Banner extends Model
 {
 
+  use AutomateMutators;
   use BinHex;
 
   /**
@@ -17,7 +19,7 @@ class Banner extends Model
    * @var array
    */
   protected $fillable = [
-      'creative_contents', 'uuid', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
+      'campaign_id', 'creative_contents', 'uuid', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
   ];
 
   /**
@@ -28,23 +30,13 @@ class Banner extends Model
   protected $hidden = [
   ];
 
-  public function getUuidAttribute($value)
-  {
-      return $this->binHexAccessor($value);
-  }
-
-  public function setUuidAttribute($value)
-  {
-      return $this->binHexMutator($value);
-  }
-
-  public function getCreativeSha1Attribute($value)
-  {
-      return $this->binHexAccessor($value);
-  }
-
-  public function setCreativeSha1Attribute($value)
-  {
-      return $this->binHexMutator($value);
-  }
+  /**
+  * The attributes that use some ModelTraits with mutator settings automation
+  *
+  * @var array
+  */
+  protected $traitAutomate = [
+      'uuid' => 'BinHex',
+      'creative_sha1' => 'BinHex',
+  ];
 }

@@ -6,9 +6,9 @@ namespace App\ModelTraits;
  */
 trait BinHex
 {
-    public function binHexMutator($value)
+    public function binHexMutator($key, $value)
     {
-        return ($value !== null) ? hex2bin($value) : null;
+        $this->attributes[$key] = $value !== null ? hex2bin($value) : null;
     }
 
     public function binHexAccessor($value)
