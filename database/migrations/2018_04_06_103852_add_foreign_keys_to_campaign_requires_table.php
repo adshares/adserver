@@ -26,9 +26,9 @@ class AddForeignKeysToCampaignRequiresTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('campaign_require', function(Blueprint $table)
+		Schema::table('campaign_requires', function(Blueprint $table)
 		{
-			$table->dropForeign('???');
+			$table->dropForeign(['campaign_id']);
 		});
 	}
 

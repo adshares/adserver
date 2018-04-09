@@ -28,7 +28,7 @@ class AddForeignKeysToBannersTable extends Migration {
 	{
 		Schema::table('banners', function(Blueprint $table)
 		{
-			$table->dropForeign('??');
+			$table->dropForeign(['campaign_id']);
 		});
 	}
 

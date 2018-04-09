@@ -26,9 +26,9 @@ class AddForeignKeysToCampaignExcludesTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('campaign_exclude', function(Blueprint $table)
+		Schema::table('campaign_excludes', function(Blueprint $table)
 		{
-			$table->dropForeign('???');
+			$table->dropForeign(['campaign_id']);
 		});
 	}
 

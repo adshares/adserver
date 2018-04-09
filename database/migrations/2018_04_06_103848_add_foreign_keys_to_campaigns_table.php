@@ -28,7 +28,7 @@ class AddForeignKeysToCampaignsTable extends Migration {
 	{
 		Schema::table('campaigns', function(Blueprint $table)
 		{
-			$table->dropForeign('??');
+			$table->dropForeign(['user_id']);
 		});
 	}
 
