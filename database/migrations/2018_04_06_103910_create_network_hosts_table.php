@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNetworkHostTable extends Migration {
+class CreateNetworkHostsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,9 +12,9 @@ class CreateNetworkHostTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('network_host', function(Blueprint $table)
+		Schema::create('network_hosts', function(Blueprint $table)
 		{
-			$table->binary('address', 6)->primary();
+			$table->string('address', 6)->primary(); // binary // REQ CUSTOM ALTER
 			$table->string('host', 128);
 			$table->integer('account_msid')->unsigned();
 			$table->decimal('fee_estimate');
@@ -25,6 +25,8 @@ class CreateNetworkHostTable extends Migration {
 			$table->float('score', 10, 0);
 			$table->integer('last_seen')->unsigned();
 		});
+
+		DB::statement("ALTER TABLE network_hosts MODIFY address varbinary(6)");
 	}
 
 
@@ -35,7 +37,7 @@ class CreateNetworkHostTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('network_host');
+		Schema::drop('network_hosts');
 	}
 
 }

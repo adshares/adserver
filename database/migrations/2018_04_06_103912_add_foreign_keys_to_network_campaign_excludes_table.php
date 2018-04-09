@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class AddForeignKeysToNetworkCampaignExcludeTable extends Migration {
+class AddForeignKeysToNetworkCampaignExcludesTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,9 +12,9 @@ class AddForeignKeysToNetworkCampaignExcludeTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::table('network_campaign_exclude', function(Blueprint $table)
+		Schema::table('network_campaign_excludes', function(Blueprint $table)
 		{
-			$table->foreign('campaign_id', 'FK_E0FF72B3F639F774')->references('id')->on('network_campaign')->onUpdate('RESTRICT')->onDelete('CASCADE');
+			$table->foreign('campaign_id')->references('id')->on('network_campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
 		});
 	}
 
@@ -26,9 +26,9 @@ class AddForeignKeysToNetworkCampaignExcludeTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::table('network_campaign_exclude', function(Blueprint $table)
+		Schema::table('network_campaign_excludes', function(Blueprint $table)
 		{
-			$table->dropForeign('FK_E0FF72B3F639F774');
+			$table->dropForeign(['campaign_id']);
 		});
 	}
 
