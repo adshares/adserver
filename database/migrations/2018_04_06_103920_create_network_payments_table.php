@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNetworkPaymentTable extends Migration {
+class CreateNetworkPaymentsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,11 +12,11 @@ class CreateNetworkPaymentTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('network_payment', function(Blueprint $table)
+		Schema::create('network_payments', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->binary('receiver_address', 6);
-			$table->binary('sender_address', 6);
+			$table->bigIncrements('id');
+			$table->binary('receiver_address', 6); // REQ CUSTOM ALTER
+			$table->binary('sender_address', 6); // REQ CUSTOM ALTER
 			$table->string('sender_host', 32);
 			$table->decimal('amount');
 			$table->integer('create_time');
@@ -25,6 +25,9 @@ class CreateNetworkPaymentTable extends Migration {
 			$table->boolean('detailed_data_used');
 			$table->boolean('processed');
 		});
+
+		DB::statement("ALTER TABLE network_payments MODIFY receiver_address varbinary(6)");
+		DB::statement("ALTER TABLE network_payments MODIFY sender_address varbinary(6)");
 	}
 
 
@@ -35,7 +38,7 @@ class CreateNetworkPaymentTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('network_payment');
+		Schema::drop('network_payments');
 	}
 
 }
