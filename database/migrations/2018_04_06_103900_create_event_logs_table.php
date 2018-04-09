@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateEventLogTable extends Migration {
+class CreateEventLogsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,13 +12,13 @@ class CreateEventLogTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('event_log', function(Blueprint $table)
+		Schema::create('event_logs', function(Blueprint $table)
 		{
-			$table->integer('id', true);
+			$table->bigIncrements('id');
 			$table->binary('cid', 16);
 			$table->binary('tid', 16);
 			$table->integer('publisher_event_id');
-			$table->integer('banner_id');
+			$table->bigInteger('banner_id');
 			$table->string('event_type', 16);
 			$table->binary('pay_to', 6)->nullable();
 			$table->binary('ip', 8);
@@ -32,6 +32,9 @@ class CreateEventLogTable extends Migration {
 			$table->decimal('event_value', 20, 9)->nullable();
 			$table->decimal('paid_amount', 20, 9);
 			$table->integer('payment_id');
+
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 
@@ -43,7 +46,7 @@ class CreateEventLogTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('event_log');
+		Schema::drop('event_logs');
 	}
 
 }

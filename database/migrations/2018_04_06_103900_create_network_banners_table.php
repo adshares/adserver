@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNetworkBannerTable extends Migration {
+class CreateNetworkBannersTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,10 +12,10 @@ class CreateNetworkBannerTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('network_banner', function(Blueprint $table)
+		Schema::create('network_banners', function(Blueprint $table)
 		{
-			$table->integer('id', true);
-			$table->integer('campaign_id')->index('IDX_9F6DA3E4F639F774');
+			$table->bigIncrements('id');
+			$table->bigInteger('campaign_id')->unsigned();
 			$table->string('serve_url', 1024);
 			$table->string('click_url', 1024);
 			$table->string('view_url', 1024);
@@ -25,6 +25,9 @@ class CreateNetworkBannerTable extends Migration {
 			$table->integer('creative_width');
 			$table->integer('creative_height');
 			$table->dateTime('modify_time');
+
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 
@@ -36,7 +39,7 @@ class CreateNetworkBannerTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('network_banner');
+		Schema::drop('network_banners');
 	}
 
 }

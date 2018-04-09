@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNetworkEventLogTable extends Migration {
+class CreateNetworkEventLogsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,9 +12,9 @@ class CreateNetworkEventLogTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('network_event_log', function(Blueprint $table)
+		Schema::create('network_event_logs', function(Blueprint $table)
 		{
-			$table->integer('id', true);
+			$table->bigIncrements('id');
 			$table->binary('cid', 16);
 			$table->binary('tid', 16);
 			$table->binary('banner_id', 16);
@@ -30,6 +30,9 @@ class CreateNetworkEventLogTable extends Migration {
 			$table->decimal('event_value', 20, 9);
 			$table->decimal('paid_amount', 20, 9);
 			$table->integer('payment_id');
+
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 
@@ -41,7 +44,7 @@ class CreateNetworkEventLogTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('network_event_log');
+		Schema::drop('network_event_logs');
 	}
 
 }

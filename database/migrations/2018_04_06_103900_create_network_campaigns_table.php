@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateNetworkCampaignTable extends Migration {
+class CreateNetworkCampaignsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -12,14 +12,14 @@ class CreateNetworkCampaignTable extends Migration {
 	 */
 	public function up()
 	{
-		Schema::create('network_campaign', function(Blueprint $table)
+		Schema::create('network_campaigns', function(Blueprint $table)
 		{
-			$table->integer('id', true);
+			$table->bigIncrements('id');
 			$table->integer('advertiser_id');
 			$table->string('source_host');
 			$table->integer('source_update_time')->unsigned();
 			$table->string('adshares_address', 32);
-			$table->binary('uuid', 16)->unique('uuid');
+			$table->binary('uuid', 16);//->unique('uuid'); TODO: fix column type and index
 			$table->string('landing_url', 1024);
 			$table->decimal('max_cpm');
 			$table->decimal('max_cpc');
@@ -27,6 +27,9 @@ class CreateNetworkCampaignTable extends Migration {
 			$table->dateTime('time_start');
 			$table->dateTime('time_end');
 			$table->integer('require_count');
+
+			$table->timestamps();
+			$table->softDeletes();
 		});
 	}
 
@@ -38,7 +41,7 @@ class CreateNetworkCampaignTable extends Migration {
 	 */
 	public function down()
 	{
-		Schema::drop('network_campaign');
+		Schema::drop('network_campaigns');
 	}
 
 }
