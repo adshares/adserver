@@ -3,47 +3,49 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateCampaignExcludesTable extends Migration {
+// TODO: do sprawdzenia dok adselect na wiki github
 
-	/**
-	 * Run the migrations.
-	 *
-	 * @return void
-	 */
-	public function up()
-	{
-		Schema::create('campaign_excludes', function(Blueprint $table)
-		{
-			$table->bigIncrements('id');
-			$table->bigInteger('campaign_id')->unsigned();
-			$table->binary('name', 64); // REQ CUSTOM ALTER
-			$table->binary('min', 64); // REQ CUSTOM ALTER
-			$table->binary('max', 64); // REQ CUSTOM ALTER
+class CreateCampaignExcludesTable extends Migration
+{
 
-			$table->timestamps();
-			$table->softDeletes();
-		});
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('campaign_excludes', function (Blueprint $table) {
+            $table->bigIncrements('id');
 
-		DB::statement("ALTER TABLE campaign_excludes MODIFY name varbinary(64)");
-		DB::statement("ALTER TABLE campaign_excludes MODIFY min varbinary(64)");
-		DB::statement("ALTER TABLE campaign_excludes MODIFY max varbinary(64)");
+            $table->timestamps();
+            $table->softDeletes();
 
-		Schema::table('campaign_excludes', function(Blueprint $table)
-		{
-			$table->index(['campaign_id','name','min'], 'min');
-			$table->index(['campaign_id','name','max'], 'max');
-		});
-	}
+            $table->bigInteger('campaign_id')->unsigned();
+            
+            $table->binary('name', 64); // REQ CUSTOM ALTER
+            $table->binary('min', 64); // REQ CUSTOM ALTER
+            $table->binary('max', 64); // REQ CUSTOM ALTER
+        });
+
+        DB::statement("ALTER TABLE campaign_excludes MODIFY name varbinary(64)");
+        DB::statement("ALTER TABLE campaign_excludes MODIFY min varbinary(64)");
+        DB::statement("ALTER TABLE campaign_excludes MODIFY max varbinary(64)");
+
+        Schema::table('campaign_excludes', function (Blueprint $table) {
+            $table->index(['campaign_id','name','min'], 'min');
+            $table->index(['campaign_id','name','max'], 'max');
+        });
+    }
 
 
-	/**
-	 * Reverse the migrations.
-	 *
-	 * @return void
-	 */
-	public function down()
-	{
-		Schema::drop('campaign_excludes');
-	}
-
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::drop('campaign_excludes');
+    }
 }
