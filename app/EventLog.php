@@ -50,8 +50,7 @@ class EventLog extends Model
       'user_id' => 'BinHex',
       'our_userdata' => 'JsonValue',
       'their_userdata' => 'JsonValue',
-      // TODO: money requires some digging into money patterns
-      // 'event_value' => 'Money',
-      // 'paid_amount' => 'Money',
+      'event_value' => 'Money',
+      'paid_amount' => 'Money',
   ];
 }
