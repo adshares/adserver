@@ -35,6 +35,6 @@ trait AutomateMutators
             return parent::setAttribute($key, $value);
         }
         $func = lcfirst($this->traitAutomate[$key]) . 'Mutator';
-        return $this->$func($key,$value);
+        return $this->$func($key, $value);
     }
 }
