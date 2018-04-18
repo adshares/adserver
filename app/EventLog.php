@@ -25,7 +25,7 @@ class EventLog extends Model
       'cid', 'tid', 'publisher_event_id', 'banner_id', 'event_type', 'pay_to', 'ip',
       'our_context', 'their_context', 'user_id', 'human_score', 'our_userdata', 'their_userdata',
       'timestamp', 'event_value', 'paid_amount', 'payment_id'
-  ];
+    ];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -33,7 +33,7 @@ class EventLog extends Model
      * @var array
      */
     protected $hidden = [
-  ];
+    ];
 
     /**
     * The attributes that use some ModelTraits with mutator settings automation
