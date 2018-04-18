@@ -18,7 +18,8 @@ class Banner extends Model
      * @var array
      */
     protected $fillable = [
-      'campaign_id', 'creative_contents', 'uuid', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
+      'uuid', 'campaign_id',
+      'creative_contents', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
     ];
 
     /**
