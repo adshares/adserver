@@ -57,5 +57,5 @@ class EventLog extends Model
       'their_userdata' => 'JsonValue',
       'event_value' => 'Money',
       'paid_amount' => 'Money',
-  ];
+    ];
 }
