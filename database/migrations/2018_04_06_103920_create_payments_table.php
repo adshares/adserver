@@ -21,7 +21,6 @@ class CreatePaymentsTable extends Migration
 
             $table->text('transfers');
             $table->text('subthreshold_transfers')->nullable();
-            $table->integer('create_time');
             $table->binary('account_address', 6)->nullable(); // REQ CUSTOM ALTER
             $table->binary('account_hashin', 32)->nullable(); // REQ CUSTOM ALTER
             $table->binary('account_hashout', 32)->nullable(); // REQ CUSTOM ALTER

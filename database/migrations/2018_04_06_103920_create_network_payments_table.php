@@ -23,7 +23,6 @@ class CreateNetworkPaymentsTable extends Migration
             $table->binary('sender_address', 6); // REQ CUSTOM ALTER
             $table->string('sender_host', 32);
             $table->decimal('amount');
-            $table->integer('create_time');
             $table->string('tx_id', 128);
             $table->integer('tx_time');
             $table->boolean('detailed_data_used');
