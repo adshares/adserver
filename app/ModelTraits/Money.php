@@ -1,0 +1,21 @@
+<?php
+
+namespace App\ModelTraits;
+
+/**
+ *  store money balance
+ */
+trait Money
+{
+    public function moneyMutator($key, $value)
+    {
+        $this->attributes[$key] = $value !== null ? $money : null;
+    }
+
+    public function moneyAccessor($value)
+    {
+        return $value === null ? null : $value;
+    }
+
+    // TODO: this is just tmp mock, should be processed to Money class (Currency)
+}

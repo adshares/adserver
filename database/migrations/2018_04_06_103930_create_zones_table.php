@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 
-class CreateUsersTable extends Migration
+class CreateZonesTable extends Migration
 {
+
     /**
      * Run the migrations.
      *
@@ -13,19 +13,19 @@ class CreateUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('zones', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('email', 191)->unique();
 
             $table->timestamps();
             $table->softDeletes();
 
-            $table->string('name');
-            $table->string('password');
-
-            $table->rememberToken();
+            $table->bigInteger('website_id')->unsigned()->nullable();
+            $table->string('name', 32);
+            $table->integer('width');
+            $table->integer('height');
         });
     }
+
 
     /**
      * Reverse the migrations.
@@ -34,6 +34,6 @@ class CreateUsersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::drop('zones');
     }
 }
