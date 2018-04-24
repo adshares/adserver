@@ -41,6 +41,8 @@ class MockDataUsersSeeder extends Seeder
             $u->name = $r[$cols['name']];
             $u->password = $this->password;
             $u->save();
+
+            $this->command->info(' Added - ' . $u->email);
         }
         DB::commit();
 
