@@ -22,7 +22,7 @@ class MockDataUsersSeeder extends Seeder
             return 999;
         }
 
-        $data = $this->mockDataLoad(__DIR__ . '/../mock-data/users.json');
+        $data = MockDataSeeder::mockDataLoad(__DIR__ . '/../mock-data/users.json');
         $cols = array_flip($data->cols);
         $data = $data->data;
 
@@ -30,7 +30,7 @@ class MockDataUsersSeeder extends Seeder
 
         $selected = [];
         for ($c=0;$c<$this->limit;$c++) {
-            $selected[] = $this->randomNoRepeat(0, $max, $selected);
+            $selected[] = MockDataSeeder::randomNoRepeat(0, $max, $selected);
         }
 
         DB::beginTransaction();
@@ -45,28 +45,5 @@ class MockDataUsersSeeder extends Seeder
         DB::commit();
 
         $this->command->info('Users mock data seeded - all passwords = test1234');
-    }
-
-    protected function randomNoRepeat($min, $max, $exclude)
-    {
-        do {
-            $i = rand($min, $max);
-        } while (in_array($i, $exclude));
-        return $i;
-    }
-
-    protected function mockDataLoad($file)
-    {
-        $json = file_get_contents($file);
-        if (empty($json)) {
-            $this->command->error('Error loading mock-data/users.json');
-            throw new \Exception;
-        }
-        $json = json_decode($json);
-        if (empty($json)) {
-            $this->command->error('Error processing mock-data/users.json');
-            throw new \Exception;
-        }
-        return $json;
     }
 }

@@ -13,4 +13,27 @@ class MockDataSeeder extends Seeder
     {
         $this->call(MockDataUsersSeeder::class);
     }
+
+    public static function randomNoRepeat($min, $max, $exclude)
+    {
+        do {
+            $i = rand($min, $max);
+        } while (in_array($i, $exclude));
+        return $i;
+    }
+
+    public static function mockDataLoad($file)
+    {
+        $json = file_get_contents($file);
+        if (empty($json)) {
+            $this->command->error('Error loading mock-data/users.json');
+            throw new \Exception;
+        }
+        $json = json_decode($json);
+        if (empty($json)) {
+            $this->command->error('Error processing mock-data/users.json');
+            throw new \Exception;
+        }
+        return $json;
+    }
 }
