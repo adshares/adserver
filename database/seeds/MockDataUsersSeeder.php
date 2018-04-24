@@ -25,8 +25,6 @@ class MockDataUsersSeeder extends Seeder
         $data = $this->mockDataLoad(__DIR__ . '/../mock-data/users.json');
         $cols = array_flip($data->cols);
         $data = $data->data;
-        // print_r($data);
-        // print_r($cols);
 
         $max = count($data) - 1;
 
@@ -46,7 +44,7 @@ class MockDataUsersSeeder extends Seeder
         }
         DB::commit();
 
-        $this->command->info('Users mock data seeded');
+        $this->command->info('Users mock data seeded - all passwords = test1234');
     }
 
     protected function randomNoRepeat($min, $max, $exclude)
