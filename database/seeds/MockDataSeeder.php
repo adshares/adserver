@@ -13,6 +13,7 @@ class MockDataSeeder extends Seeder
     {
         $this->call(MockDataUsersSeeder::class);
         $this->call(MockDataWebsitesSeeder::class);
+        $this->call(MockDataCampaignsSeeder::class);
     }
 
     public static function randomNoRepeat($min, $max, $exclude)
