@@ -52,8 +52,6 @@ class MockDataWebsitesSeeder extends Seeder
         $webp_cols = array_flip($webp_data->cols);
         $webp_data = $webp_data->data;
 
-        $max = count($webp_data) - 1;
-
         DB::beginTransaction();
         foreach ($webp_data as $i => $r) {
             $w = new Website;
