@@ -16,8 +16,8 @@ class TmpTestModelController extends Controller
         $this->middleware('guest');
     }
 
-    public function runTests() {
-
-      die('finished');
+    public function runTests()
+    {
+        die('finished');
     }
 }
