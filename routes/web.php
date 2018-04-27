@@ -11,8 +11,10 @@
 |
 */
 
+#
+# INFO: Currently this is not used
+#
+
 Route::get('/', function () {
     return view('welcome');
 });
-
-Route::get('/test', 'TmpTestModelController@runTests');
