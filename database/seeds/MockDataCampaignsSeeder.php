@@ -150,7 +150,7 @@ class MockDataCampaignsSeeder extends Seeder
             // CAMPAIGN
 
             $c = new Campaign;
-            $c->landing_url = $r[$camp_cols['url']];
+            $c->landing_url = 'http://'.$r[$camp_cols['url']].'/';
             if ($i) {
                 $c->user_id = $i+1+(20-count($camp_data));
             } else {
