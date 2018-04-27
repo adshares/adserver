@@ -37,4 +37,16 @@ trait AutomateMutators
         $func = lcfirst($this->traitAutomate[$key]) . 'Mutator';
         return $this->$func($key, $value);
     }
+
+    public function toArray()
+    {
+        if (empty($this->traitAutomate)) {
+            return parent::toArray();
+        }
+        $array = parent::toArray();
+        foreach (array_keys($this->traitAutomate) as $k) {
+            $array[$k] = $this->$k;
+        }
+        return $array;
+    }
 }
