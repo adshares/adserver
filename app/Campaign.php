@@ -38,6 +38,7 @@ class Campaign extends Model
      * @var array
      */
     protected $hidden = [
+      'id'
     ];
 
     /**
@@ -48,4 +49,9 @@ class Campaign extends Model
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
+
+    public function banners()
+    {
+        return $this->hasMany('App\Banner');
+    }
 }

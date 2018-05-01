@@ -39,6 +39,7 @@ class Banner extends Model
      * @var array
      */
     protected $hidden = [
+      'id','creative_contents','campaign_id'
     ];
 
     /**
@@ -50,4 +51,9 @@ class Banner extends Model
       'uuid' => 'BinHex',
       'creative_sha1' => 'BinHex',
     ];
+
+    public function campaign()
+    {
+        return $this->belongsTo('App\Campaign');
+    }
 }
