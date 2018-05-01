@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+Route::get('/adshares/inventory/list', 'ApiController@adsharesInventoryList');
+Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransactionReport');
