@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Events\GenerateUUID;
+
 use App\ModelTraits\AutomateMutators;
 use App\ModelTraits\BinHex;
 
@@ -11,6 +13,15 @@ class Banner extends Model
 {
     use AutomateMutators;
     use BinHex;
+
+    /**
+     * The event map for the model.
+     *
+     * @var array
+     */
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
 
     /**
      * The attributes that are mass assignable.
