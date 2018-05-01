@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Events\CreativeSha1;
 use App\Events\GenerateUUID;
 
 use App\ModelTraits\AutomateMutators;
@@ -21,6 +22,7 @@ class Banner extends Model
      */
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
+        'saving' => CreativeSha1::class,
     ];
 
     /**
