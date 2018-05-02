@@ -58,4 +58,17 @@ class Banner extends Model
     {
         return $this->belongsTo('App\Campaign');
     }
+
+    /**
+    * check toArrayExtrasCheck() in AutomateMutators trait
+    */
+    protected function toArrayExtras($array)
+    {
+        $array['FU'] = 'TESTED';
+        // TODO: follow up
+        // $json['serve_url'] = $router->generate('serve_creative', ['id' =>  $this->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        // $json['view_url'] = $router->generate('log_view', ['id' =>  $this->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        // $json['click_url'] = $router->generate('log_click', ['id' =>  $this->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        return $array;
+    }
 }
