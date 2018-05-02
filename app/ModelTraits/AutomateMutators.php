@@ -41,12 +41,20 @@ trait AutomateMutators
     public function toArray()
     {
         if (empty($this->traitAutomate)) {
-            return parent::toArray();
+            return $this->toArrayExtrasCheck(parent::toArray());
         }
         $array = parent::toArray();
         foreach (array_keys($this->traitAutomate) as $k) {
             $array[$k] = $this->$k;
         }
-        return $array;
+        return $this->toArrayExtrasCheck($array);
+    }
+
+    public function toArrayExtrasCheck($array)
+    {
+        if (!method_exists($this, 'toArrayExtras')) {
+            return $array;
+        }
+        return $this->toArrayExtras($array);
     }
 }
