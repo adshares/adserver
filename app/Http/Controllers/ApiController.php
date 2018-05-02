@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Adshares\Esc\Esc;
+
 use App\Banner;
 use App\Campaign;
 
@@ -17,10 +19,11 @@ class ApiController extends Controller
     {
         // TODO : convert 2 laravel - follow up for data structure
 
-        foreach (Campaign::with('Banners')->get() as $campaign) {
-            $campaigns[] = $campaign->toArray();
+        foreach (Campaign::with('Banners')->get() as $i => $campaign) {
+            $campaigns[$i] = $campaign->toArray();
+            // TODO: move out to configuration
+            $campaigns[$i]['adshares_address'] = Esc::normalizeAddress('0001-00000001-8B4E');
         }
-
         return Response::json(['campaigns' => $campaigns], 200, array(), JSON_PRETTY_PRINT);
     }
 
