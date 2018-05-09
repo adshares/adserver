@@ -41,7 +41,8 @@ class CreateEventLogsTable extends Migration
             $table->text('their_userdata')->nullable();
 
             $table->decimal('event_value', 20, 9)->nullable(); // na razie jest ADST - ale waluta jest potrzebna
-            $table->decimal('paid_amount', 20, 9); // faktycznie zaplacone
+            $table->decimal('paid_amount', 20, 9)->nullable();
+            // faktycznie zaplacone
             $table->integer('payment_id');
         });
 
