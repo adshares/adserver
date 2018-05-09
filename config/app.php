@@ -118,6 +118,7 @@ return [
     |
     */
 
+    'adserver_secret' => env('ADSERVER_SECRET'),
     'adshares_address' => env('ADSHARES_ADDRESS'),
 
     /*
