@@ -22,7 +22,7 @@ class CreateEventLogsTable extends Migration
             $table->binary('cid', 16); // REQ CUSTOM ALTER -> dla kazdej zony oddzielnie
             $table->binary('tid', 16); // REQ CUSTOM ALTER ->
 
-            $table->integer('publisher_event_id');
+            $table->integer('publisher_event_id')->nullable();
 
             $table->bigInteger('banner_id'); // TODO: brakuje klucza
             $table->string('event_type', 16); // na razie jest view i click
