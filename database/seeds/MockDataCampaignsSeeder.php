@@ -64,12 +64,12 @@ class MockDataCampaignsSeeder extends Seeder
         <html>
         <head>
             <meta http-equiv="content-type" content="text/html; charset=utf-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: {$server_url} {$server_url}; frame-src \'self\' data:; script-src \'self\' {$server_url} {$server_url} \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
+            <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: '.$server_url.' '.$server_url.'; frame-src \'self\' data:; script-src \'self\' '.$server_url.' '.$server_url.' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
-            <script src="{$server_url}/demand/view.js"></script>
+            <script src="'.$server_url.'/demand/view.js"></script>
             <a id="adsharesLink">
-            <img src="data:image/png;base64,{$base64Image}" width="$width" height="$height" border="0">
+            <img src="data:image/png;base64,'.$base64Image.'" width="'.$width.'" height="'.$height.'" border="0">
             </a>
 
         </body>
