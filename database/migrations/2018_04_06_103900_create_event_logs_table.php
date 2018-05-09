@@ -43,7 +43,7 @@ class CreateEventLogsTable extends Migration
             $table->decimal('event_value', 20, 9)->nullable(); // na razie jest ADST - ale waluta jest potrzebna
             $table->decimal('paid_amount', 20, 9)->nullable();
             // faktycznie zaplacone
-            $table->integer('payment_id');
+            $table->integer('payment_id')->nullable();
         });
 
         DB::statement("ALTER TABLE event_logs MODIFY cid varbinary(16)");
