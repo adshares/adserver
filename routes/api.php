@@ -19,3 +19,7 @@ use Illuminate\Http\Request;
 
 Route::get('/adshares/inventory/list', 'ApiController@adsharesInventoryList');
 Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransactionReport');
+
+Route::get('/click/{id}', 'DemandController@click')->name('banner-click');
+Route::get('/serve/{id}', 'DemandController@serve')->name('banner-serve');
+Route::get('/view/{id}', 'DemandController@view')->name('banner-view');

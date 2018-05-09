@@ -110,6 +110,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Adshares Adserver configuration
+    |--------------------------------------------------------------------------
+    |
+    | Moved from symfony project
+    | TODO: naming conventions / checks params.yml.tpl
+    |
+    */
+
+    'adshares_address' => env('ADSHARES_ADDRESS'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Autoloaded Service Providers
     |--------------------------------------------------------------------------
     |

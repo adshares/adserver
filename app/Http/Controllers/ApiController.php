@@ -17,12 +17,9 @@ class ApiController extends Controller
 {
     public function adsharesInventoryList(Request $request)
     {
-        // TODO : convert 2 laravel - follow up for data structure
-
         foreach (Campaign::with('Banners')->get() as $i => $campaign) {
             $campaigns[$i] = $campaign->toArray();
-            // TODO: move out to configuration
-            $campaigns[$i]['adshares_address'] = Esc::normalizeAddress('0001-00000001-8B4E');
+            $campaigns[$i]['adshares_address'] = Esc::normalizeAddress(config('app.adshares_address'));
         }
         return Response::json(['campaigns' => $campaigns], 200, array(), JSON_PRETTY_PRINT);
     }
