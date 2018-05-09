@@ -1,6 +1,6 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;

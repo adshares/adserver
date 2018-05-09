@@ -1,6 +1,6 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 
@@ -52,6 +52,6 @@ class Campaign extends Model
 
     public function banners()
     {
-        return $this->hasMany('Adshares\Adserver\Banner');
+        return $this->hasMany('Adshares\Adserver\Models\Banner');
     }
 }

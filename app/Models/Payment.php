@@ -1,20 +1,22 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\ModelTraits\AccountAddress;
 use Adshares\Adserver\ModelTraits\AutomateMutators;
 use Adshares\Adserver\ModelTraits\BinHex;
 use Adshares\Adserver\ModelTraits\JsonValue;
+use Adshares\Adserver\ModelTraits\TransactionId;
 
 use Illuminate\Database\Eloquent\Model;
 
-class EventLog extends Model
+class Payment extends Model
 {
     use AccountAddress;
     use AutomateMutators;
     use BinHex;
     use JsonValue;
+    use TransactionId;
 
     /**
      * The attributes that are mass assignable.
@@ -22,14 +24,10 @@ class EventLog extends Model
      * @var array
      */
     protected $fillable = [
-      'cid', 'tid',
-      'publisher_event_id', 'banner_id',
-      'event_type',
-      'pay_to', 'ip',
-      'our_context', 'their_context',
-      'user_id', 'human_score', 'our_userdata', 'their_userdata',
-      'timestamp',
-      'event_value', 'paid_amount', 'payment_id'
+      'transfers', 'subthreshold_transfers',
+      'account_address', 'account_hashin', 'account_hashout', 'account_msid',
+      'tx_data', 'tx_id', 'tx_time', 'fee',
+      'completed',
     ];
 
     /**
@@ -46,16 +44,12 @@ class EventLog extends Model
     * @var array
     */
     protected $traitAutomate = [
-      'cid' => 'BinHex',
-      'tid' => 'BinHex',
-      'pay_to' => 'AccountAddress',
-      'ip' => 'BinHex',
-      'our_context' => 'JsonValue',
-      'their_context' => 'JsonValue',
-      'user_id' => 'BinHex',
-      'our_userdata' => 'JsonValue',
-      'their_userdata' => 'JsonValue',
-      'event_value' => 'Money',
-      'paid_amount' => 'Money',
+      'transfers' => 'JsonValue',
+      'subthreshold_transfers' => 'JsonValue',
+      'account_address' => 'AccountAddress',
+      'account_hashin' => 'BinHex',
+      'account_hashout' => 'BinHex',
+      'tx_id' => 'TransactionId',
+      'fee' => 'Money',
     ];
 }

@@ -1,13 +1,18 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
+
+use Adshares\Adserver\ModelTraits\AccountAddress;
+use Adshares\Adserver\ModelTraits\AutomateMutators;
 
 use Illuminate\Database\Eloquent\Model;
 
-class NetworkCampaign extends Model
+class NetworkHost extends Model
 {
+    use AccountAddress;
     use AutomateMutators;
     use BinHex;
+    use JsonValue;
 
     /**
      * The attributes that are mass assignable.
@@ -15,9 +20,7 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $fillable = [
-      'uuid',
-      'source_host', 'source_update_time', 'adshares_address',
-      'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end',
+      'address', 'host', 'last_seen', 'banner_id',
     ];
 
     /**
@@ -34,6 +37,6 @@ class NetworkCampaign extends Model
     * @var array
     */
     protected $traitAutomate = [
-      'uuid' => 'BinHex',
+      'address' => 'AccountAddress',
     ];
 }

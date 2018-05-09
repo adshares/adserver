@@ -1,10 +1,15 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
+
+use Adshares\Adserver\ModelTraits\AccountAddress;
+use Adshares\Adserver\ModelTraits\AutomateMutators;
+use Adshares\Adserver\ModelTraits\BinHex;
+use Adshares\Adserver\ModelTraits\JsonValue;
 
 use Illuminate\Database\Eloquent\Model;
 
-class NetworkEventLog extends Model
+class EventLog extends Model
 {
     use AccountAddress;
     use AutomateMutators;
@@ -18,11 +23,10 @@ class NetworkEventLog extends Model
      */
     protected $fillable = [
       'cid', 'tid',
-      'banner_id',
-      'pay_from',
+      'publisher_event_id', 'banner_id',
       'event_type',
       'pay_to', 'ip',
-      'context',
+      'our_context', 'their_context',
       'user_id', 'human_score', 'our_userdata', 'their_userdata',
       'timestamp',
       'event_value', 'paid_amount', 'payment_id'
@@ -44,10 +48,10 @@ class NetworkEventLog extends Model
     protected $traitAutomate = [
       'cid' => 'BinHex',
       'tid' => 'BinHex',
-      'banner_id' => 'BinHex',
-      'pay_from' => 'AccountAddress',
+      'pay_to' => 'AccountAddress',
       'ip' => 'BinHex',
-      'context' => 'JsonValue',
+      'our_context' => 'JsonValue',
+      'their_context' => 'JsonValue',
       'user_id' => 'BinHex',
       'our_userdata' => 'JsonValue',
       'their_userdata' => 'JsonValue',

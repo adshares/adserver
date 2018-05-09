@@ -1,13 +1,15 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\ModelTraits\AccountAddress;
 use Adshares\Adserver\ModelTraits\AutomateMutators;
+use Adshares\Adserver\ModelTraits\BinHex;
+use Adshares\Adserver\ModelTraits\JsonValue;
 
 use Illuminate\Database\Eloquent\Model;
 
-class NetworkHost extends Model
+class NetworkPayment extends Model
 {
     use AccountAddress;
     use AutomateMutators;
@@ -20,7 +22,11 @@ class NetworkHost extends Model
      * @var array
      */
     protected $fillable = [
-      'address', 'host', 'last_seen', 'banner_id',
+      'receiver_address', 'sender_address', 'sender_host',
+      'amount', 'account_hashout', 'account_msid',
+      'tx_id', 'tx_time',
+      'detailed_data_used',
+      'processed',
     ];
 
     /**
@@ -37,6 +43,7 @@ class NetworkHost extends Model
     * @var array
     */
     protected $traitAutomate = [
-      'address' => 'AccountAddress',
+      'receiver_address' => 'AccountAddress',
+      'sender_address' => 'AccountAddress',
     ];
 }

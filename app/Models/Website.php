@@ -1,10 +1,10 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Zone extends Model
+class Website extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -12,6 +12,6 @@ class Zone extends Model
      * @var array
      */
     protected $fillable = [
-      'website_id', 'name', 'width', 'height',
+      'user_id', 'host',
     ];
 }

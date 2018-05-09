@@ -1,6 +1,6 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
@@ -56,7 +56,7 @@ class Banner extends Model
 
     public function campaign()
     {
-        return $this->belongsTo('Adshares\Adserver\Campaign');
+        return $this->belongsTo('Adshares\Adserver\Models\Campaign');
     }
 
     /**

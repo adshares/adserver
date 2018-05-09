@@ -1,10 +1,10 @@
 <?php
 
-namespace Adshares\Adserver;
+namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class WebsiteExclude extends Model
+class CampaignRequire extends Model
 {
     /**
      * The attributes that are mass assignable.

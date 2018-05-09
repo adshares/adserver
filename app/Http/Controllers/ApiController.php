@@ -4,8 +4,8 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Esc\Esc;
 
-use Adshares\Adserver\Banner;
-use Adshares\Adserver\Campaign;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
