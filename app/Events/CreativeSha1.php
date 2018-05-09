@@ -20,7 +20,7 @@ class CreativeSha1
      *
      * @return void
      */
-    public function __construct(\Adshares\Adserver\Banner $model)
+    public function __construct(\Adshares\Adserver\Models\Banner $model)
     {
         $model->creative_sha1 = sha1($model->creative_contents);
     }

@@ -1,10 +1,10 @@
 <?php
 
-use App\Banner;
-use App\Campaign;
-use App\CampaignExclude;
-use App\CampaignRequire;
-use App\User;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\CampaignExclude;
+use Adshares\Adserver\Models\CampaignRequire;
+use Adshares\Adserver\Models\User;
 
 use Illuminate\Database\Seeder;
 
