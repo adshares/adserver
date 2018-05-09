@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Events;
+namespace Adshares\Adserver\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +20,7 @@ class CreativeSha1
      *
      * @return void
      */
-    public function __construct(\App\Banner $model)
+    public function __construct(\Adshares\Adserver\Banner $model)
     {
         $model->creative_sha1 = sha1($model->creative_contents);
     }

@@ -30,7 +30,7 @@
             "database/factories"
         ],
         "psr-4": {
-            "App\\": "app/"
+            "Adshares\\Adserver\\": "app/"
         }
     },
     "autoload-dev": {

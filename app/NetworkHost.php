@@ -1,9 +1,9 @@
 <?php
 
-namespace App;
+namespace Adshares\Adserver;
 
-use App\ModelTraits\AccountAddress;
-use App\ModelTraits\AutomateMutators;
+use Adshares\Adserver\ModelTraits\AccountAddress;
+use Adshares\Adserver\ModelTraits\AutomateMutators;
 
 use Illuminate\Database\Eloquent\Model;
 

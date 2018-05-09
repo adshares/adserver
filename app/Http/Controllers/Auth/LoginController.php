@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace Adshares\Adserver\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller

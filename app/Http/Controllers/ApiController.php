@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Esc\Esc;
 
-use App\Banner;
-use App\Campaign;
+use Adshares\Adserver\Banner;
+use Adshares\Adserver\Campaign;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;

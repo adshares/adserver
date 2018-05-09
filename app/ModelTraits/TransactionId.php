@@ -2,7 +2,7 @@
 
 
 
-namespace App\ModelTraits;
+namespace Adshares\Adserver\ModelTraits;
 
 /**
  * binhex columns

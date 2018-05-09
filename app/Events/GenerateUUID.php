@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Events;
+namespace Adshares\Adserver\Events;
 
-use App\Utilities\UUID;
+use Adshares\Adserver\Utilities\UUID;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Database\Eloquent\Model;

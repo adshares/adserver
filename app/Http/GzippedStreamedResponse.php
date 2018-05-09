@@ -1,5 +1,5 @@
 <?php
-namespace App\Http;
+namespace Adshares\Adserver\Http;
 
 use Symfony\Component\HttpFoundation\StreamedResponse;
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace App;
+namespace Adshares\Adserver;
 
-use App\Events\CreativeSha1;
-use App\Events\GenerateUUID;
+use Adshares\Adserver\Events\CreativeSha1;
+use Adshares\Adserver\Events\GenerateUUID;
 
-use App\ModelTraits\AutomateMutators;
-use App\ModelTraits\BinHex;
+use Adshares\Adserver\ModelTraits\AutomateMutators;
+use Adshares\Adserver\ModelTraits\BinHex;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -56,7 +56,7 @@ class Banner extends Model
 
     public function campaign()
     {
-        return $this->belongsTo('App\Campaign');
+        return $this->belongsTo('Adshares\Adserver\Campaign');
     }
 
     /**

@@ -1,11 +1,11 @@
 <?php
 
-namespace App;
+namespace Adshares\Adserver;
 
-use App\ModelTraits\AccountAddress;
-use App\ModelTraits\AutomateMutators;
-use App\ModelTraits\BinHex;
-use App\ModelTraits\JsonValue;
+use Adshares\Adserver\ModelTraits\AccountAddress;
+use Adshares\Adserver\ModelTraits\AutomateMutators;
+use Adshares\Adserver\ModelTraits\BinHex;
+use Adshares\Adserver\ModelTraits\JsonValue;
 
 use Illuminate\Database\Eloquent\Model;
 

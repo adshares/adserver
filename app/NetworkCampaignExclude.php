@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace Adshares\Adserver;
 
 use Illuminate\Database\Eloquent\Model;
 
