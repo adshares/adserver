@@ -2,11 +2,11 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\ModelTraits\AccountAddress;
-use Adshares\Adserver\ModelTraits\AutomateMutators;
-use Adshares\Adserver\ModelTraits\BinHex;
-use Adshares\Adserver\ModelTraits\JsonValue;
-use Adshares\Adserver\ModelTraits\TransactionId;
+use Adshares\Adserver\Models\Traits\AccountAddress;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Adserver\Models\Traits\TransactionId;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,7 +39,7 @@ class Payment extends Model
     ];
 
     /**
-    * The attributes that use some ModelTraits with mutator settings automation
+    * The attributes that use some Models\Traits with mutator settings automation
     *
     * @var array
     */

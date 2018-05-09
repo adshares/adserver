@@ -4,8 +4,8 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 
-use Adshares\Adserver\ModelTraits\AutomateMutators;
-use Adshares\Adserver\ModelTraits\BinHex;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,7 +42,7 @@ class Campaign extends Model
     ];
 
     /**
-    * The attributes that use some ModelTraits with mutator settings automation
+    * The attributes that use some Models\Traits with mutator settings automation
     *
     * @var array
     */

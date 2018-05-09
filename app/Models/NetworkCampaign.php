@@ -29,7 +29,7 @@ class NetworkCampaign extends Model
     ];
 
     /**
-    * The attributes that use some ModelTraits with mutator settings automation
+    * The attributes that use some Models\Traits with mutator settings automation
     *
     * @var array
     */

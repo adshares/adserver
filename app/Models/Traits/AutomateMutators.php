@@ -1,6 +1,6 @@
 <?php
 
-namespace Adshares\Adserver\ModelTraits;
+namespace Adshares\Adserver\Models\Traits;
 
 /**
 automate some custom model columns accessors and mutators

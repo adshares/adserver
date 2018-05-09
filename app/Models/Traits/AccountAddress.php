@@ -1,6 +1,6 @@
 <?php
 
-namespace Adshares\Adserver\ModelTraits;
+namespace Adshares\Adserver\Models\Traits;
 
 /**
  * adresses columns
