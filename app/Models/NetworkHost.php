@@ -11,8 +11,6 @@ class NetworkHost extends Model
 {
     use AccountAddress;
     use AutomateMutators;
-    use BinHex;
-    use JsonValue;
 
     /**
      * The attributes that are mass assignable.

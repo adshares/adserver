@@ -2,6 +2,9 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
+
 use Illuminate\Database\Eloquent\Model;
 
 class NetworkBanner extends Model
