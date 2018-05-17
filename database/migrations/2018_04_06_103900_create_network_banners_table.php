@@ -18,9 +18,10 @@ class CreateNetworkBannersTable extends Migration
             $table->binary('uuid', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
-            $table->softDeletes();
+            $table->timestamp('source_created_at')->nullable();
+            $table->timestamp('source_updated_at')->nullable();
 
-            $table->bigInteger('campaign_id')->unsigned();
+            $table->bigInteger('network_campaign_id')->unsigned();
 
             $table->string('serve_url', 1024);
             $table->string('click_url', 1024);

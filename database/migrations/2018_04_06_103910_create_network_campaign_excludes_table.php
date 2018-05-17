@@ -17,9 +17,10 @@ class CreateNetworkCampaignExcludesTable extends Migration
             $table->bigIncrements('id');
 
             $table->timestamps();
-            $table->softDeletes();
+            $table->timestamp('source_created_at')->nullable();
+            $table->timestamp('source_updated_at')->nullable();
 
-            $table->bigInteger('campaign_id')->unsigned();
+            $table->bigInteger('network_campaign_id')->unsigned();
             $table->binary('name', 64); // REQ CUSTOM ALTER
             $table->binary('min', 64); // REQ CUSTOM ALTER
             $table->binary('max', 64); // REQ CUSTOM ALTER
@@ -30,8 +31,8 @@ class CreateNetworkCampaignExcludesTable extends Migration
         DB::statement("ALTER TABLE network_campaign_excludes MODIFY max varbinary(64)");
 
         Schema::table('network_campaign_excludes', function (Blueprint $table) {
-            $table->index(['campaign_id','name','min'], 'min');
-            $table->index(['campaign_id','name','max'], 'max');
+            $table->index(['network_campaign_id','name','min'], 'min');
+            $table->index(['network_campaign_id','name','max'], 'max');
         });
     }
 

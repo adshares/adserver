@@ -18,11 +18,14 @@ class CreateNetworkCampaignsTable extends Migration
             $table->binary('uuid', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
-            $table->softDeletes();
+            $table->timestamp('source_created_at')->nullable();
+            $table->timestamp('source_updated_at')->nullable();
 
             $table->string('source_host'); // should link to network_hosts
-            $table->integer('source_update_time')->unsigned(); // ? smelly
 
+            // TODO: Jacek? do we really need that / not really seen it being used outside of prop set()
+            // $table->integer('source_update_time')->unsigned(); // ? smelly
+            // TODO: Jacek? why is that here and why the format is string -> is that account of the user that is doing the campaign?
             $table->string('adshares_address', 32);
 
             $table->string('landing_url', 1024);
