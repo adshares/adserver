@@ -32,7 +32,7 @@ class CreateBannersTable extends Migration
         });
 
         DB::statement("ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB");
-        DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16)");
+        DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL");
         DB::statement("ALTER TABLE banners MODIFY creative_sha1 varbinary(20)");
     }
 

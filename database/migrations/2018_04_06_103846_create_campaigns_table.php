@@ -32,7 +32,7 @@ class CreateCampaignsTable extends Migration
             $table->dateTime('time_end');
         });
 
-        DB::statement("ALTER TABLE campaigns MODIFY uuid varbinary(16)");
+        DB::statement("ALTER TABLE campaigns MODIFY uuid varbinary(16) NOT NULL");
     }
 
 
