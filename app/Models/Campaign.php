@@ -38,7 +38,7 @@ class Campaign extends Model
      * @var array
      */
     protected $hidden = [
-      'id'
+      'id', 'user_id'
     ];
 
     /**
@@ -53,5 +53,15 @@ class Campaign extends Model
     public function banners()
     {
         return $this->hasMany('Adshares\Adserver\Models\Banner');
+    }
+
+    public function campaignExcludes()
+    {
+        return $this->hasMany('Adshares\Adserver\Models\CampaignExclude');
+    }
+
+    public function campaignRequires()
+    {
+        return $this->hasMany('Adshares\Adserver\Models\CampaignRequire');
     }
 }

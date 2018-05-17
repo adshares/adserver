@@ -17,7 +17,7 @@ class ApiController extends Controller
 {
     public function adsharesInventoryList(Request $request)
     {
-        foreach (Campaign::with('Banners')->get() as $i => $campaign) {
+        foreach (Campaign::with('Banners', 'CampaignExcludes', 'CampaignRequires')->whereNull('deleted_at')->get() as $i => $campaign) {
             $campaigns[$i] = $campaign->toArray();
             $campaigns[$i]['adshares_address'] = Esc::normalizeAddress(config('app.adshares_address'));
         }
