@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Adserver'),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'http://server.ads'),
 
     /*
     |--------------------------------------------------------------------------
@@ -110,16 +110,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Adshares Adserver configuration
+    | Adshares Adserver & Network Components Integration configuration
     |--------------------------------------------------------------------------
-    |
-    | Moved from symfony project
-    | TODO: naming conventions / checks params.yml.tpl
-    |
     */
 
+    'adserver_host' => env('ADSERVER_HOST'),
     'adserver_secret' => env('ADSERVER_SECRET'),
+
     'adshares_address' => env('ADSHARES_ADDRESS'),
+    'adshares_node_host' => env('ADSHARES_NODE_HOST'),
+    'adshares_node_port' => env('ADSHARES_NODE_PORT'),
+    'adshares_secret' => env('ADSHARES_SECRET'),
+    'adshares_wallet' => env('ADSHARES_WALLET'),
+    'adshares_workdir' => env('ADSHARES_WORKDIR'),
+
+    'aduser_endpoint' => env('ADUSER_ENDPOINT'),
+    'adpay_endpoint' => env('ADPAY_ENDPOINT'),
+    'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
 
     /*
     |--------------------------------------------------------------------------
