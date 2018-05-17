@@ -12,7 +12,7 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/adshares/esc-php-api.git",
-                "reference": "75829351014ce922167dced4a5937c730c38222d"
+                "reference": "7f5973cb12aca6cdf86a8b7340c1bd6f3f01de02"
             },
             "require": {
                 "php": ">=7.0",
@@ -57,7 +57,7 @@
                 "issues": "https://github.com/adshares/esc-php-api/issues",
                 "source": "https://github.com/adshares/esc-php-api"
             },
-            "time": "2018-05-01T12:47:37+00:00"
+            "time": "2018-05-17T02:17:42+00:00"
         },
         {
             "name": "browscap/browscap-php",
