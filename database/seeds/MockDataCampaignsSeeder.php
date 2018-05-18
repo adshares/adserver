@@ -1,10 +1,10 @@
 <?php
 
-use App\Banner;
-use App\Campaign;
-use App\CampaignExclude;
-use App\CampaignRequire;
-use App\User;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\CampaignExclude;
+use Adshares\Adserver\Models\CampaignRequire;
+use Adshares\Adserver\Models\User;
 
 use Illuminate\Database\Seeder;
 
@@ -64,12 +64,12 @@ class MockDataCampaignsSeeder extends Seeder
         <html>
         <head>
             <meta http-equiv="content-type" content="text/html; charset=utf-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: {$server_url} {$server_url}; frame-src \'self\' data:; script-src \'self\' {$server_url} {$server_url} \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
+            <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: '.$server_url.' '.$server_url.'; frame-src \'self\' data:; script-src \'self\' '.$server_url.' '.$server_url.' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
-            <script src="{$server_url}/demand/view.js"></script>
+            <script src="'.$server_url.'/demand/view.js"></script>
             <a id="adsharesLink">
-            <img src="data:image/png;base64,{$base64Image}" width="$width" height="$height" border="0">
+            <img src="data:image/png;base64,'.$base64Image.'" width="'.$width.'" height="'.$height.'" border="0">
             </a>
 
         </body>
@@ -150,7 +150,7 @@ class MockDataCampaignsSeeder extends Seeder
             // CAMPAIGN
 
             $c = new Campaign;
-            $c->landing_url = $r[$camp_cols['url']];
+            $c->landing_url = 'http://'.$r[$camp_cols['url']].'/';
             if ($i) {
                 $c->user_id = $i+1+(20-count($camp_data));
             } else {

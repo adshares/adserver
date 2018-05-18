@@ -17,12 +17,11 @@ class CreateEventLogsTable extends Migration
             $table->bigIncrements('id');
 
             $table->timestamps();
-            $table->softDeletes();
 
             $table->binary('cid', 16); // REQ CUSTOM ALTER -> dla kazdej zony oddzielnie
             $table->binary('tid', 16); // REQ CUSTOM ALTER ->
 
-            $table->integer('publisher_event_id');
+            $table->integer('publisher_event_id')->nullable();
 
             $table->bigInteger('banner_id'); // TODO: brakuje klucza
             $table->string('event_type', 16); // na razie jest view i click
@@ -41,8 +40,9 @@ class CreateEventLogsTable extends Migration
             $table->text('their_userdata')->nullable();
 
             $table->decimal('event_value', 20, 9)->nullable(); // na razie jest ADST - ale waluta jest potrzebna
-            $table->decimal('paid_amount', 20, 9); // faktycznie zaplacone
-            $table->integer('payment_id');
+            $table->decimal('paid_amount', 20, 9)->nullable();
+            // faktycznie zaplacone
+            $table->integer('payment_id')->nullable();
         });
 
         DB::statement("ALTER TABLE event_logs MODIFY cid varbinary(16)");

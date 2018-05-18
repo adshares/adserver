@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Utilities;
+namespace Adshares\Adserver\Utilities;
 
 /**
  * Generate UUIDs

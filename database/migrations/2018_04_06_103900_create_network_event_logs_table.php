@@ -17,7 +17,6 @@ class CreateNetworkEventLogsTable extends Migration
             $table->bigIncrements('id');
 
             $table->timestamps();
-            $table->softDeletes();
 
             $table->binary('cid', 16); // REQ CUSTOM ALTER
             $table->binary('tid', 16); // REQ CUSTOM ALTER
@@ -35,10 +34,9 @@ class CreateNetworkEventLogsTable extends Migration
             $table->integer('human_score')->nullable();
             $table->text('our_userdata')->nullable();
             $table->text('their_userdata')->nullable();
-            $table->integer('timestamp');
-            $table->decimal('event_value', 20, 9);
-            $table->decimal('paid_amount', 20, 9);
-            $table->integer('payment_id');
+            $table->decimal('event_value', 20, 9)->nullable();
+            $table->decimal('paid_amount', 20, 9)->nullable();
+            $table->integer('payment_id')->nullable();
         });
 
         DB::statement("ALTER TABLE network_event_logs MODIFY cid varbinary(16)");

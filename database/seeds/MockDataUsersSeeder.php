@@ -1,6 +1,6 @@
 <?php
 
-use App\User;
+use Adshares\Adserver\Models\User;
 
 use Illuminate\Database\Seeder;
 

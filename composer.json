@@ -6,6 +6,8 @@
     "type": "project",
     "require": {
         "php": "^7.1",
+        "adshares/esc-php-api": "dev-master",
+        "browscap/browscap-php": "^4.1",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.6.*",
         "laravel/tinker": "^1.0"
@@ -29,7 +31,7 @@
             "database/factories"
         ],
         "psr-4": {
-            "App\\": "app/"
+            "Adshares\\Adserver\\": "app/"
         }
     },
     "autoload-dev": {
@@ -63,6 +65,12 @@
         "sort-packages": true,
         "optimize-autoloader": true,
 		"bin-dir": "bin/vendor"
+    },
+    "repositories": {
+        "esc-php-api": {
+            "type":"git",
+            "url": "https://github.com/adshares/esc-php-api.git"
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

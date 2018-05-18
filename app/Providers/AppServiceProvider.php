@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers;
+namespace Adshares\Adserver\Providers;
 
 use Illuminate\Support\ServiceProvider;
 

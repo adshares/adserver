@@ -1,10 +1,10 @@
 <?php
 
-use App\User;
-use App\Website;
-use App\WebsiteExclude;
-use App\WebsiteRequire;
-use App\Zone;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Website;
+use Adshares\Adserver\Models\WebsiteExclude;
+use Adshares\Adserver\Models\WebsiteRequire;
+use Adshares\Adserver\Models\Zone;
 
 use Illuminate\Database\Seeder;
 
