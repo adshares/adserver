@@ -18,7 +18,8 @@ class NetworkBanner extends Model
      * @var array
      */
     protected $fillable = [
-      'uuid', 'campaign_id',
+      'uuid', 'network_campaign_id',
+      'source_created_at', 'source_updated_at',
       'serve_url','click_url', 'view_url',
       'creative_contents', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
     ];
@@ -29,6 +30,7 @@ class NetworkBanner extends Model
      * @var array
      */
     protected $hidden = [
+      'id', 'network_campaign_id'
     ];
 
     /**

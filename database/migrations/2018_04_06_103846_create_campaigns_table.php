@@ -33,6 +33,10 @@ class CreateCampaignsTable extends Migration
         });
 
         DB::statement("ALTER TABLE campaigns MODIFY uuid varbinary(16) NOT NULL");
+
+        Schema::table('campaigns', function (Blueprint $table) {
+            $table->unique('uuid');
+        });
     }
 
 

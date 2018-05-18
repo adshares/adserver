@@ -15,6 +15,7 @@ class CreateNetworkCampaignRequiresTable extends Migration
     {
         Schema::create('network_campaign_requires', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->binary('uuid', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
             $table->timestamp('source_created_at')->nullable();
@@ -26,11 +27,13 @@ class CreateNetworkCampaignRequiresTable extends Migration
             $table->binary('max', 64); // REQ CUSTOM ALTER
         });
 
+        DB::statement("ALTER TABLE network_campaign_requires MODIFY uuid varbinary(16) NOT NULL");
         DB::statement("ALTER TABLE network_campaign_requires MODIFY name varbinary(64)");
         DB::statement("ALTER TABLE network_campaign_requires MODIFY min varbinary(64)");
         DB::statement("ALTER TABLE network_campaign_requires MODIFY max varbinary(64)");
 
         Schema::table('network_campaign_requires', function (Blueprint $table) {
+            $table->unique('uuid');
             $table->index(['network_campaign_id','name','min'], 'min');
             $table->index(['network_campaign_id','name','max'], 'max');
         });
