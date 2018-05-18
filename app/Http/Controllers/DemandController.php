@@ -107,7 +107,7 @@ class DemandController extends Controller
         $response->setCallback(function () use ($jsPath, $request, $params) {
             echo str_replace([
               "'{{ ORIGIN }}'",
-          ], $params, file_get_contents($jsPath));
+            ], $params, file_get_contents($jsPath));
         });
 
         $response->headers->set('Content-Type', 'text/javascript');
@@ -256,7 +256,7 @@ class DemandController extends Controller
             if ($adpayService) {
                 $adpayService->addEvents([
                   $log->getAdpayJson(),
-              ]);
+                ]);
             }
         }
 
@@ -326,7 +326,7 @@ class DemandController extends Controller
         if ($adpayService && $log->getOurContext() && $log->getUserId()) {
             $adpayService->addEvents([
               $log->getAdpayJson(),
-          ]);
+            ]);
         }
 
         return $response;

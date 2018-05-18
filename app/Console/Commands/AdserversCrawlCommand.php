@@ -47,12 +47,12 @@ class AdserversCrawlCommand extends Command
         // TODO: move to Service
         // ($walletCommand, $workingDir, $address, $secret, $host, $port)
         $this->esc = new Esc(
-          config('app.adshares_wallet'),
-          config('app.adshares_workdir'),
-          config('app.adshares_address'),
-          config('app.adshares_secret'),
-          config('app.adshares_node_host'),
-          config('app.adshares_node_port')
+            config('app.adshares_wallet'),
+            config('app.adshares_workdir'),
+            config('app.adshares_address'),
+            config('app.adshares_secret'),
+            config('app.adshares_node_host'),
+            config('app.adshares_node_port')
         );
     }
 

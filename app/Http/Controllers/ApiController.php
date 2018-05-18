@@ -42,8 +42,16 @@ class ApiController extends Controller
         } else {
             $response = [];
 
-            $events = $em->createQuery("SELECT e.publisher_event_id, e.paid_amount, e.timestamp FROM Adshares\Entity\EventLog e WHERE e.payment_id = :payment_id AND e.pay_to = :pay_to")
-          ->iterate(['payment_id' => $paymentId, 'pay_to' => $pay_to], Query::HYDRATE_SCALAR);
+            $events = $em->createQuery(
+              "SELECT
+                  e.publisher_event_id, e.paid_amount, e.timestamp
+                FROM
+                  Adshares\Entity\EventLog e
+                WHERE
+                  e.payment_id = :payment_id
+                AND
+                  e.pay_to = :pay_to"
+              )->iterate(['payment_id' => $paymentId, 'pay_to' => $pay_to], Query::HYDRATE_SCALAR);
 
             $minTime = PHP_INT_MAX;
             $maxTime = PHP_INT_MIN;

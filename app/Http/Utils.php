@@ -269,7 +269,7 @@ class Utils
         return Utils::UrlSafeBase64Encode(strrev(substr(Utils::UrlSafeBase64Decode($etag), 6)));
     }
 
-    public static function array_erase(array &$array, $value)
+    public static function arrayRemoveValues(array &$array, $value) // former array_erase
     {
         foreach ($array as $key => $val) {
             if ($val === $value) {
@@ -279,7 +279,7 @@ class Utils
         return;
     }
 
-    public static function array_erase_one(array &$array, $value)
+    public static function arrayRemoveFirstValue(array &$array, $value) // former array_erase_one
     {
         foreach ($array as $key => $val) {
             if ($val === $value) {
