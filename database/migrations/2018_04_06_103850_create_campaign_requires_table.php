@@ -15,6 +15,7 @@ class CreateCampaignRequiresTable extends Migration
     {
         Schema::create('campaign_requires', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->binary('uuid', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
             $table->softDeletes();
@@ -26,11 +27,13 @@ class CreateCampaignRequiresTable extends Migration
             $table->binary('max', 64); // REQ CUSTOM ALTER
         });
 
+        DB::statement("ALTER TABLE campaign_requires MODIFY uuid varbinary(16) NOT NULL");
         DB::statement("ALTER TABLE campaign_requires MODIFY name varbinary(64)");
         DB::statement("ALTER TABLE campaign_requires MODIFY min varbinary(64)");
         DB::statement("ALTER TABLE campaign_requires MODIFY max varbinary(64)");
 
         Schema::table('campaign_requires', function (Blueprint $table) {
+            $table->unique('uuid');
             $table->index(['campaign_id','name','min'], 'min');
             $table->index(['campaign_id','name','max'], 'max');
         });

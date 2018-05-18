@@ -14,7 +14,7 @@ class AddForeignKeysToNetworkBannersTable extends Migration
     public function up()
     {
         Schema::table('network_banners', function (Blueprint $table) {
-            $table->foreign('campaign_id')->references('id')->on('network_campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
+            $table->foreign('network_campaign_id')->references('id')->on('network_campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
     }
 
@@ -27,7 +27,7 @@ class AddForeignKeysToNetworkBannersTable extends Migration
     public function down()
     {
         Schema::table('network_banners', function (Blueprint $table) {
-            $table->dropForeign(['campaign_id']);
+            $table->dropForeign(['network_campaign_id']);
         });
     }
 }
