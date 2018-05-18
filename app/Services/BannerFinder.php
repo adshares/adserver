@@ -1,32 +1,23 @@
 <?php
-namespace Adshares\Supply;
+namespace Adshares\Adserver\Services;
 
-use Adshares\Entity\NetworkCampaign;
 use Doctrine\ORM\EntityManager;
+
 use Symfony\Component\Routing\Router;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Adshares\Helper\Utils;
+
 use Symfony\Component\DependencyInjection\Container;
 use Doctrine\ORM\Query;
-use Adshares\Entity\NetworkBanner;
-use Adshares\Services\Adselect;
-use Adshares\Entity\Zone;
+
 use Adshares\Helper\Filter;
+use Adshares\Adserver\Http\Utils;
 
-/**
- *
 
- cond = (name = 'screen_width AND 800 BETWEEN min AND max OR name ='Browser' AND "Chrome" BETWEEN min AND max))
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\Zone;
 
- SELECT b.id, b.price_amount,  b.price_amount * IFNULL(1 + (SELECT SUM(i.modifier) FROM `BannerModifier` i WHERE i.banner_id = b.id AND (i.name = 'screen_width' AND 500 BETWEEN i.min AND i.max OR i.name = 'screen_height' AND 100 BETWEEN i.min AND i.max OR i.name = 'browser' AND 'Chrome' BETWEEN min AND max) )/100, 1) score
- FROM Banner b
- WHERE
- NOT EXISTS (SELECT e.banner_id FROM `BannerExclude` e WHERE e.banner_id = b.id AND (e.name = 'screen_width' AND 500 BETWEEN e.min AND e.max OR e.name = 'screen_height' AND 100 BETWEEN e.min AND e.max OR e.name = 'browser' AND 'Chrome' BETWEEN min AND max))
- AND require_count = (SELECT COUNT(DISTINCT name) FROM `BannerRequire` r WHERE r.banner_id = b.id AND (r.name = 'screen_width' AND 500 BETWEEN r.min AND r.max OR r.name = 'screen_height' AND 500 BETWEEN r.min AND r.max OR r.name = 'browser' AND 'Chrome' BETWEEN min AND max))
- GROUP BY b.id ORDER BY score DESC
-
- */
-
+// use Adshares\Adserver\Services\Adselect;
 
 /**
  *
@@ -42,16 +33,19 @@ class BannerFinder
             'image'
         ];
 
-        $adselectService = $container->has('adselect') ? $container->get('adselect') : null;
-        $adselectService instanceof Adselect;
+
+        // TODO: adselect
+
+        // $adselectService = $container->has('adselect') ? $container->get('adselect') : null;
+        // $adselectService instanceof Adselect;
 
         $bannerIds = [];
 
 
-        if ($adselectService) {
+        /*if (false && $adselectService) {
             $requests = [];
             foreach ($zones as $i => $zoneInfo) {
-                $zone = Zone::getRepository($em)->find($zoneInfo['zone']);
+                $zone = Zone::find($zoneInfo['zone']);
                 $zone instanceof Zone;
 
                 $website = $zone->getWebsite();
@@ -87,58 +81,35 @@ class BannerFinder
                 $bannerIds[$response['request_id']] = $response['banner_id'];
             }
 //             ksort($bannerIds);
-        } else {
-            foreach ($zones as $zoneInfo) {
-                $zone = Zone::getRepository($em)->find($zoneInfo['zone']);
-                $zone instanceof Zone;
-                $bannerList = NetworkBanner::getRepository($em)->createQueryBuilder('b')
-                    ->andWhere('b.creative_width = :width')
-                    ->andWhere('b.creative_height = :height')
-                    ->andWhere('b.creative_type IN (:type)')
-                    ->setParameters([
-                    'width' => $zone->getWidth(),
-                    'height' => $zone->getHeight(),
-                    'type' => $typeDefault
-                    ])
-                    ->getQuery()
-                    ->getResult(Query::HYDRATE_SIMPLEOBJECT);
+        } else {*/
+        foreach ($zones as $zoneInfo) {
+            $zone = Zone::find($zoneInfo['zone']);
 
-                if (! $bannerList) {
-                    $bannerIds[] = null;
-                    continue;
-                }
-                $bannerIds[] = $bannerList[array_rand($bannerList)]->getUuid();
-            }
+            // $zone instanceof Zone; // ?? Yodahack : what the hack
+            $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                    ->where('creative_height', $zone->height)
+                    ->whereIn('creative_type', $typeDefault)
+                    ->get()->pluck('uuid')->random();
         }
-
-        $router = $container->get('router');
-        assert($router instanceof Router);
+        /*}*/
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {
-            $banner = $bannerId ? NetworkBanner::getRepository($em)->findOneBy(['uuid' => $bannerId]) : null;
+            // TODO:
+            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
 
-
-            if ($banner instanceof NetworkBanner) {
-                $campaign = NetworkCampaign::getRepository($em)->find($banner->getCampaignId());
-
-                $click_url = $router->generate('log_network_click', [
-                    'id' => $banner->getUuid(),
-                    'r' => Utils::UrlSafeBase64Encode($banner->getClickUrl())
-                ], UrlGeneratorInterface::ABSOLUTE_URL);
-                $view_url = $router->generate('log_network_view', [
-                    'id' => $banner->getUuid(),
-                    'r' => Utils::UrlSafeBase64Encode($banner->getViewUrl())
-                ], UrlGeneratorInterface::ABSOLUTE_URL);
+            if (!empty($banner)) {
+                $campaign = NetworkCampaign::find($banner->network_campaign_id);
                 $banners[] = [
-                    'serve_url' => $banner->getServeUrl(),
-                    'creative_sha1' => $banner->getCreativeSha1(),
-                    'pay_from' => $campaign->getAdsharesAddress(), // send this info to log
-                    'click_url' => $click_url,
-                    'view_url' => $view_url
+                    'serve_url' => $banner->serve_url,
+                    'creative_sha1' => $banner->creative_sha1,
+                    'pay_from' => $campaign->adshares_address, // send this info to log
+                    'click_url' => route('log-network-click', ['id'=>$banner->uuid,'r'=>Utils::UrlSafeBase64Encode($banner->click_url)]),
+                    'view_url' => route('log-network-view', ['id'=>$banner->uuid,'r'=>Utils::UrlSafeBase64Encode($banner->view_url)])
                 ];
             } else {
                 $banners[] = null;
+                // TODO: discuss Jacek
             }
         }
 

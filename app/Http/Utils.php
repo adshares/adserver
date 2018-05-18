@@ -1,13 +1,20 @@
 <?php
-namespace Adshares\Helper;
+namespace Adshares\Adserver\Http;
 
-use BrowscapPHP\Cache\BrowscapCache;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+
 use BrowscapPHP\Browscap;
-use Symfony\Component\DependencyInjection\Container;
-use WurflCache\Adapter\File;
+use BrowscapPHP\BrowscapUpdater;
+
+use Symfony\Component\Console\Output\NullOutput;
+use BrowscapPHP\Helper\LoggerHelper;
+use Doctrine\Common\Cache\FilesystemCache;
+use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 
 /**
  * Various helpful methods
@@ -15,12 +22,15 @@ use WurflCache\Adapter\File;
  */
 class Utils
 {
-    public static function getImpressionContext(Container $container, Request $request, $contextStr = null)
+    # not yet reviewed
+    # TODO: remove $container
+
+    public static function getImpressionContext(Request $request, $contextStr = null)
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
         if ($contextStr) {
             if (is_string($contextStr)) {
-                $context = Utils::decodeZones($contextStr);
+                $context = self::decodeZones($contextStr);
             } else {
                 $context = ['page' => $contextStr];
             }
@@ -28,75 +38,70 @@ class Utils
             $context = null;
         }
         return [
-            'site' => self::getSiteContext($container, $request, $context),
-            'device' => self::getDeviceContext($container, $request, $context),
+            'site' => self::getSiteContext($request, $context),
+            'device' => self::getDeviceContext($request, $context),
         ];
     }
-    
-    public static function getSiteContext(Container $container, Request $request, $context)
+
+    public static function getSiteContext(Request $request, $context)
     {
         $site = [];
 
-        if ($context && isset($context['page'])) {
-            $page = $context['page'];
-            
-            if (!$page['url']) {
-                $page['url'] = $request->headers->get('Referer');
-            }
-            $url = parse_url($page['url']);
-            
-            
-            $site['inframe'] = isset($page['frame']) ? ($page['frame'] ? 'yes' : 'no') : null;
-            $site['domain'] = $url['host'] ?? null;
-            $site['page'] = $page['url'];
-            
-            if (isset($page['keywords']) && is_string($page['keywords'])) {
-                $site['keywords'] = explode(',', $page['keywords']);
-                foreach ($site['keywords'] as &$word) {
-                    $word = strtolower(trim($word));
-                }
+        if (empty($context) || !isset($context['page'])) {
+            return $site;
+        }
+
+        $page = $context['page'];
+
+        if (!$page['url']) {
+            $page['url'] = $request->headers->get('Referer');
+        }
+        $url = parse_url($page['url']);
+        $site['domain'] = $url['host'] ?? null;
+        $site['inframe'] = isset($page['frame']) ? ($page['frame'] ? 'yes' : 'no') : null;
+        $site['page'] = $page['url'];
+        if (isset($page['keywords']) && is_string($page['keywords'])) {
+            $site['keywords'] = explode(',', $page['keywords']);
+            foreach ($site['keywords'] as &$word) {
+                $word = strtolower(trim($word));
             }
         }
         return $site;
     }
-    
-    public static function getDeviceContext(Container $container, Request $request, $context)
+
+    public static function getDeviceContext(Request $request, $context)
     {
         $device = [];
         if ($context && isset($context['page'])) {
             $page = $context['page'];
-            
+
             $device['w'] = $page['width'] ?? null;
             $device['h'] = $page['height'] ?? null;
         }
-        
-        $browscap = new \BrowscapPHP\Browscap();
 
-        $cacheDirectory = $container->get('kernel')->getCacheDir() . '/browscap/';
+        // TODO: refactor into browsercap service
 
-        $cacheAdapter = new File(
-            ['dir' => $cacheDirectory]
-        );
+        $logger = LoggerHelper::createDefaultLogger(new NullOutput);
 
+        $fileCache = new FilesystemCache(storage_path('framework/cache/browscap'));
+        $cache = new SimpleCacheAdapter($fileCache);
 
-
-        $browscap->setCache(new BrowscapCache($cacheAdapter));
+        $browscap = new \BrowscapPHP\Browscap($cache, $logger);
 
         $browser = $browscap->getBrowser();
-        
+
         $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
         if ($locale) {
             $device['language'] = $locale;
         }
-        
+
         $device['browser'] = $browser->browser;
         $device['browserv'] = $browser->version > 0 ? $browser->version : null;
-        
+
         $device['input'] = $browser->device_pointing_method ?? null;
-        
+
         $device['os'] = $browser->platform;
-        
-        $match = null;
+
         if (is_numeric($browser->platform_version)) {
             $device['osv'] = $browser->platform_version;
         } elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
@@ -105,7 +110,7 @@ class Utils
         } else {
             $device['osv'] = $browser->platform;
         }
-        
+
         if ($browser->ismobiledevice === true) {
             $device['type'] = 'mobile';
         } elseif ($browser->istablet === true) {
@@ -119,7 +124,7 @@ class Utils
         } else {
             $device['type'] = 'desktop';
         }
-        
+
         foreach ($device as $key => &$value) {
             if ($value === 'false' || $value === 'unknown' || $value === null || $value === false) {
                 unset($device[$key]);
@@ -128,7 +133,7 @@ class Utils
                 $value = strtolower($value);
             }
         }
-        
+
         $geo = self::getGeoData('128.65.210.8');
         if ($geo) {
             $device['geo'] = $geo;
@@ -149,7 +154,7 @@ class Utils
 //         carrier
 //         geo
     }
-    
+
     private static function getGeoData($clientIp)
     {
         $geo = [];
@@ -206,10 +211,10 @@ class Utils
         $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
         $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
         $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
-        
+
         $id = substr(sha1(implode(':', $input), true), 0, 16);
         $checksum = substr(sha1($id . $secret, true), 0, 6);
- 
+
         return Utils::UrlSafeBase64Encode($id . $checksum);
     }
 
@@ -224,7 +229,7 @@ class Utils
         return substr(sha1($id . $secret, true), 0, 6) == $checksum;
     }
 
-    public function attachTrackingCookie($secret, Request $request, Response $response, $contentSha1, \DateTime $contentModified)
+    public static function attachTrackingCookie($secret, Request $request, Response $response, $contentSha1, \DateTime $contentModified)
     {
         $tid = $request->cookies->get('tid');
         if (! Utils::validTrackingId($tid, $secret)) {
@@ -239,7 +244,7 @@ class Utils
         }
         $response->headers->setCookie(new Cookie('tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHttpHost()));
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
-        
+
 
         //         $response->setVary("Origin");
         $response->setCache(array(
@@ -318,12 +323,12 @@ class Utils
     public static function decodeZones($zonesStr)
     {
         $zonesStr = self::UrlSafeBase64Decode($zonesStr);
-        
+
         $zones = explode(self::ZONE_GLUE, $zonesStr);
         $fields = explode(self::VALUE_GLUE, array_shift($zones));
         //         return $fields;
         $data = [];
-        
+
         foreach ($zones as $zoneStr) {
             $zone = [];
             $propStrs = explode(self::PROP_GLUE, $zoneStr);
@@ -333,17 +338,17 @@ class Utils
             }
             $data[] = $zone;
         }
-        
+
         $result = [
             'page' => array_shift($data)
         ];
         if ($data) {
             $result['zones'] = $data;
         }
-        
+
         return $result;
     }
-    
+
     public static function toJsonString($value)
     {
         if ($value instanceof \DateTime) {
@@ -351,7 +356,7 @@ class Utils
         }
         return (string) $value;
     }
-    
+
     public static function fromJsonString($field, $value)
     {
         if (stristr($field, "time")) {
@@ -359,18 +364,18 @@ class Utils
         }
         return $value;
     }
-    
+
     public static function flattenKeywords(array $keywords, $prefix = '')
     {
         $ret = [];
-        
+
         if (array_values($keywords) == $keywords) {
             $keywords = array_flip($keywords);
             foreach ($keywords as &$value) {
                 $value = 1;
             }
         }
-        
+
         foreach ($keywords as $keyword => $value) {
             if (is_array($value)) {
                 $ret = array_merge($ret, self::flattenKeywords($value, $keyword . '_'));
@@ -380,16 +385,16 @@ class Utils
         }
         return $ret;
     }
-    
-    
-    
+
+
+
     const VALUE_MIN = "\x00";
-    
+
     const VALUE_MAX = "\xFF";
-    
+
     const NUMERIC_PAD_FORMAT = "%'08.2f";
-    
-    
+
+
     public static function generalKeywordMatch(array $keywords, $name, $min, $max)
     {
         $path = explode('_', $name);
@@ -405,7 +410,7 @@ class Utils
             }
         }
         $vectors = [''];
-        for ($i=0; $i<count($values); $i++) {
+        for ($i=0;$i<count($values);$i++) {
             $orgVectors = $vectors;
             for ($j=0; $j<count($values[$i]); $j++) {
                 $newVector = [];
@@ -423,13 +428,13 @@ class Utils
                 }
             }
         }
-        
+
         foreach ($vectors as $vector) {
             if (strcmp($min, $vector) <=0 && strcmp($vector, $max) <= 0) {
                 return true;
             }
         }
-        
+
         return false;
     }
 }

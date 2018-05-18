@@ -1,23 +1,27 @@
 <?php
-namespace Adshares\Controller;
 
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Request;
+namespace Adshares\Adserver\Http\Controllers;
+
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\EventLog;
+
+use Adshares\Adserver\Http\GzippedStreamedResponse;
+use Adshares\Adserver\Http\Utils;
+
+use Adshares\Adserver\Services\BannerFinder;
+
+use Adshares\Esc\Esc;
+
+use Illuminate\Http\Request;
+
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Adshares\Helper\Utils;
-use Adshares\Supply\BannerFinder;
-use Adshares\Coin\Api;
-
-use Adshares\Entity\NetworkCampaign;
-use Adshares\Entity\NetworkEventLog;
-use Adshares\Services\Adselect;
-
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Bundle\FrameworkBundle\Routing\Router;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
+// use Adshares\Services\Adselect;
+
+// TODO: review request headers // extract & organize ??
 
 /**
  * HTTP api that is used by supply adserver to display banners and log relevant events
@@ -25,30 +29,16 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
  */
 class SupplyController extends Controller
 {
-
-    /**
-     * @Route("/supply")
-     */
-    public function indexAction(Request $request)
-    {
-        return new Response('supply');
-    }
-
-    /**
-     * Finds banners requested by website
-     *
-     * @Route("/supply/find", methods={"GET", "POST", "OPTIONS"})
-     */
-    public function indexFind(Request $request)
+    public function find(Request $request)
     {
         $response = new Response();
-        
+
         if ($request->headers->has("Origin")) {
             $response->headers->set("Access-Control-Allow-Origin", $request->headers->get("Origin"));
             $response->headers->set("Access-Control-Allow-Credentials", "true");
             $response->headers->set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         }
-        
+
         if ($request->getRealMethod() == 'GET') {
             $data = $request->getQueryString();
         } elseif ($request->getRealMethod() == 'POST') {
@@ -58,51 +48,46 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Max-Age', 1728000);
             return $response;
         }
-        
+
         $decoded = Utils::decodeZones($data);
 //         print_r($decoded);exit;
         $zones = $decoded['zones'];
-        
-        $tid = Utils::attachTrackingCookie($this->getParameter('secret'), $request, $response, "", new \DateTime());
+
+        $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, "", new \DateTime());
 
         // use adselect here
-        $context = Utils::getImpressionContext($this->container, $request, $data);
-        
+        $context = Utils::getImpressionContext($request, $data);
+
         $impressionId = $decoded['page']['iid'];
         if ($impressionId) {
-            $aduser_endpoint = $this->container->getParameter('aduser_endpoint');
+            $aduser_endpoint = config('app.aduser_endpoint');
             if ($aduser_endpoint) {
                 $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
         }
-        
+
         $keywords = array_merge($context, $userdata);
-        
-        $banners = BannerFinder::getBestBanners($this->container, $this->getDoctrine()->getManager(), $zones, $keywords);
-        
+
+        $banners = BannerFinder::getBestBanners($zones, $keywords);
+
         foreach ($banners as &$banner) {
             if ($banner) {
-                $banner['pay_to'] = Api::normalizeAddress($this->container->getParameter('adshares_address'));
+                $banner['pay_to'] = Esc::normalizeAddress(config('app.adshares_address'));
             }
         }
-        
-        
+
         $response->setContent(json_encode($banners, JSON_PRETTY_PRINT));
         return $response;
     }
 
-    /**
-     * @Route("/supply/find.js")
-     */
-    public function findScriptAction(Request $request)
+    public function findScript(Request $request)
     {
-        $aduser_endpoint = $this->container->getParameter('aduser_endpoint');
-        
-        $params = [json_encode($request->getSchemeAndHttpHost()), json_encode($aduser_endpoint)];
-        
-        $jsPath = $this->get('kernel')->getEnvironment() == 'dev' ? './-/find.min.js' : './-/find.x.js';
+        $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_endpoint'))];
+
+        $jsPath = config('app.env') == 'production' ? resource_path('assets/js/tmp-copy/find.x.js') : resource_path('assets/js/tmp-copy/find.min.js');
+
         $response = new StreamedResponse();
         $response->setCallback(function () use ($jsPath, $request, $params) {
             echo str_replace([
@@ -110,9 +95,9 @@ class SupplyController extends Controller
                 "'{{ ADUSER }}'",
             ], $params, file_get_contents($jsPath));
         });
-        
+
         $response->headers->set('Content-Type', 'text/javascript');
-        
+
         $response->setCache(array(
             'etag' => md5(md5_file($jsPath) . implode(':', $params)),
             'last_modified' => new \DateTime('@' . filemtime($jsPath)),
@@ -121,17 +106,14 @@ class SupplyController extends Controller
             'private' => false,
             'public' => true
         ));
-        
+
         if (! $response->isNotModified($request)) {
+            // TODO: ask Jacek
         }
         return $response;
     }
-    
-    /**
-     * @Route("/nclick/{id}", name="log_network_click", methods={"GET"}, requirements={"id": "[0-9a-f]+"})
-     *
-     */
-    public function networkClickAction(Request $request, $id)
+
+    public function logNetworkClick(Request $request, $id)
     {
         if ($request->query->get('r')) {
             $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
@@ -140,17 +122,17 @@ class SupplyController extends Controller
             $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
                 'uuid' => $id
             ]);
-            
+
             if (! $banner) {
                 throw new NotFoundHttpException();
             }
-            
+
             $url = $banner->getClickUrl();
         }
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
-            
+
             if ($qPos === false) {
                 $url .= '?' . $qString;
             } elseif ($qPos == strlen($url) - 1) {
@@ -159,15 +141,15 @@ class SupplyController extends Controller
                 $url .= '&' . $qString;
             }
         }
-        
+
         $logIp = bin2hex(inet_pton($request->getClientIp()));
-        
-        
+
+
         $cid = Utils::getRawTrackingId($request->query->get('cid'));
         $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         // TODO get user / website / zone
         $payFrom = $request->query->get('pfr');
-        
+
         $log = new NetworkEventLog();
         $log->setCid($cid);
         $log->setBannerId($id);
@@ -176,50 +158,37 @@ class SupplyController extends Controller
         $log->setIp($logIp);
         $log->setEventType("click");
         //         $log->setContext(Utils::getImpressionContext($this->container, $request));
-        
+
         $em = $this->getDoctrine()->getManager();
         $em->persist($log);
         $em->flush();
-        
+
         $url = Utils::addUrlParameter($url, 'pid', $log->getId());
-        
+
         $adselectService = $this->container->has('adselect') ? $this->container->get('adselect') : null;
         $adselectService instanceof Adselect;
-        
+
         if ($adselectService) {
             $adselectService->addImpressions([
                 $log->getAdselectJson(),
             ]);
         }
-        
+
         $response = new RedirectResponse($url);
         return $response;
     }
-    
-    /**
-     * @Route("/nview/{id}", name="log_network_view", methods={"GET"}, requirements={"id": "[0-9a-f]+"})
-     *
-     */
-    public function networkViewAction(Request $request, $id)
+
+    public function logNetworkView(Request $request, $id)
     {
         if ($request->query->get('r')) {
             $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
-        } else {
-            $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
-                'uuid' => $id
-            ]);
-            
-            if (! $banner) {
-                throw new NotFoundHttpException();
-            }
-            
-            $url = $banner->getViewUrl();
         }
+
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
-            
+
             if ($qPos === false) {
                 $url .= '?' . $qString;
             } elseif ($qPos == strlen($url) - 1) {
@@ -228,90 +197,69 @@ class SupplyController extends Controller
                 $url .= '&' . $qString;
             }
         }
-        
+
         $logIp = bin2hex(inet_pton($request->getClientIp()));
-        
+
         $cid = Utils::getRawTrackingId($request->query->get('cid'));
         $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
-        
+
         $log = new NetworkEventLog();
-        $log->setCid($cid);
-        $log->setBannerId($id);
-        $log->setPayFrom($payFrom);
-        $log->setTid($tid);
-        $log->setIp($logIp);
-        $log->setEventType("view");
-        $log->setContext(Utils::getImpressionContext($this->container, $request));
-        
+        $log->cid = $cid;
+        $log->banner_id = $id;
+        $log->pay_from = $payFrom;
+        $log->tid = $tid;
+        $log->ip = $logIp;
+        $log->event_type = "view";
+        $log->context = Utils::getImpressionContext($request);
+
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
-        $aduser_endpoint = $this->container->getParameter('aduser_endpoint');
+        $aduser_endpoint = config('app.aduser_endpoint');
         if ($aduser_endpoint && $impressionId) {
             $userdata = json_decode(file_get_contents("{$aduser_endpoint}/get/{$impressionId}"), true);
         } else {
             $userdata = [];
         }
-        $log->setOurUserdata($userdata['keywords']);
-        $log->setHumanScore($userdata['human_score']);
-        $log->setUserId($userdata['user_id']);
-        
-        
-        // make sure db error wont stop redirection
-//         try {
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($log);
-            $em->flush();
-            
-            $adselectService = $this->container->has('adselect') ? $this->container->get('adselect') : null;
-            $adselectService instanceof Adselect;
-            
-        if ($adselectService) {
-            $adselectService->addImpressions([
-                $log->getAdselectJson(),
-            ]);
-        }
-            
-            
-            $router = $this->container->get('router');
-            assert($router instanceof Router);
-            
-            $backUrl = $router->generate('log_network_keywords', [
-                'log_id' => $log->getId(),
-            ], UrlGeneratorInterface::ABSOLUTE_URL);
-            
-            $url = Utils::addUrlParameter($url, 'pid', $log->getId());
-            $url = Utils::addUrlParameter($url, 'k', Utils::UrlSafeBase64Encode(json_encode($log->getOurUserdata())));
-            $url = Utils::addUrlParameter($url, 'r', Utils::UrlSafeBase64Encode($backUrl));
-            
-//         } catch (\Exception $e) {}
-        
+        $log->our_userdata = $userdata['keywords'];
+        $log->human_score = $userdata['human_score'];
+        $log->user_id = $userdata['user_id'];
+        $log->save();
+
+        // $adselectService = $this->container->has('adselect') ? $this->container->get('adselect') : null;
+        // $adselectService instanceof Adselect;
+        //
+        // if ($adselectService) {
+        //     $adselectService->addImpressions([
+        //         $log->getAdselectJson(),
+        //     ]);
+        // }
+
+        $backUrl = route('log-network-click', ['log_id' => $log->id]);
+
+        $url = Utils::addUrlParameter($url, 'pid', $log->id);
+        $url = Utils::addUrlParameter($url, 'k', Utils::UrlSafeBase64Encode(json_encode($log->our_userdata)));
+        $url = Utils::addUrlParameter($url, 'r', Utils::UrlSafeBase64Encode($backUrl));
+
         $response = new RedirectResponse($url);
-        
+
         return $response;
     }
-    
-    /**
-     * @Route("/nkeywords/{log_id}", name="log_network_keywords", methods={"GET"})
-     *
-     */
-    public function networkKeywordsAction(Request $request, $log_id)
+
+    public function logNetworkKeywords(Request $request, $log_id)
     {
         $source = $request->query->get('s');
         $keywords = json_decode(Utils::UrlSafeBase64Decode($request->query->get('k')), true);
-        
-        $em = $this->getDoctrine()->getManager();
-        $log = NetworkEventLog::getRepository($em)->find($log_id);
-        $log instanceof NetworkEventLog;
+
+        $log = NetworkEventLog::find($log_id);
         if ($log) {
-            $log->setTheirUserdata($keywords);
-            $em->persist($log);
-            $em->flush();
+            $log->their_userdata =$keywords;
+            $log->save();
         }
         //         $keywords = print_r($keywords, 1);
         //         $response = new Response("nKeywords logId={$log_id} source={$source} keywords={$keywords}");
         //         return $response;
-        
+
         $response = new Response();
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
