@@ -12,6 +12,9 @@ class NetworkHost extends Model
     use AccountAddress;
     use AutomateMutators;
 
+    protected $primaryKey = 'address';
+    public $incrementing = false;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -37,4 +40,17 @@ class NetworkHost extends Model
     protected $traitAutomate = [
       'address' => 'AccountAddress',
     ];
+
+    public static function registerHost($address, $host)
+    {
+        $h = self::find(hex2bin(self::decodeAddress($address)));
+        if (empty($h)) {
+            $h = new self();
+            $h->address = $address;
+            $h->host = $host;
+        }
+        $h->last_seen = time();
+        $h->save();
+        return $h;
+    }
 }
