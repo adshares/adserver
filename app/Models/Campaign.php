@@ -42,10 +42,10 @@ class Campaign extends Model
     ];
 
     /**
-    * The attributes that use some Models\Traits with mutator settings automation
-    *
-    * @var array
-    */
+     * The attributes that use some Models\Traits with mutator settings automation
+     *
+     * @var array
+     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
