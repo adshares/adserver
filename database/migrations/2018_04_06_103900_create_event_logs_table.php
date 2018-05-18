@@ -17,7 +17,6 @@ class CreateEventLogsTable extends Migration
             $table->bigIncrements('id');
 
             $table->timestamps();
-            $table->softDeletes();
 
             $table->binary('cid', 16); // REQ CUSTOM ALTER -> dla kazdej zony oddzielnie
             $table->binary('tid', 16); // REQ CUSTOM ALTER ->
