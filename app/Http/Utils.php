@@ -233,20 +233,23 @@ class Utils
     {
         $tid = $request->cookies->get('tid');
         if (! self::validTrackingId($tid, $secret)) {
+            $tid = null;
             $etags = $request->getETags();
             if (isset($etags[0])) {
                 $tag = str_replace('"', '', $etags[0]);
                 $tid = self::decodeEtag($tag);
             }
-            if (! self::validTrackingId($tid, $secret)) {
+            if (is_null($tid) || !self::validTrackingId($tid, $secret)) {
                 $tid = self::createTrackingId($secret);
             }
         }
         $response->headers->setCookie(new Cookie('tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHttpHost()));
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
+        // var_dump(self::generateEtag($tid, $contentSha1));
+        // die;
 
-        //         $response->setVary("Origin");
+        // $response->setVary("Origin");
         $response->setCache(array(
             'etag' => self::generateEtag($tid, $contentSha1),
             'last_modified' => $contentModified,
@@ -385,8 +388,6 @@ class Utils
         }
         return $ret;
     }
-
-
 
     const VALUE_MIN = "\x00";
 
