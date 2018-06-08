@@ -77,14 +77,13 @@ class DemandController extends Controller
             echo base64_encode($banner->creative_contents);
         });
 
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
         $cid = Utils::createTrackingId(config('app.adserver_secret'));
 
         $log = new EventLog();
         $log->banner_id =$banner->id;
         $log->cid = Utils::getRawTrackingId($cid);
         $log->tid = Utils::getRawTrackingId($tid);
-        $log->ip = $logIp;
+        $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->event_type = "request";
         $log->save();
 
