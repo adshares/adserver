@@ -239,7 +239,7 @@ class DemandController extends Controller
               'r' => $url
             ]);
 
-            $response = new RedirectResponse($aduser_endpoint . '/setimg/' . $iid . '?r='. Utils::UrlSafeBase64Encode($backUrl));
+            $response = new RedirectResponse($aduser_endpoint . '/pixel/' . $iid . '?r='. Utils::UrlSafeBase64Encode($backUrl));
         } else {
             throw new Exception('ADAPY');
 
@@ -269,7 +269,7 @@ class DemandController extends Controller
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_endpoint');
-        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(file_get_contents("{$aduser_endpoint}/get/{$impressionId}"), true) : [];
+        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true) : [];
 
         $log = EventLog::find($log_id);
         if (!empty($log)) {

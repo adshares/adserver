@@ -62,7 +62,7 @@ class SupplyController extends Controller
         if ($impressionId) {
             $aduser_endpoint = config('app.aduser_endpoint');
             if ($aduser_endpoint) {
-                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get/{$impressionId}"), true);
+                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
@@ -217,7 +217,7 @@ class SupplyController extends Controller
         $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_endpoint');
         if ($aduser_endpoint && $impressionId) {
-            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/get/{$impressionId}"), true);
+            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
         } else {
             $userdata = [];
         }
