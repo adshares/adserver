@@ -82,11 +82,12 @@ class SupplyController extends Controller
         return $response;
     }
 
+    # we do it here because ORIGIN may be configured elsewhere with randomization of hostname
     public function findScript(Request $request)
     {
         $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_endpoint'))];
 
-        $jsPath = config('app.env') == 'production' ? resource_path('assets/js/tmp-copy/find.x.js') : resource_path('assets/js/tmp-copy/find.min.js');
+        $jsPath = public_path('-/find.js');
 
         $response = new StreamedResponse();
         $response->setCallback(function () use ($jsPath, $request, $params) {
@@ -143,7 +144,6 @@ class SupplyController extends Controller
         }
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
-
 
         $cid = Utils::getRawTrackingId($request->query->get('cid'));
         $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;

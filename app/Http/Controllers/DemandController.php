@@ -100,7 +100,7 @@ class DemandController extends Controller
     {
         $params = [json_encode($request->getSchemeAndHttpHost())];
 
-        $jsPath = config('app.env') == 'production' ? resource_path('assets/js/tmp-copy/view.x.js') : resource_path('assets/js/tmp-copy/view.min.js');
+        $jsPath = public_path('-/view.js');
 
         $response = new StreamedResponse();
         $response->setCallback(function () use ($jsPath, $request, $params) {
