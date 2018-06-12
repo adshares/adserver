@@ -194,7 +194,7 @@ class Utils
         if (! $encodedId) {
             return "";
         }
-        $input = Utils::UrlSafeBase64Decode($encodedId);
+        $input = self::UrlSafeBase64Decode($encodedId);
         return bin2hex(substr($input, 0, 16));
     }
 
@@ -215,7 +215,7 @@ class Utils
         $id = substr(sha1(implode(':', $input), true), 0, 16);
         $checksum = substr(sha1($id . $secret, true), 0, 6);
 
-        return Utils::UrlSafeBase64Encode($id . $checksum);
+        return self::UrlSafeBase64Encode($id . $checksum);
     }
 
     public static function validTrackingId($input, $secret)
@@ -223,7 +223,7 @@ class Utils
         if (! is_string($input)) {
             return false;
         }
-        $input = Utils::UrlSafeBase64Decode($input);
+        $input = self::UrlSafeBase64Decode($input);
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
         return substr(sha1($id . $secret, true), 0, 6) == $checksum;
@@ -232,21 +232,24 @@ class Utils
     public static function attachTrackingCookie($secret, Request $request, Response $response, $contentSha1, \DateTime $contentModified)
     {
         $tid = $request->cookies->get('tid');
-        if (! Utils::validTrackingId($tid, $secret)) {
+        if (! self::validTrackingId($tid, $secret)) {
+            $tid = null;
             $etags = $request->getETags();
             if (isset($etags[0])) {
                 $tag = str_replace('"', '', $etags[0]);
                 $tid = self::decodeEtag($tag);
             }
-            if (! Utils::validTrackingId($tid, $secret)) {
-                $tid = Utils::createTrackingId($secret);
+            if (is_null($tid) || !self::validTrackingId($tid, $secret)) {
+                $tid = self::createTrackingId($secret);
             }
         }
         $response->headers->setCookie(new Cookie('tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHttpHost()));
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
+        // var_dump(self::generateEtag($tid, $contentSha1));
+        // die;
 
-        //         $response->setVary("Origin");
+        // $response->setVary("Origin");
         $response->setCache(array(
             'etag' => self::generateEtag($tid, $contentSha1),
             'last_modified' => $contentModified,
@@ -260,13 +263,13 @@ class Utils
     private static function generateEtag($tid, $contentSha1)
     {
         $sha1 = pack('H*', $contentSha1);
-        return Utils::UrlSafeBase64Encode(substr($sha1, 0, 6) . strrev(Utils::UrlSafeBase64Decode($tid)));
+        return self::UrlSafeBase64Encode(substr($sha1, 0, 6) . strrev(self::UrlSafeBase64Decode($tid)));
     }
 
     private static function decodeEtag($etag)
     {
         $etag = str_replace('"', '', $etag);
-        return Utils::UrlSafeBase64Encode(strrev(substr(Utils::UrlSafeBase64Decode($etag), 6)));
+        return self::UrlSafeBase64Encode(strrev(substr(self::UrlSafeBase64Decode($etag), 6)));
     }
 
     public static function arrayRemoveValues(array &$array, $value) // former array_erase
@@ -386,8 +389,6 @@ class Utils
         return $ret;
     }
 
-
-
     const VALUE_MIN = "\x00";
 
     const VALUE_MAX = "\xFF";
@@ -417,7 +418,7 @@ class Utils
                 foreach ($orgVectors as $vector) {
                     $val = $values[$i][$j];
                     if (is_numeric($val)) {
-                        $val = sprintf(Utils::NUMERIC_PAD_FORMAT, $val);
+                        $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
                     }
                     $newVector[] = ($vector ? $vector . ':' : '') . $val;
                 }
