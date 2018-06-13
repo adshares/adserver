@@ -13,7 +13,7 @@ return [
     */
 
     'supportsCredentials' => false,
-    'allowedOrigins' => [env('ADPANEL_URL')],
+    'allowedOrigins' => ['*'],//[env('ADPANEL_URL')], // for local testing
     'allowedOriginsPatterns' => [],
     'allowedHeaders' => ['*'],
     'allowedMethods' => ['*'],
