@@ -59,5 +59,6 @@ class Kernel extends HttpKernel
         'guest' => \Adshares\Adserver\Http\Middleware\RedirectIfAuthenticated::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'cors' => \Barryvdh\Cors\HandleCors::class,
     ];
 }
