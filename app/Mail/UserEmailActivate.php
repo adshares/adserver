@@ -36,7 +36,7 @@ class UserEmailActivate extends Mailable
     {
         return $this->markdown('emails.user-email-activate')->with([
             // 'name' => $this->user->name,
-            // 'hash' => $this->user->activation_hash,
+            'hash' => $this->user->email_confirm_token,
         ]);
     }
 }

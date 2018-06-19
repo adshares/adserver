@@ -5,9 +5,9 @@
 
 Thank you for registering with Adshares. Please click button below to activate your account
 
-{{-- @component('mail::button', ['url' => route('registerActivate',[$hash])])
+@component('mail::button', ['url' => env('ADPANEL_URL').'/auth/register-confirm/'.$hash])
 Accept and Activate
-@endcomponent --}}
+@endcomponent
 
 Thanks,<br>
 {{ config('app.name') }}

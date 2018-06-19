@@ -17,8 +17,23 @@ class UserController extends AppController
     {
         $this->validateRequest('user', User::$rules);
         $user = User::create($request->input('user'));
+        $user->email_confirm_token = md5(microtime());
+        $user->save();
         Mail::to($user)->queue(new UserEmailActivate($user));
         //
         return self::json($user, 200);
+    }
+
+    public function emailActivate(Request $request, $token)
+    {
+        $user = User::where('email_confirm_token', $token)->whereNull('email_confirmed_at')->first();
+
+        if (empty($user)) {
+            return self::json(['token', $token], 401);
+        }
+
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
+        $user->save();
+        return self::json(['user'=>$user], 200);
     }
 }

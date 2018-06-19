@@ -33,11 +33,3 @@ Route::get('/supply/find.js', 'SupplyController@findScript')->name('supply-find.
 Route::get('/l/n/view/{id}', 'SupplyController@logNetworkView')->name('log-network-view');
 Route::get('/l/n/click/{id}', 'SupplyController@logNetworkClick')->name('log-network-click');
 Route::get('/l/n/keywords/{log_id}', 'SupplyController@logNetworkKeywords')->name('log-network-click');
-
-#
-# PANEL
-#
-
-Route::middleware(['cors'])->prefix('app')->group(function () {
-    Route::post('users', 'App\UserController@register');
-});

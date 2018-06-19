@@ -67,7 +67,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => Adshares\Adserver\User::class,
+            'model' => Adshares\Adserver\Models\User::class,
         ],
 
         // 'users' => [
