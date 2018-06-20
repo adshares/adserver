@@ -1,5 +1,5 @@
 <?php
-namespace Adshares\Services;
+namespace Adshares\Adserver\Services;
 
 use JsonRPC\Client;
 
@@ -12,7 +12,7 @@ class Adselect
 {
     private $endpointUrl;
     private $rpcClient;
-    
+
     public function __construct($endpoint, $debug)
     {
         $this->endpointUrl = $endpoint;
@@ -22,7 +22,7 @@ class Adselect
             $this->rpcClient->getHttpClient()->withDebug();
         }
     }
-    
+
     public function getStatus()
     {
         /*
@@ -31,7 +31,7 @@ class Adselect
          }
          */
     }
-    
+
     public function addImpressions(array $events)
     {
         return $this->rpcClient->execute("impression_add", $events);
@@ -47,7 +47,7 @@ class Adselect
         }
         */
     }
-    
+
     public function getBanners(array $requests)
     {
         return $this->rpcClient->execute("banner_select", $requests);
@@ -68,7 +68,7 @@ class Adselect
             'impression_keywords': KEYWORDS
         },
          */
-        
+
 //         echo json_encode($requests, JSON_PRETTY_PRINT);
 //         exit;
 
@@ -77,19 +77,19 @@ class Adselect
 //         } catch(\Exception $e) {
 //             return [];
 //         }
-        
+
         $responses = [];
-        
+
         foreach ($requests as $request) {
             $responses[] = [
                 'request_id' => $request['request_id'],
                 'banner_id' => $request['request_id']+1
             ];
         }
-        
+
         return $responses;
     }
-    
+
     public function addCampaigns(array $campaings)
     {
         return $this->rpcClient->execute("campaign_update", $campaings);
@@ -118,7 +118,7 @@ class Adselect
         }
          */
     }
-    
+
     public function deleteCampaigns(array $campaignIds)
     {
         return $this->rpcClient->execute("campaign_delete", $campaignIds);
