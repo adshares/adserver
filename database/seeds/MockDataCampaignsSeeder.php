@@ -48,6 +48,7 @@ class MockDataCampaignsSeeder extends Seeder
 
         ob_start();
         \imagepng($image);
+
         return ob_get_clean();
     }
 
@@ -57,6 +58,7 @@ class MockDataCampaignsSeeder extends Seeder
         $base64Image = base64_encode($img);
 
         $server_url = env('APP_URL');
+        $view_js_route = route('demand-view.js');
 
         //if(!mt_rand(0, 2))        return self::tankHTML();
         return '
@@ -67,7 +69,7 @@ class MockDataCampaignsSeeder extends Seeder
             <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: '.$server_url.' '.$server_url.'; frame-src \'self\' data:; script-src \'self\' '.$server_url.' '.$server_url.' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
-            <script src="'.$server_url.'/demand/view.js"></script>
+            <script src="'.$view_js_route.'"></script>
             <a id="adsharesLink">
             <img src="data:image/png;base64,'.$base64Image.'" width="'.$width.'" height="'.$height.'" border="0">
             </a>
@@ -132,6 +134,7 @@ class MockDataCampaignsSeeder extends Seeder
 
         if (Campaign::count() > 0) {
             $this->command->error('Campaigns already seeded');
+
             return 999;
         }
 

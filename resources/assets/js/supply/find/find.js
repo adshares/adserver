@@ -238,7 +238,7 @@ var aduserPixel = function(impressionId)
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
-    img.src = aduserOrigin + '/setimg/' + impressionId;
+    img.src = aduserOrigin + '/pixel/' + impressionId;
     document.body.appendChild(img);
 }
 

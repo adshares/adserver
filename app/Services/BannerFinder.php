@@ -42,7 +42,7 @@ class BannerFinder
         $bannerIds = [];
 
 
-        /*if (false && $adselectService) {
+        if (false && $adselectService) {
             $requests = [];
             foreach ($zones as $i => $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
@@ -81,17 +81,17 @@ class BannerFinder
                 $bannerIds[$response['request_id']] = $response['banner_id'];
             }
 //             ksort($bannerIds);
-        } else {*/
-        foreach ($zones as $zoneInfo) {
-            $zone = Zone::find($zoneInfo['zone']);
+        } else {
+            foreach ($zones as $zoneInfo) {
+                $zone = Zone::find($zoneInfo['zone']);
 
-            // $zone instanceof Zone; // ?? Yodahack : what the hack
-            $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                // $zone instanceof Zone; // ?? Yodahack : what the hack
+                $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
                     ->where('creative_height', $zone->height)
                     ->whereIn('creative_type', $typeDefault)
                     ->get()->pluck('uuid')->random();
+            }
         }
-        /*}*/
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {

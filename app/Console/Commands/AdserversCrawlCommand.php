@@ -4,16 +4,15 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Illuminate\Console\Command;
 
+use Adshares\Adserver\Services\Adselect;
 use Adshares\Esc\Esc;
 
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Services\Adselect;
 
 class AdserversCrawlCommand extends Command
 {
     protected $broadcast=true;
-    protected $esc;
     protected $host;
     protected $registerHostsIfBroadcastedLimit = 3600; // seconds
     protected $crawlHostsIfLastSeenLimit = 3600*24*14; // seconds
@@ -41,19 +40,7 @@ class AdserversCrawlCommand extends Command
     public function __construct()
     {
         parent::__construct();
-
         $this->host = config('app.adserver_host');
-
-        // TODO: move to Service
-        // ($walletCommand, $workingDir, $address, $secret, $host, $port)
-        $this->esc = new Esc(
-            config('app.adshares_wallet'),
-            config('app.adshares_workdir'),
-            config('app.adshares_address'),
-            config('app.adshares_secret'),
-            config('app.adshares_node_host'),
-            config('app.adshares_node_port')
-        );
     }
 
     /**
@@ -61,16 +48,16 @@ class AdserversCrawlCommand extends Command
      *
      * @return mixed
      */
-    public function handle()
+    public function handle(Adselect $adselect, Esc $esc)
     {
-        $this->readBroadcasts();
-        $this->crawlHosts();
+        $this->readBroadcasts($esc);
+        $this->crawlHosts($esc, $adselect);
     }
 
-    protected function readBroadcasts()
+    protected function readBroadcasts(Esc $esc)
     {
         try {
-            $logMessage = $this->esc->getBroadcastLog(time() - $this->registerHostsIfBroadcastedLimit);
+            $logMessage = $esc->getBroadcastLog(time() - $this->registerHostsIfBroadcastedLimit);
             print_r($logMessage);
             $logs = $logMessage->broadcast;
         } catch (\Exception $e) {
@@ -106,14 +93,14 @@ class AdserversCrawlCommand extends Command
 
         if ($this->broadcast) {
             $this->info("Broadcast own host: $this->host");
-            $x = $this->esc->sendBroadcast($this->host);
+            $x = $esc->sendBroadcast($this->host);
             var_dump($x);
             // TODO: this fails currently
 //             die(print_r($x));
         }
     }
 
-    protected function crawlHosts()
+    protected function crawlHosts(Esc $esc, Adselect $adselect)
     {
         $crawlTime = time();
 
@@ -121,14 +108,9 @@ class AdserversCrawlCommand extends Command
 
         $batch = 0;
 
-        // TODO: integrate with adselect
-        // $adselectService = $this->getContainer()->has('adselect') ? $this->getContainer()->get('adselect') : null;
-        // $adselectService instanceof Adselect;
-        // $adselectCmp = [];
-
         foreach ($hosts as $r) {
             $host = $r->host;
-            $this->info("Crawl: $host");
+            $this->info("STARTING PROCESSING: $host");
 
             // status: updated, removed, synced (adselect)
             $inventory = json_decode(file_get_contents("http://{$host}/adshares/inventory/list"), JSON_OBJECT_AS_ARRAY);
@@ -142,39 +124,37 @@ class AdserversCrawlCommand extends Command
                 $campaign_data['source_host'] = $host;
                 $campaign = NetworkCampaign::fromJsonData($campaign_data);//, $existing);
 
-                // $adselectCmp[] = $campaign->getAdselectJson();
-                // if ($batch++ == 100) {
-                //     if ($adselectService) {
-                //         $adselectService->addCampaigns($adselectCmp);
-                //         $adselectCmp = [];
-                //     }
-                //     $em->flush();
+                $adselectCmp[] = $campaign->getAdselectJson();
+                if ($batch++ == 100) {
+                    if ($adselect) {
+                        $adselect->addCampaigns($adselectCmp);
+                        $adselectCmp = [];
+                    }
+                }
+            }
+
+            if ($adselect) {
+                $adselect->addCampaigns($adselectCmp);
+                $adselectCmp = [];
+
+                // $deleted = $em->createQuery("SELECT u.uuid FROM Adshares\Entity\NetworkCampaign u WHERE u.source_host = :host AND u.source_update_time != :time")
+                //   ->setParameter("host", $host)->setParameter("time", $crawlTime)
+                //   ->getResult(Query::HYDRATE_SCALAR);
+
+                // $campaignIds = [];
+                // foreach ($deleted as $r) {
+                //     $campaignIds[] = $host . '/'. $r['uuid'];
+                // }
+                // if ($campaignIds) {
+                //     $adselect->deleteCampaigns($campaignIds);
                 // }
             }
 
-            // if ($adselectService) {
-            //     $adselectService->addCampaigns($adselectCmp);
-            //     $adselectCmp = [];
-            // }
-            // $em->flush();
-            //
-            // if ($adselectService) {
-            //     $deleted = $em->createQuery("SELECT u.uuid FROM Adshares\Entity\NetworkCampaign u WHERE u.source_host = :host AND u.source_update_time != :time")
-            //       ->setParameter("host", $host)->setParameter("time", $crawlTime)
-            //       ->getResult(Query::HYDRATE_SCALAR);
-            //
-            //     $campaignIds = [];
-            //     foreach ($deleted as $r) {
-            //         $campaignIds[] = $host . '/'. $r['uuid'];
-            //     }
-            //     if ($campaignIds) {
-            //         $adselectService->deleteCampaigns($campaignIds);
-            //     }
-            // }
-            //
+
             // $query = $em->createQuery("DELETE FROM Adshares\Entity\NetworkCampaign u WHERE u.source_host = :host AND u.source_update_time != :time");
             // $query->setParameter("host", $host)->setParameter("time", $crawlTime);
             // $query->execute();
+            $this->info("FINISHED PROCESSING: $host");
         }
     }
 }

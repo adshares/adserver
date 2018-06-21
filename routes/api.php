@@ -23,9 +23,9 @@ Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransacti
 Route::get('/click/{id}', 'DemandController@click')->name('banner-click');
 Route::get('/serve/{id}', 'DemandController@serve')->name('banner-serve');
 Route::get('/view/{id}', 'DemandController@view')->name('banner-view');
+Route::get('/view.js', 'DemandController@viewScript')->name('demand-view.js');
 
-Route::get('/demand/view.js', 'DemandController@viewScript')->name('demand-view.js');
-
+Route::get('/l/context/{log_id}', 'DemandController@logContext')->name('log-context');
 Route::get('/l/keywords/{log_id}', 'DemandController@logKeywords')->name('log-keywords');
 
 Route::get('/supply/find', 'SupplyController@find')->name('supply-find');
