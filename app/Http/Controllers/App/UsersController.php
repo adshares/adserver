@@ -32,6 +32,10 @@ class UsersController extends AppController
         return self::json($users);
     }
 
+    public function edit(Request $request, $userId)
+    {
+    }
+
     public function delete(Request $request, $userId)
     {
         // TODO check privileges
@@ -42,16 +46,14 @@ class UsersController extends AppController
         return self::json(['message' => 'Successful deleted'], 200);
     }
 
-    public function edit(Request $request, $userId)
+    public function emailActivate(Request $request)
     {
-    }
+        $this->validateRequest('user', User::$rules_email_activate);
 
-    public function emailActivate(Request $request, $token)
-    {
-        $user = User::where('email_confirm_token', $token)->whereNull('email_confirmed_at')->first();
+        $user = User::where('email_confirm_token', $request->input('user.email_confirm_token'))->whereNull('email_confirmed_at')->first();
 
         if (empty($user)) {
-            return self::json(['token', $token], 401);
+            return self::json([], 401);
         }
 
         $user->email_confirmed_at = date('Y-m-d H:i:s');

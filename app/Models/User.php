@@ -5,7 +5,6 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -41,7 +40,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'id', 'password', 'remember_token'
+        'id', 'password', 'remember_token',
     ];
 
     public static $rules = [
@@ -51,8 +50,12 @@ class User extends Authenticatable
         'isPublisher' => 'boolean',
     ];
 
+    public static $rules_email_activate = [
+        'email_confirm_token' => 'required',
+    ];
+
     /**
-     * The attributes that use some Models\Traits with mutator settings automation
+     * The attributes that use some Models\Traits with mutator settings automation.
      *
      * @var array
      */
@@ -67,6 +70,6 @@ class User extends Authenticatable
 
     public function setPasswordAttribute($value)
     {
-        $this->attributes['password'] = $value !== null ? Hash::make($value) : null;
+        $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
     }
 }
