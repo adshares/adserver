@@ -2,6 +2,10 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
+
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -10,13 +14,25 @@ class User extends Authenticatable
 {
     use Notifiable;
 
+    use AutomateMutators;
+    use BinHex;
+
+    /**
+     * The event map for the model.
+     *
+     * @var array
+     */
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'login', 'password',
+        'uuid', 'name', 'email', 'login', 'password',
     ];
 
     /**
@@ -25,7 +41,23 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'id', 'password', 'remember_token'
+    ];
+
+    public static $rules = [
+        'email' => 'required|email|max:150|unique:users',
+        'password' => 'required|min:8',
+        'isAdvertiser' => 'boolean',
+        'isPublisher' => 'boolean',
+    ];
+
+    /**
+     * The attributes that use some Models\Traits with mutator settings automation
+     *
+     * @var array
+     */
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
     ];
 
     public function checkPassword($value)

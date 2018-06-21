@@ -41,6 +41,17 @@ class Kernel extends HttpKernel
             // 'throttle:60,1',
             'bindings',
         ],
+
+        'app' => [
+            \Barryvdh\Cors\HandleCors::class,
+            \Adshares\Adserver\Http\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            // \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            // \Adshares\Adserver\Http\Middleware\VerifyCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
     ];
 
     /**
@@ -59,5 +70,6 @@ class Kernel extends HttpKernel
         'guest' => \Adshares\Adserver\Http\Middleware\RedirectIfAuthenticated::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'cors' => \Barryvdh\Cors\HandleCors::class,
     ];
 }
