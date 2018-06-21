@@ -9,26 +9,6 @@ use Illuminate\Support\Facades\Mail;
 
 class UsersController extends AppController
 {
-    public function browse(Request $request)
-    {
-        // TODO check privileges
-        $users = User::whereNull('deleted_at')->get();
-
-        return self::json($users);
-    }
-
-    public function read(Request $request, $userId)
-    {
-        // TODO check privileges
-        $user = User::whereNull('deleted_at')->findOrFail($userId);
-
-        return self::json($user);
-    }
-
-    public function edit(Request $request, $userId)
-    {
-    }
-
     public function add(Request $request)
     {
         $this->validateRequest('user', User::$rules);
@@ -44,6 +24,14 @@ class UsersController extends AppController
         return $response;
     }
 
+    public function browse(Request $request)
+    {
+        // TODO check privileges
+        $users = User::whereNull('deleted_at')->get();
+
+        return self::json($users);
+    }
+
     public function delete(Request $request, $userId)
     {
         // TODO check privileges
@@ -52,6 +40,10 @@ class UsersController extends AppController
         $user->save();
 
         return self::json(['message' => 'Successful deleted'], 200);
+    }
+
+    public function edit(Request $request, $userId)
+    {
     }
 
     public function emailActivate(Request $request, $token)
@@ -66,5 +58,13 @@ class UsersController extends AppController
         $user->save();
 
         return self::json(['user' => $user], 200);
+    }
+
+    public function read(Request $request, $userId)
+    {
+        // TODO check privileges
+        $user = User::whereNull('deleted_at')->findOrFail($userId);
+
+        return self::json($user);
     }
 }
