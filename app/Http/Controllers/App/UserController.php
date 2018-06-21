@@ -4,16 +4,11 @@ namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\User;
-
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Response;
-use Illuminate\Support\Facades\Validator;
 
 class UserController extends AppController
 {
-
     public function browse(Request $request)
     {
         // TODO check privileges
@@ -32,7 +27,6 @@ class UserController extends AppController
 
     public function edit(Request $request, $userId)
     {
-
     }
 
     public function add(Request $request)
@@ -70,6 +64,7 @@ class UserController extends AppController
 
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
+
         return self::json(['user' => $user], 200);
     }
 }

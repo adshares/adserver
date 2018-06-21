@@ -1,19 +1,18 @@
 <?php
+
 namespace Adshares\Adserver\Services;
 
 use JsonRPC\Client;
 
 /**
- *
- * Wrapper class used to interact with adselect service
- *
+ * Wrapper class used to interact with adselect service.
  */
 class Adselect
 {
     private $endpointUrl;
     private $rpcClient;
 
-    public function __construct($endpointUrl, $debug=false)
+    public function __construct($endpointUrl, $debug = false)
     {
         $this->endpointUrl = $endpointUrl;
         $this->rpcClient = new Client($this->endpointUrl);
@@ -34,7 +33,7 @@ class Adselect
 
     public function addImpressions(array $events)
     {
-        return $this->rpcClient->execute("impression_add", $events);
+        return $this->rpcClient->execute('impression_add', $events);
 //         echo json_encode($events, JSON_PRETTY_PRINT);
 //                 exit;
         /*
@@ -50,7 +49,7 @@ class Adselect
 
     public function getBanners(array $requests)
     {
-        return $this->rpcClient->execute("banner_select", $requests);
+        return $this->rpcClient->execute('banner_select', $requests);
         /*
          {
             'request_id': ''
@@ -83,7 +82,7 @@ class Adselect
         foreach ($requests as $request) {
             $responses[] = [
                 'request_id' => $request['request_id'],
-                'banner_id' => $request['request_id']+1
+                'banner_id' => $request['request_id'] + 1,
             ];
         }
 
@@ -92,7 +91,7 @@ class Adselect
 
     public function addCampaigns(array $campaings)
     {
-        return $this->rpcClient->execute("campaign_update", $campaings);
+        return $this->rpcClient->execute('campaign_update', $campaings);
 //         echo json_encode($campaings, JSON_PRETTY_PRINT);
 //         exit;
         /*
@@ -121,7 +120,7 @@ class Adselect
 
     public function deleteCampaigns(array $campaignIds)
     {
-        return $this->rpcClient->execute("campaign_delete", $campaignIds);
+        return $this->rpcClient->execute('campaign_delete', $campaignIds);
 //         print_r($campaignIds);
 //         exit;
         // [1, 2, 3, 4, 5]

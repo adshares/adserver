@@ -124,7 +124,7 @@ class SupplyController extends Controller
     public function logNetworkClick(Request $request, Adselect $adselect, $id)
     {
         if ($request->query->get('r')) {
-            $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
+            $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         } else {
             $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
@@ -184,7 +184,7 @@ class SupplyController extends Controller
     public function logNetworkView(Request $request, Adselect $adselect, $id)
     {
         if ($request->query->get('r')) {
-            $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
+            $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         }
 
@@ -239,8 +239,8 @@ class SupplyController extends Controller
         $backUrl = route('log-network-click', ['log_id' => $log->id]);
 
         $url = Utils::addUrlParameter($url, 'pid', $log->id);
-        $url = Utils::addUrlParameter($url, 'k', Utils::UrlSafeBase64Encode(json_encode($log->our_userdata)));
-        $url = Utils::addUrlParameter($url, 'r', Utils::UrlSafeBase64Encode($backUrl));
+        $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($log->our_userdata)));
+        $url = Utils::addUrlParameter($url, 'r', Utils::urlSafeBase64Encode($backUrl));
 
         $response = new RedirectResponse($url);
 
@@ -250,7 +250,7 @@ class SupplyController extends Controller
     public function logNetworkKeywords(Request $request, $log_id)
     {
         $source = $request->query->get('s');
-        $keywords = json_decode(Utils::UrlSafeBase64Decode($request->query->get('k')), true);
+        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
 
         $log = NetworkEventLog::find($log_id);
         if ($log) {

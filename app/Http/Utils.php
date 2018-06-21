@@ -1,29 +1,24 @@
 <?php
+
 namespace Adshares\Adserver\Http;
 
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
-
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-
 use BrowscapPHP\Browscap;
-use BrowscapPHP\BrowscapUpdater;
-
 use Symfony\Component\Console\Output\NullOutput;
 use BrowscapPHP\Helper\LoggerHelper;
 use Doctrine\Common\Cache\FilesystemCache;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 
 /**
- * Various helpful methods
- *
+ * Various helpful methods.
  */
 class Utils
 {
-    # not yet reviewed
-    # TODO: remove $container
+    // not yet reviewed
+    // TODO: remove $container
 
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
@@ -37,6 +32,7 @@ class Utils
         } else {
             $context = null;
         }
+
         return [
             'site' => self::getSiteContext($request, $context),
             'device' => self::getDeviceContext($request, $context),
@@ -66,6 +62,7 @@ class Utils
                 $word = strtolower(trim($word));
             }
         }
+
         return $site;
     }
 
@@ -81,7 +78,7 @@ class Utils
 
         // TODO: refactor into browsercap service
 
-        $logger = LoggerHelper::createDefaultLogger(new NullOutput);
+        $logger = LoggerHelper::createDefaultLogger(new NullOutput());
 
         $fileCache = new FilesystemCache(storage_path('framework/cache/browscap'));
         $cache = new SimpleCacheAdapter($fileCache);
@@ -111,22 +108,22 @@ class Utils
             $device['osv'] = $browser->platform;
         }
 
-        if ($browser->ismobiledevice === true) {
+        if (true === $browser->ismobiledevice) {
             $device['type'] = 'mobile';
-        } elseif ($browser->istablet === true) {
+        } elseif (true === $browser->istablet) {
             $device['type'] = 'tablet';
-        } elseif ($browser->issyndicationreader === true) {
+        } elseif (true === $browser->issyndicationreader) {
             $device['type'] = 'syndicationreader';
-        } elseif ($browser->crawler === true) {
+        } elseif (true === $browser->crawler) {
             $device['type'] = 'crawler';
-        } elseif ($browser->isfake === true) {
+        } elseif (true === $browser->isfake) {
             $device['type'] = 'fake';
         } else {
             $device['type'] = 'desktop';
         }
 
         foreach ($device as $key => &$value) {
-            if ($value === 'false' || $value === 'unknown' || $value === null || $value === false) {
+            if ('false' === $value || 'unknown' === $value || null === $value || false === $value) {
                 unset($device[$key]);
             }
             if (is_string($value)) {
@@ -138,6 +135,7 @@ class Utils
         if ($geo) {
             $device['geo'] = $geo;
         }
+
         return $device;
 //         devicetype
 //         make
@@ -173,34 +171,36 @@ class Utils
                 }
             }
         }
+
         return $geo;
     }
 
     public static function addUrlParameter($url, $name, $value)
     {
-        $param = $name . '=' . urlencode($value);
+        $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');
-        if ($qPos == false) {
-            return $url . '?' . $param;
+        if (false == $qPos) {
+            return $url.'?'.$param;
         } elseif ($qPos == strlen($url) - 1) {
-            return $url . $param;
+            return $url.$param;
         } else {
-            return $url . '&' . $param;
+            return $url.'&'.$param;
         }
     }
 
     public static function getRawTrackingId($encodedId)
     {
-        if (! $encodedId) {
-            return "";
+        if (!$encodedId) {
+            return '';
         }
-        $input = self::UrlSafeBase64Decode($encodedId);
+        $input = self::urlSafeBase64Decode($encodedId);
+
         return bin2hex(substr($input, 0, 16));
     }
 
     /**
-     *
      * @param string $secret
+     *
      * @return string
      */
     public static function createTrackingId($secret)
@@ -213,26 +213,27 @@ class Utils
         $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = substr(sha1($id . $secret, true), 0, 6);
+        $checksum = substr(sha1($id.$secret, true), 0, 6);
 
-        return self::UrlSafeBase64Encode($id . $checksum);
+        return self::urlSafeBase64Encode($id.$checksum);
     }
 
     public static function validTrackingId($input, $secret)
     {
-        if (! is_string($input)) {
+        if (!is_string($input)) {
             return false;
         }
-        $input = self::UrlSafeBase64Decode($input);
+        $input = self::urlSafeBase64Decode($input);
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
-        return substr(sha1($id . $secret, true), 0, 6) == $checksum;
+
+        return substr(sha1($id.$secret, true), 0, 6) == $checksum;
     }
 
     public static function attachTrackingCookie($secret, Request $request, Response $response, $contentSha1, \DateTime $contentModified)
     {
         $tid = $request->cookies->get('tid');
-        if (! self::validTrackingId($tid, $secret)) {
+        if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
             $etags = $request->getETags();
             if (isset($etags[0])) {
@@ -254,22 +255,25 @@ class Utils
             'etag' => self::generateEtag($tid, $contentSha1),
             'last_modified' => $contentModified,
             'max_age' => 0,
-            'private' => true
+            'private' => true,
         ));
-        $response->headers->addCacheControlDirective("no-transform");
+        $response->headers->addCacheControlDirective('no-transform');
+
         return $tid;
     }
 
     private static function generateEtag($tid, $contentSha1)
     {
         $sha1 = pack('H*', $contentSha1);
-        return self::UrlSafeBase64Encode(substr($sha1, 0, 6) . strrev(self::UrlSafeBase64Decode($tid)));
+
+        return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
     private static function decodeEtag($etag)
     {
         $etag = str_replace('"', '', $etag);
-        return self::UrlSafeBase64Encode(strrev(substr(self::UrlSafeBase64Decode($etag), 6)));
+
+        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 
     public static function arrayRemoveValues(array &$array, $value) // former array_erase
@@ -279,6 +283,7 @@ class Utils
                 unset($array[$key]);
             }
         }
+
         return;
     }
 
@@ -287,33 +292,35 @@ class Utils
         foreach ($array as $key => $val) {
             if ($val === $value) {
                 unset($array[$key]);
+
                 return;
             }
         }
+
         return;
     }
 
-    public static function UrlSafeBase64Encode($string)
+    public static function urlSafeBase64Encode($string)
     {
         return str_replace([
             '/',
             '+',
-            '='
+            '=',
         ], [
             '_',
             '-',
-            ''
+            '',
         ], base64_encode($string));
     }
 
-    public static function UrlSafeBase64Decode($string)
+    public static function urlSafeBase64Decode($string)
     {
         return base64_decode(str_replace([
             '_',
-            '-'
+            '-',
         ], [
             '/',
-            '+'
+            '+',
         ], $string));
     }
 
@@ -325,7 +332,7 @@ class Utils
 
     public static function decodeZones($zonesStr)
     {
-        $zonesStr = self::UrlSafeBase64Decode($zonesStr);
+        $zonesStr = self::urlSafeBase64Decode($zonesStr);
 
         $zones = explode(self::ZONE_GLUE, $zonesStr);
         $fields = explode(self::VALUE_GLUE, array_shift($zones));
@@ -343,7 +350,7 @@ class Utils
         }
 
         $result = [
-            'page' => array_shift($data)
+            'page' => array_shift($data),
         ];
         if ($data) {
             $result['zones'] = $data;
@@ -357,14 +364,16 @@ class Utils
         if ($value instanceof \DateTime) {
             return $value->format(DATE_ISO8601);
         }
+
         return (string) $value;
     }
 
     public static function fromJsonString($field, $value)
     {
-        if (stristr($field, "time")) {
+        if (stristr($field, 'time')) {
             return \DateTime::createFromFormat(DATE_ISO8601, $value);
         }
+
         return $value;
     }
 
@@ -381,11 +390,12 @@ class Utils
 
         foreach ($keywords as $keyword => $value) {
             if (is_array($value)) {
-                $ret = array_merge($ret, self::flattenKeywords($value, $keyword . '_'));
+                $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
             } else {
-                $ret[$prefix . $keyword] = $value;
+                $ret[$prefix.$keyword] = $value;
             }
         }
+
         return $ret;
     }
 
@@ -395,7 +405,6 @@ class Utils
 
     const NUMERIC_PAD_FORMAT = "%'08.2f";
 
-
     public static function generalKeywordMatch(array $keywords, $name, $min, $max)
     {
         $path = explode('_', $name);
@@ -403,7 +412,7 @@ class Utils
         $keys = explode(':', $last);
         $values = [];
         foreach ($keys as $key) {
-            $key = implode('_', $path) . '_' . $key;
+            $key = implode('_', $path).'_'.$key;
             if (isset($keywords[$key])) {
                 $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
             } else {
@@ -411,18 +420,18 @@ class Utils
             }
         }
         $vectors = [''];
-        for ($i=0;$i<count($values);$i++) {
+        for ($i = 0; $i < count($values); ++$i) {
             $orgVectors = $vectors;
-            for ($j=0; $j<count($values[$i]); $j++) {
+            for ($j = 0; $j < count($values[$i]); ++$j) {
                 $newVector = [];
                 foreach ($orgVectors as $vector) {
                     $val = $values[$i][$j];
                     if (is_numeric($val)) {
                         $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
                     }
-                    $newVector[] = ($vector ? $vector . ':' : '') . $val;
+                    $newVector[] = ($vector ? $vector.':' : '').$val;
                 }
-                if ($j==0) {
+                if (0 == $j) {
                     $vectors = $newVector;
                 } else {
                     $vectors = array_merge($vectors, $newVector);
@@ -431,7 +440,7 @@ class Utils
         }
 
         foreach ($vectors as $vector) {
-            if (strcmp($min, $vector) <=0 && strcmp($vector, $max) <= 0) {
+            if (strcmp($min, $vector) <= 0 && strcmp($vector, $max) <= 0) {
                 return true;
             }
         }
