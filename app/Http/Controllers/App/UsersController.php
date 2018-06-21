@@ -7,7 +7,7 @@ use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
-class UserController extends AppController
+class UsersController extends AppController
 {
     public function browse(Request $request)
     {
