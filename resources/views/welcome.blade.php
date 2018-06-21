@@ -3,19 +3,29 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-        <title>Laravel</title>
+        <title>Adshares Adserver</title>
+
+        <meta name="description" content="Adserver | $ADS | 1e11 | Clicks" />
+    		<link rel="canonical" href="http://server.e11.click" />
+    		<meta property="og:title" content="Adshares Adserver 1e11" />
+    		<meta property="og:description" content="Adserver | $ADS | 1e11 | Clicks" />
+    		<meta property="og:url" content="http://server.e11.click" />
+    		<meta property="og:image" content="http://server.e11.click/images/logo.png" />
+    		<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+    		<link rel="icon" type="image/png" href="favicon-32x32.png" sizes="32x32" />
+    		<link rel="icon" type="image/png" href="favicon-16x16.png" sizes="16x16" />
 
         <!-- Fonts -->
-        <link href="https://fonts.googleapis.com/css?family=Raleway:100,600" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:400,600" rel="stylesheet">
 
         <!-- Styles -->
         <style>
             html, body {
                 background-color: #fff;
                 color: #636b6f;
-                font-family: 'Raleway', sans-serif;
+                font-family: 'Nunito Sans', sans-serif;
                 font-weight: 100;
                 height: 100vh;
                 margin: 0;
@@ -47,13 +57,17 @@
 
             .title {
                 font-size: 84px;
+                font-weight: 600;
+                text-transform: uppercase;
+                margin-top:1em;
+                color: #666;
             }
 
             .links > a {
                 color: #636b6f;
                 padding: 0 25px;
                 font-size: 12px;
-                font-weight: 600;
+                font-weight: 400;
                 letter-spacing: .1rem;
                 text-decoration: none;
                 text-transform: uppercase;
@@ -66,28 +80,18 @@
     </head>
     <body>
         <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-                        <a href="{{ route('register') }}">Register</a>
-                    @endauth
-                </div>
-            @endif
-
             <div class="content">
+                <img src="/img/logo.png" alt="Adshares" style="width:300px; height:300px;" />
+
                 <div class="title m-b-md">
-                    Laravel
+                    Adserver
                 </div>
+
 
                 <div class="links">
-                    <a href="https://laravel.com/docs">Documentation</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
+                    <a href="https://github.com/adshares">Advertising Ecosystem</a>
+                    <a href="https://github.com/adshares/adserver">Adserver Repository</a>
+                    <a href="https://laravel.com/">Laravel 5.6</a>
                 </div>
             </div>
         </div>
