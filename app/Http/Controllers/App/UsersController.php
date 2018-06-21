@@ -18,7 +18,7 @@ class UsersController extends AppController
 
         Mail::to($user)->queue(new UserEmailActivate($user));
 
-        $response = self::json($user, 201);
+        $response = self::json(compact('user'), 201);
         $response->header('Location', route('app.users.read', ['user' => $user]));
 
         return $response;
@@ -59,7 +59,7 @@ class UsersController extends AppController
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
 
-        return self::json(['user' => $user], 200);
+        return self::json(compact('user'), 200);
     }
 
     public function read(Request $request, $userId)
@@ -67,6 +67,6 @@ class UsersController extends AppController
         // TODO check privileges
         $user = User::whereNull('deleted_at')->findOrFail($userId);
 
-        return self::json($user);
+        return self::json(compact('user'));
     }
 }

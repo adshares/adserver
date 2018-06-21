@@ -22,25 +22,24 @@ class AppController extends BaseController
 
     /**
      * @param array $data
-     * @param int $code
-     * @param bool $errors
+     * @param int   $code
+     * @param mixed $errors
      *
      * @return \Illuminate\Http\JsonResponse
      */
     protected static function json($data = [], $code = 200, $errors = false)
     {
-        $return = ['data' => $data];
         if (empty($errors)) {
-            return Response::json($return, $code);
+            return Response::json($data, $code);
         }
-        $return['errors'] = $errors;
+        $data['errors'] = $errors;
 
-        return Response::json($return, $code);
+        return Response::json($data, $code);
     }
 
     /**
-     * @param String $index
-     * @param array $rules
+     * @param string $index
+     * @param array  $rules
      *
      * @return array
      *
