@@ -48,6 +48,7 @@ class DemandController extends Controller
 
         if ($request->getRealMethod() == 'OPTIONS') {
             $response->headers->set('Access-Control-Max-Age', 1728000);
+
             return $response;
         }
 
@@ -64,6 +65,7 @@ class DemandController extends Controller
         $response->setCallback(function () use ($response, $banner, $isIECompat) {
             if (!$isIECompat) {
                 echo $banner->creative_contents;
+
                 return;
             }
 
@@ -93,6 +95,7 @@ class DemandController extends Controller
         if (! $response->isNotModified($request)) {
             $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '') . $mime);
         }
+
         return $response;
     }
 
@@ -123,6 +126,7 @@ class DemandController extends Controller
         if (! $response->isNotModified($request)) {
             // TODO: ask Jacek
         }
+
         return $response;
     }
 
@@ -296,37 +300,30 @@ class DemandController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/context/{log_id}", name="log_context", methods={"GET"})
-     *
-     */
-    public function contextAction(Request $request, $log_id)
+    public function logContext(Request $request, $log_id)
     {
         $keywords = json_decode(Utils::UrlSafeBase64Decode($request->query->get('k')), true);
 
-        $context = Utils::getImpressionContext($this->container, $request, $keywords);
+        $context = Utils::getImpressionContext($request, $keywords);
 
-        $em = $this->getDoctrine()->getManager();
-        $log = EventLog::getRepository($em)->find($log_id);
-        $log instanceof EventLog;
-        if ($log) {
-            $log->setOurContext($context);
-            $em->flush();
+        $log = EventLog::find($log_id);
+
+        if (!empty($log)) {
+            $log->our_context= $context;
+            $log->save();
         }
 
-        $response = new Response();
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->headers->set('Content-Type', 'image/gif');
+        $response = Response::make(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
+        $response->header('Content-Type', 'image/gif');
 
-        $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        $adpayService instanceof Adpay;
-
-        if ($adpayService && $log->getOurContext() && $log->getUserId()) {
-            $adpayService->addEvents([
-              $log->getAdpayJson(),
-            ]);
-        }
+        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
+        // $adpayService instanceof Adpay;
+        //
+        // if ($adpayService && $log->getOurContext() && $log->getUserId()) {
+        //     $adpayService->addEvents([
+        //       $log->getAdpayJson(),
+        //     ]);
+        // }
 
         return $response;
     }

@@ -10,10 +10,14 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 
 use Adshares\Adserver\Services\BannerFinder;
+use Adshares\Adserver\Services\Adselect;
 
 use Adshares\Esc\Esc;
 
+use Exception;
+
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -46,6 +50,7 @@ class SupplyController extends Controller
         } elseif ($request->getRealMethod() == 'OPTIONS') {
             $response->setStatusCode(204);
             $response->headers->set('Access-Control-Max-Age', 1728000);
+
             return $response;
         }
 
@@ -79,6 +84,7 @@ class SupplyController extends Controller
         }
 
         $response->setContent(json_encode($banners, JSON_PRETTY_PRINT));
+
         return $response;
     }
 
@@ -111,10 +117,11 @@ class SupplyController extends Controller
         if (! $response->isNotModified($request)) {
             // TODO: ask Jacek
         }
+
         return $response;
     }
 
-    public function logNetworkClick(Request $request, $id)
+    public function logNetworkClick(Request $request, Adselect $adselect, $id)
     {
         if ($request->query->get('r')) {
             $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
@@ -165,20 +172,16 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pid', $log->getId());
 
-        $adselectService = $this->container->has('adselect') ? $this->container->get('adselect') : null;
-        $adselectService instanceof Adselect;
-
-        if ($adselectService) {
-            $adselectService->addImpressions([
-                $log->getAdselectJson(),
-            ]);
-        }
+        $adselect->addImpressions([
+            $log->getAdselectJson(),
+        ]);
 
         $response = new RedirectResponse($url);
+
         return $response;
     }
 
-    public function logNetworkView(Request $request, $id)
+    public function logNetworkView(Request $request, Adselect $adselect, $id)
     {
         if ($request->query->get('r')) {
             $url = Utils::UrlSafeBase64Decode($request->query->get('r'));
@@ -216,24 +219,22 @@ class SupplyController extends Controller
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_endpoint');
-        if ($aduser_endpoint && $impressionId) {
-            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
-        } else {
-            $userdata = [];
-        }
-        $log->our_userdata = $userdata['keywords'];
-        $log->human_score = $userdata['human_score'];
-        $log->user_id = $userdata['user_id'];
-        $log->save();
 
-        // $adselectService = $this->container->has('adselect') ? $this->container->get('adselect') : null;
-        // $adselectService instanceof Adselect;
-        //
-        // if ($adselectService) {
-        //     $adselectService->addImpressions([
-        //         $log->getAdselectJson(),
-        //     ]);
-        // }
+        if (empty($aduser_endpoint) || empty($impressionId)) {
+            $log->save();
+        // TODO: process?
+        } else {
+            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+
+            $log->our_userdata = $userdata['user']['keywords'];
+            $log->human_score = $userdata['user']['human_score'];
+            // $log->user_id = $userdata['user']['user_id']; // TODO: review process and data
+            $log->save();
+        }
+
+        $adselect->addImpressions([
+            $log->getAdselectJson(),
+        ]);
 
         $backUrl = route('log-network-click', ['log_id' => $log->id]);
 
@@ -264,6 +265,7 @@ class SupplyController extends Controller
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
         $response->headers->set('Content-Type', 'image/gif');
+
         return $response;
     }
 }

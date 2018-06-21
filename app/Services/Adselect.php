@@ -13,9 +13,9 @@ class Adselect
     private $endpointUrl;
     private $rpcClient;
 
-    public function __construct($endpoint, $debug)
+    public function __construct($endpointUrl, $debug=false)
     {
-        $this->endpointUrl = $endpoint;
+        $this->endpointUrl = $endpointUrl;
         $this->rpcClient = new Client($this->endpointUrl);
         $this->rpcClient->getHttpClient()->withTimeout(1);
         if ($debug) {
