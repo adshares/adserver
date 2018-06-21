@@ -230,8 +230,13 @@ class Utils
         return substr(sha1($id.$secret, true), 0, 6) == $checksum;
     }
 
-    public static function attachTrackingCookie($secret, Request $request, Response $response, $contentSha1, \DateTime $contentModified)
-    {
+    public static function attachTrackingCookie(
+        $secret,
+        Request $request,
+        Response $response,
+        $contentSha1,
+        \DateTime $contentModified
+    ) {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
@@ -244,7 +249,15 @@ class Utils
                 $tid = self::createTrackingId($secret);
             }
         }
-        $response->headers->setCookie(new Cookie('tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHttpHost()));
+        $response->headers->setCookie(
+            new Cookie(
+                'tid',
+                $tid,
+                new \DateTime('+ 1 month'),
+                '/',
+                $request->getHttpHost()
+            )
+        );
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
         // var_dump(self::generateEtag($tid, $contentSha1));

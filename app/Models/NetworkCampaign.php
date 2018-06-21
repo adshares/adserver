@@ -2,13 +2,8 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Adserver\Models\NetworkCampaignExclude;
-use Adshares\Adserver\Models\NetworkCampaignRequire;
-
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +19,7 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $dates = [
-      'time_start','time_end',
+        'time_start', 'time_end',
     ];
 
     /**
@@ -33,10 +28,10 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $fillable = [
-      'uuid',
-      'source_created_at', 'source_updated_at',
-      'source_host', 'adshares_address',
-      'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end',
+        'uuid',
+        'source_created_at', 'source_updated_at',
+        'source_host', 'adshares_address',
+        'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end',
     ];
 
     /**
@@ -45,16 +40,16 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $hidden = [
-      'id'
+        'id',
     ];
 
     /**
-    * The attributes that use some Models\Traits with mutator settings automation
-    *
-    * @var array
-    */
+     * The attributes that use some Models\Traits with mutator settings automation.
+     *
+     * @var array
+     */
     protected $traitAutomate = [
-      'uuid' => 'BinHex',
+        'uuid' => 'BinHex',
     ];
 
     public function banners()
@@ -85,8 +80,9 @@ class NetworkCampaign extends Model
     public function getAdselectJson()
     {
         $json = [
-            'campaign_id' => $this->source_host . '/'. $this->uuid,
-            // 'advertiser_id' => $this->source_host . '/'. $this->getAdvertiserId(), // TODO: discuss, missing in inventory
+            'campaign_id' => $this->source_host.'/'.$this->uuid,
+            // TODO: discuss, missing in inventory
+            // 'advertiser_id' => $this->source_host . '/'. $this->getAdvertiserId(),
             'time_start' => $this->time_start->getTimestamp(),
             'time_end' => $this->time_end->getTimestamp(),
             // 'filters' => Filter::getFilter($this->getRequire(), $this->getExclude()),
@@ -128,7 +124,11 @@ class NetworkCampaign extends Model
     public static function fromJsonData(array $data)
     {
         DB::beginTransaction();
-        $campaign = self::with('Banners', 'CampaignExcludes', 'CampaignRequires')->where('uuid', hex2bin($data['uuid']))->lockForUpdate()->first();
+        $campaign = self::with(
+            'Banners',
+            'CampaignExcludes',
+            'CampaignRequires'
+        )->where('uuid', hex2bin($data['uuid']))->lockForUpdate()->first();
         if (empty($campaign)) {
             $campaign = self::fromJsonDataNew($data);
         } else {

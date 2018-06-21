@@ -3,20 +3,17 @@
 namespace Adshares\Adserver\Console\Commands;
 
 use Illuminate\Console\Command;
-
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Esc\Esc;
-
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 
 class AdserversCrawlCommand extends Command
 {
-    protected $broadcast=true;
+    protected $broadcast = true;
     protected $host;
     protected $registerHostsIfBroadcastedLimit = 3600; // seconds
-    protected $crawlHostsIfLastSeenLimit = 3600*24*14; // seconds
-
+    protected $crawlHostsIfLastSeenLimit = 3600 * 24 * 14; // seconds
 
     /**
      * The name and signature of the console command.
@@ -30,12 +27,11 @@ class AdserversCrawlCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements from each adserver and stores offers in local db. Updates are forwarded to adselect.';
+    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements
+from each adserver and stores offers in local db. Updates are forwarded to adselect.';
 
     /**
      * Create a new command instance.
-     *
-     * @return void
      */
     public function __construct()
     {
@@ -122,10 +118,10 @@ class AdserversCrawlCommand extends Command
 
             foreach ($inventory['campaigns'] as $campaign_data) {
                 $campaign_data['source_host'] = $host;
-                $campaign = NetworkCampaign::fromJsonData($campaign_data);//, $existing);
+                $campaign = NetworkCampaign::fromJsonData($campaign_data); //, $existing);
 
                 $adselectCmp[] = $campaign->getAdselectJson();
-                if ($batch++ == 100) {
+                if (100 == $batch++) {
                     if ($adselect) {
                         $adselect->addCampaigns($adselectCmp);
                         $adselectCmp = [];
@@ -137,7 +133,8 @@ class AdserversCrawlCommand extends Command
                 $adselect->addCampaigns($adselectCmp);
                 $adselectCmp = [];
 
-                // $deleted = $em->createQuery("SELECT u.uuid FROM Adshares\Entity\NetworkCampaign u WHERE u.source_host = :host AND u.source_update_time != :time")
+                // $deleted = $em->createQuery("SELECT u.uuid FROM Adshares\Entity\NetworkCampaign u
+                //    WHERE u.source_host = :host AND u.source_update_time != :time")
                 //   ->setParameter("host", $host)->setParameter("time", $crawlTime)
                 //   ->getResult(Query::HYDRATE_SCALAR);
 
@@ -150,8 +147,8 @@ class AdserversCrawlCommand extends Command
                 // }
             }
 
-
-            // $query = $em->createQuery("DELETE FROM Adshares\Entity\NetworkCampaign u WHERE u.source_host = :host AND u.source_update_time != :time");
+            // $query = $em->createQuery("DELETE FROM Adshares\Entity\NetworkCampaign u
+            //    WHERE u.source_host = :host AND u.source_update_time != :time");
             // $query->setParameter("host", $host)->setParameter("time", $crawlTime);
             // $query->execute();
             $this->info("FINISHED PROCESSING: $host");

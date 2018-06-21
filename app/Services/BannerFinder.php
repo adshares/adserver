@@ -1,18 +1,9 @@
 <?php
+
 namespace Adshares\Adserver\Services;
-
-use Doctrine\ORM\EntityManager;
-
-use Symfony\Component\Routing\Router;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-
-use Symfony\Component\DependencyInjection\Container;
-use Doctrine\ORM\Query;
 
 use Adshares\Helper\Filter;
 use Adshares\Adserver\Http\Utils;
-
-
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
@@ -20,9 +11,7 @@ use Adshares\Adserver\Models\Zone;
 // use Adshares\Adserver\Services\Adselect;
 
 /**
- *
  * Returns random banners. Used if adselect service is not available. Shoud probalby be moved to Adselect class.
- *
  */
 class BannerFinder
 {
@@ -30,9 +19,8 @@ class BannerFinder
     {
         $typeDefault = [
             'html',
-            'image'
+            'image',
         ];
-
 
         // TODO: adselect
 
@@ -40,7 +28,6 @@ class BannerFinder
         // $adselectService instanceof Adselect;
 
         $bannerIds = [];
-
 
         if (false && $adselectService) {
             $requests = [];
@@ -51,8 +38,8 @@ class BannerFinder
                 $website = $zone->getWebsite();
 
                 $impression_keywords = $keywords;
-                $impression_keywords['zone'] = $website->getHost() . '/' . $zone->getId();
-                $impression_keywords['banner_size'] = $zone->getWidth() . 'x' . $zone->getHeight();
+                $impression_keywords['zone'] = $website->getHost().'/'.$zone->getId();
+                $impression_keywords['banner_size'] = $zone->getWidth().'x'.$zone->getHeight();
 
 //                 print_r($impression_keywords);exit;
 
@@ -71,7 +58,7 @@ class BannerFinder
                     'user_id' => $impression_keywords['user_id'],
                     'banner_size' => $impression_keywords['banner_size'],
                     'keywords' => Utils::flattenKeywords($impression_keywords),
-                    'banner_filters' => $filters
+                    'banner_filters' => $filters,
                 ];
                 $bannerIds[$i] = null;
             }
@@ -104,8 +91,14 @@ class BannerFinder
                     'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->creative_sha1,
                     'pay_from' => $campaign->adshares_address, // send this info to log
-                    'click_url' => route('log-network-click', ['id'=>$banner->uuid,'r'=>Utils::urlSafeBase64Encode($banner->click_url)]),
-                    'view_url' => route('log-network-view', ['id'=>$banner->uuid,'r'=>Utils::urlSafeBase64Encode($banner->view_url)])
+                    'click_url' => route('log-network-click', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                    ]),
+                    'view_url' => route('log-network-view', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                    ]),
                 ];
             } else {
                 $banners[] = null;

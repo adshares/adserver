@@ -55,7 +55,13 @@ class DemandController extends Controller
             $mime = 'image/png';
         }
 
-        $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, $banner->creative_sha1, $banner->updated_at);
+        $tid = Utils::attachTrackingCookie(
+            config('app.adserver_secret'),
+            $request,
+            $response,
+            $banner->creative_sha1,
+            $banner->updated_at
+        );
 
         $response->setCallback(function () use ($response, $banner, $isIECompat) {
             if (!$isIECompat) {
@@ -237,7 +243,9 @@ class DemandController extends Controller
                 'r' => $url,
             ]);
 
-            $response = new RedirectResponse($aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl));
+            $response = new RedirectResponse(
+                $aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl)
+            );
         } else {
             throw new Exception('ADAPY');
             $response = new Response();
@@ -266,7 +274,8 @@ class DemandController extends Controller
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_endpoint');
-        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true) : [];
+        $userdata = ($aduser_endpoint && $impressionId) ?
+            json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true) : [];
 
         $log = EventLog::find($log_id);
         if (!empty($log)) {
