@@ -14,7 +14,7 @@ class UsersEmailConfirmToken extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('email_confirm_token', 32)->unique()->nullable()->after('email');
+            $table->string('email_confirm_token', 32)->nullable()->after('email');
         });
     }
 

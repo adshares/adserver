@@ -29,15 +29,17 @@ class CreateCampaignExcludesTable extends Migration
             $table->binary('max', 64); // REQ CUSTOM ALTER
         });
 
-        DB::statement("ALTER TABLE campaign_excludes MODIFY uuid varbinary(16) NOT NULL");
-        DB::statement("ALTER TABLE campaign_excludes MODIFY name varbinary(64)");
-        DB::statement("ALTER TABLE campaign_excludes MODIFY min varbinary(64)");
-        DB::statement("ALTER TABLE campaign_excludes MODIFY max varbinary(64)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE campaign_excludes MODIFY uuid varbinary(16) NOT NULL");
+            DB::statement("ALTER TABLE campaign_excludes MODIFY name varbinary(64)");
+            DB::statement("ALTER TABLE campaign_excludes MODIFY min varbinary(64)");
+            DB::statement("ALTER TABLE campaign_excludes MODIFY max varbinary(64)");
+        }
 
         Schema::table('campaign_excludes', function (Blueprint $table) {
             $table->unique('uuid');
-            $table->index(['campaign_id','name','min'], 'min');
-            $table->index(['campaign_id','name','max'], 'max');
+            $table->index(['campaign_id','name','min'], 'campaign_excludes_min');
+            $table->index(['campaign_id','name','max'], 'campaign_excludes_max');
         });
     }
 

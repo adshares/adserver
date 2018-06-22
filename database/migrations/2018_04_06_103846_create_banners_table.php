@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 class CreateBannersTable extends Migration
 {
@@ -31,9 +31,11 @@ class CreateBannersTable extends Migration
             $table->integer('creative_height');
         });
 
-        DB::statement("ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB");
-        DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL");
-        DB::statement("ALTER TABLE banners MODIFY creative_sha1 varbinary(20)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB");
+            DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL");
+            DB::statement("ALTER TABLE banners MODIFY creative_sha1 varbinary(20)");
+        }
 
         Schema::table('banners', function (Blueprint $table) {
             $table->unique('uuid');

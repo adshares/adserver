@@ -34,8 +34,10 @@ class CreateNetworkBannersTable extends Migration
             $table->integer('creative_height');
         });
 
-        DB::statement("ALTER TABLE network_banners MODIFY uuid varbinary(16)");
-        DB::statement("ALTER TABLE network_banners MODIFY creative_sha1 varbinary(20)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE network_banners MODIFY uuid varbinary(16)");
+            DB::statement("ALTER TABLE network_banners MODIFY creative_sha1 varbinary(20)");
+        }
     }
 
 

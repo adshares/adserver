@@ -25,13 +25,15 @@ class CreateWebsiteExcludesTable extends Migration
             $table->binary('max', 64);
         });
 
-        DB::statement("ALTER TABLE website_excludes MODIFY name varbinary(64)");
-        DB::statement("ALTER TABLE website_excludes MODIFY min varbinary(64)");
-        DB::statement("ALTER TABLE website_excludes MODIFY max varbinary(64)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE website_excludes MODIFY name varbinary(64)");
+            DB::statement("ALTER TABLE website_excludes MODIFY min varbinary(64)");
+            DB::statement("ALTER TABLE website_excludes MODIFY max varbinary(64)");
+        }
 
         Schema::table('website_excludes', function (Blueprint $table) {
-            $table->index(['website_id','name','min'], 'min');
-            $table->index(['website_id','name','max'], 'max');
+            $table->index(['website_id','name','min'], 'website_excludes_min');
+            $table->index(['website_id','name','max'], 'website_excludes_max');
         });
     }
 

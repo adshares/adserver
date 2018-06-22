@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Adshares\Adserver\Tests;
 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Contracts\Console\Kernel;

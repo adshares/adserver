@@ -14,7 +14,8 @@ class UpdateUsersWithPanelAppRequiredFields extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->binary('uuid', 16)->after('id'); // REQ CUSTOM ALTER
+            // FIXME default or nullable
+            $table->binary('uuid', 16)->nullable()->after('id'); // REQ CUSTOM ALTER
 
             $table->boolean('isAdvertiser')->nullable();
             $table->boolean('isPublisher')->nullable();
@@ -25,7 +26,9 @@ class UpdateUsersWithPanelAppRequiredFields extends Migration
             $table->string('name')->nullable()->change();
         });
 
-        DB::statement("ALTER TABLE users MODIFY uuid varbinary(16) NOT NULL");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE users MODIFY uuid varbinary(16) NOT NULL");
+        }
 
         Schema::table('users', function (Blueprint $table) {
             $table->unique('uuid');
