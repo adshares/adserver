@@ -11,7 +11,7 @@ class UsersController extends AppController
 {
     public function add(Request $request)
     {
-        $this->validateRequest('user', User::$rules);
+        $this->validateRequest($request, 'user', User::$rules);
         $user = User::create($request->input('user'));
         $user->email_confirm_token = md5(openssl_random_pseudo_bytes(20));
         $user->save();
@@ -48,7 +48,7 @@ class UsersController extends AppController
 
     public function emailActivate(Request $request)
     {
-        $this->validateRequest('user', User::$rules_email_activate);
+        $this->validateRequest($request,'user', User::$rules_email_activate);
 
         $user = User::where('email_confirm_token', $request->input('user.email_confirm_token'))->whereNull('email_confirmed_at')->first();
 

@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UsersTest extends TestCase
 {
-    use RefreshDatabase ;
+    use RefreshDatabase;
 
     const URI = '/app/users';
 
@@ -58,10 +58,8 @@ class UsersTest extends TestCase
         $count = 10;
 
         $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
-        foreach($users as $user) {
+        foreach ($users as $user) {
             $response = $this->postJson(self::URI, ["user" => $user->getAttributes()]);
-            dump($user->email);
-            dump($response->content());
             $response->assertStatus(201);
         }
 
