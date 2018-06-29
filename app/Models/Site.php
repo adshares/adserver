@@ -20,11 +20,21 @@ class Site extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'name', 'url',
+        'user_id', 'name', 'url'
     ];
 
     public static $rules = [
         'name' => 'max:64',
         'url' => 'required|url',
     ];
+
+    public function siteExcludes()
+    {
+        return $this->hasMany("Adshares\Adserver\Models\SiteExclude");
+    }
+
+    public function siteRequires()
+    {
+        return $this->hasMany( "Adshares\Adserver\Models\SiteRequire");
+    }
 }

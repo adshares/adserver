@@ -20,22 +20,10 @@ class CreateSiteExcludesTable extends Migration
             $table->softDeletes();
 
             $table->bigInteger('site_id')->unsigned();
-            $table->binary('name', 64);
-            $table->binary('min', 64);
-            $table->binary('max', 64);
+            $table->string('key', 32);
+            $table->json('value');
 
             $table->foreign('site_id')->references('id')->on('sites')->onUpdate('RESTRICT')->onDelete('CASCADE');
-        });
-
-        if (DB::isMysql()) {
-            DB::statement("ALTER TABLE site_excludes MODIFY name varbinary(64)");
-            DB::statement("ALTER TABLE site_excludes MODIFY min varbinary(64)");
-            DB::statement("ALTER TABLE site_excludes MODIFY max varbinary(64)");
-        }
-
-        Schema::table('site_excludes', function (Blueprint $table) {
-            $table->index(['site_id','name','min'], 'site_excludes_min');
-            $table->index(['site_id','name','max'], 'site_excludes_max');
         });
     }
 
