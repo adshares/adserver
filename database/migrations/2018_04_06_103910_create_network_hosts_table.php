@@ -23,7 +23,9 @@ class CreateNetworkHostsTable extends Migration
             $table->integer('last_seen')->unsigned(); // TODO: rename last_broadcast
         });
 
-        DB::statement("ALTER TABLE network_hosts MODIFY address varbinary(6)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE network_hosts MODIFY address varbinary(6)");
+        }
     }
 
 

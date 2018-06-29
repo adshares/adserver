@@ -42,4 +42,15 @@ class NetworkBanner extends Model
       'uuid' => 'BinHex',
       'creative_sha1' => 'BinHex',
     ];
+
+    public function getAdselectJson()
+    {
+        return [
+            'banner_id' => $this->uuid,
+            'banner_size' => $this->creative_width . 'x' . $this->creative_height,
+            'keywords' => [
+                'type' => $this->creative_type,
+            ]
+        ];
+    }
 }

@@ -29,8 +29,10 @@ class CreateNetworkPaymentsTable extends Migration
             $table->boolean('processed');
         });
 
-        DB::statement("ALTER TABLE network_payments MODIFY receiver_address varbinary(6)");
-        DB::statement("ALTER TABLE network_payments MODIFY sender_address varbinary(6)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE network_payments MODIFY receiver_address varbinary(6)");
+            DB::statement("ALTER TABLE network_payments MODIFY sender_address varbinary(6)");
+        }
     }
 
 

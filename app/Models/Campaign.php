@@ -3,10 +3,8 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
-
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-
 use Illuminate\Database\Eloquent\Model;
 
 class Campaign extends Model
@@ -29,7 +27,7 @@ class Campaign extends Model
      * @var array
      */
     protected $fillable = [
-        'uuid', 'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end', 'require_count'
+        'uuid', 'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end', 'require_count',
     ];
 
     /**
@@ -38,11 +36,11 @@ class Campaign extends Model
      * @var array
      */
     protected $hidden = [
-      'id', 'user_id'
+        'id', 'user_id',
     ];
 
     /**
-     * The attributes that use some Models\Traits with mutator settings automation
+     * The attributes that use some Models\Traits with mutator settings automation.
      *
      * @var array
      */
@@ -63,5 +61,16 @@ class Campaign extends Model
     public function campaignRequires()
     {
         return $this->hasMany('Adshares\Adserver\Models\CampaignRequire');
+    }
+
+    public static function getWithReferences($listDeletedCampaigns)
+    {
+        $q = Campaign::with('Banners', 'CampaignExcludes', 'CampaignRequires');
+
+        if ($listDeletedCampaigns) {
+            return $q->get();
+        }
+
+        return $q->whereNull('deleted_at')->get();
     }
 }

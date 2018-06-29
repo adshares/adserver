@@ -37,3 +37,5 @@ mix.babel([
   'resources/assets/js/demand/view.js',
   'resources/assets/js/footer/*',
 ], 'public/-/view.js');
+
+mix.copyDirectory('resources/assets/img', 'public/img');

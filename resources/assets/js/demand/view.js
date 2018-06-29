@@ -1,7 +1,7 @@
 var serverOrigin = '{{ ORIGIN }}';
 
 var addUrlParam = function (url, names, value) {
-    
+
     if(typeof names != 'object') {
         var x = {};
         x[names] = value;
@@ -27,7 +27,7 @@ var UrlSafeBase64Encode = function(data) {
 }
 
 
-var getBrowserContext = function() {	
+var getBrowserContext = function() {
 	return {
         frame : (parent == top ? 0 : 1),
         width : window.screen.width,
@@ -37,14 +37,14 @@ var getBrowserContext = function() {
 }
 
 var logContext = function(log_id) {
-	
-	var url = serverOrigin + '/context/' + log_id;
-	
+
+	var url = serverOrigin + '/l/context/' + log_id;
+
 	url = addUrlParam(url, 'k', UrlSafeBase64Encode(JSON.stringify(getBrowserContext())));
-	
+
 	var img = new Image();
 	img.src = url;
-	
+
 	document.body.appendChild(img);
 }
 
@@ -80,7 +80,7 @@ domReady(function() {
 	}
 	var fn = function(event) {
 		var msg;
-		
+
 		if (typeof event.data == 'string') {
 			msg = JSON.parse(event.data);
 		} else {
@@ -92,7 +92,7 @@ domReady(function() {
 			if (data.click_url) {
 				adsharesLink.href = data.click_url;
 			}
-			
+
 			if(data.lid) {
 				logContext(data.lid);
 			}
