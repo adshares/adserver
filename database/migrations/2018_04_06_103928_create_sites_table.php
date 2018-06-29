@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateWebsitesTable extends Migration
+class CreateSitesTable extends Migration
 {
 
     /**
@@ -13,14 +13,17 @@ class CreateWebsitesTable extends Migration
      */
     public function up()
     {
-        Schema::create('websites', function (Blueprint $table) {
+        Schema::create('sites', function (Blueprint $table) {
             $table->bigIncrements('id');
 
             $table->timestamps();
             $table->softDeletes();
 
             $table->bigInteger('user_id')->unsigned()->nullable();
-            $table->string('host', 64);
+            $table->string('name', 64);
+            $table->text('url');
+
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
     }
 
@@ -32,6 +35,6 @@ class CreateWebsitesTable extends Migration
      */
     public function down()
     {
-        Schema::drop('websites');
+        Schema::drop('sites');
     }
 }

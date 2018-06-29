@@ -14,5 +14,6 @@ Route::prefix('app')->group(function () {
     Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
     Route::get('sites/{site}', 'App\SitesController@read')->name('app.sites.read');
     Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
+    Route::patch('sites/{site}', 'App\SitesController@edit')->name('app.sites.edit');
     Route::delete('sites/{site}', 'App\SitesController@delete')->name('app.sites.delete');
 });

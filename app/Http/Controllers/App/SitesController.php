@@ -29,6 +29,13 @@ class SitesController extends AppController
 
     public function edit(Request $request, $siteId)
     {
+        $this->validateRequest($request, 'site', array_intersect_key(Site::$rules, $request->input("site")));
+
+        // TODO check privileges
+        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site->update($request->input("site"));
+
+        return self::json(['message' => 'Successfully edited'], 200);
     }
 
     public function delete(Request $request, $siteId)
@@ -36,9 +43,9 @@ class SitesController extends AppController
         // TODO check privileges
         $site = Site::whereNull('deleted_at')->findOrFail($siteId);
         $site->deleted_at = new \DateTime();
-        $site->Site();
+        $site->save();
 
-        return self::json(['message' => 'Successful deleted'], 200);
+        return self::json(['message' => 'Successfully deleted'], 200);
     }
 
     public function read(Request $request, $siteId)

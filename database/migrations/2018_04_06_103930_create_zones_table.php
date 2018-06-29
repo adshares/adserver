@@ -19,10 +19,12 @@ class CreateZonesTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->bigInteger('website_id')->unsigned()->nullable();
+            $table->bigInteger('site_id')->unsigned()->nullable();
             $table->string('name', 32);
             $table->integer('width');
             $table->integer('height');
+
+            $table->foreign('site_id')->references('id')->on('sites')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
     }
 
