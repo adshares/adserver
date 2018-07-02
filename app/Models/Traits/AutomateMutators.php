@@ -44,10 +44,15 @@ trait AutomateMutators
 
     public function toArray()
     {
+        return array_merge($this->toArrayProcessTraitAttributes(), $this->relationsToArray());
+    }
+
+    protected function toArrayProcessTraitAttributes()
+    {
         if (empty($this->traitAutomate)) {
-            return $this->toArrayExtrasCheck(parent::toArray());
+            return $this->toArrayExtrasCheck(parent::attributesToArray());
         }
-        $array = parent::toArray();
+        $array = parent::attributesToArray();
         foreach (array_keys($this->traitAutomate) as $k) {
             $array[$k] = $this->$k;
         }
