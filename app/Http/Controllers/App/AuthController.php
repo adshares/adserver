@@ -3,6 +3,7 @@
 namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserAdserverWallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,7 +40,7 @@ class AuthController extends AppController
         )) {
             $request->session()->regenerate();
             // $this->authenticated($request, $this->guard()->user());
-            return self::json(Auth::user()->toArrayCamelize(), 200);
+            return self::json(Auth::user()->load('UserAdserverWallet')->toArrayCamelize(), 200);
         }
 
         return self::json([], 401);
