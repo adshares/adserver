@@ -27,9 +27,9 @@ class CreateUsersTable extends Migration
 
             $table->string('name')->nullable();
 
-            $table->boolean('isAdvertiser')->nullable();
-            $table->boolean('isPublisher')->nullable();
-            $table->boolean('isAdmin')->default(false);
+            $table->boolean('is_advertiser')->nullable();
+            $table->boolean('is_publisher')->nullable();
+            $table->boolean('is_admin')->default(false);
         });
 
         if (DB::isMysql()) {

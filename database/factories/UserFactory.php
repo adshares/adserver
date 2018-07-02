@@ -17,7 +17,7 @@ $factory->define(Adshares\Adserver\Models\User::class, function (Faker $faker) {
     return [
         'email' => $faker->unique()->safeEmail,
         'password' => $faker->password(8),
-        'isAdvertiser' => $faker->boolean,
-        'isPublisher' => $faker->boolean,
+        'is_advertiser' => $faker->boolean,
+        'is_publisher' => $faker->boolean,
     ];
 });

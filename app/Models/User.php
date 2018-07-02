@@ -46,8 +46,8 @@ class User extends Authenticatable
     public static $rules = [
         'email' => 'required|email|max:150|unique:users',
         'password' => 'required|min:8',
-        'isAdvertiser' => 'boolean',
-        'isPublisher' => 'boolean',
+        'is_advertiser' => 'boolean',
+        'is_publisher' => 'boolean',
     ];
 
     public static $rules_email_activate = [
