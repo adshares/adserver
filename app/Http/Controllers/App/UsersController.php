@@ -18,7 +18,7 @@ class UsersController extends AppController
 
         Mail::to($user)->queue(new UserEmailActivate($user));
 
-        $response = self::json($user, 201);
+        $response = self::json($user->toArrayCamelize(), 201);
         $response->header('Location', route('app.users.read', ['user' => $user]));
 
         return $response;
@@ -29,7 +29,7 @@ class UsersController extends AppController
         // TODO check privileges
         $users = User::whereNull('deleted_at')->get();
 
-        return self::json($users);
+        return self::json($users->toArrayCamelize());
     }
 
     public function edit(Request $request, $userId)
@@ -62,7 +62,7 @@ class UsersController extends AppController
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
 
-        return self::json($user, 200);
+        return self::json($user->toArrayCamelize(), 200);
     }
 
     public function read(Request $request, $userId)
@@ -70,6 +70,6 @@ class UsersController extends AppController
         // TODO check privileges
         $user = User::whereNull('deleted_at')->findOrFail($userId);
 
-        return self::json($user);
+        return self::json($user->toArrayCamelize());
     }
 }
