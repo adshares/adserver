@@ -5,6 +5,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\ToArrayCamelize;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -15,6 +16,7 @@ class User extends Authenticatable
 
     use AutomateMutators;
     use BinHex;
+    use ToArrayCamelize;
 
     /**
      * The event map for the model.
