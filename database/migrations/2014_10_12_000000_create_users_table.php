@@ -8,29 +8,41 @@ class CreateUsersTable extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->binary('uuid', 16);
             $table->string('email', 191)->unique();
+            $table->string('email_confirm_token', 32)->nullable();
+            $table->timestamp('email_confirmed_at')->nullable();
+
+            $table->rememberToken();
 
             $table->timestamps();
             $table->softDeletes();
 
-            $table->string('name');
             $table->string('password');
 
-            $table->rememberToken();
+            $table->string('name')->nullable();
+
+            $table->boolean('isAdvertiser')->nullable();
+            $table->boolean('isPublisher')->nullable();
+            $table->boolean('isAdmin')->default(false);
+        });
+
+        if (DB::isMysql()) {
+            DB::statement('ALTER TABLE users MODIFY uuid varbinary(16) NOT NULL');
+        }
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->unique('uuid');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
