@@ -42,6 +42,6 @@ abstract class SiteTargeting extends Model
 
     public function site()
     {
-        return $this->belongsTo("App\Site");
+        return $this->belongsTo("Adshares\Adserver\Models\Site");
     }
 }
