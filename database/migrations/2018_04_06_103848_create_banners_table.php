@@ -5,11 +5,8 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateBannersTable extends Migration
 {
-
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {  // TODO  => creatives
@@ -29,12 +26,14 @@ class CreateBannersTable extends Migration
 
             $table->integer('creative_width');
             $table->integer('creative_height');
+
+            $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
 
         if (DB::isMysql()) {
-            DB::statement("ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB");
-            DB::statement("ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL");
-            DB::statement("ALTER TABLE banners MODIFY creative_sha1 varbinary(20)");
+            DB::statement('ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB');
+            DB::statement('ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE banners MODIFY creative_sha1 varbinary(20)');
         }
 
         Schema::table('banners', function (Blueprint $table) {
@@ -42,11 +41,8 @@ class CreateBannersTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {

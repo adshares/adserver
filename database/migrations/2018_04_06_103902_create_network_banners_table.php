@@ -5,11 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 
 class CreateNetworkBannersTable extends Migration
 {
-
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
@@ -32,19 +29,18 @@ class CreateNetworkBannersTable extends Migration
 
             $table->integer('creative_width');
             $table->integer('creative_height');
+
+            $table->foreign('network_campaign_id')->references('id')->on('network_campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
 
         if (DB::isMysql()) {
-            DB::statement("ALTER TABLE network_banners MODIFY uuid varbinary(16)");
-            DB::statement("ALTER TABLE network_banners MODIFY creative_sha1 varbinary(20)");
+            DB::statement('ALTER TABLE network_banners MODIFY uuid varbinary(16)');
+            DB::statement('ALTER TABLE network_banners MODIFY creative_sha1 varbinary(20)');
         }
     }
 
-
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
