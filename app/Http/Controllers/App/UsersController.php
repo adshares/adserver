@@ -18,7 +18,7 @@ class UsersController extends AppController
 
         Mail::to($user)->queue(new UserEmailActivate($user));
 
-        $response = self::json(compact('user'), 201);
+        $response = self::json($user, 201);
         $response->header('Location', route('app.users.read', ['user' => $user]));
 
         return $response;
@@ -48,7 +48,7 @@ class UsersController extends AppController
 
     public function emailActivate(Request $request)
     {
-        $this->validateRequest($request,'user', User::$rules_email_activate);
+        $this->validateRequest($request, 'user', User::$rules_email_activate);
 
         $user = User::where('email_confirm_token',
             $request->input('user.email_confirm_token'))->whereNull('email_confirmed_at')->first();
@@ -60,7 +60,7 @@ class UsersController extends AppController
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
 
-        return self::json(compact('user'), 200);
+        return self::json($user, 200);
     }
 
     public function read(Request $request, $userId)
@@ -68,6 +68,6 @@ class UsersController extends AppController
         // TODO check privileges
         $user = User::whereNull('deleted_at')->findOrFail($userId);
 
-        return self::json(compact('user'));
+        return self::json($user);
     }
 }

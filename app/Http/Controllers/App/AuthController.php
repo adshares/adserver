@@ -16,7 +16,7 @@ class AuthController extends AppController
         )) {
             $request->session()->regenerate();
             // $this->authenticated($request, $this->guard()->user());
-            return self::json(['user' => Auth::check() ? Auth::user() : false], 200);
+            return self::json(Auth::user(), 200);
         }
 
         return self::json([], 401);
@@ -24,6 +24,10 @@ class AuthController extends AppController
 
     public function check(Request $request)
     {
-        return self::json(['user' => Auth::check() ? Auth::user() : false], 200);
+        if (Auth::check()) {
+            return self::json(Auth::user(), 200);
+        }
+
+        return self::json([], 401, ['message' => 'Not Authorized']);
     }
 }
