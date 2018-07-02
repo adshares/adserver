@@ -23,6 +23,15 @@ class Site extends Model
         'user_id', 'name', 'url'
     ];
 
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'deleted_at',
+    ];
+
     public static $rules = [
         'name' => 'max:64',
         'url' => 'required|url',

@@ -21,7 +21,24 @@ abstract class SiteTargeting extends Model
      * @var array
      */
     protected $hidden = [
+        'deleted_at',
     ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'value' => 'array'
+    ];
+
+    /**
+     * All of the relationships to be touched.
+     *
+     * @var array
+     */
+    protected $touches = ['site'];
 
     public function site()
     {

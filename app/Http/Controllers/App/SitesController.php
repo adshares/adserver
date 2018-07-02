@@ -2,6 +2,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Adshares\Adserver\Models\Site;
 
@@ -32,7 +33,16 @@ class SitesController extends AppController
     public function browse(Request $request)
     {
         // TODO check privileges
-        $sites = Site::whereNull('deleted_at')->get();
+        $sites = Site::with([
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')->get();
 
         return self::json($sites);
     }
@@ -61,7 +71,16 @@ class SitesController extends AppController
     public function read(Request $request, $siteId)
     {
         // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site = Site::with([
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')->findOrFail($siteId);
 
         return self::json(compact('site'));
     }
