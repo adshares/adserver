@@ -15,15 +15,21 @@ class SitesController extends AppController
         $site->save();
 
         $reqObj = $request->input('site.targeting.require');
-        foreach (array_keys($reqObj) as $key) {
-            $value = $reqObj[$key];
-            $site->siteRequires()->create(['key' => $key, 'value' => $value]);
+        if ($reqObj != NULL) {
+            foreach (array_keys($reqObj) as $key) {
+                $value = $reqObj[$key];
+                $site->siteRequires()->create(['key' => $key, 'value' => $value]);
+            }
         }
+
         $reqObj = $request->input('site.targeting.exclude');
-        foreach (array_keys($reqObj) as $key) {
-            $value = $reqObj[$key];
-            $site->siteExcludes()->create(['key' => $key, 'value' => $value]);
+        if ($reqObj != NULL) {
+            foreach (array_keys($reqObj) as $key) {
+                $value = $reqObj[$key];
+                $site->siteExcludes()->create(['key' => $key, 'value' => $value]);
+            }
         }
+
         $response = self::json(compact('site'), 201);
         $response->header('Location', route('app.sites.read', ['site' => $site]));
 
