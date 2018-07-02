@@ -5,11 +5,11 @@ namespace Adshares\Adserver\Tests\Feature;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class UsersTest extends TestCase
+class SitesTest extends TestCase
 {
     use RefreshDatabase;
 
-    const URI = '/app/users';
+    const URI = '/app/sites';
 
     public function testEmptyDb()
     {
@@ -21,16 +21,17 @@ class UsersTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function testCreateUser()
+    public function testCreateSite()
     {
-        /* @var $user \Adshares\Adserver\Models\User */
-        $user = factory(\Adshares\Adserver\Models\User::class)->make();
+        /* @var $site \Adshares\Adserver\Models\Site */
+        $site = factory(\Adshares\Adserver\Models\Site::class)->make();
 
-        $response = $this->postJson(self::URI, ["user" => $user->getAttributes()]);
+        $response = $this->postJson(self::URI, ["site" => $site->getAttributes()]);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
-        $response->assertJsonFragment(['email' => $user->email]);
+        $response->assertJsonFragment(['name' => $site->name]);
+        $response->assertJsonFragment(['url' => $site->url]);
 
         $uri = $response->headers->get('Location');
         $matches = [];
@@ -38,26 +39,22 @@ class UsersTest extends TestCase
 
         $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
-        $response->assertJsonFragment(['email' => $user->email]);
+        $response->assertJsonFragment(['name' => $site->name]);
+        $response->assertJsonFragment(['url' => $site->url]);
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(1);
 
-//        $response->assertJsonFragment([
-//            'email' => $user->email,
-//            'isAdvertiser' => $user->isAdvertiser,
-//            'isPublisher' => $user->isPublisher
-//        ]);
     }
 
-    public function testCreateUsers()
+    public function testCreateSites()
     {
         $count = 10;
 
-        $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
-        foreach ($users as $user) {
-            $response = $this->postJson(self::URI, ["user" => $user->getAttributes()]);
+        $users = factory(\Adshares\Adserver\Models\Site::class, $count)->make();
+        foreach ($users as $site) {
+            $response = $this->postJson(self::URI, ["site" => $site->getAttributes()]);
             $response->assertStatus(201);
         }
 
