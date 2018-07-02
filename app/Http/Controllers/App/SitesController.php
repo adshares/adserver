@@ -15,7 +15,7 @@ class SitesController extends AppController
         $site->save();
 
         $reqObj = $request->input('site.targeting.require');
-        if ($reqObj != NULL) {
+        if (null != $reqObj) {
             foreach (array_keys($reqObj) as $key) {
                 $value = $reqObj[$key];
                 $site->siteRequires()->create(['key' => $key, 'value' => $value]);
@@ -23,7 +23,7 @@ class SitesController extends AppController
         }
 
         $reqObj = $request->input('site.targeting.exclude');
-        if ($reqObj != NULL) {
+        if (null != $reqObj) {
             foreach (array_keys($reqObj) as $key) {
                 $value = $reqObj[$key];
                 $site->siteExcludes()->create(['key' => $key, 'value' => $value]);
@@ -55,11 +55,11 @@ class SitesController extends AppController
 
     public function edit(Request $request, $siteId)
     {
-        $this->validateRequest($request, 'site', array_intersect_key(Site::$rules, $request->input("site")));
+        $this->validateRequest($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
         // TODO check privileges
         $site = Site::whereNull('deleted_at')->findOrFail($siteId);
-        $site->update($request->input("site"));
+        $site->update($request->input('site'));
 
         return self::json(['message' => 'Successfully edited'], 200);
     }

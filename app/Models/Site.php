@@ -5,10 +5,9 @@ namespace Adshares\Adserver\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Site
- * @package Adshares\Adserver\Models
+ * Class Site.
  *
- * @property integer user_id
+ * @property int user_id
  * @property string name
  * @property string url
  */
@@ -20,7 +19,7 @@ class Site extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'name', 'url'
+        'user_id', 'name', 'url',
     ];
 
     /**
@@ -44,6 +43,6 @@ class Site extends Model
 
     public function siteRequires()
     {
-        return $this->hasMany( "Adshares\Adserver\Models\SiteRequire");
+        return $this->hasMany("Adshares\Adserver\Models\SiteRequire");
     }
 }

@@ -50,8 +50,10 @@ class UsersController extends AppController
     {
         $this->validateRequest($request, 'user', User::$rules_email_activate);
 
-        $user = User::where('email_confirm_token',
-            $request->input('user.email_confirm_token'))->whereNull('email_confirmed_at')->first();
+        $user = User::where(
+            'email_confirm_token',
+            $request->input('user.email_confirm_token')
+        )->whereNull('email_confirmed_at')->first();
 
         if (empty($user)) {
             return self::json([], 401);

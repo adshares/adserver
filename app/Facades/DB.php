@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\DB as BaseDB;
 
 class DB extends BaseDB
 {
-
     /**
      * Get database driver name.
      *
@@ -58,5 +57,4 @@ class DB extends BaseDB
     {
         return 'sqlsrv' === self::getDbDriver();
     }
-
 }
