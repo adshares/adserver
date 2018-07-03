@@ -33,18 +33,18 @@ class UsersController extends AppController
         return self::json($users->toArrayCamelize());
     }
 
-    public function edit(Request $request, $userId)
-    {
-    }
-
-    public function delete(Request $request, $userId)
+    public function delete(Request $request, $user_id)
     {
         // TODO check privileges
-        $user = User::whereNull('deleted_at')->findOrFail($userId);
+        $user = User::whereNull('deleted_at')->findOrFail($user_id);
         $user->deleted_at = new \DateTime();
         $user->save();
 
         return self::json(['message' => 'Successful deleted'], 200);
+    }
+
+    public function edit(Request $request, $user_id)
+    {
     }
 
     public function emailActivate(Request $request)
@@ -66,10 +66,10 @@ class UsersController extends AppController
         return self::json($user->toArrayCamelize(), 200);
     }
 
-    public function read(Request $request, $userId)
+    public function read(Request $request, $user_id)
     {
         // TODO check privileges
-        $user = User::whereNull('deleted_at')->findOrFail($userId);
+        $user = User::whereNull('deleted_at')->findOrFail($user_id);
 
         return self::json($user->toArrayCamelize());
     }
