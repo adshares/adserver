@@ -46,7 +46,7 @@ class User extends Authenticatable implements Camelizable
      * @var array
      */
     protected $hidden = [
-        'id', 'password', 'remember_token',
+        'password', 'remember_token',
     ];
 
     public static $rules = [
