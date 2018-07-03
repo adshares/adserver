@@ -4,7 +4,6 @@ namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserAdserverWallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 
@@ -38,7 +37,7 @@ class UsersController extends AppController
     public function browse(Request $request)
     {
         // TODO check privileges
-        $users = User::with('UserAdserverWallet')->whereNull('deleted_at')->get();
+        $users = User::with('AdserverWallet')->whereNull('deleted_at')->get();
 
         return self::json($users->toArrayCamelize());
     }
