@@ -12,15 +12,17 @@ class UsersController extends AppController
 {
     public function add(Request $request)
     {
-        $this->validateRequest($request, 'user', User::$rules);
-        $user = User::create($request->input('user'));
+        $this->validateRequest($request, 'user', User::$rules_add);
+        $user = new User($request->input('user'));
+        $user->password = $request->input('user.password');
+        $user->email = $request->input('user.email');
         $user->email_confirm_token = md5(openssl_random_pseudo_bytes(20));
         $user->save();
 
         Mail::to($user)->queue(new UserEmailActivate($user));
 
         $response = self::json($user->toArrayCamelize(), 201);
-        $response->header('Location', route('app.users.read', ['user' => $user]));
+        $response->header('Location', route('app.users.read', ['user_id' => $user->id]));
 
         return $response;
     }
@@ -36,11 +38,13 @@ class UsersController extends AppController
     public function delete(Request $request, $user_id)
     {
         // TODO check privileges
+        // TODO reset email
+        // TODO process
         $user = User::whereNull('deleted_at')->findOrFail($user_id);
         $user->deleted_at = new \DateTime();
         $user->save();
 
-        return self::json(['message' => 'Successful deleted'], 200);
+        return self::json(['message' => 'successfully deleted'], 200);
     }
 
     public function edit(Request $request, $user_id)
