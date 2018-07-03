@@ -8,6 +8,7 @@ Route::prefix('app')->group(function () {
     Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
     Route::get('users/{user_id}', 'App\UsersController@read')->name('app.users.read');
     Route::post('users', 'App\UsersController@add')->name('app.users.add');
+    Route::patch('users/{user_id}', 'App\UsersController@edit')->name('app.users.edit');
     Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
     Route::post('users/email/activate', 'App\UsersController@emailActivate');
     // Sites
