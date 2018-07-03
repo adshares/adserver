@@ -57,7 +57,7 @@ trait ToArrayCamelize
                 $relation = $value;
             }
             if (isset($relation) || is_null($value)) {
-                $attributes[self::snakeToCamel($key, true)] = $relation;
+                $attributes[self::snakeToCamel($key)] = $relation;
             }
 
             unset($relation);

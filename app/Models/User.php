@@ -76,6 +76,11 @@ class User extends Authenticatable implements Camelizable
         'uuid' => 'BinHex',
     ];
 
+    public function adserverWallet()
+    {
+        return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
+    }
+
     public function checkPassword($value)
     {
         return Hash::check($this->attributes['password'], $value);
@@ -94,10 +99,5 @@ class User extends Authenticatable implements Camelizable
         $array['isEmailConfirmed'] = !empty($array['email_confirmed_at']);
 
         return $array;
-    }
-
-    public function userAdserverWallet()
-    {
-        return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
     }
 }
