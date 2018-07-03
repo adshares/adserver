@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\Mail;
 
 class UsersController extends AppController
 {
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct()
+    {
+        $this->middleware('snake_casing');
+    }
+
     public function add(Request $request)
     {
         $this->validateRequest($request, 'user', User::$rules_add);
@@ -49,6 +57,13 @@ class UsersController extends AppController
 
     public function edit(Request $request, $user_id)
     {
+        // TODO check privileges
+        $user = User::whereNull('deleted_at')->findOrFail($user_id);
+        $this->validateRequest($request, 'user', User::$rules);
+        $user->fill($request->input('user'));
+        $user->save();
+
+        return self::json($user->toArrayCamelize(), 200);
     }
 
     public function emailActivate(Request $request)
