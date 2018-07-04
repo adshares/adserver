@@ -19,7 +19,8 @@ class UsersController extends AppController
 
     public function add(Request $request)
     {
-        $this->validateRequest($request, 'user', User::$rules_add);
+        $this->validateRequestObject($request, 'user', User::$rules_add);
+
         $user = new User($request->input('user'));
         $user->password = $request->input('user.password');
         $user->email = $request->input('user.email');
@@ -58,7 +59,7 @@ class UsersController extends AppController
     {
         // TODO check privileges
         $user = User::whereNull('deleted_at')->findOrFail($user_id);
-        $this->validateRequest($request, 'user', User::$rules);
+        $this->validateRequestObject($request, 'user', User::$rules);
         $user->fill($request->input('user'));
         $user->save();
 
@@ -67,7 +68,7 @@ class UsersController extends AppController
 
     public function emailActivate(Request $request)
     {
-        $this->validateRequest($request, 'user', User::$rules_email_activate);
+        $this->validateRequestObject($request, 'user', User::$rules_email_activate);
 
         $user = User::where(
             'email_confirm_token',
