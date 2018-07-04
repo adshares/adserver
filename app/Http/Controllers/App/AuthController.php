@@ -8,6 +8,29 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends AppController
 {
+    /**
+     * Log the user out of the application.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function check(Request $request)
+    {
+        if (Auth::check()) {
+            return self::json(Auth::user()->toArrayCamelize(), 200);
+        }
+
+        return self::json([], 401, ['message' => 'Not Authorized']);
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function login(Request $request)
     {
         if (Auth::guard()->attempt(
@@ -16,14 +39,28 @@ class AuthController extends AppController
         )) {
             $request->session()->regenerate();
             // $this->authenticated($request, $this->guard()->user());
-            return self::json(['user' => Auth::check() ? Auth::user() : false], 200);
+            return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
         }
 
         return self::json([], 401);
     }
 
-    public function check(Request $request)
+    /**
+     * Log the user out of the application.
+     *
+     * @param \Illuminate\Http\Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
     {
-        return self::json(['user' => Auth::check() ? Auth::user() : false], 200);
+        if (!Auth::check()) {
+            return self::json([], 401, ['message' => 'Not Authorized']);
+        }
+
+        Auth::guard()->logout();
+        $request->session()->invalidate();
+
+        return self::json([], 200);
     }
 }

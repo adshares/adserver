@@ -29,8 +29,8 @@ class AppController extends BaseController
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param string $index
-     * @param array  $rules
+     * @param string                   $index
+     * @param array                    $rules
      *
      * @return array
      *

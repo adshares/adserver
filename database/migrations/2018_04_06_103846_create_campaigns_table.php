@@ -5,11 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 
 class CreateCampaignsTable extends Migration
 {
-
     /**
      * Run the migrations.
-     *
-     * @return void
      */
     public function up()
     {
@@ -30,10 +27,12 @@ class CreateCampaignsTable extends Migration
 
             $table->dateTime('time_start');
             $table->dateTime('time_end');
+
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
 
         if (DB::isMysql()) {
-            DB::statement("ALTER TABLE campaigns MODIFY uuid varbinary(16) NOT NULL");
+            DB::statement('ALTER TABLE campaigns MODIFY uuid varbinary(16) NOT NULL');
         }
 
         Schema::table('campaigns', function (Blueprint $table) {
@@ -41,11 +40,8 @@ class CreateCampaignsTable extends Migration
         });
     }
 
-
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
     public function down()
     {
