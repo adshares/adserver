@@ -3,6 +3,7 @@
 Route::prefix('app')->group(function () {
     // Auth
     Route::post('auth/login', 'App\AuthController@login');
+    Route::get('auth/logout', 'App\AuthController@logout');
     Route::get('auth/check', 'App\AuthController@check');
     // Users
     Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
