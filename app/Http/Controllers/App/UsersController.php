@@ -29,8 +29,8 @@ class UsersController extends AppController
         $user->email_confirm_token = md5(openssl_random_pseudo_bytes(20));
 
         DB::beginTransaction();
-        Mail::to($user)->queue(new UserEmailActivate($user, $request->input('uri')));
         $user->save();
+        Mail::to($user)->queue(new UserEmailActivate($user, $request->input('uri')));
         DB::commit();
 
         $response = self::json($user->toArrayCamelize(), 201);
