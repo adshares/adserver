@@ -58,7 +58,7 @@ class AuthController extends AppController
             return self::json([], 401, ['message' => 'Not Authorized']);
         }
 
-        $this->guard()->logout();
+        Auth::guard()->logout();
         $request->session()->invalidate();
 
         return self::json([], 200);
