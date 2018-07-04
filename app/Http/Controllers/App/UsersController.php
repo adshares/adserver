@@ -5,7 +5,9 @@ namespace Adshares\Adserver\Http\Controllers\App;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class UsersController extends AppController
 {
@@ -20,14 +22,16 @@ class UsersController extends AppController
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'user', User::$rules_add);
-
+        Validator::make($request->all(), ['uri' => 'required'])->validate();
         $user = new User($request->input('user'));
         $user->password = $request->input('user.password');
         $user->email = $request->input('user.email');
         $user->email_confirm_token = md5(openssl_random_pseudo_bytes(20));
-        $user->save();
 
-        Mail::to($user)->queue(new UserEmailActivate($user));
+        DB::beginTransaction();
+        Mail::to($user)->queue(new UserEmailActivate($user, $request->input('uri')));
+        $user->save();
+        DB::commit();
 
         $response = self::json($user->toArrayCamelize(), 201);
         $response->header('Location', route('app.users.read', ['user_id' => $user->id]));

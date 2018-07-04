@@ -6,7 +6,6 @@ use Adshares\Adserver\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
 class UserEmailActivate extends Mailable
 {
@@ -17,14 +16,18 @@ class UserEmailActivate extends Mailable
      */
     protected $user;
 
+    protected $uri;
+
     /**
      * Create a new message instance.
      *
-     * @return void
+     * @param User   $user
+     * @param string $uri
      */
-    public function __construct(User $user)
+    public function __construct(User $user, $uri)
     {
         $this->user = $user;
+        $this->uri = $uri;
     }
 
     /**
@@ -37,6 +40,7 @@ class UserEmailActivate extends Mailable
         return $this->markdown('emails.user-email-activate')->with([
             // 'name' => $this->user->name,
             'hash' => $this->user->email_confirm_token,
+            'uri' => $this->uri,
         ]);
     }
 }
