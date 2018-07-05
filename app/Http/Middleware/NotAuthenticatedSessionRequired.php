@@ -20,7 +20,7 @@ class NotAuthenticatedSessionRequired
     public function handle($request, Closure $next, $guard = null)
     {
         if (Auth::guard($guard)->check()) {
-            return Response::json([], 403, ['errors' => ['message' => 'Required guest access']]);
+            return Response::json(['errors' => ['message' => 'Required guest access']], 403);
         }
 
         return $next($request);
