@@ -22,6 +22,5 @@ Route::prefix('app')->group(function () {
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
         Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
         Route::patch('users/{user_id?}', 'App\UsersController@edit')->name('app.users.edit');
-        Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
     });
 });
