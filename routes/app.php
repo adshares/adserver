@@ -1,6 +1,8 @@
 <?php
 
 Route::prefix('app')->group(function () {
+    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
+    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
     Route::post('users/email/activate', 'App\UsersController@emailActivate');
 
     Route::middleware('guest')->group(function () {
@@ -23,6 +25,7 @@ Route::prefix('app')->group(function () {
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
         Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
         Route::patch('users/{user_id?}', 'App\UsersController@edit')->name('app.users.edit');
+        Route::post('users/email', 'App\UsersController@emailChangeStep1');
         Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
     });
 });
