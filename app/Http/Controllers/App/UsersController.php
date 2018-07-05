@@ -4,6 +4,7 @@ namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Token;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Validator;
 
 class UsersController extends AppController
 {
+    protected $email_token_time = 24 * 60 * 60; // 24 hours
+
     /**
      * Create a new controller instance.
      */
@@ -23,14 +26,16 @@ class UsersController extends AppController
     {
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
+
+        DB::beginTransaction();
         $user = new User($request->input('user'));
         $user->password = $request->input('user.password');
         $user->email = $request->input('user.email');
-        $user->email_confirm_token = md5(openssl_random_pseudo_bytes(20));
-
-        DB::beginTransaction();
         $user->save();
-        Mail::to($user)->queue(new UserEmailActivate($user, $request->input('uri')));
+        Mail::to($user)->queue(new UserEmailActivate(
+            Token::generate('email-activate', $this->email_token_time, $user->id),
+            $request->input('uri')
+        ));
         DB::commit();
 
         $response = self::json($user->toArrayCamelize(), 201);
@@ -72,19 +77,19 @@ class UsersController extends AppController
 
     public function emailActivate(Request $request)
     {
-        $this->validateRequestObject($request, 'user', User::$rules_email_activate);
+        Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
-        $user = User::where(
-            'email_confirm_token',
-            $request->input('user.email_confirm_token')
-        )->whereNull('email_confirmed_at')->first();
-
+        DB::beginTransaction();
+        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+            return self::json([], 401);
+        }
+        $user = User::find($token['user_id']);
         if (empty($user)) {
             return self::json([], 401);
         }
-
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
+        DB::commit();
 
         return self::json($user->toArrayCamelize(), 200);
     }

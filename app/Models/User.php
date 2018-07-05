@@ -46,7 +46,7 @@ class User extends Authenticatable implements Camelizable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
     ];
 
     public static $rules = [
@@ -61,10 +61,6 @@ class User extends Authenticatable implements Camelizable
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
-    ];
-
-    public static $rules_email_activate = [
-        'email_confirm_token' => 'required',
     ];
 
     /**

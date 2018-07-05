@@ -11,22 +11,18 @@ class UserEmailActivate extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @var UserInvitation
-     */
-    protected $user;
-
+    protected $token;
     protected $uri;
 
     /**
      * Create a new message instance.
      *
-     * @param User   $user
+     * @param string $token
      * @param string $uri
      */
-    public function __construct(User $user, $uri)
+    public function __construct($token, $uri)
     {
-        $this->user = $user;
+        $this->token = $token;
         $this->uri = $uri;
     }
 
@@ -38,8 +34,7 @@ class UserEmailActivate extends Mailable
     public function build()
     {
         return $this->markdown('emails.user-email-activate')->with([
-            // 'name' => $this->user->name,
-            'hash' => $this->user->email_confirm_token,
+            'token' => $this->token,
             'uri' => $this->uri,
         ]);
     }
