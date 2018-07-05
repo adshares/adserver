@@ -28,10 +28,7 @@ class UsersController extends AppController
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
-        $user = new User($request->input('user'));
-        $user->password = $request->input('user.password');
-        $user->email = $request->input('user.email');
-        $user->save();
+        $user = User::register($request->input('user'));
         Mail::to($user)->queue(new UserEmailActivate(
             Token::generate('email-activate', $this->email_token_time, $user->id),
             $request->input('uri')
@@ -47,7 +44,7 @@ class UsersController extends AppController
     public function browse(Request $request)
     {
         // TODO check privileges
-        $users = User::with('AdserverWallet')->whereNull('deleted_at')->get();
+        $users = User::with('AdserverWallet')->get();
 
         return self::json($users->toArrayCamelize());
     }
@@ -57,17 +54,16 @@ class UsersController extends AppController
         // TODO check privileges
         // TODO reset email
         // TODO process
-        $user = User::whereNull('deleted_at')->findOrFail($user_id);
-        $user->deleted_at = new \DateTime();
-        $user->save();
+        $user = User::findOrFail($user_id);
+        $user->delete();
 
-        return self::json(['message' => 'successfully deleted'], 200);
+        return self::json([], 204);
     }
 
     public function edit(Request $request, $user_id)
     {
         // TODO check privileges
-        $user = User::whereNull('deleted_at')->findOrFail($user_id);
+        $user = User::findOrFail($user_id);
         $this->validateRequestObject($request, 'user', User::$rules);
         $user->fill($request->input('user'));
         $user->save();
@@ -97,7 +93,7 @@ class UsersController extends AppController
     public function read(Request $request, $user_id)
     {
         // TODO check privileges
-        $user = User::whereNull('deleted_at')->findOrFail($user_id);
+        $user = User::findOrFail($user_id);
 
         return self::json($user->toArrayCamelize());
     }
