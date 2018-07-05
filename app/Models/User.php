@@ -61,6 +61,7 @@ class User extends Authenticatable implements Camelizable
     public static $rules = [
         'email' => 'email|max:150|unique:users',
         'password' => 'min:8',
+        'password_new' => 'min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
     ];
