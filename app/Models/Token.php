@@ -61,36 +61,62 @@ class Token extends Model
     }
 
     /**
-     * checks if token is valid, process it (removes if one time use only, extends if multi use and extension requested, returns array from token data).
+     * checks if token is valid, process it (removes if one time use only).
      *
      * @param string $uuid
-     * @param int    $user_id
-     * @param int    $extend_valid_until_seconds
+     * @param int    $user_id default null
+     * @param string $tag     default null
      *
      * @return array
      */
-    public static function check($uuid, int $user_id = null, int $extend_valid_until_seconds = null)
+    public static function check($uuid, int $user_id = null, $tag = null)
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
-        if (!empty($userId)) {
+        if (!empty($user_id)) {
             $q->where('user_id', $user_id);
+        }
+        if (!empty($tag)) {
+            $q->where('tag', $tag);
         }
         $token = $q->first();
         if (empty($token)) {
             return false;
         }
-        if (!$token->multi_usage) {
-            $return = $token->toArray();
-            $token->delete();
-
+        $return = $token->toArray();
+        if ($token->multi_usage) {
             return $return;
         }
-        if (!empty($valid_until_seconds)) {
-            $token->valid_until = date('Y-m-d H:i:s', time() + $valid_until_seconds);
-            $token->save();
-        }
+        $token->delete();
 
         return $token->toArray();
+    }
+
+    /**
+     * extend token validation until time, returns true if token was valid and is being extended.
+     *
+     * @param string $uuid
+     * @param int    $seconds_valid
+     *
+     * @return bool
+     */
+    public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null)
+    {
+        $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
+        if (!empty($user_id)) {
+            $q->where('user_id', $user_id);
+        }
+        if (!empty($tag)) {
+            $q->where('tag', $tag);
+        }
+        $token = $q->first();
+
+        if (empty($token)) {
+            return false;
+        }
+        $token->valid_until = date('Y-m-d H:i:s', time() + $seconds_valid);
+        $token->save();
+
+        return true;
     }
 
     /**

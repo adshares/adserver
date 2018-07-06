@@ -67,51 +67,51 @@ class UsersController extends AppController
         return self::json([], 204);
     }
 
-    public function edit(Request $request, $user_id = null)
+    public function edit(Request $request)
     {
-        // TODO check privileges
-        // Currently only for logged in user
-        // has logic errors but works tmp
-        // messy
+        if (!Auth::check() && !$request->has('user.token')) {
+            return self::json([], 401, ['message' => 'Required authenticated access or token authentication']);
+        }
 
-        // $user = User::findOrFail($user_id);
-        $user = Auth::user();
+        DB::beginTransaction();
+        if (Auth::check()) {
+            $user = Auth::user();
+            $token_authorization = false;
+        } else {
+            if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
+                DB::rollBack();
+
+                return self::json([], 422, ['message' => 'Authentication token is invalid']);
+            }
+            $user = User::findOrFail($token['user_id']);
+            $token_authorization = true;
+        }
+
         $this->validateRequestObject($request, 'user', User::$rules);
         $user->fill($request->input('user'));
-        $user->save();
 
         if (!$request->has('user.password_new')) {
+            $user->save();
+            DB::commit();
+
             return self::json($user->toArrayCamelize(), 200);
         }
 
-        if (!$request->has('user.password_old') && !$request->has('user.password_recovery_token')) {
-            return self::json($user->toArrayCamelize(), 422, ['message' => 'Requires old password or token']);
-        }
-
-        if ($request->has('user.password_old')) {
-            if ($user->validPassword($request->input('user.password_old'))) {
-                return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Wrong old password provided']);
-            }
-        }
-
-        if ($request->has('user.password_recovery_token')) {//this is currently not needed, leave it for the possible future
-            DB::beginTransaction();
-            if (false === $token = Token::check($request->input('user.password_recovery_token'), $user->id)) {
-                DB::rollBack();
-
-                return self::json([], 401);
-            }
+        if ($token_authorization) {
             $user->password = $request->input('user.password_new');
             $user->save();
             DB::commit();
 
-            return self::json($user->toArrayCamelize(), 422, ['message' => 'Requires old password or token']);
+            return self::json($user->toArrayCamelize(), 200);
         }
 
-        // $request->has('user.password_recovery_token')
+        if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
+            return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Old password is not valid']);
+        }
 
-        // $user->password = $request->input('user.password_new');
+        $user->password = $request->input('user.password_new');
         $user->save();
+        DB::commit();
 
         return self::json($user->toArrayCamelize(), 200);
     }

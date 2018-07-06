@@ -90,4 +90,18 @@ class AuthController extends AppController
 
         return self::json([], 204);
     }
+
+    /**
+     * Tests and extends user password recovery token.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function recoveryTokenExtend($token)
+    {
+        if (Token::extend($token, $this->password_recovery_token_time, null, 'password-recovery')) {
+            return self::json([], 204);
+        }
+
+        return self::json([], 422, ['message' => 'Password recovery token is invalid']);
+    }
 }
