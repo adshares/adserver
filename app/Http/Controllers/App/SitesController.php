@@ -10,7 +10,7 @@ class SitesController extends AppController
 {
     public function add(Request $request)
     {
-        $this->validateRequest($request, 'site', Site::$rules);
+        $this->validateRequestObject($request, 'site', Site::$rules);
         $site = Site::create($request->input('site'));
         $site->save();
 
@@ -55,7 +55,7 @@ class SitesController extends AppController
 
     public function edit(Request $request, $siteId)
     {
-        $this->validateRequest($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
+        $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
         // TODO check privileges
         $site = Site::whereNull('deleted_at')->findOrFail($siteId);

@@ -15,17 +15,13 @@ class CreateUsersTable extends Migration
             $table->bigIncrements('id');
             $table->binary('uuid', 16);
             $table->string('email', 191)->unique();
-            $table->string('email_confirm_token', 32)->nullable();
-            $table->timestamp('email_confirmed_at')->nullable();
-
-            $table->rememberToken();
 
             $table->timestamps();
             $table->softDeletes();
-
-            $table->string('password');
+            $table->timestamp('email_confirmed_at')->nullable();
 
             $table->string('name')->nullable();
+            $table->string('password');
 
             $table->boolean('is_advertiser')->nullable();
             $table->boolean('is_publisher')->nullable();

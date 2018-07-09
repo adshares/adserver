@@ -1,12 +1,12 @@
 @component('mail::message')
-# Account Activation
+# Password Recovery
 
 {{-- Dear {{ $name }} --}}
 
-Thank you for registering with Adshares. Please click button below to activate your account
+Please use button below to setup your new password
 
 @component('mail::button', ['url' => env('ADPANEL_URL').$uri.$token])
-Accept and Activate
+Setup new password
 @endcomponent
 
 Thanks,<br>

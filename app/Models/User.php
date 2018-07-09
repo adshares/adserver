@@ -8,6 +8,7 @@ use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\ToArrayCamelize;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
@@ -15,10 +16,18 @@ use Illuminate\Support\Facades\Hash;
 class User extends Authenticatable implements Camelizable
 {
     use Notifiable;
+    use SoftDeletes;
 
     use AutomateMutators;
     use BinHex;
     use ToArrayCamelize;
+
+    /**
+     * The attributes that should be mutated to dates.
+     *
+     * @var array
+     */
+    protected $dates = ['deleted_at'];
 
     /**
      * The event map for the model.
@@ -46,12 +55,13 @@ class User extends Authenticatable implements Camelizable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
     ];
 
     public static $rules = [
         'email' => 'email|max:150|unique:users',
         'password' => 'min:8',
+        'password_new' => 'min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
     ];
@@ -61,10 +71,6 @@ class User extends Authenticatable implements Camelizable
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
-    ];
-
-    public static $rules_email_activate = [
-        'email_confirm_token' => 'required',
     ];
 
     /**
@@ -81,9 +87,14 @@ class User extends Authenticatable implements Camelizable
         return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
     }
 
-    public function checkPassword($value)
+    public static function register($data)
     {
-        return Hash::check($this->attributes['password'], $value);
+        $user = new User($data);
+        $user->password = $data['password'];
+        $user->email = $data['email'];
+        $user->save();
+
+        return $user;
     }
 
     public function setPasswordAttribute($value)
@@ -99,5 +110,10 @@ class User extends Authenticatable implements Camelizable
         $array['isEmailConfirmed'] = !empty($array['email_confirmed_at']);
 
         return $array;
+    }
+
+    public function validPassword($value)
+    {
+        return Hash::check($this->attributes['password'], $value);
     }
 }

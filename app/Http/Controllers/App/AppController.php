@@ -29,7 +29,7 @@ class AppController extends BaseController
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param string                   $index
+     * @param string                   $name
      * @param array                    $rules
      *
      * @return array
@@ -37,13 +37,13 @@ class AppController extends BaseController
      * @throws JsonResponseException
      * @throws \Illuminate\Validation\ValidationException
      */
-    protected function validateRequest(Request $request, String $index, array $rules)
+    protected function validateRequestObject(Request $request, String $name, array $rules)
     {
-        if (!$request->has($index)) {
-            throw new JsonResponseException(self::json([], 422, ['message' => "Missing data '$index'"]));
+        if (!$request->has($name)) {
+            throw new JsonResponseException(self::json([], 422, ['message' => "Missing request object '$name'"]));
         }
         /* @var $validator \Illuminate\Validation\Validator */
-        $validator = Validator::make($request->input($index), $rules);
+        $validator = Validator::make($request->input($name), $rules);
 
         return $validator->validate();
     }

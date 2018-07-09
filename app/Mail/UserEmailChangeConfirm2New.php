@@ -7,7 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class UserEmailActivate extends Mailable
+class UserEmailChangeConfirm2New extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -33,7 +33,7 @@ class UserEmailActivate extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.user-email-activate')->with([
+        return $this->markdown('emails.user-email-change-confirm-2-new')->with([
             'token' => $this->token,
             'uri' => $this->uri,
         ]);
