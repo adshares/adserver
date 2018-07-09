@@ -1,12 +1,12 @@
 @component('mail::message')
-# Account Activation
+# Confirm your new email
 
 {{-- Dear {{ $name }} --}}
 
-Thank you for registering with Adshares. Please click button below to activate your account
+Please confirm this is your new email that you want to link with your Adshares account
 
 @component('mail::button', ['url' => env('ADPANEL_URL').$uri.$token])
-Accept and Activate
+Confirm and save new email
 @endcomponent
 
 Thanks,<br>

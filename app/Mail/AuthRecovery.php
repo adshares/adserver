@@ -2,12 +2,11 @@
 
 namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class UserEmailActivate extends Mailable
+class AuthRecovery extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -33,7 +32,7 @@ class UserEmailActivate extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.user-email-activate')->with([
+        return $this->markdown('emails.auth-recovery')->with([
             'token' => $this->token,
             'uri' => $this->uri,
         ]);

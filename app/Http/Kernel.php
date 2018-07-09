@@ -67,10 +67,11 @@ class Kernel extends HttpKernel
         'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
-        'guest' => \Adshares\Adserver\Http\Middleware\RedirectIfAuthenticated::class,
-        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'cors' => \Barryvdh\Cors\HandleCors::class,
+        'guest' => \Adshares\Adserver\Http\Middleware\NotAuthenticatedSessionRequired::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'snake_casing' => \Adshares\Adserver\Http\Middleware\SnakeCasing::class,
+        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'user' => \Adshares\Adserver\Http\Middleware\AuthenticatedSessionRequired::class,
     ];
 }
