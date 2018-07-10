@@ -53,7 +53,10 @@ class Token extends Model
      */
     public static function canGenerate(int $user_id, $tag, int $older_then_seconds)
     {
-        if (self::where('user_id', $user_id)->where('tag', $tag)->where('created_at', '>', date('Y-m-d H:i:s', time() - $older_then_seconds))->count()) {
+        if (self::where('user_id', $user_id)
+            ->where('tag', $tag)
+            ->where('created_at', '>', date('Y-m-d H:i:s', time() - $older_then_seconds))
+            ->count()) {
             return false;
         }
 
@@ -130,8 +133,13 @@ class Token extends Model
      *
      * @return string
      */
-    public static function generate(string $tag, int $valid_until_seconds, int $user_id = null, $payload = null, bool $multi_usage = false)
-    {
+    public static function generate(
+        string $tag,
+        int $valid_until_seconds,
+        int $user_id = null,
+        $payload = null,
+        bool $multi_usage = false
+    ) {
         $valid_until = date('Y-m-d H:i:s', time() + $valid_until_seconds);
         $token = self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
 
