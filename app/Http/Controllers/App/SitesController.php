@@ -90,4 +90,30 @@ class SitesController extends AppController
 
         return self::json(compact('site'));
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
+     * @throws \Illuminate\Validation\ValidationException
+     * "totalEarnings": 1364,
+    "totalClicks": 224,
+    "totalImpressions": 12546,
+    "averagePageRPM": 0.0515,
+    "averageCPC": 2.05
+     */
+    public function count(Request $request)
+    {
+        //@TODO: create function data
+        $siteCount = [
+            "totalEarnings" => 0,
+            "totalClicks"=> 0,
+            "totalImpressions" => 0,
+            "averagePageRPM" => 0,
+            "averageCPC" => 0
+        ];
+        $response = self::json($siteCount, 200);
+
+        return $response;
+    }
 }
