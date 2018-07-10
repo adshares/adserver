@@ -2,6 +2,7 @@
 
 namespace Adshares\Adserver\Tests\Feature;
 
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,6 +14,8 @@ class UsersTest extends TestCase
 
     public function testEmptyDb()
     {
+        $this->actingAs(factory(User::class)->create());
+
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(0);
@@ -26,7 +29,7 @@ class UsersTest extends TestCase
         /* @var $user \Adshares\Adserver\Models\User */
         $user = factory(\Adshares\Adserver\Models\User::class)->make();
 
-        $response = $this->postJson(self::URI, ["user" => $user->getAttributes()]);
+        $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
@@ -35,6 +38,8 @@ class UsersTest extends TestCase
         $uri = $response->headers->get('Location');
         $matches = [];
         $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]));
 
         $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
@@ -57,9 +62,11 @@ class UsersTest extends TestCase
 
         $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
         foreach ($users as $user) {
-            $response = $this->postJson(self::URI, ["user" => $user->getAttributes()]);
+            $response = $this->postJson(self::URI, ["user" => $user->getAttributes(), 'uri' => '/']);
             $response->assertStatus(201);
         }
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]));
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);

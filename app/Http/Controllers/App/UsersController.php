@@ -141,7 +141,11 @@ class UsersController extends AppController
         $user = Auth::user();
         DB::beginTransaction();
         if (!Token::canGenerate($user->id, 'email-activate', $this->email_activation_resend_limit)) {
-            return self::json([], 400, ['message' => 'You can request 1 email activation every 15 minutes. Please wait.']);
+            return self::json(
+                [],
+                400,
+                ['message' => 'You can request 1 email activation every 15 minutes. Please wait.']
+            );
         }
         Mail::to($user)->queue(new UserEmailActivate(
             Token::generate('email-activate', $this->email_activation_token_time, $user->id),
@@ -154,7 +158,10 @@ class UsersController extends AppController
 
     public function emailChangeStep1(Request $request)
     {
-        Validator::make($request->all(), ['email' => 'required|email', 'URIstep1' => 'required', 'URIstep2' => 'required'])->validate();
+        Validator::make(
+            $request->all(),
+            ['email' => 'required|email', 'URIstep1' => 'required', 'URIstep2' => 'required']
+        )->validate();
         if (User::withTrashed()->where('email', $request->input('email'))->count()) {
             return self::json([], 422, ['email' => 'This email already exists in our database']);
         }

@@ -1,7 +1,0 @@
-parameters:
-    autoload_files:
-        - ./_ide_helper.php
-    ignoreErrors:
-        - '#Non-static method Illuminate\\Auth\\Access\\Gate::policy\(\) should not be called statically#'
-includes:
-        - vendor/weebly/phpstan-laravel/extension.neon

@@ -30,45 +30,20 @@ addons:
 install:
   - composer install --no-ansi --no-scripts
   - composer run-script install-codestandards
-  - php artisan ide-helper:generate
-  #- cp app/config/parameters.yml.dist app/config/parameters.yml
-  #- php bin/console doctrine:database:create --env=test
-  #- php bin/console doctrine:schema:create --env=test
-  #- php bin/console doctrine:fixtures:load -n --env=test
 
-stages:
-  - build
-  - quality
-  - test
-#  - name: deploy
-#      if: branch = master
-
-jobs:
-  include:
-    # PHP Lint: check syntax errors in all PHP files
-    - stage: build
-      script: ./bin/vendor/parallel-lint --no-colors --blame --exclude vendor .
-    # SensioLabs Security Checker: check dependencies with known security vulnerabilities
-    #- stage: build
-    #  script: ./bin/vendor/security-checker security:check
-    # PHP_CodeSniffer: check PHP compatibility
-    - stage: quality
-      script: ./bin/vendor/phpcs -s app --standard=PHPCompatibility
-    # PHP_CodeSniffer: check PSR2 standard
-    - stage: quality
-      script: ./bin/vendor/phpcs -s app --standard=PSR2
-    # PHP Static Analysis Tool
-    - stage: quality
-      script: ./bin/vendor/phpstan --no-ansi --no-progress analyse -c phpstan.neon -l 7 app
-    # Sonar Qube
-    - stage: quality
-      script: sonar-scanner
-    # PHP unit tests
-    - stage: test
-      script:
-        - alias php='php -dzend_extension=xdebug.so'
-        - alias phpunit='php ./bin/vendor/phpunit'
-        - phpunit --configuration phpunit.xml tests
+script:
+  # PHP Lint: check syntax errors in all PHP files
+  - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
+  # PHP_CodeSniffer: check PHP compatibility
+  - ./vendor/bin/phpcs -s --standard=PHPCompatibility src tests
+  # PHP_CodeSniffer: check PSR2 standard
+  - ./vendor/bin/phpcs -s --standard=PSR2 src tests
+  # PHP unit tests
+  - alias php='php -dzend_extension=xdebug.so'
+  - alias phpunit='php ./vendor/bin/phpunit'
+  - phpunit --testsuit Unit
+  # SonarQube
+  - sonar-scanner
 
 # After a build, send email notification with the build results
 notifications:
