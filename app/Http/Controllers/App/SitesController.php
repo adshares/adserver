@@ -96,11 +96,6 @@ class SitesController extends AppController
      * @return \Illuminate\Http\JsonResponse
      * @throws \Adshares\Adserver\Exceptions\JsonResponseException
      * @throws \Illuminate\Validation\ValidationException
-     * "totalEarnings": 1364,
-    "totalClicks": 224,
-    "totalImpressions": 12546,
-    "averagePageRPM": 0.0515,
-    "averageCPC": 2.05
      */
     public function count(Request $request)
     {
