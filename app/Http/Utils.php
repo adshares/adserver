@@ -460,4 +460,24 @@ class Utils
 
         return false;
     }
+
+    public static function normalizeAdsharesAddress($address)
+    {
+        $x = preg_replace('/[^0-9A-FX]+/', '', strtoupper($address));
+        if (16 != strlen($x)) {
+            throw new \RuntimeException('Invalid adshares address');
+        }
+
+        return sprintf('%s-%s-%s', substr($x, 0, 4), substr($x, 4, 8), substr($x, 12, 4));
+    }
+
+    public static function normalizeAdsharesTxid($txid)
+    {
+        $x = preg_replace('/[^0-9A-F]+/', '', strtoupper($txid));
+        if (16 != strlen($x)) {
+            throw new \RuntimeException('Invalid adshares address');
+        }
+
+        return sprintf('%s:%s:%s', substr($x, 0, 4), substr($x, 4, 8), substr($x, 12, 4));
+    }
 }
