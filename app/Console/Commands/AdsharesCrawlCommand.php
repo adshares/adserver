@@ -9,7 +9,14 @@ use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 
-class AdserversCrawlCommand extends Command
+/**
+ * supply adserver.
+ *
+ * Crawl command =is called periodically. It queries blockchain for available adsevers.
+ * It downloads available advertisements from each adserver and stores offers in local db
+ * Updates are forwarded to adselect
+ */
+class AdsharesCrawlCommand extends Command
 {
     protected $broadcast = true;
     protected $host;
