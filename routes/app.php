@@ -27,6 +27,8 @@ Route::prefix('app')->group(function () {
 
         Route::get('campaigns', 'App\CampaignsController@browse')->name('app.sites.browse');
         Route::get('campaigns/targeting', 'App\CampaignsController@targeting')->name('app.campaigns.targeting');
+        Route::post('campaigns', 'App\SitesController@add')->name('app.campaigns.add');
+        Route::get('campaigns/{campaign}', 'App\SitesController@read')->name('app.campaigns.read');
 
         Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
