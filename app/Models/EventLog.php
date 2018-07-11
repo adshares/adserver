@@ -81,7 +81,7 @@ class EventLog extends Model
             [
                 'user' => $this->our_userdata,
             ]
-          );
+        );
     }
 
     public function getTheirKeywords()
