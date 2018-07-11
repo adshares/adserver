@@ -1,6 +1,7 @@
 <?php
 
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserAdserverWallet;
 use Illuminate\Database\Seeder;
 
 class MockDataUsersSeeder extends Seeder
@@ -28,6 +29,11 @@ class MockDataUsersSeeder extends Seeder
             $u->email = $r->email;
             $u->password = $r->password;
             $u->save();
+
+            $w = UserAdserverWallet::where('user_id', $u->id)->first();
+            $w->adshares_address = $r->adserverWallet->adshares_address;
+            $w->total_funds = $r->adserverWallet->total_funds;
+            $w->save();
 
             $this->command->info(" Added - <{$u->email}> with password '{$r->password}'");
         }

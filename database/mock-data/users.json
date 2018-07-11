@@ -4,7 +4,7 @@
     "password":"useruser",
     "adserverWallet" : {
       "adshares_address":"0001-00000001-8B4E",
-      "totalFunds":200
+      "total_funds":200
     }
   },
   {
@@ -12,7 +12,7 @@
     "password":"publisher",
     "adserverWallet" : {
       "adshares_address":"0001-00000002-BB2D",
-      "totalFunds":0
+      "total_funds":0
     }
 
   },
@@ -21,7 +21,7 @@
     "password":"advertiser",
     "adserverWallet" : {
       "adshares_address":"0001-00000003-AB0C",
-      "totalFunds":1000
+      "total_funds":1000
     }
   }
 ]
