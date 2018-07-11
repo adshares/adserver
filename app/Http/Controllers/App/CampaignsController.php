@@ -8,7 +8,6 @@ use Adshares\Adserver\Models\Campaign;
 
 class CampaignsController extends AppController
 {
-
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
@@ -71,10 +70,11 @@ class CampaignsController extends AppController
         return self::json(compact('campaign'));
     }
 
-
     /**
      * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
+     *
      * @throws \Adshares\Adserver\Exceptions\JsonResponseException
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -86,5 +86,4 @@ class CampaignsController extends AppController
 
         return $response;
     }
-
 }
