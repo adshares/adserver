@@ -114,6 +114,6 @@ class User extends Authenticatable implements Camelizable
 
     public function validPassword($value)
     {
-        return Hash::check($this->attributes['password'], $value);
+        return Hash::check($value,$this->attributes['password'] );
     }
 }
