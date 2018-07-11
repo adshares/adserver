@@ -111,4 +111,20 @@ class SitesController extends AppController
 
         return $response;
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function targeting(Request $request)
+    {
+        //@TODO: create function data
+        $siteTargeting = [];
+        $response = self::json($siteTargeting, 200);
+
+        return $response;
+    }
+
 }
