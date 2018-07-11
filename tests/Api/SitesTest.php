@@ -20,7 +20,7 @@ class SitesTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI . '/1');
+        $response = $this->getJson(self::URI.'/1');
         $response->assertStatus(404);
     }
 
@@ -31,7 +31,7 @@ class SitesTest extends TestCase
         /* @var $site \Adshares\Adserver\Models\Site */
         $site = factory(\Adshares\Adserver\Models\Site::class)->make();
 
-        $response = $this->postJson(self::URI, ["site" => $site->getAttributes()]);
+        $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
@@ -42,7 +42,7 @@ class SitesTest extends TestCase
         $matches = [];
         $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
 
-        $response = $this->getJson(self::URI . '/' . $matches[1]);
+        $response = $this->getJson(self::URI.'/'.$matches[1]);
         $response->assertStatus(200);
         $response->assertJsonFragment(['name' => $site->name]);
         $response->assertJsonFragment(['url' => $site->url]);
@@ -59,7 +59,7 @@ class SitesTest extends TestCase
 
         $users = factory(\Adshares\Adserver\Models\Site::class, $count)->make();
         foreach ($users as $site) {
-            $response = $this->postJson(self::URI, ["site" => $site->getAttributes()]);
+            $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
             $response->assertStatus(201);
         }
 

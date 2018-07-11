@@ -20,7 +20,7 @@ class UsersTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI . '/1');
+        $response = $this->getJson(self::URI.'/1');
         $response->assertStatus(404);
     }
 
@@ -41,7 +41,7 @@ class UsersTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(['is_admin' => true]));
 
-        $response = $this->getJson(self::URI . '/' . $matches[1]);
+        $response = $this->getJson(self::URI.'/'.$matches[1]);
         $response->assertStatus(200);
         $response->assertJsonFragment(['email' => $user->email]);
 
@@ -62,7 +62,7 @@ class UsersTest extends TestCase
 
         $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
         foreach ($users as $user) {
-            $response = $this->postJson(self::URI, ["user" => $user->getAttributes(), 'uri' => '/']);
+            $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
             $response->assertStatus(201);
         }
 

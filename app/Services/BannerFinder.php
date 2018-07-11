@@ -72,11 +72,15 @@ class BannerFinder
             foreach ($zones as $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
 
-                // $zone instanceof Zone; // ?? Yodahack : what the hack
-                $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
-                    ->where('creative_height', $zone->height)
-                    ->whereIn('creative_type', $typeDefault)
-                    ->get()->pluck('uuid')->random();
+                try {
+                    // $zone instanceof Zone; // ?? Yodahack : what the hack
+                    $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                      ->where('creative_height', $zone->height)
+                      ->whereIn('creative_type', $typeDefault)
+                      ->get()->pluck('uuid')->random();
+                } catch (\InvalidArgumentException $e) {
+                    $bannerIds[] = '';
+                }
             }
         }
 
