@@ -4,21 +4,12 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Models\EventLog;
-
-use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
-
 use Adshares\Adserver\Services\BannerFinder;
 use Adshares\Adserver\Services\Adselect;
-
-use Adshares\Esc\Esc;
-
-use Exception;
-
+use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -28,8 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 // TODO: review request headers // extract & organize ??
 
 /**
- * HTTP api that is used by supply adserver to display banners and log relevant events
- *
+ * HTTP api that is used by supply adserver to display banners and log relevant events.
  */
 class SupplyController extends Controller
 {
@@ -37,17 +27,17 @@ class SupplyController extends Controller
     {
         $response = new Response();
 
-        if ($request->headers->has("Origin")) {
-            $response->headers->set("Access-Control-Allow-Origin", $request->headers->get("Origin"));
-            $response->headers->set("Access-Control-Allow-Credentials", "true");
-            $response->headers->set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         }
 
-        if ($request->getRealMethod() == 'GET') {
+        if ('GET' == $request->getRealMethod()) {
             $data = $request->getQueryString();
-        } elseif ($request->getRealMethod() == 'POST') {
+        } elseif ('POST' == $request->getRealMethod()) {
             $data = $request->getContent();
-        } elseif ($request->getRealMethod() == 'OPTIONS') {
+        } elseif ('OPTIONS' == $request->getRealMethod()) {
             $response->setStatusCode(204);
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
@@ -58,7 +48,7 @@ class SupplyController extends Controller
 //         print_r($decoded);exit;
         $zones = $decoded['zones'];
 
-        $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, "", new \DateTime());
+        $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, '', new \DateTime());
 
         // use adselect here
         $context = Utils::getImpressionContext($request, $data);
@@ -67,7 +57,7 @@ class SupplyController extends Controller
         if ($impressionId) {
             $aduser_endpoint = config('app.aduser_endpoint');
             if ($aduser_endpoint) {
-                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
@@ -79,7 +69,7 @@ class SupplyController extends Controller
 
         foreach ($banners as &$banner) {
             if ($banner) {
-                $banner['pay_to'] = Esc::normalizeAddress(config('app.adshares_address'));
+                $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
             }
         }
 
@@ -88,7 +78,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    # we do it here because ORIGIN may be configured elsewhere with randomization of hostname
+    // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
     public function findScript(Request $request)
     {
         $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_endpoint'))];
@@ -106,15 +96,15 @@ class SupplyController extends Controller
         $response->headers->set('Content-Type', 'text/javascript');
 
         $response->setCache(array(
-            'etag' => md5(md5_file($jsPath) . implode(':', $params)),
-            'last_modified' => new \DateTime('@' . filemtime($jsPath)),
+            'etag' => md5(md5_file($jsPath).implode(':', $params)),
+            'last_modified' => new \DateTime('@'.filemtime($jsPath)),
             'max_age' => 3600 * 24 * 30,
             's_maxage' => 3600 * 24 * 30,
             'private' => false,
-            'public' => true
+            'public' => true,
         ));
 
-        if (! $response->isNotModified($request)) {
+        if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
         }
 
@@ -128,10 +118,10 @@ class SupplyController extends Controller
             $request->query->remove('r');
         } else {
             $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
-                'uuid' => $id
+                'uuid' => $id,
             ]);
 
-            if (! $banner) {
+            if (!$banner) {
                 throw new NotFoundHttpException();
             }
 
@@ -141,12 +131,12 @@ class SupplyController extends Controller
         if ($qString) {
             $qPos = strpos($url, '?');
 
-            if ($qPos === false) {
-                $url .= '?' . $qString;
+            if (false === $qPos) {
+                $url .= '?'.$qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&' . $qString;
+                $url .= '&'.$qString;
             }
         }
 
@@ -163,7 +153,7 @@ class SupplyController extends Controller
         $log->setPayFrom($payFrom);
         $log->setTid($tid);
         $log->setIp($logIp);
-        $log->setEventType("click");
+        $log->setEventType('click');
         //         $log->setContext(Utils::getImpressionContext($this->container, $request));
 
         $em = $this->getDoctrine()->getManager();
@@ -192,12 +182,12 @@ class SupplyController extends Controller
         if ($qString) {
             $qPos = strpos($url, '?');
 
-            if ($qPos === false) {
-                $url .= '?' . $qString;
+            if (false === $qPos) {
+                $url .= '?'.$qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&' . $qString;
+                $url .= '&'.$qString;
             }
         }
 
@@ -213,7 +203,7 @@ class SupplyController extends Controller
         $log->pay_from = $payFrom;
         $log->tid = $tid;
         $log->ip = $logIp;
-        $log->event_type = "view";
+        $log->event_type = 'view';
         $log->context = Utils::getImpressionContext($request);
 
         // GET kewords from aduser
@@ -254,7 +244,7 @@ class SupplyController extends Controller
 
         $log = NetworkEventLog::find($log_id);
         if ($log) {
-            $log->their_userdata =$keywords;
+            $log->their_userdata = $keywords;
             $log->save();
         }
         //         $keywords = print_r($keywords, 1);
