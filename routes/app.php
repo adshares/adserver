@@ -17,7 +17,7 @@ Route::prefix('app')->group(function () {
         Route::get('auth/check', 'App\AuthController@check');
         Route::get('auth/logout', 'App\AuthController@logout');
 
-        Route::get('sites/count', 'App\SitesController@count')->name('app.sites.delete');
+        Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
         Route::delete('sites/{site}', 'App\SitesController@delete')->name('app.sites.delete');
         Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
         Route::get('sites/{site}', 'App\SitesController@read')->name('app.sites.read');

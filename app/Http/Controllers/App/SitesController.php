@@ -53,6 +53,29 @@ class SitesController extends AppController
         return self::json($sites);
     }
 
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function count(Request $request)
+    {
+        //@TODO: create function data
+        $siteCount = [
+            'totalEarnings' => 0,
+            'totalClicks' => 0,
+            'totalImpressions' => 0,
+            'averagePageRPM' => 0,
+            'averageCPC' => 0,
+        ];
+        $response = self::json($siteCount, 200);
+
+        return $response;
+    }
+
     public function edit(Request $request, $siteId)
     {
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
@@ -93,28 +116,9 @@ class SitesController extends AppController
 
     /**
      * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function count(Request $request)
-    {
-        //@TODO: create function data
-        $siteCount = [
-            "totalEarnings" => 0,
-            "totalClicks"=> 0,
-            "totalImpressions" => 0,
-            "averagePageRPM" => 0,
-            "averageCPC" => 0
-        ];
-        $response = self::json($siteCount, 200);
-
-        return $response;
-    }
-
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     *
      * @throws \Adshares\Adserver\Exceptions\JsonResponseException
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -126,5 +130,4 @@ class SitesController extends AppController
 
         return $response;
     }
-
 }
