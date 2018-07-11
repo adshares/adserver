@@ -23,10 +23,10 @@ Route::prefix('app')->group(function () {
         Route::get('sites/{site}', 'App\SitesController@read')->name('app.sites.read');
         Route::patch('sites/{site}', 'App\SitesController@edit')->name('app.sites.edit');
         Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
-        Route::post('sites/targeting', 'App\SitesController@targeting')->name('app.sites.targeting');
+        Route::get('sites/targeting', 'App\SitesController@targeting')->name('app.sites.targeting');
 
         Route::get('campaigns', 'App\CampaignsController@browse')->name('app.sites.browse');
-        Route::post('campaigns/targeting', 'App\CampaignsController@targeting')->name('app.campaigns.targeting');
+        Route::get('campaigns/targeting', 'App\CampaignsController@targeting')->name('app.campaigns.targeting');
 
         Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
