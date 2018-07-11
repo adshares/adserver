@@ -26,10 +26,10 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(AdsClient::class, function ($app) {
             $drv = new CliDriver(
-              config('app.adshares_address'),
-              config('app.adshares_secret'),
-              config('app.adshares_node_host'),
-              config('app.adshares_node_port')
+                config('app.adshares_address'),
+                config('app.adshares_secret'),
+                config('app.adshares_node_host'),
+                config('app.adshares_node_port')
             );
             $drv->setCommand(config('app.adshares_command'));
             $drv->setWorkingDir(config('app.adshares_workingdir'));
