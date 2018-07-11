@@ -138,7 +138,7 @@ class MockDataCampaignsSeeder extends Seeder
 
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
-                $c->landing_url = 'http://'.$cr->url.'/';
+                $c->landing_url = $cr->url;
                 $c->user_id = $u->id;
                 $c->max_cpm = $cr->max_cpm;
                 $c->max_cpc = $cr->max_cpc;
