@@ -2,7 +2,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Esc\Esc;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -17,7 +17,7 @@ class ApiController extends Controller
         $campaigns = [];
         foreach (Campaign::getWithReferences(false) as $i => $campaign) {
             $campaigns[$i] = $campaign->toArray();
-            $campaigns[$i]['adshares_address'] = Esc::normalizeAddress(config('app.adshares_address'));
+            $campaigns[$i]['adshares_address'] = Utils::normalizeAdsharesAddress(config('app.adshares_address'));
         }
 
         return Response::json(['campaigns' => $campaigns], 200, array(), JSON_PRETTY_PRINT);

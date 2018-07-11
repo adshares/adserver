@@ -4,7 +4,8 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Illuminate\Console\Command;
 use Adshares\Adserver\Services\Adselect;
-use Adshares\Esc\Esc;
+use Adshares\Adserver\Http\Utils;
+use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
 
@@ -27,8 +28,8 @@ class AdserversCrawlCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements
-from each adserver and stores offers in local db. Updates are forwarded to adselect.';
+    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements '.
+    'from each adserver and stores offers in local db. Updates are forwarded to adselect.';
 
     /**
      * Create a new command instance.
@@ -44,16 +45,16 @@ from each adserver and stores offers in local db. Updates are forwarded to adsel
      *
      * @return mixed
      */
-    public function handle(Adselect $adselect, Esc $esc)
+    public function handle(Adselect $adselect, AdsClient $adsClient)
     {
-        $this->readBroadcasts($esc);
-        $this->crawlHosts($esc, $adselect);
+        $this->readBroadcasts($adsClient);
+        $this->crawlHosts($adselect);
     }
 
-    protected function readBroadcasts(Esc $esc)
+    protected function readBroadcasts(AdsClient $adsClient)
     {
         try {
-            $logMessage = $esc->getBroadcastLog(time() - $this->registerHostsIfBroadcastedLimit);
+            $logMessage = $adsClient->getBroadcast(time() - $this->registerHostsIfBroadcastedLimit);
             print_r($logMessage);
             $logs = $logMessage->broadcast;
         } catch (\Exception $e) {
@@ -78,7 +79,7 @@ from each adserver and stores offers in local db. Updates are forwarded to adsel
                 $this->info("Found $host -> {$log['address']}");
                 // TODO: extract algo
                 if (preg_match('/^([a-z0-9][a-z0-9-]{0,62}\.)+([a-z]{2,})$/i', $host)) {
-                    NetworkHost::registerHost(Esc::normalizeAddress($log['address']), $host);
+                    NetworkHost::registerHost(Utils::normalizeAdsharesAddress($log['address']), $host);
                 // TODO: check this with Jacek in adserver symfony code
                     // $nHost->setAccountMsid($log['account_msid']);
                 } else {
@@ -89,14 +90,14 @@ from each adserver and stores offers in local db. Updates are forwarded to adsel
 
         if ($this->broadcast) {
             $this->info("Broadcast own host: $this->host");
-            $x = $esc->sendBroadcast($this->host);
+            $x = $adsClient->broadcast($this->host);
             var_dump($x);
             // TODO: this fails currently
 //             die(print_r($x));
         }
     }
 
-    protected function crawlHosts(Esc $esc, Adselect $adselect)
+    protected function crawlHosts(Adselect $adselect)
     {
         $crawlTime = time();
 
