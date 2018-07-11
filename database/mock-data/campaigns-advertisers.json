@@ -1,0 +1,13 @@
+[
+  {
+    "email":"advertiser@e11.click",
+    "campaigns":[
+      {
+        "url":"http://advsertiser.ads",
+        "max_cpm": 1,
+        "max_cpc": 10,
+        "budget_per_hour": 100
+      }
+    ]
+  }
+]
