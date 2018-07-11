@@ -117,9 +117,13 @@ class AdserversCrawlCommand extends Command
                 continue;
             }
 
+            $uuids = [];
+
             foreach ($inventory['campaigns'] as $campaign_data) {
                 $campaign_data['source_host'] = $host;
-                $campaign = NetworkCampaign::fromJsonData($campaign_data); //, $existing);
+                $campaign = NetworkCampaign::fromJsonData($campaign_data);
+
+                $uuids[] = hex2bin($campaign->uuid);
 
                 $adselectCmp[] = $campaign->getAdselectJson();
                 if (100 == $batch++) {
@@ -134,18 +138,19 @@ class AdserversCrawlCommand extends Command
                 $adselect->addCampaigns($adselectCmp);
                 $adselectCmp = [];
 
-                // $deleted = $em->createQuery("SELECT u.uuid FROM Adshares\Entity\NetworkCampaign u
-                //    WHERE u.source_host = :host AND u.source_update_time != :time")
-                //   ->setParameter("host", $host)->setParameter("time", $crawlTime)
-                //   ->getResult(Query::HYDRATE_SCALAR);
+                $forRemoval = NetworkCampaign::where('source_host', $host)->whereNotIn('uuid', $uuids)->get();
 
-                // $campaignIds = [];
-                // foreach ($deleted as $r) {
-                //     $campaignIds[] = $host . '/'. $r['uuid'];
-                // }
-                // if ($campaignIds) {
-                //     $adselect->deleteCampaigns($campaignIds);
-                // }
+                if (empty($forRemoval)) {
+                    continue;
+                }
+                $campaignIds = [];
+                foreach ($forRemoval as $c) {
+                    $campaignIds[] = $host.'/'.$c->uuid;
+                }
+
+                NetworkCampaign::where('source_host', $host)->whereNotIn('uuid', $uuids)->delete();
+
+                $adselect->deleteCampaigns($campaignIds);
             }
 
             // $query = $em->createQuery("DELETE FROM Adshares\Entity\NetworkCampaign u
