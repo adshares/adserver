@@ -2,6 +2,7 @@
 
 namespace Adshares\Adserver\Providers;
 
+use Adshares\Adserver\Services\Adpay;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
@@ -21,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->bind(Adpay::class, function ($app) {
+            return new Adpay(config('app.adpay_endpoint'), config('app.debug'));
+        });
         $this->app->bind(Adselect::class, function ($app) {
             return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
         });
