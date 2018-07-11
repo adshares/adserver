@@ -1,18 +1,9 @@
 <?php
+
 namespace Adshares\Adserver\Services;
-
-use Doctrine\ORM\EntityManager;
-
-use Symfony\Component\Routing\Router;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-
-use Symfony\Component\DependencyInjection\Container;
-use Doctrine\ORM\Query;
 
 use Adshares\Helper\Filter;
 use Adshares\Adserver\Http\Utils;
-
-
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
@@ -20,9 +11,7 @@ use Adshares\Adserver\Models\Zone;
 // use Adshares\Adserver\Services\Adselect;
 
 /**
- *
  * Returns random banners. Used if adselect service is not available. Shoud probalby be moved to Adselect class.
- *
  */
 class BannerFinder
 {
@@ -30,9 +19,8 @@ class BannerFinder
     {
         $typeDefault = [
             'html',
-            'image'
+            'image',
         ];
-
 
         // TODO: adselect
 
@@ -41,8 +29,7 @@ class BannerFinder
 
         $bannerIds = [];
 
-
-        /*if (false && $adselectService) {
+        if (false && $adselectService) {
             $requests = [];
             foreach ($zones as $i => $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
@@ -51,8 +38,8 @@ class BannerFinder
                 $website = $zone->getWebsite();
 
                 $impression_keywords = $keywords;
-                $impression_keywords['zone'] = $website->getHost() . '/' . $zone->getId();
-                $impression_keywords['banner_size'] = $zone->getWidth() . 'x' . $zone->getHeight();
+                $impression_keywords['zone'] = $website->getHost().'/'.$zone->getId();
+                $impression_keywords['banner_size'] = $zone->getWidth().'x'.$zone->getHeight();
 
 //                 print_r($impression_keywords);exit;
 
@@ -71,7 +58,7 @@ class BannerFinder
                     'user_id' => $impression_keywords['user_id'],
                     'banner_size' => $impression_keywords['banner_size'],
                     'keywords' => Utils::flattenKeywords($impression_keywords),
-                    'banner_filters' => $filters
+                    'banner_filters' => $filters,
                 ];
                 $bannerIds[$i] = null;
             }
@@ -81,17 +68,21 @@ class BannerFinder
                 $bannerIds[$response['request_id']] = $response['banner_id'];
             }
 //             ksort($bannerIds);
-        } else {*/
-        foreach ($zones as $zoneInfo) {
-            $zone = Zone::find($zoneInfo['zone']);
+        } else {
+            foreach ($zones as $zoneInfo) {
+                $zone = Zone::find($zoneInfo['zone']);
 
-            // $zone instanceof Zone; // ?? Yodahack : what the hack
-            $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
-                    ->where('creative_height', $zone->height)
-                    ->whereIn('creative_type', $typeDefault)
-                    ->get()->pluck('uuid')->random();
+                try {
+                    // $zone instanceof Zone; // ?? Yodahack : what the hack
+                    $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                      ->where('creative_height', $zone->height)
+                      ->whereIn('creative_type', $typeDefault)
+                      ->get()->pluck('uuid')->random();
+                } catch (\InvalidArgumentException $e) {
+                    $bannerIds[] = '';
+                }
+            }
         }
-        /*}*/
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {
@@ -104,8 +95,14 @@ class BannerFinder
                     'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->creative_sha1,
                     'pay_from' => $campaign->adshares_address, // send this info to log
-                    'click_url' => route('log-network-click', ['id'=>$banner->uuid,'r'=>Utils::UrlSafeBase64Encode($banner->click_url)]),
-                    'view_url' => route('log-network-view', ['id'=>$banner->uuid,'r'=>Utils::UrlSafeBase64Encode($banner->view_url)])
+                    'click_url' => route('log-network-click', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                    ]),
+                    'view_url' => route('log-network-view', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                    ]),
                 ];
             } else {
                 $banners[] = null;

@@ -37,7 +37,9 @@ class CreateNetworkCampaignsTable extends Migration
             $table->dateTime('time_end');
         });
 
-        DB::statement("ALTER TABLE network_campaigns MODIFY uuid varbinary(16) NOT NULL");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE network_campaigns MODIFY uuid varbinary(16) NOT NULL");
+        }
 
         Schema::table('network_campaigns', function (Blueprint $table) {
             $table->unique('uuid');

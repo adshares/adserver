@@ -32,10 +32,12 @@ class CreatePaymentsTable extends Migration
             $table->boolean('completed');
         });
 
-        DB::statement("ALTER TABLE payments MODIFY account_address varbinary(6)");
-        DB::statement("ALTER TABLE payments MODIFY account_hashin varbinary(32)");
-        DB::statement("ALTER TABLE payments MODIFY account_hashout varbinary(32)");
-        DB::statement("ALTER TABLE payments MODIFY tx_id varbinary(6)");
+        if (DB::isMysql()) {
+            DB::statement("ALTER TABLE payments MODIFY account_address varbinary(6)");
+            DB::statement("ALTER TABLE payments MODIFY account_hashin varbinary(32)");
+            DB::statement("ALTER TABLE payments MODIFY account_hashout varbinary(32)");
+            DB::statement("ALTER TABLE payments MODIFY tx_id varbinary(6)");
+        }
     }
 
 

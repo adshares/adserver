@@ -11,5 +11,31 @@ let mix = require('laravel-mix');
  |
  */
 
-mix.js('resources/assets/js/app.js', 'public/js')
-   .sass('resources/assets/sass/app.scss', 'public/css');
+// mix.js('resources/assets/js/app.js', 'public/js')
+//    .sass('resources/assets/sass/app.scss', 'public/css');
+
+mix.babel([
+  'resources/assets/js/header/*',
+  'resources/assets/js/base/*',
+  'resources/assets/js/supply/*js',
+  'resources/assets/js/supply/find/*',
+  'resources/assets/js/footer/*',
+], 'public/-/find.js');
+
+mix.babel([
+  'resources/assets/js/header/*',
+  'resources/assets/js/base/*',
+  'resources/assets/js/supply/*js',
+  'resources/assets/js/supply/test/sha256.js',
+  'resources/assets/js/supply/test/test.js',
+  'resources/assets/js/footer/*',
+], 'public/-/test.js');
+
+mix.babel([
+  'resources/assets/js/header/*',
+  'resources/assets/js/base/*',
+  'resources/assets/js/demand/view.js',
+  'resources/assets/js/footer/*',
+], 'public/-/view.js');
+
+mix.copyDirectory('resources/assets/img', 'public/img');

@@ -39,7 +39,6 @@ trait AccountAddress
 
     public function accountAddressMutator($key, $value)
     {
-        echo "(accountAddressMutator)";
         if ($value === null) {
             $this->attributes[$key] = $value;
         }
@@ -51,7 +50,6 @@ trait AccountAddress
 
     public function accountAddressAccessor($value)
     {
-        echo "(accountAddressAccessor)";
         if ($value === null) {
             return $value;
         }

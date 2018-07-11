@@ -3,14 +3,13 @@
 namespace Adshares\Adserver\Utilities;
 
 /**
- * Generate UUIDs
- *
+ * Generate UUIDs.
  */
 final class UUID
 {
     public static function v3($namespace, $name)
     {
-        if (! self::isValid($namespace)) {
+        if (!self::isValid($namespace)) {
             return false;
         }
 
@@ -18,7 +17,7 @@ final class UUID
         $nhex = str_replace(array(
             '-',
             '{',
-            '}'
+            '}',
         ), '', $namespace);
 
         // Binary Value
@@ -26,11 +25,11 @@ final class UUID
 
         // Convert Namespace UUID to bits
         for ($i = 0; $i < strlen($nhex); $i += 2) {
-            $nstr .= chr(hexdec($nhex[$i] . $nhex[$i + 1]));
+            $nstr .= chr(hexdec($nhex[$i].$nhex[$i + 1]));
         }
 
         // Calculate hash value
-        $hash = md5($nstr . $name);
+        $hash = md5($nstr.$name);
 
         return sprintf(
             '%08s%04s%04x%04x%12s',
@@ -75,7 +74,7 @@ final class UUID
 
     public static function v5($namespace, $name)
     {
-        if (! self::isValid($namespace)) {
+        if (!self::isValid($namespace)) {
             return false;
         }
 
@@ -83,7 +82,7 @@ final class UUID
         $nhex = str_replace(array(
             '-',
             '{',
-            '}'
+            '}',
         ), '', $namespace);
 
         // Binary Value
@@ -91,11 +90,11 @@ final class UUID
 
         // Convert Namespace UUID to bits
         for ($i = 0; $i < strlen($nhex); $i += 2) {
-            $nstr .= chr(hexdec($nhex[$i] . $nhex[$i + 1]));
+            $nstr .= chr(hexdec($nhex[$i].$nhex[$i + 1]));
         }
 
         // Calculate hash value
-        $hash = sha1($nstr . $name);
+        $hash = sha1($nstr.$name);
 
         return sprintf(
             '%08s%04s%04x%04x%12s',
@@ -117,6 +116,9 @@ final class UUID
 
     public static function isValid($uuid)
     {
-        return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?' . '[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
+        return 1 === preg_match(
+            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+            $uuid
+        );
     }
 }

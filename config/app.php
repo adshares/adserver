@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Application Name
@@ -121,8 +120,8 @@ return [
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),
     'adshares_node_port' => env('ADSHARES_NODE_PORT'),
     'adshares_secret' => env('ADSHARES_SECRET'),
-    'adshares_wallet' => env('ADSHARES_WALLET'),
-    'adshares_workdir' => env('ADSHARES_WORKDIR'),
+    'adshares_command' => env('ADSHARES_COMMAND'),
+    'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
 
     'aduser_endpoint' => env('ADUSER_ENDPOINT'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
@@ -140,7 +139,6 @@ return [
     */
 
     'providers' => [
-
         /*
          * Laravel Framework Service Providers...
          */
@@ -179,7 +177,6 @@ return [
         // Adshares\Adserver\Providers\BroadcastServiceProvider::class,
         Adshares\Adserver\Providers\EventServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
-
     ],
 
     /*
@@ -194,7 +191,6 @@ return [
     */
 
     'aliases' => [
-
         'App' => Illuminate\Support\Facades\App::class,
         'Artisan' => Illuminate\Support\Facades\Artisan::class,
         'Auth' => Illuminate\Support\Facades\Auth::class,
@@ -205,7 +201,7 @@ return [
         'Config' => Illuminate\Support\Facades\Config::class,
         'Cookie' => Illuminate\Support\Facades\Cookie::class,
         'Crypt' => Illuminate\Support\Facades\Crypt::class,
-        'DB' => Illuminate\Support\Facades\DB::class,
+        'DB' => Adshares\Adserver\Facades\DB::class,
         'Eloquent' => Illuminate\Database\Eloquent\Model::class,
         'Event' => Illuminate\Support\Facades\Event::class,
         'File' => Illuminate\Support\Facades\File::class,
@@ -228,7 +224,5 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-
     ],
-
 ];
