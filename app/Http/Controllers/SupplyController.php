@@ -7,6 +7,7 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Services\BannerFinder;
 use Adshares\Adserver\Services\Adselect;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
@@ -68,7 +69,7 @@ class SupplyController extends Controller
 
         foreach ($banners as &$banner) {
             if ($banner) {
-                $banner['pay_to'] = Utils::normalizeAdsharesAddress(config('app.adshares_address'));
+                $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
             }
         }
 

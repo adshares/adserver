@@ -2,8 +2,8 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 
@@ -17,15 +17,12 @@ class ApiController extends Controller
         $campaigns = [];
         foreach (Campaign::getWithReferences(false) as $i => $campaign) {
             $campaigns[$i] = $campaign->toArray();
-            $campaigns[$i]['adshares_address'] = Utils::normalizeAdsharesAddress(config('app.adshares_address'));
+            $campaigns[$i]['adshares_address'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
         }
 
         return Response::json(['campaigns' => $campaigns], 200, array(), JSON_PRETTY_PRINT);
     }
 
-    /**
-     * @Route("")
-     */
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)
     {
         // TODO : convert 2 laravel

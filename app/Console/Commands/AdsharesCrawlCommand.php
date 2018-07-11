@@ -4,10 +4,10 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Illuminate\Console\Command;
 use Adshares\Adserver\Services\Adselect;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Utilities\AdsUtils;
 
 /**
  * supply adserver.
@@ -86,7 +86,7 @@ class AdsharesCrawlCommand extends Command
                 $this->info("Found $host -> {$log['address']}");
                 // TODO: extract algo
                 if (preg_match('/^([a-z0-9][a-z0-9-]{0,62}\.)+([a-z]{2,})$/i', $host)) {
-                    NetworkHost::registerHost(Utils::normalizeAdsharesAddress($log['address']), $host);
+                    NetworkHost::registerHost(AdsUtils::normalizeAddress($log['address']), $host);
                 // TODO: check this with Jacek in adserver symfony code
                     // $nHost->setAccountMsid($log['account_msid']);
                 } else {
