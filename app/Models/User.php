@@ -116,4 +116,9 @@ class User extends Authenticatable implements Camelizable
     {
         return Hash::check($value, $this->attributes['password']);
     }
+
+    public function setRememberToken($token)
+    {
+        return;
+    }
 }
