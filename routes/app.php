@@ -23,7 +23,6 @@ Route::prefix('app')->group(function () {
         Route::get('sites/{site}', 'App\SitesController@read')->name('app.sites.read');
         Route::patch('sites/{site}', 'App\SitesController@edit')->name('app.sites.edit');
         Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
-        Route::get('sites/targeting', 'App\SitesController@targeting')->name('app.sites.targeting');
 
         Route::get('campaigns', 'App\CampaignsController@browse')->name('app.sites.browse');
         Route::get('campaigns/targeting', 'App\CampaignsController@targeting')->name('app.campaigns.targeting');
@@ -35,5 +34,14 @@ Route::prefix('app')->group(function () {
         Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
         Route::post('users/email', 'App\UsersController@emailChangeStep1');
         Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
+
+        Route::get('wallet/deposit', 'App\AdserverController@depositAddress');
+
+        // tmp mocked solutions
+        Route::post('chart', 'App\ChartsController@chart');
+        Route::get('notifications', 'App\AdserverController@notifications');
+        Route::get('options/campaigns/targeting', 'App\CampaignsController@targeting');
+        Route::get('options/sites/targeting', 'App\SitesController@targeting');
+        Route::post('publisher_chart', 'App\ChartsController@publisherChart');
     });
 });
