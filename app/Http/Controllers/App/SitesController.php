@@ -76,28 +76,28 @@ class SitesController extends AppController
         return $response;
     }
 
-    public function edit(Request $request, $siteId)
+    public function edit(Request $request, $site_id)
     {
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
         // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
         $site->update($request->input('site'));
 
         return self::json(['message' => 'Successfully edited'], 200);
     }
 
-    public function delete(Request $request, $siteId)
+    public function delete(Request $request, $site_id)
     {
         // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
         $site->deleted_at = new \DateTime();
         $site->save();
 
         return self::json(['message' => 'Successfully deleted'], 200);
     }
 
-    public function read(Request $request, $siteId)
+    public function read(Request $request, $site_id)
     {
         // TODO check privileges
         $site = Site::with([
@@ -109,7 +109,7 @@ class SitesController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])->whereNull('deleted_at')->findOrFail($siteId);
+        ])->whereNull('deleted_at')->findOrFail($site_id);
 
         return self::json(compact('site'));
     }

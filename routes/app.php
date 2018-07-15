@@ -7,9 +7,9 @@ Route::prefix('app')->group(function () {
     Route::post('users/email/activate', 'App\UsersController@emailActivate');
 
     Route::middleware('guest')->group(function () {
+        Route::get('auth/recovery/{token}', 'App\AuthController@recoveryTokenExtend');
         Route::post('auth/login', 'App\AuthController@login');
         Route::post('auth/recovery', 'App\AuthController@recovery');
-        Route::get('auth/recovery/{token}', 'App\AuthController@recoveryTokenExtend');
         Route::post('users', 'App\UsersController@add')->name('app.users.add');
     });
 
@@ -17,17 +17,19 @@ Route::prefix('app')->group(function () {
         Route::get('auth/check', 'App\AuthController@check');
         Route::get('auth/logout', 'App\AuthController@logout');
 
-        Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
-        Route::delete('sites/{site}', 'App\SitesController@delete')->name('app.sites.delete');
+        Route::delete('sites/{site_id}', 'App\SitesController@delete')->name('app.sites.delete');
         Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
-        Route::get('sites/{site}', 'App\SitesController@read')->name('app.sites.read');
-        Route::patch('sites/{site}', 'App\SitesController@edit')->name('app.sites.edit');
+        Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
+        Route::get('sites/{site_id}', 'App\SitesController@read')->name('app.sites.read');
+        Route::patch('sites/{site_id}', 'App\SitesController@edit')->name('app.sites.edit');
         Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
 
-        Route::get('campaigns', 'App\CampaignsController@browse')->name('app.sites.browse');
-        Route::get('campaigns/targeting', 'App\CampaignsController@targeting')->name('app.campaigns.targeting');
-        Route::post('campaigns', 'App\SitesController@add')->name('app.campaigns.add');
-        Route::get('campaigns/{campaign}', 'App\SitesController@read')->name('app.campaigns.read');
+        Route::delete('campaigns/{campaign_id}', 'App\CampaignsController@delete')->name('app.campaigns.delete');
+        Route::get('campaigns', 'App\CampaignsController@browse')->name('app.campaigns.browse');
+        Route::get('campaigns/count', 'App\CampaignsController@count')->name('app.campaigns.count');
+        Route::get('campaigns/{campaign_id}', 'App\CampaignsController@read')->name('app.campaigns.read');
+        Route::patch('campaigns/{campaign_id}', 'App\CampaignsController@edit')->name('app.sites.edit');
+        Route::post('campaigns', 'App\CampaignsController@add')->name('app.campaigns.add');
 
         Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');

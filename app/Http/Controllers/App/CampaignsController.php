@@ -53,7 +53,52 @@ class CampaignsController extends AppController
         return self::json($campaigns);
     }
 
-    public function read(Request $request, $campaignId)
+    /**
+     * @param Request $request
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *
+     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function count(Request $request)
+    {
+        //@TODO: create function data
+        $siteCount = [
+            'totalBudget' => 0,
+            'totalClicks' => 0,
+            'totalImpressions' => 0,
+            'averageCTR' => 0,
+            'averageCPC' => 0,
+            'totalCost' => 0,
+        ];
+        $response = self::json($siteCount, 200);
+
+        return $response;
+    }
+
+    public function edit(Request $request, $campaign_id)
+    {
+        $this->validateRequestObject($request, 'campaign', array_intersect_key(Campaign::$rules, $request->input('campaign')));
+
+        // TODO check privileges
+        $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
+        $campaign->update($request->input('campaign'));
+
+        return self::json(['message' => 'Successfully edited'], 200);
+    }
+
+    public function delete(Request $request, $campaign_id)
+    {
+        // TODO check privileges
+        $site = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
+        $site->deleted_at = new \DateTime();
+        $site->save();
+
+        return self::json(['message' => 'Successfully deleted'], 200);
+    }
+
+    public function read(Request $request, $campaign_id)
     {
         // TODO check privileges
         $campaign = Campaign::with([
@@ -65,7 +110,7 @@ class CampaignsController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])->whereNull('deleted_at')->findOrFail($campaignId);
+        ])->whereNull('deleted_at')->findOrFail($campaign_id);
 
         return self::json(compact('campaign'));
     }
