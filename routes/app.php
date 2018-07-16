@@ -45,5 +45,7 @@ Route::prefix('app')->group(function () {
         Route::get('options/campaigns/targeting', 'App\CampaignsController@targeting');
         Route::get('options/sites/targeting', 'App\SitesController@targeting');
         Route::post('publisher_chart', 'App\ChartsController@publisherChart');
+
+        Route::get('config/banners', 'App\SitesController@banners');
     });
 });

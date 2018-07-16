@@ -194,4 +194,46 @@ class SitesController extends AppController
           }
         ]'), 200);
     }
+
+    public function banners(Request $request)
+    {
+        return self::json(json_decode('[
+          {
+            "id": 1,
+        "name": "Leaderboard",
+        "type": "leaderboard",
+        "size": 0,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 2,
+        "name": "Large Rectangle",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 3,
+        "name": "Large Mobile Banner",
+        "type": "large-mobile-banner",
+        "size": 2,
+        "tags": ["Desktop", "Mobile"]
+      },
+        {
+            "id": 4,
+        "name": "Large Rectangle",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 5,
+        "name": "Large Rectangle 2",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      }
+        ]'), 200);
+
+    }
 }
