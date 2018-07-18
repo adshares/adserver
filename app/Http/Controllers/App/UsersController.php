@@ -143,7 +143,7 @@ class UsersController extends AppController
         if (!Token::canGenerate($user->id, 'email-activate', $this->email_activation_resend_limit)) {
             return self::json(
                 [],
-                400,
+                429,
                 ['message' => 'You can request 1 email activation every 15 minutes. Please wait.']
             );
         }
