@@ -28,7 +28,7 @@ class BannerFinder
         // $adselectService instanceof Adselect;
 
         $bannerIds = [];
-
+        $t = [];
         if (false && $adselectService) {
             $requests = [];
             foreach ($zones as $i => $zoneInfo) {
@@ -72,6 +72,10 @@ class BannerFinder
             foreach ($zones as $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
 
+                echo '<pre>Z=';
+                var_dump($zoneInfo['zone']);
+                print_r($zone);
+
                 try {
                     // $zone instanceof Zone; // ?? Yodahack : what the hack
                     $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
@@ -82,6 +86,7 @@ class BannerFinder
                     $bannerIds[] = '';
                 }
             }
+            die;
         }
 
         $banners = [];
