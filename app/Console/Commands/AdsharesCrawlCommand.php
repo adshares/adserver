@@ -112,6 +112,8 @@ class AdsharesCrawlCommand extends Command
 
         $batch = 0;
 
+        $adselectCmp = [];
+
         foreach ($hosts as $r) {
             $host = $r->host;
             $this->info("STARTING PROCESSING: $host");
