@@ -57,8 +57,7 @@ class MockDataSitesSeeder extends Seeder
 
             foreach ($r->sites as $rs) {
                 $s = new Site();
-                $s->name = $rs->url;
-                $s->url = $rs->url;
+                $s->name = $rs->name;
                 $s->user_id = $u->id;
                 $s->save();
                 foreach ($this->zones as $zn => $zr) {
@@ -69,7 +68,7 @@ class MockDataSitesSeeder extends Seeder
                     $z->height = $zr['height'];
                     $z->save();
                 }
-                $this->command->info(" Added - [$s->name,$s->url] for user <{$u->email}>");
+                $this->command->info(" Added - [$s->name] for user <{$u->email}>");
             }
         }
         DB::commit();
