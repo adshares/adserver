@@ -32,4 +32,4 @@ Route::get('/supply/find', 'SupplyController@find')->name('supply-find');
 Route::get('/supply/find.js', 'SupplyController@findScript')->name('supply-find.js');
 Route::get('/l/n/view/{id}', 'SupplyController@logNetworkView')->name('log-network-view');
 Route::get('/l/n/click/{id}', 'SupplyController@logNetworkClick')->name('log-network-click');
-Route::get('/l/n/keywords/{log_id}', 'SupplyController@logNetworkKeywords')->name('log-network-click');
+Route::get('/l/n/keywords/{log_id}', 'SupplyController@logNetworkKeywords')->name('log-network-keywords');
