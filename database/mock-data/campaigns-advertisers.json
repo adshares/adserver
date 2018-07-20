@@ -13,6 +13,18 @@
         "max_cpm": 0.5,
         "max_cpc": 6,
         "budget_per_hour": 20
+      },
+      {
+        "url":"http://s02.advsertiser.ads/",
+        "max_cpm": 1,
+        "max_cpc": 10,
+        "budget_per_hour": 100
+      },
+      {
+        "url":"http://s03.advsertiser.ads/",
+        "max_cpm": 0.5,
+        "max_cpc": 6,
+        "budget_per_hour": 20
       }
     ]
   }
