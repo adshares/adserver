@@ -2,7 +2,6 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Services\BannerFinder;
@@ -117,16 +116,15 @@ class SupplyController extends Controller
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         } else {
-            $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
-                'uuid' => $id,
-            ]);
+            $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
 
             if (!$banner) {
                 throw new NotFoundHttpException();
             }
 
-            $url = $banner->getClickUrl();
+            $url = $banner->click_url;
         }
+
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
@@ -148,19 +146,17 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
 
         $log = new NetworkEventLog();
-        $log->setCid($cid);
-        $log->setBannerId($id);
-        $log->setPayFrom($payFrom);
-        $log->setTid($tid);
-        $log->setIp($logIp);
-        $log->setEventType('click');
+        $log->cid = $cid;
+        $log->banner_id = $id;
+        $log->pay_from = $payFrom;
+        $log->tid = $tid;
+        $log->ip = $logIp;
+        $log->event_type = 'click';
         //         $log->setContext(Utils::getImpressionContext($this->container, $request));
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($log);
-        $em->flush();
+        $log->save();
 
-        $url = Utils::addUrlParameter($url, 'pid', $log->getId());
+        $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
         $adselect->addImpressions([
             $log->getAdselectJson(),
