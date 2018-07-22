@@ -18,6 +18,7 @@ class UsersController extends AppController
     protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes
     protected $email_change_token_time = 60 * 60; // 1 hour
+    protected $email_new_change_resend_limit = 1 * 60; // 1 minute
 
     /**
      * Create a new controller instance.
@@ -144,7 +145,7 @@ class UsersController extends AppController
             return self::json(
                 [],
                 429,
-                ['message' => 'You can request 1 email activation every 15 minutes. Please wait.']
+                ['message' => 'You can request to resend email activation every 15 minutes. Please wait 15 minutes or less.']
             );
         }
         Mail::to($user)->queue(new UserEmailActivate(
@@ -168,6 +169,13 @@ class UsersController extends AppController
 
         $user = Auth::user();
         DB::beginTransaction();
+        if (!Token::canGenerate($user->id, 'email-change-step1', $this->email_new_change_resend_limit)) {
+            return self::json(
+                [],
+                429,
+                ['message' => 'You can request email change every 1 minute. Please wait max 60 seconds to request new email setting']
+            );
+        }
         Mail::to($user)->queue(new UserEmailChangeConfirm1Old(
             Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
             $request->input('URIstep1')
