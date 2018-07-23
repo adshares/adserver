@@ -107,6 +107,8 @@ class UsersController extends AppController
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
+            DB::rollBack();
+
             return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Old password is not valid']);
         }
 
