@@ -65,7 +65,7 @@ class AuthController extends AppController
     }
 
     /**
-     * Log the user out of the application.
+     * Start password recovery process - generate and send email.
      *
      * @param \Illuminate\Http\Request $request
      *
