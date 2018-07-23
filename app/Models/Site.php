@@ -19,7 +19,7 @@ class Site extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'name', 'url',
+        'user_id', 'name',
     ];
 
     /**
@@ -32,8 +32,7 @@ class Site extends Model
     ];
 
     public static $rules = [
-        'name' => 'max:64',
-        'url' => 'required|url',
+        'name' => 'required|max:64',
     ];
 
     public function siteExcludes()

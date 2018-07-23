@@ -76,28 +76,28 @@ class SitesController extends AppController
         return $response;
     }
 
-    public function edit(Request $request, $siteId)
+    public function edit(Request $request, $site_id)
     {
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
         // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
         $site->update($request->input('site'));
 
         return self::json(['message' => 'Successfully edited'], 200);
     }
 
-    public function delete(Request $request, $siteId)
+    public function delete(Request $request, $site_id)
     {
         // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($siteId);
+        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
         $site->deleted_at = new \DateTime();
         $site->save();
 
         return self::json(['message' => 'Successfully deleted'], 200);
     }
 
-    public function read(Request $request, $siteId)
+    public function read(Request $request, $site_id)
     {
         // TODO check privileges
         $site = Site::with([
@@ -109,7 +109,7 @@ class SitesController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])->whereNull('deleted_at')->findOrFail($siteId);
+        ])->whereNull('deleted_at')->findOrFail($site_id);
 
         return self::json(compact('site'));
     }
@@ -124,10 +124,116 @@ class SitesController extends AppController
      */
     public function targeting(Request $request)
     {
-        //@TODO: create function data
-        $siteTargeting = [];
-        $response = self::json($siteTargeting, 200);
+        return self::json(json_decode('[
+          {
+            "label": "Creative type",
+            "key":"category",
+            "values": [
+              {"label": "Audio Ad (Auto-Play)", "value": "1"},
+              {"label": "Audio Ad (User Initiated)", "value": "2"},
+              {"label": "In-Banner Video Ad (Auto-Play)", "value": "6"},
+              {"label": "In-Banner Video Ad (User Initiated)", "value": "7"},
+              {"label": "Provocative or Suggestive Imagery", "value": "9"},
+              {"label": "Shaky, Flashing, Flickering, Extreme Animation, Smileys", "value": "10"},
+              {"label": "Surveys", "value": "11"},
+              {"label": "Text Only", "value": "12"},
+              {"label": "User Interactive (e.g., Embedded Games)", "value": "13"},
+              {"label": "Windows Dialog or Alert Style", "value": "14"},
+              {"label": "Has Audio On/Off Button", "value": "15"}
+            ],
+            "value_type": "string",
+            "allow_input": true
+          },
+          {
+            "label": "Language",
+            "key": "lang",
+            "values": [
+              {"label": "Polish", "value": "pl"},
+              {"label": "English", "value": "en"},
+              {"label": "Italian", "value": "it"},
+              {"label": "Japanese", "value": "jp"}
+            ],
+            "value_type": "string",
+            "allow_input": false
+          },
+          {
+            "label": "Screen",
+            "key":"screen",
+            "children": [
+              {
+                "label": "Width",
+                "key": "width",
+                "values": [
+                  {"label": "1200 or more", "value": "<1200,>"},
+                  {"label": "between 1200 and 1800", "value": "<1200,1800>"}
+                ],
+                "value_type": "number",
+                "allow_input": true
+              },
+              {
+                "label": "Height",
+                "key": "height",
+                "values": [
+                  {"label": "900 or more", "value": "<900,>"},
+                  {"label": "between 200 and 300", "value": "<200,300>"}
+                ],
+                "value_type": "number",
+                "allow_input": true
+              }
+            ]
+          },
+          {
+            "label": "Javascript support",
+            "key": "js_enabled",
+            "value_type": "boolean",
+            "values": [
+              {"label": "Yes", "value": "true"},
+              {"label": "No", "value": "false"}
+            ],
+            "allow_input": false
+          }
+        ]'), 200);
+    }
 
-        return $response;
+    public function banners(Request $request)
+    {
+        return self::json(json_decode('[
+          {
+            "id": 1,
+        "name": "Leaderboard",
+        "type": "leaderboard",
+        "size": 0,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 2,
+        "name": "Large Rectangle",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 3,
+        "name": "Large Mobile Banner",
+        "type": "large-mobile-banner",
+        "size": 2,
+        "tags": ["Desktop", "Mobile"]
+      },
+        {
+            "id": 4,
+        "name": "Large Rectangle",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      },
+        {
+            "id": 5,
+        "name": "Large Rectangle 2",
+        "type": "large-rectangle",
+        "size": 3,
+        "tags": ["Desktop"]
+      }
+        ]'), 200);
+
     }
 }

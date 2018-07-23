@@ -152,7 +152,7 @@ class MockDataCampaignsSeeder extends Seeder
 
                 // BANNERS
 
-                for ($bi = 0; $bi < 2; ++$bi) {
+                for ($bi = 0; $bi < 4; ++$bi) {
                     $t = $bi % 2 ? 'image' : 'html';
                     $s = $this->bannerSizes[array_rand($this->bannerSizes)];
                     $b = new Banner();

@@ -131,22 +131,16 @@ class DemandController extends Controller
         return $response;
     }
 
-    /**
-     * @Route("/click/{id}", name="log_click", methods={"GET"}, requirements={"id": "\d+"})
-     */
-    public function clickAction(Request $request, $id)
+    public function click(Request $request, $id)
     {
-        $banner = Banner::getRepository($this->getDoctrine()->getManager())->find($id);
+        $banner = Banner::with('Campaign')->find($id);
         if (!$banner) {
             throw new NotFoundHttpException();
         }
 
-        $campaign = Campaign::getRepository($this->getDoctrine()->getManager())->find($banner->getCampaignId());
-        if (!$campaign) {
-            throw new NotFoundHttpException();
-        }
+        $campaign = $banner->campaign;
 
-        $url = $campaign->getLandingUrl();
+        $url = $campaign->landing_url;
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
         $cid = Utils::getRawTrackingId($request->query->get('cid'));
@@ -154,7 +148,6 @@ class DemandController extends Controller
         $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
 
-        $em = $this->getDoctrine()->getManager();
         $log = new EventLog();
         $log->cid = $cid;
         $log->publisher_event_id = $pid;
@@ -163,24 +156,23 @@ class DemandController extends Controller
         $log->ip = $logIp;
         $log->pay_to = $payTo;
         $log->event_type = 'click';
-        $log->setTheirContext(Utils::getImpressionContext($this->container, $request));
+        $log->their_context = Utils::getImpressionContext($request);
+        $log->save();
 
-        $em->persist($log);
-        $em->flush();
+        // TODO: fix adpay
+        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
+        // $adpayService instanceof Adpay;
+        //
+        // if ($adpayService) {
+        //     $adpayService->addEvents([
+        //         $log->getAdpayJson(),
+        //     ]);
+        // }
 
-        $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        $adpayService instanceof Adpay;
-
-        if ($adpayService) {
-            $adpayService->addEvents([
-                $log->getAdpayJson(),
-            ]);
-        }
-
-        $response = new Response($url);
+        $response = new \Symfony\Component\HttpFoundation\Response($url);
 
         // last click id will be used to track conversions
-        $response->headers->setCookie(new Cookie('cid', $request->query->get('cid'), new \DateTime('+ 1 month')));
+        $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie('cid', $request->query->get('cid'), new \DateTime('+ 1 month')));
 
         $response->setContent(sprintf('<!DOCTYPE html>
 <html>

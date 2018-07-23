@@ -28,7 +28,6 @@ class BannerFinder
         // $adselectService instanceof Adselect;
 
         $bannerIds = [];
-
         if (false && $adselectService) {
             $requests = [];
             foreach ($zones as $i => $zoneInfo) {
