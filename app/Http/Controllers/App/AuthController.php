@@ -46,7 +46,7 @@ class AuthController extends AppController
             return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
         }
 
-        return self::json([], 401);
+        return self::json([], 400);
     }
 
     /**
