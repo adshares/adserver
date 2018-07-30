@@ -31,6 +31,8 @@ Route::prefix('app')->group(function () {
         Route::patch('campaigns/{campaign_id}', 'App\CampaignsController@edit')->name('app.sites.edit');
         Route::post('campaigns', 'App\CampaignsController@add')->name('app.campaigns.add');
 
+        Route::get('notifications', 'App\NotificationsController@read');
+
         Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
         Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
         Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
@@ -39,9 +41,11 @@ Route::prefix('app')->group(function () {
 
         Route::get('wallet/deposit', 'App\AdserverController@depositAddress');
 
+        Route::get('settings/notifications', 'App\SettingsController@readNotifications');
+
         // tmp mocked solutions
         Route::post('chart', 'App\ChartsController@chart');
-        Route::get('notifications', 'App\AdserverController@notifications');
+
         Route::get('options/campaigns/targeting', 'App\CampaignsController@targeting');
         Route::get('options/sites/targeting', 'App\SitesController@targeting');
         Route::post('publisher_chart', 'App\ChartsController@publisherChart');
