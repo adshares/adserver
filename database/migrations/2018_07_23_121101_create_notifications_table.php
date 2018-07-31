@@ -19,7 +19,7 @@ class CreateNotificationsTable extends Migration
             $table->timestamp('seen_at')->nullable();
 
             $table->bigInteger('user_id')->unsigned();
-            $table->string('userRole', 10)->default('all');
+            $table->string('user_role', 10)->default('all');
             $table->string('type', 12);
 
             $table->string('title', 96);
@@ -27,7 +27,7 @@ class CreateNotificationsTable extends Migration
 
             $table->text('payload')->nullable();
 
-            $table->index('userRole');
+            $table->index('user_role');
             $table->index('type');
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });

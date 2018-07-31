@@ -27,7 +27,7 @@ class UserCreated
     {
         $n = new Notification([
             'user_id' => $user->id,
-            'userRole' => 'all',
+            'user_role' => 'all',
             'type' => 'account',
             'title' => 'Welcome',
             'message' => 'Your account has been created',
