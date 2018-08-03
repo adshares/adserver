@@ -201,7 +201,7 @@ class UsersController extends AppController
 
             return self::json([], 422, ['message' => 'This email already exists in our database']);
         }
-        Mail::to($user)->queue(new UserEmailChangeConfirm2New(
+        Mail::to($token['payload']['email'])->queue(new UserEmailChangeConfirm2New(
             Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
             $token['payload']['URIstep2']
         ));
