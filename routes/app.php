@@ -39,7 +39,7 @@ Route::prefix('app')->group(function () {
         Route::post('users/email', 'App\UsersController@emailChangeStep1');
         Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
 
-        Route::get('wallet/deposit', 'App\AdserverController@depositAddress');
+        Route::get('wallet/deposit', 'App\ConfigController@depositAddress');
 
         Route::get('settings/notifications', 'App\SettingsController@readNotifications');
 

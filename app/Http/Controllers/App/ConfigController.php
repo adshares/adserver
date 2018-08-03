@@ -2,7 +2,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
-class AdserverController extends AppController
+class ConfigController extends AppController
 {
     /**
      * Return adserver adshares address.
