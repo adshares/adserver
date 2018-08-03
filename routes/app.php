@@ -17,6 +17,8 @@ Route::prefix('app')->group(function () {
         Route::get('auth/check', 'App\AuthController@check');
         Route::get('auth/logout', 'App\AuthController@logout');
 
+        Route::get('config/adshares-address', 'App\ConfigController@adsharesAddress');
+
         Route::delete('sites/{site_id}', 'App\SitesController@delete')->name('app.sites.delete');
         Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
         Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
@@ -38,8 +40,6 @@ Route::prefix('app')->group(function () {
         Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
         Route::post('users/email', 'App\UsersController@emailChangeStep1');
         Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
-
-        Route::get('wallet/deposit', 'App\ConfigController@depositAddress');
 
         Route::get('settings/notifications', 'App\SettingsController@readNotifications');
 

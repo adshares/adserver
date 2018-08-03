@@ -11,7 +11,7 @@ class ConfigController extends AppController
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function depositAddress()
+    public function adsharesAddress()
     {
         return self::json(['adsharesAddress' => config('app.adshares_address')], 200);
     }
