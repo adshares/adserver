@@ -53,3 +53,9 @@ Route::prefix('app')->group(function () {
         Route::get('config/banners', 'App\SitesController@banners');
     });
 });
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('test', function (Request $request) {
+        return self::json(['test' => $request], 200);
+    });
+});

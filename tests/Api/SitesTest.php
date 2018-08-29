@@ -2,6 +2,7 @@
 
 namespace Adshares\Adserver\Tests\Feature;
 
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,8 +29,8 @@ class SitesTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        /* @var $site \Adshares\Adserver\Models\Site */
-        $site = factory(\Adshares\Adserver\Models\Site::class)->make();
+        /* @var $site Site */
+        $site = factory(Site::class)->make();
 
         $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
 
@@ -57,7 +58,7 @@ class SitesTest extends TestCase
         $this->actingAs(factory(User::class)->create());
         $count = 10;
 
-        $users = factory(\Adshares\Adserver\Models\Site::class, $count)->make();
+        $users = factory(Site::class, $count)->make();
         foreach ($users as $site) {
             $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
             $response->assertStatus(201);
