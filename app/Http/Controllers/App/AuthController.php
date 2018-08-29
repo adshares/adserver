@@ -3,8 +3,8 @@
 namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\AuthRecovery;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -42,7 +42,10 @@ class AuthController extends AppController
             $request->filled('remember')
         )) {
             $request->session()->regenerate();
+            Auth::user()->generateApiKey();
+
             // $this->authenticated($request, $this->guard()->user());
+
             return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
         }
 
@@ -58,6 +61,7 @@ class AuthController extends AppController
      */
     public function logout(Request $request)
     {
+        Auth::user()->clearApiKey();
         Auth::guard()->logout();
         $request->session()->invalidate();
 
