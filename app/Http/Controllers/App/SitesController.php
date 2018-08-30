@@ -2,9 +2,9 @@
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
+use Adshares\Adserver\Models\Site;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use Adshares\Adserver\Models\Site;
 
 class SitesController extends AppController
 {
@@ -233,7 +233,7 @@ class SitesController extends AppController
         "size": 3,
         "tags": ["Desktop"]
       }
-        ]'), 200);
-
+        ]'),
+            200);
     }
 }

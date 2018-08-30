@@ -133,7 +133,7 @@ class User extends Authenticatable implements Camelizable
 
     public function clearApiKey()
     {
-        $this->api_token = NULL;
+        $this->api_token = null;
         $this->save();
     }
 }

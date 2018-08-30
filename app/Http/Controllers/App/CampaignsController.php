@@ -2,9 +2,9 @@
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
+use Adshares\Adserver\Models\Campaign;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
-use Adshares\Adserver\Models\Campaign;
 
 class CampaignsController extends AppController
 {
@@ -48,7 +48,8 @@ class CampaignsController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])->whereNull('deleted_at')->get();
+        ])->whereNull('deleted_at')->get()
+        ;
 
         return self::json($campaigns);
     }
@@ -79,7 +80,9 @@ class CampaignsController extends AppController
 
     public function edit(Request $request, $campaign_id)
     {
-        $this->validateRequestObject($request, 'campaign', array_intersect_key(Campaign::$rules, $request->input('campaign')));
+        $this->validateRequestObject($request,
+            'campaign',
+            array_intersect_key(Campaign::$rules, $request->input('campaign')));
 
         // TODO check privileges
         $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
@@ -110,7 +113,8 @@ class CampaignsController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])->whereNull('deleted_at')->findOrFail($campaign_id);
+        ])->whereNull('deleted_at')->findOrFail($campaign_id)
+        ;
 
         return self::json(compact('campaign'));
     }
@@ -375,6 +379,7 @@ class CampaignsController extends AppController
               }
             ]
           }
-        ]'), 200);
+        ]'),
+            200);
     }
 }

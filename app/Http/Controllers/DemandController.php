@@ -2,11 +2,10 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\EventLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -172,7 +171,9 @@ class DemandController extends Controller
         $response = new \Symfony\Component\HttpFoundation\Response($url);
 
         // last click id will be used to track conversions
-        $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie('cid', $request->query->get('cid'), new \DateTime('+ 1 month')));
+        $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie('cid',
+            $request->query->get('cid'),
+            new \DateTime('+ 1 month')));
 
         $response->setContent(sprintf('<!DOCTYPE html>
 <html>

@@ -5,8 +5,8 @@ namespace Adshares\Adserver\Http\Controllers\App;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +38,8 @@ class UsersController extends AppController
         Mail::to($user)->queue(new UserEmailActivate(
             Token::generate('email-activate', $this->email_activation_token_time, $user->id),
             $request->input('uri')
-        ));
+        ))
+        ;
         DB::commit();
 
         $response = self::json($user->toArrayCamelize(), 201);
@@ -153,7 +154,8 @@ class UsersController extends AppController
         Mail::to($user)->queue(new UserEmailActivate(
             Token::generate('email-activate', $this->email_activation_token_time, $user->id),
             $request->input('uri')
-        ));
+        ))
+        ;
         DB::commit();
 
         return self::json([], 204);
@@ -164,7 +166,8 @@ class UsersController extends AppController
         Validator::make(
             $request->all(),
             ['email' => 'required|email', 'URIstep1' => 'required', 'URIstep2' => 'required']
-        )->validate();
+        )->validate()
+        ;
         if (User::withTrashed()->where('email', $request->input('email'))->count()) {
             return self::json([], 422, ['email' => 'This email already exists in our database']);
         }
@@ -181,7 +184,8 @@ class UsersController extends AppController
         Mail::to($user)->queue(new UserEmailChangeConfirm1Old(
             Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
             $request->input('URIstep1')
-        ));
+        ))
+        ;
         DB::commit();
 
         return self::json([], 204);
@@ -204,7 +208,8 @@ class UsersController extends AppController
         Mail::to($token['payload']['email'])->queue(new UserEmailChangeConfirm2New(
             Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
             $token['payload']['URIstep2']
-        ));
+        ))
+        ;
         DB::commit();
 
         return self::json([], 204);
