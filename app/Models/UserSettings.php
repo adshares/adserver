@@ -14,12 +14,15 @@ class UserSettings extends Model implements Camelizable
     use Serialize;
     use ToArrayCamelize;
 
+    private const NOTIFY = 'notify';
+    private const EMAIL = 'email';
+
     public static $default_notifications = [
-        'billing' => ['email' => true, 'notify' => true],
-        'maintenance' => ['email' => true, 'notify' => true],
-        'newsletter' => ['email' => true, 'notify' => true],
-        'tips' => ['email' => true, 'notify' => true],
-        'offers' => ['email' => true, 'notify' => true],
+        'billing' => [self::EMAIL => true, self::NOTIFY => true],
+        'maintenance' => [self::EMAIL => true, self::NOTIFY => true],
+        'newsletter' => [self::EMAIL => true, self::NOTIFY => true],
+        'tips' => [self::EMAIL => true, self::NOTIFY => true],
+        'offers' => [self::EMAIL => true, self::NOTIFY => true],
     ];
 
     /**
