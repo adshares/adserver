@@ -277,7 +277,8 @@ class DemandController extends Controller
                 $adpayService->addEvents(
                     [
                         $log->getAdpayJson(),
-                    ]);
+                    ]
+                );
             }
         }
 
