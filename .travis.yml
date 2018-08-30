@@ -34,10 +34,14 @@ install:
 script:
   # PHP Lint: check syntax errors in all PHP files
   - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
-  # PHP_CodeSniffer: check PHP compatibility
-  - ./vendor/bin/phpcs -s --report=diff --standard=PHPCompatibility app tests
-  # PHP_CodeSniffer: check PSR2 standard
-  - ./vendor/bin/phpcs -s --report=diff --standard=PSR2 app tests
+# PHP_CodeSniffer: fix code styles
+  - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests
+  - ./vendor/bin/phpcbf --standard=PSR2 app tests
+  - git diff
+# PHP_CodeSniffer: check PHP compatibility
+  - ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests
+# PHP_CodeSniffer: check PSR2 standard
+  - ./vendor/bin/phpcs -s --standard=PSR2 app tests
   # PHP unit tests
   - alias php='php -dzend_extension=xdebug.so'
   - alias phpunit='php ./vendor/bin/phpunit'
