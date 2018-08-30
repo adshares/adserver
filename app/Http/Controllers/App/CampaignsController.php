@@ -80,7 +80,8 @@ class CampaignsController extends AppController
 
     public function edit(Request $request, $campaign_id)
     {
-        $this->validateRequestObject($request,
+        $this->validateRequestObject(
+            $request,
             'campaign',
             array_intersect_key(Campaign::$rules, $request->input('campaign')));
 
