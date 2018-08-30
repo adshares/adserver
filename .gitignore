@@ -21,3 +21,5 @@ _ide_helper.php
 public/img/
 phpunit.xml
 /storage/phpunit
+
+PHP_CodeSniffer

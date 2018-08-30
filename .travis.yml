@@ -35,12 +35,9 @@ script:
   # PHP Lint: check syntax errors in all PHP files
   - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
   # PHP_CodeSniffer: check PHP compatibility
-#  - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests
   - ./vendor/bin/phpcs -s --report=diff --standard=PHPCompatibility app tests
   # PHP_CodeSniffer: check PSR2 standard
-#  - ./vendor/bin/phpcbf --standard=PSR2 app tests
   - ./vendor/bin/phpcs -s --report=diff --standard=PSR2 app tests
-#  - git diff
   # PHP unit tests
   - alias php='php -dzend_extension=xdebug.so'
   - alias phpunit='php ./vendor/bin/phpunit'
