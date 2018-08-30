@@ -35,10 +35,11 @@ class UsersController extends AppController
 
         DB::beginTransaction();
         $user = User::register($request->input('user'));
-        Mail::to($user)->queue(new UserEmailActivate(
-            Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-            $request->input('uri')
-        ))
+        Mail::to($user)->queue(
+            new UserEmailActivate(
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                $request->input('uri')
+            ))
         ;
         DB::commit();
 
@@ -151,10 +152,11 @@ class UsersController extends AppController
                 ['message' => 'You can request to resend email activation every 15 minutes. Please wait 15 minutes or less.']
             );
         }
-        Mail::to($user)->queue(new UserEmailActivate(
-            Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-            $request->input('uri')
-        ))
+        Mail::to($user)->queue(
+            new UserEmailActivate(
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                $request->input('uri')
+            ))
         ;
         DB::commit();
 
@@ -181,10 +183,11 @@ class UsersController extends AppController
                 ['message' => "You have already requested email change.\nYou can request email change every 5 minutes.\nPlease wait 5 minutes or less to start configuring another email address."]
             );
         }
-        Mail::to($user)->queue(new UserEmailChangeConfirm1Old(
-            Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
-            $request->input('URIstep1')
-        ))
+        Mail::to($user)->queue(
+            new UserEmailChangeConfirm1Old(
+                Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
+                $request->input('URIstep1')
+            ))
         ;
         DB::commit();
 
@@ -205,10 +208,11 @@ class UsersController extends AppController
 
             return self::json([], 422, ['message' => 'This email already exists in our database']);
         }
-        Mail::to($token['payload']['email'])->queue(new UserEmailChangeConfirm2New(
-            Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
-            $token['payload']['URIstep2']
-        ))
+        Mail::to($token['payload']['email'])->queue(
+            new UserEmailChangeConfirm2New(
+                Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
+                $token['payload']['URIstep2']
+            ))
         ;
         DB::commit();
 

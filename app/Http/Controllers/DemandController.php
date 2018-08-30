@@ -62,22 +62,23 @@ class DemandController extends Controller
             $banner->updated_at
         );
 
-        $response->setCallback(function () use ($response, $banner, $isIECompat) {
-            if (!$isIECompat) {
-                echo $banner->creative_contents;
+        $response->setCallback(
+            function () use ($response, $banner, $isIECompat) {
+                if (!$isIECompat) {
+                    echo $banner->creative_contents;
 
-                return;
-            }
-
-            $headers = [];
-            foreach ($response->headers->allPreserveCase() as $name => $value) {
-                if (0 === strpos($name, 'X-')) {
-                    $headers[] = "$name:".implode(',', $value);
+                    return;
                 }
-            }
-            echo implode("\n", $headers)."\n\n";
-            echo base64_encode($banner->creative_contents);
-        });
+
+                $headers = [];
+                foreach ($response->headers->allPreserveCase() as $name => $value) {
+                    if (0 === strpos($name, 'X-')) {
+                        $headers[] = "$name:" . implode(',', $value);
+                    }
+                }
+                echo implode("\n", $headers) . "\n\n";
+                echo base64_encode($banner->creative_contents);
+            });
 
         $cid = Utils::createTrackingId(config('app.adserver_secret'));
 
@@ -93,7 +94,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
+            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '') . $mime);
         }
 
         return $response;
@@ -106,22 +107,27 @@ class DemandController extends Controller
         $jsPath = public_path('-/view.js');
 
         $response = new StreamedResponse();
-        $response->setCallback(function () use ($jsPath, $request, $params) {
-            echo str_replace([
-                "'{{ ORIGIN }}'",
-            ], $params, file_get_contents($jsPath));
-        });
+        $response->setCallback(
+            function () use ($jsPath, $request, $params) {
+                echo str_replace(
+                    [
+                        "'{{ ORIGIN }}'",
+                    ],
+                    $params,
+                    file_get_contents($jsPath));
+            });
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        $response->setCache(array(
-            'etag' => md5(md5_file($jsPath).implode(':', $params)),
-            'last_modified' => new \DateTime('@'.filemtime($jsPath)),
-            'max_age' => 3600 * 24 * 30,
-            's_maxage' => 3600 * 24 * 30,
-            'private' => false,
-            'public' => true,
-        ));
+        $response->setCache(
+            [
+                'etag' => md5(md5_file($jsPath) . implode(':', $params)),
+                'last_modified' => new \DateTime('@' . filemtime($jsPath)),
+                'max_age' => 3600 * 24 * 30,
+                's_maxage' => 3600 * 24 * 30,
+                'private' => false,
+                'public' => true,
+            ]);
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -171,11 +177,15 @@ class DemandController extends Controller
         $response = new \Symfony\Component\HttpFoundation\Response($url);
 
         // last click id will be used to track conversions
-        $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie('cid',
-            $request->query->get('cid'),
-            new \DateTime('+ 1 month')));
+        $response->headers->setCookie(
+            new \Symfony\Component\HttpFoundation\Cookie(
+                'cid',
+                $request->query->get('cid'),
+                new \DateTime('+ 1 month')));
 
-        $response->setContent(sprintf('<!DOCTYPE html>
+        $response->setContent(
+            sprintf(
+                '<!DOCTYPE html>
 <html>
   <head>
       <meta charset="UTF-8" />
@@ -186,7 +196,8 @@ class DemandController extends Controller
   <body>
       Redirecting to <a href="%1$s">%1$s</a>.
   </body>
-</html>', htmlspecialchars($url, ENT_QUOTES, 'UTF-8')));
+</html>',
+                htmlspecialchars($url, ENT_QUOTES, 'UTF-8')));
 
         return $response;
     }
@@ -231,13 +242,16 @@ class DemandController extends Controller
 
         if ($aduser_endpoint) {
             $iid = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
-            $backUrl = route('log-keywords', ['iid' => $iid,
-                'log_id' => $log->id,
-                'r' => $url,
-            ]);
+            $backUrl = route(
+                'log-keywords',
+                [
+                    'iid' => $iid,
+                    'log_id' => $log->id,
+                    'r' => $url,
+                ]);
 
             $response = new RedirectResponse(
-                $aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl)
+                $aduser_endpoint . '/pixel/' . $iid . '?r=' . Utils::urlSafeBase64Encode($backUrl)
             );
         } else {
             throw new Exception('ADAPY');
@@ -251,9 +265,10 @@ class DemandController extends Controller
             $adpayService instanceof Adpay;
 
             if ($adpayService) {
-                $adpayService->addEvents([
-                    $log->getAdpayJson(),
-                ]);
+                $adpayService->addEvents(
+                    [
+                        $log->getAdpayJson(),
+                    ]);
             }
         }
 

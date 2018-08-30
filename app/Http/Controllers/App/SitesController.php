@@ -39,16 +39,18 @@ class SitesController extends AppController
     public function browse(Request $request)
     {
         // TODO check privileges
-        $sites = Site::with([
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')->get();
+        $sites = Site::with(
+            [
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+            ])->whereNull('deleted_at')->get()
+        ;
 
         return self::json($sites);
     }
@@ -100,16 +102,18 @@ class SitesController extends AppController
     public function read(Request $request, $site_id)
     {
         // TODO check privileges
-        $site = Site::with([
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')->findOrFail($site_id);
+        $site = Site::with(
+            [
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+            ])->whereNull('deleted_at')->findOrFail($site_id)
+        ;
 
         return self::json(compact('site'));
     }
@@ -124,7 +128,9 @@ class SitesController extends AppController
      */
     public function targeting(Request $request)
     {
-        return self::json(json_decode('[
+        return self::json(
+            json_decode(
+                '[
           {
             "label": "Creative type",
             "key":"category",
@@ -192,12 +198,15 @@ class SitesController extends AppController
             ],
             "allow_input": false
           }
-        ]'), 200);
+        ]'),
+            200);
     }
 
     public function banners(Request $request)
     {
-        return self::json(json_decode('[
+        return self::json(
+            json_decode(
+                '[
           {
             "id": 1,
         "name": "Leaderboard",
