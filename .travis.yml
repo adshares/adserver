@@ -34,7 +34,7 @@ install:
 script:
   # PHP Lint: check syntax errors in all PHP files
   - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
-# PHP_CodeSniffer: fix code styles
+# PHP Code Beautifier and Fixer: fix code styles
   - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests
   - ./vendor/bin/phpcbf --standard=PSR2 app tests
   - git diff

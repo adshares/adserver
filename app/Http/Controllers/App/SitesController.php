@@ -1,4 +1,22 @@
 <?php
+/**
+ * Copyright (C) 2018 Adshares sp. z. o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
@@ -40,7 +58,7 @@ class SitesController extends AppController
     {
         // TODO check privileges
         $sites = Site::with(
-        [
+            [
             'siteExcludes' => function ($query) {
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
@@ -49,7 +67,8 @@ class SitesController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])
+            ]
+        )
         ->whereNull('deleted_at')->get()
         ;
 
@@ -104,7 +123,7 @@ class SitesController extends AppController
     {
         // TODO check privileges
         $site = Site::with(
-        [
+            [
             'siteExcludes' => function ($query) {
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
@@ -113,7 +132,8 @@ class SitesController extends AppController
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
-        ])
+            ]
+        )
         ->whereNull('deleted_at')->findOrFail($site_id)
         ;
 
@@ -131,7 +151,7 @@ class SitesController extends AppController
     public function targeting(Request $request)
     {
         return self::json(
-        json_decode(
+            json_decode(
                 '[
           {
             "label": "Creative type",
@@ -200,15 +220,16 @@ class SitesController extends AppController
             ],
             "allow_input": false
           }
-        ]'),
-        200
+        ]'
+            ),
+            200
         );
     }
 
     public function banners(Request $request)
     {
         return self::json(
-        json_decode(
+            json_decode(
                 '[
           {
             "id": 1,
@@ -245,8 +266,9 @@ class SitesController extends AppController
         "size": 3,
         "tags": ["Desktop"]
       }
-        ]'),
-        200
+        ]'
+            ),
+            200
         );
     }
 }

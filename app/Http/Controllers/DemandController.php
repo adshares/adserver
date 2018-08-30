@@ -78,7 +78,8 @@ class DemandController extends Controller
                 }
                 echo implode("\n", $headers) . "\n\n";
                 echo base64_encode($banner->creative_contents);
-            });
+            }
+        );
 
         $cid = Utils::createTrackingId(config('app.adserver_secret'));
 
@@ -114,8 +115,10 @@ class DemandController extends Controller
                         "'{{ ORIGIN }}'",
                     ],
                     $params,
-                    file_get_contents($jsPath));
-            });
+                    file_get_contents($jsPath)
+                );
+            }
+        );
 
         $response->headers->set('Content-Type', 'text/javascript');
 
@@ -127,7 +130,8 @@ class DemandController extends Controller
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
                 'public' => true,
-            ]);
+            ]
+        );
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -181,7 +185,9 @@ class DemandController extends Controller
             new \Symfony\Component\HttpFoundation\Cookie(
                 'cid',
                 $request->query->get('cid'),
-                new \DateTime('+ 1 month')));
+                new \DateTime('+ 1 month')
+            )
+        );
 
         $response->setContent(
             sprintf(
@@ -197,7 +203,9 @@ class DemandController extends Controller
       Redirecting to <a href="%1$s">%1$s</a>.
   </body>
 </html>',
-                htmlspecialchars($url, ENT_QUOTES, 'UTF-8')));
+                htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+            )
+        );
 
         return $response;
     }
@@ -248,7 +256,8 @@ class DemandController extends Controller
                     'iid' => $iid,
                     'log_id' => $log->id,
                     'r' => $url,
-                ]);
+                ]
+            );
 
             $response = new RedirectResponse(
                 $aduser_endpoint . '/pixel/' . $iid . '?r=' . Utils::urlSafeBase64Encode($backUrl)

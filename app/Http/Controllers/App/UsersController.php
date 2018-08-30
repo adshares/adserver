@@ -39,7 +39,8 @@ class UsersController extends AppController
             new UserEmailActivate(
                 Token::generate('email-activate', $this->email_activation_token_time, $user->id),
                 $request->input('uri')
-            ))
+            )
+        )
         ;
         DB::commit();
 
@@ -159,7 +160,8 @@ class UsersController extends AppController
             new UserEmailActivate(
                 Token::generate('email-activate', $this->email_activation_token_time, $user->id),
                 $request->input('uri')
-            ))
+            )
+        )
         ;
         DB::commit();
 
@@ -194,7 +196,8 @@ class UsersController extends AppController
             new UserEmailChangeConfirm1Old(
                 Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
                 $request->input('URIstep1')
-            ))
+            )
+        )
         ;
         DB::commit();
 
@@ -219,7 +222,8 @@ class UsersController extends AppController
             new UserEmailChangeConfirm2New(
                 Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
                 $token['payload']['URIstep2']
-            ))
+            )
+        )
         ;
         DB::commit();
 
