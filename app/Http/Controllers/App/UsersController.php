@@ -149,7 +149,10 @@ class UsersController extends AppController
             return self::json(
                 [],
                 429,
-                ['message' => 'You can request to resend email activation every 15 minutes. Please wait 15 minutes or less.']
+                [
+                    'message' => 'You can request to resend email activation every 15 minutes.'
+                        . ' Please wait 15 minutes or less.',
+                ]
             );
         }
         Mail::to($user)->queue(
@@ -180,7 +183,11 @@ class UsersController extends AppController
             return self::json(
                 [],
                 429,
-                ['message' => "You have already requested email change.\nYou can request email change every 5 minutes.\nPlease wait 5 minutes or less to start configuring another email address."]
+                [
+                    'message' => "You have already requested email change.\n"
+                        . "You can request email change every 5 minutes.\n"
+                        . "Please wait 5 minutes or less to start configuring another email address.",
+                ]
             );
         }
         Mail::to($user)->queue(
