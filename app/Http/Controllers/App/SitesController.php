@@ -40,16 +40,17 @@ class SitesController extends AppController
     {
         // TODO check privileges
         $sites = Site::with(
-            [
-                'siteExcludes' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-                'siteRequires' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-            ])->whereNull('deleted_at')->get()
+        [
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])
+        ->whereNull('deleted_at')->get()
         ;
 
         return self::json($sites);
@@ -103,16 +104,17 @@ class SitesController extends AppController
     {
         // TODO check privileges
         $site = Site::with(
-            [
-                'siteExcludes' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-                'siteRequires' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-            ])->whereNull('deleted_at')->findOrFail($site_id)
+        [
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])
+        ->whereNull('deleted_at')->findOrFail($site_id)
         ;
 
         return self::json(compact('site'));
@@ -129,7 +131,7 @@ class SitesController extends AppController
     public function targeting(Request $request)
     {
         return self::json(
-            json_decode(
+        json_decode(
                 '[
           {
             "label": "Creative type",
@@ -199,13 +201,14 @@ class SitesController extends AppController
             "allow_input": false
           }
         ]'),
-            200);
+        200
+        );
     }
 
     public function banners(Request $request)
     {
         return self::json(
-            json_decode(
+        json_decode(
                 '[
           {
             "id": 1,
@@ -243,6 +246,7 @@ class SitesController extends AppController
         "tags": ["Desktop"]
       }
         ]'),
-            200);
+        200
+        );
     }
 }
