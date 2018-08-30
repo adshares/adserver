@@ -35,9 +35,8 @@ script:
   # PHP Lint: check syntax errors in all PHP files
   - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
 # PHP Code Beautifier and Fixer: fix code styles
-  - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests
-  - ./vendor/bin/phpcbf --standard=PSR2 app tests
-  - git diff
+  - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff
+  - ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff
 # PHP_CodeSniffer: check PHP compatibility
   - ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests
 # PHP_CodeSniffer: check PSR2 standard
