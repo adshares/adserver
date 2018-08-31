@@ -20,7 +20,7 @@ class CreateTokensTable extends Migration
 
             $table->string('tag', 24);
             $table->boolean('multi_usage')->default(false);
-            $table->longText('payload')->nullable();
+            $table->text('payload')->nullable();
 
             $table->index('tag');
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');

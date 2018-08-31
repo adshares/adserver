@@ -121,4 +121,19 @@ class User extends Authenticatable implements Camelizable
     {
         return;
     }
+
+    public function generateApiKey()
+    {
+        do {
+            $this->api_token = str_random(60);
+        } while ($this->where('api_token', $this->api_token)->exists());
+
+        $this->save();
+    }
+
+    public function clearApiKey()
+    {
+        $this->api_token = null;
+        $this->save();
+    }
 }

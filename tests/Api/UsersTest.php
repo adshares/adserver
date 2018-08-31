@@ -26,8 +26,8 @@ class UsersTest extends TestCase
 
     public function testCreateUser()
     {
-        /* @var $user \Adshares\Adserver\Models\User */
-        $user = factory(\Adshares\Adserver\Models\User::class)->make();
+        /* @var $user User */
+        $user = factory(User::class)->make();
 
         $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
 
@@ -48,19 +48,13 @@ class UsersTest extends TestCase
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(1);
-
-//        $response->assertJsonFragment([
-//            'email' => $user->email,
-//            'isAdvertiser' => $user->isAdvertiser,
-//            'isPublisher' => $user->isPublisher
-//        ]);
     }
 
     public function testCreateUsers()
     {
         $count = 10;
 
-        $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
+        $users = factory(User::class, $count)->make();
         foreach ($users as $user) {
             $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
             $response->assertStatus(201);

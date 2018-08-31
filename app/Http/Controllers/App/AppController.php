@@ -12,7 +12,7 @@ class AppController extends BaseController
 {
     /**
      * @param array $data
-     * @param int   $code
+     * @param int $code
      * @param mixed $errors
      *
      * @return \Illuminate\Http\JsonResponse
@@ -29,8 +29,8 @@ class AppController extends BaseController
 
     /**
      * @param \Illuminate\Http\Request $request
-     * @param string                   $name
-     * @param array                    $rules
+     * @param string $name
+     * @param array $rules
      *
      * @return array
      *

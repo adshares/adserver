@@ -1,87 +1,117 @@
 <?php
+/**
+ * Copyright (C) 2018 Adshares sp. z. o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Providers;
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    /**
-     * This namespace is applied to your controller routes.
-     *
-     * In addition, it is set as the URL generator's root namespace.
-     *
-     * @var string
-     */
     protected $namespace = 'Adshares\Adserver\Http\Controllers';
 
-    /**
-     * Define your route model bindings, pattern filters, etc.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        //
-
-        parent::boot();
-    }
-
-    /**
-     * Define the routes for the application.
-     *
-     * @return void
-     */
     public function map()
     {
+        $this->mapAuthRoutes();
+
+        $this->mapWebRoutes();
         $this->mapApiRoutes();
         $this->mapAppRoutes();
-        $this->mapWebRoutes();
+
+        $this->mapOldAuthRoutes();
     }
 
-    /**
-     * Define the "web" routes for the application.
-     *
-     * These routes all receive session state, CSRF protection, etc.
-     *
-     * @return void
-     */
-    protected function mapWebRoutes()
+    private function mapWebRoutes()
     {
-        Route::middleware('web')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/web.php'));
+        Route::get('/', function () {
+            return view('welcome');
+        });
     }
 
-
-    /**
-     * Define the "api" routes for the application.
-     *
-     * These routes are typically stateless.
-     *
-     * @return void
-     */
-    protected function mapApiRoutes()
+    private function mapApiRoutes()
     {
-        //Route::prefix('api')
         Route::middleware('api')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/api.php'));
+            ->namespace($this->namespace)
+            ->group(base_path('routes/api.php'))
+        ;
+    }
+
+    private function mapAppRoutes()
+    {
+        Route::middleware('app')
+            ->namespace($this->namespace)
+            ->prefix('app')
+            ->group(base_path('routes/app.php'))
+        ;
+        Route::middleware('api')
+            ->namespace($this->namespace)
+            ->prefix('panel')
+            ->group(base_path('routes/app.php'))
+        ;
+    }
+
+    private function mapAuthRoutes(): void
+    {
+        Route::middleware(['app', 'guest'])
+            ->namespace($this->namespace)
+            ->prefix('auth')
+            ->group(function () {
+                Route::post('recovery', 'App\AuthController@recovery');
+                Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
+                Route::post('login', 'App\AuthController@login');
+            })
+        ;
+
+        Route::middleware(['app', 'user'])
+            ->namespace($this->namespace)
+            ->prefix('auth')
+            ->group(function () {
+                Route::get('check', 'App\AuthController@check');
+                Route::get('key', 'App\AuthController@apiKey');
+                Route::get('logout', 'App\AuthController@logout');
+            })
+        ;
     }
 
     /**
-     * Define the "api" routes for the application.
-     *
-     * These routes are typically stateless.
-     *
-     * @return void
+     * @deprecated This will be removed after AdPanel is upgraded to use token based auth
      */
-    protected function mapAppRoutes()
+    private function mapOldAuthRoutes(): void
     {
-        //Route::prefix('api')
-        Route::middleware('app')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/app.php'));
+        Route::middleware(['app', 'guest'])
+            ->namespace($this->namespace)
+            ->prefix('app/auth')
+            ->group(function () {
+                Route::post('recovery', 'App\AuthController@recovery');
+                Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
+                Route::post('login', 'App\AuthController@login');
+            })
+        ;
+
+        Route::middleware(['app', 'user'])
+            ->namespace($this->namespace)
+            ->prefix('app/auth')
+            ->group(function () {
+                Route::get('check', 'App\AuthController@check');
+                Route::get('logout', 'App\AuthController@logout');
+            })
+        ;
     }
 }

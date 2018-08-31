@@ -1,3 +1,7 @@
+/.idea/*
+!/.idea/copyright/*
+!/.idea/codeStyles/*
+
 /node_modules
 /public/-
 /public/hot
@@ -5,7 +9,6 @@
 /public/mix-manifest.json
 /storage/*.key
 /vendor
-/.idea
 /.vscode
 /.vagrant
 Homestead.json
