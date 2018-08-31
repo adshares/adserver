@@ -10,11 +10,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AppController extends BaseController
 {
-    public static function jsonWithoutSessionCookie($data = [], $code = 200, $errors = false)
-    {
-        return self::json($data, $code, $errors);
-    }
-
     /**
      * @param array $data
      * @param int $code

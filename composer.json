@@ -1,9 +1,10 @@
 {
     "name": "adshares/adserver",
-    "description": "The Laravel Framework.",
-    "keywords": ["framework", "laravel"],
-    "license": "MIT",
+    "description": "Adshares AdServer",
+    "keywords": ["advertising", "blockchain", "rest", "api"],
+    "license": "GPLv3",
     "type": "project",
+    "version": "0.1.0",
     "require": {
         "php": "^7.1",
         "adshares/php-ads-client": "dev-master",

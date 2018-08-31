@@ -16,18 +16,19 @@ class SettingsController extends AppController
      */
     public function readNotifications()
     {
-        $o = UserSettings::where('user_id', Auth::user()->id)
+        $settings = UserSettings::where('user_id', Auth::user()->id)
             ->where('type', 'notifications')
             ->first()
             ->toArrayCamelize()
         ;
-        $p = [];
-        foreach ($o['payload'] as $n => $v) {
-            $v['name'] = $n;
-            $p[] = $v;
-        }
-        $o['payload'] = $p;
 
-        return self::json($o, 200);
+        $payload = [];
+        foreach ($settings['payload'] as $name => $value) {
+            $value['name'] = $name;
+            $payload[] = $value;
+        }
+        $settings['payload'] = $payload;
+
+        return self::json($settings, 200);
     }
 }
