@@ -84,7 +84,6 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('auth')
             ->group(function () {
                 Route::get('check', 'App\AuthController@check');
-                Route::get('key', 'App\AuthController@apiKey');
                 Route::get('logout', 'App\AuthController@logout');
             })
         ;
