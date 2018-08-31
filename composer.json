@@ -1,7 +1,7 @@
 {
     "name": "adshares/adserver",
     "description": "Adshares AdServer",
-    "keywords": ["advertising", "blockchain", "rest", "api"],
+    "keywords": ["advertising", "blockchain", "rest", "api", "server-x"],
     "license": "GPLv3",
     "type": "project",
     "version": "0.1.0",
