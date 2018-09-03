@@ -60,6 +60,7 @@ class RouteServiceProvider extends ServiceProvider
             ->prefix('app')
             ->group(base_path('routes/app.php'))
         ;
+
         Route::middleware('api')
             ->namespace($this->namespace)
             ->prefix('panel')
@@ -69,13 +70,30 @@ class RouteServiceProvider extends ServiceProvider
 
     private function mapAuthRoutes(): void
     {
+        Route::middleware(['app'])
+            ->namespace($this->namespace)
+            ->prefix('auth')
+            ->group(
+                function () {
+                    //TODO: move out from 'users' - it is being used in API
+                    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
+                    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
+                    Route::post('users/email/activate', 'App\UsersController@emailActivate');
+
+                    Route::post('login', 'App\AuthController@login');
+                }
+            )
+        ;
+
         Route::middleware(['app', 'guest'])
             ->namespace($this->namespace)
             ->prefix('auth')
             ->group(function () {
                 Route::post('recovery', 'App\AuthController@recovery');
                 Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
-                Route::post('login', 'App\AuthController@login');
+
+                //TODO: move out from 'users' - it is being used in API
+                Route::post('users', 'App\UsersController@add')->name('app.users.add');
             })
         ;
 
@@ -85,6 +103,11 @@ class RouteServiceProvider extends ServiceProvider
             ->group(function () {
                 Route::get('check', 'App\AuthController@check');
                 Route::get('logout', 'App\AuthController@logout');
+
+                Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
+
+                Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
+                Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
             })
         ;
     }
