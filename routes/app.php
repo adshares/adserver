@@ -22,9 +22,10 @@ Route::middleware('user')->group(function () {
     Route::get('notifications', 'App\NotificationsController@read');
 
     Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
-    Route::post('users/email', 'App\UsersController@emailChangeStep1');
-    //TODO: Make user_id not optional - why is it anyway?
+
+    // ApiUsersService
     Route::patch('users/{user_id?}', 'App\UsersController@edit')->name('app.users.edit');
+    Route::post('users/email', 'App\UsersController@emailChangeStep1');
 
     Route::get('settings/notifications', 'App\SettingsController@readNotifications');
 

@@ -70,17 +70,20 @@ class RouteServiceProvider extends ServiceProvider
 
     private function mapAuthRoutes(): void
     {
-        Route::middleware(['app'])
+        Route::middleware(['app', 'user'])
             ->namespace($this->namespace)
             ->prefix('auth')
             ->group(
                 function () {
-                    //TODO: move out from 'users' - it is being used in API
-                    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
-                    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
-                    Route::post('users/email/activate', 'App\UsersController@emailActivate');
+                    // ApiAuthService
+                    Route::get('check', 'App\AuthController@check');
+                    Route::get('logout', 'App\AuthController@logout');
 
-                    Route::post('login', 'App\AuthController@login');
+                    // ApiUsersService
+                    Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
+
+                    Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
+                    Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
                 }
             )
         ;
@@ -88,28 +91,35 @@ class RouteServiceProvider extends ServiceProvider
         Route::middleware(['app', 'guest'])
             ->namespace($this->namespace)
             ->prefix('auth')
-            ->group(function () {
-                Route::post('recovery', 'App\AuthController@recovery');
-                Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
+            ->group(
+                function () {
+                    // ApiAuthService
+                    Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
+                    Route::post('recovery', 'App\AuthController@recovery');
 
-                //TODO: move out from 'users' - it is being used in API
-                Route::post('users', 'App\UsersController@add')->name('app.users.add');
-            })
+                    // ApiUsersService
+                    Route::post('users', 'App\UsersController@add')->name('app.users.add');
+                }
+            )
         ;
 
-        Route::middleware(['app', 'user'])
+        Route::middleware(['app'])
             ->namespace($this->namespace)
             ->prefix('auth')
-            ->group(function () {
-                Route::get('check', 'App\AuthController@check');
-                Route::get('logout', 'App\AuthController@logout');
+            ->group(
+                function () {
+                    // ApiAuthService
+                    Route::post('login', 'App\AuthController@login');
 
-                Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
-
-                Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
-                Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
-            })
+                    // ApiUsersService
+                    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
+                    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
+                    Route::post('users/email/activate', 'App\UsersController@emailActivate');
+                }
+            )
         ;
+
+
     }
 
     /**
