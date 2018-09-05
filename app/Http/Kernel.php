@@ -24,20 +24,23 @@ use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Auth\Middleware\Authorize;
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Routing\Middleware\ValidateSignature;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class Kernel extends HttpKernel
 {
+    const MIDDLEWARE_GUEST = 'guest';
+    const MIDDLEWARE_USER = 'user';
+    const API = 'api';
+    const APP = 'app';
+    const WEB = 'web';
+
     /**
      * The application's global HTTP middleware stack.
      * These middleware are run during every request to your application.
@@ -49,36 +52,25 @@ class Kernel extends HttpKernel
         ConvertEmptyStringsToNull::class,
         Middleware\TrustProxies::class,
     ];
+
     /**
      * The application's route middleware groups.
      */
     protected $middlewareGroups = [
-        'web' => [
-            Middleware\EncryptCookies::class,
-            AddQueuedCookiesToResponse::class,
-            StartSession::class,
-            // \Illuminate\Session\Middleware\AuthenticateSession::class,
-            ShareErrorsFromSession::class,
-            Middleware\VerifyCsrfToken::class,
-            SubstituteBindings::class,
+        self::WEB => [
+            'cors',
         ],
 
-        'api' => [
-            // 'throttle:60,1',
-            HandleCors::class,
-            'auth:api',
+        self::APP => [
+            'cors',
+            'session',
             'bindings',
         ],
 
-        'app' => [
-            HandleCors::class,
-            Middleware\EncryptCookies::class,
-            AddQueuedCookiesToResponse::class,
-            StartSession::class,
-            // \Illuminate\Session\Middleware\AuthenticateSession::class,
-            ShareErrorsFromSession::class,
-            // \Adshares\Adserver\Http\Middleware\VerifyCsrfToken::class,
-            SubstituteBindings::class,
+        self::API => [
+            'cors',
+            'auth:api',
+            'bindings',
         ],
     ];
     /**
@@ -86,16 +78,17 @@ class Kernel extends HttpKernel
      * These middleware may be assigned to groups or used individually.
      */
     protected $routeMiddleware = [
+        'cors' => HandleCors::class,
         'auth' => Authenticate::class,
-        'auth.basic' => AuthenticateWithBasicAuth::class,
         'bindings' => SubstituteBindings::class,
+        'session' => StartSession::class,
+
+        'auth.basic' => AuthenticateWithBasicAuth::class,
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
-        'cors' => HandleCors::class,
-        'guest' => Middleware\NotAuthenticatedSessionRequired::class,
         'signed' => ValidateSignature::class,
         'snake_casing' => Middleware\SnakeCasing::class,
-        'throttle' => ThrottleRequests::class,
-        'user' => Middleware\AuthenticatedSessionRequired::class,
+        self::MIDDLEWARE_GUEST => Middleware\NotAuthenticatedSessionRequired::class,
+        self::MIDDLEWARE_USER => Middleware\AuthenticatedSessionRequired::class,
     ];
 }

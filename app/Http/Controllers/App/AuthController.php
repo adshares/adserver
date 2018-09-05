@@ -41,10 +41,7 @@ class AuthController extends AppController
             $request->only('email', 'password'),
             $request->filled('remember')
         )) {
-            $request->session()->regenerate();
             Auth::user()->generateApiKey();
-
-            // $this->authenticated($request, $this->guard()->user());
 
             return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
         }
@@ -62,8 +59,6 @@ class AuthController extends AppController
     public function logout(Request $request)
     {
         Auth::user()->clearApiKey();
-        Auth::guard()->logout();
-        $request->session()->invalidate();
 
         return self::json([], 204);
     }
