@@ -99,6 +99,7 @@ class RouteServiceProvider extends ServiceProvider
 
                     // ApiUsersService
                     Route::post('users', 'App\UsersController@add')->name('app.users.add');
+                    Route::patch('users', 'App\UsersController@edit');
                 }
             )
         ;
