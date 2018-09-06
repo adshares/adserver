@@ -59,20 +59,27 @@ class SitesController extends AppController
         // TODO check privileges
         $sites = Site::with(
             [
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
             ]
         )
-        ->whereNull('deleted_at')->get()
+            ->whereNull('deleted_at')->get()
         ;
 
-        return self::json($sites);
+        return self::json(
+            array_map(
+                function ($site) {
+                    return $site['status'] = $site['status'] ?? 2;
+                },
+                $sites->toArray()
+            )
+        );
     }
 
     /**
@@ -124,17 +131,17 @@ class SitesController extends AppController
         // TODO check privileges
         $site = Site::with(
             [
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
             ]
         )
-        ->whereNull('deleted_at')->findOrFail($site_id)
+            ->whereNull('deleted_at')->findOrFail($site_id)
         ;
 
         return self::json(compact('site'));
