@@ -1,6 +1,6 @@
 /.idea/*
-!/.idea/copyright/*
-!/.idea/codeStyles/*
+!/.idea/copyright/
+!/.idea/codeStyles/
 
 /node_modules
 /public/-
