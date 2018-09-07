@@ -1,18 +1,18 @@
 <?php
 /**
- * Copyright (C) 2018 Adshares sp. z. o.o.
+ * Copyright (c) 2018 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
@@ -59,20 +59,27 @@ class SitesController extends AppController
         // TODO check privileges
         $sites = Site::with(
             [
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
             ]
         )
-        ->whereNull('deleted_at')->get()
+            ->whereNull('deleted_at')->get()
         ;
 
-        return self::json($sites);
+        return self::json(
+            array_map(
+                function ($site) {
+                    return $site['status'] = $site['status'] ?? 2;
+                },
+                $sites->toArray()
+            )
+        );
     }
 
     /**
@@ -124,17 +131,17 @@ class SitesController extends AppController
         // TODO check privileges
         $site = Site::with(
             [
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
+                'siteExcludes' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
+                'siteRequires' => function ($query) {
+                    /* @var $query Builder */
+                    $query->whereNull('deleted_at');
+                },
             ]
         )
-        ->whereNull('deleted_at')->findOrFail($site_id)
+            ->whereNull('deleted_at')->findOrFail($site_id)
         ;
 
         return self::json(compact('site'));
