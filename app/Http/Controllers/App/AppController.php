@@ -65,4 +65,9 @@ class AppController extends BaseController
 
         return $validator->validate();
     }
+
+    public function mockWalletHistory(Request $request)
+    {
+        return file_get_contents(base_path('mocks/wallet-history_get.json'));
+    }
 }

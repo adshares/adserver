@@ -75,7 +75,9 @@ class SitesController extends AppController
         return self::json(
             array_map(
                 function ($site) {
-                    return $site['status'] = $site['status'] ?? 2;
+                    $site['status'] = $site['status'] ?? 2;
+
+                    return $site;
                 },
                 $sites->toArray()
             )

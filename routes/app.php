@@ -54,3 +54,4 @@ Route::get('options/sites/targeting', 'App\SitesController@targeting');
 Route::post('publisher_chart', 'App\ChartsController@publisherChart');
 
 Route::get('config/banners', 'App\SitesController@banners');
+Route::get('wallet/history', 'App\AppController@mockWalletHistory');
