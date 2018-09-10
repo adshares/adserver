@@ -66,11 +66,6 @@ class AppController extends BaseController
         return $validator->validate();
     }
 
-    public function mockWalletHistory(Request $request)
-    {
-        return file_get_contents(base_path('mocks/wallet-history_get.json'));
-    }
-
     public function mock(Request $request)
     {
         $pathInfo = str_replace(['/panel', '/app', '/api'], ['', '', ''], $request->getPathInfo());
