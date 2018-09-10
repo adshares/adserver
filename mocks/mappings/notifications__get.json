@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/notifications"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "id": 8897312,
+        "userRole": "all",
+        "type": "account",
+        "title": "Welcome",
+        "message": "Your account has been created"
+      }
+    ]
+  },
+  "priority": 0
+}

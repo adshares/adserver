@@ -1,0 +1,84 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/site_targeting"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "label": "Creative type",
+        "key":"category",
+        "values": [
+          {"label": "Audio Ad (Auto-Play)", "value": "1"},
+          {"label": "Audio Ad (User Initiated)", "value": "2"},
+          {"label": "In-Banner Video Ad (Auto-Play)", "value": "6"},
+          {"label": "In-Banner Video Ad (User Initiated)", "value": "7"},
+          {"label": "Provocative or Suggestive Imagery", "value": "9"},
+          {"label": "Shaky, Flashing, Flickering, Extreme Animation, Smileys", "value": "10"},
+          {"label": "Surveys", "value": "11"},
+          {"label": "Text Only", "value": "12"},
+          {"label": "User Interactive (e.g., Embedded Games)", "value": "13"},
+          {"label": "Windows Dialog or Alert Style", "value": "14"},
+          {"label": "Has Audio On/Off Button", "value": "15"}
+        ],
+        "value_type": "string",
+        "allow_input": true
+      },
+      {
+        "label": "Language",
+        "key": "lang",
+        "values": [
+          {"label": "Polish", "value": "pl"},
+          {"label": "English", "value": "en"},
+          {"label": "Italian", "value": "it"},
+          {"label": "Japanese", "value": "jp"}
+        ],
+        "value_type": "string",
+        "allow_input": false
+      },
+      {
+        "label": "Screen",
+        "key":"screen",
+        "children": [
+          {
+            "label": "Width",
+            "key": "width",
+            "values": [
+              {"label": "1200 or more", "value": "<1200,>"},
+              {"label": "between 1200 and 1800", "value": "<1200,1800>"}
+            ],
+            "value_type": "number",
+            "allow_input": true
+          },
+          {
+            "label": "Height",
+            "key": "height",
+            "values": [
+              {"label": "900 or more", "value": "<900,>"},
+              {"label": "between 200 and 300", "value": "<200,300>"}
+            ],
+            "value_type": "number",
+            "allow_input": true
+          }
+        ]
+      },
+      {
+        "label": "Javascript support",
+        "key": "js_enabled",
+        "value_type": "boolean",
+        "values": [
+          {"label": "Yes", "value": "true"},
+          {"label": "No", "value": "false"}
+        ],
+        "allow_input": false
+      }
+    ]
+  },
+  "priority": 0
+}

@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/adshares_address"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "adsharesAddress": "0001-0000001F-34FC"
+    }
+  },
+  "priority": 0
+}

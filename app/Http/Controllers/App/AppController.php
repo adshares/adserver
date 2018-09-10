@@ -70,4 +70,31 @@ class AppController extends BaseController
     {
         return file_get_contents(base_path('mocks/wallet-history_get.json'));
     }
+
+    public function mock(Request $request)
+    {
+        $pathInfo = str_replace(['/panel', '/app', '/api'], ['', '', ''], $request->getPathInfo());
+        $path = substr(str_replace('/', '_', $pathInfo), 1);
+        $method = strtolower($request->method());
+
+        $filePath = "mocks/mappings/{$path}_{$method}.json";
+
+        if (!is_file(base_path($filePath))) {
+            $filePath = "mocks/mappings/{$path}__{$method}.json";
+        }
+
+        try {
+            $json = file_get_contents(base_path($filePath));
+        } catch (\ErrorException $errorException) {
+            abort(404, $errorException->getMessage());
+        }
+
+        try {
+            $data = \GuzzleHttp\json_decode($json, true);
+
+            return self::json($data['response']['jsonBody']);
+        } catch (\Exception $errorException) {
+            return self::json([], 500, [$errorException->getMessage()]);
+        }
+    }
 }

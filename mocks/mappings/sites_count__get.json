@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/sites/count"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "totalEarnings": 1364,
+      "totalClicks": 224,
+      "totalImpressions": 12546,
+      "averagePageRPM": 0.0515,
+      "averageCPC": 2.05
+    }
+  },
+  "priority": 0
+}

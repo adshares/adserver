@@ -1,0 +1,114 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/sites"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [{
+      "websiteUrl": "Site 1",
+      "id": 222222222222,
+      "status": 1,
+      "estimatedEarnings": 1232,
+      "clicks": 213,
+      "impressions": 12435,
+      "RPM": 0.03,
+      "averageCPC": 2.0,
+
+      "targeting": {
+        "requires": {
+          "lang": ["pl"]
+        },
+        "excludes": {
+          "js_enabled": ["false"],
+          "screen": {
+            "width": ["<1200,1800>", "<1200,>"]
+          }
+        }
+      },
+      "adUnits": [{
+        "status": 1,
+        "shortHeadline": "Adshares Dashboard Advertisement",
+        "type": "Leaderboard 728x90",
+
+        "budget": 20,
+        "clicks": 100,
+        "impressions": 1233422132,
+        "CTR": 0.00001233,
+        "averageCPC": 1.2,
+        "cost": 2435.23,
+        "code": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut dicta dolorem dolores ducimus eaque fugiat, labore mollitia neque nostrum omnis perferendis recusandae, saepe sint, soluta voluptatem! Eos nam nulla velit!"
+      },
+        {
+          "status": 0,
+          "shortHeadline": "Adshares Website Advertisement",
+          "type": "image",
+
+          "budget": 20,
+          "clicks": 200,
+          "impressions": 21313545,
+          "CTR": 0.1233,
+          "averageCPC": 3.25,
+          "cost": 8236.23,
+          "code": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut dicta dolorem dolores ducimus eaque fugiat, labore mollitia neque nostrum omnis perferendis recusandae, saepe sint, soluta voluptatem! Eos nam nulla velit!"
+        }
+      ]
+    },
+      {
+        "websiteUrl": "Site 2",
+        "id": 1111,
+        "status": 2,
+        "estimatedEarnings": 132,
+        "clicks": 11,
+        "impressions": 112,
+        "RPM": 0.23,
+        "averageCPC": 2.1,
+
+        "targeting": {
+          "requires": {
+            "lang": ["pl"]
+          },
+          "excludes": {
+            "js_enabled": ["false"],
+            "screen": {
+              "width": ["<1200,1800>", "<1200,>"]
+            }
+          }
+        },
+        "adUnits": [{
+          "status": 1,
+          "shortHeadline": "Adshares Dashboard Advertisement",
+          "type": "Large mobile banner 300x90",
+
+          "budget": 20,
+          "clicks": 100,
+          "impressions": 1233422132,
+          "CTR": 0.00001233,
+          "averageCPC": 1.2,
+          "cost": 2435.23,
+          "code": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut dicta dolorem dolores ducimus eaque fugiat, labore mollitia neque nostrum omnis perferendis recusandae, saepe sint, soluta voluptatem! Eos nam nulla velit!"
+        },
+          {
+            "status": 0,
+            "shortHeadline": "Adshares Website Advertisement",
+            "type": "image",
+
+            "budget": 20,
+            "clicks": 200,
+            "impressions": 21313545,
+            "CTR": 0.1233,
+            "averageCPC": 3.25,
+            "cost": 8236.23,
+            "code": "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut dicta dolorem dolores ducimus eaque fugiat, labore mollitia neque nostrum omnis perferendis recusandae, saepe sint, soluta voluptatem! Eos nam nulla velit!"
+          }
+        ]
+      }
+    ]
+  },
+  "priority": 0
+}

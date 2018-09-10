@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/send_activation_email"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": { "status": 200 }
+  },
+  "priority": 0
+}
