@@ -48,10 +48,6 @@ class RouteServiceProvider extends ServiceProvider
         ;
     }
 
-    private function mapWebRoutes(): void
-    {
-    }
-
     private function mapAuthRoutes(): void
     {
         Route::prefix(self::PREFIX_AUTH)->namespace($this->namespace)->group(
