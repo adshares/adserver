@@ -45,7 +45,14 @@ class Campaign extends Model
      * @var array
      */
     protected $fillable = [
-        'uuid', 'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end', 'require_count',
+        'uuid',
+        'landing_url',
+        'max_cpm',
+        'max_cpc',
+        'budget_per_hour',
+        'time_start',
+        'time_end',
+        'require_count',
     ];
 
     /**
@@ -54,7 +61,8 @@ class Campaign extends Model
      * @var array
      */
     protected $hidden = [
-        'id', 'user_id',
+//        'id',
+        'user_id',
     ];
 
     /**
@@ -66,6 +74,20 @@ class Campaign extends Model
         'uuid' => 'BinHex',
     ];
 
+    /** @var array */
+    protected $appends = ['basic_information'];
+
+    public static function getWithReferences($listDeletedCampaigns)
+    {
+        $builder = Campaign::with('Banners', 'CampaignExcludes', 'CampaignRequires');
+
+        if ($listDeletedCampaigns) {
+            return $builder->get();
+        }
+
+        return $builder->whereNull('deleted_at')->get();
+    }
+
     public function banners()
     {
         return $this->hasMany('Adshares\Adserver\Models\Banner');
@@ -73,22 +95,25 @@ class Campaign extends Model
 
     public function campaignExcludes()
     {
-        return $this->hasMany('Adshares\Adserver\Models\CampaignExclude');
+        return $this->hasMany(CampaignExclude::class);
     }
 
     public function campaignRequires()
     {
-        return $this->hasMany('Adshares\Adserver\Models\CampaignRequire');
+        return $this->hasMany(CampaignRequire::class);
     }
 
-    public static function getWithReferences($listDeletedCampaigns)
+    public function getBasicInformationAttribute()
     {
-        $q = Campaign::with('Banners', 'CampaignExcludes', 'CampaignRequires');
-
-        if ($listDeletedCampaigns) {
-            return $q->get();
-        }
-
-        return $q->whereNull('deleted_at')->get();
+        return [
+            "status" => $this->status,
+            "name" => "Campaign for Education",
+            "targetUrl" => "www.adshares.net",
+            "bidStrategyName" => "CPC",
+            "bidValue" => 0.2,
+            "budget" => 455,
+            "dateStart" => $this->time_start,
+            "dateEnd" => $this->time_end,
+        ];
     }
 }

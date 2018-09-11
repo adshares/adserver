@@ -4,7 +4,6 @@
     "keywords": ["advertising", "blockchain", "rest", "api"],
     "license": "GPLv3",
     "type": "project",
-    "version": "0.1.0",
     "require": {
         "php": "^7.1",
         "adshares/ads-client": "^1.0",
@@ -34,7 +33,8 @@
             "database/factories"
         ],
         "psr-4": {
-            "Adshares\\Adserver\\": "app/"
+            "Adshares\\Adserver\\": "app/",
+            "Adshares\\Adserver\\Core\\": "core/"
         }
     },
     "autoload-dev": {
@@ -59,9 +59,9 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover"
         ],
-		"install-codestandards": [
-			"Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
-		]
+        "install-codestandards": [
+            "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
+        ]
     },
     "config": {
         "preferred-install": "dist",

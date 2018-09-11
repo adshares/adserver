@@ -72,29 +72,29 @@ class CampaignsController extends AppController
             ->whereNull('deleted_at')->get()
         ;
 
-        return self::json(
-            array_map(
-                function ($campaign) {
-                    $campaign['basicInformation'] = $campaign['basicInformation'] ?? \GuzzleHttp\json_decode(
-                            <<<JSON
-{
-    "status": 1,
-    "name": "Campaign for Education",
-    "targetUrl": "www.adshares.net",
-    "bidStrategyName": "CPC",
-    "bidValue": 0.2,
-    "budget": 455,
-    "dateStart": "Sat Feb 23 2018 12:24:00 GMT",
-    "dateEnd": "Sun Feb 24 2018 12:24:00 GMT"
-}
-JSON
-                        );
-
-                    return $campaign;
-                },
-                $campaigns->toArray()
-            )
-        );
+//        return self::json(
+//            array_map(
+//                function (Campaign $campaign) {
+////                    $campaign['basicInformation'] = $campaign['basicInformation'] ?? \GuzzleHttp\json_decode(
+////                            <<<JSON
+////{
+////    "status": {$campaign->status},
+////    "name": "Campaign for Education",
+////    "targetUrl": "www.adshares.net",
+////    "bidStrategyName": "CPC",
+////    "bidValue": 0.2,
+////    "budget": 455,
+////    "dateStart": "{$campaign->timeStart}",
+////    "dateEnd": "Sun Feb 24 2018 12:24:00 GMT"
+////}
+////JSON
+////                        );
+//
+//                    return $campaign;
+//                },
+//                $campaigns->all()
+//            )
+//        );
 
         return self::json($campaigns);
     }
