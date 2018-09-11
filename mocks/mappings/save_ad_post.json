@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/save_ad"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "id": 1,
+      "status": 0,
+      "shortHeadline": "Adshares Dashboard Advertisement",
+      "type": "image",
+
+      "budget": 20,
+      "clicks": 100,
+      "impressions": 1233422132,
+      "CTR": 0.00001233,
+      "averageCPC": 1.2,
+      "cost": 2435.23
+    }
+  },
+  "priority": 0
+}

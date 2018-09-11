@@ -33,16 +33,18 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map()
     {
-        $this->mapWebRoutes();
+        Route::middleware(Kernel::WEB)
+            ->get('/', function () { return view('welcome'); })
+            ->name('login')
+        ;
         $this->mapAuthRoutes();
         $this->mapAppRoutes();
         $this->mapApiRoutes();
-    }
 
-    private function mapWebRoutes(): void
-    {
-        Route::middleware(Kernel::WEB)
-            ->get('/', function () { return view('welcome'); })
+        Route::middleware(Kernel::API)
+            ->namespace($this->namespace)
+            ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
+            ->where('any', '.*')
         ;
     }
 

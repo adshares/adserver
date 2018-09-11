@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/campaigns/count"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "totalBudget": 903,
+      "totalClicks": 4263,
+      "totalImpressions": 248667,
+      "averageCTR": 0.0315,
+      "averageCPC": 2.115,
+      "totalCost": 4866.46
+    }
+  },
+  "priority": 0
+}

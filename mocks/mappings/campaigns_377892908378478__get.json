@@ -1,0 +1,82 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/campaigns/377892908378478"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "basicInformation": {
+        "status": 2,
+        "name": "Campaign for Education",
+        "targetUrl": "www.adshares.net",
+        "bidStrategyName": "CPC",
+        "bidValue": 0.2,
+        "budget": 455,
+        "dateStart": "Sat Feb 23 2018 12:24:00 GMT"
+      },
+
+      "id": 377892908378478,
+      "clicks": 213,
+      "impressions": 12435,
+      "CTR": 0.03,
+      "averageCPC": 2.1,
+      "cost": 2435.23,
+      "conversions": 802,
+
+      "targeting": {
+        "requires": {
+          "user": {
+            "keywords": ["blockchain", "custom value"]
+          },
+          "site": {
+            "domain": ["coinmarketcap.com", "icoalert.com"]
+          }
+        },
+        "excludes": {
+          "device": {
+            "lang": ["it"]
+          }
+        }
+      },
+      "ads": [
+        {
+          "id": 31987321798,
+          "status": 1,
+          "shortHeadline": "Adshares Dashboard Advertisement",
+          "type": "image",
+          "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP3l58naYcoyqfxstOVPyZdlC4gwNCw89YZts9ThIrUZVrbA8i3g",
+          "imageSize": "222 KB",
+
+          "budget": 20,
+          "clicks": 100,
+          "impressions": 1233422132,
+          "CTR": 0.01233,
+          "averageCPC": 1.2,
+          "cost": 2435.23
+        },
+        {
+          "id": 123823187,
+          "status": 2,
+          "shortHeadline": "Adshares Website Advertisement",
+          "type": "image",
+          "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP3l58naYcoyqfxstOVPyZdlC4gwNCw89YZts9ThIrUZVrbA8i3g",
+          "imageSize": "222 KB",
+
+          "budget": 20,
+          "clicks": 200,
+          "impressions": 21313545,
+          "CTR": 0.1233,
+          "averageCPC": 3.25,
+          "cost": 8236.23
+        }
+      ]
+    }
+  },
+  "priority": 0
+}

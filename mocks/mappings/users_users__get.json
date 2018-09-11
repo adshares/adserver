@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/users"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "id": "1",
+        "email": "user1@example.com",
+        "isAdvertiser": true,
+        "isPublisher": true,
+        "profit": -200,
+        "topKeywords": [
+          "England",
+          "English",
+          "Manchester"
+        ]
+      },
+      {
+        "id": "2",
+        "email": "user2@example.com",
+        "isAdvertiser": true,
+        "isPublisher": false,
+        "profit": 300,
+        "topKeywords": [
+          "England",
+          "English",
+          "Manchester"
+        ]
+      },
+      {
+        "id": "3",
+        "email": "user3@example.com",
+        "isAdvertiser": false,
+        "isPublisher": true,
+        "profit": -20,
+        "topKeywords": [
+          "England",
+          "English",
+          "Manchester"
+        ]
+      },
+      {
+        "id": "4",
+        "email": "user4@example.com",
+        "isAdvertiser": true,
+        "isPublisher": false,
+        "profit": 1200,
+        "topKeywords": [
+          "England",
+          "English",
+          "Manchester"
+        ]
+      }
+    ]
+  }
+}
