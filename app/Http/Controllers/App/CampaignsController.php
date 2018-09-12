@@ -72,7 +72,11 @@ class CampaignsController extends AppController
                 },
             ]
         )
-            ->whereNull('deleted_at')->get()
+            ->whereNull('deleted_at')->get()->map(
+                function (Campaign $campaign) {
+                    return $campaign->makeVisible('id');
+                }
+            )
         ;
 
         return self::json($campaigns);

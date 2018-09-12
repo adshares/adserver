@@ -67,7 +67,7 @@ class Campaign extends Model
      * @var array
      */
     protected $hidden = [
-//        'id',
+        'id',
         'user_id',
     ];
 
