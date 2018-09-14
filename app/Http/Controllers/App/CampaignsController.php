@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http\Controllers\App;
@@ -23,13 +23,16 @@ namespace Adshares\Adserver\Http\Controllers\App;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CampaignsController extends AppController
 {
     public function add(Request $request)
     {
-        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
-        $campaign = Campaign::create($request->input('campaign'));
+//        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
+        $input = $request->input('campaign');
+        $input['user_id'] = Auth::user()->id;
+        $campaign = Campaign::create($input);
         $campaign->save();
 
         $reqObj = $request->input('campaign.targeting.require');
@@ -49,7 +52,7 @@ class CampaignsController extends AppController
         }
 
         $response = self::json(compact('campaign'), 201);
-        $response->header('Location', route('app.campaign.read', ['campaign' => $campaign]));
+        $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
 
         return $response;
     }
@@ -69,32 +72,12 @@ class CampaignsController extends AppController
                 },
             ]
         )
-            ->whereNull('deleted_at')->get()
-        ;
-
-        return self::json(
-            array_map(
-                function ($campaign) {
-                    $campaign['basicInformation'] = $campaign['basicInformation'] ?? \GuzzleHttp\json_decode(
-                            <<<JSON
-{
-    "status": 1,
-    "name": "Campaign for Education",
-    "targetUrl": "www.adshares.net",
-    "bidStrategyName": "CPC",
-    "bidValue": 0.2,
-    "budget": 455,
-    "dateStart": "Sat Feb 23 2018 12:24:00 GMT",
-    "dateEnd": "Sun Feb 24 2018 12:24:00 GMT"
-}
-JSON
-                        );
-
-                    return $campaign;
-                },
-                $campaigns->toArray()
+            ->whereNull('deleted_at')->get()->map(
+                function (Campaign $campaign) {
+                    return $campaign->makeVisible('id');
+                }
             )
-        );
+        ;
 
         return self::json($campaigns);
     }
@@ -125,20 +108,23 @@ JSON
 
     public function edit(Request $request, $campaign_id)
     {
-        $this->validateRequestObject(
-            $request,
-            'campaign',
-            array_intersect_key(
-                Campaign::$rules,
-                $request->input('campaign')
-            )
-        );
+//        $this->validateRequestObject(
+//            $request,
+//            'campaign',
+//            array_intersect_key(
+//                Campaign::$rules,
+//                $request->input('campaign')
+//            )
+//        );
 
         // TODO check privileges
         $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
         $campaign->update($request->input('campaign'));
 
-        return self::json(['message' => 'Successfully edited'], 200);
+        $response = self::json(['message' => 'Successfully edited'], 200);
+        $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
+
+        return $response;
     }
 
     public function delete(Request $request, $campaign_id)
