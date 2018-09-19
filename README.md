@@ -27,7 +27,7 @@
 
 ### Authors
 
-- **[Tomek Grzechowski](https://github.com/picostocks)**
+- **[Tomek Grzechowski](https://github.com/yodahack)**
 - **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
 - **[Paweł Zaremba](https://github.com/pawzar)**
 - **[Paweł Podkalicki](https://github.com/PawelPodkalicki)**
