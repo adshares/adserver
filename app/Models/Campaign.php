@@ -112,14 +112,14 @@ class Campaign extends Model
     public function getAdsAttribute()
     {
         return [['status'=>0]];
-}
+    }
     public function getTargetingAttribute()
     {
         return [
             "requires" => [],
             "excludes" => [],
         ];
-}
+    }
     public function getBasicInformationAttribute()
     {
         return [
