@@ -30,7 +30,6 @@
 - **[Tomek Grzechowski](https://github.com/yodahack)**
 - **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
 - **[Paweł Zaremba](https://github.com/pawzar)**
-- **[Paweł Podkalicki](https://github.com/PawelPodkalicki)**
 
 ...and other [contributors](https://github.com/adshares/adserver/contributors).
 
