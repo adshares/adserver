@@ -1,5 +1,5 @@
 <p align="center">
-    <a href="https://adshares.net/" target="_blank">
+    <a href="https://adshares.net/" title="Adshares sp. z o.o." target="_blank">
         <img src="https://adshares.net/logos/ads.svg" alt="Adshares" width="100" height="100">
     </a>
 </p>
@@ -12,7 +12,7 @@
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
 <p align="center">
-    <a href="https://travis-ci.org/adshares/adserver" title="master">
+    <a href="https://travis-ci.org/adshares/adserver" title="master" target="_blank">
         <img src="https://travis-ci.org/adshares/adserver.svg?branch=master" alt="Build Status">
     </a>
 </p>
@@ -25,7 +25,7 @@
 
 - Please follow our [Contributing Guidelines](docs/CONTRIBUTING.md)
 
-## Authors
+### Authors
 
 - **[Tomek Grzechowski](https://github.com/picostocks)**
 - **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
@@ -34,12 +34,12 @@
 
 ...and other [contributors](https://github.com/adshares/adserver/contributors).
 
-## Versioning
+### Versioning
 
 - We use [Semantic Versioning](http://semver.org/).
 - See available [versions](https://github.com/adshares/adserver/tags). 
 
-## License
+### License
 
 This work is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 You should have received a copy of the License along with this work.
 If not, see <https://www.gnu.org/licenses/gpl.html>.
 
-## More info
+## Related projects
 
-- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
 - [AdPanel](https://github.com/adshares/adpanel)
+- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
