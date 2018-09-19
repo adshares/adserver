@@ -1,12 +1,30 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +36,7 @@ class UsersController extends AppController
     protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes
     protected $email_change_token_time = 60 * 60; // 1 hour
+    protected $email_new_change_resend_limit = 5 * 60; // 1 minute
 
     /**
      * Create a new controller instance.
@@ -34,10 +53,13 @@ class UsersController extends AppController
 
         DB::beginTransaction();
         $user = User::register($request->input('user'));
-        Mail::to($user)->queue(new UserEmailActivate(
-            Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-            $request->input('uri')
-        ));
+        Mail::to($user)->queue(
+            new UserEmailActivate(
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                $request->input('uri')
+            )
+        )
+        ;
         DB::commit();
 
         $response = self::json($user->toArrayCamelize(), 201);
@@ -106,6 +128,8 @@ class UsersController extends AppController
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
+            DB::rollBack();
+
             return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Old password is not valid']);
         }
 
@@ -143,14 +167,20 @@ class UsersController extends AppController
         if (!Token::canGenerate($user->id, 'email-activate', $this->email_activation_resend_limit)) {
             return self::json(
                 [],
-                400,
-                ['message' => 'You can request 1 email activation every 15 minutes. Please wait.']
+                429,
+                [
+                    'message' => 'You can request to resend email activation every 15 minutes.'
+                        . ' Please wait 15 minutes or less.',
+                ]
             );
         }
-        Mail::to($user)->queue(new UserEmailActivate(
-            Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-            $request->input('uri')
-        ));
+        Mail::to($user)->queue(
+            new UserEmailActivate(
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                $request->input('uri')
+            )
+        )
+        ;
         DB::commit();
 
         return self::json([], 204);
@@ -161,17 +191,32 @@ class UsersController extends AppController
         Validator::make(
             $request->all(),
             ['email' => 'required|email', 'URIstep1' => 'required', 'URIstep2' => 'required']
-        )->validate();
+        )->validate()
+        ;
         if (User::withTrashed()->where('email', $request->input('email'))->count()) {
             return self::json([], 422, ['email' => 'This email already exists in our database']);
         }
 
         $user = Auth::user();
         DB::beginTransaction();
-        Mail::to($user)->queue(new UserEmailChangeConfirm1Old(
-            Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
-            $request->input('URIstep1')
-        ));
+        if (!Token::canGenerate($user->id, 'email-change-step1', $this->email_new_change_resend_limit)) {
+            return self::json(
+                [],
+                429,
+                [
+                    'message' => "You have already requested email change.\n"
+                        . "You can request email change every 5 minutes.\n"
+                        . "Please wait 5 minutes or less to start configuring another email address.",
+                ]
+            );
+        }
+        Mail::to($user)->queue(
+            new UserEmailChangeConfirm1Old(
+                Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
+                $request->input('URIstep1')
+            )
+        )
+        ;
         DB::commit();
 
         return self::json([], 204);
@@ -183,18 +228,21 @@ class UsersController extends AppController
         if (false === $token = Token::check($token)) {
             DB::commit();
 
-            return self::json([], 403, ['message' => 'Invalid token or outdated']);
+            return self::json([], 403, ['message' => 'Invalid or outdated token']);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
             DB::commit();
 
-            return self::json([], 422, ['email' => 'This email already exists in our database']);
+            return self::json([], 422, ['message' => 'This email already exists in our database']);
         }
-        Mail::to($user)->queue(new UserEmailChangeConfirm2New(
-            Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
-            $token['payload']['URIstep2']
-        ));
+        Mail::to($token['payload']['email'])->queue(
+            new UserEmailChangeConfirm2New(
+                Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
+                $token['payload']['URIstep2']
+            )
+        )
+        ;
         DB::commit();
 
         return self::json([], 204);
@@ -206,15 +254,16 @@ class UsersController extends AppController
         if (false === $token = Token::check($token)) {
             DB::commit();
 
-            return self::json([], 403, ['message' => 'Invalid token or outdated']);
+            return self::json([], 403, ['message' => 'Invalid or outdated token']);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
             DB::commit();
 
-            return self::json([], 422, ['email' => 'This email already exists in our database']);
+            return self::json([], 422, ['message' => 'This email already exists in our database']);
         }
         $user->email = $token['payload']['email'];
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
         DB::commit();
 

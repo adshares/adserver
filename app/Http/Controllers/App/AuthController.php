@@ -1,10 +1,28 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
 use Adshares\Adserver\Mail\AuthRecovery;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -41,12 +59,12 @@ class AuthController extends AppController
             $request->only('email', 'password'),
             $request->filled('remember')
         )) {
-            $request->session()->regenerate();
-            // $this->authenticated($request, $this->guard()->user());
+            Auth::user()->generateApiKey();
+
             return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
         }
 
-        return self::json([], 401);
+        return self::json([], 400);
     }
 
     /**
@@ -58,14 +76,13 @@ class AuthController extends AppController
      */
     public function logout(Request $request)
     {
-        Auth::guard()->logout();
-        $request->session()->invalidate();
+        Auth::user()->clearApiKey();
 
         return self::json([], 204);
     }
 
     /**
-     * Log the user out of the application.
+     * Start password recovery process - generate and send email.
      *
      * @param \Illuminate\Http\Request $request
      *

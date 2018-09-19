@@ -1,0 +1,33 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/users"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "id": 1,
+      "email": "user@e11.click",
+      "isAdvertiser": true,
+      "isPublisher": true,
+      "isAdmin": false,
+      "isEmailConfirmed": true,
+      "authToken": "someauthtokenvalue",
+      "financialData": {
+        "userAddress": "0001-0000001F-34FC",
+        "userMemo": "User f325626f35f6485c84cf90eb7011f1f7",
+        "userAutomaticWithdrawPeriod": 1,
+        "userAutomaticWithdrawAmount": 300,
+        "totalFunds": 1276.60,
+        "totalFundsInCurrency": 4336.23,
+        "totalFundsChange": 20.30,
+        "lastPayment": "Tue Feb 20 2018 12:24:00 GMT"
+      }
+    }
+  }
+}

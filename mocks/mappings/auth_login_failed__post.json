@@ -1,0 +1,18 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/auth/login"
+  },
+  "response": {
+    "status": 401,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "description": "Invalid username or password"
+    }
+  },
+  "priority": 999
+}

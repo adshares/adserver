@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "PUT",
+    "url": "/upload/ad/0"
+
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "name": "file-name.png",
+      "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP3l58naYcoyqfxstOVPyZdlC4gwNCw89YZts9ThIrUZVrbA8i3g",
+      "size": "222 KB"
+    }
+  },
+  "priority": 0
+}

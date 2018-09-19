@@ -1,0 +1,41 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/billing_history"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "status": "349.80",
+        "date": "Sat Feb 23 2018 12:24:00 GMT",
+        "address": "0001-0000001F-34FC",
+        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+      },
+      {
+        "status": "320.80",
+        "date": "Fri Feb 23 2018 12:24:00 GMT",
+        "address": "0001-0000001F-34FC",
+        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+      },
+      {
+        "status": "622.80",
+        "date": "Thu Feb 22 2018 12:24:00 GMT",
+        "address": "0001-0000001F-34FC",
+        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+      },
+      {
+        "status": "432.80",
+        "date": "Wed Feb 21 2018 12:24:00 GMT",
+        "address": "0001-0000001F-34FC",
+        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+      }
+    ]
+  },
+  "priority": 0
+}

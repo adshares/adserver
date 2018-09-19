@@ -1,17 +1,33 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Models\NetworkCampaign;
-use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Services\BannerFinder;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
+use Adshares\Adserver\Services\BannerFinder;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // use Adshares\Services\Adselect;
@@ -117,16 +133,15 @@ class SupplyController extends Controller
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         } else {
-            $banner = NetworkCampaign::getRepository($this->getDoctrine()->getManager())->findOneBy([
-                'uuid' => $id,
-            ]);
+            $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
 
             if (!$banner) {
                 throw new NotFoundHttpException();
             }
 
-            $url = $banner->getClickUrl();
+            $url = $banner->click_url;
         }
+
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
@@ -148,19 +163,17 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
 
         $log = new NetworkEventLog();
-        $log->setCid($cid);
-        $log->setBannerId($id);
-        $log->setPayFrom($payFrom);
-        $log->setTid($tid);
-        $log->setIp($logIp);
-        $log->setEventType('click');
+        $log->cid = $cid;
+        $log->banner_id = $id;
+        $log->pay_from = $payFrom;
+        $log->tid = $tid;
+        $log->ip = $logIp;
+        $log->event_type = 'click';
         //         $log->setContext(Utils::getImpressionContext($this->container, $request));
 
-        $em = $this->getDoctrine()->getManager();
-        $em->persist($log);
-        $em->flush();
+        $log->save();
 
-        $url = Utils::addUrlParameter($url, 'pid', $log->getId());
+        $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
         $adselect->addImpressions([
             $log->getAdselectJson(),

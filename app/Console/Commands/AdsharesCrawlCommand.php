@@ -1,13 +1,31 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Illuminate\Console\Command;
-use Adshares\Adserver\Services\Adselect;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Adselect;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Illuminate\Console\Command;
 
 /**
  * supply adserver.
@@ -63,7 +81,7 @@ class AdsharesCrawlCommand extends Command
         try {
             $logMessage = $adsClient->getBroadcast(time() - $this->registerHostsIfBroadcastedLimit);
             print_r($logMessage);
-            $logs = $logMessage->broadcast;
+            $logs = $logMessage->getBroadcast();
         } catch (\Exception $e) {
             $logs = [
                 ['message' => bin2hex($this->host), 'address' => config('app.adshares_address'), 'account_msid' => 1],
@@ -111,6 +129,8 @@ class AdsharesCrawlCommand extends Command
         $hosts = NetworkHost::where('last_seen', '>', time() - $this->crawlHostsIfLastSeenLimit)->get();
 
         $batch = 0;
+
+        $adselectCmp = [];
 
         foreach ($hosts as $r) {
             $host = $r->host;

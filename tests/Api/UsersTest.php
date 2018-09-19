@@ -1,4 +1,22 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Tests\Feature;
 
@@ -26,8 +44,8 @@ class UsersTest extends TestCase
 
     public function testCreateUser()
     {
-        /* @var $user \Adshares\Adserver\Models\User */
-        $user = factory(\Adshares\Adserver\Models\User::class)->make();
+        /* @var $user User */
+        $user = factory(User::class)->make();
 
         $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
 
@@ -48,19 +66,13 @@ class UsersTest extends TestCase
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(1);
-
-//        $response->assertJsonFragment([
-//            'email' => $user->email,
-//            'isAdvertiser' => $user->isAdvertiser,
-//            'isPublisher' => $user->isPublisher
-//        ]);
     }
 
     public function testCreateUsers()
     {
         $count = 10;
 
-        $users = factory(\Adshares\Adserver\Models\User::class, $count)->make();
+        $users = factory(User::class, $count)->make();
         foreach ($users as $user) {
             $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
             $response->assertStatus(201);

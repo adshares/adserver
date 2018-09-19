@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/update_notifications_settings"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "name": "Billing Alerts",
+        "notification": true,
+        "email": false
+      },
+      {
+        "name": "Campaign Maintenance Alerts",
+        "notification": true,
+        "email": true
+      },
+      {
+        "name": "Newsletter",
+        "notification": false,
+        "email": false
+      },
+      {
+        "name": "Performance Suggestions",
+        "notification": true,
+        "email": true
+      },
+      {
+        "name": "Special Offers",
+        "notification": true,
+        "email": false
+      }
+    ]
+  },
+  "priority": 0
+}

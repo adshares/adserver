@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/.*/"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": {
+      "description": "Catch-all scenario",
+      "delayMillis": 3000
+    }
+
+  },
+  "priority" : 0
+}

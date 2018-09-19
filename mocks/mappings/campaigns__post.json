@@ -1,0 +1,137 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/campaigns"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "http://panel.ads",
+      "Access-Control-Allow-Credentials": "true"
+    },
+    "jsonBody": [
+      {
+        "basicInformation": {
+          "status": 2,
+          "name": "Campaign for Education 1",
+          "targetUrl": "www.adshares.net",
+          "bidStrategyName": "CPC",
+          "bidValue": 0.2,
+          "budget": 451,
+          "dateStart": "Sat Feb 23 2018 12:24:00 GMT"
+        },
+
+        "id": 183297987312,
+        "clicks": 2131,
+        "impressions": 124315,
+        "CTR": 0.031,
+        "averageCPC": 2.11,
+        "cost": 2435.231,
+        "conversions": 801,
+
+        "targeting": {
+          "requires": {
+            "lang": ["pl"],
+            "site": {
+              "host": ["google.pl", "onet.pl"]
+            }
+          },
+          "excludes": {
+            "js_enabled": ["false"],
+            "screen": {
+              "width": ["<1200,1800>", "<1200,>"]
+            }
+          }
+        },
+        "ads": [
+          {
+            "status": 0,
+            "shortHeadline": "Adshares Dashboard Advertisement",
+            "type": "image",
+
+            "budget": 20,
+            "clicks": 100,
+            "impressions": 1233422132,
+            "ctr": 0.01233,
+            "averageCPC": 1.2,
+            "cost": 2435.23
+          },
+          {
+            "status": 1,
+            "shortHeadline": "Adshares Website Advertisement",
+            "type": "image",
+
+            "budget": 20,
+            "clicks": 200,
+            "impressions": 21313545,
+            "CTR": 0.1233,
+            "averageCPC": 3.25,
+            "cost": 8236.23
+          }
+        ]
+      },
+      {
+        "basicInformation": {
+          "status": 1,
+          "name": "Campaign for Education 2",
+          "targetUrl": "www.adshares.net",
+          "bidStrategyName": "CPC",
+          "bidValue": 0.1,
+          "budget": 452,
+          "dateStart": "Sat Feb 23 2018 12:24:00 GMT"
+        },
+
+        "id": 377892908378478,
+        "clicks": 2132,
+        "impressions": 124352,
+        "CTR": 0.032,
+        "averageCPC": 2.12,
+        "cost": 2431.232,
+        "conversions": 802,
+
+        "targeting": {
+          "requires": {
+            "lang": ["pl"],
+            "site": {
+              "host": ["google.pl", "onet.pl"]
+            }
+          },
+          "excludes": {
+            "js_enabled": ["false"],
+            "screen": {
+              "width": ["<1200,1800>", "<1200,>"]
+            }
+          }
+        },
+        "ads": [
+          {
+            "status": 0,
+            "shortHeadline": "Adshares Dashboard Advertisement",
+            "type": "image",
+
+            "budget": 20,
+            "clicks": 100,
+            "impressions": 1233422132,
+            "CTR": 0.00001233,
+            "averageCPC": 1.2,
+            "cost": 2432.23
+          },
+          {
+            "status": 1,
+            "shortHeadline": "Adshares Website Advertisement",
+            "type": "image",
+
+            "budget": 20,
+            "clicks": 200,
+            "impressions": 21313545,
+            "CTR": 0.1233,
+            "averageCPC": 3.25,
+            "cost": 8236.23
+          }
+        ]
+      }
+    ]
+  },
+  "priority": 0
+}

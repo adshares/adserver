@@ -1,4 +1,22 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ */
 
 namespace Adshares\Adserver\Models;
 
@@ -115,5 +133,25 @@ class User extends Authenticatable implements Camelizable
     public function validPassword($value)
     {
         return Hash::check($value, $this->attributes['password']);
+    }
+
+    public function setRememberToken($token)
+    {
+        return;
+    }
+
+    public function generateApiKey()
+    {
+        do {
+            $this->api_token = str_random(60);
+        } while ($this->where('api_token', $this->api_token)->exists());
+
+        $this->save();
+    }
+
+    public function clearApiKey()
+    {
+        $this->api_token = null;
+        $this->save();
     }
 }
