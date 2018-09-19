@@ -2,18 +2,15 @@
     <a href="https://adshares.net/" target="_blank">
         <img src="https://adshares.net/logos/ads.svg" alt="Adshares" width="100" height="100">
     </a>
-
-<h3 align="center"><small>Adshares - AdServer</small></h3>
+    <h3 align="center"><small>Adshares - AdServer</small></h3>
+    <a href="https://github.com/adshares/adserver/issues/new?template=bug_report.md&labels=Bug">Report bug</a>
+    ·
+    <a href="https://github.com/adshares/adserver/issues/new?template=feature_request.md&labels=New%20Feature">Request feature</a>
+    ·
+    <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
+</p>
 
 [![License](https://img.shields.io/badge/license-GPL_v3+-blue.svg?style=for-the-badge)](LICENSE)
-
-<a href="https://github.com/adshares/adserver/issues/new?template=bug_report.md&labels=Bug">Report bug</a>
-·
-<a href="https://github.com/adshares/adserver/issues/new?template=feature_request.md&labels=New%20Feature">Request feature</a>
-·
-<a href="https://github.com/adshares/adserver/wiki">Wiki</a>
-
-</p>
 
 [![Build Status](https://travis-ci.org/adshares/adserver.svg?branch=master)](https://travis-ci.org/adshares/adserver "Master")
 [![Quality Status](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status)](https://sonarcloud.io/dashboard?id=adshares-adserver "Master")
