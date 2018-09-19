@@ -20,6 +20,7 @@
 ## Documentation
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
+- [Changelog](CHANGELOG.md)
 
 ## Contributing
 
