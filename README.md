@@ -32,12 +32,12 @@
 - **[Paweł Zaremba](https://github.com/pawzar)**
 - **[Paweł Podkalicki](https://github.com/PawelPodkalicki)**
 
-See also: [contributors](https://github.com/adshares/adserver/contributors).
+...and other [contributors](https://github.com/adshares/adserver/contributors).
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning.
-For the available versions, see the [tags on this repository](https://github.com/adshares/adserver/tags). 
+- We use [Semantic Versioning](http://semver.org/).
+- See available [versions](https://github.com/adshares/adserver/tags). 
 
 ## License
 
