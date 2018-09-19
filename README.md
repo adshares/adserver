@@ -11,13 +11,11 @@
     ·
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
-
-[![License](https://img.shields.io/badge/license-GPL_v3+-blue.svg?style=for-the-badge)](LICENSE)
-
-[![Build Status](https://travis-ci.org/adshares/adserver.svg?branch=master)](https://travis-ci.org/adshares/adserver "Master")
-[![Quality Status](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status)](https://sonarcloud.io/dashboard?id=adshares-adserver "Master")
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=adshares-adserver)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=security_rating)](https://sonarcloud.io/dashboard?id=adshares-adserver)
+<p align="center">
+    <a href="https://travis-ci.org/adshares/adserver" title="master">
+        <img src="https://travis-ci.org/adshares/adserver.svg?branch=master" alt="Build Status">
+    </a>
+</p>
 
 ## Documentation
 
