@@ -38,7 +38,7 @@ class RequireGuestAccess
     public function handle($request, Closure $next, $guard = null)
     {
         if (Auth::guard($guard)->check()) {
-            return Response::json(['errors' => ['message' => 'Required guest access']], 403);
+            return Response::json(['errors' => ['message' => 'You cannot be logged in for this to work.']], 403);
         }
 
         return $next($request);
