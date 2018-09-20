@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,11 +15,13 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
+use Adshares\Adserver\Http\Middleware\SnakeCasing;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
@@ -35,16 +37,10 @@ use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
-    const MIDDLEWARE_GUEST = 'guest';
-    const MIDDLEWARE_USER = 'user';
-    const API = 'api';
-    const APP = 'app';
-    const WEB = 'web';
+    const API = 'api-group';
+    const GUEST = 'guest-group';
+    const ANY = 'web-group';
 
-    /**
-     * The application's global HTTP middleware stack.
-     * These middleware are run during every request to your application.
-     */
     protected $middleware = [
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
@@ -53,42 +49,33 @@ class Kernel extends HttpKernel
         Middleware\TrustProxies::class,
     ];
 
-    /**
-     * The application's route middleware groups.
-     */
     protected $middlewareGroups = [
-        self::WEB => [
+        self::ANY => [
             'cors',
         ],
-
-        self::APP => [
+        self::GUEST => [
             'cors',
-            'session',
+            'guest:api',
             'bindings',
         ],
-
         self::API => [
             'cors',
             'auth:api',
             'bindings',
         ],
     ];
-    /**
-     * The application's route middleware.
-     * These middleware may be assigned to groups or used individually.
-     */
+
     protected $routeMiddleware = [
         'cors' => HandleCors::class,
+        'guest' => RequireGuestAccess::class,
         'auth' => Authenticate::class,
         'bindings' => SubstituteBindings::class,
-        'session' => StartSession::class,
 
         'auth.basic' => AuthenticateWithBasicAuth::class,
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
         'signed' => ValidateSignature::class,
-        'snake_casing' => Middleware\SnakeCasing::class,
-        self::MIDDLEWARE_GUEST => Middleware\NotAuthenticatedSessionRequired::class,
-        self::MIDDLEWARE_USER => Middleware\AuthenticatedSessionRequired::class,
+        'snake_casing' => SnakeCasing::class,
+        'session' => StartSession::class,
     ];
 }

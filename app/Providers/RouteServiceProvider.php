@@ -33,18 +33,30 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map()
     {
-        Route::middleware(Kernel::WEB)
-            ->get('/', function () {
-                return view('welcome');
-            })
+        Route::middleware(Kernel::ANY)
+            ->get(
+                '/',
+                function () {
+                    return view('welcome');
+                }
+            )
             ->name('login')
         ;
         $this->mapAuthRoutes();
         $this->mapAppRoutes();
         $this->mapApiRoutes();
 
+        Route::middleware(Kernel::ANY)
+            ->any('/test1', 'Adshares\Adserver\Http\Controllers\Controller@test')
+        ;
+        Route::middleware(Kernel::GUEST)
+            ->any('/test2', 'Adshares\Adserver\Http\Controllers\Controller@test')
+        ;
         Route::middleware(Kernel::API)
-            ->namespace($this->namespace)
+            ->any('/test3', 'Adshares\Adserver\Http\Controllers\Controller@test')
+        ;
+
+        Route::middleware(Kernel::API)
             ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
             ->where('any', '.*')
         ;
@@ -52,53 +64,54 @@ class RouteServiceProvider extends ServiceProvider
 
     private function mapAuthRoutes(): void
     {
-        Route::prefix(self::PREFIX_AUTH)->namespace($this->namespace)->group(
-            function () {
-                Route::middleware(Kernel::APP)
-                    ->group(
-                        function () {
-                            // ApiAuthService
-                            Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
-                            Route::post('recovery', 'App\AuthController@recovery');
+        Route::prefix(self::PREFIX_AUTH)
+            ->namespace($this->namespace)
+            ->middleware(Kernel::ANY)
+            ->group(
+                function () {
+                    // ApiAuthService
+                    Route::post('login', 'App\AuthController@login');
 
-                            // ApiUsersService
-                            Route::post('users', 'App\UsersController@add')->name('app.users.add');
-                            Route::patch('users', 'App\UsersController@edit');
-                        }
-                    )
-                ;
+                    // ApiUsersService
+                    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
+                    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
+                    Route::post('users/email/activate', 'App\UsersController@emailActivate');
+                }
+            )
+        ;
 
-                Route::middleware(Kernel::WEB)
-                    ->group(
-                        function () {
-                            // ApiAuthService
-                            Route::post('login', 'App\AuthController@login');
+        Route::prefix(self::PREFIX_AUTH)
+            ->namespace($this->namespace)
+            ->middleware(Kernel::GUEST)
+            ->group(
+                function () {
+                    // ApiAuthService
+                    Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
+                    Route::post('recovery', 'App\AuthController@recovery');
 
-                            // ApiUsersService
-                            Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
-                            Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
-                            Route::post('users/email/activate', 'App\UsersController@emailActivate');
-                        }
-                    )
-                ;
+                    // ApiUsersService
+                    Route::post('users', 'App\UsersController@add')->name('app.users.add');
+                    Route::patch('users', 'App\UsersController@edit');
+                }
+            )
+        ;
 
-                Route::middleware(Kernel::API)
-                    ->group(
-                        function () {
-                            // ApiAuthService
-                            Route::get('check', 'App\AuthController@check');
-                            Route::get('logout', 'App\AuthController@logout');
+        Route::prefix(self::PREFIX_AUTH)
+            ->namespace($this->namespace)
+            ->middleware(Kernel::API)
+            ->group(
+                function () {
+                    // ApiAuthService
+                    Route::get('check', 'App\AuthController@check');
+                    Route::get('logout', 'App\AuthController@logout');
 
-                            // ApiUsersService
-                            Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
+                    // ApiUsersService
+                    Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
 
-                            Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
-                            Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
-                        }
-                    )
-                ;
-            }
-        )
+                    Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
+                    Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
+                }
+            )
         ;
     }
 
