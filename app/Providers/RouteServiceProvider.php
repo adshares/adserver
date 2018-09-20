@@ -46,20 +46,22 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapAppRoutes();
         $this->mapApiRoutes();
 
-        Route::middleware(Kernel::ANY)
-            ->any('/test1', 'Adshares\Adserver\Http\Controllers\Controller@test')
-        ;
-        Route::middleware(Kernel::GUEST)
-            ->any('/test2', 'Adshares\Adserver\Http\Controllers\Controller@test')
-        ;
-        Route::middleware(Kernel::API)
-            ->any('/test3', 'Adshares\Adserver\Http\Controllers\Controller@test')
-        ;
+        if (!$this->app->environment('production')) {
+            Route::middleware(Kernel::ANY)
+                ->any('/test1', 'Adshares\Adserver\Http\Controllers\Controller@test')
+            ;
+            Route::middleware(Kernel::GUEST)
+                ->any('/test2', 'Adshares\Adserver\Http\Controllers\Controller@test')
+            ;
+            Route::middleware(Kernel::API)
+                ->any('/test3', 'Adshares\Adserver\Http\Controllers\Controller@test')
+            ;
 
-        Route::middleware(Kernel::API)
-            ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
-            ->where('any', '.*')
-        ;
+            Route::middleware(Kernel::API)
+                ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
+                ->where('any', '.*')
+            ;
+        }
     }
 
     private function mapAuthRoutes(): void
