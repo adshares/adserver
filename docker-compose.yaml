@@ -2,7 +2,7 @@ version: "3.1"
 
 services:
   dev:
-    image: devops/php:dev
+    image: adshares/php:dev
     working_dir: /adserver
     volumes:
     - .:/adserver
