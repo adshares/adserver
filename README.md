@@ -17,6 +17,24 @@
     </a>
 </p>
 
+## Quick Start
+
+Run: 
+
+```bash
+docker-compose up --detach
+```
+
+Update your /etc/hosts to include:
+
+```
+127.0.0.1 server.ads
+```
+
+Done. Now check:
+- http://server.ads/ for the the server
+- and [MailHog](http://server.ads:8025) for an e-mail interceptor  
+
 ## Documentation
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
@@ -26,7 +44,12 @@
 
 - Please follow our [Contributing Guidelines](docs/CONTRIBUTING.md)
 
-### Authors
+## Versioning
+
+- We use [Semantic Versioning](http://semver.org/).
+- See available [versions](https://github.com/adshares/adserver/tags). 
+
+## Authors
 
 - **[Tomek Grzechowski](https://github.com/yodahack)**
 - **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
@@ -34,12 +57,12 @@
 
 ...and other [contributors](https://github.com/adshares/adserver/contributors).
 
-### Versioning
+## Related projects
 
-- We use [Semantic Versioning](http://semver.org/).
-- See available [versions](https://github.com/adshares/adserver/tags). 
+- [AdPanel](https://github.com/adshares/adpanel)
+- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
 
-### License
+## License
 
 This work is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -54,7 +77,3 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 You should have received a copy of the License along with this work.
 If not, see <https://www.gnu.org/licenses/gpl.html>.
 
-## Related projects
-
-- [AdPanel](https://github.com/adshares/adpanel)
-- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
