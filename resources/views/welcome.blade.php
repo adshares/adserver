@@ -91,7 +91,7 @@
                 <div class="links">
                     <a href="https://github.com/adshares">Advertising Ecosystem</a>
                     <a href="https://github.com/adshares/adserver">Adserver Repository</a>
-                    <a href="https://laravel.com/">Laravel 5.6</a>
+                    <a href="https://adshares.net/">Adshares</a>
                 </div>
             </div>
         </div>
