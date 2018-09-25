@@ -6,48 +6,11 @@ services:
     working_dir: /adserver
     volumes:
     - .:/adserver
-    environment:
-#      TERM: xterm
-#      LOCALTIME: Europe/Warsaw
-#      DEBUG: 0
-      PHP__display_errors: 'On'
-      PHP__log_errors: 'On'
-      PHP__error_log: '/opt/dr/logs/error.log'
-      PHP__opcache.enable: 'Off'
-      PHP__memory_limit:   '128M'
-      PHP__post_max_size:  '50M'
-#      XDEBUG: 0
-      XDEBUG: 1
-      PHP__xdebug.remote_enable: 'true'
-      PHP__xdebug.remote_autostart: 'false'
-      PHP__xdebug.remote_connect_back: 'true'
-      PHP__xdebug.remote_mode: 'req'
-      PHP__xdebug.idekey: 'PHPSTORM'
-      PHP__xdebug.max_nesting_level: '512'
-      PHP__xdebug.cli_color: '1'
-      PHP__xdebug.auto_trace: '1'
-      PHP__xdebug.extended_info: '1'
-  #      PHP__xdebug.overload_var_dump: '1'
-  #      PHP__xdebug.var_display_max_children: '-1'
-  #      PHP__xdebug.var_display_max_data: '-1'
-  #      PHP__xdebug.var_display_max_depth: '-1'
-  #      PHP__xdebug.collect_params: '4'
-  #      PHP__xdebug.collect_vars: '1'
-  #      PHP__xdebug.dump.COOKIES: '*'
-  #      PHP__xdebug.dump.FILES: '*'
-  #      PHP__xdebug.dump.GET: '*'
-  #      PHP__xdebug.dump.POST: '*'
-  #      PHP__xdebug.dump.REQUEST: '*'
-  #      PHP__xdebug.dump.SERVER: '*'
-  #      PHP__xdebug.dump.SESSION: '*'
-  #      PHP__xdebug.dump_globals: '1'
-  #      PHP__xdebug.dump_once: '0'
-  #      PHP__xdebug.dump_undefined: '1'
-  #      PHP__xdebug.scream: '1'
-  #      PHP__xdebug.show_local_vars: '1'
+    env_file:
+      - docker-compose.dev.env
 
   queue-worker:
-    image: adshares/php:dev
+    image: adshares/dev:php
     working_dir: /adserver
     volumes:
     - .:/adserver

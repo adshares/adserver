@@ -32,7 +32,7 @@ Update your /etc/hosts to include:
 ```
 
 Done. Now check:
-- http://server.ads/ for the the server
+- http://server.ads/ for the server
 - and [MailHog](http://server.ads:8025) for an e-mail interceptor  
 
 ## Documentation
