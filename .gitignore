@@ -25,3 +25,5 @@ public/img/
 
 /storage/phpunit
 phpunit.xml
+
+*.override.*

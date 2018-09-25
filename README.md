@@ -23,17 +23,14 @@ Run:
 
 ```bash
 docker-compose up --detach
+docker-compose exec dev composer install
+docker-compose exec dev php artisan key:generate
+docker-compose exec dev php artisan migrate
 ```
 
-Update your /etc/hosts to include:
-
-```
-127.0.0.1 server.ads
-```
-
-Done. Now check:
-- http://server.ads/ for the server
-- and [MailHog](http://server.ads:8025) for an e-mail interceptor  
+Go to:
+- [http://localhost:8101/](http://localhost:8101/) for the server
+- [http://localhost:8025/](http://localhost:8025/) for an e-mail interceptor  
 
 ## Documentation
 
