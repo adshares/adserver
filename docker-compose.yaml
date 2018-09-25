@@ -2,7 +2,7 @@ version: "3.1"
 
 services:
   dev:
-    image: adshares/php:dev
+    image: adshares/dev:php-fpm
     working_dir: /adserver
     volumes:
     - .:/adserver
@@ -10,7 +10,7 @@ services:
       - docker-compose.dev.env
 
   queue-worker:
-    image: adshares/dev:php
+    image: adshares/dev:php-fpm
     working_dir: /adserver
     volumes:
     - .:/adserver
