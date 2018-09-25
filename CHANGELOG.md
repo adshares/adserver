@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update README to include CHANGELOG 
 - Fix CHANGELOG release dates and formatting
+- Add a Docker Compose setup for development
 
 ## [0.1.0] - 2018-09-19
 ### Added
