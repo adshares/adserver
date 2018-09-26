@@ -27,3 +27,4 @@ public/img/
 phpunit.xml
 
 *.override.*
+!*.dist
