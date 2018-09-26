@@ -22,13 +22,10 @@
 Run: 
 
 ```bash
+cp --no-clobber docker-compose.override.yaml.dist docker-compose.override.yaml
 docker-compose up --detach
 docker-compose exec dev composer install
 docker-compose exec dev php artisan migrate
-```
-> If you have a previously installed version run: 
-```
-docker-compose exec dev composer run-script post-root-package-install
 ```
 
 Go to:
