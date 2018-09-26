@@ -22,9 +22,9 @@
 Run: 
 
 ```bash
+cp --no-clobber docker-compose.override.yaml.dist docker-compose.override.yaml
 docker-compose up --detach
 docker-compose exec dev composer install
-docker-compose exec dev php artisan key:generate
 docker-compose exec dev php artisan migrate
 ```
 
