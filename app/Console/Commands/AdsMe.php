@@ -18,21 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+namespace Adshares\Adserver\Console\Commands;
 
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Hash;
+use Adshares\Ads;
+use Adshares\Ads\AdsClient;
+use Illuminate\Console\Command;
 
-trait CreatesApplication
+class AdsMe extends Command
 {
-    public function createApplication()
+    protected $signature = 'ads:me';
+
+    public function handle(AdsClient $adsClient)
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
-
-        $app->make(Kernel::class)->bootstrap();
-
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
+        $me = $adsClient->getMe();
+        $this->info(Ads\Util\AdsConverter::clicksToAds($me->getAccount()->getBalance()));
     }
 }

@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  webserver:
+    ports:
+    - "8101:80"
+
+  mailer:
+    ports:
+    - "8025:8025"

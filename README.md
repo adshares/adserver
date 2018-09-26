@@ -17,15 +17,36 @@
     </a>
 </p>
 
+## Quick Start
+
+Run: 
+
+```bash
+cp --no-clobber docker-compose.override.yaml.dist docker-compose.override.yaml
+docker-compose up --detach
+docker-compose exec dev composer install
+docker-compose exec dev php artisan migrate
+```
+
+Go to:
+- [http://localhost:8101/](http://localhost:8101/) for the server
+- [http://localhost:8025/](http://localhost:8025/) for an e-mail interceptor  
+
 ## Documentation
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
+- [Changelog](CHANGELOG.md)
 
 ## Contributing
 
 - Please follow our [Contributing Guidelines](docs/CONTRIBUTING.md)
 
-### Authors
+## Versioning
+
+- We use [Semantic Versioning](http://semver.org/).
+- See available [versions](https://github.com/adshares/adserver/tags). 
+
+## Authors
 
 - **[Tomek Grzechowski](https://github.com/yodahack)**
 - **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
@@ -33,12 +54,12 @@
 
 ...and other [contributors](https://github.com/adshares/adserver/contributors).
 
-### Versioning
+## Related projects
 
-- We use [Semantic Versioning](http://semver.org/).
-- See available [versions](https://github.com/adshares/adserver/tags). 
+- [AdPanel](https://github.com/adshares/adpanel)
+- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
 
-### License
+## License
 
 This work is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -53,7 +74,3 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 You should have received a copy of the License along with this work.
 If not, see <https://www.gnu.org/licenses/gpl.html>.
 
-## Related projects
-
-- [AdPanel](https://github.com/adshares/adpanel)
-- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
