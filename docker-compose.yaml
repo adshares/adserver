@@ -1,8 +1,11 @@
-version: "3"
+version: "2"
 
 services:
   dev:
-    image: pawzar/devops:php-fpm
+    image: adshares/adserver:dev
+    build:
+      context: ./docker
+      dockerfile: ./dockerfile
     working_dir: /adserver
     volumes:
     - .:/adserver
