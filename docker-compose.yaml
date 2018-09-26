@@ -1,7 +1,10 @@
 version: "2"
 
+volumes:
+  database:
+
 services:
-  dev:
+  adserver:
     image: adshares/adserver:dev
     build:
       context: ./docker
@@ -12,14 +15,13 @@ services:
     env_file:
       - docker-compose.dev.env
 
-  queue-worker:
+  dev:
     image: pawzar/devops:php-fpm
     working_dir: /adserver
     volumes:
     - .:/adserver
     command: ['php','artisan','queue:work']
     user: '1000'
-    restart: on-failure
 
   webserver:
     image: nginx:alpine
@@ -35,6 +37,8 @@ services:
     - MYSQL_DATABASE=adserver
     - MYSQL_USER=adserver
     - MYSQL_PASSWORD=adserver
+    volumes:
+      - database:/var/lib/mysql
 
   mailer:
     image: mailhog/mailhog:latest
