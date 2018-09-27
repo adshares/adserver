@@ -9,6 +9,9 @@ services:
     build:
       context: ./docker
       dockerfile: ./dockerfile
+      args:
+        SYSTEM_USER_ID: ${SYSTEM_USER_ID}
+        SYSTEM_USER_NAME: ${SYSTEM_USER_NAME}
     working_dir: /adserver
     volumes:
     - .:/adserver
