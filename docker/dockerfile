@@ -2,7 +2,6 @@ FROM pawzar/devops:php-fpm
 
 RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
     libboost-all-dev libssl-dev cmake \
-    libpng-dev \
     && apt-get -qy autoremove && apt-get -qy clean all \
     && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /usr/share/doc/*
 

@@ -5,7 +5,6 @@ volumes:
 
 services:
   application:
-    image: adshares/adserver:dev
     build:
       context: ./docker
       dockerfile: ./dockerfile
@@ -30,6 +29,8 @@ services:
     volumes:
     - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
     - ./public:/adserver/public
+    ports:
+    - "${WEBSERVER_PORT}:80"
 
   database:
     image: mysql:8.0
@@ -44,4 +45,6 @@ services:
   mailer:
     image: mailhog/mailhog:latest
     user: ${SYSTEM_USER_ID}
+    ports:
+    - "${MAILER_PORT}:8025"
 
