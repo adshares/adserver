@@ -19,10 +19,8 @@ services:
       - docker-compose.dev.env
 
   dev:
-    image: pawzar/devops:php-fpm
-    working_dir: /adserver
-    volumes:
-    - .:/adserver
+    extends:
+      service: application
     command: ['php','artisan','queue:work']
     user: ${SYSTEM_USER_ID}
 
