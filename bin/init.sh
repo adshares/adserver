@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e -x
+set -e
 
 export SYSTEM_USER_ID=`id --user`
 export SYSTEM_USER_NAME=`id --user --name`
