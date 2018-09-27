@@ -21,7 +21,7 @@ services:
     volumes:
     - .:/adserver
     command: ['php','artisan','queue:work']
-    user: '1000'
+    user: ${SYSTEM_USER_ID}
 
   webserver:
     image: nginx:alpine
@@ -42,5 +42,5 @@ services:
 
   mailer:
     image: mailhog/mailhog:latest
-    user: '1000'
+    user: ${SYSTEM_USER_ID}
 
