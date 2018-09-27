@@ -4,7 +4,7 @@ volumes:
   database:
 
 services:
-  adserver:
+  application:
     image: adshares/adserver:dev
     build:
       context: ./docker

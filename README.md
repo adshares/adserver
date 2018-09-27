@@ -24,6 +24,7 @@ Run:
 ```bash
 cp --no-clobber docker-compose.override.yaml.dist docker-compose.override.yaml
 [ -f .env ] || SYSTEM_USER_ID=`id -u` envsubst \${SYSTEM_USER_ID} < .env.dist | tee .env
+docker-compose config # just to check the config
 docker-compose run --rm dev composer install
 docker-compose up --detach
 docker-compose exec dev ./artisan migrate
