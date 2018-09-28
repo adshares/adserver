@@ -23,6 +23,11 @@ Run:
 
 ```bash
 bin/init.sh
+docker-compose up --detach
+docker-compose exec worker ./artisan migrate
+
+# for some insight, logs can be followed with:
+docker-compose logs -f
 ```
 
 Go to:

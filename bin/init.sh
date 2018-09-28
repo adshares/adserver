@@ -17,13 +17,10 @@ source .env
 
 docker-compose run --rm worker composer install
 docker-compose run --rm worker composer dump-autoload
+docker-compose run --rm worker ./artisan package:discover
+docker-compose run --rm worker ./artisan browsercap:updater
 docker-compose run --rm worker npm install
 docker-compose run --rm worker npm run dev
 
 chmod a+w -R storage
 
-docker-compose up --detach
-
-docker-compose exec worker ./artisan migrate
-docker-compose exec worker ./artisan package:discover
-docker-compose exec worker ./artisan browsercap:updater
