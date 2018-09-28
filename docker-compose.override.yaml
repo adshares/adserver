@@ -1,0 +1,10 @@
+version: "2"
+
+services:
+  webserver:
+    ports:
+    - "${WEBSERVER_PORT}:80"
+
+  mailer:
+    ports:
+    - "${MAILER_PORT}:8025"
