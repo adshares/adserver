@@ -75,6 +75,7 @@ export ADSHARES_NODE_PORT=${ADSHARES_NODE_PORT:-9081}
 export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 
 export APP_ENV=${APP_ENV:-local}
+export APP_DEBUG=${APP_DEBUG:-true}
 
 [ -f .env ] || envsubst < .env.dist | tee .env
 
