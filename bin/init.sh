@@ -16,6 +16,7 @@ do
     case "$1" in
         --clean )
             OPT_CLEAN=1
+            OPT_FORCE=1
         ;;
         --force )
             OPT_FORCE=1
@@ -73,10 +74,16 @@ export ADSHARES_NODE_HOST=${ADSHARES_NODE_HOST:-esc.dock}
 export ADSHARES_NODE_PORT=${ADSHARES_NODE_PORT:-9081}
 export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 
+export APP_ENV=${APP_ENV:-local}
+
 [ -f .env ] || envsubst < .env.dist | tee .env
 
 if [ ${OPT_BUILD} -eq 1 ]
 then
+    if [ ${OPT_FORCE} -eq 1 ]
+    then
+        docker-compose run --rm worker ./artisan key:generate
+    fi
     docker-compose run --rm worker composer install
     docker-compose run --rm worker composer dump-autoload
     docker-compose run --rm worker ./artisan package:discover
