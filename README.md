@@ -19,18 +19,21 @@
 
 ## Quick Start
 
-Run: 
+When starting from scratch: 
 
 ```bash
-bin/init.sh
-docker-compose up --detach
-docker-compose exec worker ./artisan migrate
-
-# for some insight, logs can be followed with:
-docker-compose logs -f
+bin/init.sh --build --run --migrate
 ```
 
-Go to:
+To rebuild everything
+```bash
+bin/init.sh --clean --force --build --run --migrate-fresh
+```
+
+To see logs add `--logs` at the end of the above `init.sh` command.
+To follow them,  use `--logs-follow`.
+
+With the default you should have two working locations:
 - [http://localhost:8101/](http://localhost:8101/) for the server
 - [http://localhost:8025/](http://localhost:8025/) for an e-mail interceptor  
 
