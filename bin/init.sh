@@ -7,6 +7,7 @@ export SYSTEM_USER_NAME=`id --user --name`
 
 export WEBSERVER_PORT=${WEBSERVER_PORT:-8101}
 export MAILER_PORT=${MAILER_PORT:-8025}
+export MAILER_HOST=${MAILER_HOST:-mailer}
 
 export ADSERVER_URL=${ADSERVER_URL:-http://localhost:8101}
 export ADPANEL_URL=${ADPANEL_URL:-http://localhost:8102}
