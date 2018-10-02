@@ -81,12 +81,12 @@ export APP_DEBUG=${APP_DEBUG:-true}
 
 if [ ${OPT_BUILD} -eq 1 ]
 then
+    docker-compose run --rm worker composer install
+    docker-compose run --rm worker composer dump-autoload
     if [ ${OPT_FORCE} -eq 1 ]
     then
         docker-compose run --rm worker ./artisan key:generate
     fi
-    docker-compose run --rm worker composer install
-    docker-compose run --rm worker composer dump-autoload
     docker-compose run --rm worker ./artisan package:discover
     docker-compose run --rm worker ./artisan browsercap:updater
     docker-compose run --rm worker npm install
