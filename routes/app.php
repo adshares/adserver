@@ -39,10 +39,9 @@ Route::post('campaigns', 'App\CampaignsController@add')->name('app.campaigns.add
 Route::get('notifications', 'App\NotificationsController@read');
 
 Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
-
-// ApiUsersService
-Route::patch('users/{user_id?}', 'App\UsersController@edit')->name('app.users.edit');
-Route::post('users/email', 'App\UsersController@emailChangeStep1');
+Route::get('users/{user_id}', 'App\UsersController@read')->name('app.users.read');
+Route::patch('users/{user_id}', 'App\UsersController@edit')->name('app.users.edit');
+Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
 
 Route::get('settings/notifications', 'App\SettingsController@readNotifications');
 

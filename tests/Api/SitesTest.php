@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Tests\Feature;
@@ -29,11 +29,11 @@ class SitesTest extends TestCase
 {
     use RefreshDatabase;
 
-    const URI = '/app/sites';
+    const URI = '/panel/sites';
 
     public function testEmptyDb()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->actingAs(factory(User::class)->create(),'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
@@ -45,7 +45,7 @@ class SitesTest extends TestCase
 
     public function testCreateSite()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->actingAs(factory(User::class)->create(),'api');
 
         /* @var $site Site */
         $site = factory(Site::class)->make();
@@ -73,7 +73,7 @@ class SitesTest extends TestCase
 
     public function testCreateSites()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->actingAs(factory(User::class)->create(),'api');
         $count = 10;
 
         $users = factory(Site::class, $count)->make();

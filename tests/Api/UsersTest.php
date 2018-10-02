@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Tests\Feature;
@@ -28,26 +28,15 @@ class UsersTest extends TestCase
 {
     use RefreshDatabase;
 
-    const URI = '/app/users';
-
-    public function testEmptyDb()
-    {
-        $this->actingAs(factory(User::class)->create());
-
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount(0);
-
-        $response = $this->getJson(self::URI.'/1');
-        $response->assertStatus(404);
-    }
+    const URI_AUTH = '/auth/users';
+    const URI = '/panel/users';
 
     public function testCreateUser()
     {
         /* @var $user User */
         $user = factory(User::class)->make();
 
-        $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
+        $response = $this->postJson(self::URI_AUTH, ['user' => $user->getAttributes(), 'uri' => '/']);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
@@ -57,7 +46,7 @@ class UsersTest extends TestCase
         $matches = [];
         $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => true]));
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]),'api');
 
         $response = $this->getJson(self::URI.'/'.$matches[1]);
         $response->assertStatus(200);

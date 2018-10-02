@@ -47,16 +47,6 @@ class RouteServiceProvider extends ServiceProvider
         $this->mapApiRoutes();
 
         if (!$this->app->environment('production')) {
-            Route::middleware(Kernel::ANY)
-                ->any('/test1', 'Adshares\Adserver\Http\Controllers\Controller@test')
-            ;
-            Route::middleware(Kernel::GUEST)
-                ->any('/test2', 'Adshares\Adserver\Http\Controllers\Controller@test')
-            ;
-            Route::middleware(Kernel::API)
-                ->any('/test3', 'Adshares\Adserver\Http\Controllers\Controller@test')
-            ;
-
             Route::middleware(Kernel::API)
                 ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
                 ->where('any', '.*')
@@ -93,7 +83,6 @@ class RouteServiceProvider extends ServiceProvider
 
                     // ApiUsersService
                     Route::post('users', 'App\UsersController@add')->name('app.users.add');
-                    Route::patch('users', 'App\UsersController@edit');
                 }
             )
         ;
@@ -103,15 +92,12 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware(Kernel::API)
             ->group(
                 function () {
-                    // ApiAuthService
                     Route::get('check', 'App\AuthController@check');
                     Route::get('logout', 'App\AuthController@logout');
 
-                    // ApiUsersService
                     Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
-
-                    Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
-                    Route::get('users/{user_id?}', 'App\UsersController@read')->name('app.users.read');
+                    Route::patch('users', 'App\UsersController@edit');
+                    Route::post('users/email', 'App\UsersController@emailChangeStep1');
                 }
             )
         ;
