@@ -78,4 +78,3 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 
 You should have received a copy of the License along with this work.
 If not, see <https://www.gnu.org/licenses/gpl.html>.
-

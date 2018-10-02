@@ -58,16 +58,25 @@ then
     rm -f .env
 fi
 
+# Docker Compose
+
 export SYSTEM_USER_ID=`id --user`
 export SYSTEM_USER_NAME=`id --user --name`
 
 export WEBSERVER_PORT=${WEBSERVER_PORT:-8101}
 export WEBMAILER_PORT=${WEBMAILER_PORT:-8025}
 
-export MAILER_HOST=${MAILER_HOST:-mailer}
+# AdServer ====================================================
 
-export ADSERVER_HOST=${ADSERVER_HOST:-localhost}
-export ADSERVER_URL=${ADSERVER_URL:-http://${ADSERVER_HOST}:8101}
+export MAIL_HOST=${MAIL_HOST:-mailer}
+export MAIL_PORT=${MAIL_PORT:-1025}
+export MAIL_USERNAME=${MAIL_USERNAME}
+export MAIL_PASSWORD=${MAIL_PASSWORD}
+export MAIL_ENCRYPTION=${MAIL_ENCRYPTION:-null}
+export MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-dev@adshares.net}
+export MAIL_FROM_NAME=${MAIL_FROM_NAME:-'[dev] AdShares'}
+
+export ADSERVER_URL=${ADSERVER_URL:-http://localhost:8101}
 
 export ADPANEL_URL=${ADPANEL_URL:-http://localhost:8102}
 
@@ -78,6 +87,8 @@ export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 
 export APP_ENV=${APP_ENV:-local}
 export APP_DEBUG=${APP_DEBUG:-true}
+
+# =============================================================
 
 [ -f .env ] || envsubst < .env.dist | tee .env
 
