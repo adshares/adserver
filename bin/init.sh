@@ -60,8 +60,8 @@ export SYSTEM_USER_ID=`id --user`
 export SYSTEM_USER_NAME=`id --user --name`
 
 export WEBSERVER_PORT=${WEBSERVER_PORT:-8101}
+export WEBMAILER_PORT=${WEBMAILER_PORT:-8025}
 
-export MAILER_PORT=${MAILER_PORT:-8025}
 export MAILER_HOST=${MAILER_HOST:-mailer}
 
 export ADSERVER_HOST=${ADSERVER_HOST:-localhost}
