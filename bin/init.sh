@@ -29,10 +29,12 @@ do
         ;;
         --migrate )
             OPT_MIGRATE=1
+            OPT_RUN=1
         ;;
         --migrate-fresh )
             OPT_MIGRATE=1
             OPT_MIGRATE_FRESH=1
+            OPT_RUN=1
         ;;
         --logs )
             OPT_LOGS=1
@@ -82,13 +84,11 @@ export APP_DEBUG=${APP_DEBUG:-true}
 if [ ${OPT_BUILD} -eq 1 ]
 then
     docker-compose run --rm worker composer install
-    docker-compose run --rm worker composer dump-autoload
     if [ ${OPT_FORCE} -eq 1 ]
     then
         docker-compose run --rm worker ./artisan key:generate
     fi
-    docker-compose run --rm worker ./artisan package:discover
-    docker-compose run --rm worker ./artisan browsercap:updater
+    docker-compose run --rm worker composer dump-autoload
     docker-compose run --rm worker npm install
     docker-compose run --rm worker npm run dev
 fi
@@ -105,10 +105,10 @@ then
     if [ ${OPT_MIGRATE_FRESH} -eq 1 ]
     then
         echo " > Recreate database"
-        docker-compose exec worker ./artisan migrate:fresh
+        docker-compose exec -T worker ./artisan migrate:fresh
     else
         echo " > Update database"
-        docker-compose exec worker ./artisan migrate
+        docker-compose exec -T worker ./artisan migrate
     fi
 fi
 
