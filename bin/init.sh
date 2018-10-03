@@ -101,8 +101,8 @@ then
     fi
 
 #    docker-compose run --rm worker composer dump-autoload
-    docker-compose run --rm worker artisan package:discover
-    docker-compose run --rm worker artisan browsercap:updater
+    docker-compose run --rm worker php artisan package:discover
+    docker-compose run --rm worker php artisan browsercap:updater
 
     docker-compose run --rm worker npm install
     docker-compose run --rm worker npm run dev

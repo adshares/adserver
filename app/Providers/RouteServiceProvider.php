@@ -27,97 +27,34 @@ use Illuminate\Support\Facades\Route;
 class RouteServiceProvider extends ServiceProvider
 {
     const PREFIX_AUTH = 'auth';
-    const PREFIX_APP = 'panel';
     const PREFIX_API = 'api';
     protected $namespace = 'Adshares\Adserver\Http\Controllers';
 
     public function map()
     {
-        Route::middleware(Kernel::ANY)
-            ->get(
-                '/',
-                function () {
-                    return view('welcome');
-                }
-            )
-            ->name('login')
-        ;
-        $this->mapAuthRoutes();
-        $this->mapAppRoutes();
-        $this->mapApiRoutes();
+        Route::middleware(Kernel::ANY)->get('/', function () {
+            return view('welcome');
+        })->name('login');
+
+        Route::namespace($this->namespace)
+            ->prefix(self::PREFIX_AUTH)
+            ->group(base_path('routes/auth.php'));
+
+        Route::namespace($this->namespace)
+            ->prefix(self::PREFIX_API)
+            ->middleware(Kernel::API)
+            ->group(base_path('routes/app.php'));
+
+        Route::namespace($this->namespace)
+            ->prefix(self::PREFIX_API)
+            ->middleware(Kernel::API)
+            ->group(base_path('routes/api.php'));
 
         if (!$this->app->environment('production')) {
-            Route::middleware(Kernel::API)
-                ->any('/{any}', 'Adshares\Adserver\Http\Controllers\App\AppController@mock')
-                ->where('any', '.*')
-            ;
+            Route::namespace($this->namespace)
+                ->middleware(Kernel::API)
+                ->any('/{any}', 'App\AppController@mock')
+                ->where('any', '.*');
         }
-    }
-
-    private function mapAuthRoutes(): void
-    {
-        Route::prefix(self::PREFIX_AUTH)
-            ->namespace($this->namespace)
-            ->middleware(Kernel::ANY)
-            ->group(
-                function () {
-                    // ApiAuthService
-                    Route::post('login', 'App\AuthController@login');
-
-                    // ApiUsersService
-                    Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
-                    Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
-                    Route::post('users/email/activate', 'App\UsersController@emailActivate');
-                }
-            )
-        ;
-
-        Route::prefix(self::PREFIX_AUTH)
-            ->namespace($this->namespace)
-            ->middleware(Kernel::GUEST)
-            ->group(
-                function () {
-                    // ApiAuthService
-                    Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
-                    Route::post('recovery', 'App\AuthController@recovery');
-
-                    // ApiUsersService
-                    Route::post('users', 'App\UsersController@add')->name('app.users.add');
-                }
-            )
-        ;
-
-        Route::prefix(self::PREFIX_AUTH)
-            ->namespace($this->namespace)
-            ->middleware(Kernel::API)
-            ->group(
-                function () {
-                    Route::get('check', 'App\AuthController@check');
-                    Route::get('logout', 'App\AuthController@logout');
-
-                    Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
-                    Route::patch('users', 'App\UsersController@edit');
-                    Route::post('users/email', 'App\UsersController@emailChangeStep1');
-                }
-            )
-        ;
-    }
-
-    private function mapAppRoutes()
-    {
-        Route::middleware(Kernel::API)
-            ->namespace($this->namespace)
-            ->prefix(self::PREFIX_APP)
-            ->group(base_path('routes/app.php'))
-        ;
-    }
-
-    private function mapApiRoutes()
-    {
-        Route::middleware(Kernel::API)
-            ->namespace($this->namespace)
-            ->prefix(self::PREFIX_API)
-            ->group(base_path('routes/api.php'))
-        ;
     }
 }
