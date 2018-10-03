@@ -30,10 +30,11 @@ class CampaignsController extends AppController
 {
     public function add(Request $request)
     {
-//        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
+        $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
         $input['user_id'] = Auth::user()->id;
         $campaign = Campaign::create($input);
+
         $campaign->save();
 
         $reqObj = $request->input('campaign.targeting.require');
@@ -44,7 +45,7 @@ class CampaignsController extends AppController
             }
         }
 
-        $reqObj = $request->input('site.targeting.exclude');
+        $reqObj = $request->input('campaign.targeting.exclude');
         if (null != $reqObj) {
             foreach (array_keys($reqObj) as $key) {
                 $value = $reqObj[$key];
@@ -55,30 +56,22 @@ class CampaignsController extends AppController
         $response = self::json(compact('campaign'), 201);
         $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
 
-        return $response;
+        return redirect(route('app.sites.read', ['site' => $site]));
     }
 
     public function browse(Request $request)
     {
         // TODO check privileges
-        $campaigns = Campaign::with(
-            [
-                'campaignExcludes' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-                'campaignRequires' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-            ]
-        )
-            ->whereNull('deleted_at')->get()->map(
-                function (Campaign $campaign) {
-                    return $campaign->makeVisible('id');
-                }
-            )
-        ;
+        $campaigns = Campaign::with([
+            'campaignExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'campaignRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')->get();
 
         return self::json($campaigns);
     }
@@ -109,14 +102,14 @@ class CampaignsController extends AppController
 
     public function edit(Request $request, $campaign_id)
     {
-//        $this->validateRequestObject(
-//            $request,
-//            'campaign',
-//            array_intersect_key(
-//                Campaign::$rules,
-//                $request->input('campaign')
-//            )
-//        );
+        $this->validateRequestObject(
+            $request,
+            'campaign',
+            array_intersect_key(
+                Campaign::$rules,
+                $request->input('campaign')
+            )
+        );
 
         // TODO check privileges
         $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
@@ -141,21 +134,17 @@ class CampaignsController extends AppController
     public function read(Request $request, $campaign_id)
     {
         // TODO check privileges
-        $campaign = Campaign::with(
-            [
-                'campaignExcludes' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-                'campaignRequires' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-            ]
-        )
-            ->whereNull('deleted_at')
-            ->findOrFail($campaign_id)
-        ;
+        $campaign = Campaign::with([
+            'campaignExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'campaignRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')
+            ->findOrFail($campaign_id);
 
         return self::json(compact('campaign'));
     }

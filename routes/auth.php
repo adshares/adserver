@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(Kernel::ANY)->group(function () {
     Route::post('login', 'AuthController@login');
+    Route::post('email/activate', 'AuthController@emailActivate');
 });
 
 Route::middleware(Kernel::APP)->group(function () {
-    Route::post('email/activate', 'AuthController@emailActivate');
 
     Route::post('email', 'AuthController@emailChangeStep1');
     Route::get('email/confirm1Old/{token}', 'AuthController@emailChangeStep2');
@@ -43,5 +43,6 @@ Route::middleware(Kernel::GUEST)->group(function () {
     Route::get('recovery/{token}', 'AuthController@recoveryTokenExtend');
     Route::post('recovery', 'AuthController@recovery');
     Route::post('register', 'AuthController@register');
+    Route::patch('password', 'AuthController@updateSelf');
 });
 

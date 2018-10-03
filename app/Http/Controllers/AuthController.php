@@ -110,7 +110,7 @@ class AuthController extends AppController
     {
         Validator::make(
             $request->all(),
-            ['email' => 'required|email', 'URIstep1' => 'required', 'URIstep2' => 'required']
+            ['email' => 'required|email', 'uri_step1' => 'required', 'uri_step2' => 'required']
         )->validate();
         if (User::withTrashed()->where('email', $request->input('email'))->count()) {
             return self::json([], 422, ['email' => 'This email already exists in our database']);
@@ -132,7 +132,7 @@ class AuthController extends AppController
         Mail::to($user)->queue(
             new UserEmailChangeConfirm1Old(
                 Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
-                $request->input('URIstep1')
+                $request->input('uri_step1')
             )
         );
         DB::commit();
@@ -157,7 +157,7 @@ class AuthController extends AppController
         Mail::to($token['payload']['email'])->queue(
             new UserEmailChangeConfirm2New(
                 Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
-                $token['payload']['URIstep2']
+                $token['payload']['uri_step2']
             )
         );
         DB::commit();
@@ -277,8 +277,23 @@ class AuthController extends AppController
 
     public function updateSelf(Request $request)
     {
+        if (!Auth::check() && !$request->has('user.token')) {
+            return self::json([], 401, ['message' => 'Required authenticated access or token authentication']);
+        }
+
         DB::beginTransaction();
-        $user = Auth::user();
+        if (Auth::check()) {
+            $user = Auth::user();
+            $token_authorization = false;
+        } else {
+            if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
+                DB::rollBack();
+
+                return self::json([], 422, ['message' => 'Authentication token is invalid']);
+            }
+            $user = User::findOrFail($token['user_id']);
+            $token_authorization = true;
+        }
 
         $this->validateRequestObject($request, 'user', User::$rules);
         $user->fill($request->input('user'));
@@ -290,11 +305,13 @@ class AuthController extends AppController
             return self::json($user->toArrayCamelize(), 200);
         }
 
-        $user->password = $request->input('user.password_new');
-        $user->save();
-        DB::commit();
+        if ($token_authorization) {
+            $user->password = $request->input('user.password_new');
+            $user->save();
+            DB::commit();
 
-        return self::json($user->toArrayCamelize(), 200);
+            return self::json($user->toArrayCamelize(), 200);
+        }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
             DB::rollBack();

@@ -51,6 +51,7 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         self::ANY => [
             'cors',
+            'cache.headers',
         ],
         self::APP => [
             'cors',
@@ -62,6 +63,7 @@ class Kernel extends HttpKernel
             'cors',
             'guest:api',
             'bindings',
+            'snake_casing',
         ],
     ];
 
@@ -70,11 +72,11 @@ class Kernel extends HttpKernel
         'guest' => RequireGuestAccess::class,
         'auth' => Authenticate::class,
         'bindings' => SubstituteBindings::class,
+        'snake_casing' => SnakeCasing::class,
 
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
         'signed' => ValidateSignature::class,
-        'snake_casing' => SnakeCasing::class,
         'session' => StartSession::class,
     ];
 }

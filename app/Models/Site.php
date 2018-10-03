@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -31,15 +31,18 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Site extends Model
 {
+    public static $rules = [
+        'name' => 'required|max:64',
+    ];
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-        'user_id', 'name',
+        'user_id',
+        'name',
     ];
-
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -49,17 +52,13 @@ class Site extends Model
         'deleted_at',
     ];
 
-    public static $rules = [
-        'name' => 'required|max:64',
-    ];
-
     public function siteExcludes()
     {
-        return $this->hasMany("Adshares\Adserver\Models\SiteExclude");
+        return $this->hasMany(\Adshares\Adserver\Models\SiteExclude::class);
     }
 
     public function siteRequires()
     {
-        return $this->hasMany("Adshares\Adserver\Models\SiteRequire");
+        return $this->hasMany(\Adshares\Adserver\Models\SiteRequire::class);
     }
 }
