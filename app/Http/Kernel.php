@@ -24,7 +24,6 @@ use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakeCasing;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
@@ -37,9 +36,9 @@ use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
-    const API = 'api-group';
+    const ANY = 'any-group';
+    const APP = 'app-group';
     const GUEST = 'guest-group';
-    const ANY = 'web-group';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -53,14 +52,15 @@ class Kernel extends HttpKernel
         self::ANY => [
             'cors',
         ],
+        self::APP => [
+            'cors',
+            'auth:api',
+            'bindings',
+            'snake_casing',
+        ],
         self::GUEST => [
             'cors',
             'guest:api',
-            'bindings',
-        ],
-        self::API => [
-            'cors',
-            'auth:api',
             'bindings',
         ],
     ];
@@ -71,7 +71,6 @@ class Kernel extends HttpKernel
         'auth' => Authenticate::class,
         'bindings' => SubstituteBindings::class,
 
-        'auth.basic' => AuthenticateWithBasicAuth::class,
         'cache.headers' => SetCacheHeaders::class,
         'can' => Authorize::class,
         'signed' => ValidateSignature::class,

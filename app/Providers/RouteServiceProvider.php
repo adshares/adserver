@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Route;
 class RouteServiceProvider extends ServiceProvider
 {
     const PREFIX_AUTH = 'auth';
-    const PREFIX_API = 'api';
+    const PREFIX_APP = 'api';
     protected $namespace = 'Adshares\Adserver\Http\Controllers';
 
     public function map()
@@ -41,20 +41,15 @@ class RouteServiceProvider extends ServiceProvider
             ->group(base_path('routes/auth.php'));
 
         Route::namespace($this->namespace)
-            ->prefix(self::PREFIX_API)
-            ->middleware(Kernel::API)
+            ->prefix(self::PREFIX_APP)
+            ->middleware(Kernel::APP)
             ->group(base_path('routes/app.php'));
 
-        Route::namespace($this->namespace)
-            ->prefix(self::PREFIX_API)
-            ->middleware(Kernel::API)
-            ->group(base_path('routes/api.php'));
-
-        if (!$this->app->environment('production')) {
-            Route::namespace($this->namespace)
-                ->middleware(Kernel::API)
-                ->any('/{any}', 'App\AppController@mock')
-                ->where('any', '.*');
-        }
+//        if (!$this->app->environment('production')) {
+//            Route::namespace($this->namespace)
+//                ->middleware(Kernel::APP)
+//                ->any('/{any}', 'Controller@mock')
+//                ->where('any', '.*');
+//        }
     }
 }

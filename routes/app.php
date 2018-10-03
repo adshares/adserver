@@ -18,38 +18,51 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Route;
+Route::get('/adshares/inventory/list', 'ApiController@adsharesInventoryList');
+Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransactionReport');
+
+Route::get('/click/{id}', 'DemandController@click')->name('banner-click');
+Route::get('/serve/{id}', 'DemandController@serve')->name('banner-serve');
+Route::get('/view/{id}', 'DemandController@view')->name('banner-view');
+Route::get('/view.js', 'DemandController@viewScript')->name('demand-view.js');
+
+Route::get('/l/context/{log_id}', 'DemandController@logContext')->name('log-context');
+Route::get('/l/keywords/{log_id}', 'DemandController@logKeywords')->name('log-keywords');
+
+Route::get('/supply/find', 'SupplyController@find')->name('supply-find');
+Route::get('/supply/find.js', 'SupplyController@findScript')->name('supply-find.js');
+Route::get('/l/n/view/{id}', 'SupplyController@logNetworkView')->name('log-network-view');
+Route::get('/l/n/click/{id}', 'SupplyController@logNetworkClick')->name('log-network-click');
+Route::get('/l/n/keywords/{log_id}', 'SupplyController@logNetworkKeywords')->name('log-network-keywords');
 
 Route::get('config/adshares-address', 'App\ConfigController@adsharesAddress');
+Route::get('notifications', 'App\NotificationsController@read');
+Route::get('settings/notifications', 'App\SettingsController@readNotifications');
 
-Route::delete('sites/{site_id}', 'App\SitesController@delete')->name('app.sites.delete');
-Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
-Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
-Route::get('sites/{site_id}', 'App\SitesController@read')->name('app.sites.read');
-Route::patch('sites/{site_id}', 'App\SitesController@edit')->name('app.sites.edit');
-Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
-
-Route::delete('campaigns/{campaign_id}', 'App\CampaignsController@delete')->name('app.campaigns.delete');
+Route::post('campaigns', 'App\CampaignsController@add')->name('app.campaigns.add');
 Route::get('campaigns', 'App\CampaignsController@browse')->name('app.campaigns.browse');
 Route::get('campaigns/count', 'App\CampaignsController@count')->name('app.campaigns.count');
 Route::get('campaigns/{campaign_id}', 'App\CampaignsController@read')->name('app.campaigns.read');
 Route::patch('campaigns/{campaign_id}', 'App\CampaignsController@edit')->name('app.campaigns.edit');
-Route::post('campaigns', 'App\CampaignsController@add')->name('app.campaigns.add');
+Route::delete('campaigns/{campaign_id}', 'App\CampaignsController@delete')->name('app.campaigns.delete');
 
-Route::get('notifications', 'App\NotificationsController@read');
+Route::post('sites', 'App\SitesController@add')->name('app.sites.add');
+Route::get('sites', 'App\SitesController@browse')->name('app.sites.browse');
+Route::get('sites/count', 'App\SitesController@count')->name('app.sites.count');
+Route::get('sites/{site_id}', 'App\SitesController@read')->name('app.sites.read');
+Route::patch('sites/{site_id}', 'App\SitesController@edit')->name('app.sites.edit');
+Route::delete('sites/{site_id}', 'App\SitesController@delete')->name('app.sites.delete');
 
-Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
-Route::get('users/{user_id}', 'App\UsersController@read')->name('app.users.read');
-Route::patch('users/{user_id}', 'App\UsersController@edit')->name('app.users.edit');
-Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
-
-Route::get('settings/notifications', 'App\SettingsController@readNotifications');
+//Route::post('users', 'App\UsersController@add')->name('app.users.add');
+//Route::get('users', 'App\UsersController@browse')->name('app.users.browse');
+//Route::get('users/count', 'App\UsersController@count')->name('app.users.count');
+//Route::get('users/{user_id}', 'App\UsersController@read')->name('app.users.read');
+//Route::patch('users/{user_id}', 'App\UsersController@edit')->name('app.users.edit');
+//Route::delete('users/{user_id}', 'App\UsersController@delete')->name('app.users.delete');
 
 // tmp mocked solutions
 Route::post('chart', 'App\ChartsController@chart');
-
 Route::get('options/campaigns/targeting', 'App\CampaignsController@targeting');
 Route::get('options/sites/targeting', 'App\SitesController@targeting');
 Route::post('publisher_chart', 'App\ChartsController@publisherChart');
-
 Route::get('config/banners', 'App\SitesController@banners');

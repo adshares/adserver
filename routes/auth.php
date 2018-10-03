@@ -21,32 +21,27 @@
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(Kernel::ANY)->group(
-    function () {
-        Route::post('login', 'App\AuthController@login');
+Route::middleware(Kernel::ANY)->group(function () {
+    Route::post('login', 'AuthController@login');
+});
 
-        Route::get('users/email/confirm1Old/{token}', 'App\UsersController@emailChangeStep2');
-        Route::get('users/email/confirm2New/{token}', 'App\UsersController@emailChangeStep3');
-        Route::post('users/email/activate', 'App\UsersController@emailActivate');
-    }
-);
+Route::middleware(Kernel::APP)->group(function () {
+    Route::post('email/activate', 'AuthController@emailActivate');
 
-Route::middleware(Kernel::GUEST)->group(
-    function () {
-        Route::get('recovery/{token}', 'App\AuthController@recoveryTokenExtend');
-        Route::post('recovery', 'App\AuthController@recovery');
+    Route::post('email', 'AuthController@emailChangeStep1');
+    Route::get('email/confirm1Old/{token}', 'AuthController@emailChangeStep2');
+    Route::get('email/confirm2New/{token}', 'AuthController@emailChangeStep3');
 
-        Route::post('users', 'App\UsersController@add')->name('app.users.add');
-    }
-);
+    Route::get('check', 'AuthController@check');
+    Route::get('logout', 'AuthController@logout');
 
-Route::middleware(Kernel::API)->group(
-    function () {
-        Route::get('check', 'App\AuthController@check');
-        Route::get('logout', 'App\AuthController@logout');
+    Route::patch('self', 'AuthController@updateSelf');
+    Route::post('email/activate/resend', 'AuthController@emailActivateResend');
+});
 
-        Route::post('users/email/activate/resend', 'App\UsersController@emailActivateResend');
-        Route::patch('users', 'App\UsersController@edit');
-        Route::post('users/email', 'App\UsersController@emailChangeStep1');
-    }
-);
+Route::middleware(Kernel::GUEST)->group(function () {
+    Route::get('recovery/{token}', 'AuthController@recoveryTokenExtend');
+    Route::post('recovery', 'AuthController@recovery');
+    Route::post('register', 'AuthController@register');
+});
+

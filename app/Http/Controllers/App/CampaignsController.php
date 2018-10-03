@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\App;
 
+use Adshares\Adserver\Http\Controllers\AppController;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;

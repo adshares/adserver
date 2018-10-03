@@ -29,12 +29,10 @@ do
         ;;
         --migrate )
             OPT_MIGRATE=1
-            OPT_RUN=1
         ;;
         --migrate-fresh )
             OPT_MIGRATE=1
             OPT_MIGRATE_FRESH=1
-            OPT_RUN=1
         ;;
         --logs )
             OPT_LOGS=1
@@ -100,7 +98,6 @@ then
         docker-compose run --rm worker ./artisan key:generate
     fi
 
-#    docker-compose run --rm worker composer dump-autoload
     docker-compose run --rm worker php artisan package:discover
     docker-compose run --rm worker php artisan browsercap:updater
 
@@ -120,10 +117,20 @@ then
     if [ ${OPT_MIGRATE_FRESH} -eq 1 ]
     then
         echo " > Recreate database"
-        docker-compose exec -T worker ./artisan migrate:fresh
+        if [ ${OPT_RUN} -eq 1 ]
+        then
+            docker-compose exec -T worker ./artisan migrate:fresh
+        else
+            docker-compose run --rm worker ./artisan migrate:fresh
+        fi
     else
         echo " > Update database"
-        docker-compose exec -T worker ./artisan migrate
+        if [ ${OPT_RUN} -eq 1 ]
+        then
+            docker-compose exec -T worker ./artisan migrate
+        else
+            docker-compose run --rm worker ./artisan migrate:
+        fi
     fi
 fi
 
