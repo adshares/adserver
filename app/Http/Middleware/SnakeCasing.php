@@ -62,8 +62,6 @@ class SnakeCasing
             );
         }
 
-
-
         return $response;
     }
 
@@ -82,7 +80,7 @@ class SnakeCasing
 
         foreach ($data as $k => $v) {
             if (is_array($v)) {
-                $result[$k] = $this->transformArrayKeys($v);
+                $result[$k] = $this->transformArrayKeys($v, $transformation);
                 continue;
             }
             $result[$transformation($k)] = $v;

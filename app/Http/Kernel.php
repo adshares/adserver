@@ -52,6 +52,7 @@ class Kernel extends HttpKernel
         self::ANY => [
             'cors',
             'cache.headers',
+            'snake_casing',
         ],
         self::APP => [
             'cors',

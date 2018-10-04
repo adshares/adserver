@@ -38,7 +38,7 @@ class SettingsController extends AppController
         $settings = UserSettings::where('user_id', Auth::user()->id)
             ->where('type', 'notifications')
             ->first()
-            ->toArrayCamelize()
+            ->toArray()
         ;
 
         $payload = [];

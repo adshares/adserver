@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http\Controllers;
@@ -25,9 +25,6 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 
-/**
- * API commands that are used to communicate and share informations between adserver isntances.
- */
 class ApiController extends Controller
 {
     public function adsharesInventoryList(Request $request)
@@ -38,7 +35,7 @@ class ApiController extends Controller
             $campaigns[$i]['adshares_address'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
         }
 
-        return Response::json(['campaigns' => $campaigns], 200, array(), JSON_PRETTY_PRINT);
+        return Response::json(['campaigns' => $campaigns], 200, [], JSON_PRETTY_PRINT);
     }
 
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)

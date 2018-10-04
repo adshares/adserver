@@ -20,12 +20,11 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Serialize;
 use Illuminate\Database\Eloquent\Model;
 
-class UserSettings extends Model implements Camelizable
+class UserSettings extends Model
 {
     use AutomateMutators;
     use Serialize;

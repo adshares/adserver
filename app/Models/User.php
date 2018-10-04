@@ -22,7 +22,6 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
-use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,7 +29,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
-class User extends Authenticatable implements Camelizable
+class User extends Authenticatable
 {
     use Notifiable;
     use SoftDeletes;

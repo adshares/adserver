@@ -32,9 +32,15 @@ class Campaign extends Model
 
     public static $rules = [
     ];
+
     protected $dates = [
         'time_start',
         'time_end',
+    ];
+
+    protected $casts = [
+        'time_start' => 'string',
+        'time_end' => 'string',
     ];
 
     protected $dispatchesEvents = [

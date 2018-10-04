@@ -20,13 +20,12 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Serialize;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Notification extends Model implements Camelizable
+class Notification extends Model
 {
     use SoftDeletes;
 

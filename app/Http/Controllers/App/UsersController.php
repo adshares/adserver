@@ -61,7 +61,7 @@ class UsersController extends AppController
         ;
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 201)
+        return self::json($user->toArray(), 201)
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
@@ -71,7 +71,7 @@ class UsersController extends AppController
         // TODO check privileges
         $users = User::with('AdserverWallet')->get();
 
-        return self::json($users->toArrayCamelize());
+        return self::json($users->toArray());
     }
 
     public function delete(Request $request, $user_id)
@@ -113,7 +113,7 @@ class UsersController extends AppController
             $user->save();
             DB::commit();
 
-            return self::json($user->toArrayCamelize(), 200);
+            return self::json($user->toArray(), 200);
         }
 
         if ($token_authorization) {
@@ -121,20 +121,20 @@ class UsersController extends AppController
             $user->save();
             DB::commit();
 
-            return self::json($user->toArrayCamelize(), 200);
+            return self::json($user->toArray(), 200);
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
             DB::rollBack();
 
-            return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Old password is not valid']);
+            return self::json($user->toArray(), 422, ['password_old' => 'Old password is not valid']);
         }
 
         $user->password = $request->input('user.password_new');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 200);
+        return self::json($user->toArray(), 200);
     }
 
 
@@ -144,6 +144,6 @@ class UsersController extends AppController
         // TODO check privileges
         $user = User::findOrFail($user_id);
 
-        return self::json($user->toArrayCamelize());
+        return self::json($user->toArray());
     }
 }

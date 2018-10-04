@@ -56,7 +56,7 @@ class AuthController extends AppController
         );
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 201);
+        return self::json($user->toArray(), 201);
     }
 
     public function emailActivate(Request $request)
@@ -75,7 +75,7 @@ class AuthController extends AppController
         $user->save();
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 200);
+        return self::json($user->toArray(), 200);
     }
 
     public function emailActivateResend(Request $request)
@@ -182,7 +182,7 @@ class AuthController extends AppController
         $user->save();
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 200);
+        return self::json($user->toArray(), 200);
     }
 
     /**
@@ -194,7 +194,7 @@ class AuthController extends AppController
      */
     public function check(Request $request)
     {
-        return self::json(Auth::user()->toArrayCamelize(), 200);
+        return self::json(Auth::user()->toArray(), 200);
     }
 
     /**
@@ -212,7 +212,7 @@ class AuthController extends AppController
         )) {
             Auth::user()->generateApiKey();
 
-            return self::json(Auth::user()->load('AdserverWallet')->toArrayCamelize(), 200);
+            return self::json(Auth::user()->load('AdserverWallet')->toArray(), 200);
         }
 
         return self::json([], 400);
@@ -300,7 +300,7 @@ class AuthController extends AppController
             $user->save();
             DB::commit();
 
-            return self::json($user->toArrayCamelize(), 200);
+            return self::json($user->toArray(), 200);
         }
 
         if ($token_authorization) {
@@ -308,20 +308,20 @@ class AuthController extends AppController
             $user->save();
             DB::commit();
 
-            return self::json($user->toArrayCamelize(), 200);
+            return self::json($user->toArray(), 200);
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
             DB::rollBack();
 
-            return self::json($user->toArrayCamelize(), 422, ['password_old' => 'Old password is not valid']);
+            return self::json($user->toArray(), 422, ['password_old' => 'Old password is not valid']);
         }
 
         $user->password = $request->input('user.password_new');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArrayCamelize(), 200);
+        return self::json($user->toArray(), 200);
     }
 
 }

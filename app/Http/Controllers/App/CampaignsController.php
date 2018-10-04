@@ -53,10 +53,8 @@ class CampaignsController extends AppController
             }
         }
 
-        $response = self::json(compact('campaign'), 201);
-        $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
-
-        return redirect(route('app.campaigns.read', ['campaign' => $campaign]));
+        return self::json(compact('campaign'), 201)
+            ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
     public function browse(Request $request)
@@ -143,7 +141,7 @@ class CampaignsController extends AppController
         ])->whereNull('deleted_at')
             ->findOrFail($campaign_id);
 
-        return self::json($campaign->toArray());
+        return self::json(['campaign' => $campaign->toArray()]);
     }
 
     /**
