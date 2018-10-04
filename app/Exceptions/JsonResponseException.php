@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,15 +15,16 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Exceptions;
 
 use Exception;
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Http\JsonResponse;
 
-class JsonResponseException extends Exception
+class JsonResponseException extends Exception implements Responsable
 {
     protected $response;
 
@@ -32,11 +33,9 @@ class JsonResponseException extends Exception
         $this->response = $response;
     }
 
-    /**
-     * @return JsonResponse
-     */
-    public function get()
+
+    public function toResponse($request)
     {
-        return $this->response;
+        $this->response;
     }
 }

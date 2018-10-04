@@ -25,7 +25,6 @@ use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Adserver\Models\Traits\ToArrayCamelize;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -38,7 +37,6 @@ class User extends Authenticatable implements Camelizable
 
     use AutomateMutators;
     use BinHex;
-    use ToArrayCamelize;
 
     /**
      * The attributes that should be mutated to dates.

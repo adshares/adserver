@@ -61,10 +61,8 @@ class UsersController extends AppController
         ;
         DB::commit();
 
-        $response = self::json($user->toArrayCamelize(), 201);
-        $response->header('Location', route('app.users.read', ['user_id' => $user->id]));
-
-        return $response;
+        return self::json($user->toArrayCamelize(), 201)
+            ->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
     public function browse(Request $request)

@@ -56,7 +56,7 @@ class CampaignsController extends AppController
         $response = self::json(compact('campaign'), 201);
         $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
 
-        return redirect(route('app.sites.read', ['site' => $site]));
+        return redirect(route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
     public function browse(Request $request)
@@ -95,9 +95,8 @@ class CampaignsController extends AppController
             'averageCPC' => 0,
             'totalCost' => 0,
         ];
-        $response = self::json($siteCount, 200);
 
-        return $response;
+        return self::json($siteCount, 200);
     }
 
     public function edit(Request $request, $campaign_id)
@@ -115,10 +114,8 @@ class CampaignsController extends AppController
         $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
         $campaign->update($request->input('campaign'));
 
-        $response = self::json(['message' => 'Successfully edited'], 200);
-        $response->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
-
-        return $response;
+        return self::json(['message' => 'Successfully edited'], 200)
+            ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
     public function delete(Request $request, $campaign_id)
@@ -146,7 +143,7 @@ class CampaignsController extends AppController
         ])->whereNull('deleted_at')
             ->findOrFail($campaign_id);
 
-        return self::json(compact('campaign'));
+        return self::json($campaign->toArray());
     }
 
     /**

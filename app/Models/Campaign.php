@@ -43,9 +43,6 @@ class Campaign extends Model
 
     protected $fillable = [
         'landing_url',
-        'max_cpm',
-        'max_cpc',
-        'budget_per_hour',
         'time_start',
         'time_end',
         'require_count',
@@ -126,7 +123,7 @@ class Campaign extends Model
             "status" => $this->status,
             "name" => $this->name,
             "target_url" => $this->landing_url,
-            "bid_strategy_ame" => $this->strategy_name,
+            "bid_strategy_name" => $this->strategy_name,
             "bid_value" => $this->bid,
             "budget" => $this->budget,
             "date_start" => $this->time_start,

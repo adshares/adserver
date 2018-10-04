@@ -56,9 +56,7 @@ class AuthController extends AppController
         );
         DB::commit();
 
-        $response = self::json($user->toArrayCamelize(), 201);
-
-        return $response;
+        return self::json($user->toArrayCamelize(), 201);
     }
 
     public function emailActivate(Request $request)

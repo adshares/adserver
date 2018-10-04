@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,89 +15,80 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class SnakeCasing
 {
-    /**
-     * The additional attributes passed to the middleware.
-     *
-     * @var array
-     */
     protected $attributes = [];
 
-    /**
-     * Handle an incoming request.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure                 $next
-     * @param array                    ...$attributes
-     *
-     * @return mixed
-     */
-    public function handle($request, Closure $next, ...$attributes)
+    public function handle($request, Closure $next)
     {
-        $this->attributes = $attributes;
-
-        $this->clean($request);
-
-        return $next($request);
+        return $this->camelize($next($this->snakize($request)));
     }
 
-    /**
-     * Clean the request's data.
-     *
-     * @param \Illuminate\Http\Request $request
-     */
-    protected function clean($request)
+    private function snakize(Request $request): Request
     {
-        $this->cleanParameterBag($request->query);
+        $this->snakizeParameterBag($request->query);
 
         if ($request->isJson()) {
-            $this->cleanParameterBag($request->json());
+            $this->snakizeParameterBag($request->json());
         } else {
-            $this->cleanParameterBag($request->request);
-        }
-    }
-
-    /**
-     * Clean the data in the parameter bag.
-     *
-     * @param \Symfony\Component\HttpFoundation\ParameterBag $bag
-     */
-    protected function cleanParameterBag(ParameterBag $bag)
-    {
-        $bag->replace($this->snakeArray($bag->all()));
-    }
-
-    /**
-     * Clean the data in the given array.
-     *
-     * @param array $data
-     *
-     * @return array
-     */
-    protected function snakeArray(array $data)
-    {
-        if (empty($data)) {
-            return $data;
+            $this->snakizeParameterBag($request->request);
         }
 
+        return $request;
+    }
+
+    private function camelize(Response $response): Response
+    {
+        if ($response instanceof JsonResponse) {
+            return $response->setContent(
+                preg_replace_callback(
+                    '/"([^"]+?)"\s*:/',
+                    function (array $input): string {
+                        return '"' . camel_case($input[1]) . '":';
+                    },
+                    $response->content()
+                )
+            );
+        }
+
+
+
+        return $response;
+    }
+
+    private function snakizeParameterBag(ParameterBag $bag): void
+    {
+        $bag->replace($this->transformArrayKeys($bag->all(), 'snake_case'));
+    }
+
+    private function transformArrayKeys(array $data, string $transformation): array
+    {
         $result = [];
+
+        if (empty($data)) {
+            return $result;
+        }
+
         foreach ($data as $k => $v) {
             if (is_array($v)) {
-                $result[$k] = $this->snakeArray($v);
+                $result[$k] = $this->transformArrayKeys($v);
                 continue;
             }
-            $result[snake_case($k)] = $v;
+            $result[$transformation($k)] = $v;
         }
 
         return $result;
     }
+
 }
