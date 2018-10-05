@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Services;
@@ -25,8 +25,6 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Helper\Filter;
-
-// use Adshares\Adserver\Services\Adselect;
 
 /**
  * Returns random banners. Used if adselect service is not available. Shoud probalby be moved to Adselect class.
@@ -55,10 +53,8 @@ class BannerFinder
                 $website = $zone->getWebsite();
 
                 $impression_keywords = $keywords;
-                $impression_keywords['zone'] = $website->getHost().'/'.$zone->getId();
-                $impression_keywords['banner_size'] = $zone->getWidth().'x'.$zone->getHeight();
-
-//                 print_r($impression_keywords);exit;
+                $impression_keywords['zone'] = $website->getHost() . '/' . $zone->getId();
+                $impression_keywords['banner_size'] = $zone->getWidth() . 'x' . $zone->getHeight();
 
                 $filters = Filter::getFilter($website->getRequire(), $website->getExclude());
 //                 $filters['require'][] = [
@@ -89,14 +85,16 @@ class BannerFinder
             foreach ($zones as $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
 
-                try {
-                    // $zone instanceof Zone; // ?? Yodahack : what the hack
-                    $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
-                      ->where('creative_height', $zone->height)
-                      ->whereIn('creative_type', $typeDefault)
-                      ->get()->pluck('uuid')->random();
-                } catch (\InvalidArgumentException $e) {
-                    $bannerIds[] = '';
+                if ($zone) {
+                    try {
+                        // $zone instanceof Zone; // ?? Yodahack : what the hack
+                        $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                            ->where('creative_height', $zone->height)
+                            ->whereIn('creative_type', $typeDefault)
+                            ->get()->pluck('uuid')->random();
+                    } catch (\InvalidArgumentException $e) {
+                        $bannerIds[] = '';
+                    }
                 }
             }
         }

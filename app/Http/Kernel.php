@@ -20,64 +20,64 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Http\Middleware\KeyCaseModifier;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
-use Adshares\Adserver\Http\Middleware\SnakeCasing;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Routing\Middleware\ValidateSignature;
-use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
-    const ANY = 'any-group';
-    const APP = 'app-group';
-    const GUEST = 'guest-group';
+    private const CACHE_HEADERS = 'cache.headers';
+    private const BINDINGS = 'bindings';
+    private const AUTH = 'auth';
+    private const GUEST = 'guest';
+    private const KEY_CASE_MODIFIER = 'key_case_modifier';
+    private const CORS = 'cors';
+    const WEB = 'web';
+    const API_AUTH = 'only-authenticated-users';
+    const API_GUEST = 'only-guest-users';
+    const API_ANY = 'any-user';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
+        HandleCors::class,
+        Middleware\TrustProxies::class,
         Middleware\TrimStrings::class,
         ConvertEmptyStringsToNull::class,
-        Middleware\TrustProxies::class,
     ];
 
     protected $middlewareGroups = [
-        self::ANY => [
-            'cors',
-            'cache.headers',
-            'snake_casing',
+        self::WEB => [
+            self::CACHE_HEADERS,
         ],
-        self::APP => [
-            'cors',
-            'auth:api',
-            'bindings',
-            'snake_casing',
+        self::API_ANY => [
+            self::BINDINGS,
+            self::KEY_CASE_MODIFIER,
         ],
-        self::GUEST => [
-            'cors',
-            'guest:api',
-            'bindings',
-            'snake_casing',
+        self::API_AUTH => [
+            self::AUTH . ':api',
+            self::BINDINGS,
+            self::KEY_CASE_MODIFIER,
+        ],
+        self::API_GUEST => [
+            self::GUEST . ':api',
+            self::BINDINGS,
+            self::KEY_CASE_MODIFIER,
         ],
     ];
 
     protected $routeMiddleware = [
-        'cors' => HandleCors::class,
-        'guest' => RequireGuestAccess::class,
-        'auth' => Authenticate::class,
-        'bindings' => SubstituteBindings::class,
-        'snake_casing' => SnakeCasing::class,
-
-        'cache.headers' => SetCacheHeaders::class,
-        'can' => Authorize::class,
-        'signed' => ValidateSignature::class,
-        'session' => StartSession::class,
+        self::GUEST => RequireGuestAccess::class,
+        self::AUTH => Authenticate::class,
+        self::BINDINGS => SubstituteBindings::class,
+        self::KEY_CASE_MODIFIER => KeyCaseModifier::class,
+        self::CACHE_HEADERS => SetCacheHeaders::class,
     ];
 }

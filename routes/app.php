@@ -18,23 +18,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-Route::get('/adshares/inventory/list', 'ApiController@adsharesInventoryList');
-Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransactionReport');
-
-Route::get('/click/{id}', 'DemandController@click')->name('banner-click');
-Route::get('/serve/{id}', 'DemandController@serve')->name('banner-serve');
-Route::get('/view/{id}', 'DemandController@view')->name('banner-view');
-Route::get('/view.js', 'DemandController@viewScript')->name('demand-view.js');
-
-Route::get('/l/context/{log_id}', 'DemandController@logContext')->name('log-context');
-Route::get('/l/keywords/{log_id}', 'DemandController@logKeywords')->name('log-keywords');
-
-Route::get('/supply/find', 'SupplyController@find')->name('supply-find');
-Route::get('/supply/find.js', 'SupplyController@findScript')->name('supply-find.js');
-Route::get('/l/n/view/{id}', 'SupplyController@logNetworkView')->name('log-network-view');
-Route::get('/l/n/click/{id}', 'SupplyController@logNetworkClick')->name('log-network-click');
-Route::get('/l/n/keywords/{log_id}', 'SupplyController@logNetworkKeywords')->name('log-network-keywords');
-
 Route::get('config/adshares-address', 'App\ConfigController@adsharesAddress');
 Route::get('notifications', 'App\NotificationsController@read');
 Route::get('settings/notifications', 'App\SettingsController@readNotifications');
