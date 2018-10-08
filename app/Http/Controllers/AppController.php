@@ -22,11 +22,11 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 
-class AppController extends BaseController
+class AppController extends Controller
 {
     protected static function json($data = [], $code = 200, $errors = false)
     {

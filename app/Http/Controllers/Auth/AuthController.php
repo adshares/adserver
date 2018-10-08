@@ -18,8 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Http\Controllers\Auth;
 
+use Adshares\Adserver\Http\Controllers\AppController;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;

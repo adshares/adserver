@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\App;
+namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\AppController;
 use Adshares\Adserver\Mail\UserEmailActivate;
@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use JsonRPC\Exception\ServerErrorException;
 
 class UsersController extends AppController
 {
@@ -57,12 +58,16 @@ class UsersController extends AppController
                 Token::generate('email-activate', $this->email_activation_token_time, $user->id),
                 $request->input('uri')
             )
-        )
-        ;
+        );
         DB::commit();
 
         return self::json($user->toArray(), 201)
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
+    }
+
+    public function count(Request $request)
+    {
+        throw new ServerErrorException('Not implemented yet');
     }
 
     public function browse(Request $request)
@@ -136,8 +141,6 @@ class UsersController extends AppController
 
         return self::json($user->toArray(), 200);
     }
-
-
 
     public function read(Request $request, $user_id)
     {

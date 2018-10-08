@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\App;
+namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\AppController;
 
