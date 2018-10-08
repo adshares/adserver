@@ -20,8 +20,9 @@
 
 namespace Adshares\Adserver\Http;
 
-use Adshares\Adserver\Http\Middleware\KeyCaseModifier;
+use Adshares\Adserver\Http\Middleware\CamelizeResponse;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
+use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
@@ -48,7 +49,8 @@ class Kernel extends HttpKernel
         ValidatePostSize::class,            #pre 04
         TrimStrings::class,                 #pre 05
         ConvertEmptyStringsToNull::class,   #pre 06
-        KeyCaseModifier::class,             #pre+post
+        SnakizeRequest::class,               #pre
+        CamelizeResponse::class,               #post
     ];
 
     protected $middlewareGroups = [
