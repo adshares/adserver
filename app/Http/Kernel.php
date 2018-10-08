@@ -22,62 +22,48 @@ namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Http\Middleware\KeyCaseModifier;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
+use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class Kernel extends HttpKernel
 {
-    private const CACHE_HEADERS = 'cache.headers';
-    private const BINDINGS = 'bindings';
     private const AUTH = 'auth';
     private const GUEST = 'guest';
-    private const KEY_CASE_MODIFIER = 'key_case_modifier';
-    private const CORS = 'cors';
-    const WEB = 'web';
-    const API_AUTH = 'only-authenticated-users';
-    const API_GUEST = 'only-guest-users';
-    const API_ANY = 'any-user';
+    const ONLY_AUTH = 'only-authenticated-users';
+    const ONLY_GUEST = 'only-guest-users';
 
     protected $middleware = [
-        CheckForMaintenanceMode::class,
-        ValidatePostSize::class,
-        HandleCors::class,
-        Middleware\TrustProxies::class,
-        Middleware\TrimStrings::class,
-        ConvertEmptyStringsToNull::class,
+        SetCacheHeaders::class,             #post
+        CheckForMaintenanceMode::class,     #pre 01
+        TrustProxies::class,                #pre 02
+        HandleCors::class,                  #pre 03 (and a little #post)
+        ValidatePostSize::class,            #pre 04
+        TrimStrings::class,                 #pre 05
+        ConvertEmptyStringsToNull::class,   #pre 06
+        KeyCaseModifier::class,             #pre+post
     ];
 
     protected $middlewareGroups = [
-        self::WEB => [
-            self::CACHE_HEADERS,
-        ],
-        self::API_ANY => [
-            self::BINDINGS,
-            self::KEY_CASE_MODIFIER,
-        ],
-        self::API_AUTH => [
+        self::ONLY_AUTH => [
             self::AUTH . ':api',
-            self::BINDINGS,
-            self::KEY_CASE_MODIFIER,
+            SubstituteBindings::class,
         ],
-        self::API_GUEST => [
+        self::ONLY_GUEST => [
             self::GUEST . ':api',
-            self::BINDINGS,
-            self::KEY_CASE_MODIFIER,
+            SubstituteBindings::class,
         ],
     ];
 
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
-        self::BINDINGS => SubstituteBindings::class,
-        self::KEY_CASE_MODIFIER => KeyCaseModifier::class,
-        self::CACHE_HEADERS => SetCacheHeaders::class,
     ];
 }

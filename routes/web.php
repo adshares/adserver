@@ -18,6 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
 Route::get('/adshares/inventory/list', 'ApiController@adsharesInventoryList');
 Route::get('/adshares/report/{tx_id}/{pay_to}', 'ApiController@adsharesTransactionReport');
 

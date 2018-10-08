@@ -32,9 +32,8 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map()
     {
-        Route::middleware(Kernel::API_ANY)->get('/', function () {
-            return view('welcome');
-        })->name('login');
+        Route::namespace($this->namespace)
+            ->group(base_path('routes/web.php'));
 
         Route::namespace($this->namespace)
             ->prefix(self::PREFIX_AUTH)
@@ -42,11 +41,7 @@ class RouteServiceProvider extends ServiceProvider
 
         Route::namespace($this->namespace)
             ->prefix(self::PREFIX_API)
-            ->middleware(Kernel::API_AUTH)
-            ->group(base_path('routes/app.php'));
-
-        Route::namespace($this->namespace)
-            ->middleware(Kernel::WEB)
-            ->group(base_path('routes/web.php'));
+            ->middleware(Kernel::ONLY_AUTH)
+            ->group(base_path('routes/rest.php'));
     }
 }

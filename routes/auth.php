@@ -21,13 +21,10 @@
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(Kernel::API_ANY)->group(function () {
-    Route::post('login', 'AuthController@login');
-    Route::post('email/activate', 'AuthController@emailActivate');
-});
+Route::post('login', 'AuthController@login')->name('login');
+Route::post('email/activate', 'AuthController@emailActivate');
 
-Route::middleware(Kernel::API_AUTH)->group(function () {
-
+Route::middleware(Kernel::ONLY_AUTH)->group(function () {
     Route::post('email', 'AuthController@emailChangeStep1');
     Route::get('email/confirm1Old/{token}', 'AuthController@emailChangeStep2');
     Route::get('email/confirm2New/{token}', 'AuthController@emailChangeStep3');
@@ -39,7 +36,7 @@ Route::middleware(Kernel::API_AUTH)->group(function () {
     Route::post('email/activate/resend', 'AuthController@emailActivateResend');
 });
 
-Route::middleware(Kernel::API_GUEST)->group(function () {
+Route::middleware(Kernel::ONLY_GUEST)->group(function () {
     Route::get('recovery/{token}', 'AuthController@recoveryTokenExtend');
     Route::post('recovery', 'AuthController@recovery');
     Route::post('register', 'AuthController@register');
