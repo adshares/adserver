@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
 let mix = require('laravel-mix');
 
 /*
@@ -11,31 +30,31 @@ let mix = require('laravel-mix');
  |
  */
 
-// mix.js('resources/assets/js/app.js', 'public/js')
-//    .sass('resources/assets/sass/app.scss', 'public/css');
+// mix.js('resources/js/app.js', 'public/js')
+//    .sass('resources/sass/app.scss', 'public/css');
 
 mix.babel([
-  'resources/assets/js/header/*',
-  'resources/assets/js/base/*',
-  'resources/assets/js/supply/*js',
-  'resources/assets/js/supply/find/*',
-  'resources/assets/js/footer/*',
+  'resources/js/header/*',
+  'resources/js/base/*',
+  'resources/js/supply/*js',
+  'resources/js/supply/find/*',
+  'resources/js/footer/*',
 ], 'public/-/find.js');
 
 mix.babel([
-  'resources/assets/js/header/*',
-  'resources/assets/js/base/*',
-  'resources/assets/js/supply/*js',
-  'resources/assets/js/supply/test/sha256.js',
-  'resources/assets/js/supply/test/test.js',
-  'resources/assets/js/footer/*',
+  'resources/js/header/*',
+  'resources/js/base/*',
+  'resources/js/supply/*js',
+  'resources/js/supply/test/sha256.js',
+  'resources/js/supply/test/test.js',
+  'resources/js/footer/*',
 ], 'public/-/test.js');
 
 mix.babel([
-  'resources/assets/js/header/*',
-  'resources/assets/js/base/*',
-  'resources/assets/js/demand/view.js',
-  'resources/assets/js/footer/*',
+  'resources/js/header/*',
+  'resources/js/base/*',
+  'resources/js/demand/view.js',
+  'resources/js/footer/*',
 ], 'public/-/view.js');
 
-mix.copyDirectory('resources/assets/img', 'public/img');
+mix.copyDirectory('resources/img', 'public/img');
