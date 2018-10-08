@@ -18,28 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Http\Controllers\AuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::post('login', 'AuthController@login')->name('login');
-Route::post('email/activate', 'AuthController@emailActivate');
+Route::post('login', [AuthController::class, 'login'])->name('login');
+Route::post('email/activate', [AuthController::class, 'emailActivate']);
 
-Route::middleware(Kernel::ONLY_AUTH)->group(function () {
-    Route::post('email', 'AuthController@emailChangeStep1');
-    Route::get('email/confirm1Old/{token}', 'AuthController@emailChangeStep2');
-    Route::get('email/confirm2New/{token}', 'AuthController@emailChangeStep3');
+Route::middleware(Kernel::API_USER)->group(function () {
+    Route::post('email', [AuthController::class, 'emailChangeStep1']);
+    Route::get('email/confirm1Old/{token}', [AuthController::class, 'emailChangeStep2']);
+    Route::get('email/confirm2New/{token}', [AuthController::class, 'emailChangeStep3']);
 
-    Route::get('check', 'AuthController@check');
-    Route::get('logout', 'AuthController@logout');
+    Route::get('check', [AuthController::class, 'check']);
+    Route::get('logout', [AuthController::class, 'logout']);
 
-    Route::patch('self', 'AuthController@updateSelf');
-    Route::post('email/activate/resend', 'AuthController@emailActivateResend');
+    Route::patch('self', [AuthController::class, 'updateSelf']);
+    Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
 });
 
-Route::middleware(Kernel::ONLY_GUEST)->group(function () {
-    Route::get('recovery/{token}', 'AuthController@recoveryTokenExtend');
-    Route::post('recovery', 'AuthController@recovery');
-    Route::post('register', 'AuthController@register');
-    Route::patch('password', 'AuthController@updateSelf');
+Route::middleware(Kernel::API_GUEST)->group(function () {
+    Route::get('recovery/{token}', [AuthController::class, 'recoveryTokenExtend']);
+    Route::post('recovery', [AuthController::class, 'recovery']);
+    Route::post('register', [AuthController::class, 'register']);
+    Route::patch('password', [AuthController::class, 'updateSelf']);
 });
 

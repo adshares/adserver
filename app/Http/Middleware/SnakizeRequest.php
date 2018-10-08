@@ -31,6 +31,15 @@ class SnakizeRequest extends TransformsRequest
         })->all();
     }
 
+    protected function cleanValue($key, $value)
+    {
+        if (is_array($value)) {
+            return $this->transform($key, $this->cleanArray($value));
+        }
+
+        return $this->transform($key, $value);
+    }
+
     protected function transform($key, $value)
     {
         return [snake_case($key) => $value];

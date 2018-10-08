@@ -32,14 +32,13 @@ use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
-use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
-    const ONLY_AUTH = 'only-authenticated-users';
-    const ONLY_GUEST = 'only-guest-users';
+    const API_USER = 'only-authenticated-users';
+    const API_GUEST = 'only-guest-users';
 
     protected $middleware = [
         #pre
@@ -50,19 +49,18 @@ class Kernel extends HttpKernel
         TrimStrings::class,
         ConvertEmptyStringsToNull::class,
         SnakizeRequest::class,
+//            SubstituteBindings::class,
         #post
         SetCacheHeaders::class,
         CamelizeResponse::class,
     ];
 
     protected $middlewareGroups = [
-        self::ONLY_AUTH => [
+        self::API_USER => [
             self::AUTH . ':api',
-            SubstituteBindings::class,
         ],
-        self::ONLY_GUEST => [
+        self::API_GUEST => [
             self::GUEST . ':api',
-            SubstituteBindings::class,
         ],
     ];
 

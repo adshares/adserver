@@ -28,20 +28,16 @@ class RouteServiceProvider extends ServiceProvider
 {
     const PREFIX_AUTH = 'auth';
     const PREFIX_API = 'api';
-    protected $namespace = 'Adshares\Adserver\Http\Controllers';
 
     public function map()
     {
-        Route::namespace($this->namespace)
-            ->group(base_path('routes/web.php'));
+        Route::group([], base_path('routes/web.php'));
 
-        Route::namespace($this->namespace)
-            ->prefix(self::PREFIX_AUTH)
+        Route::prefix(self::PREFIX_AUTH)
             ->group(base_path('routes/auth.php'));
 
-        Route::namespace($this->namespace)
-            ->prefix(self::PREFIX_API)
-            ->middleware(Kernel::ONLY_AUTH)
+        Route::prefix(self::PREFIX_API)
+            ->middleware(Kernel::API_USER)
             ->group(base_path('routes/rest.php'));
     }
 }
