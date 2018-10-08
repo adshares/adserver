@@ -42,15 +42,17 @@ class Kernel extends HttpKernel
     const ONLY_GUEST = 'only-guest-users';
 
     protected $middleware = [
-        SetCacheHeaders::class,             #post
-        CheckForMaintenanceMode::class,     #pre 01
-        TrustProxies::class,                #pre 02
-        HandleCors::class,                  #pre 03 (and a little #post)
-        ValidatePostSize::class,            #pre 04
-        TrimStrings::class,                 #pre 05
-        ConvertEmptyStringsToNull::class,   #pre 06
-        SnakizeRequest::class,               #pre
-        CamelizeResponse::class,               #post
+        #pre
+        CheckForMaintenanceMode::class,
+        TrustProxies::class,
+        HandleCors::class,
+        ValidatePostSize::class,
+        TrimStrings::class,
+        ConvertEmptyStringsToNull::class,
+        SnakizeRequest::class,
+        #post
+        SetCacheHeaders::class,
+        CamelizeResponse::class,
     ];
 
     protected $middlewareGroups = [
