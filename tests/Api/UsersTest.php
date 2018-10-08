@@ -46,7 +46,7 @@ class UsersTest extends TestCase
         $matches = [];
         $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
 
-        $this->actingAs(factory(User::class)->create(['is_admin' => true]),'api');
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
 
         $response = $this->getJson(self::URI.'/'.$matches[1]);
         $response->assertStatus(200);

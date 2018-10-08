@@ -323,5 +323,4 @@ class AuthController extends AppController
 
         return self::json($user->toArray(), 200);
     }
-
 }

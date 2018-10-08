@@ -33,7 +33,7 @@ class SitesTest extends TestCase
 
     public function testEmptyDb()
     {
-        $this->actingAs(factory(User::class)->create(),'api');
+        $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
@@ -45,7 +45,7 @@ class SitesTest extends TestCase
 
     public function testCreateSite()
     {
-        $this->actingAs(factory(User::class)->create(),'api');
+        $this->actingAs(factory(User::class)->create(), 'api');
 
         /* @var $site Site */
         $site = factory(Site::class)->make();
@@ -73,7 +73,7 @@ class SitesTest extends TestCase
 
     public function testCreateSites()
     {
-        $this->actingAs(factory(User::class)->create(),'api');
+        $this->actingAs(factory(User::class)->create(), 'api');
         $count = 10;
 
         $users = factory(Site::class, $count)->make();

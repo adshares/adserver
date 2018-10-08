@@ -62,5 +62,4 @@ class Controller extends BaseController
             return self::json([], 500, [$errorException->getMessage()]);
         }
     }
-
 }

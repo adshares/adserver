@@ -88,5 +88,4 @@ class KeyCaseModifier
 
         return $result;
     }
-
 }

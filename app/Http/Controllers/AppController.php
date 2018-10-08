@@ -48,5 +48,4 @@ class AppController extends BaseController
 
         return $validator->validate();
     }
-
 }
