@@ -22,7 +22,10 @@ namespace Adshares\Adserver\Http\Controllers\Rpc;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 
-class Withdrawal extends Controller
+class WithdrawalController extends Controller
 {
-
+    public function info()
+    {
+        return self::json(json_decode('{"amount":10,"fee":9,"total":10}'));
+    }
 }

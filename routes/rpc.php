@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
 use Adshares\Adserver\Http\Controllers\Rest\SitesController;
 use Adshares\Adserver\Http\Controllers\Rpc\AuthController;
+use Adshares\Adserver\Http\Controllers\Rpc\WithdrawalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
@@ -37,4 +38,42 @@ Route::get('options/campaigns/targeting', [CampaignsController::class, 'targetin
 Route::get('options/sites/targeting', [SitesController::class, 'targeting']);
 Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
 Route::get('config/banners', [SitesController::class, 'banners']);
+
+// NEW
+Route::post('calculate-withdrawal', [WithdrawalController::class,'info']);
+//200{"amunt":10,"fee":1,"finalAmount":9}
+Route::post('withdraw', []);
+//{"amout":10,"type":"net|gross",to:"ADS-ADDR"}
+//201
+
+Route::get('deposit-info', []);
+//{address:"",title:""}
+
+Route::get('account/history', []);
+//[
+//      {
+//        "status": "349.80",
+//        "date": "Sat Feb 23 2018 12:24:00 GMT",
+//        "address": "0001-0000001F-34FC",
+//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+//      },
+//      {
+//        "status": "320.80",
+//        "date": "Fri Feb 23 2018 12:24:00 GMT",
+//        "address": "0001-0000001F-34FC",
+//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+//      },
+//      {
+//        "status": "622.80",
+//        "date": "Thu Feb 22 2018 12:24:00 GMT",
+//        "address": "0001-0000001F-34FC",
+//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+//      },
+//      {
+//        "status": "432.80",
+//        "date": "Wed Feb 21 2018 12:24:00 GMT",
+//        "address": "0001-0000001F-34FC",
+//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
+//      }
+//]
 
