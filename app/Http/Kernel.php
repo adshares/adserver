@@ -37,8 +37,8 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
-    const API_USER = 'only-authenticated-users';
-    const API_GUEST = 'only-guest-users';
+    const USER_ACCESS = 'only-authenticated-users';
+    const GUEST_ACCESS = 'only-guest-users';
 
     protected $middleware = [
         #pre
@@ -56,10 +56,10 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareGroups = [
-        self::API_USER => [
+        self::USER_ACCESS => [
             self::AUTH . ':api',
         ],
-        self::API_GUEST => [
+        self::GUEST_ACCESS => [
             self::GUEST . ':api',
         ],
     ];

@@ -20,9 +20,9 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 
-class ChartsController extends AppController
+class ChartsController extends Controller
 {
     public function chart()
     {

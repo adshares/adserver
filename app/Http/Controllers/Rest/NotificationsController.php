@@ -20,11 +20,11 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 
-class NotificationsController extends AppController
+class NotificationsController extends Controller
 {
     /**
      * Return adserver users notifications.

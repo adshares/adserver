@@ -20,16 +20,28 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
 
 abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    protected static function json($data = [], $code = 200, $errors = false)
+    {
+        if (empty($errors)) {
+            return Response::json($data, $code);
+        }
+        $data['errors'] = $errors;
+
+        return Response::json($data, $code);
+    }
 
     public function test(Request $request)
     {
@@ -61,5 +73,16 @@ abstract class Controller extends BaseController
         } catch (\Exception $errorException) {
             return self::json([], 500, [$errorException->getMessage()]);
         }
+    }
+
+    protected function validateRequestObject(Request $request, String $name, array $rules)
+    {
+        if (!$request->has($name)) {
+            throw new JsonResponseException(self::json([], 422, ['message' => "Missing request object '$name'"]));
+        }
+        /* @var $validator \Illuminate\Validation\Validator */
+        $validator = Validator::make($request->input($name), $rules);
+
+        return $validator->validate();
     }
 }

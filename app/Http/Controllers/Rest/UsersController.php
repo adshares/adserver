@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use JsonRPC\Exception\ServerErrorException;
 
-class UsersController extends AppController
+class UsersController extends Controller
 {
     protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes

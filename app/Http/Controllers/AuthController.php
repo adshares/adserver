@@ -18,9 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Auth;
+namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Http\Controllers\AppController;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
@@ -33,7 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
-class AuthController extends AppController
+class AuthController extends Controller
 {
     protected $password_recovery_resend_limit = 2 * 60; //2 minutes
     protected $password_recovery_token_time = 120 * 60; // 2 hours

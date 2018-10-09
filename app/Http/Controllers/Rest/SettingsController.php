@@ -20,11 +20,11 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\UserSettings;
 use Illuminate\Support\Facades\Auth;
 
-class SettingsController extends AppController
+class SettingsController extends Controller
 {
     /**
      * Return adserver users notifications.

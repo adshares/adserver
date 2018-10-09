@@ -18,21 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rest;
+namespace Adshares\Adserver\Http\Controllers\Rpc;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 
-class ConfigController extends Controller
+class Withdrawal extends Controller
 {
-    /**
-     * Return adserver adshares address.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function adsharesAddress()
-    {
-        return self::json(['adsharesAddress' => config('app.adshares_address')], 200);
-    }
+
 }

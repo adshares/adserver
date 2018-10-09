@@ -19,42 +19,28 @@
  */
 
 use Adshares\Adserver\Http\Controllers\Rest\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Rest\ChartsController;
-use Adshares\Adserver\Http\Controllers\Rest\ConfigController;
-use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
-use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
 use Adshares\Adserver\Http\Controllers\Rest\SitesController;
 use Adshares\Adserver\Http\Controllers\Rest\UsersController;
 
-Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
-Route::get('notifications', [NotificationsController::class, 'read']);
-Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
-
-Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaigns.add');
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
 Route::get('campaigns/count', [CampaignsController::class, 'count'])->name('app.campaigns.count');
 Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])->name('app.campaigns.read');
+Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaigns.add');
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
-Route::post('sites', [SitesController::class, 'add'])->name('app.sites.add');
 Route::get('sites', [SitesController::class, 'browse'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
 Route::get('sites/{site_id}', [SitesController::class, 'read'])->name('app.sites.read');
+Route::post('sites', [SitesController::class, 'add'])->name('app.sites.add');
 Route::patch('sites/{site_id}', [SitesController::class, 'edit'])->name('app.sites.edit');
 Route::delete('sites/{site_id}', [SitesController::class, 'delete'])->name('app.sites.delete');
 
 # only for admin
-Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
 Route::get('users', [UsersController::class, 'browse'])->name('app.users.browse');
 Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
 Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
+Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
 Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
 Route::delete('users/{user_id}', [UsersController::class, 'delete'])->name('app.users.delete');
 
-// tmp mocked solutions
-Route::post('chart', [ChartsController::class, 'chart']);
-Route::get('options/campaigns/targeting', [CampaignsController::class, 'targeting']);
-Route::get('options/sites/targeting', [SitesController::class, 'targeting']);
-Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
-Route::get('config/banners', [SitesController::class, 'banners']);

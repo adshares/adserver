@@ -20,12 +20,12 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Site;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 
-class SitesController extends AppController
+class SitesController extends Controller
 {
     public function add(Request $request)
     {

@@ -18,14 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Auth\AuthController;
+use Adshares\Adserver\Http\Controllers\AuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login'])->name('login');
 Route::post('email/activate', [AuthController::class, 'emailActivate']);
 
-Route::middleware(Kernel::API_USER)->group(function () {
+Route::middleware(Kernel::USER_ACCESS)->group(function () {
     Route::post('email', [AuthController::class, 'emailChangeStep1']);
     Route::get('email/confirm1Old/{token}', [AuthController::class, 'emailChangeStep2']);
     Route::get('email/confirm2New/{token}', [AuthController::class, 'emailChangeStep3']);
@@ -37,7 +37,7 @@ Route::middleware(Kernel::API_USER)->group(function () {
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
 });
 
-Route::middleware(Kernel::API_GUEST)->group(function () {
+Route::middleware(Kernel::GUEST_ACCESS)->group(function () {
     Route::get('recovery/{token}', [AuthController::class, 'recoveryTokenExtend']);
     Route::post('recovery', [AuthController::class, 'recovery']);
     Route::post('register', [AuthController::class, 'register']);

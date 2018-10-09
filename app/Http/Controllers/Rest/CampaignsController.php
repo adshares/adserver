@@ -20,13 +20,13 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
-use Adshares\Adserver\Http\Controllers\AppController;
+use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CampaignsController extends AppController
+class CampaignsController extends Controller
 {
     public function add(Request $request)
     {

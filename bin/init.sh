@@ -95,7 +95,7 @@ then
     docker-compose run --rm worker composer install
     if [ ${OPT_FORCE} -eq 1 ]
     then
-        docker-compose run --rm worker ./artisan key:generate
+        docker-compose run --rm worker php artisan key:generate
     fi
 
     docker-compose run --rm worker php artisan package:discover
