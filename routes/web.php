@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Http\Controllers\ApiController;
 use Adshares\Adserver\Http\Controllers\DemandController;
+use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 
 Route::get('/', function () {
@@ -44,5 +45,10 @@ Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name(
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->name('log-network-click');
 Route::get('/l/n/keywords/{log_id}', [SupplyController::class, 'logNetworkKeywords'])->name('log-network-keywords');
 
-### AdUser simulator
-Route::get('/pixel/{id}', [SupplyController::class, 'pixel'])->name('banner-click');
+### something is no-yes in find.js ###
+Route::get('/l/n/click', [Simulator::class, 'pixel']);
+Route::get('/l/n/view', [Simulator::class, 'pixel']);
+
+### simulator ###
+Route::get('/pixel/{id}', [Simulator::class, 'pixel']);
+Route::get('/get-data/{id}', [Simulator::class, 'userData']);

@@ -65,9 +65,9 @@ class SupplyController extends Controller
 
         $impressionId = $decoded['page']['iid'];
         if ($impressionId) {
-            $aduser_endpoint = config('app.aduser_endpoint');
-            if (false && $aduser_endpoint) {
-                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+            $aduser_endpoint = config('app.aduser_local_endpoint');
+            if ($aduser_endpoint) {
+                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
@@ -265,9 +265,4 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function pixel()
-    {
-       return new Response();
-//        return \response()->noContent();
-    }
 }
