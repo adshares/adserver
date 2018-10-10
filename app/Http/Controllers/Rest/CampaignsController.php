@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Campaign;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class CampaignsController extends Controller
@@ -53,7 +54,8 @@ class CampaignsController extends Controller
             }
         }
 
-        return self::json(compact('campaign'), 201)
+        \response();
+        return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 

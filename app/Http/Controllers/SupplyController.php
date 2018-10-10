@@ -66,7 +66,7 @@ class SupplyController extends Controller
         $impressionId = $decoded['page']['iid'];
         if ($impressionId) {
             $aduser_endpoint = config('app.aduser_endpoint');
-            if ($aduser_endpoint) {
+            if (false && $aduser_endpoint) {
                 $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             } else {
                 $userdata = [];
@@ -82,7 +82,6 @@ class SupplyController extends Controller
                 $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
             }
         }
-
         $response->setContent(json_encode($banners, JSON_PRETTY_PRINT));
 
         return $response;
@@ -264,5 +263,11 @@ class SupplyController extends Controller
         $response->headers->set('Content-Type', 'image/gif');
 
         return $response;
+    }
+
+    public function pixel()
+    {
+       return new Response();
+//        return \response()->noContent();
     }
 }

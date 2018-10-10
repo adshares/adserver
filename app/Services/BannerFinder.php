@@ -119,11 +119,22 @@ class BannerFinder
                         'r' => Utils::urlSafeBase64Encode($banner->view_url),
                     ]),
                 ];
-            } else {
-                $banners[] = null;
-                // TODO: discuss Jacek
             }
         }
+
+        $banners[] = [
+            'serve_url' => 'http://localhost:8101/banner-sample.png',
+            'creative_sha1' => 'http://localhost:8101/banner-sample.png',
+            'pay_from' => '', // send this info to log
+            'click_url' => route('log-network-click', [
+                'id' => '',
+                'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+            ]),
+            'view_url' => route('log-network-view', [
+                'id' => '',
+                'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+            ]),
+        ];
 
         return $banners;
     }

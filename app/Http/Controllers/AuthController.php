@@ -27,6 +27,7 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -212,10 +213,10 @@ class AuthController extends Controller
         )) {
             Auth::user()->generateApiKey();
 
-            return self::json(Auth::user()->load('AdserverWallet')->toArray(), 200);
+            return response()->json(Auth::user()->load('AdserverWallet')->toArray(), Response::HTTP_OK);
         }
 
-        return self::json([], 400);
+        return response()->json([], Response::HTTP_BAD_REQUEST);
     }
 
     /**
@@ -273,6 +274,7 @@ class AuthController extends Controller
         return self::json([], 422, ['message' => 'Password recovery token is invalid']);
     }
 
+//TODO: To be refactored!!! - split recovery and normal changes (email, password)
     public function updateSelf(Request $request)
     {
         if (!Auth::check() && !$request->has('user.token')) {

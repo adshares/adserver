@@ -58,7 +58,7 @@ class Campaign extends Model
         'budget',
         'bid',
         'strategy_name',
-        'basicInformation',
+        'basic_information',
     ];
 
     protected $hidden = [

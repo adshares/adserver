@@ -124,7 +124,7 @@ class User extends Authenticatable
      */
     protected function toArrayExtras($array)
     {
-        $array['isEmailConfirmed'] = !empty($array['email_confirmed_at']);
+        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
 
         return $array;
     }

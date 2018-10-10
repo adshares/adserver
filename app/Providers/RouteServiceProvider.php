@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Providers;
 
+use Adshares\Adserver\Http\Controllers\App\AppController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -34,15 +35,17 @@ class RouteServiceProvider extends ServiceProvider
     {
         Route::group([], base_path('routes/web.php'));
 
-        Route::prefix(self::PREFIX_AUTH)
-            ->group(base_path('routes/auth.php'));
+        Route::middleware([Kernel::JSON_API])->group(function () {
+            Route::prefix(self::PREFIX_AUTH)
+                ->group(base_path('routes/auth.php'));
 
-        Route::prefix(self::PREFIX_REST)
-            ->middleware(Kernel::USER_ACCESS)
-            ->group(base_path('routes/rest.php'));
+            Route::prefix(self::PREFIX_REST)
+                ->middleware(Kernel::USER_ACCESS)
+                ->group(base_path('routes/rest.php'));
 
-        Route::prefix(self::PREFIX_RPC)
-            ->middleware(Kernel::USER_ACCESS)
-            ->group(base_path('routes/rpc.php'));
+            Route::prefix(self::PREFIX_RPC)
+                ->middleware(Kernel::USER_ACCESS)
+                ->group(base_path('routes/rpc.php'));
+        });
     }
 }

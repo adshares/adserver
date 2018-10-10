@@ -20,29 +20,37 @@
 
 namespace Adshares\Adserver\Http\Middleware;
 
-use Illuminate\Foundation\Http\Middleware\TransformsRequest;
+use Closure;
+use Illuminate\Http\JsonResponse;
 
-class SnakizeRequest extends TransformsRequest
+class CamelizeJsonResponse
 {
-    protected function cleanArray(array $data)
+    public function handle($request, Closure $next)
     {
-        return collect($data)->mapWithKeys(function ($value, $key) {
-            return $this->cleanValue($key, $value);
-        })->all();
-    }
-
-    protected function cleanValue($key, $value)
-    {
-        if (is_array($value)) {
-            return $this->transform($key, $this->cleanArray($value));
+        $response = $next($request);
+        
+        if ($response instanceof JsonResponse) {
+            return $this->camelizeJsonResponse($response);
         }
 
-        return $this->transform($key, $value);
+        return $response;
     }
 
-    protected function transform($key, $value)
+    private function camelizeJsonResponse(JsonResponse $response)
     {
-        return [camel_case($key) => $value];
+        $content = $response->content();
+
+        $json = $this->camelizeJsonKeys($content);
+
+        $response->setContent($json);
+
+        return $response;
     }
 
+    private function camelizeJsonKeys(string $json): string
+    {
+        return preg_replace_callback('/"([^"]+?)"\s*:/', function (array $input): string {
+            return '"' . camel_case($input[1]) . '":';
+        }, $json);
+    }
 }

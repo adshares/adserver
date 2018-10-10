@@ -39,6 +39,10 @@ Route::get('/l/keywords/{log_id}', [DemandController::class, 'logKeywords'])->na
 
 Route::get('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
 Route::get('/supply/find.js', [SupplyController::class, 'findScript'])->name('supply-find.js');
+
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name('log-network-view');
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->name('log-network-click');
 Route::get('/l/n/keywords/{log_id}', [SupplyController::class, 'logNetworkKeywords'])->name('log-network-keywords');
+
+### AdUser simulator
+Route::get('/pixel/{id}', [SupplyController::class, 'pixel'])->name('banner-click');

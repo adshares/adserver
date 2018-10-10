@@ -40,6 +40,7 @@ Route::middleware(Kernel::USER_ACCESS)->group(function () {
 Route::middleware(Kernel::GUEST_ACCESS)->group(function () {
     Route::get('recovery/{token}', [AuthController::class, 'recoveryTokenExtend']);
     Route::post('recovery', [AuthController::class, 'recovery']);
+
     Route::post('register', [AuthController::class, 'register']);
     Route::patch('password', [AuthController::class, 'updateSelf']);
 });

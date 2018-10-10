@@ -33,6 +33,9 @@ abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    /**
+     * @deprecated
+     */
     protected static function json($data = [], $code = 200, $errors = false)
     {
         if (empty($errors)) {
@@ -43,11 +46,17 @@ abstract class Controller extends BaseController
         return Response::json($data, $code);
     }
 
+    /**
+     * @deprecated
+     */
     public function test(Request $request)
     {
         return Response::json($request->toArray(), 200, [], JSON_PRETTY_PRINT);
     }
 
+    /**
+     * @deprecated
+     */
     public function mock(Request $request)
     {
         $pathInfo = str_replace(['/panel', '/app', '/api'], ['', '', ''], $request->getPathInfo());
@@ -75,6 +84,9 @@ abstract class Controller extends BaseController
         }
     }
 
+    /**
+     * @deprecated
+     */
     protected function validateRequestObject(Request $request, String $name, array $rules)
     {
         if (!$request->has($name)) {

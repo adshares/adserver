@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Http;
 
-use Adshares\Adserver\Http\Middleware\CamelizeResponse;
+use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
@@ -39,20 +39,13 @@ class Kernel extends HttpKernel
     private const GUEST = 'guest';
     const USER_ACCESS = 'only-authenticated-users';
     const GUEST_ACCESS = 'only-guest-users';
+    const JSON_API = 'api';
 
     protected $middleware = [
         #pre
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
-        ValidatePostSize::class,
-        TrimStrings::class,
-        ConvertEmptyStringsToNull::class,
-        SnakizeRequest::class,
-//            SubstituteBindings::class,
-        #post
-        SetCacheHeaders::class,
-        CamelizeResponse::class,
     ];
 
     protected $middlewareGroups = [
@@ -61,6 +54,16 @@ class Kernel extends HttpKernel
         ],
         self::GUEST_ACCESS => [
             self::GUEST . ':api',
+        ],
+        self::JSON_API => [
+            ValidatePostSize::class,
+            TrimStrings::class,
+            ConvertEmptyStringsToNull::class,
+            SnakizeRequest::class,
+//            SubstituteBindings::class,
+            #post
+            SetCacheHeaders::class,
+            CamelizeJsonResponse::class,
         ],
     ];
 
