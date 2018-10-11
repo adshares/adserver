@@ -3,23 +3,23 @@
 set -e
 
 OPT_CLEAN=0
-OPT_FORCE=0
+OPT_RESET=0
 OPT_BUILD=0
 OPT_RUN=0
 OPT_MIGRATE=0
 OPT_MIGRATE_FRESH=0
 OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
+OPT_STOP=0
 
 while [ "$1" != "" ]
 do
     case "$1" in
         --clean )
             OPT_CLEAN=1
-            OPT_FORCE=1
         ;;
-        --force )
-            OPT_FORCE=1
+        --force | --hard )
+            OPT_RESET=1
         ;;
         --build )
             OPT_BUILD=1
@@ -41,20 +41,29 @@ do
             OPT_LOGS=1
             OPT_LOGS_FOLLOW=1
         ;;
+        --stop )
+            OPT_STOP=1
+        ;;
     esac
     shift
 done
 
-if [ ${OPT_CLEAN} -eq 1 ]
+if [ ${OPT_STOP} -eq 1 ]
 then
-    echo " > Destroy containers"
-    docker-compose down && echo " < DONE" || echo " < INFO: Containers already down"
+    OPT_CLEAN=0
+    OPT_RESET=0
+    OPT_BUILD=0
+    OPT_RUN=0
+    OPT_MIGRATE=0
+    OPT_MIGRATE_FRESH=0
+    OPT_LOGS=0
+    OPT_LOGS_FOLLOW=0
 fi
 
-if [ ${OPT_FORCE} -eq 1 ]
-then
-    rm -f .env
-fi
+envFiles=(
+    .env
+    docker-compose.override.yaml
+)
 
 # Docker Compose
 
@@ -83,17 +92,52 @@ export ADSHARES_NODE_HOST=${ADSHARES_NODE_HOST:-esc.dock}
 export ADSHARES_NODE_PORT=${ADSHARES_NODE_PORT:-9081}
 export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 
+export ADUSER_LOCAL_ENDPOINT=${ADUSER_LOCAL_ENDPOINT:-http://webserver}
+
 export APP_ENV=${APP_ENV:-local}
 export APP_DEBUG=${APP_DEBUG:-true}
 
 # =============================================================
 
-[ -f .env ] || envsubst < .env.dist | tee .env
+if [ ${OPT_STOP} -eq 1 ]
+then
+    echo " > Stop containers"
+    docker-compose stop && echo " < DONE"
+fi
+
+if [ ${OPT_CLEAN} -eq 1 ]
+then
+    echo " > Destroy containers"
+    docker-compose down && echo " < DONE"
+
+    if [ ${OPT_RESET} -eq 1 ]
+    then
+        echo " > Remove 'vendor'"
+        rm -rf vendor
+    fi
+fi
+
+for envFile in "${envFiles[@]}"
+do
+    if [ ${OPT_RESET} -eq 1 ]
+    then
+        echo " > Remove $envFile"
+        rm -f "$envFile"
+    fi
+
+    echo " > Creating '$envFile'..."
+    if [ -f "$envFile" ]
+    then
+        envsubst < "$envFile.dist" | tee "$envFile" && echo " < DONE"
+    else
+        echo " < INFO: Already gone"
+    fi
+done
 
 if [ ${OPT_BUILD} -eq 1 ]
 then
     docker-compose run --rm worker composer install
-    if [ ${OPT_FORCE} -eq 1 ]
+    if [ ${OPT_RESET} -eq 1 ]
     then
         docker-compose run --rm worker php artisan key:generate
     fi
@@ -101,11 +145,11 @@ then
     docker-compose run --rm worker php artisan package:discover
     docker-compose run --rm worker php artisan browsercap:updater
 
-    docker-compose run --rm worker npm install
-    docker-compose run --rm worker npm run dev
+    docker-compose run --rm worker yarn install
+    docker-compose run --rm worker yarn run dev
 fi
 
-chmod a+w -R storage
+[ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage || echo " < ERROR: Change permisisons to 'storage'" && exit 127
 
 if [ ${OPT_RUN} -eq 1 ]
 then
