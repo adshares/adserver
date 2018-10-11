@@ -3,11 +3,10 @@
 set -e
 
 OPT_CLEAN=0
-OPT_RESET=0
+OPT_FORCE=0
 OPT_BUILD=0
-OPT_RUN=0
+OPT_START=0
 OPT_MIGRATE=0
-OPT_MIGRATE_FRESH=0
 OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
 OPT_STOP=0
@@ -18,28 +17,20 @@ do
         --clean )
             OPT_CLEAN=1
         ;;
-        --force | --hard )
-            OPT_RESET=1
+        --hard | --force )
+            OPT_FORCE=1
         ;;
         --build )
             OPT_BUILD=1
         ;;
-        --run )
-            OPT_RUN=1
+        --run | --start )
+            OPT_START=1
         ;;
         --migrate )
             OPT_MIGRATE=1
         ;;
-        --migrate-fresh )
-            OPT_MIGRATE=1
-            OPT_MIGRATE_FRESH=1
-        ;;
         --logs )
             OPT_LOGS=1
-        ;;
-        --logs-follow )
-            OPT_LOGS=1
-            OPT_LOGS_FOLLOW=1
         ;;
         --stop )
             OPT_STOP=1
@@ -51,11 +42,10 @@ done
 if [ ${OPT_STOP} -eq 1 ]
 then
     OPT_CLEAN=0
-    OPT_RESET=0
+    OPT_FORCE=0
     OPT_BUILD=0
-    OPT_RUN=0
+    OPT_START=0
     OPT_MIGRATE=0
-    OPT_MIGRATE_FRESH=0
     OPT_LOGS=0
     OPT_LOGS_FOLLOW=0
 fi
@@ -110,7 +100,7 @@ then
     echo " > Destroy containers"
     docker-compose down && echo " < DONE"
 
-    if [ ${OPT_RESET} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Remove 'vendor'"
         rm -rf vendor
@@ -119,7 +109,7 @@ fi
 
 for envFile in "${envFiles[@]}"
 do
-    if [ ${OPT_RESET} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Remove $envFile"
         rm -f "$envFile"
@@ -137,7 +127,7 @@ done
 if [ ${OPT_BUILD} -eq 1 ]
 then
     docker-compose run --rm worker composer install
-    if [ ${OPT_RESET} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ]
     then
         docker-compose run --rm worker php artisan key:generate
     fi
@@ -151,17 +141,17 @@ fi
 
 [ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage || echo " < ERROR: Change permisisons to 'storage'" && exit 127
 
-if [ ${OPT_RUN} -eq 1 ]
+if [ ${OPT_START} -eq 1 ]
 then
     docker-compose up --detach
 fi
 
 if [ ${OPT_MIGRATE} -eq 1 ]
 then
-    if [ ${OPT_MIGRATE_FRESH} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Recreate database"
-        if [ ${OPT_RUN} -eq 1 ]
+        if [ ${OPT_START} -eq 1 ]
         then
             docker-compose exec -T worker ./artisan migrate:fresh
         else
@@ -169,7 +159,7 @@ then
         fi
     else
         echo " > Update database"
-        if [ ${OPT_RUN} -eq 1 ]
+        if [ ${OPT_START} -eq 1 ]
         then
             docker-compose exec -T worker ./artisan migrate
         else
@@ -180,7 +170,7 @@ fi
 
 if [ ${OPT_LOGS} -eq 1 ]
 then
-    if [ ${OPT_LOGS_FOLLOW} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ]
     then
         docker-compose logs -f
     else
