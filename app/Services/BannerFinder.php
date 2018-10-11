@@ -104,16 +104,16 @@ class BannerFinder
         $banners = [];
         foreach ($bannerIds as $bannerId) {
             $banners[] = [
-                'serve_url' => config('app.app_url') . '/img/logo_x.png',
+                'serve_url' => config('app.url') . '/img/logo_x.png',
                 'creative_sha1' => sha1_file(public_path('img/logo_x.png')),
                 'pay_from' => AdsUtils::normalizeAddress(config('app.adshares_address')), // send this info to log
                 'click_url' => route('log-network-click', [
                     'id' => '',
-                    'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
                 ]),
                 'view_url' => route('log-network-view', [
                     'id' => '',
-                    'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
                 ]),
             ];
 
