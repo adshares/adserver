@@ -33,6 +33,11 @@ do
         --migrate )
             OPT_MIGRATE=1
         ;;
+        --migrate-fresh )
+            echo "DEPRECATED: Please use --migrate --force"
+            OPT_MIGRATE=1
+            OPT_FORCE=1
+        ;;
         --logs )
             OPT_LOGS=1
         ;;
@@ -113,7 +118,7 @@ fi
 
 for envFile in "${envFiles[@]}"
 do
-    if [ ${OPT_FORCE} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ] && [ ${OPT_CLEAN} -eq 1 ]
     then
         echo " > Remove $envFile"
         rm -f "$envFile"
