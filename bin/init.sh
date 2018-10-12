@@ -126,24 +126,33 @@ done
 
 if [ ${OPT_BUILD} -eq 1 ]
 then
+    echo " > Building deps etc."
+
     docker-compose run --rm worker composer install
     if [ ${OPT_FORCE} -eq 1 ]
     then
+        echo " >> Generating secret"
         docker-compose run --rm worker php artisan key:generate
     fi
 
+    echo " >> Front-end stuff"
     docker-compose run --rm worker php artisan package:discover
     docker-compose run --rm worker php artisan browsercap:updater
 
+    echo " >> Yarn"
     docker-compose run --rm worker yarn install
     docker-compose run --rm worker yarn run dev
+
+    echo " < DONE"
 fi
 
-[ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage || echo " < ERROR: Change permisisons to 'storage'" && exit 127
+[ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage && echo " < Changed permissions to 'storage'" || echo " < ERROR: Change permisisons to 'storage'" && exit 127
 
 if [ ${OPT_START} -eq 1 ]
 then
+    echo " > Start containers"
     docker-compose up --detach
+    echo " < DONE"
 fi
 
 if [ ${OPT_MIGRATE} -eq 1 ]
@@ -172,8 +181,13 @@ if [ ${OPT_LOGS} -eq 1 ]
 then
     if [ ${OPT_FORCE} -eq 1 ]
     then
+        echo " > Follow logs"
         docker-compose logs -f
     else
+        echo " > List log"
         docker-compose logs
+        echo " < DONE"
     fi
 fi
+
+echo " . END"
