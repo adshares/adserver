@@ -26,14 +26,13 @@ bin/init.sh --build --start --migrate
 Usage:
 ```
 bin/init.sh         Initialize environment
-  --force            ... and delete environment files
   --clean           Remove containers
-                      and remove dependencied if option --force was used
+                     + remove dependencied and environment files when used with --force
   --build           Download dependencies
-                      and regenerate secret if option --force was used
+                     + regenerate secret when used with --force
   --start           Start docker containers
   --migrate         Update database schema (creating it if neccesary)
-                      and regenerate secret if option --force was used
+                      and regenerate secret when used with --force
   --migrate-fresh   Remove database before migration 
   --logs            Show logs after everything else is done
   --logs-follow     ...and follow them

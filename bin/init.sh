@@ -11,6 +11,8 @@ OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
 OPT_STOP=0
 
+DOCKER_COMPOSE="docker-compose"
+
 while [ "$1" != "" ]
 do
     case "$1" in
@@ -23,10 +25,6 @@ do
         --build )
             OPT_BUILD=1
         ;;
-        --run )
-            echo "DEPRECATED: Please use --start"
-            OPT_START=1
-        ;;
         --start )
             OPT_START=1
         ;;
@@ -38,6 +36,20 @@ do
         ;;
         --stop )
             OPT_STOP=1
+        ;;
+        --compose-override )
+            [ "$2" == "" ] && echo " ! ERROR: missing '--compose-override' param value" && exit 5
+            DOCKER_COMPOSE="$DOCKER_COMPOSE --file docker-compose.yaml --file docker-compose.$2.yaml"
+            shift
+        ;;
+        --run )
+            echo " ! DEPRECATED: Please use --start"
+            OPT_START=1
+        ;;
+        --migrate-fresh )
+            echo " ! DEPRECATED: Please use --migrate --force"
+            OPT_MIGRATE=1
+            OPT_FORCE=1
         ;;
     esac
     shift
@@ -86,6 +98,7 @@ export ADSHARES_NODE_HOST=${ADSHARES_NODE_HOST:-esc.dock}
 export ADSHARES_NODE_PORT=${ADSHARES_NODE_PORT:-9081}
 export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 
+export ADUSER_ENDPOINT=${ADUSER_ENDPOINT:-$ADSERVER_URL} # keep in mind that it defaults to the same AdServer
 export ADUSER_LOCAL_ENDPOINT=${ADUSER_LOCAL_ENDPOINT:-http://webserver}
 
 export APP_ENV=${APP_ENV:-local}
@@ -96,13 +109,13 @@ export APP_DEBUG=${APP_DEBUG:-true}
 if [ ${OPT_STOP} -eq 1 ]
 then
     echo " > Stop containers"
-    docker-compose stop && echo " < DONE"
+    ${DOCKER_COMPOSE} stop && echo " < DONE"
 fi
 
 if [ ${OPT_CLEAN} -eq 1 ]
 then
     echo " > Destroy containers"
-    docker-compose down && echo " < DONE"
+    ${DOCKER_COMPOSE} down && echo " < DONE"
 
     if [ ${OPT_FORCE} -eq 1 ]
     then
@@ -113,7 +126,7 @@ fi
 
 for envFile in "${envFiles[@]}"
 do
-    if [ ${OPT_FORCE} -eq 1 ]
+    if [ ${OPT_FORCE} -eq 1 ] && [ ${OPT_CLEAN} -eq 1 ]
     then
         echo " > Remove $envFile"
         rm -f "$envFile"
@@ -130,20 +143,20 @@ if [ ${OPT_BUILD} -eq 1 ]
 then
     echo " > Building..."
 
-    docker-compose run --rm worker composer install
+    ${DOCKER_COMPOSE} run --rm worker composer install
     if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " >> Generating secret"
-        docker-compose run --rm worker php artisan key:generate
+        ${DOCKER_COMPOSE} run --rm worker php artisan key:generate
     fi
 
     echo " >> Front-end stuff"
-    docker-compose run --rm worker php artisan package:discover
-    docker-compose run --rm worker php artisan browsercap:updater
+    ${DOCKER_COMPOSE} run --rm worker php artisan package:discover
+    ${DOCKER_COMPOSE} run --rm worker php artisan browsercap:updater
 
     echo " >> Yarn"
-    docker-compose run --rm worker yarn install
-    docker-compose run --rm worker yarn run dev
+    ${DOCKER_COMPOSE} run --rm worker yarn install
+    ${DOCKER_COMPOSE} run --rm worker yarn run dev
 
     echo " < DONE"
 fi
@@ -153,7 +166,7 @@ fi
 if [ ${OPT_START} -eq 1 ]
 then
     echo " > Start containers"
-    docker-compose up --detach
+    ${DOCKER_COMPOSE} up --detach
     echo " < DONE"
 fi
 
@@ -164,17 +177,17 @@ then
         echo " > Recreate database"
         if [ ${OPT_START} -eq 1 ]
         then
-            docker-compose exec -T worker ./artisan migrate:fresh
+            ${DOCKER_COMPOSE} exec -T worker ./artisan migrate:fresh
         else
-            docker-compose run --rm worker ./artisan migrate:fresh
+            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:fresh
         fi
     else
         echo " > Update database"
         if [ ${OPT_START} -eq 1 ]
         then
-            docker-compose exec -T worker ./artisan migrate
+            ${DOCKER_COMPOSE} exec -T worker ./artisan migrate
         else
-            docker-compose run --rm worker ./artisan migrate:
+            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:
         fi
     fi
     echo " < DONE"
@@ -185,10 +198,10 @@ then
     if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Follow logs"
-        docker-compose logs -f
+        ${DOCKER_COMPOSE} logs -f
     else
         echo " > List log"
-        docker-compose logs
+        ${DOCKER_COMPOSE} logs
         echo " < DONE"
     fi
 fi
