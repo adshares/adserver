@@ -22,7 +22,7 @@ use Adshares\Adserver\Http\Controllers\AuthController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
-Route::post('login', [AuthController::class, 'login'])->name('login');
+Route::post('login', [AuthController::class, 'login']);
 Route::post('email/activate', [AuthController::class, 'emailActivate']);
 
 Route::middleware(Kernel::USER_ACCESS)->group(function () {
