@@ -19,19 +19,25 @@
 
 ## Quick Start
 
-When starting from scratch: 
-
 ```bash
-bin/init.sh --build --run --migrate
+bin/init.sh --build --start --migrate
 ```
 
-To rebuild everything
-```bash
-bin/init.sh --clean --force --build --run --migrate-fresh
+Usage:
 ```
-
-To see logs add `--logs` at the end of the above `init.sh` command.
-To follow them,  use `--logs-follow`.
+bin/init.sh         Initialize environment
+  --clean           Remove containers
+                     + remove dependencied and environment files when used with --force
+  --build           Download dependencies
+                     + regenerate secret when used with --force
+  --start           Start docker containers
+  --migrate         Update database schema (creating it if neccesary)
+                      and regenerate secret when used with --force
+  --migrate-fresh   Remove database before migration 
+  --logs            Show logs after everything else is done
+  --logs-follow     ...and follow them
+  --stop            Stop all containers (overrides all other options above)
+``` 
 
 With the default you should have two working locations:
 - [http://localhost:8101/](http://localhost:8101/) for the server
