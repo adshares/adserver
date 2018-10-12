@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,18 +15,16 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Helper\Filter;
-
-// use Adshares\Adserver\Services\Adselect;
 
 /**
  * Returns random banners. Used if adselect service is not available. Shoud probalby be moved to Adselect class.
@@ -55,10 +53,8 @@ class BannerFinder
                 $website = $zone->getWebsite();
 
                 $impression_keywords = $keywords;
-                $impression_keywords['zone'] = $website->getHost().'/'.$zone->getId();
-                $impression_keywords['banner_size'] = $zone->getWidth().'x'.$zone->getHeight();
-
-//                 print_r($impression_keywords);exit;
+                $impression_keywords['zone'] = $website->getHost() . '/' . $zone->getId();
+                $impression_keywords['banner_size'] = $zone->getWidth() . 'x' . $zone->getHeight();
 
                 $filters = Filter::getFilter($website->getRequire(), $website->getExclude());
 //                 $filters['require'][] = [
@@ -89,42 +85,57 @@ class BannerFinder
             foreach ($zones as $zoneInfo) {
                 $zone = Zone::find($zoneInfo['zone']);
 
-                try {
-                    // $zone instanceof Zone; // ?? Yodahack : what the hack
-                    $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
-                      ->where('creative_height', $zone->height)
-                      ->whereIn('creative_type', $typeDefault)
-                      ->get()->pluck('uuid')->random();
-                } catch (\InvalidArgumentException $e) {
-                    $bannerIds[] = '';
+                if ($zone) {
+                    try {
+                        // $zone instanceof Zone; // ?? Yodahack : what the hack
+                        $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                            ->where('creative_height', $zone->height)
+                            ->whereIn('creative_type', $typeDefault)
+                            ->get()->pluck('uuid')->random();
+                    } catch (\InvalidArgumentException $e) {
+                        $bannerIds[] = '';
+                    }
+                } else {
+                    $bannerIds[] = md5(rand());
                 }
             }
         }
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {
-            // TODO:
-            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
+            $banners[] = [
+                'serve_url' => config('app.url') . '/img/logo_x.png',
+                'creative_sha1' => sha1_file(public_path('img/logo_x.png')),
+                'pay_from' => AdsUtils::normalizeAddress(config('app.adshares_address')), // send this info to log
+                'click_url' => route('log-network-click', [
+                    'id' => '',
+                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
+                ]),
+                'view_url' => route('log-network-view', [
+                    'id' => '',
+                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
+                ]),
+            ];
 
-            if (!empty($banner)) {
-                $campaign = NetworkCampaign::find($banner->network_campaign_id);
-                $banners[] = [
-                    'serve_url' => $banner->serve_url,
-                    'creative_sha1' => $banner->creative_sha1,
-                    'pay_from' => $campaign->adshares_address, // send this info to log
-                    'click_url' => route('log-network-click', [
-                        'id' => $banner->uuid,
-                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
-                    ]),
-                    'view_url' => route('log-network-view', [
-                        'id' => $banner->uuid,
-                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
-                    ]),
-                ];
-            } else {
-                $banners[] = null;
-                // TODO: discuss Jacek
-            }
+//            // TODO: fix
+//            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
+//
+//            if (!empty($banner)) {
+//                $campaign = NetworkCampaign::find($banner->network_campaign_id);
+//                $banners[] = [
+//                    'serve_url' => $banner->serve_url,
+//                    'creative_sha1' => $banner->creative_sha1,
+//                    'pay_from' => $campaign->adshares_address, // send this info to log
+//                    'click_url' => route('log-network-click', [
+//                        'id' => $banner->uuid,
+//                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
+//                    ]),
+//                    'view_url' => route('log-network-view', [
+//                        'id' => $banner->uuid,
+//                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
+//                    ]),
+//                ];
+//            }
         }
 
         return $banners;

@@ -30,26 +30,25 @@ class Campaign extends Model
     use AutomateMutators;
     use BinHex;
 
-    /**
-     * The event map for the model.
-     *
-     * @var array
-     */
+    public static $rules = [
+    ];
+
+    protected $dates = [
+        'time_start',
+        'time_end',
+    ];
+
+    protected $casts = [
+        'time_start' => 'string',
+        'time_end' => 'string',
+    ];
+
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'uuid',
         'landing_url',
-        'max_cpm',
-        'max_cpc',
-        'budget_per_hour',
         'time_start',
         'time_end',
         'require_count',
@@ -59,29 +58,19 @@ class Campaign extends Model
         'budget',
         'bid',
         'strategy_name',
+        'basic_information',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
-        'id',
         'user_id',
     ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
 
     /** @var array Aditional fields to be included in collections */
-    protected $appends = ['basicInformation', 'targeting','ads'];
+    protected $appends = ['basic_information', 'targeting', 'ads'];
 
     public static function getWithReferences($listDeletedCampaigns)
     {
@@ -111,8 +100,9 @@ class Campaign extends Model
 
     public function getAdsAttribute()
     {
-        return [['status'=>0]];
+        return [['status' => 0]];
     }
+
     public function getTargetingAttribute()
     {
         return [
@@ -120,17 +110,30 @@ class Campaign extends Model
             "excludes" => [],
         ];
     }
+
+    public function setBasicInformationAttribute(array $value)
+    {
+        $this->status = $value["status"];
+        $this->name = $value["name"];
+        $this->landing_url = $value["target_url"];
+        $this->strategy_name = $value["bid_strategy_name"];
+        $this->bid = $value["bid_value"];
+        $this->budget = $value["budget"];
+        $this->time_start = $value["date_start"];
+        $this->time_end = $value["date_end"];
+    }
+
     public function getBasicInformationAttribute()
     {
         return [
             "status" => $this->status,
             "name" => $this->name,
-            "targetUrl" => $this->landing_url,
-            "bidStrategyName" => $this->strategy_name,
-            "bidValue" => $this->bid,
+            "target_url" => $this->landing_url,
+            "bid_strategy_name" => $this->strategy_name,
+            "bid_value" => $this->bid,
             "budget" => $this->budget,
-            "dateStart" => $this->time_start,
-            "dateEnd" => $this->time_end,
+            "date_start" => $this->time_start,
+            "date_end" => $this->time_end,
         ];
     }
 }

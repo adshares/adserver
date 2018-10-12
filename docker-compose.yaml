@@ -14,8 +14,6 @@ services:
     working_dir: /adserver
     volumes:
     - .:/adserver
-    env_file:
-      - docker-compose.dev.env
 
   worker:
     extends:

@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,30 +15,27 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
-use Adshares\Adserver\Models\Contracts\Camelizable;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Adserver\Models\Traits\ToArrayCamelize;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Hash;
 
-class User extends Authenticatable implements Camelizable
+class User extends Authenticatable
 {
     use Notifiable;
     use SoftDeletes;
 
     use AutomateMutators;
     use BinHex;
-    use ToArrayCamelize;
 
     /**
      * The attributes that should be mutated to dates.
@@ -64,7 +61,8 @@ class User extends Authenticatable implements Camelizable
      */
     protected $fillable = [
         'name',
-        'is_advertiser', 'is_publisher',
+        'is_advertiser',
+        'is_publisher',
     ];
 
     /**
@@ -74,6 +72,7 @@ class User extends Authenticatable implements Camelizable
      */
     protected $hidden = [
         'password',
+        'id',
     ];
 
     public static $rules = [
@@ -125,7 +124,7 @@ class User extends Authenticatable implements Camelizable
      */
     protected function toArrayExtras($array)
     {
-        $array['isEmailConfirmed'] = !empty($array['email_confirmed_at']);
+        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
 
         return $array;
     }

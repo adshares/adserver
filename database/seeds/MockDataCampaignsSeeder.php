@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 use Adshares\Adserver\Models\Banner;
@@ -42,7 +42,7 @@ class MockDataCampaignsSeeder extends Seeder
         $rand = mt_rand(10000, 99999);
         $text = "{$text}{$width}x{$height}\nID: {$id}\n{$rand}";
         // Replace path by your own font path
-        $font = resource_path('assets/fonts/mock-font.ttf');
+        $font = resource_path('fonts/mock-font.ttf');
         $size = 20;
 
         // Add the text

@@ -20,62 +20,55 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
-use Adshares\Adserver\Http\Middleware\SnakeCasing;
+use Adshares\Adserver\Http\Middleware\SnakizeRequest;
+use Adshares\Adserver\Http\Middleware\TrustProxies;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
-use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
-use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode;
 use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Routing\Middleware\ValidateSignature;
-use Illuminate\Session\Middleware\StartSession;
 
 class Kernel extends HttpKernel
 {
-    const API = 'api-group';
-    const GUEST = 'guest-group';
-    const ANY = 'web-group';
+    private const AUTH = 'auth';
+    private const GUEST = 'guest';
+    const USER_ACCESS = 'only-authenticated-users';
+    const GUEST_ACCESS = 'only-guest-users';
+    const JSON_API = 'api';
 
     protected $middleware = [
+        #pre
         CheckForMaintenanceMode::class,
-        ValidatePostSize::class,
-        Middleware\TrimStrings::class,
-        ConvertEmptyStringsToNull::class,
-        Middleware\TrustProxies::class,
+        TrustProxies::class,
+        HandleCors::class,
     ];
 
     protected $middlewareGroups = [
-        self::ANY => [
-            'cors',
+        self::USER_ACCESS => [
+            self::AUTH . ':api',
         ],
-        self::GUEST => [
-            'cors',
-            'guest:api',
-            'bindings',
+        self::GUEST_ACCESS => [
+            self::GUEST . ':api',
         ],
-        self::API => [
-            'cors',
-            'auth:api',
-            'bindings',
+        self::JSON_API => [
+            ValidatePostSize::class,
+            TrimStrings::class,
+            ConvertEmptyStringsToNull::class,
+            SnakizeRequest::class,
+//            SubstituteBindings::class,
+            #post
+            SetCacheHeaders::class,
+            CamelizeJsonResponse::class,
         ],
     ];
 
     protected $routeMiddleware = [
-        'cors' => HandleCors::class,
-        'guest' => RequireGuestAccess::class,
-        'auth' => Authenticate::class,
-        'bindings' => SubstituteBindings::class,
-
-        'auth.basic' => AuthenticateWithBasicAuth::class,
-        'cache.headers' => SetCacheHeaders::class,
-        'can' => Authorize::class,
-        'signed' => ValidateSignature::class,
-        'snake_casing' => SnakeCasing::class,
-        'session' => StartSession::class,
+        self::GUEST => RequireGuestAccess::class,
+        self::AUTH => Authenticate::class,
     ];
 }

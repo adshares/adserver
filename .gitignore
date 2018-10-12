@@ -18,10 +18,13 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
-.env
 /.scannerwork
 _ide_helper.php
 public/img/
 
 /storage/phpunit
 phpunit.xml
+
+*.env
+*.override.*
+!*.dist

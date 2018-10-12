@@ -20,19 +20,81 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Validator;
 
-class Controller extends BaseController
+abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    /**
+     * @deprecated
+     */
+    protected static function json($data = [], $code = 200, $errors = false)
+    {
+        if (empty($errors)) {
+            return Response::json($data, $code);
+        }
+        $data['errors'] = $errors;
+
+        return Response::json($data, $code);
+    }
+
+    /**
+     * @deprecated
+     */
     public function test(Request $request)
     {
         return Response::json($request->toArray(), 200, [], JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * @deprecated
+     */
+    public function mock(Request $request)
+    {
+        $pathInfo = str_replace(['/panel', '/app', '/api'], ['', '', ''], $request->getPathInfo());
+        $path = substr(str_replace('/', '_', $pathInfo), 1);
+        $method = strtolower($request->method());
+
+        $filePath = "mocks/mappings/{$path}_{$method}.json";
+
+        if (!is_file(base_path($filePath))) {
+            $filePath = "mocks/mappings/{$path}__{$method}.json";
+        }
+
+        try {
+            $json = file_get_contents(base_path($filePath));
+        } catch (\ErrorException $errorException) {
+            abort(404, $errorException->getMessage());
+        }
+
+        try {
+            $data = \GuzzleHttp\json_decode($json, true);
+
+            return self::json($data['response']['jsonBody']);
+        } catch (\Exception $errorException) {
+            return self::json([], 500, [$errorException->getMessage()]);
+        }
+    }
+
+    /**
+     * @deprecated
+     */
+    protected function validateRequestObject(Request $request, String $name, array $rules)
+    {
+        if (!$request->has($name)) {
+            throw new JsonResponseException(self::json([], 422, ['message' => "Missing request object '$name'"]));
+        }
+        /* @var $validator \Illuminate\Validation\Validator */
+        $validator = Validator::make($request->input($name), $rules);
+
+        return $validator->validate();
     }
 }

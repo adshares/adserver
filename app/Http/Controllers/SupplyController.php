@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http\Controllers;
@@ -30,13 +30,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-// use Adshares\Services\Adselect;
-
 // TODO: review request headers // extract & organize ??
 
-/**
- * HTTP api that is used by supply adserver to display banners and log relevant events.
- */
 class SupplyController extends Controller
 {
     public function find(Request $request)
@@ -47,6 +42,7 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
         if ('GET' == $request->getRealMethod()) {
@@ -61,7 +57,6 @@ class SupplyController extends Controller
         }
 
         $decoded = Utils::decodeZones($data);
-//         print_r($decoded);exit;
         $zones = $decoded['zones'];
 
         $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, '', new \DateTime());
@@ -71,9 +66,9 @@ class SupplyController extends Controller
 
         $impressionId = $decoded['page']['iid'];
         if ($impressionId) {
-            $aduser_endpoint = config('app.aduser_endpoint');
+            $aduser_endpoint = config('app.aduser_local_endpoint');
             if ($aduser_endpoint) {
-                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
@@ -88,7 +83,6 @@ class SupplyController extends Controller
                 $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
             }
         }
-
         $response->setContent(json_encode($banners, JSON_PRETTY_PRINT));
 
         return $response;
@@ -271,4 +265,5 @@ class SupplyController extends Controller
 
         return $response;
     }
+
 }

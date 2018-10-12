@@ -27,3 +27,5 @@ RUN if [ $SYSTEM_USER_ID -gt 1000 ];then \
     --create-home \
     $SYSTEM_USER_NAME \
     ;fi
+
+RUN docker-php-ext-install intl
