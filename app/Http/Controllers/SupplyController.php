@@ -215,13 +215,16 @@ class SupplyController extends Controller
 
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
-        $aduser_endpoint = config('app.aduser_endpoint');
+//        $aduser_endpoint = config('app.aduser_endpoint');
+        $aduser_endpoint = config('app.aduser_local_endpoint');
 
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
         // TODO: process?
         } else {
-            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+//            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
+            $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+
 
             $log->our_userdata = $userdata['user']['keywords'];
             $log->human_score = $userdata['user']['human_score'];

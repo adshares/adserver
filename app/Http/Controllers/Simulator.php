@@ -29,8 +29,15 @@ class Simulator extends Controller
     {
         return new Response();
     }
+
     public function userData()
     {
-        return new JsonResponse(['lang'=>'pl']);
+        return new JsonResponse([
+            'user' => [
+                'keywords' => 'one, two, three',
+                'human_score' => 5
+            ],
+            'lang'=>'pl'
+        ]);
     }
 }

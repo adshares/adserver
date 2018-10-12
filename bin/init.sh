@@ -143,7 +143,7 @@ then
     fi
 
     docker-compose run --rm worker php artisan package:discover
-    docker-compose run --rm worker php artisan browsercap:updater
+#    docker-compose run --rm worker php artisan browsercap:updater
 
     docker-compose run --rm worker yarn install
     docker-compose run --rm worker yarn run dev

@@ -37,6 +37,8 @@ services:
     - MYSQL_PASSWORD=adserver
     volumes:
       - database:/var/lib/mysql
+    ports:
+      - 3306:3306
 
   mailer:
     image: mailhog/mailhog:latest

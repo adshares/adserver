@@ -2,10 +2,14 @@ FROM pawzar/devops:php-fpm
 
 RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
     libboost-all-dev libssl-dev cmake \
-# TODO: remove after parent build OK
-    libpng-dev \
+    libpng-dev libfreetype6-dev libmcrypt-dev libjpeg-dev libpng-dev \
     && apt-get -qy autoremove && apt-get -qy clean all \
     && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /usr/share/doc/*
+
+
+RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/freetype2 --with-png-dir=/usr/include --with-jpeg-dir=/usr/include
+RUN docker-php-ext-install gd
+RUN docker-php-ext-enable gd
 
 WORKDIR /opt
 RUN git clone https://github.com/adshares/ads.git

@@ -1,6 +1,7 @@
 {
     "require": {
         "php": "^7.1",
+        "ext-gd": "*",
         "adshares/ads-client": "^1",
         "barryvdh/laravel-cors": "^0.11",
         "browscap/browscap-php": "^4.1",
