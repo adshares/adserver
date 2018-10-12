@@ -17,13 +17,17 @@ do
         --clean )
             OPT_CLEAN=1
         ;;
-        --hard | --force )
+        --force )
             OPT_FORCE=1
         ;;
         --build )
             OPT_BUILD=1
         ;;
-        --run | --start )
+        --run )
+            echo "DEPRECATED: Please use --start"
+            OPT_START=1
+        ;;
+        --start )
             OPT_START=1
         ;;
         --migrate )
