@@ -33,6 +33,8 @@ class UsersTest extends TestCase
 
     public function testCreateUser()
     {
+        $this->markTestSkipped('No admin user creation at this time');
+
         /* @var $user User */
         $user = factory(User::class)->make();
 
@@ -48,7 +50,7 @@ class UsersTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
 
-        $response = $this->getJson(self::URI.'/'.$matches[1]);
+        $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
         $response->assertJsonFragment(['email' => $user->email]);
 
@@ -59,6 +61,7 @@ class UsersTest extends TestCase
 
     public function testCreateUsers()
     {
+        $this->markTestSkipped('No admin user creation at this time');
         $count = 10;
 
         $users = factory(User::class, $count)->make();
