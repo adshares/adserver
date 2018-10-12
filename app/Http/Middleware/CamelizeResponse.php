@@ -22,7 +22,7 @@ namespace Adshares\Adserver\Http\Middleware;
 
 use Illuminate\Foundation\Http\Middleware\TransformsRequest;
 
-class SnakizeRequest extends TransformsRequest
+class CamelizeResponse extends TransformsRequest
 {
     protected function cleanArray(array $data)
     {
