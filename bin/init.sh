@@ -115,18 +115,16 @@ do
         rm -f "$envFile"
     fi
 
-    echo " > Creating '$envFile'..."
-    if [ -f "$envFile" ]
+    if ! [ -f "$envFile" ]
     then
+        echo " > Creating '$envFile'..."
         envsubst < "$envFile.dist" | tee "$envFile" && echo " < DONE"
-    else
-        echo " < INFO: Already gone"
     fi
 done
 
 if [ ${OPT_BUILD} -eq 1 ]
 then
-    echo " > Building deps etc."
+    echo " > Building..."
 
     docker-compose run --rm worker composer install
     if [ ${OPT_FORCE} -eq 1 ]
@@ -146,7 +144,7 @@ then
     echo " < DONE"
 fi
 
-[ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage && echo " < Changed permissions to 'storage'" || echo " < ERROR: Change permisisons to 'storage'" && exit 127
+[ ${OPT_STOP} -eq 1 ] || chmod a+w -R storage && echo " < Changed permissions to 'storage'"
 
 if [ ${OPT_START} -eq 1 ]
 then
@@ -175,6 +173,7 @@ then
             docker-compose run --rm worker ./artisan migrate:
         fi
     fi
+    echo " < DONE"
 fi
 
 if [ ${OPT_LOGS} -eq 1 ]
@@ -190,4 +189,4 @@ then
     fi
 fi
 
-echo " . END"
+echo -e "\nEND"

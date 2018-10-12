@@ -19,15 +19,8 @@
 
 ## Quick Start
 
-When starting from scratch: 
-
 ```bash
-bin/init.sh --build --run --migrate
-```
-
-To rebuild everything
-```bash
-bin/init.sh --clean --build --run --migrate-fresh
+bin/init.sh --build --start --migrate
 ```
 
 Usage:
@@ -38,7 +31,7 @@ bin/init.sh         Initialize environment
                       and remove dependencied if option --force was used
   --build           Download dependencies
                       and regenerate secret if option --force was used
-  --run             Start docker containers
+  --start           Start docker containers
   --migrate         Update database schema (creating it if neccesary)
                       and regenerate secret if option --force was used
   --migrate-fresh   Remove database before migration 
