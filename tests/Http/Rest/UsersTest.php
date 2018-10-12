@@ -18,69 +18,59 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Feature;
+namespace Adshares\Adserver\Tests\Http\Rest;
 
-use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Tests\Http\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class SitesTest extends TestCase
+class UsersTest extends TestCase
 {
     use RefreshDatabase;
 
-    const URI = '/api/sites';
+    const URI_AUTH = '/auth/users';
+    const URI = '/panel/users';
 
-    public function testEmptyDb()
+    public function testCreateUser()
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->markTestSkipped('No admin user creation at this time');
 
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount(0);
+        /* @var $user User */
+        $user = factory(User::class)->make();
 
-        $response = $this->getJson(self::URI.'/1');
-        $response->assertStatus(404);
-    }
-
-    public function testCreateSite()
-    {
-        $this->actingAs(factory(User::class)->create(), 'api');
-
-        /* @var $site Site */
-        $site = factory(Site::class)->make();
-
-        $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
+        $response = $this->postJson(self::URI_AUTH, ['user' => $user->getAttributes(), 'uri' => '/']);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
-        $response->assertJsonFragment(['name' => $site->name]);
-//        $response->assertJsonFragment(['url' => $site->url]);
+        $response->assertJsonFragment(['email' => $user->email]);
 
         $uri = $response->headers->get('Location');
         $matches = [];
         $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
 
-        $response = $this->getJson(self::URI.'/'.$matches[1]);
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
+
+        $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
-        $response->assertJsonFragment(['name' => $site->name]);
-//        $response->assertJsonFragment(['url' => $site->url]);
+        $response->assertJsonFragment(['email' => $user->email]);
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(1);
     }
 
-    public function testCreateSites()
+    public function testCreateUsers()
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->markTestSkipped('No admin user creation at this time');
         $count = 10;
 
-        $users = factory(Site::class, $count)->make();
-        foreach ($users as $site) {
-            $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
+        $users = factory(User::class, $count)->make();
+        foreach ($users as $user) {
+            $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
             $response->assertStatus(201);
         }
+
+        $this->actingAs(factory(User::class)->create(['is_admin' => true]));
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
