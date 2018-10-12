@@ -28,8 +28,8 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
-        <testsuite name="Api">
-            <directory suffix="Test.php">./tests/Api</directory>
+        <testsuite name="Http">
+            <directory suffix="Test.php">./tests/Http</directory>
         </testsuite>
     </testsuites>
     <filter>
