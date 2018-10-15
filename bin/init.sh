@@ -190,6 +190,19 @@ then
         else
             ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:fresh
         fi
+        echo " < DONE"
+
+        if [ ${OPT_SEED} -eq 1 ]
+        then
+            echo " > Seed database"
+            if [ ${OPT_START} -eq 1 ]
+            then
+                ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed --class MockDataUsersSeeder
+            else
+                ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed --class MockDataUsersSeeder
+            fi
+            echo " < DONE"
+        fi
     else
         echo " > Update database"
         if [ ${OPT_START} -eq 1 ]
@@ -198,20 +211,8 @@ then
         else
             ${DOCKER_COMPOSE} run --rm worker ./artisan migrate
         fi
+        echo " < DONE"
     fi
-    echo " < DONE"
-
-    if [ ${OPT_SEED} -eq 1 ]
-    then
-        echo " > Seed database"
-        if [ ${OPT_START} -eq 1 ]
-        then
-            ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed --class MockDataUsersSeeder
-        else
-            ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed --class MockDataUsersSeeder
-        fi
-    fi
-    echo " < DONE"
 fi
 
 if [ ${OPT_LOGS} -eq 1 ]
