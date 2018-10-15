@@ -30,13 +30,12 @@ class WithdrawalControllerTest extends TestCase
 
     public function testCalculateWithdrawSameNode()
     {
-        $user = factory(User::class)->create();
-        $response = $this->actingAs($user, 'api')->call(
-            'POST',
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                "amount" => 100000000000,
-                "to" => "0001-00000000-XXXX",
+                'amount' => 100000000000,
+                'to' => '0001-00000000-XXXX',
             ]
         );
 
@@ -51,9 +50,8 @@ class WithdrawalControllerTest extends TestCase
 
     public function testCalculateWithdrawDiffNode()
     {
-        $user = factory(User::class)->create();
-        $response = $this->actingAs($user, 'api')->call(
-            'POST',
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
                 "amount" => 100000000000,
@@ -72,9 +70,8 @@ class WithdrawalControllerTest extends TestCase
 
     public function testWithdraw()
     {
-        $user = factory(User::class)->create();
-        $response = $this->actingAs($user, 'api')->call(
-            'POST',
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
             '/api/withdraw',
             [
                 "amount" => 100000000000,
@@ -87,9 +84,8 @@ class WithdrawalControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds()
     {
-        $user = factory(User::class)->create();
-        $response = $this->actingAs($user, 'api')->call(
-            'POST',
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
             '/api/withdraw',
             [
                 "amount" => 5000000000000000000,
@@ -102,7 +98,8 @@ class WithdrawalControllerTest extends TestCase
     public function testDepositInfo()
     {
         $user = factory(User::class)->create();
-        $response = $this->actingAs($user, 'api')->call('GET', '/api/deposit-info');
+        $this->actingAs($user, 'api');
+        $response = $this->get('/api/deposit-info');
 
         $response
             ->assertStatus(200)
