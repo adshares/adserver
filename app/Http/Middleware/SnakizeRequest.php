@@ -44,5 +44,4 @@ class SnakizeRequest extends TransformsRequest
     {
         return [snake_case($key) => $value];
     }
-
 }

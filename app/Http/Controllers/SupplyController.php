@@ -268,5 +268,4 @@ class SupplyController extends Controller
 
         return $response;
     }
-
 }
