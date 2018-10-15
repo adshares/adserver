@@ -22,6 +22,37 @@ namespace Adshares\Adserver\Utilities;
 
 final class AdsUtils
 {
+    /**
+     * Minimum transfer fee `TXS_MIN_FEE`
+     */
+    const TXS_MIN_FEE = 10000;
+    /**
+     * Local transfer coefficient `TXS_PUT_FEE`
+     */
+    const TXS_LOCAL_FEE = 0.0005;
+    /**
+     * Remote transfer coefficient `TXS_LNG_FEE`
+     */
+    const TXS_REMOTE_FEE = 0.0005;
+
+    /**
+     * Calculates transfer fee.
+     * @param string $addressFrom sender address
+     * @param string $addressTo recipient address
+     * @param int $amount amount
+     * @return int transfer fee
+     */
+    public static function calculateFee(string $addressFrom, string $addressTo, int $amount): int
+    {
+        $fee = ceil($amount * self::TXS_LOCAL_FEE);
+
+        if (0 !== substr_compare($addressFrom, $addressTo, 0, 4)) {
+            // different nodes
+            $fee += ceil($amount * self::TXS_REMOTE_FEE);
+        }
+        return intval(max($fee, self::TXS_MIN_FEE));
+    }
+
     public static function encodeTxId($binAddress)
     {
         $binAddress = strtoupper($binAddress);
