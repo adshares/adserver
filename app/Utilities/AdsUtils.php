@@ -42,7 +42,7 @@ final class AdsUtils
      * @param int $amount amount
      * @return int transfer fee
      */
-    public static function calculateFee(string $addressFrom, string $addressTo, int $amount)
+    public static function calculateFee(string $addressFrom, string $addressTo, int $amount): int
     {
         $fee = ceil($amount * self::TXS_LOCAL_FEE);
 
