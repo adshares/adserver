@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rpc;
 
+use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
@@ -45,7 +46,7 @@ class WithdrawalController extends Controller
      * @param $amount int transfer total amount
      * @return bool true if has enough, false otherwise
      */
-    public function hasUserEnoughFunds(int $amount): bool
+    private function hasUserEnoughFunds(int $amount): bool
     {
         // TODO check user account balance
         $balance = 4000000000000000000;
@@ -62,12 +63,13 @@ class WithdrawalController extends Controller
         $addressTo = $request->input(self::FIELD_TO);
 
         $addressFrom = $this->getAdserverAdsAddress();
-        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
-
-        if ($fee < 0) {
+        if (!AdsValidator::isAccountAddressValid($addressFrom)
+            || !AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
             return self::json([], 422);
         }
+        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+
         $total = $amount + $fee;
         $resp = [
             self::FIELD_AMOUNT => $amount,
@@ -88,12 +90,13 @@ class WithdrawalController extends Controller
         $addressTo = $request->input(self::FIELD_TO);
 
         $addressFrom = $this->getAdserverAdsAddress();
-        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
-
-        if ($fee < 0) {
+        if (!AdsValidator::isAccountAddressValid($addressFrom)
+            || !AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
             return self::json([], 422);
         }
+        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+
         $total = $amount + $fee;
         if (!$this->hasUserEnoughFunds($total)) {
             return self::json(['error' => 'not enough funds'], 400);

@@ -20,8 +20,6 @@
 
 namespace Adshares\Adserver\Utilities;
 
-use Adshares\Ads\Util\AdsValidator;
-
 final class AdsUtils
 {
     /**
@@ -42,16 +40,10 @@ final class AdsUtils
      * @param string $addressFrom sender address
      * @param string $addressTo recipient address
      * @param int $amount amount
-     * @return int transfer fee or -1, if invalid data provided
+     * @return int transfer fee
      */
     public static function calculateFee(string $addressFrom, string $addressTo, int $amount)
     {
-        if (!AdsValidator::isAccountAddressValid($addressFrom)
-            || !AdsValidator::isAccountAddressValid($addressTo)
-            || $amount <= 0) {
-            return -1;
-        }
-
         $fee = ceil($amount * self::TXS_LOCAL_FEE);
 
         if (0 !== substr_compare($addressFrom, $addressTo, 0, 4)) {
