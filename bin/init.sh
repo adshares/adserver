@@ -228,4 +228,4 @@ then
     fi
 fi
 
-echo -e "\nEND"
+echo -e "[END]"
