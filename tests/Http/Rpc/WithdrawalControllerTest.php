@@ -42,9 +42,9 @@ class WithdrawalControllerTest extends TestCase
         $response
             ->assertStatus(200)
             ->assertExactJson([
-                "amount" => 100000000000,
-                "fee" => 50000000,
-                "total" => 100050000000,
+                'amount' => 100000000000,
+                'fee' => 50000000,
+                'total' => 100050000000,
             ]);
     }
 
@@ -54,18 +54,32 @@ class WithdrawalControllerTest extends TestCase
         $response = $this->postJson(
             '/api/calculate-withdrawal',
             [
-                "amount" => 100000000000,
-                "to" => "0002-00000000-XXXX",
+                'amount' => 100000000000,
+                'to' => '0002-00000000-XXXX',
             ]
         );
 
         $response
             ->assertStatus(200)
             ->assertExactJson([
-                "amount" => 100000000000,
-                "fee" => 100000000,
-                "total" => 100100000000,
+                'amount' => 100000000000,
+                'fee' => 100000000,
+                'total' => 100100000000,
             ]);
+    }
+
+    public function testCalculateWithdrawInvalidAddress()
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
+            '/api/calculate-withdrawal',
+            [
+                'amount' => 100000000000,
+                'to' => '0002-00000000-ABCD',
+            ]
+        );
+
+        $response->assertStatus(422);
     }
 
     public function testWithdraw()
@@ -74,12 +88,25 @@ class WithdrawalControllerTest extends TestCase
         $response = $this->postJson(
             '/api/withdraw',
             [
-                "amount" => 100000000000,
-                "to" => "0001-00000000-XXXX",
+                'amount' => 100000000000,
+                'to' => '0001-00000000-XXXX',
             ]
         );
 
         $response->assertStatus(204);
+    }
+
+    public function testWithdrawInvalidAmount()
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
+            '/api/withdraw',
+            [
+                'amount' => 100000000000,
+                'to' => '0001-00000000-ABC',
+            ]
+        );
+        $response->assertStatus(422);
     }
 
     public function testWithdrawInsufficientFunds()
@@ -88,11 +115,11 @@ class WithdrawalControllerTest extends TestCase
         $response = $this->postJson(
             '/api/withdraw',
             [
-                "amount" => 5000000000000000000,
-                "to" => "0001-00000000-XXXX",
+                'amount' => 5000000000000000000,
+                'to' => '0001-00000000-XXXX',
             ]
         );
-        $this->assertNotEquals(200, $response->getStatusCode());
+        $response->assertStatus(400);
     }
 
     public function testDepositInfo()
