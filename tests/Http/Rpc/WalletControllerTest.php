@@ -24,7 +24,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Http\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class WithdrawalControllerTest extends TestCase
+class WalletControllerTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -86,7 +86,7 @@ class WithdrawalControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
-            '/api/withdraw',
+            '/api/wallet/withdraw',
             [
                 'amount' => 100000000000,
                 'to' => '0001-00000000-XXXX',
@@ -100,7 +100,7 @@ class WithdrawalControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
-            '/api/withdraw',
+            '/api/wallet/withdraw',
             [
                 'amount' => 100000000000,
                 'to' => '0001-00000000-ABC',
@@ -113,7 +113,7 @@ class WithdrawalControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
-            '/api/withdraw',
+            '/api/wallet/withdraw',
             [
                 'amount' => 5000000000000000000,
                 'to' => '0001-00000000-XXXX',
