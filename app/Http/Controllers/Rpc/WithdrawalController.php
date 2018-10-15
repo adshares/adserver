@@ -28,6 +28,18 @@ use Illuminate\Support\Facades\Validator;
 
 class WithdrawalController extends Controller
 {
+    const FIELD_ADDRESS = 'address';
+
+    const FIELD_AMOUNT = 'amount';
+
+    const FIELD_MESSAGE = 'message';
+
+    const FIELD_TO = 'to';
+    /**
+     * Field is required
+     */
+    const VALIDATOR_RULE_REQUIRED = 'required';
+
     /**
      * Checks, if user has enough funds.
      * @param $amount int transfer total amount
@@ -43,13 +55,13 @@ class WithdrawalController extends Controller
     public function calculateWithdrawal(Request $request)
     {
         Validator::make($request->all(), [
-            'amount' => ['required', 'integer', 'min:1'],
-            'to' => 'required',
+            self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+            self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
-        $amount = $request->input('amount');
-        $addressTo = $request->input('to');
+        $amount = $request->input(self::FIELD_AMOUNT);
+        $addressTo = $request->input(self::FIELD_TO);
 
-        $addressFrom = config('app.adshares_address');
+        $addressFrom = $this->getAdserverAdsAddress();
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         if ($fee < 0) {
@@ -58,7 +70,7 @@ class WithdrawalController extends Controller
         }
         $total = $amount + $fee;
         $resp = [
-            'amount' => $amount,
+            self::FIELD_AMOUNT => $amount,
             'fee' => $fee,
             'total' => $total,
         ];
@@ -68,14 +80,14 @@ class WithdrawalController extends Controller
     public function withdraw(Request $request)
     {
         Validator::make($request->all(), [
-            'amount' => ['required', 'integer', 'min:1'],
-            'to' => 'required',
+            self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+            self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
 
-        $amount = $request->input('amount');
-        $addressTo = $request->input('to');
+        $amount = $request->input(self::FIELD_AMOUNT);
+        $addressTo = $request->input(self::FIELD_TO);
 
-        $addressFrom = config('app.adshares_address');
+        $addressFrom = $this->getAdserverAdsAddress();
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         if ($fee < 0) {
@@ -99,15 +111,25 @@ class WithdrawalController extends Controller
         /**
          * Address of account on which funds should be deposit
          */
-        $address = config('app.adshares_address');
+        $address = $this->getAdserverAdsAddress();
         /**
          * Message which should be add to send_one tx
          */
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            'address' => $address,
-            'message' => $message,
+            self::FIELD_ADDRESS => $address,
+            self::FIELD_MESSAGE => $message,
         ];
         return self::json($resp);
+    }
+
+    /**
+     * Returns Adserver address in ADS network.
+     *
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    private function getAdserverAdsAddress()
+    {
+        return config('app.adshares_address');
     }
 }
