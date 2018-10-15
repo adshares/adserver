@@ -195,7 +195,7 @@ class AuthController extends Controller
      */
     public function check(Request $request)
     {
-        return self::json(Auth::user()->toArray(), 200);
+        return self::json(Auth::user()->load('AdserverWallet')->toArray(), 200);
     }
 
     /**

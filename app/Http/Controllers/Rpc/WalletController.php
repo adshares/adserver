@@ -27,31 +27,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class WithdrawalController extends Controller
+class WalletController extends Controller
 {
     const FIELD_ADDRESS = 'address';
-
     const FIELD_AMOUNT = 'amount';
-
     const FIELD_MESSAGE = 'message';
-
     const FIELD_TO = 'to';
-    /**
-     * Field is required
-     */
+    const FIELD_MEMO = 'memo';
     const VALIDATOR_RULE_REQUIRED = 'required';
-
-    /**
-     * Checks, if user has enough funds.
-     * @param $amount int transfer total amount
-     * @return bool true if has enough, false otherwise
-     */
-    private function hasUserEnoughFunds(int $amount): bool
-    {
-        // TODO check user account balance
-        $balance = 4000000000000000000;
-        return $amount <= $balance;
-    }
 
     public function calculateWithdrawal(Request $request)
     {
@@ -76,6 +59,7 @@ class WithdrawalController extends Controller
             'fee' => $fee,
             'total' => $total,
         ];
+
         return self::json($resp);
     }
 
@@ -88,6 +72,7 @@ class WithdrawalController extends Controller
 
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
+        $memo = $request->input(self::FIELD_MEMO);
 
         $addressFrom = $this->getAdserverAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)
@@ -123,7 +108,23 @@ class WithdrawalController extends Controller
             self::FIELD_ADDRESS => $address,
             self::FIELD_MESSAGE => $message,
         ];
+
         return self::json($resp);
+    }
+
+    /**
+     * Checks, if user has enough funds.
+     *
+     * @param $amount int transfer total amount
+     *
+     * @return bool true if has enough, false otherwise
+     */
+    private function hasUserEnoughFunds(int $amount): bool
+    {
+        // TODO check user account balance
+        $balance = 4000000000000000000;
+
+        return $amount <= $balance;
     }
 
     /**
