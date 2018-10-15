@@ -13,6 +13,8 @@ ENV TERM xterm
 ENV LOCALTIME Europe/Warsaw
 ENV DEBIAN_FRONTEND noninteractive
 
+ENV PHP_ETC_DIR="/etc/php/7.2"
+
 RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
     apt-utils gpg-agent software-properties-common build-essential curl \
     && apt-get -y remove cmdtest \
@@ -30,7 +32,7 @@ RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
         nmap mtr curl git bzip2 zip unzip tree mc wget \
         openssl openssh-client openssh-server \
         gnupg2 dirmngr connect-proxy \
-        mysql-client zsh \
+        mysql-client \
         php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl php7.2-gd php7.2-intl php7.2-json php7.2-mbstring php7.2-opcache php7.2-pgsql php7.2-readline php7.2-sqlite3 php7.2-xml php7.2-xmlrpc php7.2-xsl php7.2-zip \
         php-xdebug \
         ads ads-tools \
@@ -45,7 +47,8 @@ RUN sed "s|session\s*required\s*pam_loginuid.so|session optional pam_loginuid.so
 
 # timezone
 RUN ln -sf /usr/share/zoneinfo/$LOCALTIME /etc/localtime
-#RUN echo "date.timezone = \"${LOCALTIME}\"" | tee --append $PHP_INI_DIR/conf.d/00-default.ini
+RUN echo "date.timezone = \"${LOCALTIME}\"" | tee --append ${PHP_ETC_DIR}/cli/conf.d/00-default.ini
+RUN echo "date.timezone = \"${LOCALTIME}\"" | tee --append ${PHP_ETC_DIR}/fpm/conf.d/00-default.ini
 
 # composer
 RUN wget https://getcomposer.org/installer --quiet --output-document=/tmp/composer-setup.php \
@@ -89,7 +92,7 @@ RUN if [ $SYSTEM_USER_ID -gt 1000 ];then \
     ;fi
 
 # Credit: PHPDocker.io
-COPY overrides.conf /etc/php/7.2/fpm/pool.d/z-overrides.conf
+COPY overrides.conf ${PHP_ETC_DIR}/fpm/pool.d/z-overrides.conf
 
 ENTRYPOINT ["docker-php-entrypoint.sh"]
 CMD ["php-fpm.sh"]
