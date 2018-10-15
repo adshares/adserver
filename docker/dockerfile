@@ -98,4 +98,4 @@ ENTRYPOINT ["docker-php-entrypoint.sh"]
 CMD ["php-fpm.sh"]
 EXPOSE 9000
 
-
+RUN ln -s /usr/bin/ads /usr/local/bin/ads
