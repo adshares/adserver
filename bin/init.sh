@@ -7,6 +7,7 @@ OPT_FORCE=0
 OPT_BUILD=0
 OPT_START=0
 OPT_MIGRATE=0
+OPT_SEED=0
 OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
 OPT_STOP=0
@@ -36,6 +37,9 @@ do
         ;;
         --stop )
             OPT_STOP=1
+        ;;
+        --seed )
+            OPT_SEED=1
         ;;
         --compose-override )
             [ "$2" == "" ] && echo " ! ERROR: missing '--compose-override' param value" && exit 5
@@ -143,6 +147,11 @@ if [ ${OPT_BUILD} -eq 1 ]
 then
     echo " > Building..."
 
+    if [ ${OPT_CLEAN} -eq 1 ]
+    then
+        ${DOCKER_COMPOSE} build application worker
+    fi
+
     ${DOCKER_COMPOSE} run --rm worker composer install
     if [ ${OPT_FORCE} -eq 1 ]
     then
@@ -181,16 +190,29 @@ then
         else
             ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:fresh
         fi
+        echo " < DONE"
+
+        if [ ${OPT_SEED} -eq 1 ]
+        then
+            echo " > Seed database"
+            if [ ${OPT_START} -eq 1 ]
+            then
+                ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed --class MockDataUsersSeeder
+            else
+                ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed --class MockDataUsersSeeder
+            fi
+            echo " < DONE"
+        fi
     else
         echo " > Update database"
         if [ ${OPT_START} -eq 1 ]
         then
             ${DOCKER_COMPOSE} exec -T worker ./artisan migrate
         else
-            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:
+            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate
         fi
+        echo " < DONE"
     fi
-    echo " < DONE"
 fi
 
 if [ ${OPT_LOGS} -eq 1 ]
@@ -206,4 +228,4 @@ then
     fi
 fi
 
-echo -e "\nEND"
+echo -e "[END]"
