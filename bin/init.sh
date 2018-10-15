@@ -197,9 +197,9 @@ then
             echo " > Seed database"
             if [ ${OPT_START} -eq 1 ]
             then
-                ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed --class MockDataUsersSeeder
+                ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed
             else
-                ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed --class MockDataUsersSeeder
+                ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed
             fi
             echo " < DONE"
         fi
