@@ -21,18 +21,31 @@ script:
   - >
     docker run
     --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
+    --name adserver-build
     $DOCKER_IMAGE
     /bin/bash -c
     "cd /build/adserver &&
     ./scripts/build.sh &&
-    composer run-script install-codestandards &&
+    composer run-script install-codestandards"
+  - >
+    docker run
+    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
+    adserver-build
+    /bin/bash -c
+    "cd /build/adserver &&
     ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor . &&
     ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff &&
     ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff &&
     ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests &&
     ./vendor/bin/phpcs -s --standard=PSR2 app tests &&
     alias php='php -dzend_extension=xdebug.so' &&
-    alias phpunit='php ./vendor/bin/phpunit' &&
+    alias phpunit='php ./vendor/bin/phpunit'"
+  - >
+    docker run
+    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
+    adserver-build
+    /bin/bash -c
+    "cd /build/adserver &&
     phpunit --testsuite Http &&
     sonar-scanner"
 
