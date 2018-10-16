@@ -50,33 +50,9 @@ Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 //{}
 //200{"address":"ADS_ADDR","title":"000...uid"}
 
+Route::get('admin/settings', [Simulator::class, 'mock']);
 Route::get('account/history', [Simulator::class, 'mock']);
-/** @deprecated  */
+
+/** @deprecated */
 Route::get('wallet/history', [Simulator::class, 'mock']);
-//[
-//      {
-//        "status": "349.80",
-//        "date": "Sat Feb 23 2018 12:24:00 GMT",
-//        "address": "0001-0000001F-34FC",
-//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
-//      },
-//      {
-//        "status": "320.80",
-//        "date": "Fri Feb 23 2018 12:24:00 GMT",
-//        "address": "0001-0000001F-34FC",
-//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
-//      },
-//      {
-//        "status": "622.80",
-//        "date": "Thu Feb 22 2018 12:24:00 GMT",
-//        "address": "0001-0000001F-34FC",
-//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
-//      },
-//      {
-//        "status": "432.80",
-//        "date": "Wed Feb 21 2018 12:24:00 GMT",
-//        "address": "0001-0000001F-34FC",
-//        "link": "https://etherscan.io/address/0001-0000001F-34FC"
-//      }
-//]
 

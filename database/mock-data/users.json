@@ -1,11 +1,31 @@
 [
   {
+    "email": "2@dev.dev",
+    "password": "2@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": true,
+    "isPublisher": true,
+    "isAdvertiser": true
+  },
+  {
+    "email": "dev@dev.dev",
+    "password": "dev@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": false,
+    "isPublisher": true,
+    "isAdvertiser": true,
+    "adserverWallet": {
+      "adshares_address": "0001-00000001-8B4E",
+      "total_funds": 500
+    }
+  },
+  {
     "email": "admin@e11.click",
     "password": "adminadmin",
+    "isConfirmed": true,
     "isAdmin": true,
     "isPublisher": false,
-    "isAdvertiser": false,
-    "isConfirmed": true
+    "isAdvertiser": false
   },
   {
     "email": "user@e11.click",

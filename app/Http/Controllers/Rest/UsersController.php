@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Http\Kernel;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -43,7 +44,7 @@ class UsersController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('snake_casing')->except(['emailChangeStep1']);
+        $this->middleware(Kernel::SNAKE_CASING)->except(['emailChangeStep1']);
     }
 
     public function add(Request $request)
@@ -72,7 +73,7 @@ class UsersController extends Controller
 
     public function browse(Request $request)
     {
-        return self::json([], 501, ['message' => 'not yet implemented <3']);
+//        return self::json([], 501, ['message' => 'not yet implemented <3']);
         // TODO check privileges
         $users = User::with('AdserverWallet')->get();
 
