@@ -18,7 +18,7 @@
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
