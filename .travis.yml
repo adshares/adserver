@@ -32,7 +32,6 @@ script:
     ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests &&
     ./vendor/bin/phpcs -s --standard=PSR2 app tests &&
     alias php='php -dzend_extension=xdebug.so' &&
-    composer global require phpunit/phpunit &&
     alias phpunit='php ./vendor/bin/phpunit' &&
     phpunit --testsuite Http &&
     sonar-scanner"

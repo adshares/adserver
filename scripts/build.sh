@@ -12,7 +12,7 @@ fi
 
 envsubst < .env.dist | tee .env
 
-composer install
+composer install dev
 
 artisan key:generate
 artisan package:discover
