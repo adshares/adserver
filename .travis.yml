@@ -20,10 +20,11 @@ script:
   - docker pull $DOCKER_IMAGE
   - >
     docker run
-    --mount type=bind,src=/home/travis/build/adshares/adpanel,dst=/build/adpanel
+    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
     $DOCKER_IMAGE
-    /bin/bash -c "cd /build/adpanel &&
-    ./build/adpanel/scripts/build.sh &&
+    /bin/bash -c
+    "cd /build/adserver &&
+    ./scripts/build.sh &&
     composer run-script install-codestandards &&
     ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor . &&
     ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff &&
