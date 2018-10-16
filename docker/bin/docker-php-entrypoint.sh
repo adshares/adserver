@@ -35,7 +35,9 @@ then
     [ "$XDEBUG" == "1" ] || phpdismod xdebug || echo "Xdebug already disabled."
 
     mkdir -p /run/php
-#    set_config_from_env.sh "PHP__" "$PHP_INI_DIR/conf.d/40-from-env.ini" "="
+
+    set_config_from_env.sh "PHP__"  "${PHP_ETC_DIR}/cli/conf.d/40-from-env.ini" "="
+    set_config_from_env.sh "PHP__"  "${PHP_ETC_DIR}/fpm/conf.d/40-from-env.ini" "="
 
     if [ "${SSH_AUTHORIZED_KEY}" != "" ]
     then
