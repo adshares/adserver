@@ -156,10 +156,12 @@ class MockDataCampaignsSeeder extends Seeder
                 throw new Exception("User not found <{$r->email}>");
             }
 
+            $campaignCount = 1;
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
                 $c->landing_url = $cr->url;
                 $c->user_id = $u->id;
+                $c->name = "Campaign #$campaignCount";
 //                $c->max_cpm = $cr->max_cpm;
 //                $c->max_cpc = $cr->max_cpc;
                 $c->budget = $cr->budget_per_hour;
@@ -169,6 +171,8 @@ class MockDataCampaignsSeeder extends Seeder
                     'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
                 ]);
                 $c->save();
+
+                ++$campaignCount;
 
                 // NETWORK CAMPAIGNS
                 $nc = new NetworkCampaign();

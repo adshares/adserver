@@ -140,6 +140,10 @@ class CampaignsController extends Controller
                 /* @var $query Builder */
                 $query->whereNull('deleted_at');
             },
+            'banners' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
         ])->whereNull('deleted_at')
             ->findOrFail($campaign_id);
 

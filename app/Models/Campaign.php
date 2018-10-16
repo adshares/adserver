@@ -100,7 +100,7 @@ class Campaign extends Model
 
     public function getAdsAttribute()
     {
-        return [['status' => 0]];
+        return $this->banners;
     }
 
     public function getTargetingAttribute()
