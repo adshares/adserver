@@ -21,7 +21,7 @@
 namespace Adshares\Adserver\Tests\Http\Rpc;
 
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\Http\TestCase;
+use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class WalletControllerTest extends TestCase
