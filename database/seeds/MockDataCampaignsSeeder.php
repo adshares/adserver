@@ -165,6 +165,7 @@ class MockDataCampaignsSeeder extends Seeder
 //                $c->max_cpm = $cr->max_cpm;
 //                $c->max_cpc = $cr->max_cpc;
                 $c->budget = $cr->budget_per_hour;
+                $c->status = 2; // active
 
                 $c->fill([
                     'time_start' => date('Y-m-d H:i:s'),
