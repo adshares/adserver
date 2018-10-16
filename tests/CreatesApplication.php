@@ -18,14 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rpc;
+namespace Adshares\Adserver\Tests;
 
-use Adshares\Adserver\Http\Controllers\Controller;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Hash;
 
-class WithdrawalController extends Controller
+trait CreatesApplication
 {
-    public function info()
+    public function createApplication()
     {
-        return self::json(json_decode('{"amount":10,"fee":9,"total":10}'));
+        $app = require __DIR__ . '/../bootstrap/app.php';
+
+        $app->make(Kernel::class)->bootstrap();
+
+        Hash::driver('bcrypt')->setRounds(4);
+
+        return $app;
     }
 }

@@ -17,10 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Http\Utils;
 use Illuminate\Database\Seeder;
 
 class MockDataCampaignsSeeder extends Seeder
@@ -33,7 +35,7 @@ class MockDataCampaignsSeeder extends Seeder
     {
         $image = \imagecreatetruecolor($width, $height);
 
-        $bgColor = \imagecolorallocate($image, 240, 240, 240);
+        $bgColor = \imagecolorallocate($image, 0, 0, 240);
         $textColor = \imagecolorallocate($image, 0, 0, 0);
 
         \imagefilledrectangle($image, 0, 0, $width, $height, $bgColor);
@@ -154,13 +156,16 @@ class MockDataCampaignsSeeder extends Seeder
                 throw new Exception("User not found <{$r->email}>");
             }
 
+            $campaignCount = 1;
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
                 $c->landing_url = $cr->url;
                 $c->user_id = $u->id;
-                $c->max_cpm = $cr->max_cpm;
-                $c->max_cpc = $cr->max_cpc;
-                $c->budget_per_hour = $cr->budget_per_hour;
+                $c->name = "Campaign #$campaignCount";
+//                $c->max_cpm = $cr->max_cpm;
+//                $c->max_cpc = $cr->max_cpc;
+                $c->budget = $cr->budget_per_hour;
+                $c->status = 2; // active
 
                 $c->fill([
                     'time_start' => date('Y-m-d H:i:s'),
@@ -168,14 +173,67 @@ class MockDataCampaignsSeeder extends Seeder
                 ]);
                 $c->save();
 
-                // BANNERS
+                ++$campaignCount;
 
+                // NETWORK CAMPAIGNS
+                $nc = new NetworkCampaign();
+                $nc->uuid = uniqid().'1';
+                $nc->landing_url = $cr->url;
+                $nc->max_cpm = $cr->max_cpm;
+                $nc->max_cpc = $cr->max_cpc;
+                $nc->source_host = config('app.url');
+                $nc->budget_per_hour = $cr->budget_per_hour;
+                $nc->adshares_address = '0001-00000001-0001';
+
+                $nc->fill([
+                    'time_start' => date('Y-m-d H:i:s'),
+                    'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
+                ]);
+                $nc->save();
+
+                $banners = [];
+
+                // BANNERS
                 for ($bi = 0; $bi < 4; ++$bi) {
                     $t = $bi % 2 ? 'image' : 'html';
                     $s = $this->bannerSizes[array_rand($this->bannerSizes)];
                     $b = new Banner();
                     $b->fill(['campaign_id' => $c->id, 'creative_type' => $t, 'creative_width' => $s[0], 'creative_height' => $s[1]]);
                     $b->creative_contents = 'image' == $t ? $this->generateBannernPng($i, $s[0], $s[1]) : $this->generateBannerHTML($i, $s[0], $s[1]);
+                    $b->save();
+
+                    $banners[] = $b->id;
+                }
+
+                // NETWORK BANNERS
+                for ($bi = 0; $bi < 4; ++$bi) {
+                    $uuid = uniqid().'1';
+                    $bannerId = rand(min($banners), max($banners));
+                    $serveUrl = route('banner-serve', [
+                        'id' => $bannerId,
+                    ]);
+
+                    $t = $bi % 2 ? 'image' : 'html';
+                    $s = $this->bannerSizes[array_rand($this->bannerSizes)];
+                    $b = new NetworkBanner();
+                    $b->fill([
+                        'network_campaign_id' => $nc->id,
+                        'uuid' => $uuid,
+                        'creative_type' => $t,
+                        'creative_width' => $s[0],
+                        'creative_height' => $s[1],
+                        'serve_url' => $serveUrl,
+                        'click_url' => route('log-network-click', [
+                            'id' => '',
+                            'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                        ]),
+                        'view_url' => route('log-network-view', [
+                            'id' => '',
+                            'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                        ]),
+                    ]);
+
+//                    $b->creative_contents = 'image' == $t ? $this->generateBannernPng($i, $s[0], $s[1]) : $this->generateBannerHTML($i, $s[0], $s[1]);
                     $b->save();
                 }
                 $this->command->info(" Added - [$c->landing_url] for user <{$u->email}>");

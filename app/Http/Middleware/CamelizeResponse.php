@@ -44,5 +44,4 @@ class CamelizeResponse extends TransformsRequest
     {
         return [camel_case($key) => $value];
     }
-
 }

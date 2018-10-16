@@ -100,7 +100,11 @@ class Campaign extends Model
 
     public function getAdsAttribute()
     {
-        return [['status' => 0]];
+        foreach ($this->banners as &$banner) {
+            $banner['type'] = $banner['creative_type'] === 'image' ? 0 : 1;
+        }
+
+        return $this->banners;
     }
 
     public function getTargetingAttribute()

@@ -40,6 +40,7 @@ class Kernel extends HttpKernel
     const USER_ACCESS = 'only-authenticated-users';
     const GUEST_ACCESS = 'only-guest-users';
     const JSON_API = 'api';
+    const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
         #pre
@@ -70,5 +71,6 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
+        self::SNAKE_CASING=>SnakizeRequest::class,
     ];
 }
