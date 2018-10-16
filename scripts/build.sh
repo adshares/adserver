@@ -14,8 +14,8 @@ envsubst < .env.dist | tee .env
 
 composer install dev
 
-artisan key:generate
-artisan package:discover
+./artisan key:generate
+./artisan package:discover
 
 yarn install
 yarn run dev
