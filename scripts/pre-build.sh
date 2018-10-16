@@ -3,7 +3,7 @@
 # Ubuntu 18.04 only
 
 # Install dependencies for composer operations
-apt-get install -y php7.2-cli php7.2-curl php7.2-zip php7.2-xdebug unzip
+apt-get install -y php7.2-cli php7.2-curl php7.2-zip php7.2-xdebug php7.2-mysql unzip
 
 # Get composer
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
