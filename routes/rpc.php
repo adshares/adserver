@@ -24,8 +24,8 @@ use Adshares\Adserver\Http\Controllers\Rest\ConfigController;
 use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
 use Adshares\Adserver\Http\Controllers\Rest\SitesController;
-use Adshares\Adserver\Http\Controllers\Rpc\AuthController;
-use Adshares\Adserver\Http\Controllers\Rpc\WithdrawalController;
+use Adshares\Adserver\Http\Controllers\Rpc\WalletController;
+use Adshares\Adserver\Http\Controllers\Simulator;
 use Illuminate\Support\Facades\Route;
 
 Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
@@ -39,17 +39,20 @@ Route::get('options/sites/targeting', [SitesController::class, 'targeting']);
 Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
 Route::get('config/banners', [SitesController::class, 'banners']);
 
-// NEW
-Route::post('calculate-withdrawal', [WithdrawalController::class,'info']);
-//200{"amunt":10,"fee":1,"finalAmount":9}
-Route::post('withdraw', []);
-//{"amout":10,"type":"net|gross",to:"ADS-ADDR"}
-//201
+// Routes for Withdraw/Deposit
+Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
+//{"amount":10,"to":"ADS-ADDR"}//TODO add max option - for calculate maximum available amount to withdraw
+//200{"amount":10,"fee":1,"total":11}
+Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
+//{"amount":10,"to":"ADS-ADDR"}
+//204
+Route::get('deposit-info', [WalletController::class, 'depositInfo']);
+//{}
+//200{"address":"ADS_ADDR","title":"000...uid"}
 
-Route::get('deposit-info', []);
-//{address:"",title:""}
-
-Route::get('account/history', []);
+Route::get('account/history', [Simulator::class, 'mock']);
+/** @deprecated  */
+Route::get('wallet/history', [Simulator::class, 'mock']);
 //[
 //      {
 //        "status": "349.80",

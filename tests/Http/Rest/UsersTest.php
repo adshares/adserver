@@ -18,10 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Feature;
+namespace Adshares\Adserver\Tests\Http\Rest;
 
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Tests\Http\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UsersTest extends TestCase
@@ -33,6 +33,8 @@ class UsersTest extends TestCase
 
     public function testCreateUser()
     {
+        $this->markTestSkipped('No admin user creation at this time');
+
         /* @var $user User */
         $user = factory(User::class)->make();
 
@@ -48,7 +50,7 @@ class UsersTest extends TestCase
 
         $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
 
-        $response = $this->getJson(self::URI.'/'.$matches[1]);
+        $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
         $response->assertJsonFragment(['email' => $user->email]);
 
@@ -59,6 +61,7 @@ class UsersTest extends TestCase
 
     public function testCreateUsers()
     {
+        $this->markTestSkipped('No admin user creation at this time');
         $count = 10;
 
         $users = factory(User::class, $count)->make();

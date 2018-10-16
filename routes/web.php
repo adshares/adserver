@@ -24,8 +24,8 @@ use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return "";
+})->name('login');
 
 Route::get('/adshares/inventory/list', [ApiController::class, 'adsharesInventoryList']);
 Route::get('/adshares/report/{tx_id}/{pay_to}', [ApiController::class, 'adsharesTransactionReport']);

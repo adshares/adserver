@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+namespace Adshares\Adserver\Tests\Http;
 
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Hash;
@@ -27,7 +27,7 @@ trait CreatesApplication
 {
     public function createApplication()
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
+        $app = require __DIR__ . '/../../bootstrap/app.php';
 
         $app->make(Kernel::class)->bootstrap();
 

@@ -4,10 +4,10 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 use Adshares\Adserver\Models\User;
@@ -42,18 +42,26 @@ class MockDataUsersSeeder extends Seeder
         $data = MockDataSeeder::mockDataLoad('users.json');
 
         DB::beginTransaction();
-        foreach ($data as $r) {
-            $u = new User();
-            $u->email = $r->email;
-            $u->password = $r->password;
-            $u->save();
+        foreach ($data as $row) {
+            $user = new User();
+            $user->email = $row->email;
+            $user->password = $row->password;
+            $user->is_admin = $row->isAdmin ?? false;
+            $user->is_advertiser = $row->isAdvertiser ?? false;
+            $user->is_publisher = $row->isPublisher ?? false;
+            if ($row->isConfirmed ?? false) {
+                $user->email_confirmed_at = date('Y-m-d H:i:s');
+            }
+            $user->save();
 
-            $w = UserAdserverWallet::where('user_id', $u->id)->first();
-            $w->adshares_address = $r->adserverWallet->adshares_address;
-            $w->total_funds = $r->adserverWallet->total_funds;
-            $w->save();
+            if (isset($row->adserverWallet)) {
+                $wallet = UserAdserverWallet::where('user_id', $user->id)->first();
+                $wallet->adshares_address = $row->adserverWallet->adshares_address;
+                $wallet->total_funds = $row->adserverWallet->total_funds;
+                $wallet->save();
+            }
 
-            $this->command->info(" Added - <{$u->email}> with password '{$r->password}'");
+            $this->command->info(" Added - <{$user->email}> with password '{$row->password}'");
         }
         DB::commit();
 
