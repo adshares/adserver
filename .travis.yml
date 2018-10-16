@@ -15,48 +15,37 @@ addons:
 
 env:
   - DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
+  - HOST_PATH=/home/travis/build/adshares/adserver
+  - BUILD_PATH=/build/adserver
+  - BUILD_NAME=adserver_build
 
 script:
   - docker pull $DOCKER_IMAGE
-  - >
-    docker run
-    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
-    --name adserver-build
-    $DOCKER_IMAGE
-    /bin/bash -c
-    "cd /build/adserver &&
-    ./scripts/build.sh &&
-    composer run-script install-codestandards"
-  - >
-    docker run
-    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
-    adserver-build
-    /bin/bash -c
-    "cd /build/adserver &&
-    ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor . &&
-    ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff &&
-    ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff &&
-    ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests &&
-    ./vendor/bin/phpcs -s --standard=PSR2 app tests &&
-    alias php='php -dzend_extension=xdebug.so' &&
-    alias phpunit='php ./vendor/bin/phpunit'"
-  - >
-    docker run
-    --mount type=bind,src=/home/travis/build/adshares/adserver,dst=/build/adserver
-    adserver-build
-    /bin/bash -c
-    "cd /build/adserver &&
-    phpunit --testsuite Http &&
-    sonar-scanner"
+  - docker run -d --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH --name $BUILD_NAME $DOCKER_IMAGE sleep infinity
+  - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && ./scripts/build.sh"
+  - docker exec $BUILD_NAME composer run-script install-codestandards
+  - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && '
 
+  # PHP Lint: check syntax errors in all PHP files
+  - docker_exec ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-# PHP Lint: check syntax errors in all PHP files
-# PHP Code Beautifier and Fixer: fix code styles
-# PHP_CodeSniffer: check PHP compatibility
-# PHP_CodeSniffer: check PSR2 standard
-# PHP unit tests
-# SonarQube
+  # PHP Code Beautifier and Fixer: fix code styles
+  - docker_exec ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
+  - docker_exec ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
 
+  # PHP_CodeSniffer: check PHP compatibility
+  - docker_exec ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+
+  # PHP_CodeSniffer: check PSR2 standard
+  - docker_exec ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+
+  # PHP unit tests
+  - docker_exec php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Http"
+
+  # SonarQube
+  - sonar-scanner
+  - docker stop $BUILD_NAME
+  - docker rm $BUILD_NAME
 
 # After a build, send email notification with the build results
 notifications:
