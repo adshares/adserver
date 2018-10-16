@@ -40,7 +40,7 @@ script:
   - docker_exec ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
   # PHP unit tests
-  - docker_exec php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Http"
+  - docker_exec php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Console,Http"
 
   # SonarQube
   - sonar-scanner
