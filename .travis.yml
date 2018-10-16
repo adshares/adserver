@@ -1,21 +1,9 @@
-# Project language
-language: php
+sudo: required
 
-# PHP version
-php:
-  - 7.2
+language: ruby
 
-# Allows use container-based infrastructure
-sudo: false
-
-# Start mysql service
-#ervices:
-#  - mysql
-
-# Cache composer packages so "composer install" is faster
-cache:
-  directories:
-    - $HOME/.composer/cache/files
+services:
+  - docker
 
 addons:
   sonarcloud:
@@ -25,28 +13,36 @@ addons:
     github_token:
       secure: "OJPwpsbNxubGGaIMTchemK4KP1aU0mmna6X48S511yc7g/14D5rKLedzyYNy+8coFg81DX7Zg8BMdkTwp0d3pj6NfJvkK6BGjTUN+uwyPjUBNGrScncK3uvGYL/n8LMMrFTC/6GIF2B822h+dp8txJJ76pKlw/p1BzhxGt/PsKGn/+MOwiB0Ovy3XcJdrGvpEeKvLKZZzIO6R1isQIgo5coTFwxruUVVRC9j8pOGrFF6Ofeu1wcb28A1Y77rRRzoRsGPY5vTT83kA52Q4mT8vZGqfIwiD7G8nyfyeeuk+oaQwQ+Gp9wUUKlvtmFAtuhHBbxJrE6cRGYW25ABk6wVxrN9Md/G5oKg2bYlnzv3FFMxHdZKopxKDb+2fil238WozdmxTKFa7w+3X7E/p6+ATMi0asi/MN5ONhMJSe/6932zbop44yA7xfRC3hOTjvYaiwUDoicvvo6lBO/TxaKJzsBAAs3sXrxeuBx/npBkGPcTZhECi+QcX0J9OjcJl9w95/yLmrzsftGchnOWkCwj2QsUUsn47sduQZ2pgZCq+xXbw7oqTfGfo2B0yT2NmsH/Wy4Y1lJL63Cy2sxhaKi84WSvSRxuiKcK/UC6OXcHE+4JWRVJ0+IUjj+hU0onUWXDY2o3eiz7Ql/GQI7AfxwYjMSqOZfo/as75bwhZu4ARg0="
 
-# Install composer dependencies,
-# Create database, schema and fixtures
-install:
-  - composer install --no-ansi --no-scripts
-  - composer run-script install-codestandards
+env:
+  - DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
 
 script:
+  - docker pull $DOCKER_IMAGE
+  - >
+    docker run
+    --mount type=bind,src=/home/travis/build/adshares/adpanel,dst=/build/adpanel
+    $DOCKER_IMAGE
+    /bin/bash -c "cd /build/adpanel &&
+    ./build/adpanel/scripts/build.sh &&
+    composer run-script install-codestandards &&
+    ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor . &&
+    ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff &&
+    ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff &&
+    ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests &&
+    ./vendor/bin/phpcs -s --standard=PSR2 app tests &&
+    alias php='php -dzend_extension=xdebug.so' &&
+    alias phpunit='php ./vendor/bin/phpunit' &&
+    phpunit --testsuite Http &&
+    sonar-scanner"
+
+
 # PHP Lint: check syntax errors in all PHP files
-  - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
 # PHP Code Beautifier and Fixer: fix code styles
-  - ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff
-  - ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff
 # PHP_CodeSniffer: check PHP compatibility
-  - ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests
 # PHP_CodeSniffer: check PSR2 standard
-  - ./vendor/bin/phpcs -s --standard=PSR2 app tests
 # PHP unit tests
-  - alias php='php -dzend_extension=xdebug.so'
-  - alias phpunit='php ./vendor/bin/phpunit'
-  - phpunit --testsuite Http
 # SonarQube
-  - sonar-scanner
+
 
 # After a build, send email notification with the build results
 notifications:
