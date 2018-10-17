@@ -31,6 +31,7 @@ script:
   - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && ./scripts/build.sh"
 
   # Shortcut for test tasks - please note the missing quote you need to append.
+  - shopt -s expand_aliases
   - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && '
 
   # Pre-task dependency
