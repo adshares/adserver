@@ -30,8 +30,9 @@ script:
   # Run build script
   - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && ./scripts/build.sh"
 
-  # Shortcut for test tasks - please note the missing quote you need to append.
+  # Enable aliases for non-interactive shells
   - shopt -s expand_aliases
+  # Set alias - please note the missing quote you need to append.
   - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && '
 
   # Pre-task dependency
@@ -56,8 +57,9 @@ script:
 
   # SonarQube
   - sonar-scanner
-  - docker stop $BUILD_NAME
-  - docker rm $BUILD_NAME
+
+  # Cleanup
+  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
 
 # After a build, send email notification with the build results
 notifications:
