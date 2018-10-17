@@ -56,16 +56,6 @@ class AdsGetTxIn extends Command
     const EXIT_CODE_ERROR = 1;
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      * @param AdsClient $adsClient
      * @return int
@@ -114,8 +104,7 @@ class AdsGetTxIn extends Command
         $count = count($log);
         $lastEventIndex = $count - 1;
         if ($count > 0) {
-            $time = $log[$lastEventIndex]['time'];
-            return $time;
+            return $log[$lastEventIndex]['time'];
         }
         throw new ConsoleCommandException();
     }
@@ -130,26 +119,24 @@ class AdsGetTxIn extends Command
         $count = 0;
         foreach ($log as $logEntry) {
             $type = $logEntry['type'];
-            if ($type === 'send_many' || $type === 'send_one') {
-                if ($logEntry['inout'] === 'in') {
-                    $txid = $logEntry['id'];
-                    $amount = $logEntry['amount'];
-                    $address = $logEntry['address'];
+            if (($type === 'send_many' || $type === 'send_one') && $logEntry['inout'] === 'in') {
+                $txid = $logEntry['id'];
+                $amount = $logEntry['amount'];
+                $address = $logEntry['address'];
 
-                    $amountInClicks = AdsConverter::adsToClicks($amount);
+                $amountInClicks = AdsConverter::adsToClicks($amount);
 
-                    $adsTx = new AdsTxIn;
-                    $adsTx->txid = $txid;
-                    $adsTx->amount = $amountInClicks;
-                    $adsTx->address = $address;
+                $adsTx = new AdsTxIn;
+                $adsTx->txid = $txid;
+                $adsTx->amount = $amountInClicks;
+                $adsTx->address = $address;
 
-                    try {
-                        $adsTx->save();
-                        ++$count;
-                    } catch (QueryException $exc) {
-                        $excMessage = $exc->getMessage();
-                        $this->error("Tx ${txid} rejected due to\n    ${excMessage}");
-                    }
+                try {
+                    $adsTx->save();
+                    ++$count;
+                } catch (QueryException $exc) {
+                    $excMessage = $exc->getMessage();
+                    $this->error("Tx ${txid} rejected due to\n    ${excMessage}");
                 }
             }
         }

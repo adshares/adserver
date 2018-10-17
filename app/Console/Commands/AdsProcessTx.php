@@ -59,16 +59,6 @@ class AdsProcessTx extends Command
     const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      * @param AdsClient $adsClient
      * @return int
@@ -97,7 +87,6 @@ class AdsProcessTx extends Command
                     $isTxTargetValid = false;
                     /** @var $sendManyTx SendManyTransaction */
                     $sendManyTx = $transaction;
-//                    $senderAddr = $sendManyTx->getSenderAddress();
                     $wiresCount = $sendManyTx->getWireCount();
                     if ($wiresCount > 0) {
                         $wires = $sendManyTx->getWires();
@@ -105,7 +94,6 @@ class AdsProcessTx extends Command
                             /** @var $wire SendManyTransactionWire */
                             $targetAddr = $wire->getTargetAddress();
                             if ($targetAddr === $adServerAddress) {
-//                                $amount = $wire->getAmount();
                                 $isTxTargetValid = true;
                                 break;
                             }
@@ -126,7 +114,6 @@ class AdsProcessTx extends Command
                             $tx->status = AdsTxIn::STATUS_RESERVED;
                             $tx->save();
                         } else {
-//                            $senderAddr = $sendOneTx->getSenderAddress();
                             $amount = $sendOneTx->getAmount();
                             // add to ledger
                             $ul = new UserLedger;
