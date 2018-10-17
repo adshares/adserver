@@ -14,10 +14,11 @@ addons:
       secure: "OJPwpsbNxubGGaIMTchemK4KP1aU0mmna6X48S511yc7g/14D5rKLedzyYNy+8coFg81DX7Zg8BMdkTwp0d3pj6NfJvkK6BGjTUN+uwyPjUBNGrScncK3uvGYL/n8LMMrFTC/6GIF2B822h+dp8txJJ76pKlw/p1BzhxGt/PsKGn/+MOwiB0Ovy3XcJdrGvpEeKvLKZZzIO6R1isQIgo5coTFwxruUVVRC9j8pOGrFF6Ofeu1wcb28A1Y77rRRzoRsGPY5vTT83kA52Q4mT8vZGqfIwiD7G8nyfyeeuk+oaQwQ+Gp9wUUKlvtmFAtuhHBbxJrE6cRGYW25ABk6wVxrN9Md/G5oKg2bYlnzv3FFMxHdZKopxKDb+2fil238WozdmxTKFa7w+3X7E/p6+ATMi0asi/MN5ONhMJSe/6932zbop44yA7xfRC3hOTjvYaiwUDoicvvo6lBO/TxaKJzsBAAs3sXrxeuBx/npBkGPcTZhECi+QcX0J9OjcJl9w95/yLmrzsftGchnOWkCwj2QsUUsn47sduQZ2pgZCq+xXbw7oqTfGfo2B0yT2NmsH/Wy4Y1lJL63Cy2sxhaKi84WSvSRxuiKcK/UC6OXcHE+4JWRVJ0+IUjj+hU0onUWXDY2o3eiz7Ql/GQI7AfxwYjMSqOZfo/as75bwhZu4ARg0="
 
 env:
-  - DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
-  - HOST_PATH=/home/travis/build/adshares/adserver
-  - BUILD_PATH=/build/adserver
-  - BUILD_NAME=adserver_build
+  - >
+    DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
+    HOST_PATH=/home/travis/build/adshares/adserver
+    BUILD_PATH=/build/adserver
+    BUILD_NAME=adserver_build
 
 script:
   - docker pull $DOCKER_IMAGE
