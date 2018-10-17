@@ -1,0 +1,19 @@
+@startuml
+actor User << browser >>
+participant Publisher << web server >>
+participant Supply as Supply << AdServer >>
+participant Supply as SupplyU << AdUser >>
+ 
+User -> Publisher: GET index.html
+User <-- Publisher: index.html
+User -> Supply: GET find.js
+User <-- Supply: find.js (cacheable)
+User ->> SupplyU: {impressionId}
+User -> Supply: {impressionId, txId}
+activate Supply
+User <- Supply: best banners
+deactivate Supply
+...
+
+
+@enduml

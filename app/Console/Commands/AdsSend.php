@@ -18,36 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Console\Commands;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendOneCommand;
+use Illuminate\Console\Command;
 
-class Simulator extends Controller
+class AdsSend extends Command
 {
-    public function pixel()
-    {
-        return new Response();
-    }
+    protected $signature = 'ads:send';
 
-    public function view()
+    public function handle(AdsClient $adsClient)
     {
-        return new Response();
-    }
-
-    public function click()
-    {
-        return new Response();
-    }
-
-    public function userData()
-    {
-        return new JsonResponse([
-            'user' => [
-                'keywords' => 'one, two, three',
-                'human_score' => 5
-            ],
-            'lang'=>'pl'
-        ]);
+        $response = $adsClient->runTransaction(new SendOneCommand('0001-00000003-AB0C',100000000000,'0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'));
+        $this->info($response->getTx()->getId());
     }
 }
