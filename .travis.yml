@@ -24,10 +24,7 @@ script:
 
   - docker pull $DOCKER_IMAGE
   - docker run -d --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH --name $BUILD_NAME $DOCKER_IMAGE sleep infinity
-
-  - docker ps
-  - echo "$DOCKER_IMAGE"
-  - echo "$BUILD_NAME"
+  - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && pwd && ls -al"
 
   - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && ./scripts/build.sh"
   - docker exec $BUILD_NAME composer run-script install-codestandards
