@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59f84e3961b9201f9c926fe364179511",
+    "content-hash": "d90d87e500e239f36104663bdd4d291c",
     "packages": [
         {
             "name": "adshares/ads-client",
-            "version": "v1.1.0",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/adshares/php-ads-client.git",
-                "reference": "ed83e53ed2926e277ddf47bec97207316a83a396"
+                "url": "https://github.com/adshares/ads-php-client.git",
+                "reference": "b9a897219dfa60a316a29191dbeb836c5e1aa760"
             },
             "require": {
                 "ext-json": "*",
@@ -32,7 +32,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0.x-dev"
+                    "dev-master": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -83,7 +83,7 @@
                 "issues": "https://github.com/adshares/ads-php-client/issues",
                 "source": "https://github.com/adshares/ads-php-client"
             },
-            "time": "2018-09-24T14:01:23+00:00"
+            "time": "2018-10-17T08:46:40+00:00"
         },
         {
             "name": "asm89/stack-cors",
@@ -5795,7 +5795,9 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.1"
+        "php": "^7.1",
+        "ext-gd": "*",
+        "ext-json": "*"
     },
     "platform-dev": []
 }
