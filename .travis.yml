@@ -28,12 +28,12 @@ script:
   - docker run -d --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH --name $BUILD_NAME $DOCKER_IMAGE sleep infinity
 
   # Run build script
-  - docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && ./scripts/build.sh"
+  - docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && ./scripts/build.sh"
 
   # Enable aliases for non-interactive shells
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
-  - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd /build/adserver && '
+  - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
 
   # Pre-task dependency
   - docker_exec composer run-script install-codestandards"
