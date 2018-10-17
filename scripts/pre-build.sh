@@ -20,12 +20,9 @@ composer global require hirak/prestissimo
 apt-get install -y nodejs npm
 
 # Get yarn
-apt-get install -y curl
-
-curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+php -r "copy('https://dl.yarnpkg.com/debian/pubkey.gpg', 'yarn.pubkey.gpg');"
+cat yarn.pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-
-apt-get remove -y curl
 
 # Install yarn
 apt-get update && apt-get install -y yarn
