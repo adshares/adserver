@@ -29,6 +29,10 @@ Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaig
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
+Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])->name('app.campaigns.classify');
+Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])->name('app.campaigns.disable_classify');
+
+
 Route::get('sites', [SitesController::class, 'browse'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
 Route::get('sites/{site_id}', [SitesController::class, 'read'])->name('app.sites.read');

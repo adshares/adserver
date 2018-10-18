@@ -35,14 +35,14 @@ class MockDataCampaignsSeeder extends Seeder
     {
         $image = \imagecreatetruecolor($width, $height);
 
-        $bgColor = \imagecolorallocate($image, 0, 0, 240);
+        $bgColor = \imagecolorallocate($image, rand(0, 200), rand(0, 200), rand(0, 200));
         $textColor = \imagecolorallocate($image, 0, 0, 0);
 
         \imagefilledrectangle($image, 0, 0, $width, $height, $bgColor);
 
         // The text to draw
         $rand = mt_rand(10000, 99999);
-        $text = "{$text}{$width}x{$height}\nID: {$id}\n{$rand}";
+        $text = "{$text}\nBID: {$id}\n{$rand}\nW: $width\nH: $height";
         // Replace path by your own font path
         $font = resource_path('fonts/mock-font.ttf');
         $size = 20;
@@ -156,24 +156,23 @@ class MockDataCampaignsSeeder extends Seeder
                 throw new Exception("User not found <{$r->email}>");
             }
 
-            $campaignCount = 1;
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
                 $c->landing_url = $cr->url;
                 $c->user_id = $u->id;
-                $c->name = "Campaign #$campaignCount";
-//                $c->max_cpm = $cr->max_cpm;
-//                $c->max_cpc = $cr->max_cpc;
+                $c->name = $cr->name;
                 $c->budget = $cr->budget_per_hour;
                 $c->status = 2; // active
+                $c->targeting_requires = isset($cr->targeting_requires) ? json_encode($cr->targeting_requires) : null;
+                $c->targeting_excludes = isset($cr->targeting_excludes) ? json_encode($cr->targeting_excludes) : null;
+                $c->classification_status = $cr->classification_status ?? 0;
+                $c->classification_tags = $cr->classification_tags ?? null;
 
                 $c->fill([
                     'time_start' => date('Y-m-d H:i:s'),
                     'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
                 ]);
                 $c->save();
-
-                ++$campaignCount;
 
                 // NETWORK CAMPAIGNS
                 $nc = new NetworkCampaign();
@@ -194,12 +193,13 @@ class MockDataCampaignsSeeder extends Seeder
                 $banners = [];
 
                 // BANNERS
+                $i = 0;
                 for ($bi = 0; $bi < 4; ++$bi) {
-                    $t = $bi % 2 ? 'image' : 'html';
+                    $t = 'image';
                     $s = $this->bannerSizes[array_rand($this->bannerSizes)];
                     $b = new Banner();
                     $b->fill(['campaign_id' => $c->id, 'creative_type' => $t, 'creative_width' => $s[0], 'creative_height' => $s[1]]);
-                    $b->creative_contents = 'image' == $t ? $this->generateBannernPng($i, $s[0], $s[1]) : $this->generateBannerHTML($i, $s[0], $s[1]);
+                    $b->creative_contents = $this->generateBannernPng($i++, $s[0], $s[1], "CID: $c->id");
                     $b->save();
 
                     $banners[] = $b->id;
