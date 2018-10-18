@@ -46,8 +46,8 @@ Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->nam
 Route::get('/l/n/keywords/{log_id}', [SupplyController::class, 'logNetworkKeywords'])->name('log-network-keywords');
 
 ### something is no-yes in find.js ###
-Route::get('/l/n/click', [Simulator::class, 'pixel']);
-Route::get('/l/n/view', [Simulator::class, 'pixel']);
+Route::get('/l/n/click', [Simulator::class, 'click']);
+Route::get('/l/n/view', [Simulator::class, 'view']);
 
 ### simulator ###
 Route::get('/pixel/{id}', [Simulator::class, 'pixel']);
