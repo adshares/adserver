@@ -20,46 +20,55 @@ env:
     BUILD_PATH=/build/adserver
     BUILD_NAME=adserver_build
 
-script:
+stages:
+  - test
 
-  ## Setup test environment
-  # Run docker container
-  - docker pull $DOCKER_IMAGE
-  - docker run -d --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH --name $BUILD_NAME $DOCKER_IMAGE sleep infinity
-
-  # Run build script
-  - docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && ./scripts/build.sh"
-
+before_script:
   # Enable aliases for non-interactive shells
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
-  - alias docker_exec='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
+  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
+  # Set aliast for cleanup
+  - alias cleanup_docker='docker stop $BUILD_NAME && docker rm $BUILD_NAME'
 
-  # Pre-task dependency
-  - docker_exec composer run-script install-codestandards"
+jobs:
+  include:
+    - stage: test
+      script:
 
-  ## Test tasks
-  # PHP Lint: check syntax errors in all PHP files
-  - docker_exec ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+        ## Setup test environment
+        # Run docker container
+        - docker pull $DOCKER_IMAGE
+        - docker run -d --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH --name $BUILD_NAME $DOCKER_IMAGE sleep infinity
 
-  # PHP Code Beautifier and Fixer: fix code styles
-  - docker_exec ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
-  - docker_exec ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
+        # Run build script
+        - in_docker /bin/bash scripts/build.sh"
 
-  # PHP_CodeSniffer: check PHP compatibility
-  - docker_exec ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+        # Pre-task dependency
+        - in_docker composer run-script install-codestandards"
 
-  # PHP_CodeSniffer: check PSR2 standard
-  - docker_exec ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+        ## Test tasks
+        # PHP Lint: check syntax errors in all PHP files
+        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-  # PHP unit tests
-  - docker_exec php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Console,Http"
+        # PHP Code Beautifier and Fixer: fix code styles
+        - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
+        - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
 
-  # SonarQube
-  - sonar-scanner
+        # PHP_CodeSniffer: check PHP compatibility
+        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
 
-  # Cleanup
-  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
+        # PHP_CodeSniffer: check PSR2 standard
+        - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+
+        # PHP unit tests
+        - in_docker export APP_ENV=dev && php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Console,Http"
+
+        # SonarQube
+        - in_docker sonar-scanner"
+
+        # Cleanup
+        - cleanup_docker
 
 # After a build, send email notification with the build results
 notifications:
