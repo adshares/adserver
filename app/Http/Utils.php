@@ -271,7 +271,7 @@ class Utils
                 $tid,
                 new \DateTime('+ 1 month'),
                 '/',
-                $request->getHttpHost()
+                $request->getHost()
             )
         );
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header

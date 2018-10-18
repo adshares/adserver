@@ -173,6 +173,7 @@ class SupplyController extends Controller
             $log->getAdselectJson(),
         ]);
 
+
         $response = new RedirectResponse($url);
 
         return $response;
@@ -242,9 +243,11 @@ class SupplyController extends Controller
         $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($log->our_userdata)));
         $url = Utils::addUrlParameter($url, 'r', Utils::urlSafeBase64Encode($backUrl));
 
-        $response = new RedirectResponse($url);
+        return new Response(null, Response::HTTP_NO_CONTENT);
 
-        return $response;
+//        $response = new RedirectResponse($url);
+//
+//        return $response;
     }
 
     public function logNetworkKeywords(Request $request, $log_id)
