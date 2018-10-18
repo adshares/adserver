@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Http\Controllers;
@@ -196,34 +196,8 @@ class DemandController extends Controller
         //     ]);
         // }
 
-        $response = new \Symfony\Component\HttpFoundation\Response($url);
+        $response = new RedirectResponse($url);
 
-        // last click id will be used to track conversions
-        $response->headers->setCookie(
-            new \Symfony\Component\HttpFoundation\Cookie(
-                'cid',
-                $request->query->get('cid'),
-                new \DateTime('+ 1 month')
-            )
-        );
-
-        $response->setContent(
-            sprintf(
-                '<!DOCTYPE html>
-<html>
-  <head>
-      <meta charset="UTF-8" />
-      <meta http-equiv="refresh" content="5;url=%1$s" />
-
-      <title>Redirecting to %1$s</title>
-  </head>
-  <body>
-      Redirecting to <a href="%1$s">%1$s</a>.
-  </body>
-</html>',
-                htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
-            )
-        );
 
         return $response;
     }
