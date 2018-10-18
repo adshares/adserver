@@ -42,7 +42,6 @@ class CampaignsController extends Controller
 
         $campaign->save();
 
-//        \response();
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
