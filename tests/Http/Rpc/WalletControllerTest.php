@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Tests\Http\Rpc;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Config;
 
 class WalletControllerTest extends TestCase
 {
@@ -40,7 +42,7 @@ class WalletControllerTest extends TestCase
         );
 
         $response
-            ->assertStatus(200)
+            ->assertStatus(Response::HTTP_OK)
             ->assertExactJson([
                 'amount' => 100000000000,
                 'fee' => 50000000,
@@ -60,7 +62,7 @@ class WalletControllerTest extends TestCase
         );
 
         $response
-            ->assertStatus(200)
+            ->assertStatus(Response::HTTP_OK)
             ->assertExactJson([
                 'amount' => 100000000000,
                 'fee' => 100000000,
@@ -75,11 +77,26 @@ class WalletControllerTest extends TestCase
             '/api/calculate-withdrawal',
             [
                 'amount' => 100000000000,
-                'to' => '0002-00000000-ABCD',
+                'to' => '0002-00000000-ABCD',// invalid address
             ]
         );
 
-        $response->assertStatus(422);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testCalculateWithdrawInvalidAdServerAddress()
+    {
+        Config::set('app.adshares_address', '');//invalid ADS address set for AdServer
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
+            '/api/calculate-withdrawal',
+            [
+                'amount' => 100000000000,
+                'to' => '0002-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testWithdraw()
@@ -93,7 +110,7 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(204);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
     public function testWithdrawInvalidAmount()
@@ -106,7 +123,23 @@ class WalletControllerTest extends TestCase
                 'to' => '0001-00000000-ABC',
             ]
         );
-        $response->assertStatus(422);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawInvalidAdServerAddress()
+    {
+        Config::set('app.adshares_address', '');//invalid ASD address set for AdServer
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function testWithdrawInsufficientFunds()
@@ -119,7 +152,8 @@ class WalletControllerTest extends TestCase
                 'to' => '0001-00000000-XXXX',
             ]
         );
-        $response->assertStatus(400);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDepositInfo()
@@ -129,7 +163,7 @@ class WalletControllerTest extends TestCase
         $response = $this->get('/api/deposit-info');
 
         $response
-            ->assertStatus(200)
+            ->assertStatus(Response::HTTP_OK)
             ->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
         // check response field

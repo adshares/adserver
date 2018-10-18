@@ -24,20 +24,31 @@ use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class WalletController extends Controller
 {
     const FIELD_ADDRESS = 'address';
     const FIELD_AMOUNT = 'amount';
+    const FIELD_ERROR = 'error';
+    const FIELD_FEE = 'fee';
     const FIELD_MESSAGE = 'message';
     const FIELD_TO = 'to';
+    const FIELD_TOTAL = 'total';
     const FIELD_MEMO = 'memo';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request)
     {
+        $addressFrom = $this->getAdServerAdsAddress();
+        if (!AdsValidator::isAccountAddressValid($addressFrom)) {
+            Log::error("Invalid ADS address is set: ${addressFrom}");
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
         Validator::make($request->all(), [
             self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
             self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
@@ -45,19 +56,18 @@ class WalletController extends Controller
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
 
-        $addressFrom = $this->getAdserverAdsAddress();
-        if (!AdsValidator::isAccountAddressValid($addressFrom)
-            || !AdsValidator::isAccountAddressValid($addressTo)) {
+        if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
-            return self::json([], 422);
+            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
+
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         $total = $amount + $fee;
         $resp = [
             self::FIELD_AMOUNT => $amount,
-            'fee' => $fee,
-            'total' => $total,
+            self::FIELD_FEE => $fee,
+            self::FIELD_TOTAL => $total,
         ];
 
         return self::json($resp);
@@ -65,31 +75,36 @@ class WalletController extends Controller
 
     public function withdraw(Request $request)
     {
+        $addressFrom = $this->getAdServerAdsAddress();
+        if (!AdsValidator::isAccountAddressValid($addressFrom)) {
+            Log::error("Invalid ADS address is set: ${addressFrom}");
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
         Validator::make($request->all(), [
             self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
             self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
-
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
+        //TODO validate memo
         $memo = $request->input(self::FIELD_MEMO);
 
-        $addressFrom = $this->getAdserverAdsAddress();
-        if (!AdsValidator::isAccountAddressValid($addressFrom)
-            || !AdsValidator::isAccountAddressValid($addressTo)) {
+        if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
-            return self::json([], 422);
+            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
+
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         $total = $amount + $fee;
         if (!$this->hasUserEnoughFunds($total)) {
-            return self::json(['error' => 'not enough funds'], 400);
+            return self::json([self::FIELD_ERROR => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // TODO add tx to queue: $amount is amount, $addressTo is address
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function depositInfo()
@@ -99,7 +114,7 @@ class WalletController extends Controller
         /**
          * Address of account on which funds should be deposit
          */
-        $address = $this->getAdserverAdsAddress();
+        $address = $this->getAdServerAdsAddress();
         /**
          * Message which should be add to send_one tx
          */
@@ -128,11 +143,11 @@ class WalletController extends Controller
     }
 
     /**
-     * Returns Adserver address in ADS network.
+     * Returns AdServer address in ADS network.
      *
      * @return \Illuminate\Config\Repository|mixed
      */
-    private function getAdserverAdsAddress()
+    private function getAdServerAdsAddress()
     {
         return config('app.adshares_address');
     }
