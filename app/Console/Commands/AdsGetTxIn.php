@@ -43,7 +43,7 @@ class AdsGetTxIn extends Command
      *
      * @var string
      */
-    protected $description = 'Searches blockchain user log for incoming transfers';
+    protected $description = 'Searches blockchain log of AdServer for incoming transfers';
 
     /**
      * Command ended without error
