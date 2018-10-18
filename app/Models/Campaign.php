@@ -41,6 +41,8 @@ class Campaign extends Model
     protected $casts = [
         'time_start' => 'string',
         'time_end' => 'string',
+        'targeting_requires' => 'json',
+        'targeting_excludes' => 'json',
     ];
 
     protected $dispatchesEvents = [
@@ -59,10 +61,16 @@ class Campaign extends Model
         'bid',
         'strategy_name',
         'basic_information',
+        'targeting_requires',
+        'targeting_excludes',
+        'classification_status',
+        'classification_tags',
     ];
 
     protected $hidden = [
         'user_id',
+        'targeting_requires',
+        'targeting_excludes',
     ];
 
     protected $traitAutomate = [
@@ -110,8 +118,8 @@ class Campaign extends Model
     public function getTargetingAttribute()
     {
         return [
-            "requires" => [],
-            "excludes" => [],
+            "requires" => json_decode($this->targeting_requires, true),
+            "excludes" => json_decode($this->targeting_excludes, true),
         ];
     }
 
@@ -139,5 +147,35 @@ class Campaign extends Model
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,
         ];
+    }
+
+    public function getBannersUrls(): array
+    {
+        $urls = [];
+
+        foreach ($this->banners as $banner) {
+            $urls[] = $banner->toArray()['serve_url'];
+        }
+
+        return $urls;
+    }
+
+    public static function campaignById($campaignId)
+    {
+        return self::with([
+            'campaignExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'campaignRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'banners' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')
+            ->findOrFail($campaignId);
     }
 }

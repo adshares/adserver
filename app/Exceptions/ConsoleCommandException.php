@@ -18,36 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Exceptions;
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Exception;
 
-class Simulator extends Controller
+class ConsoleCommandException extends Exception
 {
-    public function pixel()
-    {
-        return new Response();
-    }
-
-    public function view()
-    {
-        return new Response();
-    }
-
-    public function click()
-    {
-        return new Response();
-    }
-
-    public function userData()
-    {
-        return new JsonResponse([
-            'user' => [
-                'keywords' => 'one, two, three',
-                'human_score' => 5
-            ],
-            'lang'=>'pl'
-        ]);
-    }
 }

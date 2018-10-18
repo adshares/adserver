@@ -21,7 +21,9 @@
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Notification;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,27 +36,12 @@ class CampaignsController extends Controller
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
         $input['user_id'] = Auth::user()->id;
+        $input['targeting_requires'] = $request->input('campaign.targeting.requires');
+        $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
         $campaign = Campaign::create($input);
 
         $campaign->save();
 
-        $reqObj = $request->input('campaign.targeting.require');
-        if (null != $reqObj) {
-            foreach (array_keys($reqObj) as $key) {
-                $value = $reqObj[$key];
-                $campaign->campaignRequires()->create(['key' => $key, 'value' => $value]);
-            }
-        }
-
-        $reqObj = $request->input('campaign.targeting.exclude');
-        if (null != $reqObj) {
-            foreach (array_keys($reqObj) as $key) {
-                $value = $reqObj[$key];
-                $campaign->campaignExcludes()->create(['key' => $key, 'value' => $value]);
-            }
-        }
-
-        \response();
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
@@ -128,26 +115,43 @@ class CampaignsController extends Controller
         return self::json(['message' => 'Successfully deleted'], 200);
     }
 
-    public function read(Request $request, $campaign_id)
+    public function read(Request $request, $campaignId)
     {
         // TODO check privileges
-        $campaign = Campaign::with([
-            'campaignExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'campaignRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'banners' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')
-            ->findOrFail($campaign_id);
-
+        $campaign = Campaign::campaignById($campaignId);
         return self::json(['campaign' => $campaign->toArray()]);
+    }
+
+    public function classify($campaignId)
+    {
+        $campaign = Campaign::campaignById($campaignId);
+
+        $targetingRequires = ($campaign->targeting_requires) ? json_decode($campaign->targeting_requires, true) : null;
+        $targetingExcludes = ($campaign->targeting_excludes) ? json_decode($campaign->targeting_excludes, true) : null;
+        $banners = $campaign->getBannersUrls();
+
+        ClassifyCampaign::dispatch($campaignId, $targetingRequires, $targetingExcludes, $banners);
+
+        $campaign->classification_status = 1;
+        $campaign->update();
+
+        Notification::add(
+            $campaign->user_id,
+            Notification::CLASSIFICATION_TYPE,
+            'Classify queued',
+            sprintf('Campaign %s has been queued to classify', $campaign->id)
+        );
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function disableClassify($campaignId)
+    {
+        $campaign = Campaign::campaignById($campaignId);
+        $campaign->classification_status = 0;
+        $campaign->classification_tags = null;
+
+        $campaign->update();
     }
 
     /**
