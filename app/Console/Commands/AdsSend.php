@@ -32,7 +32,7 @@ class AdsSend extends Command
     {
         $response = $adsClient->runTransaction(new SendOneCommand(
             config('app.adshares_address'),
-            10 * pow(10, 11), '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'));
+            10 * (10 ** 11), '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'));
         $this->info($response->getTx()->getId());
     }
 }
