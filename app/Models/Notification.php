@@ -32,6 +32,8 @@ class Notification extends Model
     use AutomateMutators;
     use Serialize;
 
+    const CLASSIFICATION_TYPE = 'classify';
+
     /**
      * The attributes that should be mutated to dates.
      *
@@ -63,4 +65,17 @@ class Notification extends Model
     protected $traitAutomate = [
         'payload' => 'Serialize',
     ];
+
+    public static function add($user, $type, $title, $message)
+    {
+        $notification = new self();
+        $notification->user_id = $user;
+        $notification->type = $type;
+        $notification->title = $title;
+        $notification->message = $message;
+
+        $notification->save();
+
+        return $notification;
+    }
 }
