@@ -59,6 +59,22 @@ class AdsProcessTx extends Command
     const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
 
     /**
+     * @var string blockchain address of AdServer
+     */
+    private $adServerAddress;
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->adServerAddress = config('app.adshares_address');
+    }
+
+    /**
      * Execute the console command.
      * @param AdsClient $adsClient
      * @return int
@@ -76,70 +92,10 @@ class AdsProcessTx extends Command
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
-        $adServerAddress = config('app.adshares_address');
-        $txs = AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->get();
-        /** @var $tx AdsTxIn */
-        foreach ($txs as $tx) {
-            $transaction = $adsClient->getTransaction($tx->txid)->getTxn();
-            $type = $transaction->getType();
-            switch ($type) {
-                case 'send_many':
-                    $isTxTargetValid = false;
-                    /** @var $sendManyTx SendManyTransaction */
-                    $sendManyTx = $transaction;
-                    $wiresCount = $sendManyTx->getWireCount();
-                    if ($wiresCount > 0) {
-                        $wires = $sendManyTx->getWires();
-                        foreach ($wires as $wire) {
-                            /** @var $wire SendManyTransactionWire */
-                            $targetAddr = $wire->getTargetAddress();
-                            if ($targetAddr === $adServerAddress) {
-                                $isTxTargetValid = true;
-                                break;
-                            }
-                        }
-                    }
-                    $tx->status = $isTxTargetValid ? AdsTxIn::STATUS_RESERVED : AdsTxIn::STATUS_INVALID;
-                    $tx->save();
-                    break;
+        $dbTxs = AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->get();
 
-                case 'send_one':
-                    /** @var $sendOneTx SendOneTransaction */
-                    $sendOneTx = $transaction;
-                    $targetAddr = $sendOneTx->getTargetAddress();
-                    if ($targetAddr === $adServerAddress) {
-                        $message = $sendOneTx->getMessage();
-                        $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
-                        if (null === $user) {
-                            $tx->status = AdsTxIn::STATUS_RESERVED;
-                            $tx->save();
-                        } else {
-                            $amount = $sendOneTx->getAmount();
-                            // add to ledger
-                            $ul = new UserLedger;
-                            $ul->users_id = $user->id;
-                            $ul->amount = $amount;
-                            $ul->desc = $tx->txid;
-
-                            $tx->status = AdsTxIn::STATUS_USER_DEPOSIT;
-                            // tx added to ledger will not be processed again
-                            DB::transaction(function () use ($ul, $tx) {
-                                $ul->save();
-                                $tx->save();
-                            });
-                        }
-                        break;
-                    } else {
-                        $tx->status = AdsTxIn::STATUS_INVALID;
-                        $tx->save();
-                    }
-                    break;
-
-                default:
-                    $tx->status = AdsTxIn::STATUS_INVALID;
-                    $tx->save();
-                    break;
-            }
+        foreach ($dbTxs as $dbTx) {
+            $this->handleDbTx($adsClient, $dbTx);
         }
         return self::EXIT_CODE_SUCCESS;
     }
@@ -180,6 +136,94 @@ class AdsProcessTx extends Command
                     throw $exc;
                 }
             }
+        }
+    }
+
+    /**
+     * @param AdsClient $adsClient
+     * @param AdsTxIn $dbTx
+     */
+    private function handleDbTx(AdsClient $adsClient, $dbTx)
+    {
+        $transaction = $adsClient->getTransaction($dbTx->txid)->getTxn();
+        $type = $transaction->getType();
+        switch ($type) {
+            case 'send_many':
+                /** @var $transaction SendManyTransaction */
+                $this->handleSendManyTx($dbTx, $transaction);
+                break;
+
+            case 'send_one':
+                /** @var $transaction SendOneTransaction */
+                $this->handleSendOneTx($dbTx, $transaction);
+                break;
+
+            default:
+                $dbTx->status = AdsTxIn::STATUS_INVALID;
+                $dbTx->save();
+                break;
+        }
+    }
+
+    /**
+     * @param AdsTxIn $dbTx
+     * @param SendManyTransaction $transaction
+     */
+    private function handleSendManyTx($dbTx, $transaction): void
+    {
+        $isTxTargetValid = false;
+        $wiresCount = $transaction->getWireCount();
+
+        if ($wiresCount > 0) {
+            $wires = $transaction->getWires();
+
+            foreach ($wires as $wire) {
+                /** @var $wire SendManyTransactionWire */
+                $targetAddr = $wire->getTargetAddress();
+                if ($targetAddr === $this->adServerAddress) {
+                    $isTxTargetValid = true;
+                    break;
+                }
+            }
+        }
+
+        $dbTx->status = $isTxTargetValid ? AdsTxIn::STATUS_RESERVED : AdsTxIn::STATUS_INVALID;
+        $dbTx->save();
+    }
+
+    /**
+     * @param AdsTxIn $dbTx
+     * @param SendOneTransaction $transaction
+     */
+    private function handleSendOneTx($dbTx, $transaction): void
+    {
+        $targetAddr = $transaction->getTargetAddress();
+
+        if ($targetAddr === $this->adServerAddress) {
+            $message = $transaction->getMessage();
+            $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
+
+            if (null === $user) {
+                $dbTx->status = AdsTxIn::STATUS_RESERVED;
+                $dbTx->save();
+            } else {
+                $amount = $transaction->getAmount();
+                // add to ledger
+                $ul = new UserLedger;
+                $ul->users_id = $user->id;
+                $ul->amount = $amount;
+                $ul->desc = $dbTx->txid;
+
+                $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
+                // dbTx added to ledger will not be processed again
+                DB::transaction(function () use ($ul, $dbTx) {
+                    $ul->save();
+                    $dbTx->save();
+                });
+            }
+        } else {
+            $dbTx->status = AdsTxIn::STATUS_INVALID;
+            $dbTx->save();
         }
     }
 }

@@ -36,8 +36,9 @@ class AdsProcessTxTest extends TestCase
 {
     use RefreshDatabase;
 
-    const TX_ID_SEND_ONE = '0001:00000083:0001';
+    const TX_ID_CONNECTION = '0001:00000608:0002';
     const TX_ID_SEND_MANY = '0001:00000085:0001';
+    const TX_ID_SEND_ONE = '0001:00000083:0001';
 
     public function testAdsProcessValidUserDeposit()
     {
@@ -63,6 +64,24 @@ class AdsProcessTxTest extends TestCase
         $this->assertEquals($depositAmount, $amount);
     }
 
+    public function testAdsProcessDepositWithoutUser()
+    {
+        $depositAmount = 100000000000;
+
+        $adsTx = new AdsTxIn;
+        $adsTx->txid = self::TX_ID_SEND_ONE;
+        $adsTx->amount = $depositAmount;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+
+        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+
+        $this->artisan('ads:process-tx')
+            ->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+
+        $this->assertEquals(AdsTxIn::STATUS_RESERVED, AdsTxIn::all()->first()->status);
+    }
+
     public function testAdsProcessValidSendMany()
     {
         $adsTx = new AdsTxIn;
@@ -77,6 +96,22 @@ class AdsProcessTxTest extends TestCase
             ->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsTxIn::STATUS_RESERVED, AdsTxIn::all()->first()->status);
+    }
+
+    public function testAdsProcessConnectionTx()
+    {
+        $adsTx = new AdsTxIn;
+        $adsTx->txid = self::TX_ID_CONNECTION;
+        $adsTx->amount = 300000000000;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+
+        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+
+        $this->artisan('ads:process-tx')
+            ->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+
+        $this->assertEquals(AdsTxIn::STATUS_INVALID, AdsTxIn::all()->first()->status);
     }
 
     public function testAdsProcessGetBlockIdsError()
@@ -137,6 +172,47 @@ class AdsProcessTxTest extends TestCase
             },
             "updated_blocks": "0"
         }', true));
+    }
+
+    private function getTxConnection(): string
+    {
+        return '{
+            "current_block_time": "1539860480",
+            "previous_block_time": "1539859968",
+            "tx": {
+                "data": "140100020000000568C85B0100080600000200",
+                "signature": "08463696728F197EE3CC93DDFC4EA8F91C8BE1EBC1E086A0C13336F3FAB19A7410E61'
+            . '1E8752FF79A4D8EC4F560F0EA7DD80579621C7411297C22D20155533D0E",
+                "time": "1539860485",
+                "account_msid": "0",
+                "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+                "account_hashout": "75B934A19CC7B55633C3AF3982599BF004524633442F29794CB358386EF6973A",
+                "deduct": "0.00000000000",
+                "fee": "0.00000000000"
+            },
+            "network_tx": {
+                "id": "0001:00000608:0002",
+                "block_time": "1539857408",
+                "block_id": "5BC85C00",
+                "node": "1",
+                "node_msid": "1544",
+                "node_mpos": "2",
+                "size": "23",
+                "hashpath_size": "3",
+                "data": "016E1991EF5011312E302E322B322B6766393961613633",
+                "hashpath": [
+                    "21AA279611D8C7E48B9CEBB760BBAC6D0F1F58FC0BFCB5A8BFF0B7D3C7C74866",
+                    "006BE5904D95856A24B0FDAC9EAFF002A10F00C9810EA7016E4617D4300EB3BE",
+                    "7381F2CC6118B76293214F1ED595BEF5F1EFC26E693E83DC2C98E24FBBD90885"
+                ]
+            },
+            "txn": {
+                "type": "connection",
+                "port": "6510",
+                "ip_address": "145.239.80.17",
+                "version": "1.0.2+2+gf99aa63"
+            }
+        }';
     }
 
     private function getTxSendOne(): string
@@ -265,11 +341,14 @@ class AdsProcessTxTest extends TestCase
     private function getTx(string $txid): GetTransactionResponse
     {
         switch ($txid) {
-            case self::TX_ID_SEND_ONE:
-                $response = $this->getTxSendOne();
+            case self::TX_ID_CONNECTION:
+                $response = $this->getTxConnection();
                 break;
             case self::TX_ID_SEND_MANY:
                 $response = $this->getTxSendMany();
+                break;
+            case self::TX_ID_SEND_ONE:
+                $response = $this->getTxSendOne();
                 break;
 
             default:
@@ -291,7 +370,11 @@ class AdsProcessTxTest extends TestCase
             $adsClient->method('getBlockIds')->will($getBlockIdsStub);
 
             // getTransaction
-            $txIds = [self::TX_ID_SEND_ONE, self::TX_ID_SEND_MANY];
+            $txIds = [
+                self::TX_ID_CONNECTION,
+                self::TX_ID_SEND_MANY,
+                self::TX_ID_SEND_ONE,
+            ];
             $map = [];
             foreach ($txIds as $txId) {
                 array_push($map, [$txId, $this->getTx($txId)]);
