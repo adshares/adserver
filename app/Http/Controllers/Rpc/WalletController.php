@@ -33,8 +33,11 @@ class WalletController extends Controller
 {
     const FIELD_ADDRESS = 'address';
     const FIELD_AMOUNT = 'amount';
+    const FIELD_ERROR = 'error';
+    const FIELD_FEE = 'fee';
     const FIELD_MESSAGE = 'message';
     const FIELD_TO = 'to';
+    const FIELD_TOTAL = 'total';
     const FIELD_MEMO = 'memo';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
@@ -55,7 +58,7 @@ class WalletController extends Controller
 
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
-            return self::json(['error' => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
@@ -63,8 +66,8 @@ class WalletController extends Controller
         $total = $amount + $fee;
         $resp = [
             self::FIELD_AMOUNT => $amount,
-            'fee' => $fee,
-            'total' => $total,
+            self::FIELD_FEE => $fee,
+            self::FIELD_TOTAL => $total,
         ];
 
         return self::json($resp);
@@ -89,14 +92,14 @@ class WalletController extends Controller
 
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
-            return self::json(['error' => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         $total = $amount + $fee;
         if (!$this->hasUserEnoughFunds($total)) {
-            return self::json(['error' => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return self::json([self::FIELD_ERROR => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // TODO add tx to queue: $amount is amount, $addressTo is address
