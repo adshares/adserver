@@ -1,19 +1,31 @@
 @startuml
-actor User << browser >>
 participant Publisher << web server >>
+actor User << browser >>
 participant Supply as Supply << AdServer >>
 participant Supply as SupplyU << AdUser >>
  
 User -> Publisher: GET index.html
 User <-- Publisher: index.html
+
 User -> Supply: GET find.js
 User <-- Supply: find.js (cacheable)
-User ->> SupplyU: {impressionId}
-User -> Supply: {impressionId, txId}
-activate Supply
-User <- Supply: best banners
-deactivate Supply
+
 ...
 
+User ->> Supply: {cookie?:tid}
+Supply -->> User: {set-cookie:tid} & (redirect)
+User ->> SupplyU: {cookie?:userId,param:tid}
+SupplyU -->> User: {set-cookie:userId} & (redirect)
+User ->>]: {cookie?:anotherUserId,param:userId}
+]-->> User: {set-cookie:anotherUserId}
+
+...
+
+User -[#red]>> SupplyU: {impressionId}
+User -> Supply: {impressionId, txId}
+activate Supply
+User <-- Supply: best banners
+deactivate Supply
+...
 
 @enduml
