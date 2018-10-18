@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Rpc;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -136,8 +137,9 @@ class WalletController extends Controller
      */
     private function hasUserEnoughFunds(int $amount): bool
     {
-        // TODO check user account balance
-        $balance = 4000000000000000000;
+        // check user account balance
+        $user = Auth::user();
+        $balance = UserLedger::where('users_id', $user->id)->sum('amount');
 
         return $amount <= $balance;
     }
