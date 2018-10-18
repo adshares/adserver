@@ -6,7 +6,7 @@ if [ ! -v TRAVIS ]; then
   # Install git
   apt-get install -y git
 
-  git clone https://github.com/adshares/adserver.git /build/adserver
+  git clone https://github.com/adshares/adserver.git --branch $BUILD_BRANCH --single-branch /build/adserver
   cd /build/adserver
 fi
 
