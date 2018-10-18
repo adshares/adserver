@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ ! -z "$TRAVIS" ]; then
+if [ ! -v TRAVIS ]; then
   # Checkout repo and change directory
 
   # Install git
