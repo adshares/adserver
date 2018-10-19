@@ -73,11 +73,8 @@ class AdsSendOne implements ShouldQueue
         }
 
         $command = new SendOneCommand($this->addressTo, $this->amount, $this->message);
-        try {
-            $response = $adsClient->runTransaction($command);
-        } catch (CommandException $ce) {
-            throw $ce;
-        }
+        // runTransaction throws CommandException, which can be treated as job fail
+        $response = $adsClient->runTransaction($command);
 
         $txid = $response->getTx()->getId();
 
