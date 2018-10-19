@@ -116,6 +116,23 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
+    public function testWithdrawWithMemo()
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'memo' => '00000000111111110000000011111111abcdef00111111110000000123456789',
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
     public function testWithdrawInvalidAddress()
     {
         $user = factory(User::class)->create();
@@ -125,6 +142,23 @@ class WalletControllerTest extends TestCase
             '/api/wallet/withdraw',
             [
                 'amount' => 100000000000,
+                'to' => '0001-00000000-ABC',// invalid address
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawInvalidMemo()
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'memo' => 'hello',
                 'to' => '0001-00000000-ABC',// invalid address
             ]
         );

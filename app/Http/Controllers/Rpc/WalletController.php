@@ -84,11 +84,11 @@ class WalletController extends Controller
 
         Validator::make($request->all(), [
             self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+            self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
             self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
-        //TODO validate memo
         $memo = $request->input(self::FIELD_MEMO);
 
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
@@ -103,7 +103,7 @@ class WalletController extends Controller
             return self::json([self::FIELD_ERROR => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        // TODO add tx to queue: $amount is amount, $addressTo is address
+        // TODO add tx to queue: $amount is amount, $addressTo is address, $memo is message (can be null for no message)
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
