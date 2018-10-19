@@ -217,7 +217,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b->fill([
                         'network_campaign_id' => $nc->id,
                         'uuid' => uniqid().'1',
-                        'creative_type' => $t,
+                        'creative_type' => 'image',
                         'creative_width' => $s[0],
                         'creative_height' => $s[1],
                         'serve_url' => $serveUrl,
