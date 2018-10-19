@@ -20,77 +20,72 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Controllers\Simulator;
-use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
+ * Class Site.
+ *
  * @property int user_id
  * @property string name
- * @property array|null|string site_requires
- * @property array|null|string site_excludes
- * @method static Site create($input = null)
+ * @property string url
  */
 class Site extends Model
 {
-    use Ownership;
-    use SoftDeletes;
-    /**
-     * Template for html code, which should be pasted for each ad unit
-     */
-    const PAGE_CODE_TEMPLATE = '<div data-pub="$publisherId" data-zone="$zoneId" '
-    . 'style="width:$widthpx;height:$heightpx;display: block;margin: 0 auto;background-color: #FAA"></div>';
     public static $rules = [
         'name' => 'required|max:64',
-        'primary_language' => 'required|max:2',
-        'status' => 'required|numeric',
     ];
+
     protected $casts = [
-        'site_requires' => 'json',
-        'site_excludes' => 'json',
-//        'status' => 'boolean',
+        'sites_requires' => 'json',
+        'sites_excludes' => 'json',
     ];
-    /** @var string[] */
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
+        'user_id',
         'name',
         'status',
-        'primary_language',
-        'ad_units',
-        'filtering',
+        'zones',
+        'sites_requires',
+        'sites_excludes',
     ];
-    /** @var string[] */
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
     protected $hidden = [
         'deleted_at',
-        'site_requires',
-        'site_excludes',
-        'zones',
     ];
-    protected $appends = [
-        'ad_units',
-        'filtering',
-        'page_code_common',
-    ];
+
+    /** @var array Aditional fields to be included in collections */
+    protected $appends = ['adUnits', 'targetingArray'];
+
+    public function siteExcludes()
+    {
+        return $this->hasMany(\Adshares\Adserver\Models\SiteExclude::class);
+    }
+
+    public function siteRequires()
+    {
+        return $this->hasMany(\Adshares\Adserver\Models\SiteRequire::class);
+    }
 
     public function zones()
     {
-        return $this->hasMany(Zone::class);
+        return $this->hasMany(\Adshares\Adserver\Models\Zone::class);
     }
 
-    public function setAdUnitsAttribute(array $data): void
-    {
-//        $this->zones()->createMany($this->mapAdUnitsToZoneModel($data['ad_units']));
-    }
-
-    public function getAdUnitsAttribute(): array
+    public function getAdUnitsAttribute()
     {
         $adUnits = [];
-
         foreach ($this->zones as $zone) {
-            $pageCode = $this->getAdUnitPageCode($zone);
             $adUnits[] = [
-                'page_code' => $pageCode,
-                'short_headline' => $zone->name,
+                'shortHeadline' => $zone->name,
                 'size' => [
                     'name' => $zone->name,
                     'width' => $zone->width,
@@ -102,60 +97,30 @@ class Site extends Model
         return $adUnits;
     }
 
-    public function setFilteringAttribute(array $data): void
-    {
-        $this->site_requires = $data['requires'];
-        $this->site_excludes = $data['excludes'];
-    }
-
-    public function getFilteringAttribute(): array
+    public function getTargetingArrayAttribute()
     {
         return [
-            'requires' => $this->site_requires,
-            'excludes' => $this->site_excludes,
+            'requires' => json_decode($this->site_requires),
+            'excludes' => json_decode($this->site_excludes),
         ];
     }
 
-    /**
-     * @return string html code which links to script finding proper advertisement
-     */
-    public function getPageCodeCommonAttribute(): string
+    public static function siteById($siteId)
     {
-        $serverUrl = config('app.url');
-
-        return "<script src=\"$serverUrl/supply/find.js\" async></script>";
-    }
-
-    private function mapAdUnitsToZoneModel($adUnits): array
-    {
-        $adUnits = array_map(function ($zone) {
-            $zone['name'] = $zone['short_headline'];
-            unset($zone['short_headline']);
-
-            $size = Simulator::getZoneTypes()[$zone['size']['size']];
-            $zone['width'] = $size['width'];
-            $zone['height'] = $size['height'];
-
-            return $zone;
-        }, $adUnits);
-
-        return $adUnits;
-    }
-
-    /**
-     * @param $zone Zone AdUnit data
-     *
-     * @return string html code for specific AdUnit
-     */
-    private function getAdUnitPageCode(Zone $zone): string
-    {
-        $replaceArr = [
-            '$publisherId' => $this->user_id,
-            '$zoneId' => $zone->id,
-            '$width' => $zone->width,
-            '$height' => $zone->height,
-        ];
-
-        return strtr(self::PAGE_CODE_TEMPLATE, $replaceArr);
+        return self::with([
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'zones' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at')
+            ->findOrFail($siteId);
     }
 }
