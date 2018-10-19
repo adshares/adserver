@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Rpc;
 
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Tests\TestCase;
@@ -102,6 +103,8 @@ class WalletControllerTest extends TestCase
 
     public function testWithdraw()
     {
+        $this->expectsJobs(AdsSendOne::class);
+
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
@@ -118,6 +121,8 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawWithMemo()
     {
+        $this->expectsJobs(AdsSendOne::class);
+
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
@@ -185,6 +190,8 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds()
     {
+        $this->expectsJobs(AdsSendOne::class);
+
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
@@ -196,7 +203,8 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        // balance check was moved to job, so controller returns success
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
     public function testDepositInfo()

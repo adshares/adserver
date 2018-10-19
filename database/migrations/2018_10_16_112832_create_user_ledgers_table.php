@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\UserLedger;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
@@ -35,6 +36,7 @@ class CreateUserLedgersTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('users_id');
             $table->bigInteger('amount');
+            $table->tinyInteger('status')->default(strval(UserLedger::STATUS_ACCEPTED));
             $table->string('desc');
             $table->timestamps();
         });

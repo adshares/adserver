@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Rpc;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
@@ -87,6 +88,7 @@ class WalletController extends Controller
             self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
             self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
+
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
         $memo = $request->input(self::FIELD_MEMO);
@@ -97,15 +99,22 @@ class WalletController extends Controller
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
-
         $total = $amount + $fee;
-        if (!$this->hasUserEnoughFunds($total)) {
-            return self::json([self::FIELD_ERROR => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $userId = Auth::user()->id;
+        $ul = new UserLedger;
+        $ul->users_id = $userId;
+        $ul->amount = -$total;
+        $ul->desc = '';
+        $ul->status = UserLedger::STATUS_PENDING;
+        $result = $ul->save();
+
+        if ($result) {
+            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
+            AdsSendOne::dispatch($ul, $addressTo, $amount, $memo);
         }
 
-        // TODO add tx to queue: $amount is amount, $addressTo is address, $memo is message (can be null for no message)
-
-        return self::json([], Response::HTTP_NO_CONTENT);
+        return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function depositInfo()
@@ -126,22 +135,6 @@ class WalletController extends Controller
         ];
 
         return self::json($resp);
-    }
-
-    /**
-     * Checks, if user has enough funds.
-     *
-     * @param $amount int transfer total amount
-     *
-     * @return bool true if has enough, false otherwise
-     */
-    private function hasUserEnoughFunds(int $amount): bool
-    {
-        // check user account balance
-        $user = Auth::user();
-        $balance = UserLedger::where('users_id', $user->id)->sum('amount');
-
-        return $amount <= $balance;
     }
 
     /**

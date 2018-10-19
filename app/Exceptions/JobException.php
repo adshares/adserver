@@ -18,25 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Adserver\Exceptions;
 
-use Illuminate\Database\Eloquent\Model;
+use Exception;
 
-class UserLedger extends Model
+class JobException extends Exception
 {
-    const STATUS_ACCEPTED = 0;
-    const STATUS_PENDING = 1;
-    const STATUS_REJECTED = 2;
-
-    /**
-     * Returns account balance of particular user.
-     * @param int $userId user id
-     * @return int balance
-     */
-    public static function getBalanceByUserId(int $userId): int
-    {
-        return self::where('users_id', $userId)
-            ->where('status', self::STATUS_ACCEPTED)
-            ->sum('amount');
-    }
 }
