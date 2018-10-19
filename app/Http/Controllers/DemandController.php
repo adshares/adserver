@@ -196,10 +196,7 @@ class DemandController extends Controller
         //     ]);
         // }
 
-      return  new RedirectResponse($url);
-
-
-        return $response;
+        return new RedirectResponse($url);
     }
 
     public function view(Request $request, $id)
