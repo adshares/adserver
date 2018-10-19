@@ -103,7 +103,7 @@ class Utils
 
         $browser = $browscap->getBrowser();
 
-        $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']??'en');
         if ($locale) {
             $device['language'] = $locale;
         }
