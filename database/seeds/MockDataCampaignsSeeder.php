@@ -18,7 +18,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkBanner;
@@ -159,7 +158,7 @@ class MockDataCampaignsSeeder extends Seeder
 
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
-                $c->landing_url = $cr->url;
+                $c->landing_url = config('app.app_url').'/test-advertiser/index.html';
                 $c->user_id = $u->id;
                 $c->name = $cr->name;
                 $c->budget = $cr->budget_per_hour;
@@ -207,36 +206,34 @@ class MockDataCampaignsSeeder extends Seeder
                 }
 
                 // NETWORK BANNERS
-                for ($bi = 0; $bi < 4; ++$bi) {
-                    $uuid = uniqid().'1';
-                    $bannerId = rand(min($banners), max($banners));
+                foreach($banners as $bi=>$bannerId) {
                     $serveUrl = route('banner-serve', [
                         'id' => $bannerId,
                     ]);
 
-                    $t = $bi % 2 ? 'image' : 'html';
                     $s = $this->bannerSizes[array_rand($this->bannerSizes)];
                     $b = new NetworkBanner();
                     $b->fill([
                         'network_campaign_id' => $nc->id,
-                        'uuid' => $uuid,
-                        'creative_type' => $t,
+                        'uuid' => uniqid().'1',
+                        'creative_type' => 'image',
                         'creative_width' => $s[0],
                         'creative_height' => $s[1],
                         'serve_url' => $serveUrl,
-                        'click_url' => route('log-network-click', [
-                            'id' => '',
-                            'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                        'click_url' => route('banner-click', [
+                            'id' => $bannerId,
+//                            'r' => Utils::urlSafeBase64Encode(config('app.app_url').'/test-advertiser/index.html'),
                         ]),
-                        'view_url' => route('log-network-view', [
-                            'id' => '',
-                            'r' => Utils::urlSafeBase64Encode(config('app.app_url')),
+                        'view_url' => route('banner-view', [
+                            'id' => $bannerId,
+//                            'r' => Utils::urlSafeBase64Encode(config('app.app_url').'/test-advertiser/index.html'),
                         ]),
                     ]);
 
 //                    $b->creative_contents = 'image' == $t ? $this->generateBannernPng($i, $s[0], $s[1]) : $this->generateBannerHTML($i, $s[0], $s[1]);
                     $b->save();
                 }
+
                 $this->command->info(" Added - [$c->landing_url] for user <{$u->email}>");
             }
         }
