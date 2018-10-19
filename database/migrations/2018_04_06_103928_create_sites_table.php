@@ -36,6 +36,9 @@ class CreateSitesTable extends Migration
 
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->string('name', 64);
+            $table->unsignedTinyInteger('status')->nullable(false)->default(0);
+            $table->json('site_excludes')->nullable(true);
+            $table->json('site_requires')->nullable(true);
 
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });

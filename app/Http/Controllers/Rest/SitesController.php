@@ -129,25 +129,12 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully deleted'], 200);
     }
 
-    public function read(Request $request, $site_id)
+    public function read(Request $request, $siteId)
     {
         // TODO check privileges
-        $site = Site::with(
-            [
-                'siteExcludes' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-                'siteRequires' => function ($query) {
-                    /* @var $query Builder */
-                    $query->whereNull('deleted_at');
-                },
-            ]
-        )
-            ->whereNull('deleted_at')->findOrFail($site_id)
-        ;
+        $site = Site::siteById($siteId);
 
-        return self::json(compact('site'));
+        return self::json($site->toArray());
     }
 
     /**
@@ -164,6 +151,7 @@ class SitesController extends Controller
             json_decode(
                 '[
           {
+            "id": "1",
             "label": "Creative type",
             "key":"category",
             "values": [
@@ -183,6 +171,7 @@ class SitesController extends Controller
             "allow_input": true
           },
           {
+            "id": "2",
             "label": "Language",
             "key": "lang",
             "values": [
@@ -193,34 +182,22 @@ class SitesController extends Controller
             ],
             "value_type": "string",
             "allow_input": false
-          },
+          },      
           {
-            "label": "Screen",
-            "key":"screen",
-            "children": [
-              {
-                "label": "Width",
-                "key": "width",
-                "values": [
-                  {"label": "1200 or more", "value": "<1200,>"},
-                  {"label": "between 1200 and 1800", "value": "<1200,1800>"}
-                ],
-                "value_type": "number",
-                "allow_input": true
-              },
-              {
-                "label": "Height",
-                "key": "height",
-                "values": [
-                  {"label": "900 or more", "value": "<900,>"},
-                  {"label": "between 200 and 300", "value": "<200,300>"}
-                ],
-                "value_type": "number",
-                "allow_input": true
-              }
-            ]
-          },
+            "id": "3",
+            "label": "Browser",
+            "key": "browser",
+            "values": [
+              {"label": "Firefox", "value": "firefox"},
+              {"label": "Chrome", "value": "chrome"},
+              {"label": "Safari", "value": "safari"},
+              {"label": "Edge", "value": "edge"}
+            ],
+            "value_type": "string",
+            "allow_input": false
+          },  
           {
+            "id": "4",
             "label": "Javascript support",
             "key": "js_enabled",
             "value_type": "boolean",
@@ -273,7 +250,7 @@ class SitesController extends Controller
             "id": 5,
         "name": "Large Rectangle 2",
         "type": "large-rectangle",
-        "size": 3,
+        "size": ,
         "tags": ["Desktop"]
       }
         ]'
