@@ -211,7 +211,6 @@ class MockDataCampaignsSeeder extends Seeder
                         'id' => $bannerId,
                     ]);
 
-                    $t = ($bi % 2) ? 'image' : 'html';
                     $s = $this->bannerSizes[array_rand($this->bannerSizes)];
                     $b = new NetworkBanner();
                     $b->fill([
