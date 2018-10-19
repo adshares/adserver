@@ -24,7 +24,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Helper\Filter;
 
 /**
@@ -35,7 +34,6 @@ class BannerFinder
     public static function getBestBanners(array $zones, array $keywords)
     {
         $typeDefault = [
-            'html',
             'image',
         ];
 
@@ -88,11 +86,11 @@ class BannerFinder
 
                 if ($zone) {
                     try {
-                        // $zone instanceof Zone; // ?? Yodahack : what the hack
-                        $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                        $pluck = NetworkBanner::where('creative_width', $zone->width)
                             ->where('creative_height', $zone->height)
                             ->whereIn('creative_type', $typeDefault)
-                            ->get()->pluck('uuid')->random();
+                            ->get()->pluck('uuid');
+                        $bannerIds[] = $pluck->random();
                     } catch (\InvalidArgumentException $e) {
                         $bannerIds[] = '';
                     }
