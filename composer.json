@@ -8,7 +8,8 @@
         "browscap/browscap-php": "^4.1",
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.7.*",
-        "laravel/tinker": "^1.0"
+        "laravel/tinker": "^1.0",
+        "ext-http": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
@@ -29,13 +30,15 @@
             "database/factories"
         ],
         "psr-4": {
+            "Adserver\\": "domain/",
+            "Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",
             "Adshares\\Adserver\\Core\\": "core/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Adshares\\Adserver\\Tests\\": "tests/"
+            "Adshares\\AdServer\\Tests\\": "tests/"
         }
     },
     "extra": {
