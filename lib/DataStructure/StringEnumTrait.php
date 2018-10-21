@@ -17,8 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
-namespace Lib;
+namespace Lib\DataStructure;
 
 use RuntimeException;
 use UnexpectedValueException;
@@ -38,14 +39,14 @@ trait StringEnumTrait
 
     private function failIfInvalidValueArray(): void
     {
-        if (empty(self::ALLOWED_VALUES)) {
-            throw new RuntimeException("ALLOWED_VALUES have to be defined as a non-empty array of strings");
+        if (!is_array(self::ALLOWED_VALUES) || empty(self::ALLOWED_VALUES)) {
+            throw new RuntimeException("ALLOWED_VALUES constant has to be defined as a non-empty array of strings");
         }
     }
 
     private function failIfTypeNotAllowed(string $value): void
     {
-        if (!empty(self::ALLOWED_VALUES) && !\in_array($value, self::ALLOWED_VALUES, true)) {
+        if (!in_array($value, self::ALLOWED_VALUES, true)) {
             $values = implode(', ', self::ALLOWED_VALUES);
             throw new UnexpectedValueException("Value '$value' must be one of ($values)");
         }

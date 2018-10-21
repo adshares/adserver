@@ -17,9 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
 namespace AdServer\Supply;
 
-final class Site
+use Lib\Entity;
+
+final class Site implements Entity
 {
+    use Entity\EntityTrait;
 }

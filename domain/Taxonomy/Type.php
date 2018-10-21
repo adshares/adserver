@@ -17,10 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
-namespace Lib;
+namespace AdServer\Taxonomy;
 
-final class FilterType implements StringEnum
+use Lib\DataStructure\StringEnum;
+use Lib\DataStructure\StringEnumTrait;
+
+final class Type implements StringEnum, \Lib\Filter\Type
 {
     public const REQUIRE = 'require';
     public const EXCLUDE = 'exclude';

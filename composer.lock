@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d90d87e500e239f36104663bdd4d291c",
+    "content-hash": "09e75b755eab7dcdc84d781f307c0a0f",
     "packages": [
         {
             "name": "adshares/ads-client",
@@ -5795,7 +5795,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.1",
+        "php": "^7.2",
         "ext-gd": "*",
         "ext-json": "*"
     },

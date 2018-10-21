@@ -1,6 +1,6 @@
 {
     "require": {
-        "php": "^7.1",
+        "php": "^7.2",
         "ext-gd": "*",
         "ext-json": "*",
         "adshares/ads-client": "^1",
@@ -9,7 +9,8 @@
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
-        "ext-http": "*"
+        "psr/http-message": "^1.0",
+        "ramsey/uuid": "^3.8"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
@@ -30,7 +31,7 @@
             "database/factories"
         ],
         "psr-4": {
-            "Adserver\\": "domain/",
+            "AdServer\\": "domain/",
             "Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",
             "Adshares\\Adserver\\Core\\": "core/"

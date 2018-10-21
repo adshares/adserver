@@ -17,9 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
-namespace AdServer;
+namespace Lib\DataStructure;
 
-interface User
+interface StringEnum
 {
+    public const ALLOWED_VALUES = null;
+
+    public function __construct(string $value);
 }

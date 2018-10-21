@@ -18,11 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Lib;
 
-interface StringEnum
+interface User
 {
-    public const ALLOWED_VALUES = null;
-
-    public function __construct(string $value);
 }

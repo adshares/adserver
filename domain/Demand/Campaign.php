@@ -17,31 +17,35 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
 namespace AdServer\Demand;
 
 use DateInterval;
-use http\Url;
+use Lib\Duration;
+use Lib\Entity;
+use Lib\Url;
 
-final class Campaign
+final class Campaign implements Entity
 {
-    /** @var CampaignTargeting */
-    private $targeting;
+    use Entity\EntityTrait;
+    /** @var Advertiser */
+    private $owner;
     /** @var string */
     private $name;
     /** @var Url */
     private $landingPage;
     /** @var DateInterval */
     private $duration;
-    /** @var Advertiser */
-    private $owner;
+    /** @var CampaignTargeting */
+    private $targeting;
 
     public function __construct(
         Advertiser $owner,
         string $name,
         CampaignTargeting $targeting,
         Url $landingPage,
-        DateInterval $duration
+        Duration $duration
     ) {
         $this->owner = $owner;
         $this->name = $name;

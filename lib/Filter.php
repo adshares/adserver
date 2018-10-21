@@ -17,20 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
 namespace Lib;
 
-final class Filter
+interface Filter
 {
-    /** @var FilterType */
-    private $type;
-    private $key;
-    private $value;
-
-    public function __construct(FilterType $type, $key, $value)
-    {
-        $this->type = $type;
-        $this->key = $key;
-        $this->value = $value;
-    }
+    public function __construct(Filter\Type $type, Filter\Key $key, Filter\Value $value);
 }

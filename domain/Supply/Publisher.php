@@ -17,11 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types=1);
 
 namespace AdServer\Supply;
 
-use AdServer\User;
+use Lib\Entity;
+use Lib\User;
 
-final class Publisher implements User
+final class Publisher implements User, Entity
 {
+    use Entity\EntityTrait;
 }
