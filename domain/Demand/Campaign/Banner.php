@@ -19,17 +19,28 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Demand;
+namespace AdServer\Demand\Campaign;
 
-use AdServer\Taxonomy\Filter;
+use Lib\Entity;
 
-final class BannerClassification
+final class Banner implements Entity
 {
-    /** @var Filter[] */
-    private $filters;
+    use Entity\Entity;
+    /** @var Banner\Type */
+    private $type;
+    /** @var Banner\Dimensions */
+    private $dimensions;
+    /** @var Banner\Classification */
+    private $classification;
 
-    public function __construct(Filter ...$filters)
+    public function __construct(Banner\Type $type, Banner\Dimensions $dimensions)
     {
-        $this->filters = $filters;
+        $this->type = $type;
+        $this->dimensions = $dimensions;
+    }
+
+    public function classify(Banner\Classification $classification): void
+    {
+        $this->classification = $classification;
     }
 }

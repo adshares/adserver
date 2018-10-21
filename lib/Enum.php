@@ -19,15 +19,11 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Taxonomy;
+namespace Lib;
 
-use Lib\DataStructure\StringEnum;
-use Lib\DataStructure\StringEnumTrait;
-
-final class Type implements StringEnum, \Lib\Filter\Type
+interface Enum
 {
-    public const REQUIRE = 'require';
-    public const EXCLUDE = 'exclude';
-    public const ALLOWED_VALUES = [self::REQUIRE, self::EXCLUDE];
-    use StringEnumTrait;
+    public const ALLOWED_VALUES = null;
+
+    public function __construct(string $value);
 }

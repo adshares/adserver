@@ -7,19 +7,18 @@
  */
 declare(strict_types=1);
 
+namespace AdServer;
 
-namespace Lib\Filter;
-
-trait FilterTrait
+final class Filter
 {
-    /** @var Type */
+    /** @var Filter\Type */
     private $type;
-    /** @var Key */
+    /** @var Filter\Key */
     private $key;
-    /** @var Value */
+    /** @var Filter\Value */
     private $value;
 
-    public function __construct(Type $type, Key $key, Value $value)
+    public function __construct(Filter\Type $type, Filter\Key $key, Filter\Value $value)
     {
         $this->type = $type;
         $this->key = $key;

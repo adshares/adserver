@@ -21,36 +21,42 @@ declare(strict_types=1);
 
 namespace AdServer\Demand;
 
-use DateInterval;
+use AdServer\Demand\Campaign\BannerCollection;
+use AdServer\Demand\Campaign\Targeting;
+use Lib\AggregateRoot;
 use Lib\Duration;
 use Lib\Entity;
 use Lib\Url;
 
-final class Campaign implements Entity
+final class Campaign implements Entity, AggregateRoot
 {
-    use Entity\EntityTrait;
+    use Entity\Entity;
     /** @var Advertiser */
     private $owner;
     /** @var string */
     private $name;
+    /** @var Targeting */
+    private $targeting;
     /** @var Url */
     private $landingPage;
-    /** @var DateInterval */
+    /** @var Duration */
     private $duration;
-    /** @var CampaignTargeting */
-    private $targeting;
+    /** @var BannerCollection */
+    private $banners;
 
     public function __construct(
         Advertiser $owner,
         string $name,
-        CampaignTargeting $targeting,
+        Targeting $targeting,
         Url $landingPage,
-        Duration $duration
+        Duration $duration,
+        BannerCollection $banners
     ) {
         $this->owner = $owner;
         $this->name = $name;
         $this->targeting = $targeting;
         $this->landingPage = $landingPage;
         $this->duration = $duration;
+        $this->banners = $banners;
     }
 }

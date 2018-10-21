@@ -19,12 +19,12 @@
  */
 declare(strict_types=1);
 
-namespace Lib\DataStructure;
+namespace Lib\Enum;
 
 use RuntimeException;
 use UnexpectedValueException;
 
-trait StringEnumTrait
+trait Enum
 {
     /** @var string */
     private $value;

@@ -32,6 +32,7 @@
         ],
         "psr-4": {
             "AdServer\\": "domain/",
+            "Internals\\": "internals/",
             "Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",
             "Adshares\\Adserver\\Core\\": "core/"
@@ -39,7 +40,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Adshares\\AdServer\\Tests\\": "tests/"
+            "Adshares\\AdServer\\Tests\\": "tests/",
+            "Test\\AdServer\\": "test/"
         }
     },
     "extra": {

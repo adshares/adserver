@@ -19,11 +19,12 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Supply;
+namespace AdServer\Demand\Campaign;
 
-use Lib\Filter;
+use AdServer\Filter;
+use Lib\Collection;
 
-final class Filtering
+final class Targeting implements Collection
 {
     /** @var Filter[] */
     private $filters;

@@ -10,7 +10,7 @@ namespace Lib\Entity;
 
 use Lib\Id;
 
-trait EntityTrait
+trait Entity
 {
     private $id;
 

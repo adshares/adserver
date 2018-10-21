@@ -22,9 +22,9 @@ declare(strict_types=1);
 namespace AdServer\Supply;
 
 use Lib\Entity;
-use Lib\User;
+use AdServer\User;
 
-final class Publisher implements User, Entity
+final class Publisher implements Entity, User
 {
-    use Entity\EntityTrait;
+    use Entity\Entity;
 }

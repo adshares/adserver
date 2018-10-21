@@ -7,7 +7,7 @@
  */
 declare(strict_types=1);
 
-namespace Lib\Filter;
+namespace AdServer\Filter;
 
 interface Key
 {

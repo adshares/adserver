@@ -5,7 +5,9 @@ namespace Lib;
 
 interface Id
 {
-    public function toString(): string;
+    public function __toString(): string;
 
-    public static function fromString(string $id): Id;
+    public static function fromString(string $id);
+
+    public static function random();
 }

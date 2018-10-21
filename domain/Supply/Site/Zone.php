@@ -19,17 +19,11 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Demand;
+namespace AdServer\Supply\Site;
 
 use Lib\Entity;
 
-final class Banner implements Entity
+final class Zone implements Entity
 {
-    use Entity\EntityTrait;
-
-    public function __construct() { }
-
-    public function classify(BannerClassification $classification): void
-    {
-    }
+    use Entity\Entity;
 }

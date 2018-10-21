@@ -19,11 +19,14 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Supply;
+namespace AdServer\Filter;
 
-use Lib\Entity;
+use Lib\Enum;
 
-final class Zone implements Entity
+final class Type implements Enum
 {
-    use Entity\EntityTrait;
+    public const REQUIRE = 'require';
+    public const EXCLUDE = 'exclude';
+    public const ALLOWED_VALUES = [self::REQUIRE, self::EXCLUDE];
+    use Enum\Enum;
 }

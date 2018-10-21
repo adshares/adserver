@@ -21,9 +21,32 @@ declare(strict_types=1);
 
 namespace AdServer\Supply;
 
+use AdServer\Supply\Site\Filtering;
+use AdServer\Supply\Site\ZoneCollection;
+use Lib\AggregateRoot;
 use Lib\Entity;
 
-final class Site implements Entity
+final class Site implements Entity, AggregateRoot
 {
-    use Entity\EntityTrait;
+    use Entity\Entity;
+    /** @var Publisher */
+    private $owner;
+    /** @var string */
+    private $name;
+    /** @var Filtering */
+    private $filtering;
+    /** @var ZoneCollection */
+    private $zones;
+
+    public function __construct(
+        Publisher $owner,
+        string $name,
+        Filtering $filtering,
+        ZoneCollection $zones
+    ) {
+        $this->owner = $owner;
+        $this->name = $name;
+        $this->filtering = $filtering;
+        $this->zones = $zones;
+    }
 }

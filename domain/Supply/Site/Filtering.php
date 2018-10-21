@@ -17,11 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types=1);
 
-namespace Lib;
+namespace AdServer\Supply\Site;
 
-interface User
+use Lib\Collection;
+use AdServer\Filter;
+
+final class Filtering implements Collection
 {
+    /** @var Filter[] */
+    private $filters;
+
+    public function __construct(Filter ...$filters)
+    {
+        $this->filters = $filters;
+    }
 }

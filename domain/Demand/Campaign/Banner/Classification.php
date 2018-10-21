@@ -19,11 +19,12 @@
  */
 declare(strict_types=1);
 
-namespace AdServer\Demand;
+namespace AdServer\Demand\Campaign\Banner;
 
-use AdServer\Taxonomy\Filter;
+use AdServer\Filter;
+use Lib\Collection;
 
-final class CampaignTargeting
+final class Classification implements Collection
 {
     /** @var Filter[] */
     private $filters;
