@@ -28,6 +28,9 @@
          processIsolation="false"
          stopOnFailure="false">
     <testsuites>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./test</directory>
+        </testsuite>
         <testsuite name="Console">
             <directory suffix="Test.php">./tests/Console</directory>
         </testsuite>
