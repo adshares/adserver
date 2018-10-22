@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 use Adshares\Adserver\Models\Site;
@@ -25,6 +25,32 @@ use Illuminate\Database\Seeder;
 
 class MockDataSitesSeeder extends Seeder
 {
+    private $sizes = [
+        #best
+        "medium rectangle" => "300x250",
+        "large rectangle" => "336x280",
+        "leaderboard" => "728x90",
+        "half page" => "300x600",
+        "large mobile banner" => "320x100",
+        #other
+        "banner" => "468x60",
+        "half banner" => "234x60",
+        "button" => "125x125",
+        "skyscraper" => "120x600",
+        "wide skyscraper" => "160x600",
+        "small rectangle" => "180x150",
+        "vertical banner" => "120x240",
+        "small square" => "200x200",
+        "portrait" => "300x1050",
+        "square" => "250x250",
+        "mobile banner" => "320x50",
+        "large leaderboard" => "970x90",
+        "billboard" => "970x250",
+        #polish
+        "billboard" => "750x100",
+        "double billboard" => "750x200",
+        "tripple billboard" => "750x300",
+    ];
     private $zones = [
         'top' => [
             'width' => 728,
@@ -35,8 +61,12 @@ class MockDataSitesSeeder extends Seeder
             'height' => 600,
         ],
         'right' => [
-            'width' => 160,
+            'width' => 230,
             'height' => 600,
+        ],
+        'mid' => [
+            'width' => 750,
+            'height' => 300,
         ],
         'bottom' => [
             'width' => 728,
