@@ -27,18 +27,23 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class UsersTest extends TestCase
 {
     use RefreshDatabase;
-
-    const URI_AUTH = '/auth/users';
-    const URI = '/panel/users';
+    private const URI = '/api/users';
 
     public function testCreateUser()
     {
-        $this->markTestSkipped('No admin user creation at this time');
-
         /* @var $user User */
         $user = factory(User::class)->make();
 
-        $response = $this->postJson(self::URI_AUTH, ['user' => $user->getAttributes(), 'uri' => '/']);
+        $this->actingAs(factory(User::class)->create(["is_admin" => true]), 'api');
+        $data = [
+            'user' => [
+                'email' => $user->email,
+                'password' => 'password',
+                'isAdvertiser' => true,
+                'isPublisher' => true,
+            ],
+        ];
+        $response = $this->postJson('/api/users', $data);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
@@ -46,34 +51,12 @@ class UsersTest extends TestCase
 
         $uri = $response->headers->get('Location');
         $matches = [];
-        $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
+        $this->assertSame(1, preg_match('/(\d+)$/', $uri, $matches));
 
         $this->actingAs(factory(User::class)->create(['is_admin' => true]), 'api');
 
-        $response = $this->getJson(self::URI . '/' . $matches[1]);
+        $response = $this->getJson("/api/users/{$matches[1]}");
         $response->assertStatus(200);
         $response->assertJsonFragment(['email' => $user->email]);
-
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount(1);
-    }
-
-    public function testCreateUsers()
-    {
-        $this->markTestSkipped('No admin user creation at this time');
-        $count = 10;
-
-        $users = factory(User::class, $count)->make();
-        foreach ($users as $user) {
-            $response = $this->postJson(self::URI, ['user' => $user->getAttributes(), 'uri' => '/']);
-            $response->assertStatus(201);
-        }
-
-        $this->actingAs(factory(User::class)->create(['is_admin' => true]));
-
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount($count);
     }
 }

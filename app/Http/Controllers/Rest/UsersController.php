@@ -29,7 +29,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 use JsonRPC\Exception\ServerErrorException;
 
 class UsersController extends Controller
@@ -50,7 +49,6 @@ class UsersController extends Controller
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'user', User::$rules_add);
-        Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
         $user = User::register($request->input('user'));
