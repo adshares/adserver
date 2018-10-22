@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-apt-get -y install mysql-server
+mysql --version || apt-get -y install mysql-server

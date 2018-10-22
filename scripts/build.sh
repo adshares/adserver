@@ -6,16 +6,21 @@ if [ ! -v TRAVIS ]; then
   # Install git
   git --version || apt-get install -y git
 
-  git clone https://github.com/adshares/adserver.git --branch $BUILD_BRANCH --single-branch /build/adserver
-  cd /build/adserver
+  git clone \
+    --depth=1 \
+    https://github.com/adshares/adserver.git \
+    --branch ${ADSERVER_INSTALLATION_BRANCH} \
+    ${ADSERVER_BUILD_PATH}/build
+
+  cd ${ADSERVER_BUILD_PATH}/build
 fi
 
 envsubst < .env.dist | tee .env
 
-composer install --dev
+composer install --${APP_ENV}
 
 ./artisan key:generate
 ./artisan package:discover
 
 yarn install
-yarn run dev
+yarn run ${APP_ENV}
