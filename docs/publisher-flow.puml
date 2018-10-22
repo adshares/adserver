@@ -12,20 +12,13 @@ User <-- Supply: find.js (cacheable)
 
 ...
 
-User ->> Supply: {cookie?:tid}
-Supply -->> User: {set-cookie:tid} & (redirect)
-User ->> SupplyU: {cookie?:userId,param:tid}
-SupplyU -->> User: {set-cookie:userId} & (redirect)
-User ->>]: {cookie?:anotherUserId,param:userId}
-]-->> User: {set-cookie:anotherUserId}
+User ->> Supply  : {impressionId}
+User <<-- Supply : (set cookie & redirect)
+User  ->> SupplyU: (follow redirect)
+User <<-- SupplyU: (set cookie & redirect)
+User ->>]       : (follow redirect)
 
 ...
 
-User -[#red]>> SupplyU: {impressionId}
-User -> Supply: {impressionId, txId}
-activate Supply
-User <-- Supply: best banners
-deactivate Supply
-...
 
 @enduml

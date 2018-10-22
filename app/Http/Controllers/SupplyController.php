@@ -68,7 +68,7 @@ class SupplyController extends Controller
         if ($impressionId) {
             $aduser_endpoint = config('app.aduser_local_endpoint');
             if ($aduser_endpoint) {
-                $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
             } else {
                 $userdata = [];
             }
@@ -105,14 +105,14 @@ class SupplyController extends Controller
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        $response->setCache(array(
-            'etag' => md5(md5_file($jsPath).implode(':', $params)),
-            'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+        $response->setCache([
+            'etag' => md5(md5_file($jsPath) . implode(':', $params)),
+            'last_modified' => new \DateTime('@' . filemtime($jsPath)),
             'max_age' => 3600 * 24 * 30,
             's_maxage' => 3600 * 24 * 30,
             'private' => false,
             'public' => true,
-        ));
+        ]);
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -141,11 +141,11 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?'.$qString;
+                $url .= '?' . $qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&'.$qString;
+                $url .= '&' . $qString;
             }
         }
 
@@ -173,7 +173,6 @@ class SupplyController extends Controller
             $log->getAdselectJson(),
         ]);
 
-
         $response = new RedirectResponse($url);
 
         return $response;
@@ -191,11 +190,11 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?'.$qString;
+                $url .= '?' . $qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&'.$qString;
+                $url .= '&' . $qString;
             }
         }
 
@@ -221,11 +220,10 @@ class SupplyController extends Controller
 
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
-        // TODO: process?
+            // TODO: process?
         } else {
 //            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
-            $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
-
+            $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
             $log->our_userdata = $userdata['user']['keywords'];
             $log->human_score = $userdata['user']['human_score'];
@@ -237,17 +235,13 @@ class SupplyController extends Controller
             $log->getAdselectJson(),
         ]);
 
-        $backUrl = route('log-network-click', ['log_id' => $log->id]);
+        $backUrl = route('banner-view', ['id' => $log->id]);
 
         $url = Utils::addUrlParameter($url, 'pid', $log->id);
         $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($log->our_userdata)));
         $url = Utils::addUrlParameter($url, 'r', Utils::urlSafeBase64Encode($backUrl));
 
-        return new Response(null, Response::HTTP_NO_CONTENT);
-
-//        $response = new RedirectResponse($url);
-//
-//        return $response;
+        return new RedirectResponse($url);
     }
 
     public function logNetworkKeywords(Request $request, $log_id)
