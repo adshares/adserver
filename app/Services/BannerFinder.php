@@ -22,8 +22,8 @@ namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Helper\Filter;
 
 /**
@@ -34,7 +34,6 @@ class BannerFinder
     public static function getBestBanners(array $zones, array $keywords)
     {
         $typeDefault = [
-            'html',
             'image',
         ];
 
@@ -87,11 +86,11 @@ class BannerFinder
 
                 if ($zone) {
                     try {
-                        // $zone instanceof Zone; // ?? Yodahack : what the hack
-                        $bannerIds[] = NetworkBanner::where('creative_width', $zone->width)
+                        $pluck = NetworkBanner::where('creative_width', $zone->width)
                             ->where('creative_height', $zone->height)
                             ->whereIn('creative_type', $typeDefault)
-                            ->get()->pluck('uuid')->random();
+                            ->get()->pluck('uuid');
+                        $bannerIds[] = $pluck->random();
                     } catch (\InvalidArgumentException $e) {
                         $bannerIds[] = '';
                     }
@@ -103,39 +102,24 @@ class BannerFinder
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {
-            $banners[] = [
-                'serve_url' => config('app.url') . '/img/logo_x.png',
-                'creative_sha1' => sha1_file(public_path('img/logo_x.png')),
-                'pay_from' => AdsUtils::normalizeAddress(config('app.adshares_address')), // send this info to log
-                'click_url' => route('log-network-click', [
-                    'id' => '',
-                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
-                ]),
-                'view_url' => route('log-network-view', [
-                    'id' => '',
-                    'r' => Utils::urlSafeBase64Encode(config('app.url')),
-                ]),
-            ];
+            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
 
-//            // TODO: fix
-//            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
-//
-//            if (!empty($banner)) {
-//                $campaign = NetworkCampaign::find($banner->network_campaign_id);
-//                $banners[] = [
-//                    'serve_url' => $banner->serve_url,
-//                    'creative_sha1' => $banner->creative_sha1,
-//                    'pay_from' => $campaign->adshares_address, // send this info to log
-//                    'click_url' => route('log-network-click', [
-//                        'id' => $banner->uuid,
-//                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
-//                    ]),
-//                    'view_url' => route('log-network-view', [
-//                        'id' => $banner->uuid,
-//                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
-//                    ]),
-//                ];
-//            }
+            if (!empty($banner)) {
+                $campaign = NetworkCampaign::find($banner->network_campaign_id);
+                $banners[] = [
+                    'serve_url' => $banner->serve_url,
+                    'creative_sha1' => $banner->creative_sha1,
+                    'pay_from' => $campaign->adshares_address, // send this info to log
+                    'click_url' => route('log-network-click', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                    ]),
+                    'view_url' => route('log-network-view', [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                    ]),
+                ];
+            }
         }
 
         return $banners;

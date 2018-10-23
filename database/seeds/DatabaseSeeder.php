@@ -27,5 +27,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
+        $this->call([
+            MockDataUsersSeeder::class,
+            MockDataSitesSeeder::class,
+            MockDataCampaignsSeeder::class,
+        ]);
     }
 }

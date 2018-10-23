@@ -76,6 +76,10 @@ class MockDataSitesSeeder extends Seeder
             foreach ($r->sites as $rs) {
                 $s = new Site();
                 $s->name = $rs->name;
+                $s->status = $rs->status;
+                $s->site_requires = isset($rs->site_requires) ? json_encode($rs->site_requires) : null;
+                $s->site_excludes = isset($rs->site_excludes) ? json_encode($rs->site_excludes) : null;
+
                 $s->user_id = $u->id;
                 $s->save();
                 foreach ($this->zones as $zn => $zr) {

@@ -1,0 +1,24 @@
+@startuml
+participant Publisher << web server >>
+actor User << browser >>
+participant Supply as Supply << AdServer >>
+participant Supply as SupplyU << AdUser >>
+ 
+User -> Publisher: GET index.html
+User <-- Publisher: index.html
+
+User -> Supply: GET find.js
+User <-- Supply: find.js (cacheable)
+
+...
+
+User ->> Supply  : {impressionId}
+User <<-- Supply : (set cookie & redirect)
+User  ->> SupplyU: (follow redirect)
+User <<-- SupplyU: (set cookie & redirect)
+User ->>]       : (follow redirect)
+
+...
+
+
+@enduml

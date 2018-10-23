@@ -20,66 +20,17 @@
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\User;
 use Illuminate\Database\Seeder;
 
 class MockDataCampaignsSeeder extends Seeder
 {
     private $bannerSizes = [
-        [728, 90], [160, 600], [468, 60], [250, 250],
+        [728, 90],
+        [160, 600],
     ];
-
-    private function generateBannernPng($id, $width, $height, $text = '')
-    {
-        $image = \imagecreatetruecolor($width, $height);
-
-        $bgColor = \imagecolorallocate($image, 240, 240, 240);
-        $textColor = \imagecolorallocate($image, 0, 0, 0);
-
-        \imagefilledrectangle($image, 0, 0, $width, $height, $bgColor);
-
-        // The text to draw
-        $rand = mt_rand(10000, 99999);
-        $text = "{$text}{$width}x{$height}\nID: {$id}\n{$rand}";
-        // Replace path by your own font path
-        $font = resource_path('fonts/mock-font.ttf');
-        $size = 20;
-
-        // Add the text
-        \imagettftext($image, $size, 0, 5, $size + 10, $textColor, $font, $text);
-
-        ob_start();
-        \imagepng($image);
-
-        return ob_get_clean();
-    }
-
-    private function generateBannerHTML($id, $width, $height)
-    {
-        $img = $this->generateBannernPng($id, $width, $height, 'HTML');
-        $base64Image = base64_encode($img);
-
-        $server_url = env('APP_URL');
-        $view_js_route = route('demand-view.js');
-
-        //if(!mt_rand(0, 2))        return self::tankHTML();
-        return '
-        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-        <html>
-        <head>
-            <meta http-equiv="content-type" content="text/html; charset=utf-8">
-            <meta http-equiv="Content-Security-Policy" content="default-src \none\'; img-src \'self\' data: '.$server_url.' '.$server_url.'; frame-src \'self\' data:; script-src \'self\' '.$server_url.' '.$server_url.' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
-        </head>
-        <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
-            <script src="'.$view_js_route.'"></script>
-            <a id="adsharesLink">
-            <img src="data:image/png;base64,'.$base64Image.'" width="'.$width.'" height="'.$height.'" border="0">
-            </a>
-
-        </body>
-        </html>
-        ';
-    }
 
     private static function getRandValue($type)
     {
@@ -156,11 +107,15 @@ class MockDataCampaignsSeeder extends Seeder
 
             foreach ($r->campaigns as $cr) {
                 $c = new Campaign();
-                $c->landing_url = $cr->url;
+                $c->landing_url = config('app.app_url') . '/test-advertiser/index.html';
                 $c->user_id = $u->id;
-                $c->max_cpm = $cr->max_cpm;
-                $c->max_cpc = $cr->max_cpc;
-                $c->budget_per_hour = $cr->budget_per_hour;
+                $c->name = $cr->name;
+                $c->budget = $cr->budget_per_hour;
+                $c->status = 2; // active
+                $c->targeting_requires = isset($cr->targeting_requires) ? json_encode($cr->targeting_requires) : null;
+                $c->targeting_excludes = isset($cr->targeting_excludes) ? json_encode($cr->targeting_excludes) : null;
+                $c->classification_status = $cr->classification_status ?? 0;
+                $c->classification_tags = $cr->classification_tags ?? null;
 
                 $c->fill([
                     'time_start' => date('Y-m-d H:i:s'),
@@ -168,21 +123,153 @@ class MockDataCampaignsSeeder extends Seeder
                 ]);
                 $c->save();
 
-                // BANNERS
+                // NETWORK CAMPAIGNS
+                $nc = new NetworkCampaign();
+                $nc->uuid = uniqid() . '1';
+                $nc->landing_url = $cr->url;
+                $nc->max_cpm = $cr->max_cpm;
+                $nc->max_cpc = $cr->max_cpc;
+                $nc->source_host = config('app.url');
+                $nc->budget_per_hour = $cr->budget_per_hour;
+                $nc->adshares_address = '0001-00000001-0001';
 
+                $nc->fill([
+                    'time_start' => date('Y-m-d H:i:s'),
+                    'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
+                ]);
+                $nc->save();
+
+                $banners = [];
+
+                // BANNERS
                 for ($bi = 0; $bi < 4; ++$bi) {
-                    $t = $bi % 2 ? 'image' : 'html';
-                    $s = $this->bannerSizes[array_rand($this->bannerSizes)];
-                    $b = new Banner();
-                    $b->fill(['campaign_id' => $c->id, 'creative_type' => $t, 'creative_width' => $s[0], 'creative_height' => $s[1]]);
-                    $b->creative_contents = 'image' == $t ? $this->generateBannernPng($i, $s[0], $s[1]) : $this->generateBannerHTML($i, $s[0], $s[1]);
+                    $b = $this->makeBanner($c, $bi);
+                    $b->save();
+
+                    $banners[] = $b;
+                }
+
+                // NETWORK BANNERS
+                foreach ($banners as $banner) {
+                    $b = $this->makeNetworkBanner($banner, $nc);
                     $b->save();
                 }
+
                 $this->command->info(" Added - [$c->landing_url] for user <{$u->email}>");
             }
         }
         DB::commit();
 
-        $this->command->info('Campaigns mock data seeded - for first user and last '.($i).' users');
+        $this->command->info('Campaigns mock data seeded - for first user and last ' . ($i) . ' users');
+    }
+
+    private function generateBannernPng($id, $width, $height, $text = '')
+    {
+        $image = \imagecreatetruecolor($width, $height);
+
+        $bgColor = \imagecolorallocate($image, rand(0, 200), rand(0, 200), rand(0, 200));
+        $textColor = \imagecolorallocate($image, 0, 0, 0);
+
+        \imagefilledrectangle($image, 0, 0, $width, $height, $bgColor);
+
+        // The text to draw
+        $rand = mt_rand(10000, 99999);
+        $text = "{$text}\nBID: {$id}\n{$rand}\nW: $width\nH: $height";
+        // Replace path by your own font path
+        $font = resource_path('fonts/mock-font.ttf');
+        $size = 20;
+
+        // Add the text
+        \imagettftext($image, $size, 0, 5, $size + 10, $textColor, $font, $text);
+
+        ob_start();
+        \imagepng($image);
+
+        return ob_get_clean();
+    }
+
+    private function generateBannerHTML($id, $width, $height)
+    {
+        $img = $this->generateBannernPng($id, $width, $height, 'HTML');
+        $base64Image = base64_encode($img);
+
+        $server_url = env('APP_URL');
+        $view_js_route = route('demand-view.js');
+
+        //if(!mt_rand(0, 2))        return self::tankHTML();
+        return '
+        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+        <html>
+        <head>
+            <meta http-equiv="content-type" content="text/html; charset=utf-8">
+            <meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src \'self\' data: '
+            . $server_url
+            . ' '
+            . $server_url
+            . '; frame-src \'self\' data:; script-src \'self\' '
+            . $server_url
+            . ' '
+            . $server_url
+            . ' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
+        </head>
+        <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
+            <script src="'
+            . $view_js_route
+            . '"></script>
+            <a id="adsharesLink">
+            <img src="data:image/png;base64,'
+            . $base64Image
+            . '" width="'
+            . $width
+            . '" height="'
+            . $height
+            . '" border="0">
+            </a>
+
+        </body>
+        </html>
+        ';
+    }
+
+    private function makeNetworkBanner($banner, $nc): NetworkBanner
+    {
+        $serveUrl = route('banner-serve', [
+            'id' => $banner,
+        ]);
+
+        $b = new NetworkBanner();
+        $b->fill([
+            'network_campaign_id' => $nc->id,
+            'uuid' => uniqid() . '1',
+            'creative_type' => 'image',
+            'creative_width' => $banner->creative_width,
+            'creative_height' => $banner->creative_height,
+            'serve_url' => $serveUrl,
+            'click_url' => route('banner-click', [
+                'id' => $banner->id,
+            ]),
+            'view_url' => route('banner-view', [
+                'id' => $banner->id,
+            ]),
+        ]);
+
+        return $b;
+    }
+
+    private function makeBanner($c, $bi): Banner
+    {
+        $t = 'image';
+        $idx = $bi % 2;
+        $s = $this->bannerSizes[$idx];
+        $b = new Banner();
+        $b->fill([
+            'campaign_id' => $c->id,
+            'creative_type' => $t,
+            'creative_width' => $s[0],
+            'creative_height' => $s[1],
+        ]);
+        $b->creative_contents = $this->generateBannernPng($bi, $s[0], $s[1], "CID: $c->id");
+
+        return $b;
     }
 }

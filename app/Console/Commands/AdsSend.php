@@ -18,21 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Console\Commands;
 
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Hash;
+use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendOneCommand;
+use Illuminate\Console\Command;
 
-trait CreatesApplication
+class AdsSend extends Command
 {
-    public function createApplication()
+    protected $signature = 'ads:send';
+
+    public function handle(AdsClient $adsClient)
     {
-        $app = require __DIR__ . '/../../bootstrap/app.php';
-
-        $app->make(Kernel::class)->bootstrap();
-
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
+        $response = $adsClient->runTransaction(new SendOneCommand(
+            config('app.adshares_address'),
+            10 * (10 ** 11), '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'));
+        $this->info($response->getTx()->getId());
     }
 }

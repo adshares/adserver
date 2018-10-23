@@ -48,6 +48,12 @@ class CreateCampaignsTable extends Migration
             $table->decimal('bid')->nullable(false)->default(0);
             $table->decimal('budget')->nullable(false)->default(0);
 
+            $table->json('targeting_excludes')->nullable(true);
+            $table->json('targeting_requires')->nullable(true);
+
+            $table->unsignedTinyInteger('classification_status')->nullable(false)->default(0);
+            $table->string('classification_tags')->nullable(true);
+
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
 
