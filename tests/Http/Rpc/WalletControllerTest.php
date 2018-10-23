@@ -20,7 +20,9 @@
 
 namespace Adshares\Adserver\Tests\Http\Rpc;
 
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -101,7 +103,11 @@ class WalletControllerTest extends TestCase
 
     public function testWithdraw()
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->expectsJobs(AdsSendOne::class);
+
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
@@ -113,14 +119,52 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
-    public function testWithdrawInvalidAmount()
+    public function testWithdrawWithMemo()
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->expectsJobs(AdsSendOne::class);
+
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
                 'amount' => 100000000000,
-                'to' => '0001-00000000-ABC',
+                'memo' => '00000000111111110000000011111111abcdef00111111110000000123456789',
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    public function testWithdrawInvalidAddress()
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'to' => '0001-00000000-ABC',// invalid address
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawInvalidMemo()
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => 100000000000,
+                'memo' => 'hello',
+                'to' => '0001-00000000-ABC',// invalid address
             ]
         );
 
@@ -130,7 +174,9 @@ class WalletControllerTest extends TestCase
     public function testWithdrawInvalidAdServerAddress()
     {
         Config::set('app.adshares_address', '');//invalid ASD address set for AdServer
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
@@ -144,16 +190,21 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds()
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->expectsJobs(AdsSendOne::class);
+
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+        $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 5000000000000000000,
+                'amount' => 200000000001,
                 'to' => '0001-00000000-XXXX',
             ]
         );
 
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+        // balance check was moved to job, so controller returns success
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
     public function testDepositInfo()
@@ -173,5 +224,14 @@ class WalletControllerTest extends TestCase
         $this->assertTrue((strlen($message) === 64) && ctype_xdigit($message));
         // check value
         $this->assertTrue(strpos($message, $user->uuid) !== false);
+    }
+
+    private function generateUserIncome(int $userId, int $amount)
+    {
+        $ul = new UserLedger;
+        $ul->users_id = $userId;
+        $ul->amount = $amount;
+        $ul->desc = '0001:0000000A:0001';
+        $ul->save();
     }
 }
