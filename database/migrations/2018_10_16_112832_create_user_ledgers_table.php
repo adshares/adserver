@@ -19,9 +19,9 @@
  */
 
 use Adshares\Adserver\Models\UserLedger;
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 class CreateUserLedgersTable extends Migration
 {
@@ -34,12 +34,10 @@ class CreateUserLedgersTable extends Migration
     {
         Schema::create('user_ledgers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('user_id');
+            $table->bigInteger('users_id');
             $table->bigInteger('amount');
-            $table->tinyInteger('status')->default((string)UserLedger::STATUS_ACCEPTED);
-            $table->char('address_from', 18);
-            $table->char('address_to', 18);
-            $table->char('txid', 18)->nullable();
+            $table->tinyInteger('status')->default(strval(UserLedger::STATUS_ACCEPTED));
+            $table->string('desc');
             $table->timestamps();
         });
     }
