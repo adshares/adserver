@@ -53,7 +53,7 @@ jobs:
         - in_docker /bin/bash scripts/build.sh"
 
         # PHP unit tests
-        - in_docker export APP_ENV=dev && php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Console,Http"
+        - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
 
         # Cleanup
         - cleanup_docker
