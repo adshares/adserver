@@ -47,6 +47,13 @@ jobs:
           $DOCKER_IMAGE
           sleep infinity
 
+        # Enable aliases for non-interactive shells
+        - shopt -s expand_aliases
+        # Set alias - please note the missing quote you need to append.
+        - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
+        # Set aliast for cleanup
+        - alias cleanup_docker='docker stop $BUILD_NAME && docker rm $BUILD_NAME'
+
         - in_docker alias"
         - in_docker /bin/bash scripts/pre-build.sh"
 
