@@ -20,6 +20,8 @@ mv vendor ${ADSERVER_INSTALLATION_DIR}/
 # Move artisan binary
 mv artisan ${ADSERVER_INSTALLATION_DIR}/
 
+mv composer.json ${ADSERVER_INSTALLATION_DIR}/
+
 # Migrate
 cd ${ADSERVER_INSTALLATION_DIR}
 ./artisan migrate
