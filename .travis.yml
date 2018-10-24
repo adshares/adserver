@@ -47,6 +47,7 @@ jobs:
           $DOCKER_IMAGE
           sleep infinity
 
+        - in_docker alias"
         - in_docker /bin/bash scripts/pre-build.sh"
 
         # Run build script
