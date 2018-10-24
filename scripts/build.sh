@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+env | sort
+
 if [ ! -v TRAVIS ]; then
   # Checkout repo and change directory
 
