@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rpc;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -27,6 +28,7 @@ use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -105,7 +107,8 @@ class WalletController extends Controller
         $ul = new UserLedger;
         $ul->users_id = $userId;
         $ul->amount = -$total;
-        $ul->desc = '';
+        $ul->address_from = $addressFrom;
+        $ul->address_to = $addressTo;
         $ul->status = UserLedger::STATUS_PENDING;
         $result = $ul->save();
 
@@ -133,6 +136,38 @@ class WalletController extends Controller
             self::FIELD_ADDRESS => $address,
             self::FIELD_MESSAGE => $message,
         ];
+
+        return self::json($resp);
+    }
+
+    public function history()
+    {
+        $userId = Auth::user()->id;
+        $resp = [];
+        //TODO pagination
+        foreach (UserLedger::where('users_id', $userId)->cursor() as $ul) {
+            $amount = AdsConverter::clicksToAds($ul->amount);
+            $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
+            $txid = $ul->txid;
+            if (null !== $txid) {
+                // TODO export blockexplorer address / update testHistory in WalletControllerTest
+                $link = "https://operator1.e11.click/blockexplorer/transactions/${txid}";
+            } else {
+                $link = '-';
+            }
+            if ($amount > 0) {
+                $address = $ul->address_to;
+            } else {
+                $address = $ul->address_from;
+            }
+            $entry = [
+                'status' => $amount,
+                'date' => $date,
+                'address' => $address,
+                'link' => $link,
+            ];
+            array_push($resp, $entry);
+        }
 
         return self::json($resp);
     }

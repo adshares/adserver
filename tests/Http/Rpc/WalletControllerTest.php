@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Rpc;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedger;
@@ -163,8 +164,8 @@ class WalletControllerTest extends TestCase
             '/api/wallet/withdraw',
             [
                 'amount' => 100000000000,
-                'memo' => 'hello',
-                'to' => '0001-00000000-ABC',// invalid address
+                'memo' => 'hello',// invalid memo
+                'to' => '0001-00000000-XXXX',
             ]
         );
 
@@ -226,12 +227,58 @@ class WalletControllerTest extends TestCase
         $this->assertTrue(strpos($message, $user->uuid) !== false);
     }
 
+    public function testHistory()
+    {
+        $user = factory(User::class)->create();
+        $amountInClicks = 200000000000;
+        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
+
+        // add entry with a txid
+        $this->generateUserIncome($user->id, $amountInClicks);
+        // add entry without txid
+        $dateString = '2018-10-24 15:00:49';
+        $ul = new UserLedger;
+        $ul->users_id = $user->id;
+        $ul->amount = -$amountInClicks;
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
+        $ul->save();
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history');
+
+        $response
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJson([
+                [
+                    'status' => $amountInAds,
+                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                    'address' => '0001-00000000-XXXX',
+                    'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
+                ],
+                [
+                    'status' => -$amountInAds,
+                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                    'address' => '0001-00000000-XXXX',
+                    'link' => '-',
+                ]
+            ]);
+    }
+
     private function generateUserIncome(int $userId, int $amount)
     {
+        $dateString = '2018-10-24 15:00:49';
+
         $ul = new UserLedger;
         $ul->users_id = $userId;
         $ul->amount = $amount;
-        $ul->desc = '0001:0000000A:0001';
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
+        $ul->txid = '0001:0000000A:0001';
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
         $ul->save();
     }
 }
