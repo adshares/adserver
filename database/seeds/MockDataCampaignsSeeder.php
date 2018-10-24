@@ -29,7 +29,9 @@ class MockDataCampaignsSeeder extends Seeder
 {
     private $bannerSizes = [
         [728, 90],
+        [728, 200],
         [160, 600],
+        [230, 600],
     ];
 
     private static function getRandValue($type)
@@ -106,47 +108,17 @@ class MockDataCampaignsSeeder extends Seeder
             }
 
             foreach ($r->campaigns as $cr) {
-                $c = new Campaign();
-                $c->landing_url = config('app.app_url') . '/test-advertiser/index.html';
-                $c->user_id = $u->id;
-                $c->name = $cr->name;
-                $c->budget = $cr->budget_per_hour;
-                $c->status = 2; // active
-                $c->targeting_requires = isset($cr->targeting_requires) ? json_encode($cr->targeting_requires) : null;
-                $c->targeting_excludes = isset($cr->targeting_excludes) ? json_encode($cr->targeting_excludes) : null;
-                $c->classification_status = $cr->classification_status ?? 0;
-                $c->classification_tags = $cr->classification_tags ?? null;
-
-                $c->fill([
-                    'time_start' => date('Y-m-d H:i:s'),
-                    'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
-                ]);
-                $c->save();
-
-                // NETWORK CAMPAIGNS
-                $nc = new NetworkCampaign();
-                $nc->uuid = uniqid() . '1';
-                $nc->landing_url = $cr->url;
-                $nc->max_cpm = $cr->max_cpm;
-                $nc->max_cpc = $cr->max_cpc;
-                $nc->source_host = config('app.url');
-                $nc->budget_per_hour = $cr->budget_per_hour;
-                $nc->adshares_address = '0001-00000001-0001';
-
-                $nc->fill([
-                    'time_start' => date('Y-m-d H:i:s'),
-                    'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
-                ]);
-                $nc->save();
+                $campaign = $this->createCampaign($u, $cr);
+                $nc = $this->createNetworkCampaign($cr);
 
                 $banners = [];
 
-                // BANNERS
-                for ($bi = 0; $bi < 4; ++$bi) {
-                    $b = $this->makeBanner($c, $bi);
+                $files = glob(base_path('var') . "/{$cr->code}/*.png");
+                foreach ($files as $filename) {
+                    $b = $this->makeBanner($campaign, getimagesize($filename), $filename);
                     $b->save();
-
                     $banners[] = $b;
+                    $this->command->info(" Added banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
                 }
 
                 // NETWORK BANNERS
@@ -155,7 +127,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b->save();
                 }
 
-                $this->command->info(" Added - [$c->landing_url] for user <{$u->email}>");
+                $this->command->info(" Added - [$campaign->landing_url] for user <{$u->email}>");
             }
         }
         DB::commit();
@@ -231,7 +203,7 @@ class MockDataCampaignsSeeder extends Seeder
         ';
     }
 
-    private function makeNetworkBanner($banner, $nc): NetworkBanner
+    private function makeNetworkBanner(Banner $banner, $nc): NetworkBanner
     {
         $serveUrl = route('banner-serve', [
             'id' => $banner,
@@ -256,11 +228,9 @@ class MockDataCampaignsSeeder extends Seeder
         return $b;
     }
 
-    private function makeBanner($c, $bi): Banner
+    private function makeBanner($c, $s = [], $filename = null): Banner
     {
         $t = 'image';
-        $idx = $bi % 2;
-        $s = $this->bannerSizes[$idx];
         $b = new Banner();
         $b->fill([
             'campaign_id' => $c->id,
@@ -268,8 +238,55 @@ class MockDataCampaignsSeeder extends Seeder
             'creative_width' => $s[0],
             'creative_height' => $s[1],
         ]);
-        $b->creative_contents = $this->generateBannernPng($bi, $s[0], $s[1], "CID: $c->id");
+
+        if (!empty($filename)) {
+            $b->creative_contents = file_get_contents($filename);
+        } else {
+            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $s[0], $s[1], "CID: $c->id");
+        }
 
         return $b;
+    }
+
+    private function createCampaign($u, $cr): Campaign
+    {
+        $campaign = new Campaign();
+        $campaign->landing_url = $cr->url;
+        $campaign->user_id = $u->id;
+        $campaign->name = $cr->name;
+        $campaign->budget = $cr->budget_per_hour;
+        $campaign->status = 2; // active
+        $campaign->targeting_requires = isset($cr->targeting_requires) ? json_encode($cr->targeting_requires) : null;
+        $campaign->targeting_excludes = isset($cr->targeting_excludes) ? json_encode($cr->targeting_excludes) : null;
+        $campaign->classification_status = $cr->classification_status ?? 0;
+        $campaign->classification_tags = $cr->classification_tags ?? null;
+
+        $campaign->fill([
+            'time_start' => date('Y-m-d H:i:s'),
+            'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
+        ]);
+        $campaign->save();
+
+        return $campaign;
+    }
+
+    private function createNetworkCampaign($cr): NetworkCampaign
+    {
+        $campaign = new NetworkCampaign();
+        $campaign->uuid = uniqid() . '1';
+        $campaign->landing_url = $cr->url;
+        $campaign->max_cpm = $cr->max_cpm;
+        $campaign->max_cpc = $cr->max_cpc;
+        $campaign->source_host = config('app.url');
+        $campaign->budget_per_hour = $cr->budget_per_hour;
+        $campaign->adshares_address = '0001-00000001-0001';
+
+        $campaign->fill([
+            'time_start' => date('Y-m-d H:i:s'),
+            'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
+        ]);
+        $campaign->save();
+
+        return $campaign;
     }
 }

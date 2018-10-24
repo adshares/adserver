@@ -25,6 +25,32 @@ use Illuminate\Database\Seeder;
 
 class MockDataSitesSeeder extends Seeder
 {
+    private $sizes = [
+        #best
+        "medium rectangle" => "300x250",
+        "large rectangle" => "336x280",
+        "leaderboard" => "728x90",
+        "half page" => "300x600",
+        "large mobile banner" => "320x100",
+        #other
+        "banner" => "468x60",
+        "half banner" => "234x60",
+        "button" => "125x125",
+        "skyscraper" => "120x600",
+        "wide skyscraper" => "160x600",
+        "small rectangle" => "180x150",
+        "vertical banner" => "120x240",
+        "small square" => "200x200",
+        "portrait" => "300x1050",
+        "square" => "250x250",
+        "mobile banner" => "320x50",
+        "large leaderboard" => "970x90",
+        "billboard" => "970x250",
+        #polish
+        "billboard" => "750x100",
+        "double billboard" => "750x200",
+        "tripple billboard" => "750x300",
+    ];
     private $zones = [
         'top' => [
             'width' => 728,
