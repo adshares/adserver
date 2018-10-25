@@ -114,11 +114,21 @@ class MockDataCampaignsSeeder extends Seeder
                 $banners = [];
 
                 $files = glob(base_path('var') . "/{$cr->code}/*.png");
+
                 foreach ($files as $filename) {
                     $b = $this->makeBanner($campaign, getimagesize($filename), $filename);
                     $b->save();
                     $banners[] = $b;
                     $this->command->info(" Added banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
+                }
+
+                if (empty($banners)) {
+                    foreach ($this->bannerSizes as $size) {
+                        $b = $this->makeBanner($campaign, $size);
+                        $b->save();
+                        $banners[] = $b;
+                        $this->command->info(" Added banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
+                    }
                 }
 
                 // NETWORK BANNERS
