@@ -39,10 +39,12 @@ class WalletController extends Controller
     const FIELD_AMOUNT = 'amount';
     const FIELD_ERROR = 'error';
     const FIELD_FEE = 'fee';
+    const FIELD_LIMIT = 'limit';
+    const FIELD_MEMO = 'memo';
     const FIELD_MESSAGE = 'message';
+    const FIELD_OFFSET = 'offset';
     const FIELD_TO = 'to';
     const FIELD_TOTAL = 'total';
-    const FIELD_MEMO = 'memo';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request)
@@ -140,12 +142,19 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function history()
+    public function history(Request $request)
     {
+        Validator::make($request->all(), [
+            self::FIELD_LIMIT => ['integer', 'min:1'],
+            self::FIELD_OFFSET => ['integer', 'min:0'],
+        ])->validate();
+
+        $limit = $request->input(self::FIELD_LIMIT, 10);
+        $offset = $request->input(self::FIELD_OFFSET, 0);
+
         $userId = Auth::user()->id;
         $resp = [];
-        //TODO pagination
-        foreach (UserLedger::where('users_id', $userId)->cursor() as $ul) {
+        foreach (UserLedger::where('users_id', $userId)->skip($offset)->take($limit)->cursor() as $ul) {
             $amount = AdsConverter::clicksToAds($ul->amount);
             $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
             $txid = $ul->txid;

@@ -230,21 +230,11 @@ class WalletControllerTest extends TestCase
     public function testHistory()
     {
         $user = factory(User::class)->create();
+        $userId = $user->id;
+
         $amountInClicks = 200000000000;
         $amountInAds = AdsConverter::clicksToAds($amountInClicks);
-
-        // add entry with a txid
-        $this->generateUserIncome($user->id, $amountInClicks);
-        // add entry without txid
-        $dateString = '2018-10-24 15:00:49';
-        $ul = new UserLedger;
-        $ul->users_id = $user->id;
-        $ul->amount = -$amountInClicks;
-        $ul->address_from = '0001-00000000-XXXX';
-        $ul->address_to = '0001-00000000-XXXX';
-        $ul->setCreatedAt($dateString);
-        $ul->setUpdatedAt($dateString);
-        $ul->save();
+        $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history');
@@ -267,6 +257,70 @@ class WalletControllerTest extends TestCase
             ]);
     }
 
+    public function testHistoryLimit()
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history?limit=1');
+
+        $response
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJson([
+                [
+                    'status' => $amountInAds,
+                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                    'address' => '0001-00000000-XXXX',
+                    'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
+                ]
+            ]);
+    }
+
+    public function testHistoryLimitInvalid()
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->getJson('/api/wallet/history?limit=0');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testHistoryOffset()
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history?limit=1&offset=1');
+
+        $response
+            ->assertStatus(Response::HTTP_OK)
+            ->assertJson([
+                [
+                    'status' => -$amountInAds,
+                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                    'address' => '0001-00000000-XXXX',
+                    'link' => '-',
+                ]
+            ]);
+    }
+
+    public function testHistoryOffsetInvalid()
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $response = $this->getJson('/api/wallet/history?limit=1&offset=-1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     private function generateUserIncome(int $userId, int $amount)
     {
         $dateString = '2018-10-24 15:00:49';
@@ -277,6 +331,26 @@ class WalletControllerTest extends TestCase
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';
         $ul->txid = '0001:0000000A:0001';
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
+        $ul->save();
+    }
+
+    /**
+     * @param $userId
+     * @param $amountInClicks
+     */
+    private function initUserLedger($userId, $amountInClicks): void
+    {
+// add entry with a txid
+        $this->generateUserIncome($userId, $amountInClicks);
+        // add entry without txid
+        $dateString = '2018-10-24 15:00:49';
+        $ul = new UserLedger;
+        $ul->users_id = $userId;
+        $ul->amount = -$amountInClicks;
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
         $ul->setCreatedAt($dateString);
         $ul->setUpdatedAt($dateString);
         $ul->save();
