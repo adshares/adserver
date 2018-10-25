@@ -3,7 +3,7 @@
 # Ubuntu 18.04 only
 
 # Install dependencies for composer operations
-apt-get install -y php7.2-cli php7.2-curl php7.2-zip php7.2-xdebug php7.2-mysql php7.2-gd unzip
+apt-get -qq -y install php7.2-cli php7.2-curl php7.2-zip php7.2-xdebug php7.2-mysql php7.2-gd unzip
 
 # Get composer
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
@@ -17,7 +17,7 @@ php -r "unlink('composer-setup.php');"
 composer global require hirak/prestissimo
 
 # Install dependencies for yarn operations
-apt-get install -y nodejs npm
+apt-get -qq -y install nodejs npm
 
 # Get yarn
 php -r "copy('https://dl.yarnpkg.com/debian/pubkey.gpg', 'yarn.pubkey.gpg');"
@@ -25,4 +25,4 @@ cat yarn.pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 # Install yarn
-apt-get update && apt-get install -y yarn
+apt-get -qq -y update && apt-get -qq -y install yarn
