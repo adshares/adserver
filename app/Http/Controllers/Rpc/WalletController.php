@@ -150,8 +150,7 @@ class WalletController extends Controller
             $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
             $txid = $ul->txid;
             if (null !== $txid) {
-                // TODO export blockexplorer address / update testHistory in WalletControllerTest
-                $link = "https://operator1.e11.click/blockexplorer/transactions/${txid}";
+                $link = self::getTransactionLink($txid);
             } else {
                 $link = '-';
             }
@@ -180,5 +179,16 @@ class WalletController extends Controller
     private function getAdServerAdsAddress()
     {
         return config('app.adshares_address');
+    }
+
+    /**
+     * Returns link to transaction data.
+     * @param $txid string transaction id
+     * @return string link to transaction
+     */
+    private static function getTransactionLink(string $txid): string
+    {
+        $adsOperator = config('app.ads_operator_url');
+        return "$adsOperator/blockexplorer/transactions/$txid";
     }
 }
