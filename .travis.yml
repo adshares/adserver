@@ -18,7 +18,7 @@ env:
     - APP_ENV=production APP_DEBUG=false
 
 stages:
-  - build
+  - test
   - build and install
   - quality
 
@@ -46,7 +46,7 @@ after_script:
 
 jobs:
   include:
-    - stage: build
+    - stage: test
       script:
         # Run pre-build
         - in_docker /bin/bash scripts/pre-build.sh"
