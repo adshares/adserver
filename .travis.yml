@@ -1,6 +1,8 @@
 sudo: required
 
-language: minimal
+language: jvm
+
+jdk: openjdk9
 
 services:
   - docker
@@ -25,27 +27,27 @@ before_script:
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
   - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
-  # Set aliast for cleanup
-  - alias cleanup_docker='docker stop $BUILD_NAME && docker rm $BUILD_NAME'
+  ## Setup test environment
+  # Run docker container
+  - docker pull $DOCKER_IMAGE
+  - >
+    docker run -d
+    --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
+    -e TRAVIS=true
+    -e APP_ENV=${APP_ENV}
+    -e APP_DEBUG=${APP_DEBUG}
+    -e ADSERVER_INSTALLATION_DIR=/var/www/adserver
+    --name $BUILD_NAME
+    $DOCKER_IMAGE
+    sleep infinity
+
+after_script:
+  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
 
 jobs:
   include:
-    - stage: test
+    - stage: build
       script:
-        ## Setup test environment
-        # Run docker container
-        - docker pull $DOCKER_IMAGE
-        - >
-          docker run -d
-          --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-          -e TRAVIS=true
-          -e APP_ENV=${APP_ENV}
-          -e APP_DEBUG=${APP_DEBUG}
-          -e ADSERVER_INSTALLATION_DIR=/var/www/adpanel
-          --name $BUILD_NAME
-          $DOCKER_IMAGE
-          sleep infinity
-
         # Run pre-build
         - in_docker /bin/bash scripts/pre-build.sh"
         # Run build script
@@ -54,24 +56,8 @@ jobs:
         # PHP unit tests
         - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
 
-        # Cleanup
-        - cleanup_docker
-
-    - stage: production
+    - stage: build and install
       script:
-        ## Setup test environment
-        # Run docker container
-        - docker pull $DOCKER_IMAGE
-        - >
-          docker run -d
-          --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-          -e TRAVIS=true
-          -e APP_ENV=${APP_ENV}
-          -e APP_DEBUG=${APP_DEBUG}
-          -e ADSERVER_INSTALLATION_DIR=/var/www/adpanel
-          --name $BUILD_NAME
-          $DOCKER_IMAGE
-          sleep infinity
 
         - in_docker /bin/bash scripts/pre-build.sh"
 
@@ -81,26 +67,10 @@ jobs:
         - in_docker /bin/bash scripts/install.sh"
 
         # PHP unit tests
-        - in_docker export php -dzend_extension=xdebug.so ./vendor/bin/phpunit --testsuite Console,Http"
-
-        # Cleanup
-        - cleanup_docker
+        - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
 
     - stage: quality
       script:
-        ## Setup test environment
-        # Run docker container
-        - docker pull $DOCKER_IMAGE
-        - >
-          docker run -d
-          --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-          -e TRAVIS=true
-          -e APP_ENV=${APP_ENV}
-          -e APP_DEBUG=${APP_DEBUG}
-          -e ADSERVER_INSTALLATION_DIR=/var/www/adpanel
-          --name $BUILD_NAME
-          $DOCKER_IMAGE
-          sleep infinity
         # Run build script
         - in_docker /bin/bash scripts/pre-build.sh"
 
@@ -125,10 +95,7 @@ jobs:
         - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
         # SonarQube
-        - in_docker sonar-scanner"
-
-        # Cleanup
-        - cleanup_docker
+        - sonar-scanner
 
 # After a build, send email notification with the build results
 notifications:
