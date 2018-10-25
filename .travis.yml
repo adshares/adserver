@@ -18,8 +18,8 @@ env:
     - APP_ENV=production APP_DEBUG=false
 
 stages:
-  - test
-  - production
+  - build
+  - build and install
   - quality
 
 before_script:
