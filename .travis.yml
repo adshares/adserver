@@ -53,7 +53,9 @@ jobs:
         # Run build script
         - in_docker /bin/bash scripts/build.sh"
 
-        # PHP unit tests
+        - in_docker php --ini"
+
+      # PHP unit tests
         - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
 
     - stage: build and install
