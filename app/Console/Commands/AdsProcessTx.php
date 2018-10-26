@@ -207,12 +207,15 @@ class AdsProcessTx extends Command
                 $dbTx->status = AdsTxIn::STATUS_RESERVED;
                 $dbTx->save();
             } else {
+                $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
                 // add to ledger
                 $ul = new UserLedger;
                 $ul->users_id = $user->id;
                 $ul->amount = $amount;
-                $ul->desc = $dbTx->txid;
+                $ul->address_from = $senderAddress;
+                $ul->address_to = $targetAddr;
+                $ul->txid = $dbTx->txid;
 
                 $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
                 // dbTx added to ledger will not be processed again
