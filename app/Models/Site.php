@@ -24,7 +24,6 @@ use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User;
 
 /**
  * @property int user_id
@@ -58,7 +57,7 @@ class Site extends Model
     /** @var string[] Aditional fields to be included in collections */
     protected $appends = ['adUnits', 'targetingArray'];
 
-    public static function siteById($siteId, User $owner = null)
+    public static function siteById($siteId)
     {
         $builder = self::with([
             'siteExcludes' => function ($query) {
@@ -75,9 +74,6 @@ class Site extends Model
             },
         ])->whereNull('deleted_at');
 
-        if ($owner) {
-            $builder->ownedBy($owner);
-        }
 
         return $builder->findOrFail($siteId);
     }
