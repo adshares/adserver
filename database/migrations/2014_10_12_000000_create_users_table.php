@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 use Illuminate\Database\Migrations\Migration;
@@ -44,6 +44,12 @@ class CreateUsersTable extends Migration
             $table->boolean('is_advertiser')->nullable();
             $table->boolean('is_publisher')->nullable();
             $table->boolean('is_admin')->default(false);
+
+            $table->string('api_token', 60)
+                ->unique()
+                ->nullable()
+                ->default(NULL)
+            ;
         });
 
         if (DB::isMysql()) {
