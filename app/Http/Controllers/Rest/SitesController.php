@@ -68,9 +68,7 @@ class SitesController extends Controller
                     $query->whereNull('deleted_at');
                 },
             ]
-        )->whereNull('deleted_at')
-            ->where('user_id', '=', Auth::user()->id)
-            ->get();
+        )->get();
 
         return self::json(
             array_map(
@@ -110,7 +108,6 @@ class SitesController extends Controller
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
         $site = Site::whereNull('deleted_at')
-            ->where('user_id', '=', Auth::user()->id)
             ->findOrFail($site_id);
         $site->update($request->input('site'));
 
@@ -119,9 +116,7 @@ class SitesController extends Controller
 
     public function delete(Request $request, $site_id)
     {
-        $site = Site::whereNull('deleted_at')
-            ->where('user_id', '=', Auth::user()->id)
-            ->findOrFail($site_id);
+        $site = Site::findOrFail($site_id);
         $site->deleted_at = new \DateTime();
         $site->save();
 

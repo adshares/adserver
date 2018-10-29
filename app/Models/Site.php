@@ -20,15 +20,21 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\Ownership;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User;
 
 /**
  * @property int user_id
  * @property string name
- * @property string url
  */
 class Site extends Model
 {
+    use Ownership;
+    use SoftDeletes;
+
     public static $rules = [
         'name' => 'required|max:64',
     ];
@@ -52,7 +58,7 @@ class Site extends Model
     /** @var string[] Aditional fields to be included in collections */
     protected $appends = ['adUnits', 'targetingArray'];
 
-    public static function siteById($siteId, $ownerId = null)
+    public static function siteById($siteId, User $owner = null)
     {
         $builder = self::with([
             'siteExcludes' => function ($query) {
@@ -69,8 +75,8 @@ class Site extends Model
             },
         ])->whereNull('deleted_at');
 
-        if ($ownerId) {
-            $builder->where('user_id', '=', $ownerId);
+        if ($owner) {
+            $builder->ownedBy($owner);
         }
 
         return $builder->findOrFail($siteId);
