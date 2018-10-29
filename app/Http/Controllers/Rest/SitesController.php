@@ -22,8 +22,9 @@ namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Site;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SitesController extends Controller
 {
@@ -31,6 +32,7 @@ class SitesController extends Controller
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
         $site = Site::create($request->input('site'));
+        $site->user_id = Auth::user()->id;
         $site->save();
 
         $reqObj = $request->input('site.targeting.require');
@@ -57,21 +59,18 @@ class SitesController extends Controller
 
     public function browse(Request $request)
     {
-        // TODO check privileges
         $sites = Site::with(
             [
-                'siteExcludes' => function ($query) {
-                    /* @var $query Builder */
+                'siteExcludes' => function (Relation $query) {
                     $query->whereNull('deleted_at');
                 },
-                'siteRequires' => function ($query) {
-                    /* @var $query Builder */
+                'siteRequires' => function (Relation $query) {
                     $query->whereNull('deleted_at');
                 },
             ]
-        )
-            ->whereNull('deleted_at')->get()
-        ;
+        )->whereNull('deleted_at')
+            ->where('user_id', '=', Auth::user()->id)
+            ->get();
 
         return self::json(
             array_map(
@@ -90,8 +89,6 @@ class SitesController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      *
-     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function count(Request $request)
     {
@@ -112,8 +109,9 @@ class SitesController extends Controller
     {
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
-        // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
+        $site = Site::whereNull('deleted_at')
+            ->where('user_id', '=', Auth::user()->id)
+            ->findOrFail($site_id);
         $site->update($request->input('site'));
 
         return self::json(['message' => 'Successfully edited'], 200);
@@ -121,8 +119,9 @@ class SitesController extends Controller
 
     public function delete(Request $request, $site_id)
     {
-        // TODO check privileges
-        $site = Site::whereNull('deleted_at')->findOrFail($site_id);
+        $site = Site::whereNull('deleted_at')
+            ->where('user_id', '=', Auth::user()->id)
+            ->findOrFail($site_id);
         $site->deleted_at = new \DateTime();
         $site->save();
 
@@ -131,7 +130,6 @@ class SitesController extends Controller
 
     public function read(Request $request, $siteId)
     {
-        // TODO check privileges
         $site = Site::siteById($siteId);
 
         return self::json($site->toArray());
