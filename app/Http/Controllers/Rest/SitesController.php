@@ -22,8 +22,8 @@ namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Site;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class SitesController extends Controller
@@ -31,25 +31,13 @@ class SitesController extends Controller
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
+
         $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
+        $site->site_requires = $request->input('site.targeting.requires');
+        $site->site_excludes = $request->input('site.targeting.excludes');
+
         $site->save();
-
-        $reqObj = $request->input('site.targeting.require');
-        if (null != $reqObj) {
-            foreach (array_keys($reqObj) as $key) {
-                $value = $reqObj[$key];
-                $site->siteRequires()->create(['key' => $key, 'value' => $value]);
-            }
-        }
-
-        $reqObj = $request->input('site.targeting.exclude');
-        if (null != $reqObj) {
-            foreach (array_keys($reqObj) as $key) {
-                $value = $reqObj[$key];
-                $site->siteExcludes()->create(['key' => $key, 'value' => $value]);
-            }
-        }
 
         $response = self::json(compact('site'), 201);
         $response->header('Location', route('app.sites.read', ['site' => $site]));
@@ -57,37 +45,11 @@ class SitesController extends Controller
         return $response;
     }
 
-    public function browse(Request $request)
+    public function browse()
     {
-        $sites = Site::with(
-            [
-                'siteExcludes' => function (Relation $query) {
-                    $query->whereNull('deleted_at');
-                },
-                'siteRequires' => function (Relation $query) {
-                    $query->whereNull('deleted_at');
-                },
-            ]
-        )->get();
-
-        return self::json(
-            array_map(
-                function ($site) {
-                    $site['status'] = $site['status'] ?? 2;
-
-                    return $site;
-                },
-                $sites->toArray()
-            )
-        );
+        return self::json(Site::get()->toArray());
     }
 
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     *
-     */
     public function count(Request $request)
     {
         //@TODO: create function data
@@ -98,35 +60,28 @@ class SitesController extends Controller
             'averagePageRPM' => 0,
             'averageCPC' => 0,
         ];
-        $response = self::json($siteCount, 200);
 
-        return $response;
+        return self::json($siteCount, 200);
     }
 
-    public function edit(Request $request, $site_id)
+    public function edit(Request $request, Site $site)
     {
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
 
-        $site = Site::whereNull('deleted_at')
-            ->findOrFail($site_id);
         $site->update($request->input('site'));
 
         return self::json(['message' => 'Successfully edited'], 200);
     }
 
-    public function delete(Request $request, $site_id)
+    public function delete(Site $site)
     {
-        $site = Site::findOrFail($site_id);
-        $site->deleted_at = new \DateTime();
-        $site->save();
+        $site->delete();
 
-        return self::json(['message' => 'Successfully deleted'], 200);
+        return self::json(['message' => 'Successfully deleted'], Response::HTTP_NO_CONTENT);
     }
 
-    public function read(Request $request, $siteId)
+    public function read(Site $site)
     {
-        $site = Site::siteById($siteId);
-
         return self::json($site->toArray());
     }
 

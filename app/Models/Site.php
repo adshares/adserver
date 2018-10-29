@@ -36,8 +36,8 @@ class Site extends Model
         'name' => 'required|max:64',
     ];
     protected $casts = [
-        'sites_requires' => 'json',
-        'sites_excludes' => 'json',
+        'site_requires' => 'json',
+        'site_excludes' => 'json',
     ];
     /** @var string[] */
     protected $fillable = [
@@ -45,41 +45,17 @@ class Site extends Model
         'name',
         'status',
         'zones',
-        'sites_requires',
-        'sites_excludes',
     ];
     /** @var string[] */
     protected $hidden = [
         'deleted_at',
+        'site_requires',
+        'site_excludes',
     ];
-    /** @var string[] Aditional fields to be included in collections */
+    /**
+     * @var string[] Aditional fields to be included in collections
+     */
     protected $appends = ['adUnits', 'targetingArray'];
-//    protected $with = [
-//        'siteExcludes',
-//        'siteRequires',
-//        'zones',
-//    ];
-
-    public static function siteById($siteId)
-    {
-        $builder = self::with([
-            'siteExcludes',
-            'siteRequires',
-            'zones',
-        ]);
-
-        return $builder->findOrFail($siteId);
-    }
-
-    public function siteExcludes()
-    {
-        return $this->hasMany(SiteExclude::class);
-    }
-
-    public function siteRequires()
-    {
-        return $this->hasMany(SiteRequire::class);
-    }
 
     public function zones()
     {
@@ -89,6 +65,7 @@ class Site extends Model
     public function getAdUnitsAttribute()
     {
         $adUnits = [];
+
         foreach ($this->zones as $zone) {
             $adUnits[] = [
                 'short_headline' => $zone->name,
@@ -106,8 +83,8 @@ class Site extends Model
     public function getTargetingArrayAttribute()
     {
         return [
-            'requires' => json_decode($this->site_requires),
-            'excludes' => json_decode($this->site_excludes),
+            'requires' => $this->site_requires,
+            'excludes' => $this->site_excludes,
         ];
     }
 }
