@@ -20,45 +20,101 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\Ownership;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class Site.
- *
  * @property int user_id
  * @property string name
- * @property string url
  */
 class Site extends Model
 {
+    use Ownership;
+    use SoftDeletes;
+
     public static $rules = [
         'name' => 'required|max:64',
     ];
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    protected $casts = [
+        'sites_requires' => 'json',
+        'sites_excludes' => 'json',
+    ];
+    /** @var string[] */
     protected $fillable = [
         'user_id',
         'name',
+        'status',
+        'zones',
+        'sites_requires',
+        'sites_excludes',
     ];
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    /** @var string[] */
     protected $hidden = [
         'deleted_at',
     ];
+    /** @var string[] Aditional fields to be included in collections */
+    protected $appends = ['adUnits', 'targetingArray'];
+
+    public static function siteById($siteId)
+    {
+        $builder = self::with([
+            'siteExcludes' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'siteRequires' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+            'zones' => function ($query) {
+                /* @var $query Builder */
+                $query->whereNull('deleted_at');
+            },
+        ])->whereNull('deleted_at');
+
+
+        return $builder->findOrFail($siteId);
+    }
 
     public function siteExcludes()
     {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteExclude::class);
+        return $this->hasMany(SiteExclude::class);
     }
 
     public function siteRequires()
     {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteRequire::class);
+        return $this->hasMany(SiteRequire::class);
+    }
+
+    public function zones()
+    {
+        return $this->hasMany(Zone::class);
+    }
+
+    public function getAdUnitsAttribute()
+    {
+        $adUnits = [];
+        foreach ($this->zones as $zone) {
+            $adUnits[] = [
+                'short_headline' => $zone->name,
+                'size' => [
+                    'name' => $zone->name,
+                    'width' => $zone->width,
+                    'height' => $zone->height,
+                ],
+            ];
+        }
+
+        return $adUnits;
+    }
+
+    public function getTargetingArrayAttribute()
+    {
+        return [
+            'requires' => json_decode($this->site_requires),
+            'excludes' => json_decode($this->site_excludes),
+        ];
     }
 }

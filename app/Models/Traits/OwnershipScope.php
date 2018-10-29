@@ -18,20 +18,31 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Database\Seeder;
+namespace Adshares\Adserver\Models\Traits;
 
-class DatabaseSeeder extends Seeder
+use Adshares\Adserver\Models\Site;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Scope;
+use Illuminate\Foundation\Auth\User;
+
+class OwnershipScope implements Scope
 {
+    /** @var User */
+    private $user;
+
     /**
-     * Run the database seeds.
+     * @param Authenticatable | User $user
      */
-    public function run()
+    public function __construct(User $user)
     {
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-        ]);
+        $this->user = $user;
+    }
+
+    public function apply(Builder $builder, Model $model): void
+    {
+        /** @var Site $builder */
+        $builder->ownedBy($this->user);
     }
 }
-

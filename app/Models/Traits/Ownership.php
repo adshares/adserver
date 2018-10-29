@@ -18,20 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Database\Seeder;
+namespace Adshares\Adserver\Models\Traits;
 
-class DatabaseSeeder extends Seeder
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * @method ownedBy(User $user): Builder
+ */
+trait Ownership
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    public static function bootOwnership(): void
     {
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-        ]);
+        static::addGlobalScope(new OwnershipScope(Auth::user()));
+    }
+
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->where('user_id', $user->id);
     }
 }
-

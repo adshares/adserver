@@ -37,72 +37,28 @@ class BannerFinder
             'image',
         ];
 
-        // TODO: adselect
-
-        // $adselectService = $container->has('adselect') ? $container->get('adselect') : null;
-        // $adselectService instanceof Adselect;
-
         $bannerIds = [];
-        if (false && $adselectService) {
-            $requests = [];
-            foreach ($zones as $i => $zoneInfo) {
-                $zone = Zone::find($zoneInfo['zone']);
-                $zone instanceof Zone;
+        foreach ($zones as $zoneInfo) {
+            $zone = Zone::find($zoneInfo['zone']);
 
-                $website = $zone->getWebsite();
-
-                $impression_keywords = $keywords;
-                $impression_keywords['zone'] = $website->getHost() . '/' . $zone->getId();
-                $impression_keywords['banner_size'] = $zone->getWidth() . 'x' . $zone->getHeight();
-
-                $filters = Filter::getFilter($website->getRequire(), $website->getExclude());
-//                 $filters['require'][] = [
-//                     'keyword' => 'banner_size',
-//                     'filter' => [
-//                         'type' => '=',
-//                         'args' => $impression_keywords['banner_size']
-//                     ]
-//                 ];
-
-                $requests[] = [
-                    'request_id' => $i,
-                    'publisher_id' => $zone->getWebsite()->getUser()->getId(),
-                    'user_id' => $impression_keywords['user_id'],
-                    'banner_size' => $impression_keywords['banner_size'],
-                    'keywords' => Utils::flattenKeywords($impression_keywords),
-                    'banner_filters' => $filters,
-                ];
-                $bannerIds[$i] = null;
-            }
-
-            $responses = $adselectService->getBanners($requests);
-            foreach ($responses as $response) {
-                $bannerIds[$response['request_id']] = $response['banner_id'];
-            }
-//             ksort($bannerIds);
-        } else {
-            foreach ($zones as $zoneInfo) {
-                $zone = Zone::find($zoneInfo['zone']);
-
-                if ($zone) {
-                    try {
-                        $pluck = NetworkBanner::where('creative_width', $zone->width)
-                            ->where('creative_height', $zone->height)
-                            ->whereIn('creative_type', $typeDefault)
-                            ->get()->pluck('uuid');
-                        $bannerIds[] = $pluck->random();
-                    } catch (\InvalidArgumentException $e) {
-                        $bannerIds[] = '';
-                    }
-                } else {
-                    $bannerIds[] = md5(rand());
+            if ($zone) {
+                try {
+                    $pluck = NetworkBanner::where('creative_width', $zone->width)
+                        ->where('creative_height', $zone->height)
+                        ->whereIn('creative_type', $typeDefault)
+                        ->get()->pluck('uuid');
+                    $bannerIds[] = $pluck->random();
+                } catch (\InvalidArgumentException $e) {
+                    $bannerIds[] = '';
                 }
+            } else {
+                $bannerIds[] = md5(rand());
             }
         }
 
         $banners = [];
         foreach ($bannerIds as $bannerId) {
-            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : null;
+            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : NetworkBanner::first();
 
             if (!empty($banner)) {
                 $campaign = NetworkCampaign::find($banner->network_campaign_id);

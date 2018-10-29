@@ -18,20 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Database\Seeder;
+namespace Adshares\Adserver\Exceptions;
 
-class DatabaseSeeder extends Seeder
+use Exception;
+
+class JobException extends Exception
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
-    {
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-        ]);
-    }
 }
-
