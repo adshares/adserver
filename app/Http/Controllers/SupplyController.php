@@ -103,6 +103,7 @@ class SupplyController extends Controller
             ], $params, file_get_contents($jsPath));
         });
 
+        $response->headers->set('Content-Disposition', 'attachment');
         $response->headers->set('Content-Type', 'text/javascript');
 
         $response->setCache([
