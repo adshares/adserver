@@ -36,7 +36,7 @@ class CreateUserLedgersTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('users_id');
             $table->bigInteger('amount');
-            $table->tinyInteger('status')->default(strval(UserLedger::STATUS_ACCEPTED));
+            $table->tinyInteger('status')->default((string)UserLedger::STATUS_ACCEPTED);
             $table->char('address_from', 18);
             $table->char('address_to', 18);
             $table->char('txid', 18)->nullable();
