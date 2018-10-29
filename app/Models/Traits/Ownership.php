@@ -20,8 +20,8 @@
 
 namespace Adshares\Adserver\Models\Traits;
 
-use Adshares\Adserver\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -36,6 +36,6 @@ trait Ownership
 
     public function scopeOwnedBy(Builder $query, User $user): Builder
     {
-        return $query->where('user_id', '=', $user->id);
+        return $query->where('user_id', $user->id);
     }
 }
