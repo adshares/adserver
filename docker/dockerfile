@@ -28,8 +28,8 @@ RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources
 
 # update
 RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
-        vim less dnsutils bash-completion net-tools \
-        nmap mtr curl git bzip2 zip unzip tree mc wget \
+        nmap mtr curl wget vim less dnsutils bash-completion net-tools iputils-* \
+        git bzip2 zip unzip tree mc \
         openssl openssh-client openssh-server \
         gnupg2 dirmngr connect-proxy \
         mysql-client \
