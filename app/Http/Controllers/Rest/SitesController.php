@@ -34,8 +34,8 @@ class SitesController extends Controller
 
         $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
-        $site->site_requires = $request->input('site.targeting.requires');
-        $site->site_excludes = $request->input('site.targeting.excludes');
+        $site->site_requires = $request->input('site.filtering.requires') ?? $request->input('site.targeting.requires');
+        $site->site_excludes = $request->input('site.filtering.excludes') ?? $request->input('site.targeting.excludes');
 
         $site->save();
 
