@@ -63,7 +63,7 @@ class AdsSendOne implements ShouldQueue
     public function handle(AdsClient $adsClient)
     {
         $total = -$this->userLedger->amount;
-        $balance = UserLedger::getBalanceByUserId($this->userLedger->users_id);
+        $balance = UserLedger::getBalanceByUserId($this->userLedger->user_id);
 
         if ($balance < $total) {
             Log::notice("Insufficient funds.");

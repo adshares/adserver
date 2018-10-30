@@ -34,7 +34,7 @@ class CreateUserLedgersTable extends Migration
     {
         Schema::create('user_ledgers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('users_id');
+            $table->bigInteger('user_id');
             $table->bigInteger('amount');
             $table->tinyInteger('status')->default((string)UserLedger::STATUS_ACCEPTED);
             $table->char('address_from', 18);
