@@ -211,7 +211,7 @@ class AdsProcessTx extends Command
                 $amount = $transaction->getAmount();
                 // add to ledger
                 $ul = new UserLedger;
-                $ul->users_id = $user->id;
+                $ul->user_id = $user->id;
                 $ul->amount = $amount;
                 $ul->address_from = $senderAddress;
                 $ul->address_to = $targetAddr;
