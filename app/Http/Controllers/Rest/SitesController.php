@@ -198,7 +198,7 @@ class SitesController extends Controller
             "id": 5,
         "name": "Large Rectangle 2",
         "type": "large-rectangle",
-        "size": ,
+        "size": 4,
         "tags": ["Desktop"]
       }
         ]'
