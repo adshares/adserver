@@ -36,7 +36,7 @@ class Site extends Model
     /**
      * Template for html code, which should be pasted for each ad unit
      */
-    const PAGE_CODE_TEMPLATE = '<div data-pub="1" data-zone="$zoneId" '
+    const PAGE_CODE_TEMPLATE = '<div data-pub="$publisherId" data-zone="$zoneId" '
     . 'style="width:$widthpx;height:$heightpx;display: block;margin: 0 auto;background-color: #FAA"></div>';
 
     public static $rules = [
@@ -59,7 +59,6 @@ class Site extends Model
         'site_requires',
         'site_excludes',
     ];
-
     /** @var string[] Aditional fields to be included in collections */
     protected $appends = ['adUnits', 'page_code_common', 'targetingArray'];
 
@@ -112,6 +111,7 @@ class Site extends Model
     private function getAdUnitPageCode(Zone $zone): string
     {
         $replaceArr = [
+            '$publisherId' => $this->user_id,
             '$zoneId' => $zone->id,
             '$width' => $zone->width,
             '$height' => $zone->height,
