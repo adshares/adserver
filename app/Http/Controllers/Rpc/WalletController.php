@@ -107,7 +107,7 @@ class WalletController extends Controller
 
         $userId = Auth::user()->id;
         $ul = new UserLedger;
-        $ul->users_id = $userId;
+        $ul->user_id = $userId;
         $ul->amount = -$total;
         $ul->address_from = $addressFrom;
         $ul->address_to = $addressTo;
@@ -154,7 +154,7 @@ class WalletController extends Controller
 
         $userId = Auth::user()->id;
         $resp = [];
-        foreach (UserLedger::where('users_id', $userId)->skip($offset)->take($limit)->cursor() as $ul) {
+        foreach (UserLedger::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ul) {
             $amount = AdsConverter::clicksToAds($ul->amount);
             $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
             $txid = $ul->txid;
