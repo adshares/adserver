@@ -29,6 +29,8 @@ Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaig
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
+Route::post('campaigns/banner', [CampaignsController::class, 'upload'])->name('app.campaigns.upload');
+
 Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])->name('app.campaigns.classify');
 Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])->name('app.campaigns.disable_classify');
 

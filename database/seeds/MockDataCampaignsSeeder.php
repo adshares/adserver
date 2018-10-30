@@ -266,8 +266,8 @@ class MockDataCampaignsSeeder extends Seeder
         $campaign->name = $cr->name;
         $campaign->budget = $cr->budget_per_hour;
         $campaign->status = 2; // active
-        $campaign->targeting_requires = isset($cr->targeting_requires) ? json_encode($cr->targeting_requires) : null;
-        $campaign->targeting_excludes = isset($cr->targeting_excludes) ? json_encode($cr->targeting_excludes) : null;
+        $campaign->targeting_requires = $cr->targeting_requires ?? null;
+        $campaign->targeting_excludes = $cr->targeting_excludes ?? null;
         $campaign->classification_status = $cr->classification_status ?? 0;
         $campaign->classification_tags = $cr->classification_tags ?? null;
 
