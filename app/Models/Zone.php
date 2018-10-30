@@ -25,7 +25,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Zone extends Model
 {
+    public const ZONE_SIZE = [
+        "728x90",
+        "160x600",
+        "900x120",
+        "320x100",
+        "336x280"
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     use SoftDeletes;
+
     protected $fillable = [
       'website_id', 'name', 'width', 'height',
     ];
