@@ -18,25 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Adserver\Models\Traits;
 
-use Illuminate\Database\Eloquent\Model;
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
-class UserLedger extends Model
+/**
+ * @method ownedBy(User $user): Builder
+ */
+trait Ownership
 {
-    const STATUS_ACCEPTED = 0;
-    const STATUS_PENDING = 1;
-    const STATUS_REJECTED = 2;
-
-    /**
-     * Returns account balance of particular user.
-     * @param int $userId user id
-     * @return int balance
-     */
-    public static function getBalanceByUserId(int $userId): int
+    public static function bootOwnership(): void
     {
-        return self::where('user_id', $userId)
-            ->where('status', self::STATUS_ACCEPTED)
-            ->sum('amount');
+        static::addGlobalScope(new OwnershipScope(Auth::user()));
+    }
+
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->where('user_id', '=', $user->id);
     }
 }

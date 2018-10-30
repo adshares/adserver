@@ -63,7 +63,7 @@ class AdsSendOne implements ShouldQueue
     public function handle(AdsClient $adsClient)
     {
         $total = -$this->userLedger->amount;
-        $balance = UserLedger::getBalanceByUserId($this->userLedger->users_id);
+        $balance = UserLedger::getBalanceByUserId($this->userLedger->user_id);
 
         if ($balance < $total) {
             Log::notice("Insufficient funds.");
@@ -81,7 +81,7 @@ class AdsSendOne implements ShouldQueue
         if (AdsValidator::isTransactionIdValid($txid)) {
             // TODO move to queue (or service in general) to assure user ledger entry update
             $this->userLedger->status = UserLedger::STATUS_ACCEPTED;
-            $this->userLedger->desc = $txid;
+            $this->userLedger->txid = $txid;
             $this->userLedger->save();
         } else {
             throw new JobException("Invalid txid: ${txid}");

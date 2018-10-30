@@ -49,10 +49,24 @@ Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 //{}
 //200{"address":"ADS_ADDR","title":"000...uid"}
+Route::get('wallet/history', [WalletController::class, 'history']);
+//{}
+//200[
+//    {
+//        "status": "0.05002500000",
+//        "date": "Wed, 24 Oct 2018 15:56:49 GMT",
+//        "address": "0001-00000005-CBCA",
+//        "link": "https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001"
+//    },
+//    {
+//        "status": "-0.00000010010",
+//        "date": "Wed, 24 Oct 2018 16:14:58 GMT",
+//        "address": "0001-00000005-CBCA",
+//        "link": "-"
+//    }
+//]
 
 Route::get('admin/settings', [Simulator::class, 'mock']);
 Route::get('account/history', [Simulator::class, 'mock']);
 
-/** @deprecated */
-Route::get('wallet/history', [Simulator::class, 'mock']);
 

@@ -20,72 +20,55 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class Site.
- *
  * @property int user_id
  * @property string name
- * @property string url
  */
 class Site extends Model
 {
+    use Ownership;
+    use SoftDeletes;
     public static $rules = [
         'name' => 'required|max:64',
     ];
-
     protected $casts = [
-        'sites_requires' => 'json',
-        'sites_excludes' => 'json',
+        'site_requires' => 'json',
+        'site_excludes' => 'json',
     ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    /** @var string[] */
     protected $fillable = [
         'user_id',
         'name',
         'status',
         'zones',
-        'sites_requires',
-        'sites_excludes',
     ];
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
+    /** @var string[] */
     protected $hidden = [
         'deleted_at',
+        'site_requires',
+        'site_excludes',
     ];
-
-    /** @var array Aditional fields to be included in collections */
+    /**
+     * @var string[] Aditional fields to be included in collections
+     */
     protected $appends = ['adUnits', 'targetingArray'];
-
-    public function siteExcludes()
-    {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteExclude::class);
-    }
-
-    public function siteRequires()
-    {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteRequire::class);
-    }
 
     public function zones()
     {
-        return $this->hasMany(\Adshares\Adserver\Models\Zone::class);
+        return $this->hasMany(Zone::class);
     }
 
     public function getAdUnitsAttribute()
     {
         $adUnits = [];
+
         foreach ($this->zones as $zone) {
             $adUnits[] = [
-                'shortHeadline' => $zone->name,
+                'short_headline' => $zone->name,
                 'size' => [
                     'name' => $zone->name,
                     'width' => $zone->width,
@@ -100,27 +83,8 @@ class Site extends Model
     public function getTargetingArrayAttribute()
     {
         return [
-            'requires' => json_decode($this->site_requires),
-            'excludes' => json_decode($this->site_excludes),
+            'requires' => $this->site_requires,
+            'excludes' => $this->site_excludes,
         ];
-    }
-
-    public static function siteById($siteId)
-    {
-        return self::with([
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'zones' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')
-            ->findOrFail($siteId);
     }
 }
