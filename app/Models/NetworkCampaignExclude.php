@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,29 +15,24 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class NetworkCampaignExclude extends Model
+abstract class SiteTargeting extends Model
 {
-    use AutomateMutators;
-    use BinHex;
-
+    use SoftDeletes;
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
-      'uuid', 'network_campaign_id',
-      'source_created_at', 'source_updated_at',
-      'name', 'min', 'max'
+        'key', 'value'
     ];
 
     /**
@@ -46,15 +41,27 @@ class NetworkCampaignExclude extends Model
      * @var array
      */
     protected $hidden = [
-      'id', 'network_campaign_id'
+        'deleted_at',
     ];
 
     /**
-     * The attributes that use some Models\Traits with mutator settings automation
+     * The attributes that should be cast to native types.
      *
      * @var array
      */
-    protected $traitAutomate = [
-      'uuid' => 'BinHex',
+    protected $casts = [
+        'value' => 'array'
     ];
+
+    /**
+     * All of the relationships to be touched.
+     *
+     * @var array
+     */
+    protected $touches = ['site'];
+
+    public function site()
+    {
+        return $this->belongsTo("Adshares\Adserver\Models\Site");
+    }
 }
