@@ -22,56 +22,118 @@ namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
-use Illuminate\Database\Query\Builder;
+use Adshares\Adserver\Repository\CampaignRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class CampaignsController extends Controller
 {
-    public function add(Request $request)
+    private $campaignRepository;
+
+    public function __construct(Campaign $campaignModel)
+    {
+        $this->campaignRepository = new CampaignRepository($campaignModel);
+    }
+
+    public function add(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
         $input['user_id'] = Auth::user()->id;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
-        $campaign = Campaign::create($input);
 
-        $campaign->save();
+        $banners = [];
+        $temporaryFileToRemove = [];
+        if (isset($input['ads']) && count($input['ads']) > 0) {
+            $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
+            $banners = $this->prepareBannersFromInput($input['ads']);
+        }
+
+        $campaign = new Campaign($input);
+        $this->campaignRepository->save($campaign, $banners);
+
+        if ($temporaryFileToRemove) {
+            $this->removeLocalBannerImages($temporaryFileToRemove);
+        }
 
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
-    public function browse(Request $request)
+    private function temporaryBannersToRemove(array $input): array
     {
-        // TODO check privileges
-        $campaigns = Campaign::with([
-            'campaignExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'campaignRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')->get();
+        $banners = [];
+
+        foreach ($input as $banner) {
+            if ($banner['type'] === Banner::HTML_TYPE) {
+                continue;
+            }
+
+            $banners[] = $this->getBannerLocalPublicPath($banner['image_url']);
+        }
+
+        return $banners;
+    }
+
+    private function removeLocalBannerImages(array $files): void
+    {
+        foreach ($files as $file) {
+            Storage::disk('public')->delete($file);
+        }
+    }
+
+    private function prepareBannersFromInput(array $input): array
+    {
+        $banners = [];
+
+        foreach ($input as $banner) {
+            $size = explode('x', Banner::size($banner['size']));
+
+            if (!isset($size[0]) || !isset($size[1])) {
+                throw new \RuntimeException('Banner size is required.');
+            }
+
+            $bannerModel = new Banner();
+            $bannerModel->name = $banner['name'];
+            $bannerModel->creative_width = $size[0];
+            $bannerModel->creative_height = $size[1];
+            $bannerModel->creative_type = Banner::type($banner['type']);
+
+            if ($banner['type'] === Banner::HTML_TYPE) {
+                $bannerModel->creative_contents = $banner['html'];
+            } else {
+                $path = $this->getBannerLocalPublicPath($banner['image_url']);
+                $content = Storage::disk('public')->get($path);
+
+                $bannerModel->creative_contents = $content;
+            }
+
+            $banners[] = $bannerModel;
+        }
+
+        return $banners;
+    }
+
+    private function getBannerLocalPublicPath(string $imageUrl): string
+    {
+        return str_replace(config('app.url') . '/storage/', '', $imageUrl);
+    }
+
+    public function browse()
+    {
+        $campaigns = $this->campaignRepository->find();
 
         return self::json($campaigns);
     }
 
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     *
-     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function count(Request $request)
+    public function count()
     {
         //@TODO: create function data
         $siteCount = [
@@ -86,7 +148,7 @@ class CampaignsController extends Controller
         return self::json($siteCount, 200);
     }
 
-    public function edit(Request $request, $campaign_id)
+    public function edit(Request $request, $campaignId)
     {
         $this->validateRequestObject(
             $request,
@@ -98,17 +160,18 @@ class CampaignsController extends Controller
         );
 
         // TODO check privileges
-        $campaign = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->update($request->input('campaign'));
+
 
         return self::json(['message' => 'Successfully edited'], 200)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
-    public function delete(Request $request, $campaign_id)
+    public function delete($campaignId)
     {
         // TODO check privileges
-        $site = Campaign::whereNull('deleted_at')->findOrFail($campaign_id);
+        $site = $this->campaignRepository->fetchCampaignById($campaignId);
         $site->deleted_at = new \DateTime();
         $site->save();
 
@@ -118,13 +181,13 @@ class CampaignsController extends Controller
     public function read(Request $request, $campaignId)
     {
         // TODO check privileges
-        $campaign = Campaign::campaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
     public function classify($campaignId)
     {
-        $campaign = Campaign::campaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         $targetingRequires = ($campaign->targeting_requires) ? json_decode($campaign->targeting_requires, true) : null;
         $targetingExcludes = ($campaign->targeting_excludes) ? json_decode($campaign->targeting_excludes, true) : null;
@@ -147,11 +210,34 @@ class CampaignsController extends Controller
 
     public function disableClassify($campaignId)
     {
-        $campaign = Campaign::campaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->classification_status = 0;
         $campaign->classification_tags = null;
 
         $campaign->update();
+    }
+
+    public function upload(Request $request)
+    {
+        $file = $request->file('file');
+        $path = $file->store('banners', 'public');
+
+        $name = $file->getClientOriginalName();
+        $imageSize = getimagesize($file->getRealPath());
+        $size = '';
+
+        if (isset($imageSize[0]) && isset($imageSize[1])) {
+            $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
+        }
+
+        return self::json(
+            [
+                'imageUrl' => config('app.url') . '/storage/' . $path,
+                'name' => $name,
+                'size' => $size,
+            ],
+            Response::HTTP_OK
+        );
     }
 
     /**

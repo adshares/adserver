@@ -31,6 +31,11 @@ class Campaign extends Model
     use BinHex;
 
     public static $rules = [
+//        'name' => 'required|max:255',
+//        'landing_url' => 'required|max:1024',
+//        'strategy_name' => 'in:CPC,CPM',
+//        'bid' => 'required:numeric',
+//        'budget' => 'required:numeric',
     ];
 
     protected $dates = [
@@ -71,6 +76,7 @@ class Campaign extends Model
         'user_id',
         'targeting_requires',
         'targeting_excludes',
+        'banners',
     ];
 
     protected $traitAutomate = [
@@ -118,8 +124,8 @@ class Campaign extends Model
     public function getTargetingAttribute()
     {
         return [
-            "requires" => json_decode($this->targeting_requires, true),
-            "excludes" => json_decode($this->targeting_excludes, true),
+            "requires" => $this->targeting_requires,
+            "excludes" => $this->targeting_excludes,
         ];
     }
 
