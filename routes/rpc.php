@@ -23,7 +23,6 @@ use Adshares\Adserver\Http\Controllers\Rest\ChartsController;
 use Adshares\Adserver\Http\Controllers\Rest\ConfigController;
 use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
-use Adshares\Adserver\Http\Controllers\Rest\SitesController;
 use Adshares\Adserver\Http\Controllers\Rpc\WalletController;
 use Adshares\Adserver\Http\Controllers\Simulator;
 use Illuminate\Support\Facades\Route;
@@ -35,9 +34,10 @@ Route::get('settings/notifications', [SettingsController::class, 'readNotificati
 // tmp mocked solutions
 Route::post('chart', [ChartsController::class, 'chart']);
 Route::get('options/campaigns/targeting', [CampaignsController::class, 'targeting']);
-Route::get('options/sites/targeting', [SitesController::class, 'targeting']);
+Route::get('options/sites/targeting', [Simulator::class, 'targeting']);
 Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
-Route::get('config/banners', [SitesController::class, 'banners']);
+Route::get('config/banners', [Simulator::class, 'zoneTypes']);//@deprecated
+Route::get('options/sites/zones', [Simulator::class, 'zoneTypes']);
 
 // Routes for Withdraw/Deposit
 Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);

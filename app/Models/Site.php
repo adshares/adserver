@@ -32,13 +32,11 @@ class Site extends Model
 {
     use Ownership;
     use SoftDeletes;
-
     /**
      * Template for html code, which should be pasted for each ad unit
      */
     const PAGE_CODE_TEMPLATE = '<div data-pub="$publisherId" data-zone="$zoneId" '
     . 'style="width:$widthpx;height:$heightpx;display: block;margin: 0 auto;background-color: #FAA"></div>';
-
     public static $rules = [
         'name' => 'required|max:64',
     ];
@@ -51,7 +49,6 @@ class Site extends Model
         'user_id',
         'name',
         'status',
-        'zones',
     ];
     /** @var string[] */
     protected $hidden = [
@@ -93,6 +90,7 @@ class Site extends Model
     public function getPageCodeCommonAttribute(): string
     {
         $serverUrl = config('app.url');
+
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
     }
 
@@ -106,6 +104,7 @@ class Site extends Model
 
     /**
      * @param $zone Zone AdUnit data
+     *
      * @return string html code for specific AdUnit
      */
     private function getAdUnitPageCode(Zone $zone): string
@@ -116,6 +115,7 @@ class Site extends Model
             '$width' => $zone->width,
             '$height' => $zone->height,
         ];
+
         return strtr(self::PAGE_CODE_TEMPLATE, $replaceArr);
     }
 }

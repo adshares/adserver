@@ -34,7 +34,7 @@ class Handler extends ExceptionHandler
                 return new JsonResponse([
                     $prev->getErrorCode(),
                     $prev->getMessage(),
-                    $prev->getTraceAsString()
+                    $prev->getTrace()
                 ], 500);
             }
 
