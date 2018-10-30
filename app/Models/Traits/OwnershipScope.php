@@ -21,20 +21,16 @@
 namespace Adshares\Adserver\Models\Traits;
 
 use Adshares\Adserver\Models\Site;
-use Illuminate\Contracts\Auth\Authenticatable;
+use Adshares\Adserver\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
-use Illuminate\Foundation\Auth\User;
 
 class OwnershipScope implements Scope
 {
     /** @var User */
     private $user;
 
-    /**
-     * @param Authenticatable | User $user
-     */
     public function __construct(User $user)
     {
         $this->user = $user;
