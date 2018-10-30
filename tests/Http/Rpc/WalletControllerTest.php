@@ -326,7 +326,7 @@ class WalletControllerTest extends TestCase
         $dateString = '2018-10-24 15:00:49';
 
         $ul = new UserLedger;
-        $ul->users_id = $userId;
+        $ul->user_id = $userId;
         $ul->amount = $amount;
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';
@@ -342,12 +342,12 @@ class WalletControllerTest extends TestCase
      */
     private function initUserLedger($userId, $amountInClicks): void
     {
-// add entry with a txid
+        // add entry with a txid
         $this->generateUserIncome($userId, $amountInClicks);
         // add entry without txid
         $dateString = '2018-10-24 15:00:49';
         $ul = new UserLedger;
-        $ul->users_id = $userId;
+        $ul->user_id = $userId;
         $ul->amount = -$amountInClicks;
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';

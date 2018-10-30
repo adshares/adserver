@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\Ownership;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -44,8 +43,8 @@ class Site extends Model
         'name' => 'required|max:64',
     ];
     protected $casts = [
-        'sites_requires' => 'json',
-        'sites_excludes' => 'json',
+        'site_requires' => 'json',
+        'site_excludes' => 'json',
     ];
     /** @var string[] */
     protected $fillable = [
@@ -53,46 +52,16 @@ class Site extends Model
         'name',
         'status',
         'zones',
-        'sites_requires',
-        'sites_excludes',
     ];
     /** @var string[] */
     protected $hidden = [
         'deleted_at',
+        'site_requires',
+        'site_excludes',
     ];
+
     /** @var string[] Aditional fields to be included in collections */
     protected $appends = ['adUnits', 'page_code_common', 'targetingArray'];
-
-    public static function siteById($siteId)
-    {
-        $builder = self::with([
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'zones' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at');
-
-
-        return $builder->findOrFail($siteId);
-    }
-
-    public function siteExcludes()
-    {
-        return $this->hasMany(SiteExclude::class);
-    }
-
-    public function siteRequires()
-    {
-        return $this->hasMany(SiteRequire::class);
-    }
 
     public function zones()
     {
@@ -102,6 +71,7 @@ class Site extends Model
     public function getAdUnitsAttribute(): array
     {
         $adUnits = [];
+
         foreach ($this->zones as $zone) {
             $pageCode = $this->getAdUnitPageCode($zone);
             $adUnits[] = [
@@ -130,8 +100,8 @@ class Site extends Model
     public function getTargetingArrayAttribute()
     {
         return [
-            'requires' => json_decode($this->site_requires),
-            'excludes' => json_decode($this->site_excludes),
+            'requires' => $this->site_requires,
+            'excludes' => $this->site_excludes,
         ];
     }
 
