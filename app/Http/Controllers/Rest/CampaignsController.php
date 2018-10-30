@@ -34,11 +34,14 @@ use Illuminate\Support\Facades\Storage;
 
 class CampaignsController extends Controller
 {
+    /**
+     * @var CampaignRepository
+     */
     private $campaignRepository;
 
-    public function __construct(Campaign $campaignModel)
+    public function __construct(CampaignRepository $campaignRepository)
     {
-        $this->campaignRepository = new CampaignRepository($campaignModel);
+        $this->campaignRepository = $campaignRepository;
     }
 
     public function add(Request $request): JsonResponse

@@ -12,9 +12,9 @@ class CampaignRepository
      */
     private $model;
 
-    public function __construct(Campaign $model)
+    public function __construct()
     {
-        $this->model = $model;
+        $this->model = new Campaign();
     }
 
     public function find()
