@@ -39,7 +39,7 @@ class SitesController extends Controller
 
         $site->save();
 
-        $response = self::json(compact('site'), 201);
+        $response = self::json([], 201);
         $response->header('Location', route('app.sites.read', ['site' => $site]));
 
         return $response;
