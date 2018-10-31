@@ -71,9 +71,43 @@ class SitesTest extends TestCase
         return [
             [
                 json_decode(<<<JSON
-{"site":{"id":0,"status":2,"name":"sss","primaryLanguage":0,"filtering":{"requires":{"category":["1"]},"excludes":{}},"adUnits":[{"shortHeadline":"ssss","type":0,"size":{"id":3,"name":"Large Rectangle","type":"large-rectangle","size":2,"tags":["Desktop","best"],"width":"336","height":"280","selected":true}}]}}
+{
+  "site": {
+    "id": 0,
+    "status": 2,
+    "name": "sss",
+    "primaryLanguage": 0,
+    "filtering": {
+      "requires": {
+        "category": [
+          "1"
+        ]
+      },
+      "excludes": {}
+    },
+    "adUnits": [
+      {
+        "shortHeadline": "ssss",
+        "type": 0,
+        "size": {
+          "id": 3,
+          "name": "Large Rectangle",
+          "type": "large-rectangle",
+          "size": 2,
+          "tags": [
+            "Desktop",
+            "best"
+          ],
+          "width": "336",
+          "height": "280",
+          "selected": true
+        }
+      }
+    ]
+  }
+}
 JSON
-                ,true),
+                    , true),
             ],
         ];
     }
