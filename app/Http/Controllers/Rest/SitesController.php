@@ -40,10 +40,9 @@ class SitesController extends Controller
         $site->site_excludes = $request->input('site.filtering.excludes');
         $site->save();
 
-        $adUnits = $request->input('site.ad_units');
-        $adUnits = $this->mapAdUnitsToZoneModel($adUnits);//needs to be removed after front refactor
+        $zones = $this->mapAdUnitsToZoneModel($request->input('site.ad_units'));//needs to be removed after front refactor
 
-        $site->zones()->createMany($adUnits);
+        $site->zones()->createMany($zones);
 
         $response = self::json([], 201);
         $response->header('Location', route('app.sites.read', ['site' => $site]));
