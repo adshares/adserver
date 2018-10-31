@@ -148,7 +148,7 @@ class CampaignsController extends Controller
             'totalCost' => 0,
         ];
 
-        return self::json($siteCount, 200);
+        return self::json($siteCount);
     }
 
     public function edit(Request $request, $campaignId)
@@ -167,8 +167,7 @@ class CampaignsController extends Controller
         $campaign->update($request->input('campaign'));
 
 
-        return self::json(['message' => 'Successfully edited'], 200)
-            ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
+        return self::json(['message' => 'Successfully edited']);
     }
 
     public function delete($campaignId)
@@ -178,7 +177,7 @@ class CampaignsController extends Controller
         $site->deleted_at = new \DateTime();
         $site->save();
 
-        return self::json(['message' => 'Successfully deleted'], 200);
+        return self::json(['message' => 'Successfully deleted']);
     }
 
     public function read(Request $request, $campaignId)
