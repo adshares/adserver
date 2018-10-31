@@ -41,7 +41,7 @@ class CreateZonesTable extends Migration
             $table->string('name', 32);
             $table->integer('width');
             $table->integer('height');
-            $table->integer('status', Zone::STATUS_DRAFT);
+            $table->integer('status')->default(Zone::STATUS_DRAFT);
 
             $table->foreign('site_id')->references('id')->on('sites')->onUpdate('RESTRICT')->onDelete('RESTRICT');
         });
