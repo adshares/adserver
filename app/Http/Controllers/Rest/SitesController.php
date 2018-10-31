@@ -40,7 +40,8 @@ class SitesController extends Controller
         $site->site_excludes = $request->input('site.filtering.excludes');
         $site->save();
 
-        $zones = $this->mapAdUnitsToZoneModel($request->input('site.ad_units'));//needs to be removed after front refactor
+        //needs to be removed after front-end refactor
+        $zones = $this->mapAdUnitsToZoneModel($request->input('site.ad_units'));
 
         $site->zones()->createMany($zones);
 
