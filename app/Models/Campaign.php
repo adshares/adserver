@@ -138,7 +138,7 @@ class Campaign extends Model
         $this->bid = $value["bid_value"];
         $this->budget = $value["budget"];
         $this->time_start = $value["date_start"];
-        $this->time_end = $value["date_end"];
+        $this->time_end = $value["date_end"] ?? null;
     }
 
     public function getBasicInformationAttribute()
