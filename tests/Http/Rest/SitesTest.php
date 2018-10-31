@@ -55,7 +55,7 @@ class SitesTest extends TestCase
 
         $uri = $response->headers->get('Location');
         $matches = [];
-        $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
+        $this->assertSame(1, preg_match('/(\d+)$/', $uri, $matches));
 
         $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
