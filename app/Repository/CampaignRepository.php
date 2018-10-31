@@ -7,24 +7,14 @@ use Adshares\Adserver\Models\Campaign;
 
 class CampaignRepository
 {
-    /**
-     * @var Campaign
-     */
-    private $model;
-
-    public function __construct()
-    {
-        $this->model = new Campaign();
-    }
-
     public function find()
     {
-        return $this->model->whereNull('deleted_at')->get();
+        return (new Campaign())->get();
     }
 
     public function fetchCampaignById(int $campaignId): Campaign
     {
-        return $this->model->whereNull('deleted_at')->findOrFail($campaignId);
+        return (new Campaign())->findOrFail($campaignId);
     }
 
     /**

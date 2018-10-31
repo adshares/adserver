@@ -32,14 +32,7 @@ class Zone extends Model
         "320x100",
         "336x280"
     ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     use SoftDeletes;
-
     protected $fillable = [
       'website_id', 'name', 'width', 'height',
     ];
