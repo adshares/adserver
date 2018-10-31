@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Tests\Http\Rest;
 
-use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +27,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class SitesTest extends TestCase
 {
     use RefreshDatabase;
-
     const URI = '/api/sites';
 
     public function testEmptyDb()
@@ -39,51 +37,78 @@ class SitesTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI.'/1');
+        $response = $this->getJson(self::URI . '/1');
         $response->assertStatus(404);
     }
 
-    public function testCreateSite()
+    /**
+     * @dataProvider creationDataProvider
+     */
+    public function testCreateSite($data)
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        /* @var $site Site */
-        $site = factory(Site::class)->make();
-
-        $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
+        $response = $this->postJson(self::URI, $data);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
-        $response->assertJsonFragment(['name' => $site->name]);
-//        $response->assertJsonFragment(['url' => $site->url]);
 
         $uri = $response->headers->get('Location');
         $matches = [];
-        $this->assertTrue(1 === preg_match('/(\d+)$/', $uri, $matches));
+        $this->assertSame(1, preg_match('/(\d+)$/', $uri, $matches));
 
-        $response = $this->getJson(self::URI.'/'.$matches[1]);
+        $response = $this->getJson(self::URI . '/' . $matches[1]);
         $response->assertStatus(200);
-        $response->assertJsonFragment(['name' => $site->name]);
-//        $response->assertJsonFragment(['url' => $site->url]);
+        $response->assertJsonFragment(['name' => $data['site']['name']]);
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(200);
         $response->assertJsonCount(1);
     }
 
-    public function testCreateSites()
+    public function creationDataProvider(): array
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
-        $count = 10;
-
-        $users = factory(Site::class, $count)->make();
-        foreach ($users as $site) {
-            $response = $this->postJson(self::URI, ['site' => $site->getAttributes()]);
-            $response->assertStatus(201);
+        return [
+            [
+                json_decode(<<<JSON
+{
+  "site": {
+    "id": 0,
+    "status": 2,
+    "name": "sss",
+    "primaryLanguage": 0,
+    "filtering": {
+      "requires": {
+        "category": [
+          "1"
+        ]
+      },
+      "excludes": {}
+    },
+    "adUnits": [
+      {
+        "shortHeadline": "ssss",
+        "type": 0,
+        "size": {
+          "id": 3,
+          "name": "Large Rectangle",
+          "type": "large-rectangle",
+          "size": 2,
+          "tags": [
+            "Desktop",
+            "best"
+          ],
+          "width": "336",
+          "height": "280",
+          "selected": true
         }
-
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount($count);
+      }
+    ]
+  }
+}
+JSON
+                    , true),
+            ],
+        ];
     }
 }

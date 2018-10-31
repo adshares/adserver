@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,14 +33,19 @@ class SitesController extends Controller
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
 
+        /** @var Site|Builder $site */
         $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
-        $site->site_requires = $request->input('site.filtering.requires') ?? $request->input('site.targeting.requires');
-        $site->site_excludes = $request->input('site.filtering.excludes') ?? $request->input('site.targeting.excludes');
-
+        $site->site_requires = $request->input('site.filtering.requires');
+        $site->site_excludes = $request->input('site.filtering.excludes');
         $site->save();
 
-        $response = self::json(compact('site'), 201);
+        //needs to be removed after front-end refactor
+        $zones = $this->mapAdUnitsToZoneModel($request->input('site.ad_units'));
+
+        $site->zones()->createMany($zones);
+
+        $response = self::json([], 201);
         $response->header('Location', route('app.sites.read', ['site' => $site]));
 
         return $response;
@@ -70,7 +76,7 @@ class SitesController extends Controller
 
         $site->update($request->input('site'));
 
-        return self::json(['message' => 'Successfully edited'], 200);
+        return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
     }
 
     public function delete(Site $site)
@@ -86,124 +92,21 @@ class SitesController extends Controller
     }
 
     /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     *
-     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
-     * @throws \Illuminate\Validation\ValidationException
+     * @deprecated
      */
-    public function targeting(Request $request)
+    private function mapAdUnitsToZoneModel($adUnits): array
     {
-        return self::json(
-            json_decode(
-                '[
-          {
-            "id": "1",
-            "label": "Creative type",
-            "key":"category",
-            "values": [
-              {"label": "Audio Ad (Auto-Play)", "value": "1"},
-              {"label": "Audio Ad (User Initiated)", "value": "2"},
-              {"label": "In-Banner Video Ad (Auto-Play)", "value": "6"},
-              {"label": "In-Banner Video Ad (User Initiated)", "value": "7"},
-              {"label": "Provocative or Suggestive Imagery", "value": "9"},
-              {"label": "Shaky, Flashing, Flickering, Extreme Animation, Smileys", "value": "10"},
-              {"label": "Surveys", "value": "11"},
-              {"label": "Text Only", "value": "12"},
-              {"label": "User Interactive (e.g., Embedded Games)", "value": "13"},
-              {"label": "Windows Dialog or Alert Style", "value": "14"},
-              {"label": "Has Audio On/Off Button", "value": "15"}
-            ],
-            "value_type": "string",
-            "allow_input": true
-          },
-          {
-            "id": "2",
-            "label": "Language",
-            "key": "lang",
-            "values": [
-              {"label": "Polish", "value": "pl"},
-              {"label": "English", "value": "en"},
-              {"label": "Italian", "value": "it"},
-              {"label": "Japanese", "value": "jp"}
-            ],
-            "value_type": "string",
-            "allow_input": false
-          },      
-          {
-            "id": "3",
-            "label": "Browser",
-            "key": "browser",
-            "values": [
-              {"label": "Firefox", "value": "firefox"},
-              {"label": "Chrome", "value": "chrome"},
-              {"label": "Safari", "value": "safari"},
-              {"label": "Edge", "value": "edge"}
-            ],
-            "value_type": "string",
-            "allow_input": false
-          },  
-          {
-            "id": "4",
-            "label": "Javascript support",
-            "key": "js_enabled",
-            "value_type": "boolean",
-            "values": [
-              {"label": "Yes", "value": "true"},
-              {"label": "No", "value": "false"}
-            ],
-            "allow_input": false
-          }
-        ]'
-            ),
-            200
-        );
-    }
+        $adUnits = array_map(function ($zone) {
+            $zone['name'] = $zone['short_headline'];
+            unset($zone['short_headline']);
 
-    public function banners(Request $request)
-    {
-        return self::json(
-            json_decode(
-                '[
-          {
-            "id": 1,
-        "name": "Leaderboard",
-        "type": "leaderboard",
-        "size": 0,
-        "tags": ["Desktop"]
-      },
-        {
-            "id": 2,
-        "name": "Large Rectangle",
-        "type": "large-rectangle",
-        "size": 3,
-        "tags": ["Desktop"]
-      },
-        {
-            "id": 3,
-        "name": "Large Mobile Banner",
-        "type": "large-mobile-banner",
-        "size": 2,
-        "tags": ["Desktop", "Mobile"]
-      },
-        {
-            "id": 4,
-        "name": "Large Rectangle",
-        "type": "large-rectangle",
-        "size": 3,
-        "tags": ["Desktop"]
-      },
-        {
-            "id": 5,
-        "name": "Large Rectangle 2",
-        "type": "large-rectangle",
-        "size": 4,
-        "tags": ["Desktop"]
-      }
-        ]'
-            ),
-            200
-        );
+            $size = Simulator::getZoneTypes()[$zone['size']['size']];
+            $zone['width'] = $size['width'];
+            $zone['height'] = $size['height'];
+
+            return $zone;
+        }, $adUnits);
+
+        return $adUnits;
     }
 }
