@@ -54,6 +54,7 @@ class CampaignsController extends Controller
 
         $banners = [];
         $temporaryFileToRemove = [];
+
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
             $banners = $this->prepareBannersFromInput($input['ads']);
