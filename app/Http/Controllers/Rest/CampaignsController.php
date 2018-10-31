@@ -54,6 +54,7 @@ class CampaignsController extends Controller
 
         $banners = [];
         $temporaryFileToRemove = [];
+
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
             $banners = $this->prepareBannersFromInput($input['ads']);
@@ -66,7 +67,7 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        return self::json([], Response::HTTP_CREATED)
+        return self::json($campaign->toArray(), Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
