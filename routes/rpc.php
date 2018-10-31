@@ -34,7 +34,8 @@ Route::get('settings/notifications', [SettingsController::class, 'readNotificati
 // tmp mocked solutions
 Route::post('chart', [ChartsController::class, 'chart']);
 Route::get('options/campaigns/targeting', [CampaignsController::class, 'targeting']);
-Route::get('options/sites/targeting', [Simulator::class, 'targeting']);
+Route::get('options/sites/targeting', [Simulator::class, 'targeting']);//@deprecated
+Route::get('options/sites/filtering', [Simulator::class, 'targeting']);
 Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
 Route::get('config/banners', [Simulator::class, 'zoneTypes']);//@deprecated
 Route::get('options/sites/zones', [Simulator::class, 'zoneTypes']);
