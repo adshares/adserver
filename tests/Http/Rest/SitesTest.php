@@ -29,7 +29,7 @@ class SitesTest extends TestCase
 {
     use RefreshDatabase;
     const URI = '/api/sites';
-    const SiteStructure = [
+    const SITE_STRUCTURE = [
         'id',
         'name',
         'filtering',
@@ -37,7 +37,7 @@ class SitesTest extends TestCase
         'status',
         'primaryLanguage',
     ];
-    const BasicSiteStructure = [
+    const BASIC_SITE_STRUCTURE = [
         'id',
         'name',
 //        'filtering',
@@ -86,7 +86,7 @@ class SitesTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonCount(2);
         $response->assertJsonStructure([
-            '*' => self::SiteStructure,
+            '*' => self::SITE_STRUCTURE,
         ]);
     }
 
@@ -97,7 +97,7 @@ class SitesTest extends TestCase
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        factory(Site::class)->create(['user_id' => $user->id]);
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::URI . '/1', ['site' => $data]);
         $response->assertStatus(204);
@@ -105,9 +105,9 @@ class SitesTest extends TestCase
         $this->getJson(self::URI . '/1')
             ->assertStatus(200)
             ->assertJsonFragment([
-                'name' => $data['name'],
-                'primaryLanguage' => $data['primaryLanguage'],
-                'status' => $data['status'],
+                'name' => $data['name'] ?? $site->name,
+                'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
+                'status' => $data['status'] ?? $site->status,
             ]);
     }
 
@@ -141,7 +141,11 @@ class SitesTest extends TestCase
             ],
             [
                 'status' => 1,
+            ],
+            [
                 "name" => "name" . rand(),
+            ],
+            [
                 "primaryLanguage" => "en",
             ],
         ];
@@ -198,7 +202,7 @@ JSON
     {
         $response = $this->getJson(self::URI . '/' . $id);
         $response->assertStatus(200)
-            ->assertJsonStructure(self::SiteStructure)->assertJsonFragment([
+            ->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment([
                 'name' => $preset['name'],
                 'primaryLanguage' => $preset['primaryLanguage'],
             ])
