@@ -79,5 +79,4 @@ class SitesController extends Controller
     {
         return self::json($site->toArray());
     }
-
 }

@@ -40,10 +40,10 @@ class SitesTest extends TestCase
     const BASIC_SITE_STRUCTURE = [
         'id',
         'name',
-//        'filtering',
-//        'adUnits',
         'status',
         'primaryLanguage',
+//        'filtering',
+//        'adUnits',
     ];
 
     public function testEmptyDb()
