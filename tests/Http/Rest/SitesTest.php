@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Http\Rest;
 
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,6 +29,22 @@ class SitesTest extends TestCase
 {
     use RefreshDatabase;
     const URI = '/api/sites';
+    const SiteStructure = [
+        'id',
+        'name',
+        'filtering',
+        'adUnits' => ['*' => ['shortHeadline']],
+        'status',
+        'primaryLanguage',
+    ];
+    const BasicSiteStructure = [
+        'id',
+        'name',
+//        'filtering',
+//        'adUnits',
+        'status',
+        'primaryLanguage',
+    ];
 
     public function testEmptyDb()
     {
@@ -44,7 +61,7 @@ class SitesTest extends TestCase
     /**
      * @dataProvider creationDataProvider
      */
-    public function testCreateSite($data)
+    public function testCreateSite($data, $preset)
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -53,41 +70,85 @@ class SitesTest extends TestCase
         $response->assertStatus(201);
         $response->assertHeader('Location');
 
-        $uri = $response->headers->get('Location');
-        $matches = [];
-        $this->assertSame(1, preg_match('/(\d+)$/', $uri, $matches));
+        $this->assertResourceData($preset, $this->getIdFromLocation($response->headers->get('Location')));
+    }
 
-        $this->getJson(self::URI . '/' . $matches[1])
-            ->assertStatus(200)
-            ->assertJsonFragment(['name' => $data['name']])
-            ->assertJsonCount(2, 'filtering')
-            ->assertJsonCount(1, 'filtering.requires')
-            ->assertJsonCount(0, 'filtering.excludes');
+    public function testMultipleSites()
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
 
-        $response = $this->getJson(self::URI)
-            ->assertStatus(200);
+        array_map(function ($data) use ($user) {
+            factory(Site::class)->create(['user_id' => $user->id]);
+        }, $this->creationDataProvider());
+
+        $response = $this->getJson(self::URI);
+        $response->assertStatus(200);
+        $response->assertJsonCount(2);
         $response->assertJsonStructure([
-            '*' => [
-                'id',
-                'name',
-                'filtering',
-                'adUnits' => ['*' => ['shortHeadline']],
-                'status',
-//                'primaryLanguage',
-            ],
+            '*' => self::SiteStructure,
         ]);
+    }
+
+    /**
+     * @dataProvider updateDataProvider
+     */
+    public function testUpdateSite($data)
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        factory(Site::class)->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::URI . '/1', ['site' => $data]);
+        $response->assertStatus(204);
+
+        $this->getJson(self::URI . '/1')
+            ->assertStatus(200)
+            ->assertJsonFragment([
+                'name' => $data['name'],
+                'primaryLanguage' => $data['primaryLanguage'],
+                'status' => $data['status'],
+            ]);
+    }
+
+    public function updateDataProvider()
+    {
+        return [
+            [
+                [
+                    "status" => "0",
+                    "name" => "name" . rand(),
+                    "primaryLanguage" => "pl",
+                ],
+            ],
+            [
+                [
+                    'status' => "1",
+                    "name" => "name" . rand(),
+                    "primaryLanguage" => "en",
+                ],
+            ],
+        ];
     }
 
     public function creationDataProvider(): array
     {
-        return [
+        $presets = [
             [
-                json_decode(<<<JSON
+                "status" => 0,
+                "name" => "name" . rand(),
+                "primaryLanguage" => "pl",
+            ],
+            [
+                'status' => 1,
+                "name" => "name" . rand(),
+                "primaryLanguage" => "en",
+            ],
+        ];
+
+        $default =
+            json_decode(<<<JSON
 {
-    "id": 0,
-    "status": 2,
-    "name": "sss",
-    "primaryLanguage": 0,
     "filtering": {
       "requires": {
         "category": [
@@ -117,8 +178,32 @@ class SitesTest extends TestCase
     ]
   }
 JSON
-                    , true),
-            ],
-        ];
+                , true);
+
+        return
+            array_map(function ($preset) use ($default) {
+                return [array_merge($default, $preset), $preset];
+            }, $presets);
+    }
+
+    private function getIdFromLocation($location)
+    {
+        $matches = [];
+        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
+
+        return $matches[1];
+    }
+
+    private function assertResourceData($preset, $id): void
+    {
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(200)
+            ->assertJsonStructure(self::SiteStructure)->assertJsonFragment([
+                'name' => $preset['name'],
+                'primaryLanguage' => $preset['primaryLanguage'],
+            ])
+            ->assertJsonCount(2, 'filtering')
+            ->assertJsonCount(1, 'filtering.requires')
+            ->assertJsonCount(0, 'filtering.excludes');
     }
 }

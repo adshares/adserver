@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
-use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -32,23 +31,22 @@ class SitesController extends Controller
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-
-        /** @var Site|Builder $site */
         $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
-        $site->site_requires = $request->input('site.filtering.requires');
-        $site->site_excludes = $request->input('site.filtering.excludes');
         $site->save();
 
-        //needs to be removed after front-end refactor
-        $zones = $this->mapAdUnitsToZoneModel($request->input('site.ad_units'));
+        return self::json([], Response::HTTP_CREATED)
+            ->header('Location', route('app.sites.read', ['site' => $site]));
+    }
 
-        $site->zones()->createMany($zones);
+    public function edit(Request $request, Site $site)
+    {
+        $input = $request->input('site');
+        $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
 
-        $response = self::json([], 201);
-        $response->header('Location', route('app.sites.read', ['site' => $site]));
+        $site->update($input);
 
-        return $response;
+        return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
     }
 
     public function browse()
@@ -70,15 +68,6 @@ class SitesController extends Controller
         return self::json($siteCount, 200);
     }
 
-    public function edit(Request $request, Site $site)
-    {
-        $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $request->input('site')));
-
-        $site->update($request->input('site'));
-
-        return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
-    }
-
     public function delete(Site $site)
     {
         $site->delete();
@@ -91,22 +80,4 @@ class SitesController extends Controller
         return self::json($site->toArray());
     }
 
-    /**
-     * @deprecated
-     */
-    private function mapAdUnitsToZoneModel($adUnits): array
-    {
-        $adUnits = array_map(function ($zone) {
-            $zone['name'] = $zone['short_headline'];
-            unset($zone['short_headline']);
-
-            $size = Simulator::getZoneTypes()[$zone['size']['size']];
-            $zone['width'] = $size['width'];
-            $zone['height'] = $size['height'];
-
-            return $zone;
-        }, $adUnits);
-
-        return $adUnits;
-    }
 }
