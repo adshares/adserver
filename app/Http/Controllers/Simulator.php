@@ -583,6 +583,13 @@ FILTERING_JSON;
         }, array_keys(self::ZONE_SIZES), self::ZONE_SIZES);
     }
 
+    public static function getAvailableLanguages()
+    {
+        return array_map(function ($key, $value) {
+            return ['name' => $value, 'code' => $key];
+        }, array_keys(self::LANGUAGES), self::LANGUAGES);
+    }
+
     public function pixel()
     {
         return new Response();

@@ -18,22 +18,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Tests\Http;
 
-class SiteOptionsController extends Controller
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class SiteOptionsTest extends TestCase
 {
-    public function filtering()
-    {
-        return self::json(json_decode(Simulator::FILTERING_JSON));
-    }
+    use RefreshDatabase;
+    const URI = '/api/options/sites';
 
-    public function languages()
+    public function testCreateSite(): void
     {
-        return self::json(Simulator::getAvailableLanguages());
-    }
+        $this->actingAs(factory(User::class)->create(), 'api');
 
-    public function zones()
-    {
-        return self::json(Simulator::getZoneTypes());
+        $response = $this->getJson(self::URI . '/languages');
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                '*' => [
+                    'name',
+                    'code',
+                ],
+            ]);
     }
 }
