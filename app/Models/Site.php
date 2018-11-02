@@ -56,7 +56,6 @@ class Site extends Model
         'name',
         'status',
         'primary_language',
-        'ad_units',
         'filtering',
     ];
     /** @var string[] */
@@ -77,19 +76,27 @@ class Site extends Model
         return $this->hasMany(Zone::class);
     }
 
-    public function setAdUnitsAttribute(array $data): void
+    public function addZones(array $data): void
     {
-//        $this->zones()->createMany($this->mapAdUnitsToZoneModel($data['ad_units']));
+        $records = array_map(function ($zone) {
+            $zone['name'] = $zone['short_headline'];
+            unset($zone['short_headline']);
+
+            $size = Simulator::getZoneTypes()[$zone['size']['size']];
+            $zone['width'] = $size['width'];
+            $zone['height'] = $size['height'];
+
+            return $zone;
+        }, $data);
+
+        $this->zones()->createMany($records);
     }
 
     public function getAdUnitsAttribute(): array
     {
-        $adUnits = [];
-
-        foreach ($this->zones as $zone) {
-            $pageCode = $this->getAdUnitPageCode($zone);
-            $adUnits[] = [
-                'page_code' => $pageCode,
+        return array_map(function (Zone $zone) {
+            return [
+                'page_code' => $this->getAdUnitPageCode($zone),
                 'short_headline' => $zone->name,
                 'size' => [
                     'name' => $zone->name,
@@ -97,9 +104,7 @@ class Site extends Model
                     'height' => $zone->height,
                 ],
             ];
-        }
-
-        return $adUnits;
+        }, $this->zones->all());
     }
 
     public function setFilteringAttribute(array $data): void
@@ -124,22 +129,6 @@ class Site extends Model
         $serverUrl = config('app.url');
 
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
-    }
-
-    private function mapAdUnitsToZoneModel($adUnits): array
-    {
-        $adUnits = array_map(function ($zone) {
-            $zone['name'] = $zone['short_headline'];
-            unset($zone['short_headline']);
-
-            $size = Simulator::getZoneTypes()[$zone['size']['size']];
-            $zone['width'] = $size['width'];
-            $zone['height'] = $size['height'];
-
-            return $zone;
-        }, $adUnits);
-
-        return $adUnits;
     }
 
     /**
