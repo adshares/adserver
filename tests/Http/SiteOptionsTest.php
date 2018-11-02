@@ -29,7 +29,7 @@ class SiteOptionsTest extends TestCase
     use RefreshDatabase;
     const URI = '/api/options/sites';
 
-    public function testCreateSite(): void
+    public function testLanguages(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -39,6 +39,43 @@ class SiteOptionsTest extends TestCase
                 '*' => [
                     'name',
                     'code',
+                ],
+            ]);
+    }
+
+    public function testZones(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI . '/zones');
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                '*' => [
+                    'id',
+                    'name',
+                    'type',
+                    'size',
+                    'tags' => [],
+                    'width',
+                    'height',
+                ],
+            ]);
+    }
+
+    public function testFiltering(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI . '/filtering');
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                '*' => [
+                    'id',
+                    'label',
+                    'key',
+                    'values' => ['*' => ['label', 'value']],
+                    'valueType',
+                    'allowInput',
                 ],
             ]);
     }
