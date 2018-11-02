@@ -11,10 +11,10 @@ if [ ! -v TRAVIS ]; then
   git clone \
     --depth=1 \
     https://github.com/adshares/adserver.git \
-    --branch ${ADSERVER_INSTALLATION_BRANCH} \
-    ${ADSERVER_BUILD_PATH}/build
+    --branch ${ADSERVER_BRANCH} \
+    ${BUILD_PATH}/build
 
-  cd ${ADSERVER_BUILD_PATH}/build
+  cd ${BUILD_PATH}/build
 fi
 
 envsubst < .env.dist | tee .env
