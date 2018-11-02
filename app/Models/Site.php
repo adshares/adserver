@@ -20,8 +20,8 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Models\Traits\Ownership;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -30,9 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string name
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
- * @property Zone[]|Collection zones
  * @method static Site create($input = null)
- * @method static get()
  */
 class Site extends Model
 {
@@ -41,6 +39,8 @@ class Site extends Model
     /**
      * Template for html code, which should be pasted for each ad unit
      */
+    const PAGE_CODE_TEMPLATE = '<div data-pub="$publisherId" data-zone="$zoneId" '
+    . 'style="width:$widthpx;height:$heightpx;display: block;margin: 0 auto;background-color: #FAA"></div>';
     public static $rules = [
         'name' => 'required|max:64',
         'primary_language' => 'required|max:2',
@@ -49,12 +49,14 @@ class Site extends Model
     protected $casts = [
         'site_requires' => 'json',
         'site_excludes' => 'json',
+//        'status' => 'boolean',
     ];
     /** @var string[] */
     protected $fillable = [
         'name',
         'status',
         'primary_language',
+        'ad_units',
         'filtering',
     ];
     /** @var string[] */
@@ -75,13 +77,29 @@ class Site extends Model
         return $this->hasMany(Zone::class);
     }
 
-    public function getAdUnitsAttribute()
+    public function setAdUnitsAttribute(array $data): void
     {
-        return $this->zones->map(function (Zone $zone) {
-            $zone->publisher_id = $this->user_id;
+//        $this->zones()->createMany($this->mapAdUnitsToZoneModel($data['ad_units']));
+    }
 
-            return $zone;
-        });
+    public function getAdUnitsAttribute(): array
+    {
+        $adUnits = [];
+
+        foreach ($this->zones as $zone) {
+            $pageCode = $this->getAdUnitPageCode($zone);
+            $adUnits[] = [
+                'page_code' => $pageCode,
+                'short_headline' => $zone->name,
+                'size' => [
+                    'name' => $zone->name,
+                    'width' => $zone->width,
+                    'height' => $zone->height,
+                ],
+            ];
+        }
+
+        return $adUnits;
     }
 
     public function setFilteringAttribute(array $data): void
@@ -98,10 +116,46 @@ class Site extends Model
         ];
     }
 
+    /**
+     * @return string html code which links to script finding proper advertisement
+     */
     public function getPageCodeCommonAttribute(): string
     {
         $serverUrl = config('app.url');
 
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
+    }
+
+    private function mapAdUnitsToZoneModel($adUnits): array
+    {
+        $adUnits = array_map(function ($zone) {
+            $zone['name'] = $zone['short_headline'];
+            unset($zone['short_headline']);
+
+            $size = Simulator::getZoneTypes()[$zone['size']['size']];
+            $zone['width'] = $size['width'];
+            $zone['height'] = $size['height'];
+
+            return $zone;
+        }, $adUnits);
+
+        return $adUnits;
+    }
+
+    /**
+     * @param $zone Zone AdUnit data
+     *
+     * @return string html code for specific AdUnit
+     */
+    private function getAdUnitPageCode(Zone $zone): string
+    {
+        $replaceArr = [
+            '$publisherId' => $this->user_id,
+            '$zoneId' => $zone->id,
+            '$width' => $zone->width,
+            '$height' => $zone->height,
+        ];
+
+        return strtr(self::PAGE_CODE_TEMPLATE, $replaceArr);
     }
 }

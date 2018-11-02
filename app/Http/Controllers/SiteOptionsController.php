@@ -18,14 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Zone;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Http\Controllers;
 
-$factory->define(Zone::class, function (Faker $faker) {
-    return [
-        'name' => $faker->word(),
-        'width' => $faker->numberBetween(100,1024),
-        'height' => $faker->numberBetween(100,1024),
-        'status' => 0,
-    ];
-});
+class SiteOptionsController extends Controller
+{
+    public function filtering()
+    {
+        return self::json(json_decode(Simulator::FILTERING_JSON));
+    }
+
+    public function languages()
+    {
+        return self::json(Simulator::getAvailableLanguages());
+    }
+
+    public function zones()
+    {
+        return self::json(Simulator::getZoneTypes());
+    }
+}
