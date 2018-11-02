@@ -57,7 +57,7 @@ class Site extends Model
         'site_excludes',
     ];
     /** @var string[] Aditional fields to be included in collections */
-    protected $appends = ['adUnits', 'page_code_common', 'targetingArray'];
+    protected $appends = ['adUnits', 'page_code_common', 'filtering'];
 
     public function zones()
     {
@@ -94,7 +94,7 @@ class Site extends Model
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
     }
 
-    public function getTargetingArrayAttribute()
+    public function getFilteringAttribute()
     {
         return [
             'requires' => $this->site_requires,
