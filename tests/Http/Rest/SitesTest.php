@@ -116,16 +116,24 @@ class SitesTest extends TestCase
         return [
             [
                 [
-                    "status" => "0",
+                    "status" => "1",
                     "name" => "name" . rand(),
-                    "primaryLanguage" => "pl",
+                    "primaryLanguage" => "xx",
                 ],
             ],
             [
                 [
                     'status' => "1",
+                ],
+            ],
+            [
+                [
                     "name" => "name" . rand(),
-                    "primaryLanguage" => "en",
+                ],
+            ],
+            [
+                [
+                    "primaryLanguage" => "xx",
                 ],
             ],
         ];
@@ -140,12 +148,8 @@ class SitesTest extends TestCase
                 "primaryLanguage" => "pl",
             ],
             [
-                'status' => 1,
-            ],
-            [
+                'status' => "1",
                 "name" => "name" . rand(),
-            ],
-            [
                 "primaryLanguage" => "en",
             ],
         ];

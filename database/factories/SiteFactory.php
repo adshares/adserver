@@ -35,5 +35,6 @@ $factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
     return [
         'name' => $faker->words(2, true),
         'primary_language' => $faker->languageCode,
+        'status' => "0",
     ];
 });
