@@ -167,7 +167,6 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->update($request->input('campaign'));
 
-
         return self::json(['message' => 'Successfully edited']);
     }
 
@@ -185,6 +184,7 @@ class CampaignsController extends Controller
     {
         // TODO check privileges
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+
         return self::json(['campaign' => $campaign->toArray()]);
     }
 

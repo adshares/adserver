@@ -28,7 +28,7 @@ class CamelizeJsonResponse
     public function handle($request, Closure $next)
     {
         $response = $next($request);
-        
+
         if ($response instanceof JsonResponse) {
             return $this->camelizeJsonResponse($response);
         }
