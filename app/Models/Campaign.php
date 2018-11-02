@@ -23,14 +23,23 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Campaign extends Model
 {
+    use Ownership;
+    use SoftDeletes;
     use AutomateMutators;
     use BinHex;
 
     public static $rules = [
+//        'name' => 'required|max:255',
+//        'landing_url' => 'required|max:1024',
+//        'strategy_name' => 'in:CPC,CPM',
+//        'bid' => 'required:numeric',
+//        'budget' => 'required:numeric',
     ];
 
     protected $dates = [
@@ -69,8 +78,10 @@ class Campaign extends Model
 
     protected $hidden = [
         'user_id',
+        'deleted_at',
         'targeting_requires',
         'targeting_excludes',
+        'banners',
     ];
 
     protected $traitAutomate = [
@@ -80,30 +91,9 @@ class Campaign extends Model
     /** @var array Aditional fields to be included in collections */
     protected $appends = ['basic_information', 'targeting', 'ads'];
 
-    public static function getWithReferences($listDeletedCampaigns)
-    {
-        $builder = Campaign::with('Banners', 'CampaignExcludes', 'CampaignRequires');
-
-        if ($listDeletedCampaigns) {
-            return $builder->get();
-        }
-
-        return $builder->whereNull('deleted_at')->get();
-    }
-
     public function banners()
     {
         return $this->hasMany('Adshares\Adserver\Models\Banner');
-    }
-
-    public function campaignExcludes()
-    {
-        return $this->hasMany(CampaignExclude::class);
-    }
-
-    public function campaignRequires()
-    {
-        return $this->hasMany(CampaignRequire::class);
     }
 
     public function getAdsAttribute()
@@ -118,8 +108,8 @@ class Campaign extends Model
     public function getTargetingAttribute()
     {
         return [
-            "requires" => json_decode($this->targeting_requires, true),
-            "excludes" => json_decode($this->targeting_excludes, true),
+            "requires" => $this->targeting_requires,
+            "excludes" => $this->targeting_excludes,
         ];
     }
 
@@ -132,7 +122,7 @@ class Campaign extends Model
         $this->bid = $value["bid_value"];
         $this->budget = $value["budget"];
         $this->time_start = $value["date_start"];
-        $this->time_end = $value["date_end"];
+        $this->time_end = $value["date_end"] ?? null;
     }
 
     public function getBasicInformationAttribute()
@@ -158,24 +148,5 @@ class Campaign extends Model
         }
 
         return $urls;
-    }
-
-    public static function campaignById($campaignId)
-    {
-        return self::with([
-            'campaignExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'campaignRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'banners' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')
-            ->findOrFail($campaignId);
     }
 }

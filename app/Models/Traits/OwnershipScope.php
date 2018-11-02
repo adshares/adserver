@@ -18,12 +18,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Models\Traits;
 
-$factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
-    return [
-        'name' => $faker->words(2, true),
-        'primary_language' => $faker->languageCode,
-        'status' => "0",
-    ];
-});
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Scope;
+
+class OwnershipScope implements Scope
+{
+    /** @var User */
+    private $user;
+
+    public function __construct(User $user)
+    {
+        $this->user = $user;
+    }
+
+    public function apply(Builder $builder, Model $model): void
+    {
+        /** @var Site $builder */
+        $builder->ownedBy($this->user);
+    }
+}

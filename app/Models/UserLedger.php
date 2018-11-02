@@ -24,5 +24,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserLedger extends Model
 {
-    //
+    const STATUS_ACCEPTED = 0;
+    const STATUS_PENDING = 1;
+    const STATUS_REJECTED = 2;
+
+    /**
+     * Returns account balance of particular user.
+     * @param int $userId user id
+     * @return int balance
+     */
+    public static function getBalanceByUserId(int $userId): int
+    {
+        return self::where('user_id', $userId)
+            ->where('status', self::STATUS_ACCEPTED)
+            ->sum('amount');
+    }
 }

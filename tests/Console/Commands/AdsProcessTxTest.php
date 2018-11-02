@@ -60,7 +60,7 @@ class AdsProcessTxTest extends TestCase
             ->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsTxIn::STATUS_USER_DEPOSIT, AdsTxIn::all()->first()->status);
-        $amount = UserLedger::where('users_id', $user->id)->sum('amount');
+        $amount = UserLedger::getBalanceByUserId($user->id);
         $this->assertEquals($depositAmount, $amount);
     }
 

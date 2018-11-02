@@ -3,7 +3,27 @@
     "email":"publisher@e11.click",
     "sites":[
       {
-        "name":"publisher.ads"
+        "name":"publisher.ads",
+        "status": 2,
+        "site_requires": [
+          {
+            "id": "category",
+            "label": "Creative type",
+            "key":"category"
+          },
+          {
+            "id": "lang",
+            "label": "Language",
+            "key": "lang"
+          }
+        ],
+        "site_excludes": [
+          {
+            "id": "js_enabled",
+            "label": "Javascript support",
+            "key": "js_enabled"
+          }
+        ]
       }
     ]
   }

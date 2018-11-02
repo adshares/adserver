@@ -17,19 +17,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-var SHA1 = function () {
-};
-var x;
-for ( var func in x = {
-    reset : function () {
-        this._hash = [ 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0 ];
+var SHA1 = function () {};
+
+var sha1Functions = {
+    reset: function () {
+        this._hash = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0];
         this.W = new Array(80);
     },
-
-    digest : function (str, callback) {
+    digest: function (str, callback) {
         this.reset();
+
         var words = new Array(16);
-        ;
+
         var length = str.length;
         var fullLength = (length >>> 6) << 6;
         var nBitsTotal = length * 8;
@@ -72,7 +71,7 @@ for ( var func in x = {
             for (; i < fullLength; i += 64) {
                 for (j = 0; j < 16; j++) {
                     words[j] = str.charCodeAt(curPos++) << 24 | str.charCodeAt(curPos++) << 16
-                            | str.charCodeAt(curPos++) << 8 | str.charCodeAt(curPos++);
+                        | str.charCodeAt(curPos++) << 8 | str.charCodeAt(curPos++);
                 }
                 self.doBlock(words, 0);
                 if (curPos % 16000 == 0 && (new Date() - start) > 50) {
@@ -81,11 +80,12 @@ for ( var func in x = {
                 }
             }
             fn_final();
-        }
+        };
+
         fn();
     },
 
-    toHex : function (words) {
+    toHex: function (words) {
         var sigBytes = words.length * 4;
 
         // Convert
@@ -99,7 +99,7 @@ for ( var func in x = {
         return hexChars.join('');
     },
 
-    doBlock : function (M) {
+    doBlock: function (M) {
         // Shortcut
         var H = this._hash;
         var W = this.W;
@@ -197,14 +197,16 @@ for ( var func in x = {
         H[3] = (H[3] + d) | 0;
         H[4] = (H[4] + e) | 0;
     }
-}) {
-    SHA1.prototype[func] = x[func]
 };
+
+for (var func in sha1Functions) {
+    SHA1.prototype[func] = sha1Functions[func];
+}
 
 var running = [];
 var sha1 = function (data, callback) {
     if (!callback.$delayed) {
-        running.push([ data, callback ]);
+        running.push([data, callback]);
         if (running.length > 1) {
             callback.$delayed = true;
             return;
@@ -217,10 +219,9 @@ var sha1 = function (data, callback) {
             setTimeout(sha1.bind(this, running[0][0], running[0][1]), 0);
         }
     });
-}
+};
 
 var sha1_async = function (data, callback) {
-
     if (window.Blob && data instanceof Blob) // blob
     {
         var reader = new FileReader();
@@ -229,7 +230,7 @@ var sha1_async = function (data, callback) {
             sha1(reader.result, function (hash) {
                 callback(hash);
             });
-        }
+        };
 
         if (reader.readAsBinaryString)
             reader.readAsBinaryString(data);
@@ -241,5 +242,4 @@ var sha1_async = function (data, callback) {
             callback(hash);
         });
     }
-
-}
+};

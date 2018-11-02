@@ -36,6 +36,13 @@ class Utils
     // not yet reviewed
     // TODO: remove $container
 
+    const VALUE_GLUE = "\t";
+    const PROP_GLUE = "\r";
+    const ZONE_GLUE = "\n";
+    const VALUE_MIN = "\x00";
+    const VALUE_MAX = "\xFF";
+    const NUMERIC_PAD_FORMAT = "%'08.2f";
+
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
@@ -103,7 +110,7 @@ class Utils
 
         $browser = $browscap->getBrowser();
 
-        $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+        $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'en');
         if ($locale) {
             $device['language'] = $locale;
         }
@@ -169,38 +176,16 @@ class Utils
 //         geo
     }
 
-    private static function getGeoData($clientIp)
-    {
-        $geo = [];
-        if (function_exists('geoip_record_by_name')) {
-            @$data = \geoip_record_by_name($clientIp);
-            if ($data) {
-                foreach ($data as $key => $value) {
-                    if ($value) {
-                        $geo[$key] = $value;
-                    }
-                }
-            } else {
-                @$data = \geoip_country_code_by_name($clientIp);
-                if ($data) {
-                    $geo['country_code'] = $data;
-                }
-            }
-        }
-
-        return $geo;
-    }
-
     public static function addUrlParameter($url, $name, $value)
     {
-        $param = $name.'='.urlencode($value);
+        $param = $name . '=' . urlencode($value);
         $qPos = strpos($url, '?');
         if (false == $qPos) {
-            return $url.'?'.$param;
+            return $url . '?' . $param;
         } elseif ($qPos == strlen($url) - 1) {
-            return $url.$param;
+            return $url . $param;
         } else {
-            return $url.'&'.$param;
+            return $url . '&' . $param;
         }
     }
 
@@ -229,9 +214,9 @@ class Utils
         $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = substr(sha1($id.$secret, true), 0, 6);
+        $checksum = substr(sha1($id . $secret, true), 0, 6);
 
-        return self::urlSafeBase64Encode($id.$checksum);
+        return self::urlSafeBase64Encode($id . $checksum);
     }
 
     public static function validTrackingId($input, $secret)
@@ -243,7 +228,7 @@ class Utils
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
 
-        return substr(sha1($id.$secret, true), 0, 6) == $checksum;
+        return substr(sha1($id . $secret, true), 0, 6) == $checksum;
     }
 
     public static function attachTrackingCookie(
@@ -276,29 +261,15 @@ class Utils
         );
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
-        $response->setCache(array(
+        $response->setCache([
             'etag' => self::generateEtag($tid, $contentSha1),
             'last_modified' => $contentModified,
             'max_age' => 0,
             'private' => true,
-        ));
+        ]);
         $response->headers->addCacheControlDirective('no-transform');
 
         return $tid;
-    }
-
-    private static function generateEtag($tid, $contentSha1)
-    {
-        $sha1 = pack('H*', $contentSha1);
-
-        return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
-    }
-
-    private static function decodeEtag($etag)
-    {
-        $etag = str_replace('"', '', $etag);
-
-        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 
     public static function arrayRemoveValues(array &$array, $value) // former array_erase
@@ -349,12 +320,6 @@ class Utils
         ], $string));
     }
 
-    const VALUE_GLUE = "\t";
-
-    const PROP_GLUE = "\r";
-
-    const ZONE_GLUE = "\n";
-
     public static function decodeZones($zonesStr)
     {
         $zonesStr = self::urlSafeBase64Decode($zonesStr);
@@ -390,7 +355,7 @@ class Utils
             return $value->format(DATE_ISO8601);
         }
 
-        return (string) $value;
+        return (string)$value;
     }
 
     public static function fromJsonString($field, $value)
@@ -415,20 +380,14 @@ class Utils
 
         foreach ($keywords as $keyword => $value) {
             if (is_array($value)) {
-                $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
+                $ret = array_merge($ret, self::flattenKeywords($value, $keyword . '_'));
             } else {
-                $ret[$prefix.$keyword] = $value;
+                $ret[$prefix . $keyword] = $value;
             }
         }
 
         return $ret;
     }
-
-    const VALUE_MIN = "\x00";
-
-    const VALUE_MAX = "\xFF";
-
-    const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public static function generalKeywordMatch(array $keywords, $name, $min, $max)
     {
@@ -437,7 +396,7 @@ class Utils
         $keys = explode(':', $last);
         $values = [];
         foreach ($keys as $key) {
-            $key = implode('_', $path).'_'.$key;
+            $key = implode('_', $path) . '_' . $key;
             if (isset($keywords[$key])) {
                 $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
             } else {
@@ -454,7 +413,7 @@ class Utils
                     if (is_numeric($val)) {
                         $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
                     }
-                    $newVector[] = ($vector ? $vector.':' : '').$val;
+                    $newVector[] = ($vector ? $vector . ':' : '') . $val;
                 }
                 if (0 == $j) {
                     $vectors = $newVector;
@@ -471,5 +430,41 @@ class Utils
         }
 
         return false;
+    }
+
+    private static function getGeoData($clientIp)
+    {
+        $geo = [];
+        if (function_exists('geoip_record_by_name')) {
+            @$data = \geoip_record_by_name($clientIp);
+            if ($data) {
+                foreach ($data as $key => $value) {
+                    if ($value) {
+                        $geo[$key] = $value;
+                    }
+                }
+            } else {
+                @$data = \geoip_country_code_by_name($clientIp);
+                if ($data) {
+                    $geo['country_code'] = $data;
+                }
+            }
+        }
+
+        return $geo;
+    }
+
+    private static function generateEtag($tid, $contentSha1)
+    {
+        $sha1 = pack('H*', $contentSha1);
+
+        return self::urlSafeBase64Encode(substr($sha1, 0, 6) . strrev(self::urlSafeBase64Decode($tid)));
+    }
+
+    private static function decodeEtag($etag)
+    {
+        $etag = str_replace('"', '', $etag);
+
+        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 }
