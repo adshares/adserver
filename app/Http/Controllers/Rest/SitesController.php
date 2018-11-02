@@ -31,9 +31,12 @@ class SitesController extends Controller
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        $site = Site::create($request->input('site'));
+        $input = $request->input('site');
+        $site = Site::create($input);
         $site->user_id = Auth::user()->id;
         $site->save();
+
+        $site->addZones($request->input('site.ad_units'));
 
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site]));
@@ -72,7 +75,7 @@ class SitesController extends Controller
     {
         $site->delete();
 
-        return self::json(['message' => 'Successfully deleted'], Response::HTTP_NO_CONTENT);
+        return self::json(['message' => 'Successfully deleted']);
     }
 
     public function read(Site $site)
