@@ -52,6 +52,7 @@ class WalletController extends Controller
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
+
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -84,6 +85,7 @@ class WalletController extends Controller
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
+
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -106,7 +108,7 @@ class WalletController extends Controller
         $total = $amount + $fee;
 
         $userId = Auth::user()->id;
-        $ul = new UserLedger;
+        $ul = new UserLedger();
         $ul->user_id = $userId;
         $ul->amount = -$total;
         $ul->address_from = $addressFrom;
@@ -192,12 +194,15 @@ class WalletController extends Controller
 
     /**
      * Returns link to transaction data.
+     *
      * @param $txid string transaction id
+     *
      * @return string link to transaction
      */
     private static function getTransactionLink(string $txid): string
     {
         $adsOperator = config('app.ads_operator_url');
+
         return "$adsOperator/blockexplorer/transactions/$txid";
     }
 }
