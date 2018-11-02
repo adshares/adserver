@@ -48,7 +48,7 @@ class SitesTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->postJson(self::URI, $data);
+        $response = $this->postJson(self::URI, ['site' => $data]);
 
         $response->assertStatus(201);
         $response->assertHeader('Location');
@@ -57,13 +57,25 @@ class SitesTest extends TestCase
         $matches = [];
         $this->assertSame(1, preg_match('/(\d+)$/', $uri, $matches));
 
-        $response = $this->getJson(self::URI . '/' . $matches[1]);
-        $response->assertStatus(200);
-        $response->assertJsonFragment(['name' => $data['site']['name']]);
+        $this->getJson(self::URI . '/' . $matches[1])
+            ->assertStatus(200)
+            ->assertJsonFragment(['name' => $data['name']])
+            ->assertJsonCount(2, 'filtering')
+            ->assertJsonCount(1, 'filtering.requires')
+            ->assertJsonCount(0, 'filtering.excludes');
 
-        $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
-        $response->assertJsonCount(1);
+        $response = $this->getJson(self::URI)
+            ->assertStatus(200);
+        $response->assertJsonStructure([
+            '*' => [
+                'id',
+                'name',
+                'filtering',
+                'adUnits' => ['*' => ['shortHeadline']],
+                'status',
+//                'primaryLanguage',
+            ],
+        ]);
     }
 
     public function creationDataProvider(): array
@@ -72,7 +84,6 @@ class SitesTest extends TestCase
             [
                 json_decode(<<<JSON
 {
-  "site": {
     "id": 0,
     "status": 2,
     "name": "sss",
@@ -105,7 +116,6 @@ class SitesTest extends TestCase
       }
     ]
   }
-}
 JSON
                     , true),
             ],
