@@ -77,12 +77,24 @@ class Campaign extends Model
         'classification_tags',
     ];
 
-    protected $hidden = [
-        'user_id',
-        'deleted_at',
-        'targeting_requires',
-        'targeting_excludes',
-        'banners',
+    protected $visible = [
+        'id',
+        'uuid',
+        'created_at',
+        'updated_at',
+        'landing_url',
+        'time_start',
+        'time_end',
+        'status',
+        'name',
+        'strategy_name',
+        'bid',
+        'budget',
+        'classification_status',
+        'classification_tags',
+        'basic_information',
+        'targeting',
+        'ads',
     ];
 
     protected $traitAutomate = [
