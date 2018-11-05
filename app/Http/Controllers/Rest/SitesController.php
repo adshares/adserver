@@ -25,10 +25,11 @@ use Adshares\Adserver\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SitesController extends Controller
 {
-    public function add(Request $request)
+    public function add(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
         $site = Site::create($request->input('site'));
@@ -39,7 +40,7 @@ class SitesController extends Controller
             ->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
-    public function edit(Request $request, Site $site)
+    public function edit(Request $request, Site $site): JsonResponse
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
@@ -49,14 +50,13 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
     }
 
-    public function browse()
+    public function browse(): JsonResponse
     {
-        return self::json(Site::get()->toArray());
+        return self::json(Site::get());
     }
 
-    public function count(Request $request)
+    public function count(): JsonResponse
     {
-        //@TODO: create function data
         $siteCount = [
             'totalEarnings' => 0,
             'totalClicks' => 0,
@@ -68,15 +68,15 @@ class SitesController extends Controller
         return self::json($siteCount, 200);
     }
 
-    public function delete(Site $site)
+    public function delete(Site $site): JsonResponse
     {
         $site->delete();
 
-        return self::json(['message' => 'Successfully deleted'], Response::HTTP_NO_CONTENT);
+        return self::json(['message' => 'Successfully deleted']);
     }
 
-    public function read(Site $site)
+    public function read(Site $site): JsonResponse
     {
-        return self::json($site->toArray());
+        return self::json($site);
     }
 }

@@ -155,11 +155,14 @@ class SitesTest extends TestCase
 
     public function testFailDeleteNotOwnedSite(): void
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
-
         $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
+        $this->getJson(self::URI . "/{$site->id}")
+            ->assertStatus(200);
+
+        $this->actingAs(factory(User::class)->create(), 'api');
         $this->deleteJson(self::URI . "/{$site->id}")
             ->assertStatus(404);
     }

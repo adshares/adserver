@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
  * @method static Site create($input = null)
+ * @method static get()
  */
 class Site extends Model
 {

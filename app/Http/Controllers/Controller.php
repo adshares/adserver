@@ -24,6 +24,7 @@ use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Response;
@@ -33,7 +34,7 @@ abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    protected static function json($data = [], $code = 200, $errors = false)
+    protected static function json($data = [], $code = 200, $errors = false): JsonResponse
     {
         if (empty($errors)) {
             return Response::json($data, $code);
