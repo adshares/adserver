@@ -25,6 +25,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Banner extends Model
 {
@@ -33,6 +34,10 @@ class Banner extends Model
 
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
+    protected $dates = [
+        'deleted_at',
+    ];
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
         'saving' => CreativeSha1::class,
@@ -51,6 +56,7 @@ class Banner extends Model
         'id',
         'creative_contents',
         'campaign_id',
+        'deleted_at',
     ];
     protected $traitAutomate = [
         'uuid' => 'BinHex',
