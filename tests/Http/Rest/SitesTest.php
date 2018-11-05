@@ -57,7 +57,7 @@ class SitesTest extends TestCase
         $response->assertJsonCount(0);
 
         $response = $this->getJson(self::URI . '/1');
-        $response->assertStatus(404);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     /**
@@ -69,7 +69,7 @@ class SitesTest extends TestCase
 
         $response = $this->postJson(self::URI, ['site' => $data]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(Response::HTTP_CREATED);
         $response->assertHeader('Location');
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));

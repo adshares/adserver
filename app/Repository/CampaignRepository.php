@@ -59,4 +59,21 @@ class CampaignRepository
 
         DB::commit();
     }
+
+    public function delete(int $campaignId)
+    {
+        $campaign = $this->fetchCampaignById($campaignId);
+
+        DB::beginTransaction();
+
+        try {
+            $campaign->delete();
+            $campaign->banners()->delete();
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            throw $ex;
+        }
+
+        DB::commit();
+    }
 }
