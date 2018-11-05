@@ -31,12 +31,8 @@ class SitesController extends Controller
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-
-        $input = $request->input('site');
-
-        $site = Site::create($input);
+        $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
-
         $site->save();
 
         $site->zones()->createMany($request->input('site.ad_units'));
