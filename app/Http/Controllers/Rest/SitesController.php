@@ -22,10 +22,12 @@ namespace Adshares\Adserver\Http\Controllers\Rest;
 
 use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Site;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SitesController extends Controller
@@ -33,11 +35,21 @@ class SitesController extends Controller
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        $site = Site::create($request->input('site'));
-        $site->user_id = Auth::user()->id;
-        $site->save();
 
-        $site->zones()->createMany($request->input('site.ad_units'));
+        DB::beginTransaction();
+
+        try {
+            $site = Site::create($request->input('site'));
+            $site->user_id = Auth::user()->id;
+            $site->save();
+
+            $site->zones()->createMany($request->input('site.ad_units'));
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+
+        DB::commit();
 
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site]));
@@ -53,30 +65,48 @@ class SitesController extends Controller
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
 
-        $site->update($input);
+        DB::beginTransaction();
 
-        $inputZones = new Collection($request->input('site.ad_units'));
-        foreach ($site->zones as $zone) {
-            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-            if ($zoneFromInput) {
-                $zone->update($zoneFromInput);
-                $inputZones = $inputZones->reject(function ($value) use ($zone) {
-                    return (int)($value['id'] ?? "") === $zone->id;
-                });
-            } else {
-                $zone->delete();
+        try {
+            $site->update($input);
+
+            $inputZones = new Collection($request->input('site.ad_units'));
+            foreach ($site->zones as $zone) {
+                $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
+                if ($zoneFromInput) {
+                    $zone->update($zoneFromInput);
+                    $inputZones = $inputZones->reject(function ($value) use ($zone) {
+                        return (int)($value['id'] ?? "") === $zone->id;
+                    });
+                } else {
+                    $zone->delete();
+                }
             }
+
+            $site->zones()->createMany($inputZones->all());
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
         }
 
-        $site->zones()->createMany($inputZones->all());
+        DB::commit();
 
         return self::json(['message' => 'Successfully edited']);
     }
 
     public function delete(Site $site): JsonResponse
     {
-        $site->delete();
-        $site->zones()->delete();
+        DB::beginTransaction();
+
+        try {
+            $site->delete();
+            $site->zones()->delete();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+
+        DB::commit();
 
         return self::json(['message' => 'Successfully deleted']);
     }

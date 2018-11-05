@@ -191,31 +191,6 @@ class SitesTest extends TestCase
             ->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    /**
-     * @test
-     * @dataProvider updateZonesInSiteProvider
-     */
-    public function updateZonesInSite($data): void
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-
-        $site = factory(Site::class)
-            ->create(['user_id' => $user->id]);
-        $site->zones(factory(Zone::class, 3)
-            ->create(['site_id' => $site->id]));
-        $response = $this->getJson(self::URI . "/{$site->id}");
-        $response->assertJsonCount(3, 'adUnits');
-
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
-        $response->assertStatus(Response::HTTP_OK);
-
-        $response = $this->getJson(self::URI . "/{$site->id}");
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJsonStructure(self::SITE_STRUCTURE);
-        $response->assertJsonCount(2, 'adUnits');
-    }
-
     public function updateDataProvider(): array
     {
         return [
@@ -299,6 +274,31 @@ JSON
             }, $presets);
     }
 
+    /**
+     * @test
+     * @dataProvider updateZonesInSiteProvider
+     */
+    public function updateZonesInSite($data): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $site = factory(Site::class)
+            ->create(['user_id' => $user->id]);
+        $site->zones(factory(Zone::class, 3)
+            ->create(['site_id' => $site->id]));
+        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response->assertJsonCount(3, 'adUnits');
+
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::SITE_STRUCTURE);
+        $response->assertJsonCount(2, 'adUnits');
+    }
+
     public function updateZonesInSiteProvider(): array
     {
         return [
@@ -354,6 +354,31 @@ JSON
                 ],
             ],
         ];
+    }
+
+    /**
+     * @test
+     * @dataProvider updateZonesInSiteProvider
+     */
+    public function failZoneUpdatesInSite($data): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $site = factory(Site::class)
+            ->create(['user_id' => $user->id]);
+        $site->zones(factory(Zone::class, 3)
+            ->create(['site_id' => $site->id]));
+        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response->assertJsonCount(3, 'adUnits');
+
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::SITE_STRUCTURE);
+        $response->assertJsonCount(2, 'adUnits');
     }
 
     private function getIdFromLocation($location)
