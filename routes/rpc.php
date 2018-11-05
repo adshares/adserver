@@ -23,7 +23,6 @@ use Adshares\Adserver\Http\Controllers\Rest\ChartsController;
 use Adshares\Adserver\Http\Controllers\Rest\ConfigController;
 use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
-use Adshares\Adserver\Http\Controllers\Rest\SitesController;
 use Adshares\Adserver\Http\Controllers\Rpc\WalletController;
 use Adshares\Adserver\Http\Controllers\Simulator;
 use Illuminate\Support\Facades\Route;
@@ -35,9 +34,11 @@ Route::get('settings/notifications', [SettingsController::class, 'readNotificati
 // tmp mocked solutions
 Route::post('chart', [ChartsController::class, 'chart']);
 Route::get('options/campaigns/targeting', [CampaignsController::class, 'targeting']);
-Route::get('options/sites/targeting', [SitesController::class, 'targeting']);
+Route::get('options/sites/targeting', [Simulator::class, 'targeting']);//@deprecated
+Route::get('options/sites/filtering', [Simulator::class, 'targeting']);
 Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
-Route::get('config/banners', [SitesController::class, 'banners']);
+Route::get('config/banners', [Simulator::class, 'zoneTypes']);//@deprecated
+Route::get('options/sites/zones', [Simulator::class, 'zoneTypes']);
 
 // Routes for Withdraw/Deposit
 Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
@@ -49,10 +50,24 @@ Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 //{}
 //200{"address":"ADS_ADDR","title":"000...uid"}
+Route::get('wallet/history', [WalletController::class, 'history']);
+//{}
+//200[
+//    {
+//        "status": "0.05002500000",
+//        "date": "Wed, 24 Oct 2018 15:56:49 GMT",
+//        "address": "0001-00000005-CBCA",
+//        "link": "https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001"
+//    },
+//    {
+//        "status": "-0.00000010010",
+//        "date": "Wed, 24 Oct 2018 16:14:58 GMT",
+//        "address": "0001-00000005-CBCA",
+//        "link": "-"
+//    }
+//]
 
 Route::get('admin/settings', [Simulator::class, 'mock']);
 Route::get('account/history', [Simulator::class, 'mock']);
 
-/** @deprecated */
-Route::get('wallet/history', [Simulator::class, 'mock']);
 

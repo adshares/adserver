@@ -31,12 +31,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 
 class CampaignsController extends Controller
 {
-    private const FILESYSTEM_DISK = 'public';
-
     /**
      * @var CampaignRepository
      */
@@ -57,6 +54,7 @@ class CampaignsController extends Controller
 
         $banners = [];
         $temporaryFileToRemove = [];
+
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
             $banners = $this->prepareBannersFromInput($input['ads']);
@@ -69,7 +67,7 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        return self::json([], Response::HTTP_CREATED)
+        return self::json($campaign->toArray(), Response::HTTP_CREATED)
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
@@ -91,11 +89,7 @@ class CampaignsController extends Controller
     private function removeLocalBannerImages(array $files): void
     {
         foreach ($files as $file) {
-            try {
-                Storage::disk(self::FILESYSTEM_DISK)->delete($file);
-            } catch (FileNotFoundException $ex) {
-                // do nothing
-            }
+            Storage::disk('public')->delete($file);
         }
     }
 
@@ -120,7 +114,7 @@ class CampaignsController extends Controller
                 $bannerModel->creative_contents = $banner['html'];
             } else {
                 $path = $this->getBannerLocalPublicPath($banner['image_url']);
-                $content = Storage::disk(self::FILESYSTEM_DISK)->get($path);
+                $content = Storage::disk('public')->get($path);
 
                 $bannerModel->creative_contents = $content;
             }
@@ -155,7 +149,7 @@ class CampaignsController extends Controller
             'totalCost' => 0,
         ];
 
-        return self::json($siteCount, 200);
+        return self::json($siteCount);
     }
 
     public function edit(Request $request, $campaignId)
@@ -173,9 +167,7 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->update($request->input('campaign'));
 
-
-        return self::json(['message' => 'Successfully edited'], 200)
-            ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
+        return self::json(['message' => 'Successfully edited']);
     }
 
     public function delete($campaignId)
@@ -185,13 +177,14 @@ class CampaignsController extends Controller
         $site->deleted_at = new \DateTime();
         $site->save();
 
-        return self::json(['message' => 'Successfully deleted'], 200);
+        return self::json(['message' => 'Successfully deleted']);
     }
 
     public function read(Request $request, $campaignId)
     {
         // TODO check privileges
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
@@ -230,7 +223,7 @@ class CampaignsController extends Controller
     public function upload(Request $request)
     {
         $file = $request->file('file');
-        $path = $file->store('banners', self::FILESYSTEM_DISK);
+        $path = $file->store('banners', 'public');
 
         $name = $file->getClientOriginalName();
         $imageSize = getimagesize($file->getRealPath());
