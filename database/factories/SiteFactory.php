@@ -18,22 +18,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Site;
 use Faker\Generator as Faker;
 
-$factory->define(Site::class, function (Faker $faker) {
+$factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
     return [
         'name' => $faker->words(2, true),
         'primary_language' => $faker->languageCode,
         'status' => "0",
     ];
 });
-
-$factory->state(Site::class, 'with-filtering', function () {
-    return [
-        'site_requires' => '{"category":["1"]}',
-        'site_excludes' => '{"category":["2"]}',
-    ];
-});
-
-

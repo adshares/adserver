@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property Site site
+ * @property int id
  */
 class Zone extends Model
 {
@@ -63,20 +64,26 @@ HTML;
         '750x300',
     ];
     protected $fillable = [
-        'short_headline',
-        'size',
+        'short_headline',#@deprecated
+        'name',
+        'size',#@deprecated
+        'width',
+        'height',
         'status',
     ];
     protected $visible = [
         'id',
-        'short_headline',
+        'short_headline',#@deprecated
+        'name',
         'code',
-        'size',
+        'size',#@deprecated
+        'width',
+        'height',
         'status',
     ];
     protected $appends = [
-        'size',
-        'short_headline',
+        'size',#@deprecated
+        'short_headline',#@deprecated
         'code',
     ];
     protected $touches = ['site'];

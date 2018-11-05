@@ -106,7 +106,7 @@ class WalletController extends Controller
         $total = $amount + $fee;
 
         $userId = Auth::user()->id;
-        $ul = new UserLedger();
+        $ul = new UserLedger;
         $ul->user_id = $userId;
         $ul->amount = -$total;
         $ul->address_from = $addressFrom;
