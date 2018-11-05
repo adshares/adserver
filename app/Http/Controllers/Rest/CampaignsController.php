@@ -96,9 +96,7 @@ class CampaignsController extends Controller
                 Storage::disk(self::FILESYSTEM_DISK)->delete($file);
             } catch (FileNotFoundException $ex) {
                 // do nothing
-
             }
-
         }
     }
 
