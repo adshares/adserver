@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\Storage;
 
 class CampaignsController extends Controller
 {
+    private const FILESYSTEM_DISK = 'public';
+
     /**
      * @var CampaignRepository
      */
@@ -89,7 +92,13 @@ class CampaignsController extends Controller
     private function removeLocalBannerImages(array $files): void
     {
         foreach ($files as $file) {
-            Storage::disk('public')->delete($file);
+            try {
+                Storage::disk(self::FILESYSTEM_DISK)->delete($file);
+            } catch (FileNotFoundException $ex) {
+                // do nothing
+
+            }
+
         }
     }
 
@@ -114,7 +123,7 @@ class CampaignsController extends Controller
                 $bannerModel->creative_contents = $banner['html'];
             } else {
                 $path = $this->getBannerLocalPublicPath($banner['image_url']);
-                $content = Storage::disk('public')->get($path);
+                $content = Storage::disk(self::FILESYSTEM_DISK)->get($path);
 
                 $bannerModel->creative_contents = $content;
             }
@@ -223,7 +232,7 @@ class CampaignsController extends Controller
     public function upload(Request $request)
     {
         $file = $request->file('file');
-        $path = $file->store('banners', 'public');
+        $path = $file->store('banners', self::FILESYSTEM_DISK);
 
         $name = $file->getClientOriginalName();
         $imageSize = getimagesize($file->getRealPath());
