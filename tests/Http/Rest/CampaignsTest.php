@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 
 class CampaignsTest extends TestCase
 {
@@ -36,11 +37,11 @@ class CampaignsTest extends TestCase
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
 
         $response = $this->getJson(self::URI . '/1');
-        $response->assertStatus(404);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeleteCampaignWithBanner()
@@ -55,7 +56,7 @@ class CampaignsTest extends TestCase
         $this->assertCount(1, Banner::where('id', $bannerId)->get());
 
         $response = $this->deleteJson(self::URI . "/{$campaignId}");
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
 
         $this->assertCount(0, Campaign::where('id', $campaignId)->get());
         $this->assertCount(0, Banner::where('id', $bannerId)->get());
@@ -63,7 +64,7 @@ class CampaignsTest extends TestCase
         $this->assertCount(1, Banner::withTrashed()->where('id', $bannerId)->get());
 
         $response = $this->deleteJson(self::URI . "/{$campaignId}");
-        $response->assertStatus(404);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFailDeleteNotOwnedCampaign()
@@ -75,7 +76,7 @@ class CampaignsTest extends TestCase
         $this->createBanner($campaignId);
 
         $response = $this->deleteJson(self::URI . "/{$campaignId}");
-        $response->assertStatus(404);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     private function createCampaign($user)

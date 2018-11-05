@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 
 class SitesTest extends TestCase
 {
@@ -52,11 +53,11 @@ class SitesTest extends TestCase
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
 
         $response = $this->getJson(self::URI . '/1');
-        $response->assertStatus(404);
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     /**
@@ -68,13 +69,13 @@ class SitesTest extends TestCase
 
         $response = $this->postJson(self::URI, ['site' => $data]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(Response::HTTP_CREATED);
         $response->assertHeader('Location');
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
         $response = $this->getJson(self::URI . '/' . $id);
-        $response->assertStatus(200)
+        $response->assertStatus(Response::HTTP_OK)
             ->assertJsonStructure(self::SITE_STRUCTURE)
             ->assertJsonFragment([
                 'name' => $preset['name'],
@@ -96,7 +97,7 @@ class SitesTest extends TestCase
         }, $this->creationDataProvider());
 
         $response = $this->getJson(self::URI);
-        $response->assertStatus(200);
+        $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
         $response->assertJsonStructure([
             '*' => self::SITE_STRUCTURE,
@@ -113,10 +114,10 @@ class SitesTest extends TestCase
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => $data]);
-        $response->assertStatus(204);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(200)
+            ->assertStatus(Response::HTTP_OK)
             ->assertJsonFragment([
                 'name' => $data['name'] ?? $site->name,
                 'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
@@ -131,10 +132,10 @@ class SitesTest extends TestCase
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(200);
+            ->assertStatus(Response::HTTP_OK);
 
         $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(404);
+            ->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testDeleteSiteWithZones(): void
@@ -147,10 +148,10 @@ class SitesTest extends TestCase
         $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
 
         $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(200);
+            ->assertStatus(Response::HTTP_OK);
 
         $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(404);
+            ->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function testFailDeleteNotOwnedSite(): void
@@ -161,7 +162,7 @@ class SitesTest extends TestCase
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
         $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(404);
+            ->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
     public function updateDataProvider(): array
