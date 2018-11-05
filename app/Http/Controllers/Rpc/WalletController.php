@@ -20,15 +20,11 @@
 
 namespace Adshares\Adserver\Http\Controllers\Rpc;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controllers\Controller;
-use Adshares\Adserver\Jobs\AdsSendOne;
-use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -39,12 +35,10 @@ class WalletController extends Controller
     const FIELD_AMOUNT = 'amount';
     const FIELD_ERROR = 'error';
     const FIELD_FEE = 'fee';
-    const FIELD_LIMIT = 'limit';
-    const FIELD_MEMO = 'memo';
     const FIELD_MESSAGE = 'message';
-    const FIELD_OFFSET = 'offset';
     const FIELD_TO = 'to';
     const FIELD_TOTAL = 'total';
+    const FIELD_MEMO = 'memo';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request)
@@ -89,12 +83,11 @@ class WalletController extends Controller
 
         Validator::make($request->all(), [
             self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
-            self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
             self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
         ])->validate();
-
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
+        //TODO validate memo
         $memo = $request->input(self::FIELD_MEMO);
 
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
@@ -103,23 +96,15 @@ class WalletController extends Controller
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+
         $total = $amount + $fee;
-
-        $userId = Auth::user()->id;
-        $ul = new UserLedger;
-        $ul->user_id = $userId;
-        $ul->amount = -$total;
-        $ul->address_from = $addressFrom;
-        $ul->address_to = $addressTo;
-        $ul->status = UserLedger::STATUS_PENDING;
-        $result = $ul->save();
-
-        if ($result) {
-            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
-            AdsSendOne::dispatch($ul, $addressTo, $amount, $memo);
+        if (!$this->hasUserEnoughFunds($total)) {
+            return self::json([self::FIELD_ERROR => 'not enough funds'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
+        // TODO add tx to queue: $amount is amount, $addressTo is address
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function depositInfo()
@@ -142,42 +127,19 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function history(Request $request)
+    /**
+     * Checks, if user has enough funds.
+     *
+     * @param $amount int transfer total amount
+     *
+     * @return bool true if has enough, false otherwise
+     */
+    private function hasUserEnoughFunds(int $amount): bool
     {
-        Validator::make($request->all(), [
-            self::FIELD_LIMIT => ['integer', 'min:1'],
-            self::FIELD_OFFSET => ['integer', 'min:0'],
-        ])->validate();
+        // TODO check user account balance
+        $balance = 4000000000000000000;
 
-        $limit = $request->input(self::FIELD_LIMIT, 10);
-        $offset = $request->input(self::FIELD_OFFSET, 0);
-
-        $userId = Auth::user()->id;
-        $resp = [];
-        foreach (UserLedger::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ul) {
-            $amount = AdsConverter::clicksToAds($ul->amount);
-            $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
-            $txid = $ul->txid;
-            if (null !== $txid) {
-                $link = self::getTransactionLink($txid);
-            } else {
-                $link = '-';
-            }
-            if ($amount > 0) {
-                $address = $ul->address_to;
-            } else {
-                $address = $ul->address_from;
-            }
-            $entry = [
-                'status' => $amount,
-                'date' => $date,
-                'address' => $address,
-                'link' => $link,
-            ];
-            array_push($resp, $entry);
-        }
-
-        return self::json($resp);
+        return $amount <= $balance;
     }
 
     /**
@@ -188,16 +150,5 @@ class WalletController extends Controller
     private function getAdServerAdsAddress()
     {
         return config('app.adshares_address');
-    }
-
-    /**
-     * Returns link to transaction data.
-     * @param $txid string transaction id
-     * @return string link to transaction
-     */
-    private static function getTransactionLink(string $txid): string
-    {
-        $adsOperator = config('app.ads_operator_url');
-        return "$adsOperator/blockexplorer/transactions/$txid";
     }
 }

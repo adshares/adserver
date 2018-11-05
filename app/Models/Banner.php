@@ -28,33 +28,46 @@ use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
-    public const IMAGE_TYPE = 0;
-    public const HTML_TYPE = 1;
-
     use AutomateMutators;
     use BinHex;
+
+    /**
+     * The event map for the model.
+     *
+     * @var array
+     */
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
         'saving' => CreativeSha1::class,
     ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
     protected $fillable = [
-        'uuid',
-        'campaign_id',
-        'creative_contents',
-        'creative_type',
-        'creative_sha1',
-        'creative_width',
-        'creative_height',
-        'name',
+      'uuid', 'campaign_id',
+      'creative_contents', 'creative_type', 'creative_sha1', 'creative_width', 'creative_height',
     ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
     protected $hidden = [
-        'id',
-        'creative_contents',
-        'campaign_id',
+      'id','creative_contents','campaign_id'
     ];
+
+    /**
+    * The attributes that use some Models\Traits with mutator settings automation
+    *
+    * @var array
+    */
     protected $traitAutomate = [
-        'uuid' => 'BinHex',
-        'creative_sha1' => 'BinHex',
+      'uuid' => 'BinHex',
+      'creative_sha1' => 'BinHex',
     ];
 
     public function campaign()
@@ -62,31 +75,15 @@ class Banner extends Model
         return $this->belongsTo('Adshares\Adserver\Models\Campaign');
     }
 
+    /**
+    * check toArrayExtrasCheck() in AutomateMutators trait
+    */
     protected function toArrayExtras($array)
     {
-        $array['serve_url'] = route('banner-serve', ['id' => $this->id]);
+        $array['serve_url'] = route('banner-serve', ['id'=>$this->id]);
         $array['image_url'] = $array['serve_url'];
-        $array['view_url'] = route('log-network-view', ['id' => $this->id]);
-        $array['click_url'] = route('log-network-click', ['id' => $this->id]);
-
+        $array['view_url'] = route('banner-view', ['id'=>$this->id]);
+        $array['click_url'] = route('banner-click', ['id'=>$this->id]);
         return $array;
-    }
-
-    public static function type($type)
-    {
-        if ($type === self::IMAGE_TYPE) {
-            return 'image';
-        }
-
-        return 'html';
-    }
-
-    public static function size($size)
-    {
-        if (!isset(Zone::ZONE_SIZE[$size])) {
-            throw new \RuntimeException(sprintf('Wrong image size.'));
-        }
-
-        return Zone::ZONE_SIZE[$size];
     }
 }

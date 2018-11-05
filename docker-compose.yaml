@@ -27,7 +27,6 @@ services:
     volumes:
     - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
     - ./public:/adserver/public
-    - ./storage/app:/adserver/storage/app
 
   database:
     image: mysql:8.0

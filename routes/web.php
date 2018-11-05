@@ -30,11 +30,10 @@ Route::get('/', function () {
 Route::get('/adshares/inventory/list', [ApiController::class, 'adsharesInventoryList']);
 Route::get('/adshares/report/{tx_id}/{pay_to}', [ApiController::class, 'adsharesTransactionReport']);
 
-Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-view.js');
-
+Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
 Route::get('/serve/{id}', [DemandController::class, 'serve'])->name('banner-serve');
 Route::get('/view/{id}', [DemandController::class, 'view'])->name('banner-view');
-Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
+Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-view.js');
 
 Route::get('/l/context/{log_id}', [DemandController::class, 'logContext'])->name('log-context');
 Route::get('/l/keywords/{log_id}', [DemandController::class, 'logKeywords'])->name('log-keywords');
@@ -45,6 +44,10 @@ Route::get('/supply/find.js', [SupplyController::class, 'findScript'])->name('su
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name('log-network-view');
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->name('log-network-click');
 Route::get('/l/n/keywords/{log_id}', [SupplyController::class, 'logNetworkKeywords'])->name('log-network-keywords');
+
+### something is no-yes in find.js ###
+Route::get('/l/n/click', [Simulator::class, 'click']);
+Route::get('/l/n/view', [Simulator::class, 'view']);
 
 ### simulator ###
 Route::get('/pixel/{id}', [Simulator::class, 'pixel']);

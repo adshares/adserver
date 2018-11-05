@@ -146,8 +146,6 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
 
-    'ads_operator_url' => env('ADS_OPERATOR_URL'),
-
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

@@ -18,9 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
 
 class DatabaseSeeder extends Seeder
 {
@@ -29,7 +27,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
         $this->call([
             MockDataUsersSeeder::class,
             MockDataSitesSeeder::class,
@@ -37,4 +34,3 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
-

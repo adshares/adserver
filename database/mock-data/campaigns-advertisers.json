@@ -3,8 +3,7 @@
     "email":"advertiser@e11.click",
     "campaigns":[
       {
-        "code":"ads",
-        "url":"https://adshares.net/",
+        "url":"http://advsertiser.ads/",
         "max_cpm": 1,
         "max_cpc": 10,
         "budget_per_hour": 100,
@@ -43,16 +42,29 @@
           }
         },
         "classification_status": 2,
-        "classification_tags": "open source",
+        "classification_tags": "18+,gamble,drugs",
         "name": "Campaign for adults only"
       },
       {
-        "code":"ads-pl",
-        "url":"https://adshares.pl/",
+        "url":"http://s01.advsertiser.ads/",
+        "max_cpm": 0.5,
+        "max_cpc": 6,
+        "budget_per_hour": 20,
+        "name": "Global campaign for brand XXX"
+      },
+      {
+        "url":"http://s02.advsertiser.ads/",
         "max_cpm": 1,
         "max_cpc": 10,
         "budget_per_hour": 100,
         "name": "Internal campaign"
+      },
+      {
+        "url":"http://s03.advsertiser.ads/",
+        "max_cpm": 0.5,
+        "max_cpc": 6,
+        "budget_per_hour": 20,
+        "name": "Campaign YYY"
       }
     ]
   }

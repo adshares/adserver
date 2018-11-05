@@ -18,24 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth;
-
-/**
- * @method ownedBy(User $user): Builder
- */
-trait Ownership
+class SiteRequire extends SiteTargeting
 {
-    public static function bootOwnership(): void
-    {
-        static::addGlobalScope(new OwnershipScope(Auth::user()));
-    }
-
-    public function scopeOwnedBy(Builder $query, User $user): Builder
-    {
-        return $query->where('user_id', '=', $user->id);
-    }
 }

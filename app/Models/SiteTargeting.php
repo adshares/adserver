@@ -18,27 +18,48 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Scope;
 
-class OwnershipScope implements Scope
+abstract class SiteTargeting extends Model
 {
-    /** @var User */
-    private $user;
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'key', 'value'
+    ];
 
-    public function __construct(User $user)
-    {
-        $this->user = $user;
-    }
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'deleted_at',
+    ];
 
-    public function apply(Builder $builder, Model $model): void
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'value' => 'array'
+    ];
+
+    /**
+     * All of the relationships to be touched.
+     *
+     * @var array
+     */
+    protected $touches = ['site'];
+
+    public function site()
     {
-        /** @var Site $builder */
-        $builder->ownedBy($this->user);
+        return $this->belongsTo("Adshares\Adserver\Models\Site");
     }
 }

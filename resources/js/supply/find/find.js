@@ -20,8 +20,8 @@
 var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
 
-var UrlSafeBase64Encode = function (data) {
-    return btoa(data).replace(/=|\+|\//g, function (x) {
+var UrlSafeBase64Encode = function(data) {
+	return btoa(data).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
     });
 }
@@ -33,11 +33,11 @@ var encodeZones = function (zone_data) {
     var fields = {};
     var fCount = 0;
 
-    var result = [null];
+    var result = [ null ];
     for (var i = 0; i < zone_data.length; i++) {
         var zone = zone_data[i];
         var entry = [];
-        for (var prop in zone) {
+        for ( var prop in zone) {
             if (zone.hasOwnProperty(prop)) {
                 if (!fields[prop]) {
                     fields[prop] = fCount++;
@@ -49,7 +49,7 @@ var encodeZones = function (zone_data) {
     }
 
     var entry = [];
-    for (var prop in fields) {
+    for ( var prop in fields) {
         if (fields.hasOwnProperty(prop)) {
             entry.push(prop);
         }
@@ -79,8 +79,8 @@ var addListener = function (element, event, handler, phase) {
 
 navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
     fetchURL(url, {
-        method: 'post',
-        post: data
+        method : 'post',
+        post : data
     });
 };
 
@@ -105,14 +105,14 @@ var prepareElement = function (context, banner, element) {
         addListener(window, 'message', function (event) {
             if (event.source == element.contentWindow && event.data) {
                 var data, isString = typeof event.data == "string";
-                if (isString) {
-                    data = JSON.parse(event.data);
+                if(isString) {
+                	data = JSON.parse(event.data);
                 } else {
-                    data = event.data;
+                	data = event.data;
                 }
-                if (data.adsharesLoad) {
+                if ( data.adsharesLoad ) {
                     var msg = {adsharesLoad: 1, data: context};
-
+                    
                     event.source.postMessage(isString ? JSON.stringify(msg) : msg, '*');
                 } else if (data.adsharesClick) {
                     if (!mouseover && document.activeElement != element) {
@@ -141,7 +141,7 @@ var prepareElement = function (context, banner, element) {
         div.appendChild(link);
         return div;
     }
-};
+}
 
 // checks if element is not hidden with display: none
 // function isRendered(domObj) {
@@ -158,7 +158,7 @@ function isRendered(domObj) {
                 return false;
             }
         } else if (domObj.currentStyle
-            && (domObj.currentStyle["display"] == "none" || domObj.currentStyle["visibility"] == "hidden")) {
+                && (domObj.currentStyle["display"] == "none" || domObj.currentStyle["visibility"] == "hidden")) {
             return false;
         } else {
             return true;
@@ -178,12 +178,12 @@ function getBoundRect(el) {
     } while (el = (el == document.body ? document.documentElement : el.offsetParent));
 
     return {
-        top: top,
-        bottom: top + height,
-        left: left,
-        right: left + width,
-        width: width,
-        height: height
+        top : top,
+        bottom : top + height,
+        left : left,
+        right : left + width,
+        width : width,
+        height : height
     }
 }
 
@@ -192,12 +192,7 @@ var isVisible = function (el) {
     if (!isRendered(el))
         return false;
 
-    var rect = getBoundRect(el),
-        top = rect.top,
-        height = rect.height,
-        left = rect.left,
-        width = rect.width,
-        el = el.parentNode;
+    var rect = getBoundRect(el), top = rect.top, height = rect.height, left = rect.left, width = rect.width, el = el.parentNode;
     do {
         rect = getBoundRect(el);
         if (top <= rect.bottom === false)
@@ -213,18 +208,18 @@ var isVisible = function (el) {
     } while (el != document.body);
     // Check its within the document viewport
     return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
-        && top > -height
-        && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
-        && left > -width;
+            && top > -height
+            && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
+            && left > -width;
 };
 
 var addUrlParam = function (url, names, value) {
-
-    if (typeof name != 'object') {
+    
+    if(typeof name != 'object') {
         name = {};
         name[name] = value;
     }
-    for (var name in names) {
+    for(var name in names) {
         value = names[name];
         var param = name + '=' + encodeURIComponent(value);
         var qPos = url.indexOf('?');
@@ -238,24 +233,26 @@ var addUrlParam = function (url, names, value) {
 }
 
 var impressionId;
-var getImpressionId = function () {
-    if (!impressionId) {
-        var d = new Date().getTime();
-
-        var chars = [];
-        for (var i = 0; i < 16; i++) {
-            var r = (d + Math.random() * 256) % 256 | 0;
-            d = Math.floor(d / 256);
-            chars.push(String.fromCharCode(r));
-        }
-
-        impressionId = UrlSafeBase64Encode(chars.join(''));
-    }
-    return impressionId;
+var getImpressionId = function()
+{
+	if(!impressionId) {
+		var d = new Date().getTime();
+		
+		var chars = [];
+		for(var i=0;i<16;i++) {
+			var r = (d + Math.random()*256)%256 | 0;
+	        d = Math.floor(d/256);
+	        chars.push(String.fromCharCode(r));
+		}
+	
+		impressionId = UrlSafeBase64Encode(chars.join(''));
+	}
+	return impressionId;
 }
 
-var aduserPixel = function (impressionId) {
-    if (!aduserOrigin) return;
+var aduserPixel = function(impressionId)
+{
+	if(!aduserOrigin) return;
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
@@ -264,7 +261,7 @@ var aduserPixel = function (impressionId) {
     document.body.appendChild(img);
 }
 
-var getPageKeywords = function () {
+var getPageKeywords = function() {
 
     var MAX_KEYWORDS = 10;
     var metaKeywords = document.querySelector("meta[name=keywords]");
@@ -280,29 +277,29 @@ var getPageKeywords = function () {
     return metaKeywords;
 }
 
-var getBrowserContext = function () {
-    return {
-        iid: getImpressionId(),
-        frame: (window == top ? 0 : 1),
-        width: window.screen.width,
-        height: window.screen.height,
+var getBrowserContext = function() {
+	return {
+		iid: getImpressionId(),
+        frame : (window == top ? 0 : 1),
+        width : window.screen.width,
+        height : window.screen.height,
         url: window.location.href,
-        keywords: getPageKeywords()
-        // agent: window.navigator.userAgent
+        keywords : getPageKeywords()
+    // agent: window.navigator.userAgent
     }
 }
 
 domReady(function () {
-
+    
     aduserPixel(getImpressionId());
 
     var tags = document.querySelectorAll('div[data-pub]');
     var n = tags.length;
-
-    if (n == 0) {
-        return;
+    
+    if(n == 0) {
+    	return;
     }
-
+     
     var param, params = [];
     params.push(getBrowserContext());
 
@@ -318,7 +315,7 @@ domReady(function () {
                 param[parts.join('-')] = tag.attributes[j].value;
             }
         }
-        if (param.zone && param.pub) {
+        if(param.zone && param.pub) {
             params.push(param);
         }
     }
@@ -326,7 +323,7 @@ domReady(function () {
     var data = encodeZones(params);
     var url = serverOrigin + '/supply/find';
     var options = {
-        json: true
+        json : true
     };
     if (data.length <= 800) { // safe limit for url
         url += '?' + data;
@@ -346,12 +343,12 @@ domReady(function () {
             }
 
             if (isVisible(banner.destElement)) {
-                fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                fetchBanner(banner, {page: params[0], zone: params[i+1]});
             } else {
                 var timer = setInterval(function () {
                     if (isVisible(banner.destElement)) {
                         clearInterval(timer);
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                        fetchBanner(banner, {page: params[0], zone: params[i+1]});
                     }
                 }, 200);
             }
@@ -359,8 +356,9 @@ domReady(function () {
     });
 });
 
-var addTrackingPixel = function (context, banner, element) {
-    if (!context.view_url) return;
+var addTrackingPixel = function(context, banner, element)
+{
+    if(!context.view_url) return;
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
@@ -371,31 +369,16 @@ var addTrackingPixel = function (context, banner, element) {
 
 var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {
-        binary: true
+        binary : true
     }).then(function (data, xhr) {
-        context.cid = xhr.getResponseHeader('X-Adshares-Cid');
-        context.lid = xhr.getResponseHeader('X-Adshares-Lid');
-
+    	context.cid = xhr.getResponseHeader('X-Adshares-Cid');
+    	context.lid = xhr.getResponseHeader('X-Adshares-Lid');
+        
         context.page.zone = context.zone.zone;
         var contextParam = encodeZones([context.page]);
-        context.click_url = addUrlParam(banner.click_url,
-            {
-                'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
-                'ctx': contextParam,
-                'iid': getImpressionId()
-            });
-        context.view_url = addUrlParam(banner.view_url,
-            {
-                'lid': context.lid,
-                'cid': context.cid,
-                'pto': banner.pay_to,
-                'pfr': banner.pay_from,
-                'ctx': contextParam,
-                'iid': getImpressionId()
-            });
-
+        context.click_url = addUrlParam(banner.click_url, {'cid': context.cid, 'pto': banner.pay_to, 'pfr': banner.pay_from, 'ctx': contextParam, 'iid': getImpressionId()});
+        context.view_url = addUrlParam(banner.view_url, {'lid': context.lid, 'cid': context.cid, 'pto': banner.pay_to, 'pfr': banner.pay_from, 'ctx': contextParam, 'iid': getImpressionId()});
+        
         var fn = function () {
             var caller;
             if (data.type.indexOf('image/') != -1) {

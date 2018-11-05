@@ -21,14 +21,16 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-class CreateBannersTable extends Migration
+// TODO: do sprawdzenia dok adselect na wiki github
+
+class CreateCampaignExcludesTable extends Migration
 {
     /**
      * Run the migrations.
      */
     public function up()
-    {  // TODO  => creatives
-        Schema::create('banners', function (Blueprint $table) {
+    {
+        Schema::create('campaign_excludes', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->binary('uuid', 16); // REQ CUSTOM ALTER
 
@@ -37,25 +39,24 @@ class CreateBannersTable extends Migration
 
             $table->bigInteger('campaign_id')->unsigned();
 
-            $table->binary('creative_contents', 16777215); // REQ CUSTOM ALTER
-
-            $table->string('creative_type', 32);
-            $table->binary('creative_sha1', 20); // REQ CUSTOM ALTER
-
-            $table->integer('creative_width');
-            $table->integer('creative_height');
+            $table->binary('name', 64); // REQ CUSTOM ALTER
+            $table->binary('min', 64); // REQ CUSTOM ALTER
+            $table->binary('max', 64); // REQ CUSTOM ALTER
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
 
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE banners MODIFY creative_contents MEDIUMBLOB');
-            DB::statement('ALTER TABLE banners MODIFY uuid varbinary(16) NOT NULL');
-            DB::statement('ALTER TABLE banners MODIFY creative_sha1 varbinary(20)');
+            DB::statement('ALTER TABLE campaign_excludes MODIFY uuid varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE campaign_excludes MODIFY name varbinary(64)');
+            DB::statement('ALTER TABLE campaign_excludes MODIFY min varbinary(64)');
+            DB::statement('ALTER TABLE campaign_excludes MODIFY max varbinary(64)');
         }
 
-        Schema::table('banners', function (Blueprint $table) {
+        Schema::table('campaign_excludes', function (Blueprint $table) {
             $table->unique('uuid');
+            $table->index(['campaign_id', 'name', 'min'], 'campaign_excludes_min');
+            $table->index(['campaign_id', 'name', 'max'], 'campaign_excludes_max');
         });
     }
 
@@ -64,6 +65,6 @@ class CreateBannersTable extends Migration
      */
     public function down()
     {
-        Schema::drop('banners');
+        Schema::drop('campaign_excludes');
     }
 }

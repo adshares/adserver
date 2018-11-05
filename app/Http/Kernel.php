@@ -32,7 +32,6 @@ use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
 use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Http\Middleware\SetCacheHeaders;
-use Illuminate\Routing\Middleware\SubstituteBindings;
 
 class Kernel extends HttpKernel
 {
@@ -62,7 +61,7 @@ class Kernel extends HttpKernel
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
             SnakizeRequest::class,
-            SubstituteBindings::class,
+//            SubstituteBindings::class,
             #post
             SetCacheHeaders::class,
             CamelizeJsonResponse::class,

@@ -18,10 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Exceptions;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Exception;
-
-class JobException extends Exception
+class AddTokenForApiRequests extends Migration
 {
+    public function up()
+    {
+        Schema::table('users',
+            function (Blueprint $table) {
+                $table->string('api_token', 60)
+                    ->unique()
+                    ->nullable()
+                    ->default(NULL)
+                ;
+            });
+    }
+
+    public function down()
+    {
+        Schema::table('users',
+            function (Blueprint $table) {
+                $table->removeColumn('api_token');
+            });
+    }
 }

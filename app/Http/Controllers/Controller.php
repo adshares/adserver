@@ -33,6 +33,9 @@ abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
+    /**
+     * @deprecated
+     */
     protected static function json($data = [], $code = 200, $errors = false)
     {
         if (empty($errors)) {
