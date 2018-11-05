@@ -67,7 +67,7 @@ class Site extends Model
     protected $appends = [
         'ad_units',
         'filtering',
-        'page_code_common',
+        'code',
     ];
 
     public function zones()
@@ -98,7 +98,7 @@ class Site extends Model
         ];
     }
 
-    public function getPageCodeCommonAttribute(): string
+    public function getCodeAttribute(): string
     {
         $serverUrl = config('app.url');
 
