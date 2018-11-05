@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\Ownership;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -30,7 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string name
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
- * @property Zone[]|Collection zones
+ * @property Zone[] zones
  * @method static Site create($input = null)
  * @method static get()
  */
@@ -38,9 +37,6 @@ class Site extends Model
 {
     use Ownership;
     use SoftDeletes;
-    /**
-     * Template for html code, which should be pasted for each ad unit
-     */
     public static $rules = [
         'name' => 'required|max:64',
         'primary_language' => 'required|max:2',
@@ -50,14 +46,12 @@ class Site extends Model
         'site_requires' => 'json',
         'site_excludes' => 'json',
     ];
-    /** @var string[] */
     protected $fillable = [
         'name',
         'status',
         'primary_language',
         'filtering',
     ];
-    /** @var string[] */
     protected $hidden = [
         'deleted_at',
         'site_requires',
@@ -67,7 +61,7 @@ class Site extends Model
     protected $appends = [
         'ad_units',
         'filtering',
-        'page_code_common',
+        'code',
     ];
 
     public function zones()
@@ -98,7 +92,7 @@ class Site extends Model
         ];
     }
 
-    public function getPageCodeCommonAttribute(): string
+    public function getCodeAttribute(): string
     {
         $serverUrl = config('app.url');
 

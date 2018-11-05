@@ -26,11 +26,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property Site site
+ * @property int id
  */
 class Zone extends Model
 {
     use SoftDeletes;
-    private const PAGE_CODE_TEMPLATE = <<<'HTML'
+    private const CODE_TEMPLATE = <<<HTML
 <div 
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
@@ -63,21 +64,27 @@ HTML;
         '750x300',
     ];
     protected $fillable = [
-        'short_headline',
-        'size',
+        'short_headline',#@deprecated
+        'name',
+        'size',#@deprecated
+        'width',
+        'height',
         'status',
     ];
     protected $visible = [
         'id',
-        'short_headline',
-        'page_code',
-        'size',
+        'short_headline',#@deprecated
+        'name',
+        'code',
+        'size',#@deprecated
+        'width',
+        'height',
         'status',
     ];
     protected $appends = [
-        'size',
-        'short_headline',
-        'page_code',
+        'size',#@deprecated
+        'short_headline',#@deprecated
+        'code',
     ];
     protected $touches = ['site'];
 
@@ -86,7 +93,7 @@ HTML;
         return $this->belongsTo(Site::class);
     }
 
-    public function getPageCodeAttribute()
+    public function getCodeAttribute()
     {
         $replaceArr = [
             '{{publisherId}}' => $this->publisher_id,
@@ -95,7 +102,7 @@ HTML;
             '{{height}}' => $this->height,
         ];
 
-        return strtr(self::PAGE_CODE_TEMPLATE, $replaceArr);
+        return strtr(self::CODE_TEMPLATE, $replaceArr);
     }
 
     public function getShortHeadlineAttribute(): string

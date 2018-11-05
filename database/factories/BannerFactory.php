@@ -18,12 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\Banner;
 use Faker\Generator as Faker;
 
-$factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
+$factory->define(Banner::class, function (Faker $faker) {
     return [
-        'name' => $faker->words(2, true),
-        'primary_language' => $faker->languageCode,
-        'status' => "0",
+        'creative_contents' => $faker->sha1(),
+        'creative_type' => $faker->word(),
+        'creative_sha1' => $faker->sha1(),
+        'creative_width' => $faker->numberBetween(100,1024),
+        'creative_height' => $faker->numberBetween(100,1024),
+        'name' => $faker->word(),
     ];
 });

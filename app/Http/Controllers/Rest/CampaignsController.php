@@ -200,12 +200,9 @@ class CampaignsController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    public function delete($campaignId)
+    public function delete(int $campaignId): JsonResponse
     {
-        // TODO check privileges
-        $site = $this->campaignRepository->fetchCampaignById($campaignId);
-        $site->deleted_at = new \DateTime();
-        $site->save();
+        $this->campaignRepository->delete($campaignId);
 
         return self::json(['message' => 'Successfully deleted']);
     }
@@ -248,6 +245,29 @@ class CampaignsController extends Controller
         $campaign->classification_tags = null;
 
         $campaign->update();
+    }
+
+    public function upload(Request $request)
+    {
+        $file = $request->file('file');
+        $path = $file->store('banners', 'public');
+
+        $name = $file->getClientOriginalName();
+        $imageSize = getimagesize($file->getRealPath());
+        $size = '';
+
+        if (isset($imageSize[0]) && isset($imageSize[1])) {
+            $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
+        }
+
+        return self::json(
+            [
+                'imageUrl' => config('app.url') . '/storage/' . $path,
+                'name' => $name,
+                'size' => $size,
+            ],
+            Response::HTTP_OK
+        );
     }
 
     /**
