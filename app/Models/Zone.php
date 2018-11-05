@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Zone extends Model
 {
     use SoftDeletes;
-    private const CODE_TEMPLATE = <<<'HTML'
+    private const CODE_TEMPLATE = <<<HTML
 <div 
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 

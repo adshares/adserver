@@ -91,7 +91,7 @@ class SitesTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        array_map(function ($data) use ($user) {
+        array_map(function () use ($user) {
             factory(Site::class)->create(['user_id' => $user->id]);
         }, $this->creationDataProvider());
 
@@ -137,7 +137,7 @@ class SitesTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function testFailDeleteSiteWithZones(): void
+    public function testDeleteSiteWithZones(): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');

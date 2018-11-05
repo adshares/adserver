@@ -71,65 +71,6 @@ class CampaignsController extends Controller
             ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
     }
 
-    private function temporaryBannersToRemove(array $input): array
-    {
-        $banners = [];
-
-        foreach ($input as $banner) {
-            if ($banner['type'] === Banner::HTML_TYPE) {
-                continue;
-            }
-
-            $banners[] = $this->getBannerLocalPublicPath($banner['image_url']);
-        }
-
-        return $banners;
-    }
-
-    private function removeLocalBannerImages(array $files): void
-    {
-        foreach ($files as $file) {
-            Storage::disk('public')->delete($file);
-        }
-    }
-
-    private function prepareBannersFromInput(array $input): array
-    {
-        $banners = [];
-
-        foreach ($input as $banner) {
-            $size = explode('x', Banner::size($banner['size']));
-
-            if (!isset($size[0]) || !isset($size[1])) {
-                throw new \RuntimeException('Banner size is required.');
-            }
-
-            $bannerModel = new Banner();
-            $bannerModel->name = $banner['name'];
-            $bannerModel->creative_width = $size[0];
-            $bannerModel->creative_height = $size[1];
-            $bannerModel->creative_type = Banner::type($banner['type']);
-
-            if ($banner['type'] === Banner::HTML_TYPE) {
-                $bannerModel->creative_contents = $banner['html'];
-            } else {
-                $path = $this->getBannerLocalPublicPath($banner['image_url']);
-                $content = Storage::disk('public')->get($path);
-
-                $bannerModel->creative_contents = $content;
-            }
-
-            $banners[] = $bannerModel;
-        }
-
-        return $banners;
-    }
-
-    private function getBannerLocalPublicPath(string $imageUrl): string
-    {
-        return str_replace(config('app.url') . '/storage/', '', $imageUrl);
-    }
-
     public function browse()
     {
         $campaigns = $this->campaignRepository->find();
@@ -243,273 +184,62 @@ class CampaignsController extends Controller
         );
     }
 
-    /**
-     * @param Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     *
-     * @throws \Adshares\Adserver\Exceptions\JsonResponseException
-     * @throws \Illuminate\Validation\ValidationException
-     */
-    public function targeting(Request $request)
+    private function temporaryBannersToRemove(array $input): array
     {
-        return self::json(
-            json_decode(
-                <<<'JSON'
-[
-          {
-            "label": "Site",
-            "key":"site",
-            "children": [
-              {
-                "label": "Site domain",
-                "key": "domain",
-                "values": [
-                  {"label": "coinmarketcap.com", "value": "coinmarketcap.com"},
-                  {"label": "icoalert.com", "value": "icoalert.com"}
-                ],
-                "value_type": "string",
-                "allow_input": true
-              },
-              {
-                "label": "Inside frame",
-                "key": "inframe",
-                "value_type": "boolean",
-                "values": [
-                  {"label": "Yes", "value": "true"},
-                  {"label": "No", "value": "false"}
-                ],
-                "allow_input": false
-              },
-              {
-                "label": "Language",
-                "key": "lang",
-                "values": [
-                  {"label": "Polish", "value": "pl"},
-                  {"label": "English", "value": "en"},
-                  {"label": "Italian", "value": "it"},
-                  {"label": "Japanese", "value": "jp"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Content keywords",
-                "key": "keywords",
-                "values": [
-                  {"label": "blockchain", "value": "blockchain"},
-                  {"label": "ico", "value": "ico"}
-                ],
-                "value_type": "string",
-                "allow_input": true
-              }
-            ]
-          },
-          {
-            "label": "User",
-            "key":"user",
-            "children": [
-              {
-                "label": "Age",
-                "key": "age",
-                "values": [
-                  {"label": "18-35", "value": "18,35"},
-                  {"label": "36-65", "value": "36,65"}
-                ],
-                "value_type": "number",
-                "allow_input": true
-              },
-              {
+        $banners = [];
 
-                "label": "Height",
-                "key": "height",
-                "values": [
-                  {"label": "900 or more", "value": "<900,>"},
-                  {"label": "between 200 and 300", "value": "<200,300>"}
-                ],
-                "value_type": "number",
-                "allow_input": true
-              },
-              {
-                "label": "Interest keywords",
-                "key": "keywords",
-                "values": [
-                  {"label": "blockchain", "value": "blockchain"},
-                  {"label": "ico", "value": "ico"}
-                ],
-                "value_type": "string",
-                "allow_input": true
-              },
-              {
-                "label": "Language",
-                "key": "lang",
-                "values": [
-                  {"label": "Polish", "value": "pl"},
-                  {"label": "English", "value": "en"},
-                  {"label": "Italian", "value": "it"},
-                  {"label": "Japanese", "value": "jp"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Gender",
-                "key": "gender",
-                "values": [
-                  {"label": "Male", "value": "pl"},
-                  {"label": "Female", "value": "en"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Geo",
-                "key":"geo",
-                "children": [
-                  {
-                    "label": "Continent",
-                    "key": "continent",
-                    "values": [
-                      {"label": "Africa", "value": "af"},
-                      {"label": "Asia", "value": "as"},
-                      {"label": "Europe", "value": "eu"},
-                      {"label": "North America", "value": "na"},
-                      {"label": "South America", "value": "sa"},
-                      {"label": "Oceania", "value": "oc"},
-                      {"label": "Antarctica", "value": "an"}
-                    ],
-                    "value_type": "string",
-                    "allow_input": false
-                  },
-                  {
-                    "label": "Country",
-                    "key": "country",
-                    "values": [
-                      {"label": "United States", "value": "us"},
-                      {"label": "Poland", "value": "pl"},
-                      {"label": "Spain", "value": "eu"},
-                      {"label": "China", "value": "cn"}
-                    ],
-                    "value_type": "string",
-                    "allow_input": false
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "label": "Device",
-            "key":"device",
-            "children": [
-              {
-                "label": "Screen size",
-                "key":"screen",
-                "children": [
-                  {
-                    "label": "Width",
-                    "key": "width",
-                    "values": [
-                      {"label": "1200 or more", "value": "<1200,>"},
-                      {"label": "between 1200 and 1800", "value": "<1200,1800>"}
-                    ],
-                    "value_type": "number",
-                    "allow_input": true
-                  },
-                  {
-                    "label": "Height",
-                    "key": "height",
-                    "values": [
-                      {"label": "1200 or more", "value": "<1200,>"},
-                      {"label": "between 1200 and 1800", "value": "<1200,1800>"}
-                    ],
-                    "value_type": "number",
-                    "allow_input": true
-                  }
-                ]
-              },
-              {
-                "label": "Language",
-                "key": "lang",
-                "values": [
-                  {"label": "Polish", "value": "pl"},
-                  {"label": "English", "value": "en"},
-                  {"label": "Italian", "value": "it"},
-                  {"label": "Japanese", "value": "jp"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Browser",
-                "key": "browser",
-                "values": [
-                  {"label": "Chrome", "value": "Chrome"},
-                  {"label": "Edge", "value": "Edge"},
-                  {"label": "Firefox", "value": "Firefox"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Operating system",
-                "key": "os",
-                "values": [
-                  {"label": "Linux", "value": "Linux"},
-                  {"label": "Mac", "value": "Mac"},
-                  {"label": "Windows", "value": "Windows"}
-                ],
-                "value_type": "string",
-                "allow_input": false
-              },
-              {
-                "label": "Geo",
-                "key":"geo",
-                "children": [
-                  {
-                    "label": "Continent",
-                    "key": "continent",
-                    "values": [
-                      {"label": "Africa", "value": "af"},
-                      {"label": "Asia", "value": "as"},
-                      {"label": "Europe", "value": "eu"},
-                      {"label": "North America", "value": "na"},
-                      {"label": "South America", "value": "sa"},
-                      {"label": "Oceania", "value": "oc"},
-                      {"label": "Antarctica", "value": "an"}
-                    ],
-                    "value_type": "string",
-                    "allow_input": false
-                  },
-                  {
-                    "label": "Country",
-                    "key": "country",
-                    "values": [
-                      {"label": "United States", "value": "us"},
-                      {"label": "Poland", "value": "pl"},
-                      {"label": "Spain", "value": "eu"},
-                      {"label": "China", "value": "cn"}
-                    ],
-                    "value_type": "string",
-                    "allow_input": false
-                  }
-                ]
-              },
-              {
-                "label": "Javascript support",
-                "key": "js_enabled",
-                "value_type": "boolean",
-                "values": [
-                  {"label": "Yes", "value": "true"},
-                  {"label": "No", "value": "false"}
-                ],
-                "allow_input": false
-              }
-            ]
-          }
-        ]
-JSON
-            ),
-            200
-        );
+        foreach ($input as $banner) {
+            if ($banner['type'] === Banner::HTML_TYPE) {
+                continue;
+            }
+
+            $banners[] = $this->getBannerLocalPublicPath($banner['image_url']);
+        }
+
+        return $banners;
+    }
+
+    private function removeLocalBannerImages(array $files): void
+    {
+        foreach ($files as $file) {
+            Storage::disk('public')->delete($file);
+        }
+    }
+
+    private function prepareBannersFromInput(array $input): array
+    {
+        $banners = [];
+
+        foreach ($input as $banner) {
+            $size = explode('x', Banner::size($banner['size']));
+
+            if (!isset($size[0]) || !isset($size[1])) {
+                throw new \RuntimeException('Banner size is required.');
+            }
+
+            $bannerModel = new Banner();
+            $bannerModel->name = $banner['name'];
+            $bannerModel->creative_width = $size[0];
+            $bannerModel->creative_height = $size[1];
+            $bannerModel->creative_type = Banner::type($banner['type']);
+
+            if ($banner['type'] === Banner::HTML_TYPE) {
+                $bannerModel->creative_contents = $banner['html'];
+            } else {
+                $path = $this->getBannerLocalPublicPath($banner['image_url']);
+                $content = Storage::disk('public')->get($path);
+
+                $bannerModel->creative_contents = $content;
+            }
+
+            $banners[] = $bannerModel;
+        }
+
+        return $banners;
+    }
+
+    private function getBannerLocalPublicPath(string $imageUrl): string
+    {
+        return str_replace(config('app.url') . '/storage/', '', $imageUrl);
     }
 }
