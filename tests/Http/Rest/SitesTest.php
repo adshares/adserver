@@ -165,6 +165,16 @@ class SitesTest extends TestCase
             'deleted_at' => null,
         ]);
 
+        $this->assertDatabaseMissing('sites', [
+            'id' => $site->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->assertDatabaseMissing('zones', [
+            'site_id' => $site->id,
+            'deleted_at' => null,
+        ]);
+
         $this->getJson(self::URI . "/{$site->id}")
             ->assertStatus(Response::HTTP_NOT_FOUND);
     }

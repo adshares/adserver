@@ -58,6 +58,18 @@ class SitesController extends Controller
         $inputZones = new Collection($request->input('site.ad_units'));
         foreach ($site->zones as $zone) {
             $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
+            if($zoneFromInput){
+                $zone->update($zoneFromInput);
+            }else{
+                $zone->delete();
+            }
+
+        }
+
+        return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
+        $inputZones = new Collection($request->input('site.ad_units'));
+        foreach ($site->zones as $zone) {
+            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
             if ($zoneFromInput) {
                 $zone->update($zoneFromInput);
                 $inputZones = $inputZones->reject(function ($value) use ($zone) {
