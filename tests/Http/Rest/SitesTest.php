@@ -43,8 +43,8 @@ class SitesTest extends TestCase
         'name',
         'status',
         'primaryLanguage',
-//        'filtering',
-//        'adUnits',
+        'filtering',
+        'adUnits',
     ];
 
     public function testEmptyDb()
@@ -146,8 +146,22 @@ class SitesTest extends TestCase
             ->create(['user_id' => $user->id]);
         $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
 
+        $this->assertDatabaseHas('zones', [
+            'site_id' => $site->id,
+        ]);
+
         $this->deleteJson(self::URI . "/{$site->id}")
             ->assertStatus(200);
+
+        $this->assertDatabaseMissing('sites', [
+            'id' => $site->id,
+            'deleted_at' => null,
+        ]);
+
+        $this->assertDatabaseMissing('zones', [
+            'site_id' => $site->id,
+            'deleted_at' => null,
+        ]);
 
         $this->getJson(self::URI . "/{$site->id}")
             ->assertStatus(404);
@@ -160,6 +174,7 @@ class SitesTest extends TestCase
         $user = factory(User::class)->create();
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
+        $this->actingAs(factory(User::class)->create(), 'api');
         $this->deleteJson(self::URI . "/{$site->id}")
             ->assertStatus(404);
     }
