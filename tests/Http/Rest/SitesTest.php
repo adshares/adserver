@@ -34,7 +34,7 @@ class SitesTest extends TestCase
         'id',
         'name',
         'filtering',
-        'adUnits' => ['*' => ['shortHeadline', 'pageCode', 'size', 'status']],
+        'adUnits' => ['*' => ['shortHeadline', 'code', 'size', 'status']],
         'status',
         'primaryLanguage',
     ];
