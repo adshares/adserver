@@ -47,6 +47,29 @@ class CampaignsController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
+    public function upload(Request $request)
+    {
+        $file = $request->file('file');
+        $path = $file->store('banners', self::FILESYSTEM_DISK);
+
+        $name = $file->getClientOriginalName();
+        $imageSize = getimagesize($file->getRealPath());
+        $size = '';
+
+        if (isset($imageSize[0]) && isset($imageSize[1])) {
+            $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
+        }
+
+        return self::json(
+            [
+                'imageUrl' => config('app.url') . '/storage/' . $path,
+                'name' => $name,
+                'size' => $size,
+            ],
+            Response::HTTP_OK
+        );
+    }
+
     public function add(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
@@ -95,7 +118,7 @@ class CampaignsController extends Controller
             try {
                 Storage::disk(self::FILESYSTEM_DISK)->delete($file);
             } catch (FileNotFoundException $ex) {
-                // do nothing
+                 // do nothing
             }
         }
     }
@@ -225,29 +248,6 @@ class CampaignsController extends Controller
         $campaign->classification_tags = null;
 
         $campaign->update();
-    }
-
-    public function upload(Request $request)
-    {
-        $file = $request->file('file');
-        $path = $file->store('banners', self::FILESYSTEM_DISK);
-
-        $name = $file->getClientOriginalName();
-        $imageSize = getimagesize($file->getRealPath());
-        $size = '';
-
-        if (isset($imageSize[0]) && isset($imageSize[1])) {
-            $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
-        }
-
-        return self::json(
-            [
-                'imageUrl' => config('app.url') . '/storage/' . $path,
-                'name' => $name,
-                'size' => $size,
-            ],
-            Response::HTTP_OK
-        );
     }
 
     /**
