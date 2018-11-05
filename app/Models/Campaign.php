@@ -43,6 +43,7 @@ class Campaign extends Model
     ];
 
     protected $dates = [
+        'deleted_at',
         'time_start',
         'time_end',
     ];
@@ -93,7 +94,7 @@ class Campaign extends Model
 
     public function banners()
     {
-        return $this->hasMany('Adshares\Adserver\Models\Banner');
+        return $this->hasMany(Banner::class);
     }
 
     public function getAdsAttribute()

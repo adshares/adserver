@@ -111,12 +111,10 @@ class CampaignsController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    public function delete($campaignId)
+    public function delete(Campaign $campaign): JsonResponse
     {
-        // TODO check privileges
-        $site = $this->campaignRepository->fetchCampaignById($campaignId);
-        $site->deleted_at = new \DateTime();
-        $site->save();
+        $campaign->delete();
+        $campaign->banners()->delete();
 
         return self::json(['message' => 'Successfully deleted']);
     }
