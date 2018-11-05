@@ -137,7 +137,7 @@ class SitesTest extends TestCase
             ->assertStatus(404);
     }
 
-    public function testFailDeleteSiteWithZones(): void
+    public function testDeleteSiteWithZones(): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
