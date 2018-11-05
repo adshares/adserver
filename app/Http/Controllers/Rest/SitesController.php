@@ -58,15 +58,19 @@ class SitesController extends Controller
         $inputZones = new Collection($request->input('site.ad_units'));
         foreach ($site->zones as $zone) {
             $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-            if($zoneFromInput){
+            if ($zoneFromInput) {
                 $zone->update($zoneFromInput);
-            }else{
+                $inputZones = $inputZones->reject(function ($value) use ($zone) {
+                    return (int)($value['id'] ?? "") === $zone->id;
+                });
+            } else {
                 $zone->delete();
             }
-
         }
 
-        return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
+        $site->zones()->createMany($inputZones->all());
+
+        return self::json(['message' => 'Successfully edited']);
     }
 
     public function delete(Site $site): JsonResponse
