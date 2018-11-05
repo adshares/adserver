@@ -24,33 +24,60 @@ use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Models\Site;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SitesController extends Controller
 {
-    public function add(Request $request): JsonResponse
+    public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
         $site = Site::create($request->input('site'));
         $site->user_id = Auth::user()->id;
         $site->save();
 
+        $site->zones()->createMany($request->input('site.ad_units'));
+
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
-    public function edit(Request $request, Site $site): JsonResponse
+    public function read(Site $site): JsonResponse
+    {
+        return self::json($site);
+    }
+
+    public function update(Request $request, Site $site): JsonResponse
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
 
         $site->update($input);
 
+        $inputZones = new Collection($request->input('site.ad_units'));
+        foreach ($site->zones as $zone) {
+            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
+            if($zoneFromInput){
+                $zone->update($zoneFromInput);
+            }else{
+                $zone->delete();
+            }
+
+        }
+
         return self::json(['message' => 'Successfully edited'], Response::HTTP_NO_CONTENT);
     }
 
-    public function browse(): JsonResponse
+    public function delete(Site $site): JsonResponse
+    {
+        $site->delete();
+        $site->zones()->delete();
+
+        return self::json(['message' => 'Successfully deleted']);
+    }
+
+    public function list(): JsonResponse
     {
         return self::json(Site::get());
     }
@@ -66,17 +93,5 @@ class SitesController extends Controller
         ];
 
         return self::json($siteCount, 200);
-    }
-
-    public function delete(Site $site): JsonResponse
-    {
-        $site->delete();
-
-        return self::json(['message' => 'Successfully deleted']);
-    }
-
-    public function read(Site $site): JsonResponse
-    {
-        return self::json($site);
     }
 }
