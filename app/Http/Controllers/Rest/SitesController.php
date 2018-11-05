@@ -35,6 +35,8 @@ class SitesController extends Controller
         $site->user_id = Auth::user()->id;
         $site->save();
 
+        $site->zones()->createMany($request->input('site.ad_units'));
+
         return self::json([], Response::HTTP_CREATED)
             ->header('Location', route('app.sites.read', ['site' => $site]));
     }
@@ -51,12 +53,11 @@ class SitesController extends Controller
 
     public function browse()
     {
-        return self::json(Site::get()->toArray());
+        return self::json(Site::get());
     }
 
-    public function count(Request $request)
+    public function count()
     {
-        //@TODO: create function data
         $siteCount = [
             'totalEarnings' => 0,
             'totalClicks' => 0,
@@ -72,11 +73,11 @@ class SitesController extends Controller
     {
         $site->delete();
 
-        return self::json(['message' => 'Successfully deleted'], Response::HTTP_NO_CONTENT);
+        return self::json(['message' => 'Successfully deleted']);
     }
 
     public function read(Site $site)
     {
-        return self::json($site->toArray());
+        return self::json($site);
     }
 }

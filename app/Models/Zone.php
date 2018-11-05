@@ -20,13 +20,17 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Controllers\Simulator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property Site site
+ */
 class Zone extends Model
 {
     use SoftDeletes;
-    private const CODE_TEMPLATE = <<<'HTML'
+    private const CODE_TEMPLATE = <<<HTML
 <div 
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 

@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,11 +35,6 @@ class Site extends Model
 {
     use Ownership;
     use SoftDeletes;
-    /**
-     * Template for html code, which should be pasted for each ad unit
-     */
-    const PAGE_CODE_TEMPLATE = '<div data-pub="$publisherId" data-zone="$zoneId" '
-    . 'style="width:$widthpx;height:$heightpx;display: block;margin: 0 auto;background-color: #FAA"></div>';
     public static $rules = [
         'name' => 'required|max:64',
         'primary_language' => 'required|max:2',
@@ -49,17 +43,13 @@ class Site extends Model
     protected $casts = [
         'site_requires' => 'json',
         'site_excludes' => 'json',
-//        'status' => 'boolean',
     ];
-    /** @var string[] */
     protected $fillable = [
         'name',
         'status',
         'primary_language',
-        'ad_units',
         'filtering',
     ];
-    /** @var string[] */
     protected $hidden = [
         'deleted_at',
         'site_requires',

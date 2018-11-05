@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Tests\Http\Rest;
 
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -90,7 +91,7 @@ class SitesTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        array_map(function ($data) use ($user) {
+        array_map(function () use ($user) {
             factory(Site::class)->create(['user_id' => $user->id]);
         }, $this->creationDataProvider());
 
