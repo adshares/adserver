@@ -25,6 +25,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Zone extends Model
 {
+    use SoftDeletes;
+    private const CODE_TEMPLATE = <<<'HTML'
+<div 
+    data-pub="{{publisherId}}" 
+    data-zone="{{zoneId}}" 
+    style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto;background-color: #FAA"></div>
+HTML;
     public const STATUS_DRAFT = 0;
     public const STATUS_ACTIVE = 1;
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_ACTIVE];
@@ -51,16 +58,65 @@ class Zone extends Model
         '750x200',
         '750x300',
     ];
-    use SoftDeletes;
     protected $fillable = [
-        'name',
-        'width',
-        'height',
+        'short_headline',
+        'size',
         'status',
     ];
-    protected $hidden = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
+    protected $visible = [
+        'id',
+        'short_headline',
+        'code',
+        'size',
+        'status',
     ];
+    protected $appends = [
+        'size',
+        'short_headline',
+        'code',
+    ];
+    protected $touches = ['site'];
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
+
+    public function getCodeAttribute()
+    {
+        $replaceArr = [
+            '{{publisherId}}' => $this->publisher_id,
+            '{{zoneId}}' => $this->id,
+            '{{width}}' => $this->width,
+            '{{height}}' => $this->height,
+        ];
+
+        return strtr(self::CODE_TEMPLATE, $replaceArr);
+    }
+
+    public function getShortHeadlineAttribute(): string
+    {
+        return $this->name;
+    }
+
+    public function setShortHeadlineAttribute($value): void
+    {
+        $this->name = $value;
+    }
+
+    public function setSizeAttribute(array $data): void
+    {
+        $size = Simulator::getZoneTypes()[$data['size']];
+        $this->width = $size['width'];
+        $this->height = $size['height'];
+    }
+
+    public function getSizeAttribute(): array
+    {
+        return [
+            'name' => $this->name,
+            'width' => $this->width,
+            'height' => $this->height,
+        ];
+    }
 }

@@ -69,7 +69,7 @@ class Site extends Model
     protected $appends = [
         'ad_units',
         'filtering',
-        'page_code_common',
+        'code',
     ];
 
     public function zones()
@@ -77,29 +77,13 @@ class Site extends Model
         return $this->hasMany(Zone::class);
     }
 
-    public function setAdUnitsAttribute(array $data): void
+    public function getAdUnitsAttribute()
     {
-//        $this->zones()->createMany($this->mapAdUnitsToZoneModel($data['ad_units']));
-    }
+        return $this->zones->map(function (Zone $zone) {
+            $zone->publisher_id = $this->user_id;
 
-    public function getAdUnitsAttribute(): array
-    {
-        $adUnits = [];
-
-        foreach ($this->zones as $zone) {
-            $pageCode = $this->getAdUnitPageCode($zone);
-            $adUnits[] = [
-                'page_code' => $pageCode,
-                'short_headline' => $zone->name,
-                'size' => [
-                    'name' => $zone->name,
-                    'width' => $zone->width,
-                    'height' => $zone->height,
-                ],
-            ];
-        }
-
-        return $adUnits;
+            return $zone;
+        });
     }
 
     public function setFilteringAttribute(array $data): void
@@ -116,46 +100,10 @@ class Site extends Model
         ];
     }
 
-    /**
-     * @return string html code which links to script finding proper advertisement
-     */
-    public function getPageCodeCommonAttribute(): string
+    public function getCodeAttribute(): string
     {
         $serverUrl = config('app.url');
 
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
-    }
-
-    private function mapAdUnitsToZoneModel($adUnits): array
-    {
-        $adUnits = array_map(function ($zone) {
-            $zone['name'] = $zone['short_headline'];
-            unset($zone['short_headline']);
-
-            $size = Simulator::getZoneTypes()[$zone['size']['size']];
-            $zone['width'] = $size['width'];
-            $zone['height'] = $size['height'];
-
-            return $zone;
-        }, $adUnits);
-
-        return $adUnits;
-    }
-
-    /**
-     * @param $zone Zone AdUnit data
-     *
-     * @return string html code for specific AdUnit
-     */
-    private function getAdUnitPageCode(Zone $zone): string
-    {
-        $replaceArr = [
-            '$publisherId' => $this->user_id,
-            '$zoneId' => $zone->id,
-            '$width' => $zone->width,
-            '$height' => $zone->height,
-        ];
-
-        return strtr(self::PAGE_CODE_TEMPLATE, $replaceArr);
     }
 }

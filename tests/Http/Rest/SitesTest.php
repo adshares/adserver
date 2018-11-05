@@ -28,12 +28,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 class SitesTest extends TestCase
 {
     use RefreshDatabase;
-    const URI = '/api/sites';
+    private const URI = '/api/sites';
     const SITE_STRUCTURE = [
         'id',
         'name',
         'filtering',
-        'adUnits' => ['*' => ['shortHeadline']],
+        'adUnits' => ['*' => ['shortHeadline', 'code', 'size', 'status']],
         'status',
         'primaryLanguage',
     ];
@@ -70,10 +70,22 @@ class SitesTest extends TestCase
         $response->assertStatus(201);
         $response->assertHeader('Location');
 
-        $this->assertResourceData($preset, $this->getIdFromLocation($response->headers->get('Location')));
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(200)
+            ->assertJsonStructure(self::SITE_STRUCTURE)
+            ->assertJsonFragment([
+                'name' => $preset['name'],
+                'primaryLanguage' => $preset['primaryLanguage'],
+            ])
+            ->assertJsonCount(1, 'adUnits')
+            ->assertJsonCount(2, 'filtering')
+            ->assertJsonCount(1, 'filtering.requires')
+            ->assertJsonCount(0, 'filtering.excludes');
     }
 
-    public function testMultipleSites()
+    public function testCreateMultipleSites()
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
@@ -99,10 +111,10 @@ class SitesTest extends TestCase
         $this->actingAs($user, 'api');
         $site = factory(Site::class)->create(['user_id' => $user->id]);
 
-        $response = $this->patchJson(self::URI . '/1', ['site' => $data]);
+        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => $data]);
         $response->assertStatus(204);
 
-        $this->getJson(self::URI . '/1')
+        $this->getJson(self::URI . "/{$site->id}")
             ->assertStatus(200)
             ->assertJsonFragment([
                 'name' => $data['name'] ?? $site->name,
@@ -111,7 +123,47 @@ class SitesTest extends TestCase
             ]);
     }
 
-    public function updateDataProvider()
+    public function testDeleteSite(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->deleteJson(self::URI . "/{$site->id}")
+            ->assertStatus(200);
+
+        $this->getJson(self::URI . "/{$site->id}")
+            ->assertStatus(404);
+    }
+
+    public function testFailDeleteSiteWithZones(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $site = factory(Site::class)
+            ->create(['user_id' => $user->id]);
+        $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
+
+        $this->deleteJson(self::URI . "/{$site->id}")
+            ->assertStatus(200);
+
+        $this->getJson(self::URI . "/{$site->id}")
+            ->assertStatus(404);
+    }
+
+    public function testFailDeleteNotOwnedSite(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $user = factory(User::class)->create();
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->deleteJson(self::URI . "/{$site->id}")
+            ->assertStatus(404);
+    }
+
+    public function updateDataProvider(): array
     {
         return [
             [
@@ -200,18 +252,5 @@ JSON
         $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
 
         return $matches[1];
-    }
-
-    private function assertResourceData($preset, $id): void
-    {
-        $response = $this->getJson(self::URI . '/' . $id);
-        $response->assertStatus(200)
-            ->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment([
-                'name' => $preset['name'],
-                'primaryLanguage' => $preset['primaryLanguage'],
-            ])
-            ->assertJsonCount(2, 'filtering')
-            ->assertJsonCount(1, 'filtering.requires')
-            ->assertJsonCount(0, 'filtering.excludes');
     }
 }
