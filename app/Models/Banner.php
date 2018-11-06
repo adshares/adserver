@@ -25,11 +25,19 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Banner extends Model
 {
+    public const IMAGE_TYPE = 0;
+    public const HTML_TYPE = 1;
+
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
+    protected $dates = [
+        'deleted_at',
+    ];
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
         'saving' => CreativeSha1::class,
@@ -42,11 +50,13 @@ class Banner extends Model
         'creative_sha1',
         'creative_width',
         'creative_height',
+        'name',
     ];
     protected $hidden = [
         'id',
         'creative_contents',
         'campaign_id',
+        'deleted_at',
     ];
     protected $traitAutomate = [
         'uuid' => 'BinHex',
@@ -66,5 +76,23 @@ class Banner extends Model
         $array['click_url'] = route('log-network-click', ['id' => $this->id]);
 
         return $array;
+    }
+
+    public static function type($type)
+    {
+        if ($type === self::IMAGE_TYPE) {
+            return 'image';
+        }
+
+        return 'html';
+    }
+
+    public static function size($size)
+    {
+        if (!isset(Zone::ZONE_SIZE[$size])) {
+            throw new \RuntimeException(sprintf('Wrong image size.'));
+        }
+
+        return Zone::ZONE_SIZE[$size];
     }
 }

@@ -38,8 +38,7 @@ class SettingsController extends Controller
         $settings = UserSettings::where('user_id', Auth::user()->id)
             ->where('type', 'notifications')
             ->first()
-            ->toArray()
-        ;
+            ->toArray();
 
         $payload = [];
         foreach ($settings['payload'] as $name => $value) {
