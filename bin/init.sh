@@ -167,6 +167,12 @@ then
     ${DOCKER_COMPOSE} run --rm worker yarn install
     ${DOCKER_COMPOSE} run --rm worker yarn run dev
 
+    echo " >> Setting upload directory"
+    ${DOCKER_COMPOSE} run --rm application mkdir -p storage/app/public/banners
+    ${DOCKER_COMPOSE} run --rm application chown -R dev:www-data storage/app/public/banners
+    ${DOCKER_COMPOSE} run --rm application php artisan storage:link -q
+
+
     echo " < DONE"
 fi
 
