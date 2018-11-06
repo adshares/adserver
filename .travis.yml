@@ -13,6 +13,7 @@ env:
     - HOST_PATH=/home/travis/build/adshares/adserver
     - BUILD_PATH=/build/adserver
     - BUILD_NAME=adserver_build
+    - MYSQL_ROOT_PASSWORD=root
   matrix:
     - APP_ENV=dev APP_DEBUG=true
     - APP_ENV=production APP_DEBUG=false
@@ -29,14 +30,18 @@ before_script:
   - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
   ## Setup test environment
   # Run docker container
+  - docker network create -d bridge test-network
+  - docker run --name mysql.dock --network=test-network -d mysql:5.7
   - docker pull $DOCKER_IMAGE
   - >
     docker run -d
     --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
+    --network=test-network
     -e TRAVIS=true
     -e APP_ENV=${APP_ENV}
     -e APP_DEBUG=${APP_DEBUG}
     -e ADSERVER_INSTALLATION_DIR=/var/www/adserver
+    -e DB_HOST=mysql.dock
     --env-file=$HOST_PATH/.env.testing
     --name $BUILD_NAME
     $DOCKER_IMAGE
