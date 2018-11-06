@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 class Simulator extends Controller
 {
@@ -554,6 +555,11 @@ FILTERING_JSON;
         'double-billboard' => '750x200',
         'triple-billboard' => '750x300',
     ];
+
+    public static function getZoneTypeName(string $size): string
+    {
+        return Collection::make(self::ZONE_SIZES)->search($size) ?: $size;
+    }
 
     public static function getZoneTypes(): array
     {
