@@ -60,10 +60,8 @@ class CampaignRepository
         DB::commit();
     }
 
-    public function delete(int $campaignId)
+    public function delete(Campaign $campaign)
     {
-        $campaign = $this->fetchCampaignById($campaignId);
-
         DB::beginTransaction();
 
         try {

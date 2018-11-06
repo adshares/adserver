@@ -56,7 +56,7 @@ class CampaignsTest extends TestCase
         $this->assertCount(1, Banner::where('id', $bannerId)->get());
 
         $response = $this->deleteJson(self::URI . "/{$campaignId}");
-        $response->assertStatus(Response::HTTP_OK);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $this->assertCount(0, Campaign::where('id', $campaignId)->get());
         $this->assertCount(0, Banner::where('id', $bannerId)->get());
