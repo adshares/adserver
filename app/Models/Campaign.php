@@ -33,7 +33,9 @@ class Campaign extends Model
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
-
+    const STATUS_DRAFT = 0;
+    const STATUS_INACTIVE = 1;
+    const STATUS_ACTIVE = 2;
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
