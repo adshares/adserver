@@ -35,7 +35,7 @@ class SitesTest extends TestCase
         'id',
         'name',
         'filtering',
-        'adUnits' => ['*' => ['shortHeadline', 'code', 'size', 'status']],
+        'adUnits' => ['*' => ['shortHeadline', 'code', 'size', 'status', 'width', 'height', 'type']],
         'status',
         'primaryLanguage',
     ];
@@ -306,13 +306,14 @@ JSON
                 [
                     [
                         "status" => "0",
-                        "shortHeadline" => "title1",
+                        "type" => "zone-type-1",
+                        "name" => "title1",
                         "width" => 100,
                         "height" => 200,
                     ],
                     [
                         "status" => "1",
-                        "shortHeadline" => "title2",
+                        "name" => "title2",
                         "width" => 300,
                         "height" => 400,
                     ],
@@ -323,31 +324,33 @@ JSON
                     [
                         "id" => "1",
                         "status" => "0",
-                        "shortHeadline" => "new-title1",
+                        "type" => "zone-type-1",
+                        "name" => "new-title1",
                         "width" => 100,
                         "height" => 200,
                     ],
                     [
                         "status" => "1",
-                        "shortHeadline" => "new-title2",
+                        "name" => "new-title2",
                         "width" => 300,
                         "height" => 400,
                     ],
                 ],
             ],
-            'bothNewZone' => [
+            'bothNewZones' => [
                 [
                     [
                         "id" => "1",
                         "status" => "0",
-                        "shortHeadline" => "new-title1",
+                        "type" => "zone-type-1",
+                        "name" => "new-title1",
                         "width" => 100,
                         "height" => 200,
                     ],
                     [
                         "id" => "2",
                         "status" => "1",
-                        "shortHeadline" => "new-title2",
+                        "name" => "new-title2",
                         "width" => 300,
                         "height" => 400,
                     ],

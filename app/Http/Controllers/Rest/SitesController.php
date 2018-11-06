@@ -71,18 +71,7 @@ class SitesController extends Controller
             $site->fill($input);
             $site->push();
 
-            $inputZones = new Collection($request->input('site.ad_units'));
-            foreach ($site->zones as $zone) {
-                $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-                if ($zoneFromInput) {
-                    $zone->update($zoneFromInput);
-                    $inputZones = $inputZones->reject(function ($value) use ($zone) {
-                        return (int)($value['id'] ?? "") === $zone->id;
-                    });
-                } else {
-                    $zone->delete();
-                }
-            }
+            $inputZones = $this->proccessInputZones($site, Collection::make($request->input('site.ad_units')));
 
             $site->zones()->createMany($inputZones->all());
         } catch (Exception $exception) {
@@ -128,5 +117,22 @@ class SitesController extends Controller
         ];
 
         return self::json($siteCount, 200);
+    }
+
+    private function proccessInputZones(Site $site, Collection $inputZones)
+    {
+        foreach ($site->zones as $zone) {
+            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
+            if ($zoneFromInput) {
+                $zone->update($zoneFromInput);
+                $inputZones = $inputZones->reject(function ($value) use ($zone) {
+                    return (int)($value['id'] ?? "") === $zone->id;
+                });
+            } else {
+                $zone->delete();
+            }
+        }
+
+        return $inputZones;
     }
 }
