@@ -20,107 +20,100 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
- * Class Site.
- *
  * @property int user_id
  * @property string name
- * @property string url
+ * @property array|null|string site_requires
+ * @property array|null|string site_excludes
+ * @property Zone[]|Collection zones
+ * @method static Site create($input = null)
+ * @method static get()
  */
 class Site extends Model
 {
+    use Ownership;
+    use SoftDeletes;
+    public const STATUS_DRAFT = 0;
+    public const STATUS_INACTIVE = 1;
+    public const STATUS_ACTIVE = 2;
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    private const ZONE_STATUS = [
+        Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
+        Site::STATUS_INACTIVE => Zone::STATUS_ARCHIVED,
+        Site::STATUS_ACTIVE => Zone::STATUS_ACTIVE,
+    ];
     public static $rules = [
         'name' => 'required|max:64',
+        'primary_language' => 'required|max:2',
+        'status' => 'required|numeric',
     ];
-
     protected $casts = [
-        'sites_requires' => 'json',
-        'sites_excludes' => 'json',
+        'site_requires' => 'json',
+        'site_excludes' => 'json',
     ];
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'user_id',
         'name',
         'status',
-        'zones',
-        'sites_requires',
-        'sites_excludes',
+        'primary_language',
+        'filtering',
     ];
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'deleted_at',
+        'site_requires',
+        'site_excludes',
+        'zones',
     ];
-
-    /** @var array Aditional fields to be included in collections */
-    protected $appends = ['adUnits', 'targetingArray'];
-
-    public function siteExcludes()
-    {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteExclude::class);
-    }
-
-    public function siteRequires()
-    {
-        return $this->hasMany(\Adshares\Adserver\Models\SiteRequire::class);
-    }
+    protected $appends = [
+        'ad_units',
+        'filtering',
+        'code',
+    ];
 
     public function zones()
     {
-        return $this->hasMany(\Adshares\Adserver\Models\Zone::class);
+        return $this->hasMany(Zone::class);
     }
 
     public function getAdUnitsAttribute()
     {
-        $adUnits = [];
-        foreach ($this->zones as $zone) {
-            $adUnits[] = [
-                'shortHeadline' => $zone->name,
-                'size' => [
-                    'name' => $zone->name,
-                    'width' => $zone->width,
-                    'height' => $zone->height,
-                ],
-            ];
-        }
+        return $this->zones->map(function (Zone $zone) {
+            $zone->publisher_id = $this->user_id;
 
-        return $adUnits;
+            return $zone;
+        });
     }
 
-    public function getTargetingArrayAttribute()
+    public function setFilteringAttribute(array $data): void
+    {
+        $this->site_requires = $data['requires'];
+        $this->site_excludes = $data['excludes'];
+    }
+
+    public function getFilteringAttribute(): array
     {
         return [
-            'requires' => json_decode($this->site_requires),
-            'excludes' => json_decode($this->site_excludes),
+            'requires' => $this->site_requires,
+            'excludes' => $this->site_excludes,
         ];
     }
 
-    public static function siteById($siteId)
+    public function getCodeAttribute(): string
     {
-        return self::with([
-            'siteExcludes' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'siteRequires' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-            'zones' => function ($query) {
-                /* @var $query Builder */
-                $query->whereNull('deleted_at');
-            },
-        ])->whereNull('deleted_at')
-            ->findOrFail($siteId);
+        $serverUrl = config('app.url');
+
+        return "<script src=\"$serverUrl/supply/find.js\" async></script>";
+    }
+
+    public function setStatusAttribute($value): void
+    {
+        $this->attributes['status'] = $value;
+        $this->zones->map(function (Zone $zone) use ($value) {
+            $zone->status = Site::ZONE_STATUS[$value];
+        });
     }
 }

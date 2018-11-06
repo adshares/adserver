@@ -18,12 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\Campaign;
 use Faker\Generator as Faker;
 
-$factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
+$factory->define(Campaign::class, function (Faker $faker) {
+    $startEnd = $faker->dateTimeThisMonth();
+    $startTime = $faker->dateTimeThisMonth($startEnd);
     return [
-        'name' => $faker->words(2, true),
-        'primary_language' => $faker->languageCode,
-        'status' => "0",
+        'landing_url' => $faker->url(),
+        'time_start' => $startTime,
+        'time_end' => $startEnd,
+        'status' => '0',
+        'name' => $faker->word(),
+        'strategy_name' => 'CPC',
+        'bid' => '1',
+        'budget' => '100',
+        'targeting_excludes' => [],
+        'targeting_requires' => [],
+        'classification_status' => 0,
+        'classification_tags' => null,
     ];
 });

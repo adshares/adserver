@@ -18,12 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Models\Traits;
 
-$factory->define(Adshares\Adserver\Models\Site::class, function (Faker $faker) {
-    return [
-        'name' => $faker->words(2, true),
-        'primary_language' => $faker->languageCode,
-        'status' => "0",
-    ];
-});
+use Adshares\Adserver\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+
+/**
+ * @method ownedBy(User $user): Builder
+ */
+trait Ownership
+{
+    public static function bootOwnership(): void
+    {
+        static::addGlobalScope(new OwnershipScope(Auth::user()));
+    }
+
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->where('user_id', '=', $user->id);
+    }
+}
