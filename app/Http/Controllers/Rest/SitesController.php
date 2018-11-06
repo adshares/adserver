@@ -68,7 +68,8 @@ class SitesController extends Controller
         DB::beginTransaction();
 
         try {
-            $site->update($input);
+            $site->fill($input);
+            $site->push();
 
             $inputZones = new Collection($request->input('site.ad_units'));
             foreach ($site->zones as $zone) {
