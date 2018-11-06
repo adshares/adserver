@@ -558,7 +558,7 @@ FILTERING_JSON;
 
     public static function getZoneTypeName(string $size): string
     {
-        return Collection::make(self::ZONE_SIZES)->search($size);
+        return Collection::make(self::ZONE_SIZES)->search($size) ?: $size;
     }
 
     public static function getZoneTypes(): array
