@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 env | sort
 
 if [ ! -v TRAVIS ]; then

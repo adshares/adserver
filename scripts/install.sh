@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # Create directories
 mkdir -p ${ADSERVER_INSTALLATION_DIR}
 mkdir -m 777 ${ADSERVER_INSTALLATION_DIR}/storage
