@@ -109,7 +109,7 @@ class Site extends Model
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
     }
 
-    public function setStatusAttribute($value)
+    public function setStatusAttribute($value): void
     {
         $this->attributes['status'] = $value;
         $this->zones->map(function (Zone $zone) use ($value) {
