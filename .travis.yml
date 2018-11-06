@@ -42,7 +42,9 @@ before_script:
     sleep infinity
   - in_docker add-apt-repository ppa:adshares/releases -y"
   - in_docker apt-get -qq update"
-  - in_docker apt-get -qq -y install mysql-server ads"
+  - in_docker apt-get -qq -y install ads"
+  - in_docker set -a && source .env.testing && set +a"
+
 after_script:
   - docker stop $BUILD_NAME && docker rm $BUILD_NAME
 

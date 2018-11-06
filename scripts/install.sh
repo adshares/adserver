@@ -4,7 +4,7 @@ set -e
 
 # Create directories
 mkdir -p ${ADSERVER_INSTALLATION_DIR}
-mkdir -m 777 ${ADSERVER_INSTALLATION_DIR}/storage
+mkdir -pm 777 ${ADSERVER_INSTALLATION_DIR}/storage
 
 # Move directories
 mv app ${ADSERVER_INSTALLATION_DIR}/
