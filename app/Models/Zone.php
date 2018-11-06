@@ -139,4 +139,22 @@ HTML;
             'type' => Simulator::getZoneTypeName("{$this->width}x{$this->height}"),
         ];
     }
+
+    public function setWidthAttribute($width): void
+    {
+        $this->attributes['width'] = $width;
+        if ($this->attributes['height'] ?? false) {
+            $this->attributes['type'] =
+                Simulator::getZoneTypeName("{$this->attributes['width']}x{$this->attributes['height']}");
+        }
+    }
+
+    public function setHeightAttribute($height): void
+    {
+        $this->attributes['height'] = $height;
+        if ($this->attributes['width'] ?? false) {
+            $this->attributes['type'] =
+                Simulator::getZoneTypeName("{$this->attributes['width']}x{$this->attributes['height']}");
+        }
+    }
 }
