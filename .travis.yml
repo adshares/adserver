@@ -66,6 +66,8 @@ jobs:
         # Run build script
         - in_docker /bin/bash scripts/build.sh"
         - in_docker /bin/bash scripts/pre-install.sh"
+        - in_docker apt-get -qq -y install mysql-server
+
         - in_docker /bin/bash scripts/install.sh"
 
         # PHP unit tests
