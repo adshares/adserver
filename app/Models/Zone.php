@@ -71,6 +71,8 @@ HTML;
         'size',#@deprecated
         'width',
         'height',
+        'type',
+//        'status',
     ];
     protected $visible = [
         'id',
@@ -81,6 +83,7 @@ HTML;
         'width',
         'height',
         'status',
+        'type',
     ];
     protected $appends = [
         'size',#@deprecated
@@ -118,11 +121,12 @@ HTML;
 
     public function setSizeAttribute(array $data): void
     {
-        $oldSizeNumber = $data['size'] ?? false;
-        if ($oldSizeNumber) {
+        $oldSizeNumber = $data['size'] ?? null;
+        if ($oldSizeNumber !== null) {
             $size = Simulator::getZoneTypes()[$oldSizeNumber];
             $this->width = $size['width'];
             $this->height = $size['height'];
+            $this->type = $size['type'] ?? Simulator::getZoneTypeName("{$size['width']}x{$size['height']}");
         }
     }
 
@@ -132,6 +136,7 @@ HTML;
             'name' => $this->name,
             'width' => $this->width,
             'height' => $this->height,
+            'type' => Simulator::getZoneTypeName("{$this->width}x{$this->height}"),
         ];
     }
 }

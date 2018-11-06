@@ -27,5 +27,6 @@ $factory->define(Zone::class, function (Faker $faker) {
         'width' => $faker->numberBetween(100, 1024),
         'height' => $faker->numberBetween(100, 1024),
         'status' => 0,
+        'type' => $faker->text(16),
     ];
 });
