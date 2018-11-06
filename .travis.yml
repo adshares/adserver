@@ -37,13 +37,13 @@ before_script:
     -e APP_ENV=${APP_ENV}
     -e APP_DEBUG=${APP_DEBUG}
     -e ADSERVER_INSTALLATION_DIR=/var/www/adserver
+    --env-file=$HOST_PATH/.env.testing
     --name $BUILD_NAME
     $DOCKER_IMAGE
     sleep infinity
   - in_docker add-apt-repository ppa:adshares/releases -y"
   - in_docker apt-get -qq update"
   - in_docker apt-get -qq -y install ads"
-  - in_docker set -a && source .env.testing && set +a"
 
 after_script:
   - docker stop $BUILD_NAME && docker rm $BUILD_NAME
