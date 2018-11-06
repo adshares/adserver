@@ -30,16 +30,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Zone extends Model
 {
-    use SoftDeletes;
     private const CODE_TEMPLATE = <<<HTML
 <div 
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
     style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto;background-color: #FAA"></div>
 HTML;
+    use SoftDeletes;
     public const STATUS_DRAFT = 0;
     public const STATUS_ACTIVE = 1;
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_ACTIVE];
+    public const STATUS_ARCHIVED = 2;
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_ACTIVE, self::STATUS_ARCHIVED];
     public const ZONE_SIZE = [
         '728x90',
         '300x250',
@@ -63,13 +64,13 @@ HTML;
         '750x200',
         '750x300',
     ];
+    public $publisher_id;
     protected $fillable = [
         'short_headline',#@deprecated
         'name',
         'size',#@deprecated
         'width',
         'height',
-        'status',
     ];
     protected $visible = [
         'id',
@@ -96,7 +97,7 @@ HTML;
     public function getCodeAttribute()
     {
         $replaceArr = [
-            '{{publisherId}}' => $this->publisher_id,
+            '{{publisherId}}' => $this->publisher_id ?? 0,
             '{{zoneId}}' => $this->id,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,
@@ -117,9 +118,12 @@ HTML;
 
     public function setSizeAttribute(array $data): void
     {
-        $size = Simulator::getZoneTypes()[$data['size']];
-        $this->width = $size['width'];
-        $this->height = $size['height'];
+        $oldSizeNumber = $data['size'] ?? false;
+        if ($oldSizeNumber) {
+            $size = Simulator::getZoneTypes()[$oldSizeNumber];
+            $this->width = $size['width'];
+            $this->height = $size['height'];
+        }
     }
 
     public function getSizeAttribute(): array
