@@ -70,13 +70,7 @@ jobs:
 
     - stage: build and install
       script:
-
-        - in_docker /bin/bash scripts/pre-build.sh"
-
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-        - in_docker /bin/bash scripts/pre-install.sh"
-
+        # Backing services and tools
         - >
           docker run
           --name mysql.dock
@@ -88,7 +82,12 @@ jobs:
           -d
           mysql/mysql-server:5.7
 
-        # Backing services and tools
+        - in_docker /bin/bash scripts/pre-build.sh"
+
+        # Run build script
+        - in_docker /bin/bash scripts/build.sh"
+        - in_docker /bin/bash scripts/pre-install.sh"
+        - docker ps -a
         - in_docker /bin/bash scripts/install.sh"
 
         # PHP unit tests
