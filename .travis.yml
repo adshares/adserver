@@ -82,16 +82,13 @@ jobs:
           --name mysql.dock
           --network=test-network
           -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+          -e MYSQL_USER=adserver
+          -e MYSQL_PASSWORD=adserver
+          -e MYSQL_DATABASE=adserver
           -d
           mysql/mysql-server:5.7
 
-        - >
-          docker exec mysql.dock
-          mysql -e "CREATE USER 'adserver'@'%' IDENTIFIED BY 'adserver';
-                    GRANT ALL PRIVILEGES ON adserver.* TO 'adserver'@'%'  WITH GRANT OPTION;
-                    FLUSH PRIVILEGES;"
-
-      # Backing services and tools
+        # Backing services and tools
         - in_docker /bin/bash scripts/install.sh"
 
         # PHP unit tests
