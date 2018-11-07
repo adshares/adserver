@@ -110,6 +110,5 @@ class CampaignRepository
         }
 
         DB::commit();
-
     }
 }
