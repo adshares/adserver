@@ -40,7 +40,7 @@ before_script:
     -e APP_DEBUG=${APP_DEBUG}
     -e INSTALLATION_PATH=/var/www/adserver
     -e DB_HOST=mysql.dock
-    -e DB_USER=adserver
+    -e DB_USERNAME=adserver
     -e DB_DATABASE=adserver
     -e DB_PASSWORD=adserver
     --env-file=$HOST_PATH/.env.testing
@@ -87,6 +87,7 @@ jobs:
         # Run build script
         - in_docker /bin/bash scripts/build.sh"
         - in_docker /bin/bash scripts/pre-install.sh"
+
         - docker ps -a
         - in_docker /bin/bash scripts/install.sh"
 
