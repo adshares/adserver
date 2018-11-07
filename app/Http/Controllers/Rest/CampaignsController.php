@@ -30,6 +30,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -193,9 +194,44 @@ class CampaignsController extends Controller
             )
         );
 
-        // TODO check privileges
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        $campaign->update($request->input('campaign'));
+        $input = $request->input('campaign');
+        $banners = Collection::make($input['ads']);
+
+        $campaign->fill($input);
+
+        $bannersToUpdate = [];
+        $bannersToDelete = [];
+        $bannersToInsert = [];
+        $temporaryFileToRemove = [];
+
+        foreach ($campaign->banners as $banner) {
+            $bannerFromInput = $banners->firstWhere('uuid', $banner->uuid);
+
+            if ($bannerFromInput) {
+                $banner->name = $bannerFromInput['name'];
+                $bannersToUpdate[] = $banner;
+
+                $banners = $banners->reject(function ($value) use ($banner) {
+                    return (string)($value['uuid'] ?? "") === $banner->uuid;
+                });
+
+                continue;
+            }
+
+            $bannersToDelete[] = $banner;
+        }
+
+        if ($banners) {
+            $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
+            $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
+        }
+
+        $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
+
+        if ($temporaryFileToRemove) {
+            $this->removeLocalBannerImages($temporaryFileToRemove);
+        }
 
         return self::json(['message' => 'Successfully edited']);
     }
