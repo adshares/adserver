@@ -74,11 +74,11 @@ class Banner extends Model
         $array['view_url'] = route('log-network-view', ['id' => $this->id]);
         $array['click_url'] = route('log-network-click', ['id' => $this->id]);
 
-        if ($this->creative_type === 'html') {
+        if ($this->type === self::HTML_TYPE) {
             $array['html'] = $this->creative_contents;
         }
 
-        if ($this->creative_type === 'image') {
+        if ($this->type === self::IMAGE_TYPE) {
             $array['image_url'] = $array['serve_url'];
         }
 
