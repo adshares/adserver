@@ -30,7 +30,6 @@ before_script:
   ## Setup test environment
   # Run docker container
   - docker network create -d bridge test-network
-  - docker run --name mysql.dock --network=test-network -d mysql:5.7
   - docker pull $DOCKER_IMAGE
   - >
     docker run -d
@@ -41,6 +40,9 @@ before_script:
     -e APP_DEBUG=${APP_DEBUG}
     -e ADSERVER_INSTALLATION_DIR=/var/www/adserver
     -e DB_HOST=mysql.dock
+    -e DB_USER=adserver
+    -e DB_DATABASE=adserver
+    -e DB_PASSWORD=adserver
     --env-file=$HOST_PATH/.env.testing
     --name $BUILD_NAME
     $DOCKER_IMAGE
@@ -75,8 +77,13 @@ jobs:
         - in_docker /bin/bash scripts/build.sh"
         - in_docker /bin/bash scripts/pre-install.sh"
 
-        # Backing services and tools
+        - docker run --name mysql.dock --network=test-network -d mysql:5.7
+        - >
+          docker exec mysql.dock mysql -e "CREATE USER 'adserver'@'%' IDENTIFIED BY 'adserver';
+          GRANT ALL PRIVILEGES ON adserver.* TO 'adserver'@'%'  WITH GRANT OPTION;
+          FLUSH PRIVILEGES;"
 
+      # Backing services and tools
         - in_docker /bin/bash scripts/install.sh"
 
         # PHP unit tests
