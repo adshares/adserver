@@ -13,7 +13,8 @@ ENV TERM xterm
 ENV LOCALTIME Europe/Warsaw
 ENV DEBIAN_FRONTEND noninteractive
 
-ENV PHP_ETC_DIR="/etc/php/7.2"
+ENV PHP_VER="7.2"
+ENV PHP_ETC_DIR="/etc/php/${PHP_VER}"
 
 RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
     apt-utils gpg-agent software-properties-common build-essential curl \
@@ -33,7 +34,8 @@ RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
         openssl openssh-client openssh-server \
         gnupg2 dirmngr connect-proxy \
         mysql-client \
-        php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl php7.2-gd php7.2-intl php7.2-json php7.2-mbstring php7.2-opcache php7.2-pgsql php7.2-readline php7.2-sqlite3 php7.2-xml php7.2-xmlrpc php7.2-xsl php7.2-zip \
+        php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl php7.2-gd php7.2-intl php7.2-json \
+        php7.2-mbstring php7.2-opcache php7.2-readline php7.2-sqlite3 php7.2-xml php7.2-xmlrpc php7.2-xsl php7.2-zip \
         php-xdebug \
         ads \
         nodejs yarn \
