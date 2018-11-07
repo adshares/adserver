@@ -91,9 +91,6 @@ jobs:
         - docker ps -a
         - in_docker /bin/bash scripts/install.sh"
 
-        # PHP unit tests
-        - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
-
     - stage: quality
       script:
         # Run build script
