@@ -26,7 +26,27 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
+/**
+ * @property int id
+ * @property string uuid
+ * @property int created_at
+ * @property int updated_at
+ * @property int deleted_at
+ * @property int user_id
+ * @property string landing_url
+ * @property \DateTime time_start
+ * @property \DateTime time_end
+ * @property int status
+ * @property string name
+ * @property array|null|string strategy_name
+ * @property float bid
+ * @property float budget
+ * @property array|null|string targeting_requires
+ * @property array|null|string targeting_excludes
+ * @property Banner[]|Collection banners
+ */
 class Campaign extends Model
 {
     use Ownership;
