@@ -39,8 +39,6 @@ class Campaign extends Model
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
-//        'strategy_name' => 'in:CPC,CPM',
-//        'bid' => 'required:numeric',
 //        'budget' => 'required:numeric',
     ];
 
@@ -70,8 +68,8 @@ class Campaign extends Model
         'name',
         'status',
         'budget',
-        'bid',
-        'strategy_name',
+        'max_cpc',
+        'max_cpm',
         'basic_information',
         'targeting_requires',
         'targeting_excludes',
@@ -84,14 +82,12 @@ class Campaign extends Model
         'uuid',
         'created_at',
         'updated_at',
-        'landing_url',
-        'time_start',
-        'time_end',
-        'status',
-        'name',
-        'strategy_name',
-        'bid',
-        'budget',
+//        'landing_url',
+//        'time_start',
+//        'time_end',
+//        'status',
+//        'name',
+//        'budget',
         'classification_status',
         'classification_tags',
         'basic_information',
@@ -135,8 +131,8 @@ class Campaign extends Model
         $this->status = $value["status"];
         $this->name = $value["name"];
         $this->landing_url = $value["target_url"];
-        $this->strategy_name = $value["bid_strategy_name"];
-        $this->bid = $value["bid_value"];
+        $this->max_cpc = $value["max_cpc"];
+        $this->max_cpm = $value["max_cpm"];
         $this->budget = $value["budget"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
@@ -148,8 +144,8 @@ class Campaign extends Model
             "status" => $this->status,
             "name" => $this->name,
             "target_url" => $this->landing_url,
-            "bid_strategy_name" => $this->strategy_name,
-            "bid_value" => $this->bid,
+            "max_cpc" => $this->max_cpc,
+            "max_cpm" => $this->max_cpm,
             "budget" => $this->budget,
             "date_start" => $this->time_start,
             "date_end" => $this->time_end,

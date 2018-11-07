@@ -44,6 +44,28 @@ class CampaignsTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    public function testCreateCampaign()
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->postJson(self::URI, $this->getCreateCampaign());
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertHeader('Location');
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        // currently $id is returned as int
+        $id = intval($id);
+
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(Response::HTTP_OK)
+//            ->assertJsonStructure(self::SITE_STRUCTURE)
+            ->assertJsonFragment([
+                'name' => 'testCamp',
+                'id' => $id
+            ]);
+    }
+
     public function testDeleteCampaignWithBanner()
     {
         $user = factory(User::class)->create();
@@ -91,5 +113,43 @@ class CampaignsTest extends TestCase
         $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
         $bannerId = $banner->id;
         return $bannerId;
+    }
+
+    public function getCreateCampaign(): array
+    {
+        return json_decode(<<<JSON
+{
+	"campaign": {
+		"basicInformation": {
+			"status": 0,
+			"name": "testCamp",
+			"targetUrl": "http://sss.sss",
+			"max_cpc": 2,
+			"max_cpm": 1,
+			"budget": 111,
+			"dateStart": "2018-01-01",
+			"dateEnd": null
+		},
+		"targeting": {
+			"requires": {},
+			"excludes": {}
+		},
+		"targetingArray": {
+			"requires": [],
+			"excludes": []
+		},
+		"ads": []
+	}
+}
+JSON
+            , true);
+    }
+
+    private function getIdFromLocation($location)
+    {
+        $matches = [];
+        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
+
+        return $matches[1];
     }
 }
