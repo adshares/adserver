@@ -196,7 +196,11 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $input = $request->input('campaign');
-        $banners = Collection::make($input['ads']);
+        $ads = $request->input('campaign.ads');
+        $input['targeting_requires'] = $request->input('campaign.targeting.requires');
+        $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
+
+        $banners = Collection::make($ads);
 
         $campaign->fill($input);
 
@@ -223,8 +227,11 @@ class CampaignsController extends Controller
         }
 
         if ($banners) {
-            $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
+        }
+
+        if ($ads) {
+            $this->temporaryBannersToRemove($ads);
         }
 
         $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
