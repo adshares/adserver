@@ -233,7 +233,32 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        return self::json(['message' => 'Successfully edited']);
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function changeStatus(Request $request, $campaignId)
+    {
+        $this->validateRequestObject(
+            $request,
+            'campaign',
+            array_intersect_key(
+                Campaign::$rules,
+                $request->input('campaign')
+            )
+        );
+
+        $status = (int) $request->input('campaign.status');
+
+        if (!Campaign::isStatusAllowed($status)) {
+            $status = Campaign::STATUS_INACTIVE;
+        }
+
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $campaign->status = $status;
+
+        $this->campaignRepository->update($campaign);
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function delete(int $campaignId): JsonResponse
