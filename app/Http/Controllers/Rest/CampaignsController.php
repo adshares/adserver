@@ -194,14 +194,14 @@ class CampaignsController extends Controller
             )
         );
 
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $input = $request->input('campaign');
-        $ads = $request->input('campaign.ads');
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
 
+        $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->fill($input);
 
         $bannersToUpdate = [];
