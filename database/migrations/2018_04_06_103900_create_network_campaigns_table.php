@@ -48,9 +48,9 @@ class CreateNetworkCampaignsTable extends Migration
 
             $table->string('landing_url', 1024);
 
-            $table->decimal('max_cpm');
-            $table->decimal('max_cpc');
-            $table->decimal('budget_per_hour');
+            $table->decimal('max_cpm', 19, 11)->nullable(false);
+            $table->decimal('max_cpc', 19, 11)->nullable(false);
+            $table->decimal('budget_per_hour', 19, 11)->nullable(false);
             $table->dateTime('time_start');
             $table->dateTime('time_end');
         });
