@@ -53,9 +53,11 @@ class Campaign extends Model
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
+
     const STATUS_DRAFT = 0;
     const STATUS_INACTIVE = 1;
     const STATUS_ACTIVE = 2;
+
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
@@ -185,5 +187,10 @@ class Campaign extends Model
         }
 
         return $urls;
+    }
+
+    public static function isStatusAllowed(int $status): bool
+    {
+        return in_array($status, [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE]);
     }
 }

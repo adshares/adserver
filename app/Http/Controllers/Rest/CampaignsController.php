@@ -249,7 +249,7 @@ class CampaignsController extends Controller
 
         $status = (int) $request->input('campaign.status');
 
-        if (!in_array($status, [Campaign::STATUS_DRAFT, Campaign::STATUS_INACTIVE, Campaign::STATUS_ACTIVE])) {
+        if (!Campaign::isStatusAllowed($status)) {
             $status = Campaign::STATUS_INACTIVE;
         }
 
