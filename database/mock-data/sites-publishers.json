@@ -3,7 +3,7 @@
     "email":"publisher@e11.click",
     "sites":[
       {
-        "name":"publisher.ads",
+        "name":"publisher.ads1",
         "status": 2,
         "site_requires": [
           {
@@ -24,7 +24,75 @@
             "key": "js_enabled"
           }
         ]
-      }
-    ]
+      },
+      {
+        "name":"publisher.ads3",
+        "status": 2,
+        "site_requires": [
+          {
+            "id": "category",
+            "label": "Creative type",
+            "key":"category"
+          },
+          {
+            "id": "lang",
+            "label": "Language",
+            "key": "lang"
+          }
+        ],
+        "site_excludes": [
+          {
+            "id": "js_enabled",
+            "label": "Javascript support",
+            "key": "js_enabled"
+          }
+        ]
+      },
+      {
+        "name":"publisher.ads4",
+        "status": 2,
+        "site_requires": [
+          {
+            "id": "category",
+            "label": "Creative type",
+            "key":"category"
+          },
+          {
+            "id": "lang",
+            "label": "Language",
+            "key": "lang"
+          }
+        ],
+        "site_excludes": [
+          {
+            "id": "js_enabled",
+            "label": "Javascript support",
+            "key": "js_enabled"
+          }
+        ]
+      },
+      {
+        "name":"publisher.ads2",
+        "status": 2,
+        "site_requires": [
+          {
+            "id": "category",
+            "label": "Creative type",
+            "key":"category"
+          },
+          {
+            "id": "lang",
+            "label": "Language",
+            "key": "lang"
+          }
+        ],
+        "site_excludes": [
+          {
+            "id": "js_enabled",
+            "label": "Javascript support",
+            "key": "js_enabled"
+          }
+        ]
+      }    ]
   }
 ]
