@@ -77,10 +77,10 @@ class SitesTest extends TestCase
         $response = $this->getJson(self::URI.'/'.$id);
         $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment(
             [
-                    'name' => $preset['name'],
-                    'primaryLanguage' => $preset['primaryLanguage'],
-                    'status' => $preset['status'],
-                ]
+                'name' => $preset['name'],
+                'primaryLanguage' => $preset['primaryLanguage'],
+                'status' => $preset['status'],
+            ]
         )
             ->assertJsonCount(1, 'adUnits')
             ->assertJsonCount(2, 'filtering')
