@@ -181,14 +181,12 @@ class WalletController extends Controller
             $txid = $ul->txid;
             if (null !== $txid) {
                 $link = self::getTransactionLink($txid);
-            }
-            else {
+            } else {
                 $link = '-';
             }
             if ($amount > 0) {
                 $address = $ul->address_to;
-            }
-            else {
+            } else {
                 $address = $ul->address_from;
             }
             $entry = [

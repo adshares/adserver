@@ -124,8 +124,7 @@ class AdsProcessTx extends Command
                     && ++$attempt < $attemptMax) {
                     // try again after 3 seconds sleep
                     sleep(3);
-                }
-                else {
+                } else {
                     throw $exc;
                 }
             }
@@ -199,8 +198,7 @@ class AdsProcessTx extends Command
             if (null === $user) {
                 $dbTx->status = AdsTxIn::STATUS_RESERVED;
                 $dbTx->save();
-            }
-            else {
+            } else {
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
                 // add to ledger
@@ -220,8 +218,7 @@ class AdsProcessTx extends Command
                     }
                 );
             }
-        }
-        else {
+        } else {
             $dbTx->status = AdsTxIn::STATUS_INVALID;
             $dbTx->save();
         }

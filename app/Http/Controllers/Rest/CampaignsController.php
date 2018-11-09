@@ -139,8 +139,7 @@ class CampaignsController extends Controller
 
             if ($banner['type'] === Banner::HTML_TYPE) {
                 $bannerModel->creative_contents = $banner['html'];
-            }
-            else {
+            } else {
                 $path = $this->getBannerLocalPublicPath($banner['image_url']);
                 $content = Storage::disk(self::FILESYSTEM_DISK)->get($path);
 

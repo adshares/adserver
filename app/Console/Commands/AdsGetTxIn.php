@@ -87,8 +87,7 @@ class AdsGetTxIn extends Command
             } catch (ConsoleCommandException $exc) {
                 $this->error('Cannot get time of last event');
             }
-        }
-        else {
+        } else {
             $txsCount = 0;
         }
         $this->info("Number of added txs: ${txsCount}");

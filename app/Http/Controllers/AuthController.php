@@ -285,8 +285,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
-        }
-        else {
+        } else {
             if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
                 DB::rollBack();
 

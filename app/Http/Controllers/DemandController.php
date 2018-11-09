@@ -47,8 +47,7 @@ class DemandController extends Controller
 
         if ('OPTIONS' == $request->getRealMethod()) {
             $response = new Response('', 204);
-        }
-        else {
+        } else {
             $response = new GzippedStreamedResponse();
         }
 
@@ -69,8 +68,7 @@ class DemandController extends Controller
 
         if ('html' == $banner->creative_type) {
             $mime = 'text/html';
-        }
-        else {
+        } else {
             $mime = 'image/png';
         }
 
@@ -253,8 +251,7 @@ class DemandController extends Controller
             $response = new RedirectResponse(
                 $aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl)
             );
-        }
-        else {
+        } else {
             throw new Exception('ADAPY');
             $response = new Response();
 

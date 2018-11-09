@@ -47,11 +47,9 @@ class SupplyController extends Controller
 
         if ('GET' == $request->getRealMethod()) {
             $data = $request->getQueryString();
-        }
-        elseif ('POST' == $request->getRealMethod()) {
+        } elseif ('POST' == $request->getRealMethod()) {
             $data = $request->getContent();
-        }
-        elseif ('OPTIONS' == $request->getRealMethod()) {
+        } elseif ('OPTIONS' == $request->getRealMethod()) {
             $response->setStatusCode(204);
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
@@ -71,8 +69,7 @@ class SupplyController extends Controller
             $aduser_endpoint = config('app.aduser_local_endpoint');
             if ($aduser_endpoint) {
                 $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
-            }
-            else {
+            } else {
                 $userdata = [];
             }
         }
@@ -137,8 +134,7 @@ class SupplyController extends Controller
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
-        }
-        else {
+        } else {
             $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
 
             if (!$banner) {
@@ -154,11 +150,9 @@ class SupplyController extends Controller
 
             if (false === $qPos) {
                 $url .= '?'.$qString;
-            }
-            elseif ($qPos == strlen($url) - 1) {
+            } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
-            }
-            else {
+            } else {
                 $url .= '&'.$qString;
             }
         }
@@ -207,11 +201,9 @@ class SupplyController extends Controller
 
             if (false === $qPos) {
                 $url .= '?'.$qString;
-            }
-            elseif ($qPos == strlen($url) - 1) {
+            } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
-            }
-            else {
+            } else {
                 $url .= '&'.$qString;
             }
         }
@@ -239,8 +231,7 @@ class SupplyController extends Controller
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
-        }
-        else {
+        } else {
 //            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 

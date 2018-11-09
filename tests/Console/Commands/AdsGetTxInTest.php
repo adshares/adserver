@@ -45,8 +45,7 @@ class AdsGetTxInTest extends TestCase
                         function($d) {
                             if (null === $d) {
                                 $ts = 0;
-                            }
-                            else {
+                            } else {
                                 /** @var $d \DateTime */
                                 $ts = $d->getTimestamp();
                             }

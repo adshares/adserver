@@ -94,8 +94,7 @@ class SitesController extends Controller
                         return (int)($value['id'] ?? "") === $zone->id;
                     }
                 );
-            }
-            else {
+            } else {
                 $zone->delete();
             }
         }

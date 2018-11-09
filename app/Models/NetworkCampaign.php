@@ -88,8 +88,7 @@ class NetworkCampaign extends Model
         )->where('uuid', hex2bin($data['uuid']))->lockForUpdate()->first();
         if (empty($campaign)) {
             $campaign = self::fromJsonDataNew($data);
-        }
-        else {
+        } else {
             $campaign = self::fromJsonDataUpdate($campaign, $data);
         }
         DB::commit();
@@ -119,6 +118,16 @@ class NetworkCampaign extends Model
         }
 
         return $campaign;
+    }
+
+    protected static function convertTimestampsToSourceTimestamps($array)
+    {
+        $array['source_created_at'] = $array['created_at'];
+        $array['source_updated_at'] = $array['updated_at'];
+        unset($array['created_at']);
+        unset($array['updated_at']);
+
+        return $array;
     }
 
     public static function fromJsonDataUpdate(NetworkCampaign $campaign, array $data)
@@ -153,16 +162,6 @@ class NetworkCampaign extends Model
             $data['campaign_requires'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
             unset($data['campaign_requires'][$i]);
         }
-    }
-
-    protected static function convertTimestampsToSourceTimestamps($array)
-    {
-        $array['source_created_at'] = $array['created_at'];
-        $array['source_updated_at'] = $array['updated_at'];
-        unset($array['created_at']);
-        unset($array['updated_at']);
-
-        return $array;
     }
 
     protected static function fromJsonDataUpdateObjects(Collection $collection, array $data)

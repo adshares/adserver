@@ -104,8 +104,7 @@ class AdsSendOne implements ShouldQueue
             $this->userLedger->status = UserLedger::STATUS_ACCEPTED;
             $this->userLedger->txid = $txid;
             $this->userLedger->save();
-        }
-        else {
+        } else {
             throw new JobException("Invalid txid: ${txid}");
         }
     }

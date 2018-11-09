@@ -75,8 +75,7 @@ class SitesTest extends TestCase
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
         $response = $this->getJson(self::URI.'/'.$id);
-        $response->assertStatus(Response::HTTP_OK)
-            ->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment(
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment(
                 [
                     'name' => $preset['name'],
                     'primaryLanguage' => $preset['primaryLanguage'],

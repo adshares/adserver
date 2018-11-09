@@ -266,7 +266,7 @@ class WalletControllerTest extends TestCase
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',
                 ],
-                ]
+            ]
         );
     }
 
@@ -310,7 +310,7 @@ class WalletControllerTest extends TestCase
                     'address' => '0001-00000000-XXXX',
                     'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
                 ],
-                ]
+            ]
         );
     }
 
@@ -342,7 +342,7 @@ class WalletControllerTest extends TestCase
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',
                 ],
-                ]
+            ]
         );
     }
 

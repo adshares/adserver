@@ -49,12 +49,10 @@ class Utils
         if ($contextStr) {
             if (is_string($contextStr)) {
                 $context = self::decodeZones($contextStr);
-            }
-            else {
+            } else {
                 $context = ['page' => $contextStr];
             }
-        }
-        else {
+        } else {
             $context = null;
         }
 
@@ -172,31 +170,24 @@ class Utils
 
         if (is_numeric($browser->platform_version)) {
             $device['osv'] = $browser->platform_version;
-        }
-        elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
+        } elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
             $device['os'] = $match[1];
             $device['osv'] = $match[2];
-        }
-        else {
+        } else {
             $device['osv'] = $browser->platform;
         }
 
         if (true === $browser->ismobiledevice) {
             $device['type'] = 'mobile';
-        }
-        elseif (true === $browser->istablet) {
+        } elseif (true === $browser->istablet) {
             $device['type'] = 'tablet';
-        }
-        elseif (true === $browser->issyndicationreader) {
+        } elseif (true === $browser->issyndicationreader) {
             $device['type'] = 'syndicationreader';
-        }
-        elseif (true === $browser->crawler) {
+        } elseif (true === $browser->crawler) {
             $device['type'] = 'crawler';
-        }
-        elseif (true === $browser->isfake) {
+        } elseif (true === $browser->isfake) {
             $device['type'] = 'fake';
-        }
-        else {
+        } else {
             $device['type'] = 'desktop';
         }
 
@@ -242,8 +233,7 @@ class Utils
                         $geo[$key] = $value;
                     }
                 }
-            }
-            else {
+            } else {
                 @$data = \geoip_country_code_by_name($clientIp);
                 if ($data) {
                     $geo['country_code'] = $data;
@@ -260,11 +250,9 @@ class Utils
         $qPos = strpos($url, '?');
         if (false == $qPos) {
             return $url.'?'.$param;
-        }
-        elseif ($qPos == strlen($url) - 1) {
+        } elseif ($qPos == strlen($url) - 1) {
             return $url.$param;
-        }
-        else {
+        } else {
             return $url.'&'.$param;
         }
     }
@@ -437,8 +425,7 @@ class Utils
         foreach ($keywords as $keyword => $value) {
             if (is_array($value)) {
                 $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
-            }
-            else {
+            } else {
                 $ret[$prefix.$keyword] = $value;
             }
         }
@@ -456,8 +443,7 @@ class Utils
             $key = implode('_', $path).'_'.$key;
             if (isset($keywords[$key])) {
                 $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
-            }
-            else {
+            } else {
                 return false;
             }
         }
@@ -475,8 +461,7 @@ class Utils
                 }
                 if (0 == $j) {
                     $vectors = $newVector;
-                }
-                else {
+                } else {
                     $vectors = array_merge($vectors, $newVector);
                 }
             }

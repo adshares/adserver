@@ -46,6 +46,7 @@ use Illuminate\Support\Collection;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
+ * @method static where(string $string, int $campaignId)
  */
 class Campaign extends Model
 {

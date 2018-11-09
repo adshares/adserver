@@ -107,8 +107,7 @@ class AdsharesCrawlCommand extends Command
                     NetworkHost::registerHost(AdsUtils::normalizeAddress($log['address']), $host);
                     // TODO: check this with Jacek in adserver symfony code
                     // $nHost->setAccountMsid($log['account_msid']);
-                }
-                else {
+                } else {
                     // TODO: debug error log?
                 }
             }

@@ -53,8 +53,7 @@ class BannerFinder
                 } catch (\InvalidArgumentException $e) {
                     $bannerIds[] = '';
                 }
-            }
-            else {
+            } else {
                 $bannerIds[] = md5(rand());
             }
         }
