@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -35,9 +35,13 @@ class NetworkCampaignExclude extends Model
      * @var array
      */
     protected $fillable = [
-      'uuid', 'network_campaign_id',
-      'source_created_at', 'source_updated_at',
-      'name', 'min', 'max'
+        'uuid',
+        'network_campaign_id',
+        'source_created_at',
+        'source_updated_at',
+        'name',
+        'min',
+        'max',
     ];
 
     /**
@@ -46,7 +50,8 @@ class NetworkCampaignExclude extends Model
      * @var array
      */
     protected $hidden = [
-      'id', 'network_campaign_id'
+        'id',
+        'network_campaign_id',
     ];
 
     /**
@@ -55,6 +60,6 @@ class NetworkCampaignExclude extends Model
      * @var array
      */
     protected $traitAutomate = [
-      'uuid' => 'BinHex',
+        'uuid' => 'BinHex',
     ];
 }

@@ -33,23 +33,24 @@ class SiteOptionsTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI . '/languages');
-        $response->assertStatus(200)
-            ->assertJsonStructure([
+        $response = $this->getJson(self::URI.'/languages');
+        $response->assertStatus(200)->assertJsonStructure(
+            [
                 '*' => [
                     'name',
                     'code',
                 ],
-            ]);
+            ]
+        );
     }
 
     public function testZones(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI . '/zones');
-        $response->assertStatus(200)
-            ->assertJsonStructure([
+        $response = $this->getJson(self::URI.'/zones');
+        $response->assertStatus(200)->assertJsonStructure(
+            [
                 '*' => [
                     'id',
                     'name',
@@ -59,16 +60,17 @@ class SiteOptionsTest extends TestCase
                     'width',
                     'height',
                 ],
-            ]);
+            ]
+        );
     }
 
     public function testFiltering(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI . '/filtering');
-        $response->assertStatus(200)
-            ->assertJsonStructure([
+        $response = $this->getJson(self::URI.'/filtering');
+        $response->assertStatus(200)->assertJsonStructure(
+            [
                 '*' => [
                     'id',
                     'label',
@@ -77,6 +79,7 @@ class SiteOptionsTest extends TestCase
                     'valueType',
                     'allowInput',
                 ],
-            ]);
+            ]
+        );
     }
 }

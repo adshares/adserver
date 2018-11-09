@@ -63,7 +63,7 @@ class CampaignsController extends Controller
 
         return self::json(
             [
-                'imageUrl' => config('app.url') . '/storage/' . $path,
+                'imageUrl' => config('app.url').'/storage/'.$path,
                 'name' => $name,
                 'size' => $size,
             ],
@@ -94,8 +94,10 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        return self::json($campaign->toArray(), Response::HTTP_CREATED)
-            ->header('Location', route('app.campaigns.read', ['campaign' => $campaign]));
+        return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
+            'Location',
+            route('app.campaigns.read', ['campaign' => $campaign])
+        );
     }
 
     private function temporaryBannersToRemove(array $input): array
@@ -113,15 +115,9 @@ class CampaignsController extends Controller
         return $banners;
     }
 
-    private function removeLocalBannerImages(array $files): void
+    private function getBannerLocalPublicPath(string $imageUrl): string
     {
-        foreach ($files as $file) {
-            try {
-                Storage::disk(self::FILESYSTEM_DISK)->delete($file);
-            } catch (FileNotFoundException $ex) {
-                 // do nothing
-            }
-        }
+        return str_replace(config('app.url').'/storage/', '', $imageUrl);
     }
 
     private function prepareBannersFromInput(array $input): array
@@ -156,9 +152,15 @@ class CampaignsController extends Controller
         return $banners;
     }
 
-    private function getBannerLocalPublicPath(string $imageUrl): string
+    private function removeLocalBannerImages(array $files): void
     {
-        return str_replace(config('app.url') . '/storage/', '', $imageUrl);
+        foreach ($files as $file) {
+            try {
+                Storage::disk(self::FILESYSTEM_DISK)->delete($file);
+            } catch (FileNotFoundException $ex) {
+                // do nothing
+            }
+        }
     }
 
     public function browse()
@@ -216,9 +218,11 @@ class CampaignsController extends Controller
                 $banner->name = $bannerFromInput['name'];
                 $bannersToUpdate[] = $banner;
 
-                $banners = $banners->reject(function ($value) use ($banner) {
-                    return (string)($value['uuid'] ?? "") === $banner->uuid;
-                });
+                $banners = $banners->reject(
+                    function ($value) use ($banner) {
+                        return (string)($value['uuid'] ?? "") === $banner->uuid;
+                    }
+                );
 
                 continue;
             }
@@ -254,7 +258,7 @@ class CampaignsController extends Controller
             )
         );
 
-        $status = (int) $request->input('campaign.status');
+        $status = (int)$request->input('campaign.status');
 
         if (!Campaign::isStatusAllowed($status)) {
             $status = Campaign::STATUS_INACTIVE;

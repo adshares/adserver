@@ -43,10 +43,12 @@ class BannerFinder
 
             if ($zone) {
                 try {
-                    $pluck = NetworkBanner::where('creative_width', $zone->width)
-                        ->where('creative_height', $zone->height)
-                        ->whereIn('creative_type', $typeDefault)
-                        ->get()->pluck('uuid');
+                    $pluck =
+                        NetworkBanner::where('creative_width', $zone->width)
+                            ->where('creative_height', $zone->height)
+                            ->whereIn('creative_type', $typeDefault)
+                            ->get()
+                            ->pluck('uuid');
                     $bannerIds[] = $pluck->random();
                 } catch (\InvalidArgumentException $e) {
                     $bannerIds[] = '';
@@ -66,14 +68,20 @@ class BannerFinder
                     'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->creative_sha1,
                     'pay_from' => $campaign->adshares_address, // send this info to log
-                    'click_url' => route('log-network-click', [
-                        'id' => $banner->uuid,
-                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
-                    ]),
-                    'view_url' => route('log-network-view', [
-                        'id' => $banner->uuid,
-                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
-                    ]),
+                    'click_url' => route(
+                        'log-network-click',
+                        [
+                            'id' => $banner->uuid,
+                            'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                        ]
+                    ),
+                    'view_url' => route(
+                        'log-network-view',
+                        [
+                            'id' => $banner->uuid,
+                            'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                        ]
+                    ),
                 ];
             }
         }

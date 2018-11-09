@@ -50,10 +50,10 @@ class Kernel extends HttpKernel
     ];
     protected $middlewareGroups = [
         self::USER_ACCESS => [
-            self::AUTH . ':api',
+            self::AUTH.':api',
         ],
         self::GUEST_ACCESS => [
-            self::GUEST . ':api',
+            self::GUEST.':api',
         ],
         self::JSON_API => [
             ValidatePostSize::class,

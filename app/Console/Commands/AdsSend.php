@@ -30,11 +30,13 @@ class AdsSend extends Command
 
     public function handle(AdsClient $adsClient)
     {
-        $response = $adsClient->runTransaction(new SendOneCommand(
-            config('app.adshares_address'),
-            10 * (10 ** 11),
-            '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'
-        ));
+        $response = $adsClient->runTransaction(
+            new SendOneCommand(
+                config('app.adshares_address'),
+                10 * (10 ** 11),
+                '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'
+            )
+        );
         $this->info($response->getTx()->getId());
     }
 }

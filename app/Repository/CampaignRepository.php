@@ -38,6 +38,7 @@ class CampaignRepository
     /**
      * @param Campaign $campaign
      * @param array $banners
+     *
      * @throws \Exception
      */
     public function save(Campaign $campaign, array $banners = []): void
@@ -80,8 +81,7 @@ class CampaignRepository
         array $bannersToInsert = [],
         array $bannersToUpdate = [],
         array $bannersToDelete = []
-    ): void
-    {
+    ): void {
         DB::beginTransaction();
 
         try {

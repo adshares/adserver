@@ -18,9 +18,9 @@ env:
     - APP_DEBUG=true
 
 stages:
+  - code quality
   - build
   - build and install
-  - quality
 
 before_script:
   # Enable aliases for non-interactive shells
@@ -56,68 +56,68 @@ after_script:
 
 jobs:
   include:
-    - stage: build
-      script:
-        # Run pre-build
-        - in_docker /bin/bash scripts/pre-build.sh"
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
+  - stage: code quality
+    script:
+    # Run build script
+    - in_docker /bin/bash scripts/pre-build.sh"
 
-        - in_docker php --ini"
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
 
-      # PHP unit tests
-        - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
+    # Pre-task dependency
+    - in_docker composer run-script install-codestandards"
 
-    - stage: build and install
-      script:
-        # Backing services and tools
-        - >
-          docker run
-          --name mysql.dock
-          --network=test-network
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
-          -e MYSQL_USER=adserver
-          -e MYSQL_PASSWORD=adserver
-          -e MYSQL_DATABASE=adserver
-          -d
-          mysql/mysql-server:5.7
+    ## Test tasks
+    # PHP Lint: check syntax errors in all PHP files
+    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-        - in_docker /bin/bash scripts/pre-build.sh"
+#    # PHP Code Beautifier and Fixer: fix code styles
+#    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || (git diff && exit 8)"
+#    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || (git diff && exit 8)"
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-        - in_docker /bin/bash scripts/pre-install.sh"
+    # PHP_CodeSniffer: check PHP compatibility
+    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
 
-        - docker ps -a
-        - in_docker /bin/bash scripts/install.sh"
+    # PHP_CodeSniffer: check PSR2 standard
+    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
-    - stage: quality
-      script:
-        # Run build script
-        - in_docker /bin/bash scripts/pre-build.sh"
+    # SonarQube
+    - sonar-scanner
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
+  - stage: build
+    script:
+    # Run pre-build
+    - in_docker /bin/bash scripts/pre-build.sh"
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
 
-        # Pre-task dependency
-        - in_docker composer run-script install-codestandards"
+    - in_docker php --ini"
 
-        ## Test tasks
-        # PHP Lint: check syntax errors in all PHP files
-        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+    # PHP unit tests
+    - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
 
-        # PHP Code Beautifier and Fixer: fix code styles
-        - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
-        - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
+  - stage: build and install
+    script:
+    # Backing services and tools
+    - >
+      docker run
+      --name mysql.dock
+      --network=test-network
+      -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+      -e MYSQL_USER=adserver
+      -e MYSQL_PASSWORD=adserver
+      -e MYSQL_DATABASE=adserver
+      -d
+      mysql/mysql-server:5.7
 
-        # PHP_CodeSniffer: check PHP compatibility
-        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+    - in_docker /bin/bash scripts/pre-build.sh"
 
-        # PHP_CodeSniffer: check PSR2 standard
-        - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
+    - in_docker /bin/bash scripts/pre-install.sh"
 
-        # SonarQube
-        - sonar-scanner
+    - docker ps -a
+    - in_docker /bin/bash scripts/install.sh"
 
 # After a build, send email notification with the build results
 notifications:

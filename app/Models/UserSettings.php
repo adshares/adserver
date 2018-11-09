@@ -46,7 +46,9 @@ class UserSettings extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'type', 'payload',
+        'user_id',
+        'type',
+        'payload',
     ];
 
     /**

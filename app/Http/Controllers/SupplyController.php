@@ -96,23 +96,31 @@ class SupplyController extends Controller
         $jsPath = public_path('-/find.js');
 
         $response = new StreamedResponse();
-        $response->setCallback(function () use ($jsPath, $request, $params) {
-            echo str_replace([
-                "'{{ ORIGIN }}'",
-                "'{{ ADUSER }}'",
-            ], $params, file_get_contents($jsPath));
-        });
+        $response->setCallback(
+            function () use ($jsPath, $request, $params) {
+                echo str_replace(
+                    [
+                        "'{{ ORIGIN }}'",
+                        "'{{ ADUSER }}'",
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                );
+            }
+        );
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        $response->setCache([
-            'etag' => md5(md5_file($jsPath) . implode(':', $params)),
-            'last_modified' => new \DateTime('@' . filemtime($jsPath)),
-            'max_age' => 3600 * 24 * 30,
-            's_maxage' => 3600 * 24 * 30,
-            'private' => false,
-            'public' => true,
-        ]);
+        $response->setCache(
+            [
+                'etag' => md5(md5_file($jsPath).implode(':', $params)),
+                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+                'max_age' => 3600 * 24 * 30,
+                's_maxage' => 3600 * 24 * 30,
+                'private' => false,
+                'public' => true,
+            ]
+        );
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -141,11 +149,11 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?' . $qString;
+                $url .= '?'.$qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&' . $qString;
+                $url .= '&'.$qString;
             }
         }
 
@@ -169,9 +177,11 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
-        $adselect->addImpressions([
-            $log->getAdselectJson(),
-        ]);
+        $adselect->addImpressions(
+            [
+                $log->getAdselectJson(),
+            ]
+        );
 
         $response = new RedirectResponse($url);
 
@@ -190,11 +200,11 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?' . $qString;
+                $url .= '?'.$qString;
             } elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&' . $qString;
+                $url .= '&'.$qString;
             }
         }
 
@@ -231,9 +241,11 @@ class SupplyController extends Controller
             $log->save();
         }
 
-        $adselect->addImpressions([
-            $log->getAdselectJson(),
-        ]);
+        $adselect->addImpressions(
+            [
+                $log->getAdselectJson(),
+            ]
+        );
 
         $backUrl = route('banner-view', ['id' => $log->id]);
 

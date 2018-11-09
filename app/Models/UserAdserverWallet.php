@@ -44,7 +44,8 @@ class UserAdserverWallet extends Model
      * @var array
      */
     protected $hidden = [
-        'id', 'user_id',
+        'id',
+        'user_id',
     ];
 
     /**
