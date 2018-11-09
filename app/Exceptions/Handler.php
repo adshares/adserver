@@ -36,7 +36,8 @@ class Handler extends ExceptionHandler
                         $prev->getErrorCode(),
                         $prev->getMessage(),
                         $prev->getTrace(),
-                    ], 500
+                    ],
+                    500
                 );
             }
 
@@ -45,7 +46,8 @@ class Handler extends ExceptionHandler
                     $exception->getMessage(),
                     $exception->getSql(),
                     $exception->getTrace(),
-                ], 500
+                ],
+                500
             );
         }
 

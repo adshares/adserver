@@ -74,9 +74,9 @@ final class UUID
     public static function isValid($uuid)
     {
         return 1 === preg_match(
-                '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
-                $uuid
-            );
+            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+            $uuid
+        );
     }
 
     public static function v4()

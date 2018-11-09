@@ -288,7 +288,11 @@ class Utils
         }
         $response->headers->setCookie(
             new Cookie(
-                'tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHost()
+                'tid',
+                $tid,
+                new \DateTime('+ 1 month'),
+                '/',
+                $request->getHost()
             )
         );
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header

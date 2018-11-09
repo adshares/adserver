@@ -56,7 +56,8 @@ class UsersController extends Controller
         $user = User::register($request->input('user'));
         Mail::to($user)->queue(
             new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id), $request->input('uri')
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                $request->input('uri')
             )
         );
         DB::commit();
