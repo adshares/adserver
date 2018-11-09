@@ -56,7 +56,35 @@ after_script:
 
 jobs:
   include:
-    - stage: build
+  - stage: code quality
+    script:
+    # Run build script
+    - in_docker /bin/bash scripts/pre-build.sh"
+
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
+
+    # Pre-task dependency
+    - in_docker composer run-script install-codestandards"
+
+    ## Test tasks
+    # PHP Lint: check syntax errors in all PHP files
+    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+
+    # PHP Code Beautifier and Fixer: fix code styles
+    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
+    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
+
+    # PHP_CodeSniffer: check PHP compatibility
+    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+
+    # PHP_CodeSniffer: check PSR2 standard
+    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+
+    # SonarQube
+    - sonar-scanner
+
+  - stage: build
       script:
         # Run pre-build
         - in_docker /bin/bash scripts/pre-build.sh"
@@ -90,34 +118,6 @@ jobs:
 
         - docker ps -a
         - in_docker /bin/bash scripts/install.sh"
-
-    - stage: quality
-      script:
-        # Run build script
-        - in_docker /bin/bash scripts/pre-build.sh"
-
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-
-        # Pre-task dependency
-        - in_docker composer run-script install-codestandards"
-
-        ## Test tasks
-        # PHP Lint: check syntax errors in all PHP files
-        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
-
-        # PHP Code Beautifier and Fixer: fix code styles
-        - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
-        - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
-
-        # PHP_CodeSniffer: check PHP compatibility
-        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
-
-        # PHP_CodeSniffer: check PSR2 standard
-        - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
-
-        # SonarQube
-        - sonar-scanner
 
 # After a build, send email notification with the build results
 notifications:
