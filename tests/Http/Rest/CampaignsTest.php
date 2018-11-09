@@ -27,99 +27,54 @@ use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 
-class CampaignsTest extends TestCase
+final class CampaignsTest extends TestCase
 {
     use RefreshDatabase;
+
     private const URI = '/api/campaigns';
 
-    public function testEmptyDb()
+    public function testBrowseCampaignWRequesthenNoCampaigns(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
-
-        $response = $this->getJson(self::URI.'/1');
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    public function testCreateCampaign()
+    public function testCampaignRequestWhenCampaignIsNotFound(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->postJson(self::URI, $this->getCreateCampaign());
+        $response = $this->getJson(self::URI . '/1');
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
 
+    public function testCreateCampaignWithoutBannersAndTargeting(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
         $response->assertStatus(Response::HTTP_CREATED);
-        $response->assertHeader('Location');
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));
-        // currently $id is returned as int
-        $id = intval($id);
 
-        $response = $this->getJson(self::URI.'/'.$id);
-        $response->assertStatus(Response::HTTP_OK)//            ->assertJsonStructure(self::SITE_STRUCTURE)
-        ->assertJsonFragment(
-            [
-                'name' => 'testCamp',
-                'id' => $id,
-            ]
-        );
+        $response = $this->getJson(self::URI . '/' . $id);
+        $response->assertStatus(Response::HTTP_OK);
     }
 
-    public function getCreateCampaign(): array
-    {
-        return json_decode(
-            <<<JSON
-{
-	"campaign": {
-		"basicInformation": {
-			"status": 0,
-			"name": "testCamp",
-			"targetUrl": "http://sss.sss",
-			"max_cpc": 2,
-			"max_cpm": 1,
-			"budget": 111,
-			"dateStart": "2018-01-01",
-			"dateEnd": null
-		},
-		"targeting": {
-			"requires": {},
-			"excludes": {}
-		},
-		"targetingArray": {
-			"requires": [],
-			"excludes": []
-		},
-		"ads": []
-	}
-}
-JSON
-            ,
-            true
-        );
-    }
-
-    private function getIdFromLocation($location)
-    {
-        $matches = [];
-        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
-
-        return $matches[1];
-    }
-
-    public function testDeleteCampaignWithBanner()
+    public function testDeleteCampaignWithBanner(): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $campaignId = $this->createCampaign($user);
-        $bannerId = $this->createBanner($campaignId);
+        $campaignId = $this->createCampaignForUser($user);
+        $bannerId = $this->createBannerForCampaign($campaignId);
 
         $this->assertCount(1, Campaign::where('id', $campaignId)->get());
         $this->assertCount(1, Banner::where('id', $bannerId)->get());
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
         $this->assertCount(0, Campaign::where('id', $campaignId)->get());
@@ -127,11 +82,23 @@ JSON
         $this->assertCount(1, Campaign::withTrashed()->where('id', $campaignId)->get());
         $this->assertCount(1, Banner::withTrashed()->where('id', $bannerId)->get());
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    private function createCampaign($user)
+    public function testFailDeleteNotOwnedCampaign(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $user = factory(User::class)->create();
+        $campaignId = $this->createCampaignForUser($user);
+        $this->createBannerForCampaign($campaignId);
+
+        $response = $this->deleteJson(self::URI . "/{$campaignId}");
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    private function createCampaignForUser(User $user): int
     {
         $campaign = factory(Campaign::class)->create(['user_id' => $user->id]);
         $campaignId = $campaign->id;
@@ -139,7 +106,7 @@ JSON
         return $campaignId;
     }
 
-    private function createBanner($campaignId)
+    private function createBannerForCampaign(int $campaignId): int
     {
         $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
         $bannerId = $banner->id;
@@ -147,15 +114,36 @@ JSON
         return $bannerId;
     }
 
-    public function testFailDeleteNotOwnedCampaign()
+    private function campaignInputData(): array
     {
-        $this->actingAs(factory(User::class)->create(), 'api');
+        return [
+            'basicInformation' => [
+                'status' => 0,
+			    'name' =>  'Adshares test campaign',
+			    'targetUrl' => 'http://adshares.net',
+			    'max_cpc' => 2,
+			    'max_cpm' => 1,
+			    'budget' => 100,
+			    'dateStart' => '2018-01-01',
+			    'dateEnd' => '2018-12-30',
+            ],
+            'targeting' => [
+                'requires' => [],
+                'excludes' => [],
+            ],
+            'targetingArray' => [
+                'requires' => [],
+                'excludes' => [],
+            ],
+            'ads' => [],
+        ];
+    }
 
-        $user = factory(User::class)->create();
-        $campaignId = $this->createCampaign($user);
-        $this->createBanner($campaignId);
+    private function getIdFromLocation(string $location): string
+    {
+        $matches = [];
+        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
 
-        $response = $this->deleteJson(self::URI."/{$campaignId}");
-        $response->assertStatus(Response::HTTP_NOT_FOUND);
+        return $matches[1];
     }
 }
