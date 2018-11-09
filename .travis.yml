@@ -72,8 +72,8 @@ jobs:
     - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
     # PHP Code Beautifier and Fixer: fix code styles
-    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff"
-    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff"
+    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || git diff && exit 8"
+    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || git diff && exit 8"
 
     # PHP_CodeSniffer: check PHP compatibility
     - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
