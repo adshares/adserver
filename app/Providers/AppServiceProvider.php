@@ -42,19 +42,19 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(
             Adpay::class,
-            function($app) {
+            function ($app) {
                 return new Adpay(config('app.adpay_endpoint'), config('app.debug'));
             }
         );
         $this->app->bind(
             Adselect::class,
-            function($app) {
+            function ($app) {
                 return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
             }
         );
         $this->app->bind(
             AdsClient::class,
-            function($app) {
+            function ($app) {
                 $drv = new CliDriver(
                     config('app.adshares_address'),
                     config('app.adshares_secret'),

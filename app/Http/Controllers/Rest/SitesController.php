@@ -90,7 +90,7 @@ class SitesController extends Controller
             if ($zoneFromInput) {
                 $zone->update($zoneFromInput);
                 $inputZones = $inputZones->reject(
-                    function($value) use ($zone) {
+                    function ($value) use ($zone) {
                         return (int)($value['id'] ?? "") === $zone->id;
                     }
                 );

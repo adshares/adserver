@@ -38,11 +38,11 @@ class AdsGetTxInTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function() {
+            function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 $adsClient->method('getLog')->will(
                     $this->returnCallback(
-                        function($d) {
+                        function ($d) {
                             if (null === $d) {
                                 $ts = 0;
                             } else {
@@ -489,7 +489,7 @@ class AdsGetTxInTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function() {
+            function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 $adsClient->method('getLog')->willReturn(new GetLogResponse(json_decode($this->getLogEmpty(), true)));
 
@@ -547,7 +547,7 @@ class AdsGetTxInTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function() {
+            function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 $command = new GetLogCommand(new \DateTime());
                 $exception = new CommandException($command, 'Process timed out');

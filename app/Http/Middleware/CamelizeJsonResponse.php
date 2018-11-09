@@ -51,7 +51,7 @@ class CamelizeJsonResponse
     {
         return preg_replace_callback(
             '/"([^"]+?)"\s*:/',
-            function(array $input): string {
+            function (array $input): string {
                 return '"'.camel_case($input[1]).'":';
             },
             $json
