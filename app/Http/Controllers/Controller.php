@@ -34,16 +34,6 @@ abstract class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
 
-    protected static function json($data = [], $code = 200, $errors = false): JsonResponse
-    {
-        if (empty($errors)) {
-            return Response::json($data, $code);
-        }
-        $data['errors'] = $errors;
-
-        return Response::json($data, $code);
-    }
-
     /**
      * @deprecated
      */
@@ -80,6 +70,16 @@ abstract class Controller extends BaseController
         } catch (\Exception $errorException) {
             return self::json([], 500, [$errorException->getMessage()]);
         }
+    }
+
+    protected static function json($data = [], $code = 200, $errors = false): JsonResponse
+    {
+        if (empty($errors)) {
+            return Response::json($data, $code);
+        }
+        $data['errors'] = $errors;
+
+        return Response::json($data, $code);
     }
 
     /**

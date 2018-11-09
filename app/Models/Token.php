@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -47,7 +47,11 @@ class Token extends Model
      * @var array
      */
     protected $fillable = [
-        'multi_usage', 'payload', 'tag', 'user_id', 'valid_until',
+        'multi_usage',
+        'payload',
+        'tag',
+        'user_id',
+        'valid_until',
     ];
 
     /**
@@ -63,18 +67,19 @@ class Token extends Model
     /**
      * Checks if can generate another token for user based on time limit and tag.
      *
-     * @param int    $user_id
+     * @param int $user_id
      * @param string $tag
-     * @param int    $older_then_seconds
+     * @param int $older_then_seconds
      *
      * @return bool
      */
     public static function canGenerate(int $user_id, $tag, int $older_then_seconds)
     {
-        if (self::where('user_id', $user_id)
-            ->where('tag', $tag)
-            ->where('created_at', '>', date('Y-m-d H:i:s', time() - $older_then_seconds))
-            ->count()) {
+        if (self::where('user_id', $user_id)->where('tag', $tag)->where(
+            'created_at',
+            '>',
+            date('Y-m-d H:i:s', time() - $older_then_seconds)
+        )->count()) {
             return false;
         }
 
@@ -85,8 +90,8 @@ class Token extends Model
      * checks if token is valid, process it (removes if one time use only).
      *
      * @param string $uuid
-     * @param int    $user_id default null
-     * @param string $tag     default null
+     * @param int $user_id default null
+     * @param string $tag default null
      *
      * @return array
      */
@@ -116,7 +121,7 @@ class Token extends Model
      * extend token validation until time, returns true if token was valid and is being extended.
      *
      * @param string $uuid
-     * @param int    $seconds_valid
+     * @param int $seconds_valid
      *
      * @return bool
      */
@@ -144,10 +149,10 @@ class Token extends Model
      * generates Token and returns token uuid.
      *
      * @param string $tag
-     * @param int    $valid_until_seconds
-     * @param int    $user_id
-     * @param mixed  $payload
-     * @param bool   $multi_usage
+     * @param int $valid_until_seconds
+     * @param int $user_id
+     * @param mixed $payload
+     * @param bool $multi_usage
      *
      * @return string
      */

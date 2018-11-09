@@ -56,7 +56,7 @@ class SitesTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(0);
 
-        $response = $this->getJson(self::URI . '/1');
+        $response = $this->getJson(self::URI.'/1');
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
@@ -74,18 +74,27 @@ class SitesTest extends TestCase
 
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-        $response = $this->getJson(self::URI . '/' . $id);
+        $response = $this->getJson(self::URI.'/'.$id);
         $response->assertStatus(Response::HTTP_OK)
-            ->assertJsonStructure(self::SITE_STRUCTURE)
-            ->assertJsonFragment([
-                'name' => $preset['name'],
-                'primaryLanguage' => $preset['primaryLanguage'],
-                'status' => $preset['status'],
-            ])
+            ->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment(
+                [
+                    'name' => $preset['name'],
+                    'primaryLanguage' => $preset['primaryLanguage'],
+                    'status' => $preset['status'],
+                ]
+            )
             ->assertJsonCount(1, 'adUnits')
             ->assertJsonCount(2, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
             ->assertJsonCount(0, 'filtering.excludes');
+    }
+
+    private function getIdFromLocation($location)
+    {
+        $matches = [];
+        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
+
+        return $matches[1];
     }
 
     public function testCreateMultipleSites()
@@ -93,130 +102,21 @@ class SitesTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        array_map(function () use ($user) {
-            factory(Site::class)->create(['user_id' => $user->id]);
-        }, $this->creationDataProvider());
+        array_map(
+            function() use ($user) {
+                factory(Site::class)->create(['user_id' => $user->id]);
+            },
+            $this->creationDataProvider()
+        );
 
         $response = $this->getJson(self::URI);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonCount(2);
-        $response->assertJsonStructure([
-            '*' => self::SITE_STRUCTURE,
-        ]);
-    }
-
-    /**
-     * @dataProvider updateDataProvider
-     */
-    public function testUpdateSite($data)
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => $data]);
-        $response->assertStatus(Response::HTTP_OK);
-
-        $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_OK)
-            ->assertJsonFragment([
-                'name' => $data['name'] ?? $site->name,
-                'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
-                'status' => $data['status'] ?? $site->status,
-            ]);
-    }
-
-    public function testDeleteSite(): void
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-
-        $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_OK);
-
-        $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    public function testDeleteSiteWithZones(): void
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-
-        $site = factory(Site::class)
-            ->create(['user_id' => $user->id]);
-        $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
-
-        $this->assertDatabaseHas('zones', [
-            'site_id' => $site->id,
-        ]);
-
-        $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_OK);
-
-        $this->assertDatabaseMissing('sites', [
-            'id' => $site->id,
-            'deleted_at' => null,
-        ]);
-
-        $this->assertDatabaseMissing('zones', [
-            'site_id' => $site->id,
-            'deleted_at' => null,
-        ]);
-
-        $this->assertDatabaseMissing('sites', [
-            'id' => $site->id,
-            'deleted_at' => null,
-        ]);
-
-        $this->assertDatabaseMissing('zones', [
-            'site_id' => $site->id,
-            'deleted_at' => null,
-        ]);
-
-        $this->getJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    public function testFailDeleteNotOwnedSite(): void
-    {
-        $this->actingAs(factory(User::class)->create(), 'api');
-
-        $user = factory(User::class)->create();
-        $site = factory(Site::class)->create(['user_id' => $user->id]);
-
-        $this->actingAs(factory(User::class)->create(), 'api');
-        $this->deleteJson(self::URI . "/{$site->id}")
-            ->assertStatus(Response::HTTP_NOT_FOUND);
-    }
-
-    public function updateDataProvider(): array
-    {
-        return [
+        $response->assertJsonStructure(
             [
-                [
-                    "status" => "1",
-                    "name" => "name1",
-                    "primaryLanguage" => "xx",
-                ],
-            ],
-            [
-                [
-                    'status' => "1",
-                ],
-            ],
-            [
-                [
-                    "name" => "name2",
-                ],
-            ],
-            [
-                [
-                    "primaryLanguage" => "xx",
-                ],
-            ],
-        ];
+                '*' => self::SITE_STRUCTURE,
+            ]
+        );
     }
 
     public function creationDataProvider(): array
@@ -234,8 +134,8 @@ class SitesTest extends TestCase
             ],
         ];
 
-        $default =
-            json_decode(<<<JSON
+        $default = json_decode(
+            <<<JSON
 {
     "filtering": {
       "requires": {
@@ -266,12 +166,139 @@ class SitesTest extends TestCase
     ]
   }
 JSON
-                , true);
+            ,
+            true
+        );
 
-        return
-            array_map(function ($preset) use ($default) {
+        return array_map(
+            function($preset) use ($default) {
                 return [array_merge($default, $preset), $preset];
-            }, $presets);
+            },
+            $presets
+        );
+    }
+
+    /**
+     * @dataProvider updateDataProvider
+     */
+    public function testUpdateSite($data)
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => $data]);
+        $response->assertStatus(Response::HTTP_OK);
+
+        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK)->assertJsonFragment(
+            [
+                'name' => $data['name'] ?? $site->name,
+                'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
+                'status' => $data['status'] ?? $site->status,
+            ]
+        );
+    }
+
+    public function testDeleteSite(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK);
+
+        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testDeleteSiteWithZones(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site->zones(factory(Zone::class, 3)->create(['site_id' => $site->id]));
+
+        $this->assertDatabaseHas(
+            'zones',
+            [
+                'site_id' => $site->id,
+            ]
+        );
+
+        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_OK);
+
+        $this->assertDatabaseMissing(
+            'sites',
+            [
+                'id' => $site->id,
+                'deleted_at' => null,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'zones',
+            [
+                'site_id' => $site->id,
+                'deleted_at' => null,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'sites',
+            [
+                'id' => $site->id,
+                'deleted_at' => null,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'zones',
+            [
+                'site_id' => $site->id,
+                'deleted_at' => null,
+            ]
+        );
+
+        $this->getJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testFailDeleteNotOwnedSite(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $user = factory(User::class)->create();
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $this->deleteJson(self::URI."/{$site->id}")->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function updateDataProvider(): array
+    {
+        return [
+            [
+                [
+                    "status" => "1",
+                    "name" => "name1",
+                    "primaryLanguage" => "xx",
+                ],
+            ],
+            [
+                [
+                    'status' => "1",
+                ],
+            ],
+            [
+                [
+                    "name" => "name2",
+                ],
+            ],
+            [
+                [
+                    "primaryLanguage" => "xx",
+                ],
+            ],
+        ];
     }
 
     /**
@@ -283,17 +310,17 @@ JSON
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $site = factory(Site::class)
-            ->create(['user_id' => $user->id]);
-        $site->zones(factory(Zone::class, 3)
-            ->create(['site_id' => $site->id]));
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site->zones(
+            factory(Zone::class, 3)->create(['site_id' => $site->id])
+        );
+        $response = $this->getJson(self::URI."/{$site->id}");
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response = $this->getJson(self::URI."/{$site->id}");
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
@@ -368,27 +395,19 @@ JSON
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $site = factory(Site::class)
-            ->create(['user_id' => $user->id]);
-        $site->zones(factory(Zone::class, 3)
-            ->create(['site_id' => $site->id]));
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $site->zones(
+            factory(Zone::class, 3)->create(['site_id' => $site->id])
+        );
+        $response = $this->getJson(self::URI."/{$site->id}");
         $response->assertJsonCount(3, 'adUnits');
 
-        $response = $this->patchJson(self::URI . "/{$site->id}", ['site' => ['adUnits' => $data]]);
+        $response = $this->patchJson(self::URI."/{$site->id}", ['site' => ['adUnits' => $data]]);
         $response->assertStatus(Response::HTTP_OK);
 
-        $response = $this->getJson(self::URI . "/{$site->id}");
+        $response = $this->getJson(self::URI."/{$site->id}");
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
-    }
-
-    private function getIdFromLocation($location)
-    {
-        $matches = [];
-        $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
-
-        return $matches[1];
     }
 }

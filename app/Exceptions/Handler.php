@@ -31,18 +31,22 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof QueryException) {
             if ($prev = $exception->getPrevious()) {
-                return new JsonResponse([
-                    $prev->getErrorCode(),
-                    $prev->getMessage(),
-                    $prev->getTrace()
-                ], 500);
+                return new JsonResponse(
+                    [
+                        $prev->getErrorCode(),
+                        $prev->getMessage(),
+                        $prev->getTrace(),
+                    ], 500
+                );
             }
 
-            return new JsonResponse([
-                $exception->getMessage(),
-                $exception->getSql(),
-                $exception->getTrace()
-            ], 500);
+            return new JsonResponse(
+                [
+                    $exception->getMessage(),
+                    $exception->getSql(),
+                    $exception->getTrace(),
+                ], 500
+            );
         }
 
         return parent::render($request, $exception);

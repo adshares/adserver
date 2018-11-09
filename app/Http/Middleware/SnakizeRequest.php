@@ -26,9 +26,11 @@ class SnakizeRequest extends TransformsRequest
 {
     protected function cleanArray(array $data)
     {
-        return collect($data)->mapWithKeys(function ($value, $key) {
-            return $this->cleanValue($key, $value);
-        })->all();
+        return collect($data)->mapWithKeys(
+            function($value, $key) {
+                return $this->cleanValue($key, $value);
+            }
+        )->all();
     }
 
     protected function cleanValue($key, $value)

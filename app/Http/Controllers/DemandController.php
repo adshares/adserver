@@ -47,7 +47,8 @@ class DemandController extends Controller
 
         if ('OPTIONS' == $request->getRealMethod()) {
             $response = new Response('', 204);
-        } else {
+        }
+        else {
             $response = new GzippedStreamedResponse();
         }
 
@@ -68,7 +69,8 @@ class DemandController extends Controller
 
         if ('html' == $banner->creative_type) {
             $mime = 'text/html';
-        } else {
+        }
+        else {
             $mime = 'image/png';
         }
 
@@ -81,7 +83,7 @@ class DemandController extends Controller
         );
 
         $response->setCallback(
-            function () use ($response, $banner, $isIECompat) {
+            function() use ($response, $banner, $isIECompat) {
                 if (!$isIECompat) {
                     echo $banner->creative_contents;
 
@@ -91,10 +93,10 @@ class DemandController extends Controller
                 $headers = [];
                 foreach ($response->headers->allPreserveCase() as $name => $value) {
                     if (0 === strpos($name, 'X-')) {
-                        $headers[] = "$name:" . implode(',', $value);
+                        $headers[] = "$name:".implode(',', $value);
                     }
                 }
-                echo implode("\n", $headers) . "\n\n";
+                echo implode("\n", $headers)."\n\n";
                 echo base64_encode($banner->creative_contents);
             }
         );
@@ -113,7 +115,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '') . $mime);
+            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
         }
 
         return $response;
@@ -127,7 +129,7 @@ class DemandController extends Controller
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $params) {
+            function() use ($jsPath, $params) {
                 echo str_replace(
                     [
                         "'{{ ORIGIN }}'",
@@ -142,8 +144,8 @@ class DemandController extends Controller
 
         $response->setCache(
             [
-                'etag' => md5(md5_file($jsPath) . implode(':', $params)),
-                'last_modified' => new \DateTime('@' . filemtime($jsPath)),
+                'etag' => md5(md5_file($jsPath).implode(':', $params)),
+                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
@@ -249,9 +251,10 @@ class DemandController extends Controller
             );
 
             $response = new RedirectResponse(
-                $aduser_endpoint . '/pixel/' . $iid . '?r=' . Utils::urlSafeBase64Encode($backUrl)
+                $aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl)
             );
-        } else {
+        }
+        else {
             throw new Exception('ADAPY');
             $response = new Response();
 
@@ -281,8 +284,10 @@ class DemandController extends Controller
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_endpoint');
-        $userdata = ($aduser_endpoint && $impressionId) ?
-            json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true) : [];
+        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(
+            file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"),
+            true
+        ) : [];
 
         $log = EventLog::find($log_id);
         if (!empty($log)) {

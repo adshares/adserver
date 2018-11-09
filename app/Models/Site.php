@@ -81,11 +81,13 @@ class Site extends Model
 
     public function getAdUnitsAttribute()
     {
-        return $this->zones->map(function (Zone $zone) {
-            $zone->publisher_id = $this->user_id;
+        return $this->zones->map(
+            function(Zone $zone) {
+                $zone->publisher_id = $this->user_id;
 
-            return $zone;
-        });
+                return $zone;
+            }
+        );
     }
 
     public function setFilteringAttribute(array $data): void
@@ -112,8 +114,10 @@ class Site extends Model
     public function setStatusAttribute($value): void
     {
         $this->attributes['status'] = $value;
-        $this->zones->map(function (Zone $zone) use ($value) {
-            $zone->status = Site::ZONE_STATUS[$value];
-        });
+        $this->zones->map(
+            function(Zone $zone) use ($value) {
+                $zone->status = Site::ZONE_STATUS[$value];
+            }
+        );
     }
 }

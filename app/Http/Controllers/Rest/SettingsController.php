@@ -35,10 +35,8 @@ class SettingsController extends Controller
      */
     public function readNotifications()
     {
-        $settings = UserSettings::where('user_id', Auth::user()->id)
-            ->where('type', 'notifications')
-            ->first()
-            ->toArray();
+        $settings =
+            UserSettings::where('user_id', Auth::user()->id)->where('type', 'notifications')->first()->toArray();
 
         $payload = [];
         foreach ($settings['payload'] as $name => $value) {

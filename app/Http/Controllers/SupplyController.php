@@ -47,9 +47,11 @@ class SupplyController extends Controller
 
         if ('GET' == $request->getRealMethod()) {
             $data = $request->getQueryString();
-        } elseif ('POST' == $request->getRealMethod()) {
+        }
+        elseif ('POST' == $request->getRealMethod()) {
             $data = $request->getContent();
-        } elseif ('OPTIONS' == $request->getRealMethod()) {
+        }
+        elseif ('OPTIONS' == $request->getRealMethod()) {
             $response->setStatusCode(204);
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
@@ -69,7 +71,8 @@ class SupplyController extends Controller
             $aduser_endpoint = config('app.aduser_local_endpoint');
             if ($aduser_endpoint) {
                 $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
-            } else {
+            }
+            else {
                 $userdata = [];
             }
         }
@@ -96,23 +99,31 @@ class SupplyController extends Controller
         $jsPath = public_path('-/find.js');
 
         $response = new StreamedResponse();
-        $response->setCallback(function () use ($jsPath, $request, $params) {
-            echo str_replace([
-                "'{{ ORIGIN }}'",
-                "'{{ ADUSER }}'",
-            ], $params, file_get_contents($jsPath));
-        });
+        $response->setCallback(
+            function() use ($jsPath, $request, $params) {
+                echo str_replace(
+                    [
+                        "'{{ ORIGIN }}'",
+                        "'{{ ADUSER }}'",
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                );
+            }
+        );
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        $response->setCache([
-            'etag' => md5(md5_file($jsPath) . implode(':', $params)),
-            'last_modified' => new \DateTime('@' . filemtime($jsPath)),
-            'max_age' => 3600 * 24 * 30,
-            's_maxage' => 3600 * 24 * 30,
-            'private' => false,
-            'public' => true,
-        ]);
+        $response->setCache(
+            [
+                'etag' => md5(md5_file($jsPath).implode(':', $params)),
+                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+                'max_age' => 3600 * 24 * 30,
+                's_maxage' => 3600 * 24 * 30,
+                'private' => false,
+                'public' => true,
+            ]
+        );
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -126,7 +137,8 @@ class SupplyController extends Controller
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
-        } else {
+        }
+        else {
             $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
 
             if (!$banner) {
@@ -141,11 +153,13 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?' . $qString;
-            } elseif ($qPos == strlen($url) - 1) {
+                $url .= '?'.$qString;
+            }
+            elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
-            } else {
-                $url .= '&' . $qString;
+            }
+            else {
+                $url .= '&'.$qString;
             }
         }
 
@@ -169,9 +183,11 @@ class SupplyController extends Controller
 
         $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
-        $adselect->addImpressions([
-            $log->getAdselectJson(),
-        ]);
+        $adselect->addImpressions(
+            [
+                $log->getAdselectJson(),
+            ]
+        );
 
         $response = new RedirectResponse($url);
 
@@ -190,11 +206,13 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?' . $qString;
-            } elseif ($qPos == strlen($url) - 1) {
+                $url .= '?'.$qString;
+            }
+            elseif ($qPos == strlen($url) - 1) {
                 $url .= $qString;
-            } else {
-                $url .= '&' . $qString;
+            }
+            else {
+                $url .= '&'.$qString;
             }
         }
 
@@ -221,7 +239,8 @@ class SupplyController extends Controller
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
-        } else {
+        }
+        else {
 //            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
@@ -231,9 +250,11 @@ class SupplyController extends Controller
             $log->save();
         }
 
-        $adselect->addImpressions([
-            $log->getAdselectJson(),
-        ]);
+        $adselect->addImpressions(
+            [
+                $log->getAdselectJson(),
+            ]
+        );
 
         $backUrl = route('banner-view', ['id' => $log->id]);
 

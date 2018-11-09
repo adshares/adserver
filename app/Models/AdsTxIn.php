@@ -40,9 +40,8 @@ class AdsTxIn extends Model
      * Invalid tx
      */
     const STATUS_INVALID = -1;
-
+    public $incrementing = false;
     protected $table = 'ads_tx_in';
     protected $primaryKey = 'txid';
     protected $keyType = 'string';
-    public $incrementing = false;
 }

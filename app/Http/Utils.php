@@ -49,10 +49,12 @@ class Utils
         if ($contextStr) {
             if (is_string($contextStr)) {
                 $context = self::decodeZones($contextStr);
-            } else {
+            }
+            else {
                 $context = ['page' => $contextStr];
             }
-        } else {
+        }
+        else {
             $context = null;
         }
 
@@ -60,6 +62,52 @@ class Utils
             'site' => self::getSiteContext($request, $context),
             'device' => self::getDeviceContext($request, $context),
         ];
+    }
+
+    public static function decodeZones($zonesStr)
+    {
+        $zonesStr = self::urlSafeBase64Decode($zonesStr);
+
+        $zones = explode(self::ZONE_GLUE, $zonesStr);
+        $fields = explode(self::VALUE_GLUE, array_shift($zones));
+        //         return $fields;
+        $data = [];
+
+        foreach ($zones as $zoneStr) {
+            $zone = [];
+            $propStrs = explode(self::PROP_GLUE, $zoneStr);
+            foreach ($propStrs as $propStr) {
+                $prop = explode(self::VALUE_GLUE, $propStr);
+                $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
+            }
+            $data[] = $zone;
+        }
+
+        $result = [
+            'page' => array_shift($data),
+        ];
+        if ($data) {
+            $result['zones'] = $data;
+        }
+
+        return $result;
+    }
+
+    public static function urlSafeBase64Decode($string)
+    {
+        return base64_decode(
+            str_replace(
+                [
+                    '_',
+                    '-',
+                ],
+                [
+                    '/',
+                    '+',
+                ],
+                $string
+            )
+        );
     }
 
     public static function getSiteContext(Request $request, $context)
@@ -124,24 +172,31 @@ class Utils
 
         if (is_numeric($browser->platform_version)) {
             $device['osv'] = $browser->platform_version;
-        } elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
+        }
+        elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
             $device['os'] = $match[1];
             $device['osv'] = $match[2];
-        } else {
+        }
+        else {
             $device['osv'] = $browser->platform;
         }
 
         if (true === $browser->ismobiledevice) {
             $device['type'] = 'mobile';
-        } elseif (true === $browser->istablet) {
+        }
+        elseif (true === $browser->istablet) {
             $device['type'] = 'tablet';
-        } elseif (true === $browser->issyndicationreader) {
+        }
+        elseif (true === $browser->issyndicationreader) {
             $device['type'] = 'syndicationreader';
-        } elseif (true === $browser->crawler) {
+        }
+        elseif (true === $browser->crawler) {
             $device['type'] = 'crawler';
-        } elseif (true === $browser->isfake) {
+        }
+        elseif (true === $browser->isfake) {
             $device['type'] = 'fake';
-        } else {
+        }
+        else {
             $device['type'] = 'desktop';
         }
 
@@ -176,16 +231,41 @@ class Utils
 //         geo
     }
 
+    private static function getGeoData($clientIp)
+    {
+        $geo = [];
+        if (function_exists('geoip_record_by_name')) {
+            @$data = \geoip_record_by_name($clientIp);
+            if ($data) {
+                foreach ($data as $key => $value) {
+                    if ($value) {
+                        $geo[$key] = $value;
+                    }
+                }
+            }
+            else {
+                @$data = \geoip_country_code_by_name($clientIp);
+                if ($data) {
+                    $geo['country_code'] = $data;
+                }
+            }
+        }
+
+        return $geo;
+    }
+
     public static function addUrlParameter($url, $name, $value)
     {
-        $param = $name . '=' . urlencode($value);
+        $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');
         if (false == $qPos) {
-            return $url . '?' . $param;
-        } elseif ($qPos == strlen($url) - 1) {
-            return $url . $param;
-        } else {
-            return $url . '&' . $param;
+            return $url.'?'.$param;
+        }
+        elseif ($qPos == strlen($url) - 1) {
+            return $url.$param;
+        }
+        else {
+            return $url.'&'.$param;
         }
     }
 
@@ -197,38 +277,6 @@ class Utils
         $input = self::urlSafeBase64Decode($encodedId);
 
         return bin2hex(substr($input, 0, 16));
-    }
-
-    /**
-     * @param string $secret
-     *
-     * @return string
-     */
-    public static function createTrackingId($secret)
-    {
-        $input = [];
-        $input[] = microtime();
-        $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
-        $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
-        $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
-        $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
-
-        $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = substr(sha1($id . $secret, true), 0, 6);
-
-        return self::urlSafeBase64Encode($id . $checksum);
-    }
-
-    public static function validTrackingId($input, $secret)
-    {
-        if (!is_string($input)) {
-            return false;
-        }
-        $input = self::urlSafeBase64Decode($input);
-        $id = substr($input, 0, 16);
-        $checksum = substr($input, 16);
-
-        return substr(sha1($id . $secret, true), 0, 6) == $checksum;
     }
 
     public static function attachTrackingCookie(
@@ -252,24 +300,85 @@ class Utils
         }
         $response->headers->setCookie(
             new Cookie(
-                'tid',
-                $tid,
-                new \DateTime('+ 1 month'),
-                '/',
-                $request->getHost()
+                'tid', $tid, new \DateTime('+ 1 month'), '/', $request->getHost()
             )
         );
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
-        $response->setCache([
-            'etag' => self::generateEtag($tid, $contentSha1),
-            'last_modified' => $contentModified,
-            'max_age' => 0,
-            'private' => true,
-        ]);
+        $response->setCache(
+            [
+                'etag' => self::generateEtag($tid, $contentSha1),
+                'last_modified' => $contentModified,
+                'max_age' => 0,
+                'private' => true,
+            ]
+        );
         $response->headers->addCacheControlDirective('no-transform');
 
         return $tid;
+    }
+
+    public static function validTrackingId($input, $secret)
+    {
+        if (!is_string($input)) {
+            return false;
+        }
+        $input = self::urlSafeBase64Decode($input);
+        $id = substr($input, 0, 16);
+        $checksum = substr($input, 16);
+
+        return substr(sha1($id.$secret, true), 0, 6) == $checksum;
+    }
+
+    private static function decodeEtag($etag)
+    {
+        $etag = str_replace('"', '', $etag);
+
+        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
+    }
+
+    public static function urlSafeBase64Encode($string)
+    {
+        return str_replace(
+            [
+                '/',
+                '+',
+                '=',
+            ],
+            [
+                '_',
+                '-',
+                '',
+            ],
+            base64_encode($string)
+        );
+    }
+
+    /**
+     * @param string $secret
+     *
+     * @return string
+     */
+    public static function createTrackingId($secret)
+    {
+        $input = [];
+        $input[] = microtime();
+        $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
+        $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
+        $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
+        $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+
+        $id = substr(sha1(implode(':', $input), true), 0, 16);
+        $checksum = substr(sha1($id.$secret, true), 0, 6);
+
+        return self::urlSafeBase64Encode($id.$checksum);
+    }
+
+    private static function generateEtag($tid, $contentSha1)
+    {
+        $sha1 = pack('H*', $contentSha1);
+
+        return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
     public static function arrayRemoveValues(array &$array, $value) // former array_erase
@@ -294,59 +403,6 @@ class Utils
         }
 
         return;
-    }
-
-    public static function urlSafeBase64Encode($string)
-    {
-        return str_replace([
-            '/',
-            '+',
-            '=',
-        ], [
-            '_',
-            '-',
-            '',
-        ], base64_encode($string));
-    }
-
-    public static function urlSafeBase64Decode($string)
-    {
-        return base64_decode(str_replace([
-            '_',
-            '-',
-        ], [
-            '/',
-            '+',
-        ], $string));
-    }
-
-    public static function decodeZones($zonesStr)
-    {
-        $zonesStr = self::urlSafeBase64Decode($zonesStr);
-
-        $zones = explode(self::ZONE_GLUE, $zonesStr);
-        $fields = explode(self::VALUE_GLUE, array_shift($zones));
-        //         return $fields;
-        $data = [];
-
-        foreach ($zones as $zoneStr) {
-            $zone = [];
-            $propStrs = explode(self::PROP_GLUE, $zoneStr);
-            foreach ($propStrs as $propStr) {
-                $prop = explode(self::VALUE_GLUE, $propStr);
-                $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
-            }
-            $data[] = $zone;
-        }
-
-        $result = [
-            'page' => array_shift($data),
-        ];
-        if ($data) {
-            $result['zones'] = $data;
-        }
-
-        return $result;
     }
 
     public static function toJsonString($value)
@@ -380,9 +436,10 @@ class Utils
 
         foreach ($keywords as $keyword => $value) {
             if (is_array($value)) {
-                $ret = array_merge($ret, self::flattenKeywords($value, $keyword . '_'));
-            } else {
-                $ret[$prefix . $keyword] = $value;
+                $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
+            }
+            else {
+                $ret[$prefix.$keyword] = $value;
             }
         }
 
@@ -396,10 +453,11 @@ class Utils
         $keys = explode(':', $last);
         $values = [];
         foreach ($keys as $key) {
-            $key = implode('_', $path) . '_' . $key;
+            $key = implode('_', $path).'_'.$key;
             if (isset($keywords[$key])) {
                 $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
-            } else {
+            }
+            else {
                 return false;
             }
         }
@@ -413,11 +471,12 @@ class Utils
                     if (is_numeric($val)) {
                         $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
                     }
-                    $newVector[] = ($vector ? $vector . ':' : '') . $val;
+                    $newVector[] = ($vector ? $vector.':' : '').$val;
                 }
                 if (0 == $j) {
                     $vectors = $newVector;
-                } else {
+                }
+                else {
                     $vectors = array_merge($vectors, $newVector);
                 }
             }
@@ -430,41 +489,5 @@ class Utils
         }
 
         return false;
-    }
-
-    private static function getGeoData($clientIp)
-    {
-        $geo = [];
-        if (function_exists('geoip_record_by_name')) {
-            @$data = \geoip_record_by_name($clientIp);
-            if ($data) {
-                foreach ($data as $key => $value) {
-                    if ($value) {
-                        $geo[$key] = $value;
-                    }
-                }
-            } else {
-                @$data = \geoip_country_code_by_name($clientIp);
-                if ($data) {
-                    $geo['country_code'] = $data;
-                }
-            }
-        }
-
-        return $geo;
-    }
-
-    private static function generateEtag($tid, $contentSha1)
-    {
-        $sha1 = pack('H*', $contentSha1);
-
-        return self::urlSafeBase64Encode(substr($sha1, 0, 6) . strrev(self::urlSafeBase64Decode($tid)));
-    }
-
-    private static function decodeEtag($etag)
-    {
-        $etag = str_replace('"', '', $etag);
-
-        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 }

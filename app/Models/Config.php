@@ -28,11 +28,9 @@ class Config extends Model
      * Time of last processed event in ADS user's log
      */
     const ADS_LOG_START = 'ads-log-start';
-
+    public $incrementing = false;
     protected $primaryKey = 'key';
     protected $keyType = 'string';
-    public $incrementing = false;
-
     /**
      * The attributes that aren't mass assignable.
      *

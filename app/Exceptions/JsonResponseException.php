@@ -33,7 +33,6 @@ class JsonResponseException extends Exception implements Responsable
         $this->response = $response;
     }
 
-
     public function toResponse($request)
     {
         $this->response;

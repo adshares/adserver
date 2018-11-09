@@ -44,13 +44,13 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertExactJson([
+        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
+            [
                 'amount' => 100000000000,
                 'fee' => 50000000,
                 'total' => 100050000000,
-            ]);
+            ]
+        );
     }
 
     public function testCalculateWithdrawDiffNode()
@@ -64,13 +64,13 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertExactJson([
+        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
+            [
                 'amount' => 100000000000,
                 'fee' => 100000000,
                 'total' => 100100000000,
-            ]);
+            ]
+        );
     }
 
     public function testCalculateWithdrawInvalidAddress()
@@ -118,6 +118,21 @@ class WalletControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
+    }
+
+    private function generateUserIncome(int $userId, int $amount)
+    {
+        $dateString = '2018-10-24 15:00:49';
+
+        $ul = new UserLedger();
+        $ul->user_id = $userId;
+        $ul->amount = $amount;
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
+        $ul->txid = '0001:0000000A:0001';
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
+        $ul->save();
     }
 
     public function testWithdrawWithMemo()
@@ -214,9 +229,7 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->get('/api/deposit-info');
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertJson(['address' => config('app.adshares_address')]);
+        $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
         // check response field
         $this->assertObjectHasAttribute('message', $content);
@@ -239,9 +252,8 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history');
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertJson([
+        $response->assertStatus(Response::HTTP_OK)->assertJson(
+            [
                 [
                     'status' => $amountInAds,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
@@ -253,8 +265,29 @@ class WalletControllerTest extends TestCase
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',
+                ],
                 ]
-            ]);
+        );
+    }
+
+    /**
+     * @param $userId
+     * @param $amountInClicks
+     */
+    private function initUserLedger($userId, $amountInClicks): void
+    {
+        // add entry with a txid
+        $this->generateUserIncome($userId, $amountInClicks);
+        // add entry without txid
+        $dateString = '2018-10-24 15:00:49';
+        $ul = new UserLedger();
+        $ul->user_id = $userId;
+        $ul->amount = -$amountInClicks;
+        $ul->address_from = '0001-00000000-XXXX';
+        $ul->address_to = '0001-00000000-XXXX';
+        $ul->setCreatedAt($dateString);
+        $ul->setUpdatedAt($dateString);
+        $ul->save();
     }
 
     public function testHistoryLimit()
@@ -269,16 +302,16 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history?limit=1');
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertJson([
+        $response->assertStatus(Response::HTTP_OK)->assertJson(
+            [
                 [
                     'status' => $amountInAds,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
+                ],
                 ]
-            ]);
+        );
     }
 
     public function testHistoryLimitInvalid()
@@ -301,16 +334,16 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history?limit=1&offset=1');
 
-        $response
-            ->assertStatus(Response::HTTP_OK)
-            ->assertJson([
+        $response->assertStatus(Response::HTTP_OK)->assertJson(
+            [
                 [
                     'status' => -$amountInAds,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',
+                ],
                 ]
-            ]);
+        );
     }
 
     public function testHistoryOffsetInvalid()
@@ -319,40 +352,5 @@ class WalletControllerTest extends TestCase
         $response = $this->getJson('/api/wallet/history?limit=1&offset=-1');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    private function generateUserIncome(int $userId, int $amount)
-    {
-        $dateString = '2018-10-24 15:00:49';
-
-        $ul = new UserLedger;
-        $ul->user_id = $userId;
-        $ul->amount = $amount;
-        $ul->address_from = '0001-00000000-XXXX';
-        $ul->address_to = '0001-00000000-XXXX';
-        $ul->txid = '0001:0000000A:0001';
-        $ul->setCreatedAt($dateString);
-        $ul->setUpdatedAt($dateString);
-        $ul->save();
-    }
-
-    /**
-     * @param $userId
-     * @param $amountInClicks
-     */
-    private function initUserLedger($userId, $amountInClicks): void
-    {
-        // add entry with a txid
-        $this->generateUserIncome($userId, $amountInClicks);
-        // add entry without txid
-        $dateString = '2018-10-24 15:00:49';
-        $ul = new UserLedger;
-        $ul->user_id = $userId;
-        $ul->amount = -$amountInClicks;
-        $ul->address_from = '0001-00000000-XXXX';
-        $ul->address_to = '0001-00000000-XXXX';
-        $ul->setCreatedAt($dateString);
-        $ul->setUpdatedAt($dateString);
-        $ul->save();
     }
 }

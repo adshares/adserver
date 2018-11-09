@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -37,7 +37,8 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $dates = [
-        'time_start', 'time_end',
+        'time_start',
+        'time_end',
     ];
 
     /**
@@ -47,9 +48,16 @@ class NetworkCampaign extends Model
      */
     protected $fillable = [
         'uuid',
-        'source_created_at', 'source_updated_at',
-        'source_host', 'adshares_address',
-        'landing_url', 'max_cpm', 'max_cpc', 'budget_per_hour', 'time_start', 'time_end',
+        'source_created_at',
+        'source_updated_at',
+        'source_host',
+        'adshares_address',
+        'landing_url',
+        'max_cpm',
+        'max_cpc',
+        'budget_per_hour',
+        'time_start',
+        'time_end',
     ];
 
     /**
@@ -70,75 +78,6 @@ class NetworkCampaign extends Model
         'uuid' => 'BinHex',
     ];
 
-    public function banners()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
-    }
-
-    public function campaignExcludes()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignExclude');
-    }
-
-    public function campaignRequires()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignRequire');
-    }
-
-    protected static function convertTimestampsToSourceTimestamps($array)
-    {
-        $array['source_created_at'] = $array['created_at'];
-        $array['source_updated_at'] = $array['updated_at'];
-        unset($array['created_at']);
-        unset($array['updated_at']);
-
-        return $array;
-    }
-
-    public function getAdselectJson()
-    {
-        $json = [
-            'campaign_id' => $this->source_host.'/'.$this->uuid,
-            // TODO: discuss, missing in inventory
-            // 'advertiser_id' => $this->source_host . '/'. $this->getAdvertiserId(),
-            'time_start' => $this->time_start->getTimestamp(),
-            'time_end' => $this->time_end->getTimestamp(),
-            // 'filters' => Filter::getFilter($this->getRequire(), $this->getExclude()),
-            'keywords' => [
-                'source_host' => $this->source_host,
-                'adshares_address' => $this->adshares_address,
-                // 'landing_host' => parse_url($this->getLandingUrl(), PHP_URL_HOST), // TODO: missing in inventory
-                // 'landing_url' => $this->landing_url, // TODO: missing in inventory
-            ],
-        ];
-
-        $banners = [];
-
-        foreach ($this->banners as $banner) {
-            $banners[] = $banner->getAdselectJson();
-        }
-
-        $json['banners'] = $banners;
-
-        return $json;
-    }
-
-    protected static function jsonDataMakeUUIDKeys(array &$data)
-    {
-        foreach ($data['banners'] as $i => $d) {
-            $data['banners'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
-            unset($data['banners'][$i]);
-        }
-        foreach ($data['campaign_excludes'] as $i => $d) {
-            $data['campaign_excludes'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
-            unset($data['campaign_excludes'][$i]);
-        }
-        foreach ($data['campaign_requires'] as $i => $d) {
-            $data['campaign_requires'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
-            unset($data['campaign_requires'][$i]);
-        }
-    }
-
     public static function fromJsonData(array $data)
     {
         DB::beginTransaction();
@@ -149,7 +88,8 @@ class NetworkCampaign extends Model
         )->where('uuid', hex2bin($data['uuid']))->lockForUpdate()->first();
         if (empty($campaign)) {
             $campaign = self::fromJsonDataNew($data);
-        } else {
+        }
+        else {
             $campaign = self::fromJsonDataUpdate($campaign, $data);
         }
         DB::commit();
@@ -181,21 +121,6 @@ class NetworkCampaign extends Model
         return $campaign;
     }
 
-    protected static function fromJsonDataUpdateObjects(Collection $collection, array $data)
-    {
-        foreach ($collection as $o) {
-            if (empty($data[$o->uuid])) {
-                $o->delete();
-                continue;
-            }
-            if ($data[$o->uuid]['source_updated_at'] === $o->source_updated_at) {
-                continue;
-            }
-            $o->fill($data[$o->uuid]);
-            $o->save();
-        }
-    }
-
     public static function fromJsonDataUpdate(NetworkCampaign $campaign, array $data)
     {
         $data = self::convertTimestampsToSourceTimestamps($data);
@@ -212,5 +137,89 @@ class NetworkCampaign extends Model
         self::fromJsonDataUpdateObjects($campaign->campaignRequires, $data['campaign_requires']);
 
         return $campaign;
+    }
+
+    protected static function jsonDataMakeUUIDKeys(array &$data)
+    {
+        foreach ($data['banners'] as $i => $d) {
+            $data['banners'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
+            unset($data['banners'][$i]);
+        }
+        foreach ($data['campaign_excludes'] as $i => $d) {
+            $data['campaign_excludes'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
+            unset($data['campaign_excludes'][$i]);
+        }
+        foreach ($data['campaign_requires'] as $i => $d) {
+            $data['campaign_requires'][$d['uuid']] = self::convertTimestampsToSourceTimestamps($d);
+            unset($data['campaign_requires'][$i]);
+        }
+    }
+
+    protected static function convertTimestampsToSourceTimestamps($array)
+    {
+        $array['source_created_at'] = $array['created_at'];
+        $array['source_updated_at'] = $array['updated_at'];
+        unset($array['created_at']);
+        unset($array['updated_at']);
+
+        return $array;
+    }
+
+    protected static function fromJsonDataUpdateObjects(Collection $collection, array $data)
+    {
+        foreach ($collection as $o) {
+            if (empty($data[$o->uuid])) {
+                $o->delete();
+                continue;
+            }
+            if ($data[$o->uuid]['source_updated_at'] === $o->source_updated_at) {
+                continue;
+            }
+            $o->fill($data[$o->uuid]);
+            $o->save();
+        }
+    }
+
+    public function banners()
+    {
+        return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
+    }
+
+    public function campaignExcludes()
+    {
+        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignExclude');
+    }
+
+    public function campaignRequires()
+    {
+        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignRequire');
+    }
+
+    public function getAdselectJson()
+    {
+        $json = [
+            'campaign_id' => $this->source_host.'/'.$this->uuid,
+            // TODO: discuss, missing in inventory
+            // 'advertiser_id' => $this->source_host . '/'. $this->getAdvertiserId(),
+            'time_start' => $this->time_start->getTimestamp(),
+            'time_end' => $this->time_end->getTimestamp(),
+            // 'filters' => Filter::getFilter($this->getRequire(), $this->getExclude()),
+            'keywords' => [
+                'source_host' => $this->source_host,
+                'adshares_address' => $this->adshares_address,
+                // 'landing_host' => parse_url($this->getLandingUrl(), PHP_URL_HOST), // TODO: missing in inventory
+                // 'landing_url' => $this->landing_url, // TODO: missing in inventory
+            ],
+        ];
+
+        $banners = [];
+
+        foreach ($this->banners as $banner) {
+            $banners[] = $banner->getAdselectJson();
+        }
+
+        $json['banners'] = $banners;
+
+        return $json;
     }
 }

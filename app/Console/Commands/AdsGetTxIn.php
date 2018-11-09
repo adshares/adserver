@@ -32,20 +32,6 @@ use Illuminate\Database\QueryException;
 class AdsGetTxIn extends Command
 {
     /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'ads:get-tx-in';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Searches blockchain log of AdServer for incoming transfers';
-
-    /**
      * Command ended without error
      */
     const EXIT_CODE_SUCCESS = 0;
@@ -54,10 +40,24 @@ class AdsGetTxIn extends Command
      * Command ended with an error
      */
     const EXIT_CODE_ERROR = 1;
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'ads:get-tx-in';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Searches blockchain log of AdServer for incoming transfers';
 
     /**
      * Execute the console command.
+     *
      * @param AdsClient $adsClient
+     *
      * @return int
      */
     public function handle(AdsClient $adsClient)
@@ -68,11 +68,12 @@ class AdsGetTxIn extends Command
             $from = Config::create(['key' => Config::ADS_LOG_START, 'value' => '0']);
         }
         $timestamp = intval($from->value);
-        $dateFrom = (new \DateTime)->setTimestamp($timestamp);
+        $dateFrom = (new \DateTime())->setTimestamp($timestamp);
         try {
             $response = $adsClient->getLog($dateFrom);
         } catch (CommandException $exc) {
             $this->error('Cannot get log');
+
             return self::EXIT_CODE_ERROR;
         }
         $log = $response->getLog();
@@ -86,32 +87,20 @@ class AdsGetTxIn extends Command
             } catch (ConsoleCommandException $exc) {
                 $this->error('Cannot get time of last event');
             }
-        } else {
+        }
+        else {
             $txsCount = 0;
         }
         $this->info("Number of added txs: ${txsCount}");
+
         return self::EXIT_CODE_SUCCESS;
     }
 
     /**
-     * Returns time of last event in log.
-     * @param array $log log
-     * @return int time of last event
-     * @throws ConsoleCommandException if log array is empty
-     */
-    private function getLastEventTime(array $log): int
-    {
-        $count = count($log);
-        $lastEventIndex = $count - 1;
-        if ($count > 0) {
-            return $log[$lastEventIndex]['time'];
-        }
-        throw new ConsoleCommandException();
-    }
-
-    /**
      * Processes log and adds incoming transfers to db table.
+     *
      * @param array $log log
+     *
      * @return int number of added transfers
      */
     private function parse(array $log): int
@@ -126,7 +115,7 @@ class AdsGetTxIn extends Command
 
                 $amountInClicks = AdsConverter::adsToClicks($amount);
 
-                $adsTx = new AdsTxIn;
+                $adsTx = new AdsTxIn();
                 $adsTx->txid = $txid;
                 $adsTx->amount = $amountInClicks;
                 $adsTx->address = $address;
@@ -140,6 +129,25 @@ class AdsGetTxIn extends Command
                 }
             }
         }
+
         return $count;
+    }
+
+    /**
+     * Returns time of last event in log.
+     *
+     * @param array $log log
+     *
+     * @return int time of last event
+     * @throws ConsoleCommandException if log array is empty
+     */
+    private function getLastEventTime(array $log): int
+    {
+        $count = count($log);
+        $lastEventIndex = $count - 1;
+        if ($count > 0) {
+            return $log[$lastEventIndex]['time'];
+        }
+        throw new ConsoleCommandException();
     }
 }

@@ -51,8 +51,7 @@ class SitesController extends Controller
 
         DB::commit();
 
-        return self::json([], Response::HTTP_CREATED)
-            ->header('Location', route('app.sites.read', ['site' => $site]));
+        return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
     public function read(Site $site): JsonResponse
@@ -82,6 +81,26 @@ class SitesController extends Controller
         DB::commit();
 
         return self::json(['message' => 'Successfully edited']);
+    }
+
+    private function proccessInputZones(Site $site, Collection $inputZones)
+    {
+        foreach ($site->zones as $zone) {
+            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
+            if ($zoneFromInput) {
+                $zone->update($zoneFromInput);
+                $inputZones = $inputZones->reject(
+                    function($value) use ($zone) {
+                        return (int)($value['id'] ?? "") === $zone->id;
+                    }
+                );
+            }
+            else {
+                $zone->delete();
+            }
+        }
+
+        return $inputZones;
     }
 
     public function delete(Site $site): JsonResponse
@@ -117,22 +136,5 @@ class SitesController extends Controller
         ];
 
         return self::json($siteCount, 200);
-    }
-
-    private function proccessInputZones(Site $site, Collection $inputZones)
-    {
-        foreach ($site->zones as $zone) {
-            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-            if ($zoneFromInput) {
-                $zone->update($zoneFromInput);
-                $inputZones = $inputZones->reject(function ($value) use ($zone) {
-                    return (int)($value['id'] ?? "") === $zone->id;
-                });
-            } else {
-                $zone->delete();
-            }
-        }
-
-        return $inputZones;
     }
 }

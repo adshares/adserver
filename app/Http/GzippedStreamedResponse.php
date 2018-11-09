@@ -39,11 +39,13 @@ class GzippedStreamedResponse extends StreamedResponse
 {
     public function sendContent()
     {
-        ob_start(function ($output) {
-            header('Content-Length: ' . strlen($output));
+        ob_start(
+            function($output) {
+                header('Content-Length: '.strlen($output));
 
-            return false;
-        });
+                return false;
+            }
+        );
         if (function_exists('ob_gzhandler')) {
             ob_start("ob_gzhandler");
         }

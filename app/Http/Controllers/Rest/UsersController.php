@@ -56,14 +56,12 @@ class UsersController extends Controller
         $user = User::register($request->input('user'));
         Mail::to($user)->queue(
             new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-                $request->input('uri')
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id), $request->input('uri')
             )
         );
         DB::commit();
 
-        return self::json($user->toArray(), 201)
-            ->header('Location', route('app.users.read', ['user_id' => $user->id]));
+        return self::json($user->toArray(), 201)->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
     public function count(Request $request)
@@ -102,7 +100,8 @@ class UsersController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
-        } else {
+        }
+        else {
             if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
                 DB::rollBack();
 

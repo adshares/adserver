@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Utilities;
@@ -32,11 +32,15 @@ final class UUID
         }
 
         // Get hexadecimal components of namespace
-        $nhex = str_replace(array(
-            '-',
-            '{',
-            '}',
-        ), '', $namespace);
+        $nhex = str_replace(
+            [
+                '-',
+                '{',
+                '}',
+            ],
+            '',
+            $namespace
+        );
 
         // Binary Value
         $nstr = '';
@@ -65,6 +69,14 @@ final class UUID
             // 48 bits for "node"
             substr($hash, 20, 12)
         );
+    }
+
+    public static function isValid($uuid)
+    {
+        return 1 === preg_match(
+                '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+                $uuid
+            );
     }
 
     public static function v4()
@@ -97,11 +109,15 @@ final class UUID
         }
 
         // Get hexadecimal components of namespace
-        $nhex = str_replace(array(
-            '-',
-            '{',
-            '}',
-        ), '', $namespace);
+        $nhex = str_replace(
+            [
+                '-',
+                '{',
+                '}',
+            ],
+            '',
+            $namespace
+        );
 
         // Binary Value
         $nstr = '';
@@ -129,14 +145,6 @@ final class UUID
             (hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000,
             // 48 bits for "node"
             substr($hash, 20, 12)
-        );
-    }
-
-    public static function isValid($uuid)
-    {
-        return 1 === preg_match(
-            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
-            $uuid
         );
     }
 }

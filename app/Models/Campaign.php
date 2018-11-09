@@ -118,6 +118,11 @@ class Campaign extends Model
     /** @var array Aditional fields to be included in collections */
     protected $appends = ['basic_information', 'targeting', 'ads'];
 
+    public static function isStatusAllowed(int $status): bool
+    {
+        return in_array($status, [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE]);
+    }
+
     public function banners()
     {
         return $this->hasMany(Banner::class);
@@ -126,7 +131,7 @@ class Campaign extends Model
     public function getAdsAttribute()
     {
         foreach ($this->banners as &$banner) {
-            $size = $banner->creative_width . 'x' . $banner->creative_height;
+            $size = $banner->creative_width.'x'.$banner->creative_height;
             $banner['type'] = $banner['creative_type'] === 'image' ? 0 : 1;
             $banner['size'] = array_search($size, Zone::ZONE_SIZE);
         }
@@ -177,10 +182,5 @@ class Campaign extends Model
         }
 
         return $urls;
-    }
-
-    public static function isStatusAllowed(int $status): bool
-    {
-        return in_array($status, [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE]);
     }
 }

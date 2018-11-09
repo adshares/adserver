@@ -51,8 +51,7 @@ class AuthController extends Controller
         $user = User::register($request->input('user'));
         Mail::to($user)->queue(
             new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-                $request->input('uri')
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id), $request->input('uri')
             )
         );
         DB::commit();
@@ -90,14 +89,13 @@ class AuthController extends Controller
                 429,
                 [
                     'message' => 'You can request to resend email activation every 15 minutes.'
-                        . ' Please wait 15 minutes or less.',
+                        .' Please wait 15 minutes or less.',
                 ]
             );
         }
         Mail::to($user)->queue(
             new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-                $request->input('uri')
+                Token::generate('email-activate', $this->email_activation_token_time, $user->id), $request->input('uri')
             )
         );
         DB::commit();
@@ -123,8 +121,8 @@ class AuthController extends Controller
                 429,
                 [
                     'message' => "You have already requested email change.\n"
-                        . "You can request email change every 5 minutes.\n"
-                        . "Please wait 5 minutes or less to start configuring another email address.",
+                        ."You can request email change every 5 minutes.\n"
+                        ."Please wait 5 minutes or less to start configuring another email address.",
                 ]
             );
         }
@@ -251,10 +249,12 @@ class AuthController extends Controller
         if (!Token::canGenerate($user->id, 'password-recovery', $this->password_recovery_resend_limit)) {
             return self::json([], 204);
         }
-        Mail::to($user)->queue(new AuthRecovery(
-            Token::generate('password-recovery', $this->password_recovery_token_time, $user->id),
-            $request->input('uri')
-        ));
+        Mail::to($user)->queue(
+            new AuthRecovery(
+                Token::generate('password-recovery', $this->password_recovery_token_time, $user->id),
+                $request->input('uri')
+            )
+        );
         DB::commit();
 
         return self::json([], 204);
@@ -285,7 +285,8 @@ class AuthController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
             $token_authorization = false;
-        } else {
+        }
+        else {
             if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
                 DB::rollBack();
 
