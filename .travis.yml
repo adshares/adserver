@@ -18,9 +18,9 @@ env:
     - APP_DEBUG=true
 
 stages:
+  - code quality
   - build
   - build and install
-  - quality
 
 before_script:
   # Enable aliases for non-interactive shells
