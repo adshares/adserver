@@ -40,7 +40,7 @@ class GzippedStreamedResponse extends StreamedResponse
     public function sendContent()
     {
         ob_start(
-            function ($output) {
+            function($output) {
                 header('Content-Length: '.strlen($output));
 
                 return false;

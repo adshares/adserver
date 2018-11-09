@@ -36,7 +36,7 @@ class RouteServiceProvider extends ServiceProvider
         Route::group([], base_path('routes/web.php'));
 
         Route::middleware([Kernel::JSON_API])->group(
-            function () {
+            function() {
                 Route::prefix(self::PREFIX_AUTH)->group(base_path('routes/auth.php'));
 
                 Route::prefix(self::PREFIX_REST)->middleware(Kernel::USER_ACCESS)->group(base_path('routes/rest.php'));

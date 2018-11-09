@@ -564,7 +564,7 @@ FILTERING_JSON;
     public static function getZoneTypes(): array
     {
         return array_map(
-            function ($key, $value) {
+            function($key, $value) {
                 $sizeId = array_search($key, array_keys(self::ZONE_SIZES), false);
 
                 $tags = ['Desktop'];
@@ -596,7 +596,7 @@ FILTERING_JSON;
     public static function getAvailableLanguages()
     {
         return array_map(
-            function ($key, $value) {
+            function($key, $value) {
                 return ['name' => $value, 'code' => $key];
             },
             array_keys(self::LANGUAGES),

@@ -82,7 +82,7 @@ class Site extends Model
     public function getAdUnitsAttribute()
     {
         return $this->zones->map(
-            function (Zone $zone) {
+            function(Zone $zone) {
                 $zone->publisher_id = $this->user_id;
 
                 return $zone;
@@ -115,7 +115,7 @@ class Site extends Model
     {
         $this->attributes['status'] = $value;
         $this->zones->map(
-            function (Zone $zone) use ($value) {
+            function(Zone $zone) use ($value) {
                 $zone->status = Site::ZONE_STATUS[$value];
             }
         );

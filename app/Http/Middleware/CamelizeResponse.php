@@ -27,7 +27,7 @@ class CamelizeResponse extends TransformsRequest
     protected function cleanArray(array $data)
     {
         return collect($data)->mapWithKeys(
-            function ($value, $key) {
+            function($value, $key) {
                 return $this->cleanValue($key, $value);
             }
         )->all();

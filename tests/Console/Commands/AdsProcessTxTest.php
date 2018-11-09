@@ -114,7 +114,7 @@ class AdsProcessTxTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function () {
+            function() {
                 $adsClient = $this->createMock(AdsClient::class);
                 // getBlockIds
                 $command = new GetBlockIdsCommand('0', '5B400000');
@@ -148,7 +148,7 @@ class AdsProcessTxTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function () {
+            function() {
                 $adsClient = $this->createMock(AdsClient::class);
                 // getBlockIds
                 $getBlockIdsStub = new \PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls(

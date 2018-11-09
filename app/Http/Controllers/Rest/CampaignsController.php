@@ -219,7 +219,7 @@ class CampaignsController extends Controller
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(
-                    function ($value) use ($banner) {
+                    function($value) use ($banner) {
                         return (string)($value['uuid'] ?? "") === $banner->uuid;
                     }
                 );

@@ -81,7 +81,7 @@ class DemandController extends Controller
         );
 
         $response->setCallback(
-            function () use ($response, $banner, $isIECompat) {
+            function() use ($response, $banner, $isIECompat) {
                 if (!$isIECompat) {
                     echo $banner->creative_contents;
 
@@ -127,7 +127,7 @@ class DemandController extends Controller
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $params) {
+            function() use ($jsPath, $params) {
                 echo str_replace(
                     [
                         "'{{ ORIGIN }}'",

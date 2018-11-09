@@ -97,7 +97,7 @@ class SupplyController extends Controller
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $request, $params) {
+            function() use ($jsPath, $request, $params) {
                 echo str_replace(
                     [
                         "'{{ ORIGIN }}'",

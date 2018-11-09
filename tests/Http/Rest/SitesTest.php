@@ -102,7 +102,7 @@ class SitesTest extends TestCase
         $this->actingAs($user, 'api');
 
         array_map(
-            function () use ($user) {
+            function() use ($user) {
                 factory(Site::class)->create(['user_id' => $user->id]);
             },
             $this->creationDataProvider()
@@ -170,7 +170,7 @@ JSON
         );
 
         return array_map(
-            function ($preset) use ($default) {
+            function($preset) use ($default) {
                 return [array_merge($default, $preset), $preset];
             },
             $presets

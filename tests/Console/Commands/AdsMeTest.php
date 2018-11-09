@@ -30,7 +30,7 @@ class AdsMeTest extends TestCase
     {
         $this->app->bind(
             AdsClient::class,
-            function () {
+            function() {
                 $adsClient = $this->createMock(AdsClient::class);
                 $adsClient->method('getMe')->willReturn($this->getMe());
 
