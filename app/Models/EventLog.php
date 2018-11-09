@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -39,14 +39,23 @@ class EventLog extends Model
      * @var array
      */
     protected $fillable = [
-        'cid', 'tid',
-        'publisher_event_id', 'banner_id',
+        'cid',
+        'tid',
+        'publisher_event_id',
+        'banner_id',
         'event_type',
-        'pay_to', 'ip',
-        'our_context', 'their_context',
-        'user_id', 'human_score', 'our_userdata', 'their_userdata',
+        'pay_to',
+        'ip',
+        'our_context',
+        'their_context',
+        'user_id',
+        'human_score',
+        'our_userdata',
+        'their_userdata',
         'timestamp',
-        'event_value', 'paid_amount', 'payment_id',
+        'event_value',
+        'paid_amount',
+        'payment_id',
     ];
 
     /**
@@ -54,8 +63,7 @@ class EventLog extends Model
      *
      * @var array
      */
-    protected $hidden = [
-    ];
+    protected $hidden = [];
 
     /**
      * The attributes that use some Models\Traits with mutator settings automation.
@@ -79,10 +87,10 @@ class EventLog extends Model
     public function getAdpayJson()
     {
         return [
-            'event_id' => (string) $this->id,
+            'event_id' => (string)$this->id,
             'event_type' => $this->event_type,
             'event_value' => $this->event_value,
-            'banner_id' => (string) $this->banner_id,
+            'banner_id' => (string)$this->banner_id,
             'our_keywords' => Utils::flattenKeywords($this->getOurKeywords()),
             'their_keywords' => Utils::flattenKeywords($this->getTheirKeywords()),
             'timestamp' => $this->updated_at,
@@ -95,7 +103,7 @@ class EventLog extends Model
     public function getOurKeywords()
     {
         return array_merge(
-            (array) $this->our_context,
+            (array)$this->our_context,
             [
                 'user' => $this->our_userdata,
             ]
@@ -105,7 +113,7 @@ class EventLog extends Model
     public function getTheirKeywords()
     {
         return array_merge(
-            (array) $this->their_context,
+            (array)$this->their_context,
             [
                 'user' => $this->their_userdata,
             ]

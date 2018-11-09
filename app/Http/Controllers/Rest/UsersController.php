@@ -62,8 +62,7 @@ class UsersController extends Controller
         );
         DB::commit();
 
-        return self::json($user->toArray(), 201)
-            ->header('Location', route('app.users.read', ['user_id' => $user->id]));
+        return self::json($user->toArray(), 201)->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
     public function count(Request $request)

@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Models;
@@ -42,15 +42,22 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $fillable = [
-      'cid', 'tid',
-      'banner_id',
-      'pay_from',
-      'event_type',
-      'pay_to', 'ip',
-      'context',
-      'user_id', 'human_score', 'our_userdata', 'their_userdata',
-      'timestamp',
-      'event_value', 'paid_amount', 'payment_id'
+        'cid',
+        'tid',
+        'banner_id',
+        'pay_from',
+        'event_type',
+        'pay_to',
+        'ip',
+        'context',
+        'user_id',
+        'human_score',
+        'our_userdata',
+        'their_userdata',
+        'timestamp',
+        'event_value',
+        'paid_amount',
+        'payment_id',
     ];
 
     /**
@@ -58,34 +65,33 @@ class NetworkEventLog extends Model
      *
      * @var array
      */
-    protected $hidden = [
-    ];
+    protected $hidden = [];
 
     /**
-    * The attributes that use some Models\Traits with mutator settings automation
-    *
-    * @var array
-    */
+     * The attributes that use some Models\Traits with mutator settings automation
+     *
+     * @var array
+     */
     protected $traitAutomate = [
-      'cid' => 'BinHex',
-      'tid' => 'BinHex',
-      'banner_id' => 'BinHex',
-      'pay_from' => 'AccountAddress',
-      'ip' => 'BinHex',
-      'context' => 'JsonValue',
-      'user_id' => 'BinHex',
-      'our_userdata' => 'JsonValue',
-      'their_userdata' => 'JsonValue',
-      'event_value' => 'Money',
-      'paid_amount' => 'Money',
+        'cid' => 'BinHex',
+        'tid' => 'BinHex',
+        'banner_id' => 'BinHex',
+        'pay_from' => 'AccountAddress',
+        'ip' => 'BinHex',
+        'context' => 'JsonValue',
+        'user_id' => 'BinHex',
+        'our_userdata' => 'JsonValue',
+        'their_userdata' => 'JsonValue',
+        'event_value' => 'Money',
+        'paid_amount' => 'Money',
     ];
 
     public function getAdselectJson()
     {
         return [
-            'event_id' => (string) $this->id,
-            'banner_id' => (string) $this->banner_id,
-            'keywords' =>  Utils::flattenKeywords($this->getKeywords()),
+            'event_id' => (string)$this->id,
+            'banner_id' => (string)$this->banner_id,
+            'keywords' => Utils::flattenKeywords($this->getKeywords()),
             'paid_amount' => $this->event_value,
             'user_id' => $this->user_id,
             'publisher_id' => "1",
@@ -95,9 +101,12 @@ class NetworkEventLog extends Model
 
     public function getKeywords()
     {
-        $data = array_merge((array) $this->context, [
-            'user' => $this->our_userdata
-        ]);
+        $data = array_merge(
+            (array)$this->context,
+            [
+                'user' => $this->our_userdata,
+            ]
+        );
 
         return $data;
     }

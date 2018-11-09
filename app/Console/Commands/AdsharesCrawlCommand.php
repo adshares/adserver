@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Console\Commands;
@@ -53,8 +53,8 @@ class AdsharesCrawlCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements '.
-    'from each adserver and stores offers in local db. Updates are forwarded to adselect.';
+    protected $description = 'Queries blockchain for available adsevers, downloads available advertisements '
+    .'from each adserver and stores offers in local db. Updates are forwarded to adselect.';
 
     /**
      * Create a new command instance.
@@ -105,7 +105,7 @@ class AdsharesCrawlCommand extends Command
                 // TODO: extract algo
                 if (preg_match('/^([a-z0-9][a-z0-9-]{0,62}\.)+([a-z]{2,})$/i', $host)) {
                     NetworkHost::registerHost(AdsUtils::normalizeAddress($log['address']), $host);
-                // TODO: check this with Jacek in adserver symfony code
+                    // TODO: check this with Jacek in adserver symfony code
                     // $nHost->setAccountMsid($log['account_msid']);
                 } else {
                     // TODO: debug error log?

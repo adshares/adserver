@@ -49,8 +49,12 @@ class CamelizeJsonResponse
 
     private function camelizeJsonKeys(string $json): string
     {
-        return preg_replace_callback('/"([^"]+?)"\s*:/', function (array $input): string {
-            return '"' . camel_case($input[1]) . '":';
-        }, $json);
+        return preg_replace_callback(
+            '/"([^"]+?)"\s*:/',
+            function (array $input): string {
+                return '"'.camel_case($input[1]).'":';
+            },
+            $json
+        );
     }
 }

@@ -63,6 +63,24 @@ class Banner extends Model
         'creative_sha1' => 'BinHex',
     ];
 
+    public static function type($type)
+    {
+        if ($type === self::IMAGE_TYPE) {
+            return 'image';
+        }
+
+        return 'html';
+    }
+
+    public static function size($size)
+    {
+        if (!isset(Zone::ZONE_SIZE[$size])) {
+            throw new \RuntimeException(sprintf('Wrong image size.'));
+        }
+
+        return Zone::ZONE_SIZE[$size];
+    }
+
     public function campaign()
     {
         return $this->belongsTo('Adshares\Adserver\Models\Campaign');
@@ -83,23 +101,5 @@ class Banner extends Model
         }
 
         return $array;
-    }
-
-    public static function type($type)
-    {
-        if ($type === self::IMAGE_TYPE) {
-            return 'image';
-        }
-
-        return 'html';
-    }
-
-    public static function size($size)
-    {
-        if (!isset(Zone::ZONE_SIZE[$size])) {
-            throw new \RuntimeException(sprintf('Wrong image size.'));
-        }
-
-        return Zone::ZONE_SIZE[$size];
     }
 }

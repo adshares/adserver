@@ -28,27 +28,30 @@ class AdsMeTest extends TestCase
 {
     public function testAdsMe()
     {
-        $this->app->bind(AdsClient::class, function () {
-            $adsClient = $this->createMock(AdsClient::class);
-            $adsClient->method('getMe')
-                ->willReturn($this->getMe());
-            return $adsClient;
-        });
+        $this->app->bind(
+            AdsClient::class,
+            function () {
+                $adsClient = $this->createMock(AdsClient::class);
+                $adsClient->method('getMe')->willReturn($this->getMe());
 
-        $this->artisan('ads:me')
-            ->expectsOutput('10757805.92629473076')
-            ->assertExitCode(0);
+                return $adsClient;
+            }
+        );
+
+        $this->artisan('ads:me')->expectsOutput('10757805.92629473076')->assertExitCode(0);
     }
 
     private function getMe()
     {
-        return new GetAccountResponse(json_decode('{
+        return new GetAccountResponse(
+            json_decode(
+                '{
             "current_block_time": "1539606240",
             "previous_block_time": "1539606208",
             "tx": {
                 "data": "10010000000000010000000000E986C45B",
                 "signature": "749E930A3054A1ACB7926E34FB18ACC712AED8F9431891F376CE01279A'
-            .'9D5B927F80FD2F0BBEE3FE083E7721FF9C7DBCAFED9BD536ED2F634102BE22D2091703",
+                .'9D5B927F80FD2F0BBEE3FE083E7721FF9C7DBCAFED9BD536ED2F634102BE22D2091703",
                 "time": "1539606249"
             },
             "account": {
@@ -84,6 +87,9 @@ class AdsMeTest extends TestCase
                 "hash": "A3F1B886445EA0F1E6F64D22C8D015F15F6C440B504E314C80FDA572EA66E4AC",
                 "checksum": "true"
             }
-        }', true));
+        }',
+                true
+            )
+        );
     }
 }

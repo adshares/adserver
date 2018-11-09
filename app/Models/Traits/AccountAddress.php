@@ -33,6 +33,17 @@ trait AccountAddress
         $this->attributes[$key] = hex2bin($binAddress);
     }
 
+    private function decodeAddress($address)
+    {
+        $address = preg_replace('/[^0-9A-F]+/', '', strtoupper($address));
+
+        if (!preg_match('/[0-9A-F]{16}/', $address)) {
+            throw new \InvalidArgumentException("Incorrect account address $address");
+        }
+
+        return substr($address, 0, 12);
+    }
+
     public function accountAddressAccessor($value)
     {
         if ($value === null) {
@@ -40,6 +51,13 @@ trait AccountAddress
         }
 
         return $this->encodeAddress(bin2hex($value));
+    }
+
+    private function encodeAddress($binAddress)
+    {
+        $checksum = self::crc16($binAddress);
+
+        return strtoupper(sprintf("%s-%s-%s", substr($binAddress, 0, 4), substr($binAddress, 4, 8), $checksum));
     }
 
     private function crc16($hexChars)
@@ -54,23 +72,5 @@ trait AccountAddress
         }
 
         return strtoupper(str_pad(dechex($crc), 4, '0', STR_PAD_LEFT));
-    }
-
-    private function encodeAddress($binAddress)
-    {
-        $checksum = self::crc16($binAddress);
-
-        return strtoupper(sprintf("%s-%s-%s", substr($binAddress, 0, 4), substr($binAddress, 4, 8), $checksum));
-    }
-
-    private function decodeAddress($address)
-    {
-        $address = preg_replace('/[^0-9A-F]+/', '', strtoupper($address));
-
-        if (!preg_match('/[0-9A-F]{16}/', $address)) {
-            throw new \InvalidArgumentException("Incorrect account address $address");
-        }
-
-        return substr($address, 0, 12);
     }
 }

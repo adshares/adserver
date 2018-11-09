@@ -30,13 +30,13 @@ class UserLedger extends Model
 
     /**
      * Returns account balance of particular user.
+     *
      * @param int $userId user id
+     *
      * @return int balance
      */
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)
-            ->where('status', self::STATUS_ACCEPTED)
-            ->sum('amount');
+        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
     }
 }

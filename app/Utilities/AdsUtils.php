@@ -37,9 +37,11 @@ final class AdsUtils
 
     /**
      * Calculates transfer fee.
+     *
      * @param string $addressFrom sender address
      * @param string $addressTo recipient address
      * @param int $amount amount
+     *
      * @return int transfer fee
      */
     public static function calculateFee(string $addressFrom, string $addressTo, int $amount): int
@@ -50,6 +52,7 @@ final class AdsUtils
             // different nodes
             $fee += ceil($amount * self::TXS_REMOTE_FEE);
         }
+
         return intval(max($fee, self::TXS_MIN_FEE));
     }
 

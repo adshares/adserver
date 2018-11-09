@@ -563,37 +563,45 @@ FILTERING_JSON;
 
     public static function getZoneTypes(): array
     {
-        return array_map(function ($key, $value) {
-            $sizeId = array_search($key, array_keys(self::ZONE_SIZES), false);
+        return array_map(
+            function ($key, $value) {
+                $sizeId = array_search($key, array_keys(self::ZONE_SIZES), false);
 
-            $tags = ['Desktop'];
-            if (strpos($key, 'mobile') !== false) {
-                $tags[] = 'Mobile';
-            }
-            if (strpos($key, '-billboard') !== false) {
-                $tags[] = 'PL';
-            }
-            if ($sizeId < 5) {
-                $tags[] = 'best';
-            }
+                $tags = ['Desktop'];
+                if (strpos($key, 'mobile') !== false) {
+                    $tags[] = 'Mobile';
+                }
+                if (strpos($key, '-billboard') !== false) {
+                    $tags[] = 'PL';
+                }
+                if ($sizeId < 5) {
+                    $tags[] = 'best';
+                }
 
-            return [
-                'id' => $sizeId + 1,
-                'name' => ucwords(str_replace('-', ' ', $key)),
-                'type' => $key,
-                'size' => $sizeId,
-                'tags' => $tags,
-                'width' => explode('x', $value)[0],
-                'height' => explode('x', $value)[1],
-            ];
-        }, array_keys(self::ZONE_SIZES), self::ZONE_SIZES);
+                return [
+                    'id' => $sizeId + 1,
+                    'name' => ucwords(str_replace('-', ' ', $key)),
+                    'type' => $key,
+                    'size' => $sizeId,
+                    'tags' => $tags,
+                    'width' => explode('x', $value)[0],
+                    'height' => explode('x', $value)[1],
+                ];
+            },
+            array_keys(self::ZONE_SIZES),
+            self::ZONE_SIZES
+        );
     }
 
     public static function getAvailableLanguages()
     {
-        return array_map(function ($key, $value) {
-            return ['name' => $value, 'code' => $key];
-        }, array_keys(self::LANGUAGES), self::LANGUAGES);
+        return array_map(
+            function ($key, $value) {
+                return ['name' => $value, 'code' => $key];
+            },
+            array_keys(self::LANGUAGES),
+            self::LANGUAGES
+        );
     }
 
     public function pixel()
@@ -613,12 +621,14 @@ FILTERING_JSON;
 
     public function userData()
     {
-        return new JsonResponse([
-            'user' => [
-                'keywords' => 'one, two, three',
-                'human_score' => 5,
-            ],
-            'lang' => 'pl',
-        ]);
+        return new JsonResponse(
+            [
+                'user' => [
+                    'keywords' => 'one, two, three',
+                    'human_score' => 5,
+                ],
+                'lang' => 'pl',
+            ]
+        );
     }
 }
