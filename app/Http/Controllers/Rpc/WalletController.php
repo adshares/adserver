@@ -52,13 +52,17 @@ class WalletController extends Controller
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
+
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        Validator::make($request->all(), [
-            self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
-            self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
-        ])->validate();
+        Validator::make(
+            $request->all(),
+            [
+                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
+            ]
+        )->validate();
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
 
@@ -79,19 +83,33 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
+    /**
+     * Returns AdServer address in ADS network.
+     *
+     * @return \Illuminate\Config\Repository|mixed
+     */
+    private function getAdServerAdsAddress()
+    {
+        return config('app.adshares_address');
+    }
+
     public function withdraw(Request $request)
     {
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
+
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        Validator::make($request->all(), [
-            self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
-            self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
-            self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
-        ])->validate();
+        Validator::make(
+            $request->all(),
+            [
+                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+                self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
+                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
+            ]
+        )->validate();
 
         $amount = $request->input(self::FIELD_AMOUNT);
         $addressTo = $request->input(self::FIELD_TO);
@@ -106,7 +124,7 @@ class WalletController extends Controller
         $total = $amount + $fee;
 
         $userId = Auth::user()->id;
-        $ul = new UserLedger;
+        $ul = new UserLedger();
         $ul->user_id = $userId;
         $ul->amount = -$total;
         $ul->address_from = $addressFrom;
@@ -144,10 +162,13 @@ class WalletController extends Controller
 
     public function history(Request $request)
     {
-        Validator::make($request->all(), [
-            self::FIELD_LIMIT => ['integer', 'min:1'],
-            self::FIELD_OFFSET => ['integer', 'min:0'],
-        ])->validate();
+        Validator::make(
+            $request->all(),
+            [
+                self::FIELD_LIMIT => ['integer', 'min:1'],
+                self::FIELD_OFFSET => ['integer', 'min:0'],
+            ]
+        )->validate();
 
         $limit = $request->input(self::FIELD_LIMIT, 10);
         $offset = $request->input(self::FIELD_OFFSET, 0);
@@ -181,23 +202,16 @@ class WalletController extends Controller
     }
 
     /**
-     * Returns AdServer address in ADS network.
-     *
-     * @return \Illuminate\Config\Repository|mixed
-     */
-    private function getAdServerAdsAddress()
-    {
-        return config('app.adshares_address');
-    }
-
-    /**
      * Returns link to transaction data.
+     *
      * @param $txid string transaction id
+     *
      * @return string link to transaction
      */
     private static function getTransactionLink(string $txid): string
     {
         $adsOperator = config('app.ads_operator_url');
+
         return "$adsOperator/blockexplorer/transactions/$txid";
     }
 }

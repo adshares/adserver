@@ -92,6 +92,7 @@ class MockDataSitesSeeder extends Seeder
                     $z->name = $zn;
                     $z->width = $zr['width'];
                     $z->height = $zr['height'];
+                    $z->type = "{$zr['width']}x{$zr['height']}";
                     $z->save();
                 }
                 $this->command->info(" Added - [$s->name] for user <{$u->email}>");

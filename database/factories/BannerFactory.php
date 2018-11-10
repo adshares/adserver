@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,21 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+use Adshares\Adserver\Models\Banner;
+use Faker\Generator as Faker;
 
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Hash;
-
-trait CreatesApplication
-{
-    public function createApplication()
-    {
-        $app = require __DIR__.'/../bootstrap/app.php';
-
-        $app->make(Kernel::class)->bootstrap();
-
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
-    }
-}
+$factory->define(Banner::class, function (Faker $faker) {
+    return [
+        'creative_contents' => $faker->sha1(),
+        'creative_type' => $faker->word(),
+        'creative_sha1' => $faker->sha1(),
+        'creative_width' => $faker->numberBetween(100,1024),
+        'creative_height' => $faker->numberBetween(100,1024),
+        'name' => $faker->word(),
+    ];
+});

@@ -18,22 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Events;
+use Adshares\Adserver\Models\Campaign;
+use Faker\Generator as Faker;
 
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-
-class CreativeSha1
-{
-    use Dispatchable, SerializesModels;
-
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(\Adshares\Adserver\Models\Banner $model)
-    {
-        $model->creative_sha1 = sha1($model->creative_contents);
-    }
-}
+$factory->define(Campaign::class, function (Faker $faker) {
+    $startEnd = $faker->dateTimeThisMonth();
+    $startTime = $faker->dateTimeThisMonth($startEnd);
+    return [
+        'landing_url' => $faker->url(),
+        'time_start' => $startTime,
+        'time_end' => $startEnd,
+        'status' => '0',
+        'name' => $faker->word(),
+        'max_cpc' => '2',
+        'max_cpm' => '1',
+        'budget' => '100',
+        'targeting_excludes' => [],
+        'targeting_requires' => [],
+        'classification_status' => 0,
+        'classification_tags' => null,
+    ];
+});

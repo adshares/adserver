@@ -25,6 +25,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Banner extends Model
 {
@@ -33,6 +34,10 @@ class Banner extends Model
 
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
+    protected $dates = [
+        'deleted_at',
+    ];
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
         'saving' => CreativeSha1::class,
@@ -51,26 +56,12 @@ class Banner extends Model
         'id',
         'creative_contents',
         'campaign_id',
+        'deleted_at',
     ];
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',
     ];
-
-    public function campaign()
-    {
-        return $this->belongsTo('Adshares\Adserver\Models\Campaign');
-    }
-
-    protected function toArrayExtras($array)
-    {
-        $array['serve_url'] = route('banner-serve', ['id' => $this->id]);
-        $array['image_url'] = $array['serve_url'];
-        $array['view_url'] = route('log-network-view', ['id' => $this->id]);
-        $array['click_url'] = route('log-network-click', ['id' => $this->id]);
-
-        return $array;
-    }
 
     public static function type($type)
     {
@@ -88,5 +79,27 @@ class Banner extends Model
         }
 
         return Zone::ZONE_SIZE[$size];
+    }
+
+    public function campaign()
+    {
+        return $this->belongsTo('Adshares\Adserver\Models\Campaign');
+    }
+
+    protected function toArrayExtras($array)
+    {
+        $array['serve_url'] = route('banner-serve', ['id' => $this->id]);
+        $array['view_url'] = route('log-network-view', ['id' => $this->id]);
+        $array['click_url'] = route('log-network-click', ['id' => $this->id]);
+
+        if ($this->type === self::HTML_TYPE) {
+            $array['html'] = $this->creative_contents;
+        }
+
+        if ($this->type === self::IMAGE_TYPE) {
+            $array['image_url'] = $array['serve_url'];
+        }
+
+        return $array;
     }
 }

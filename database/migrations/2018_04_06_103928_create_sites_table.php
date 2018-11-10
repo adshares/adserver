@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\Site;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -36,10 +37,12 @@ class CreateSitesTable extends Migration
 
             $table->bigInteger('user_id')->unsigned()->nullable();
             $table->string('name', 64);
-            $table->unsignedTinyInteger('status')->nullable(false)->default(0);
+            $table->unsignedTinyInteger('status')
+                ->nullable(false)
+                ->default(Site::STATUS_INACTIVE);
             $table->json('site_excludes')->nullable(true);
             $table->json('site_requires')->nullable(true);
-            $table->string('primary_language','2')->nullable(false)->default('en');
+            $table->string('primary_language', '2')->nullable(false)->default('en');
 
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('RESTRICT');
         });

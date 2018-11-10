@@ -35,29 +35,25 @@ use Illuminate\Console\Command;
 class AdsProcessTx extends Command
 {
     /**
+     * Command ended without error
+     */
+    const EXIT_CODE_SUCCESS = 0;
+    /**
+     * Command ended prematurely because block ids could not be updated
+     */
+    const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
+    /**
      * The name and signature of the console command.
      *
      * @var string
      */
     protected $signature = 'ads:process-tx';
-
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Processes incoming txs';
-
-    /**
-     * Command ended without error
-     */
-    const EXIT_CODE_SUCCESS = 0;
-
-    /**
-     * Command ended prematurely because block ids could not be updated
-     */
-    const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
-
     /**
      * @var string blockchain address of AdServer
      */
@@ -76,7 +72,9 @@ class AdsProcessTx extends Command
 
     /**
      * Execute the console command.
+     *
      * @param AdsClient $adsClient
+     *
      * @return int
      */
     public function handle(AdsClient $adsClient)
@@ -86,9 +84,10 @@ class AdsProcessTx extends Command
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
-            $this->error("Cannot update blocks due to CommandException:\n"
-                . "Code:\n  ${code}\n"
-                . "Message:\n  ${message}\n");
+            $this->error(
+                "Cannot update blocks due to CommandException:\n"."Code:\n  ${code}\n"."Message:\n  ${message}\n"
+            );
+
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
@@ -97,22 +96,15 @@ class AdsProcessTx extends Command
         foreach ($dbTxs as $dbTx) {
             $this->handleDbTx($adsClient, $dbTx);
         }
+
         return self::EXIT_CODE_SUCCESS;
     }
 
     /**
-     * Extracts uuid from tx message.
-     * @param string $message tx message
-     * @return string uuid as hex string
-     */
-    private function extractUuidFromMessage(string $message): string
-    {
-        return substr($message, -32);
-    }
-
-    /**
      * Updates block data.
+     *
      * @param AdsClient $adsClient
+     *
      * @throws CommandException
      */
     private function updateBlockIds(AdsClient $adsClient)
@@ -210,7 +202,7 @@ class AdsProcessTx extends Command
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
                 // add to ledger
-                $ul = new UserLedger;
+                $ul = new UserLedger();
                 $ul->user_id = $user->id;
                 $ul->amount = $amount;
                 $ul->address_from = $senderAddress;
@@ -219,14 +211,28 @@ class AdsProcessTx extends Command
 
                 $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
                 // dbTx added to ledger will not be processed again
-                DB::transaction(function () use ($ul, $dbTx) {
-                    $ul->save();
-                    $dbTx->save();
-                });
+                DB::transaction(
+                    function () use ($ul, $dbTx) {
+                        $ul->save();
+                        $dbTx->save();
+                    }
+                );
             }
         } else {
             $dbTx->status = AdsTxIn::STATUS_INVALID;
             $dbTx->save();
         }
+    }
+
+    /**
+     * Extracts uuid from tx message.
+     *
+     * @param string $message tx message
+     *
+     * @return string uuid as hex string
+     */
+    private function extractUuidFromMessage(string $message): string
+    {
+        return substr($message, -32);
     }
 }

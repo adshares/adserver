@@ -38,6 +38,7 @@ class CampaignRepository
     /**
      * @param Campaign $campaign
      * @param array $banners
+     *
      * @throws \Exception
      */
     public function save(Campaign $campaign, array $banners = []): void
@@ -50,6 +51,57 @@ class CampaignRepository
             if ($banners) {
                 foreach ($banners as $banner) {
                     $campaign->banners()->save($banner);
+                }
+            }
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            throw $ex;
+        }
+
+        DB::commit();
+    }
+
+    public function delete(Campaign $campaign): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $campaign->delete();
+            $campaign->banners()->delete();
+        } catch (\Exception $ex) {
+            DB::rollBack();
+            throw $ex;
+        }
+
+        DB::commit();
+    }
+
+    public function update(
+        Campaign $campaign,
+        array $bannersToInsert = [],
+        array $bannersToUpdate = [],
+        array $bannersToDelete = []
+    ): void {
+        DB::beginTransaction();
+
+        try {
+            $campaign->update();
+
+            if ($bannersToInsert) {
+                foreach ($bannersToInsert as $banner) {
+                    $campaign->banners()->save($banner);
+                }
+            }
+
+            if ($bannersToUpdate) {
+                foreach ($bannersToUpdate as $banner) {
+                    $banner->update();
+                }
+            }
+
+            if ($bannersToDelete) {
+                foreach ($bannersToDelete as $banner) {
+                    $banner->delete();
                 }
             }
         } catch (\Exception $ex) {

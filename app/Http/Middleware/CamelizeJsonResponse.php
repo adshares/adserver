@@ -28,7 +28,7 @@ class CamelizeJsonResponse
     public function handle($request, Closure $next)
     {
         $response = $next($request);
-        
+
         if ($response instanceof JsonResponse) {
             return $this->camelizeJsonResponse($response);
         }
@@ -49,8 +49,12 @@ class CamelizeJsonResponse
 
     private function camelizeJsonKeys(string $json): string
     {
-        return preg_replace_callback('/"([^"]+?)"\s*:/', function (array $input): string {
-            return '"' . camel_case($input[1]) . '":';
-        }, $json);
+        return preg_replace_callback(
+            '/"([^"]+?)"\s*:/',
+            function (array $input): string {
+                return '"'.camel_case($input[1]).'":';
+            },
+            $json
+        );
     }
 }

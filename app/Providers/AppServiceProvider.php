@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Adserver\Providers;
@@ -40,23 +40,32 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->app->bind(Adpay::class, function ($app) {
-            return new Adpay(config('app.adpay_endpoint'), config('app.debug'));
-        });
-        $this->app->bind(Adselect::class, function ($app) {
-            return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
-        });
-        $this->app->bind(AdsClient::class, function ($app) {
-            $drv = new CliDriver(
-                config('app.adshares_address'),
-                config('app.adshares_secret'),
-                config('app.adshares_node_host'),
-                config('app.adshares_node_port')
-            );
-            $drv->setCommand(config('app.adshares_command'));
-            $drv->setWorkingDir(config('app.adshares_workingdir'));
+        $this->app->bind(
+            Adpay::class,
+            function ($app) {
+                return new Adpay(config('app.adpay_endpoint'), config('app.debug'));
+            }
+        );
+        $this->app->bind(
+            Adselect::class,
+            function ($app) {
+                return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
+            }
+        );
+        $this->app->bind(
+            AdsClient::class,
+            function ($app) {
+                $drv = new CliDriver(
+                    config('app.adshares_address'),
+                    config('app.adshares_secret'),
+                    config('app.adshares_node_host'),
+                    config('app.adshares_node_port')
+                );
+                $drv->setCommand(config('app.adshares_command'));
+                $drv->setWorkingDir(config('app.adshares_workingdir'));
 
-            return new AdsClient($drv);
-        });
+                return new AdsClient($drv);
+            }
+        );
     }
 }

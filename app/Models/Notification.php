@@ -47,7 +47,12 @@ class Notification extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'userRole', 'type', 'title', 'message', 'payload',
+        'user_id',
+        'userRole',
+        'type',
+        'title',
+        'message',
+        'payload',
     ];
 
     /**

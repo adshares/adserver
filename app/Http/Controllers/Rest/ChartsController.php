@@ -26,7 +26,9 @@ class ChartsController extends Controller
 {
     public function chart()
     {
-        return self::json(json_decode('{
+        return self::json(
+            json_decode(
+                '{
         "values": [
           96,
           66,
@@ -90,12 +92,16 @@ class ChartsController extends Controller
         "total": 5200,
         "difference": 300,
         "differenceInPercentage": 0.06
-      }'));
+      }'
+            )
+        );
     }
 
     public function publisherChart()
     {
-        return self::json(json_decode('[{
+        return self::json(
+            json_decode(
+                '[{
       "values": [
         96,
         66,
@@ -159,6 +165,8 @@ class ChartsController extends Controller
       "total": 5200,
       "difference": 300,
       "differenceInPercentage": 0.06
-    }]'));
+    }]'
+            )
+        );
     }
 }

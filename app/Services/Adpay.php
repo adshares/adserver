@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,7 +15,7 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
 namespace Adshares\Services;
@@ -31,7 +31,7 @@ class Adpay
 {
     private $endpointUrl;
     private $rpcClient;
-    
+
     public function __construct($endpoint, $debug)
     {
         $this->endpointUrl = $endpoint;
@@ -41,7 +41,7 @@ class Adpay
             $this->rpcClient->getHttpClient()->withDebug();
         }
     }
-    
+
     public function getPayments($hour_timestamp)
     {
         return $this->rpcClient->execute("get_payments", [['timestamp' => $hour_timestamp]]);
@@ -56,16 +56,16 @@ class Adpay
 
          */
     }
-    
+
     public function testGetPayments($hour_timestamp)
     {
         return $this->rpcClient->execute("test_get_payments", [['timestamp' => $hour_timestamp]]);
     }
-    
+
     public function addEvents(array $events)
     {
         return $this->rpcClient->execute("add_events", $events);
-        
+
         /*
 -> [
     {
@@ -112,7 +112,7 @@ class Adpay
 <- {'result':True}
          */
     }
-    
+
     public function addCampaigns(array $campaings)
     {
         return $this->rpcClient->execute("campaign_update", $campaings);
@@ -141,7 +141,7 @@ class Adpay
         }
          */
     }
-    
+
     public function deleteCampaigns(array $campaignIds)
     {
         return $this->rpcClient->execute("campaign_delete", $campaignIds);

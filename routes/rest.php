@@ -27,6 +27,7 @@ Route::get('campaigns/count', [CampaignsController::class, 'count'])->name('app.
 Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])->name('app.campaigns.read');
 Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaigns.add');
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
+Route::put('campaigns/{campaign_id}/status', [CampaignsController::class, 'changeStatus'])->name('app.campaigns.change_status');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
 Route::post('campaigns/banner', [CampaignsController::class, 'upload'])->name('app.campaigns.upload');
@@ -34,12 +35,12 @@ Route::post('campaigns/banner', [CampaignsController::class, 'upload'])->name('a
 Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])->name('app.campaigns.classify');
 Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])->name('app.campaigns.disable_classify');
 
-Route::get('sites', [SitesController::class, 'browse'])->name('app.sites.browse');
-Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
+Route::post('sites', [SitesController::class, 'create'])->name('app.sites.add');
 Route::get('sites/{site}', [SitesController::class, 'read'])->name('app.sites.read');
-Route::post('sites', [SitesController::class, 'add'])->name('app.sites.add');
-Route::patch('sites/{site}', [SitesController::class, 'edit'])->name('app.sites.edit');
+Route::patch('sites/{site}', [SitesController::class, 'update'])->name('app.sites.edit');
 Route::delete('sites/{site}', [SitesController::class, 'delete'])->name('app.sites.delete');
+Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
+Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
 
 # only for admin
 Route::get('users', [UsersController::class, 'browse'])->name('app.users.browse');

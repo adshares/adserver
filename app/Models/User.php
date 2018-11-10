@@ -37,13 +37,25 @@ class User extends Authenticatable
     use AutomateMutators;
     use BinHex;
 
+    public static $rules = [
+        'email' => 'email|max:150|unique:users',
+        'password' => 'min:8',
+        'password_new' => 'min:8',
+        'is_advertiser' => 'boolean',
+        'is_publisher' => 'boolean',
+    ];
+    public static $rules_add = [
+        'email' => 'required|email|max:150|unique:users',
+        'password' => 'required|min:8',
+        'is_advertiser' => 'boolean',
+        'is_publisher' => 'boolean',
+    ];
     /**
      * The attributes that should be mutated to dates.
      *
      * @var array
      */
     protected $dates = ['deleted_at'];
-
     /**
      * The event map for the model.
      *
@@ -53,7 +65,6 @@ class User extends Authenticatable
         'creating' => GenerateUUID::class,
         'created' => UserCreated::class,
     ];
-
     /**
      * The attributes that are mass assignable.
      *
@@ -64,7 +75,6 @@ class User extends Authenticatable
         'is_advertiser',
         'is_publisher',
     ];
-
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -74,22 +84,6 @@ class User extends Authenticatable
         'password',
         'id',
     ];
-
-    public static $rules = [
-        'email' => 'email|max:150|unique:users',
-        'password' => 'min:8',
-        'password_new' => 'min:8',
-        'is_advertiser' => 'boolean',
-        'is_publisher' => 'boolean',
-    ];
-
-    public static $rules_add = [
-        'email' => 'required|email|max:150|unique:users',
-        'password' => 'required|min:8',
-        'is_advertiser' => 'boolean',
-        'is_publisher' => 'boolean',
-    ];
-
     /**
      * The attributes that use some Models\Traits with mutator settings automation.
      *
@@ -98,11 +92,6 @@ class User extends Authenticatable
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
-
-    public function adserverWallet()
-    {
-        return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
-    }
 
     public static function register($data)
     {
@@ -114,19 +103,14 @@ class User extends Authenticatable
         return $user;
     }
 
+    public function adserverWallet()
+    {
+        return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
+    }
+
     public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
-    }
-
-    /**
-     * check toArrayExtrasCheck() in AutomateMutators trait.
-     */
-    protected function toArrayExtras($array)
-    {
-        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
-
-        return $array;
     }
 
     public function validPassword($value)
@@ -152,5 +136,15 @@ class User extends Authenticatable
     {
         $this->api_token = null;
         $this->save();
+    }
+
+    /**
+     * check toArrayExtrasCheck() in AutomateMutators trait.
+     */
+    protected function toArrayExtras($array)
+    {
+        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
+
+        return $array;
     }
 }
