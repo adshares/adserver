@@ -141,8 +141,8 @@ return [
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
 
-    'aduser_endpoint' => env('ADUSER_ENDPOINT'),
-    'aduser_local_endpoint' => env('ADUSER_LOCAL_ENDPOINT'),
+    'aduser_external_location' => env('ADUSER_EXTERNAL_LOCATION'),
+    'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
 

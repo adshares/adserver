@@ -236,7 +236,7 @@ class DemandController extends Controller
 
         $log->save();
 
-        $aduser_endpoint = config('app.aduser_endpoint');
+        $aduser_endpoint = config('app.aduser_external_location');
 
         if ($aduser_endpoint) {
             $iid = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
@@ -281,7 +281,7 @@ class DemandController extends Controller
 
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
-        $aduser_endpoint = config('app.aduser_endpoint');
+        $aduser_endpoint = config('app.aduser_external_location');
         $userdata = ($aduser_endpoint && $impressionId) ? json_decode(
             file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"),
             true
