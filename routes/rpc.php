@@ -19,13 +19,13 @@
  */
 
 use Adshares\Adserver\Http\Controllers\CampaignOptionsController;
-use Adshares\Adserver\Http\Controllers\Rest\ChartsController;
-use Adshares\Adserver\Http\Controllers\Rest\ConfigController;
-use Adshares\Adserver\Http\Controllers\Rest\NotificationsController;
-use Adshares\Adserver\Http\Controllers\Rest\SettingsController;
-use Adshares\Adserver\Http\Controllers\Rpc\WalletController;
+use Adshares\Adserver\Http\Controllers\ChartsController;
+use Adshares\Adserver\Http\Controllers\ConfigController;
+use Adshares\Adserver\Http\Controllers\NotificationsController;
+use Adshares\Adserver\Http\Controllers\SettingsController;
 use Adshares\Adserver\Http\Controllers\Simulator;
 use Adshares\Adserver\Http\Controllers\SiteOptionsController;
+use Adshares\Adserver\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);

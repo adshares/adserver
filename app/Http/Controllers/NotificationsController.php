@@ -18,21 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rest;
+namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Models\Notification;
+use Illuminate\Support\Facades\Auth;
 
-class ConfigController extends Controller
+class NotificationsController extends Controller
 {
     /**
-     * Return adserver adshares address.
+     * Return adserver users notifications.
      *
      * @param \Illuminate\Http\Request $request
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function adsharesAddress()
+    public function read()
     {
-        return self::json(['adsharesAddress' => config('app.adshares_address')], 200);
+        return self::json(Notification::where('user_id', Auth::user()->id)->get()->toArray(), 200);
     }
 }

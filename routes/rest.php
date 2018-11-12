@@ -18,9 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Rest\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Rest\SitesController;
-use Adshares\Adserver\Http\Controllers\Rest\UsersController;
+use Adshares\Adserver\Http\Controllers\CampaignsController;
+use Adshares\Adserver\Http\Controllers\SitesController;
+use Adshares\Adserver\Http\Controllers\UsersController;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
 Route::get('campaigns/count', [CampaignsController::class, 'count'])->name('app.campaigns.count');

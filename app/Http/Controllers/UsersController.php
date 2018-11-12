@@ -18,9 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rest;
+namespace Adshares\Adserver\Http\Controllers;
 
-use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Http\Kernel;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;

@@ -18,11 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rpc;
+namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
-use Adshares\Adserver\Http\Controllers\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\UserLedger;
 use Adshares\Adserver\Utilities\AdsUtils;
