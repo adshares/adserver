@@ -18,12 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Http\Controllers\Manager;
 
-class CampaignOptionsController extends Controller
+use Adshares\Adserver\Http\Controller;
+
+class SiteOptionsController extends Controller
 {
-    public function targeting()
+    public function filtering()
     {
-        return self::json(json_decode(Simulator::TARGETING_JSON));
+        return self::json(json_decode(Simulator::FILTERING_JSON));
+    }
+
+    public function languages()
+    {
+        return self::json(Simulator::getAvailableLanguages());
+    }
+
+    public function zones()
+    {
+        return self::json(Simulator::getZoneTypes());
     }
 }

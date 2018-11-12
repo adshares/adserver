@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
