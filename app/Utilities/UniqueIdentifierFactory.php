@@ -17,25 +17,23 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Events;
+namespace Adshares\Adserver\Utilities;
 
-use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use Ramsey\Uuid\Uuid;
 
-class GenerateUUID
+final class UniqueIdentifierFactory
 {
-    use Dispatchable, SerializesModels;
-
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(Model $model)
+    public static function fromString(string $id): UniqueId
     {
-        $model->uuid = UuidStringGenerator::v4();
+        return new UniqueId(Uuid::fromString($id));
     }
+
+    public static function random(): UniqueId
+    {
+        return new UniqueId(Uuid::uuid4());
+    }
+
+    private function __construct() { }
 }

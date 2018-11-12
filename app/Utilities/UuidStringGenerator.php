@@ -20,12 +20,9 @@
 
 namespace Adshares\Adserver\Utilities;
 
-/**
- * Generate UUIDs.
- */
-final class UUID
+final class UuidStringGenerator
 {
-    public static function v3($namespace, $name)
+    public static function v3(string $namespace, string $name): string
     {
         if (!self::isValid($namespace)) {
             return false;
@@ -71,7 +68,7 @@ final class UUID
         );
     }
 
-    public static function isValid($uuid)
+    public static function isValid(string $uuid): string
     {
         $pregMatch = preg_match(
             '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
@@ -81,7 +78,7 @@ final class UUID
         return 1 === $pregMatch;
     }
 
-    public static function v4()
+    public static function v4(): string
     {
         return sprintf(
             '%04x%04x%04x%04x%04x%04x%04x%04x',
