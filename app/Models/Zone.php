@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Controllers\Simulator;
+use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 

@@ -18,17 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\CampaignOptionsController;
-use Adshares\Adserver\Http\Controllers\CampaignsController;
-use Adshares\Adserver\Http\Controllers\ChartsController;
-use Adshares\Adserver\Http\Controllers\ConfigController;
-use Adshares\Adserver\Http\Controllers\NotificationsController;
-use Adshares\Adserver\Http\Controllers\SettingsController;
-use Adshares\Adserver\Http\Controllers\Simulator;
-use Adshares\Adserver\Http\Controllers\SiteOptionsController;
-use Adshares\Adserver\Http\Controllers\SitesController;
-use Adshares\Adserver\Http\Controllers\UsersController;
-use Adshares\Adserver\Http\Controllers\WalletController;
+use Adshares\Adserver\Http\Controllers\Manager\CampaignOptionsController;
+use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
+use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
+use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
+use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
+use Adshares\Adserver\Http\Controllers\Manager\Simulator;
+use Adshares\Adserver\Http\Controllers\Manager\SiteOptionsController;
+use Adshares\Adserver\Http\Controllers\Manager\SitesController;
+use Adshares\Adserver\Http\Controllers\Manager\UsersController;
+use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');

@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,23 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers;
+namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Models\Notification;
-use Illuminate\Support\Facades\Auth;
 
-class NotificationsController extends Controller
+class CampaignOptionsController extends Controller
 {
-    /**
-     * Return adserver users notifications.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function read()
+    public function targeting()
     {
-        return self::json(Notification::where('user_id', Auth::user()->id)->get()->toArray(), 200);
+        return self::json(json_decode(Simulator::TARGETING_JSON));
     }
 }
