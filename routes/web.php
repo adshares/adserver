@@ -18,8 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Http\Controllers\ApiController;
 use Adshares\Adserver\Http\Controllers\DemandController;
-use Adshares\Adserver\Http\Controllers\Manager\ApiController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
