@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;

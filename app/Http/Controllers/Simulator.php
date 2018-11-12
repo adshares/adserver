@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Http\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;

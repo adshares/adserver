@@ -18,22 +18,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Http\Controllers\CampaignOptionsController;
 use Adshares\Adserver\Http\Controllers\CampaignsController;
+use Adshares\Adserver\Http\Controllers\ChartsController;
+use Adshares\Adserver\Http\Controllers\ConfigController;
+use Adshares\Adserver\Http\Controllers\NotificationsController;
+use Adshares\Adserver\Http\Controllers\SettingsController;
+use Adshares\Adserver\Http\Controllers\Simulator;
+use Adshares\Adserver\Http\Controllers\SiteOptionsController;
 use Adshares\Adserver\Http\Controllers\SitesController;
 use Adshares\Adserver\Http\Controllers\UsersController;
+use Adshares\Adserver\Http\Controllers\WalletController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
 Route::get('campaigns/count', [CampaignsController::class, 'count'])->name('app.campaigns.count');
 Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])->name('app.campaigns.read');
 Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaigns.add');
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
-Route::put('campaigns/{campaign_id}/status', [CampaignsController::class, 'changeStatus'])->name('app.campaigns.change_status');
+Route::put('campaigns/{campaign_id}/status', [CampaignsController::class, 'changeStatus'])
+    ->name('app.campaigns.change_status');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
 Route::post('campaigns/banner', [CampaignsController::class, 'upload'])->name('app.campaigns.upload');
 
-Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])->name('app.campaigns.classify');
-Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])->name('app.campaigns.disable_classify');
+Route::post('campaigns/{campaign_id}/classify', [CampaignsController::class, 'classify'])
+    ->name('app.campaigns.classify');
+Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])
+    ->name('app.campaigns.disable_classify');
 
 Route::post('sites', [SitesController::class, 'create'])->name('app.sites.add');
 Route::get('sites/{site}', [SitesController::class, 'read'])->name('app.sites.read');
@@ -49,4 +61,28 @@ Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users
 Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
 Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
 Route::delete('users/{user_id}', [UsersController::class, 'delete'])->name('app.users.delete');
+
+# actions
+Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
+Route::get('notifications', [NotificationsController::class, 'read']);
+Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
+
+Route::get('options/campaigns/targeting', [CampaignOptionsController::class, 'targeting']);
+
+Route::get('options/sites/filtering', [SiteOptionsController::class, 'filtering']);
+Route::get('options/sites/languages', [SiteOptionsController::class, 'languages']);
+Route::get('options/sites/zones', [SiteOptionsController::class, 'zones']);
+
+// Routes for Withdraw/Deposit
+Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
+Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
+Route::get('deposit-info', [WalletController::class, 'depositInfo']);
+Route::get('wallet/history', [WalletController::class, 'history']);
+
+// tmp mocked solutions
+Route::post('chart', [ChartsController::class, 'chart']);
+Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
+Route::get('admin/settings', [Simulator::class, 'mock']);
+Route::get('account/history', [Simulator::class, 'mock']);
+
 

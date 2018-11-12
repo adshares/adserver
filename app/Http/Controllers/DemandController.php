@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;

@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\UserSettings;
 use Illuminate\Support\Facades\Auth;
 

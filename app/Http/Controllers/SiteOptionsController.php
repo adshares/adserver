@@ -20,6 +20,8 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Http\Controller;
+
 class SiteOptionsController extends Controller
 {
     public function filtering()
