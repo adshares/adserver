@@ -35,5 +35,7 @@ final class UniqueIdentifierFactory
         return new UniqueId(Uuid::uuid4());
     }
 
-    private function __construct() { }
+    private function __construct()
+    {
+    }
 }
