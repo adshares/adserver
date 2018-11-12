@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http\Rpc;
+namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Jobs\AdsSendOne;

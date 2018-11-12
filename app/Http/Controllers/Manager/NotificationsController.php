@@ -18,9 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Rest;
+namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Adserver\Http\Controllers\Controller;
+use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 

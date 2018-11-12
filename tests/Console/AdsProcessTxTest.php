@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetBlockIdsCommand;
