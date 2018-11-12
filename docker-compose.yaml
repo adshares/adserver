@@ -30,7 +30,7 @@ services:
     - ./storage/app:/adserver/storage/app
 
   database:
-    image: mysql:8.0
+    image: percona
     environment:
     - MYSQL_ROOT_PASSWORD=adshares
     - MYSQL_DATABASE=adserver

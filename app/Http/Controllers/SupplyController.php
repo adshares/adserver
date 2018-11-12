@@ -67,7 +67,7 @@ class SupplyController extends Controller
 
         $impressionId = $decoded['page']['iid'];
         if ($impressionId) {
-            $aduser_endpoint = config('app.aduser_local_endpoint');
+            $aduser_endpoint = config('app.aduser_internal_location');
             if ($aduser_endpoint) {
                 $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
             } else {
@@ -92,7 +92,7 @@ class SupplyController extends Controller
     // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
     public function findScript(Request $request)
     {
-        $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_endpoint'))];
+        $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_external_location'))];
 
         $jsPath = public_path('-/find.js');
 
@@ -226,14 +226,12 @@ class SupplyController extends Controller
 
         // GET kewords from aduser
         $impressionId = $request->query->get('iid');
-//        $aduser_endpoint = config('app.aduser_endpoint');
-        $aduser_endpoint = config('app.aduser_local_endpoint');
+        $aduser_endpoint = config('app.aduser_internal_location');
 
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
         } else {
-//            $userdata = json_decode(file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"), true);
             $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
             $log->our_userdata = $userdata['user']['keywords'];
