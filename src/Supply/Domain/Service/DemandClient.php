@@ -20,9 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Model;
+namespace Adshares\Supply\Domain\Service;
 
-final class InventoryServer
+use Adshares\Supply\Model\Inventory;
+use Adshares\Supply\Model\InventoryServer;
+
+interface DemandClient
 {
-
+    public function fetchInventory(InventoryServer $inventoryServer): Inventory;
 }

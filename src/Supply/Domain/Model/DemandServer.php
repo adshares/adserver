@@ -18,11 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Supply\Domain\Model;
 
-namespace Adshares\Supply\Service;
-
-class Finder
+class DemandServer
 {
+    private $id;
 
+    private $address;
 }

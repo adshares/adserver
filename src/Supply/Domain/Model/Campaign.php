@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Model;
+namespace Adshares\Supply\Domain\Model;
 
 final class Campaign
 {

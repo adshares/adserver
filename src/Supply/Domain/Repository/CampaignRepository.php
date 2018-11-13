@@ -18,9 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Model;
+declare(strict_types = 1);
 
-class CampaignDetail
+namespace Adshares\Supply\Domain\Repository;
+
+use Adshares\Supply\Model\Campaign;
+
+interface CampaignRepository
 {
-
+    public function save(Campaign $campaign);
 }

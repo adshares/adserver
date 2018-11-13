@@ -18,14 +18,23 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Supply\Domain\Model;
 
-namespace Adshares\Supply\Service;
-
-use Adshares\Supply\Model\Inventory;
-use Adshares\Supply\Model\InventoryServer;
-
-interface DemandClient
+final class Budget
 {
-    public function fetchInventory(InventoryServer $inventoryServer): Inventory;
+    /** @var int */
+    private $budget;
+
+    /** @var int|null */
+    private $maxCpc;
+
+    /** @var int|null */
+    private $maxCpm;
+
+    public function __construct(int $budget, ?int $maxCpc, ?int $maxCpm)
+    {
+        $this->budget = $budget;
+        $this->maxCpc = $maxCpc;
+        $this->maxCpm = $maxCpm;
+    }
 }
