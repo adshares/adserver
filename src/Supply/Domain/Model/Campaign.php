@@ -22,30 +22,43 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Model;
 
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\UniqueId;
+use Ramsey\Uuid\Uuid;
+
 final class Campaign
 {
+    /** @var UniqueId */
     private $id;
 
+    /** @var int */
     private $userId;
 
+    /** @var DemandServer */
     private $demandServer;
 
+    /** @var string */
     private $name;
 
+    /** @var string */
     private $landingUrl;
 
+    /** @var \DateTime */
     private $dateStart;
 
+    /** @var \DateTime */
     private $dateEnd;
 
-    private $status;
+    /** @var ArrayCollection */
+    private $banners;
+
+    /** @var Budget */
+    private $budget;
 
     private $targetingExcludes = [];
 
     private $targetingRequires = [];
 
-    /** @var Budget */
-    private $budget;
 
     public function __construct(
         int $userId,
@@ -53,9 +66,14 @@ final class Campaign
         string $landingUrl,
         \DateTime $dateStart,
         \DateTime $dateEnd,
+        array $banners,
         Budget $budget,
-        DemandServer $demandServer
+        DemandServer $demandServer,
+        array $targetingRequires = [],
+        array $targetingExcludes = []
     ) {
+        $this->id = Uuid::uuid4();
+
         $this->userId = $userId;
         $this->name = $name;
         $this->landingUrl = $landingUrl;
@@ -63,12 +81,12 @@ final class Campaign
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
 
+        $this->banners = new ArrayCollection($banners);
+
         $this->budget = $budget;
         $this->demandServer = $demandServer;
-    }
 
-    public static function create()
-    {
-
+        $this->targetingRequires = $targetingRequires;
+        $this->targetingExcludes = $targetingExcludes;
     }
 }

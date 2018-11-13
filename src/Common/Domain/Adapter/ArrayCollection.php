@@ -18,13 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Common\Domain\Adapter;
 
-namespace Adshares\Supply\Repository;
+use Adshares\Common\Domain\Collection;
+use Doctrine\Common\Collections\ArrayCollection as DoctrineArrayCollection;
 
-use Adshares\Supply\Model\InventoryItem;
-
-interface InventoryRepository
+class ArrayCollection extends DoctrineArrayCollection implements Collection
 {
-    public function save(InventoryItem $item): void;
 }

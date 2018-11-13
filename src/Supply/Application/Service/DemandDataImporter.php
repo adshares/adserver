@@ -18,14 +18,32 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Supply\Application\Service;
 
-namespace Adshares\Supply\Domain\Service;
-
-use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Model\DemandServer;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
+use Adshares\Supply\Domain\Service\DemandClient;
 
-interface DemandClient
+class DemandDataImporter
 {
-    public function fetchInventory(DemandServer $inventoryServer): CampaignCollection;
+    /*** @var DemandClient */
+    private $client;
+
+    /** @var CampaignRepository */
+    private $campaignRepository;
+
+    public function __construct(CampaignRepository $campaignRepository, DemandClient $client)
+    {
+        $this->client = $client;
+        $this->campaignRepository = $campaignRepository;
+    }
+
+    public function import(DemandServer $demandServer): void
+    {
+        $inventory = $this->client->fetchInventory($demandServer);
+
+        foreach ($inventory->getCampaigns() as $campaign) {
+            $this->campaignRepository->save($campaign);
+        }
+    }
 }

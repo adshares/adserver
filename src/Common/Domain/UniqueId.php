@@ -18,16 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
-namespace Adshares\Supply\Model;
+namespace Adshares\Common\Domain;
 
-final class Inventory
+use Ramsey\Uuid\UuidInterface;
+
+final class UniqueId implements Id
 {
-    private $campaigns = [];
+    /** @var UuidInterface */
+    private $id;
 
-    public function getCampaigns(): array
+    public function __construct(UuidInterface $id)
     {
-        return $this->campaigns;
+        $this->id = $id;
+    }
+
+    public function __toString(): string
+    {
+        return $this->id->toString();
     }
 }

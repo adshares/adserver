@@ -20,11 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Repository;
+namespace Adshares\Common\Domain;
 
-use Adshares\Supply\Domain\Model\Campaign;
-
-interface CampaignRepository
+interface Id
 {
-    public function save(Campaign $campaign);
+    public function __toString(): string;
 }

@@ -18,11 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Client;
 
-namespace Adshares\Supply\Model;
+use Adshares\Supply\Domain\Model\CampaignCollection;
+use Adshares\Supply\Domain\Model\DemandServer;
+use Adshares\Supply\Domain\Service\DemandClient;
 
-final class InventoryList
+class GuzzleDemandClient implements DemandClient
 {
+    public function fetchInventory(DemandServer $inventoryServer): CampaignCollection
+    {
 
+    }
 }
