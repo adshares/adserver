@@ -31,9 +31,7 @@
         ],
         "psr-4": {
             "Adshares\\Adserver\\": "app/",
-            "Adshares\\Lib\\": "lib/",
-            "Adshares\\Supply\\": "supply/",
-            "Adshares\\Demand\\": "demand/"
+            "Adshares\\": "src/"
         }
     },
     "autoload-dev": {

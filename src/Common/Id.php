@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Lib;
+namespace Adshares\Common;
 
 interface Id
 {
