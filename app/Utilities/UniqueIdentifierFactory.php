@@ -25,6 +25,8 @@ use Ramsey\Uuid\Uuid;
 
 final class UniqueIdentifierFactory
 {
+    private function __construct() { }
+
     public static function fromString(string $id): UniqueId
     {
         return new UniqueId(Uuid::fromString($id));
@@ -33,9 +35,5 @@ final class UniqueIdentifierFactory
     public static function random(): UniqueId
     {
         return new UniqueId(Uuid::uuid4());
-    }
-
-    private function __construct()
-    {
     }
 }
