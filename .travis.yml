@@ -108,7 +108,7 @@ jobs:
       -e MYSQL_PASSWORD=adserver
       -e MYSQL_DATABASE=adserver
       -d
-      mysql/mysql-server:5.7
+      percona/percona-server:5.7
 
     - in_docker /bin/bash scripts/pre-build.sh"
 

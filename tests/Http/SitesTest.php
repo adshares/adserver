@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http\Rest;
+namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
