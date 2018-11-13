@@ -20,11 +20,10 @@
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Domain\Model\DemandServer;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Service\DemandClient;
 
-class DemandDataImporter
+class InventoryImporter
 {
     /*** @var DemandClient */
     private $client;
@@ -38,12 +37,29 @@ class DemandDataImporter
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function import(DemandServer $demandServer): void
+    public function import(string $host): void
     {
-        $inventory = $this->client->fetchInventory($demandServer);
+        $inventory = $this->client->fetchAllInventory($host);
 
         foreach ($inventory->getCampaigns() as $campaign) {
-            $this->campaignRepository->save($campaign);
+            try {
+                $this->campaignRepository->save($campaign);
+            } catch (\Exception $ex) {
+                // delete old banners ???
+                // inventory przesyła wszystkie dane, my możemy jakieś już mieć. Co wtedy?
+                // a) Kasujemy stare banery i dodajemy tylko nowe? Tak raczej nie można.
+                // b) Dodajemy lub updatujemy nowe? Jeśli nie ma to kasujemy?
+                $this->campaignRepository->update($campaign);
+            }
         }
     }
+
+//    public function import(DemandServer $demandServer): void
+//    {
+//        $inventory = $this->client->fetchInventory($demandServer);
+//
+//        foreach ($inventory->getCampaigns() as $campaign) {
+//            $this->campaignRepository->save($campaign);
+//        }
+//    }
 }

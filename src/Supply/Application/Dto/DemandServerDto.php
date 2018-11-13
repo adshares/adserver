@@ -18,13 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Supply\Application\Dto;
 
-namespace Adshares\Supply\Domain\Service;
-
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class DemandServerDto
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+    /** @var string */
+    private $address;
+
+    /** @var string */
+    private $host;
+
+    public function __construct(string $address, string $host)
+    {
+        $this->address = $address;
+        $this->host = $host;
+    }
 }
