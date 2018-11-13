@@ -19,6 +19,8 @@ mv routes ${INSTALLATION_PATH}/
 mv tests ${INSTALLATION_PATH}/
 mv vendor ${INSTALLATION_PATH}/
 
+mv composer.json ${INSTALLATION_PATH}/
+
 # Move artisan binary
 mv artisan ${INSTALLATION_PATH}/
 
