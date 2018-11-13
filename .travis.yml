@@ -18,9 +18,8 @@ env:
     - APP_DEBUG=true
 
 stages:
-  - code quality
-  - build
-  - build and install
+- test
+#  - build and install
 
 before_script:
   # Enable aliases for non-interactive shells
@@ -56,7 +55,7 @@ after_script:
 
 jobs:
   include:
-  - stage: code quality
+  - stage: test
     script:
     # Run build script
     - in_docker /bin/bash scripts/pre-build.sh"
@@ -84,15 +83,6 @@ jobs:
     # SonarQube
     - sonar-scanner
 
-  - stage: build
-    script:
-    # Run pre-build
-    - in_docker /bin/bash scripts/pre-build.sh"
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
-
-    - in_docker php --ini"
-
     # PHP unit tests
     - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
@@ -108,7 +98,7 @@ jobs:
       -e MYSQL_PASSWORD=adserver
       -e MYSQL_DATABASE=adserver
       -d
-      percona/percona-server:5.7
+      percona:5
 
     - in_docker /bin/bash scripts/pre-build.sh"
 

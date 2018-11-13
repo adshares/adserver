@@ -22,8 +22,6 @@ mv vendor ${INSTALLATION_PATH}/
 # Move artisan binary
 mv artisan ${INSTALLATION_PATH}/
 
-mv composer.json ${INSTALLATION_PATH}/
-
 # Migrate
 cd ${INSTALLATION_PATH}
 ./artisan migrate
