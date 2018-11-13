@@ -94,7 +94,7 @@ jobs:
     - in_docker php --ini"
 
     # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
+    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
   - stage: build and install
     script:
