@@ -9,7 +9,7 @@ services:
 
 env:
   global:
-    - DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
+  - DOCKER_IMAGE=adshares/devops
     - HOST_PATH=/home/travis/build/adshares/adserver
     - BUILD_PATH=/build/adserver
     - BUILD_NAME=adserver_build
@@ -46,9 +46,6 @@ before_script:
     --name $BUILD_NAME
     $DOCKER_IMAGE
     sleep infinity
-  - in_docker add-apt-repository ppa:adshares/releases -y"
-  - in_docker apt-get -qq update"
-  - in_docker apt-get -qq -y install ads"
 
 after_script:
   - docker stop $BUILD_NAME && docker rm $BUILD_NAME
