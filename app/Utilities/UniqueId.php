@@ -18,24 +18,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Events;
+declare(strict_types=1);
 
-use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+namespace Adshares\Adserver\Utilities;
 
-class GenerateUUID
+use Adshares\Common\Id;
+use Ramsey\Uuid\UuidInterface;
+
+final class UniqueId implements Id
 {
-    use Dispatchable, SerializesModels;
+    /** @var UuidInterface */
+    private $id;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(Model $model)
+    public function __construct(UuidInterface $id)
     {
-        $model->uuid = UuidStringGenerator::v4();
+        $this->id = $id;
+    }
+
+    public function __toString(): string
+    {
+        return $this->id->toString();
     }
 }

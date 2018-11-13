@@ -17,18 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Utilities;
 
-/**
- * Generate UUIDs.
- */
-final class UUID
+use InvalidArgumentException;
+
+final class UuidStringGenerator
 {
-    public static function v3($namespace, $name)
+    public static function v3(string $namespace, string $name): string
     {
         if (!self::isValid($namespace)) {
-            return false;
+            throw new InvalidArgumentException("Namespace '$namespace' is invalid.");
         }
 
         // Get hexadecimal components of namespace
@@ -71,7 +71,7 @@ final class UUID
         );
     }
 
-    public static function isValid($uuid)
+    public static function isValid(string $uuid): bool
     {
         $pregMatch = preg_match(
             '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
@@ -81,7 +81,7 @@ final class UUID
         return 1 === $pregMatch;
     }
 
-    public static function v4()
+    public static function v4(): string
     {
         return sprintf(
             '%04x%04x%04x%04x%04x%04x%04x%04x',
