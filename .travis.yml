@@ -9,7 +9,7 @@ services:
 
 env:
   global:
-    - DOCKER_IMAGE=awlodarkiewicz/devops:build-latest
+    - DOCKER_IMAGE=awlodarkiewicz/devops:adserver
     - HOST_PATH=/home/travis/build/adshares/adserver
     - BUILD_PATH=/build/adserver
     - BUILD_NAME=adserver_build
