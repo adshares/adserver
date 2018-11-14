@@ -26,7 +26,7 @@ use Adshares\Supply\Domain\Model\Campaign;
 
 interface CampaignRepository
 {
-    public function deactivateAllCampaignFromHost(string $host);
+    public function deactivateAllCampaignsFromHost(string $host);
 
     public function save(Campaign $campaign);
 }

@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Domain\Model\Campaign;
@@ -53,7 +55,7 @@ class InventoryImporter
         $this->transactionManager->begin();
 
         try {
-            $this->campaignRepository->deactivateAllCampaignFromHost($host);
+            $this->campaignRepository->deactivateAllCampaignsFromHost($host);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
