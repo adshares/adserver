@@ -53,6 +53,9 @@ class CreateNetworkCampaignsTable extends Migration
             $table->decimal('budget_per_hour', 19, 11)->nullable(false);
             $table->dateTime('time_start');
             $table->dateTime('time_end');
+
+            $table->unsignedTinyInteger('status')->nullable(false)->default(1);
+
         });
 
         if (DB::isMysql()) {
