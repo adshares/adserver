@@ -183,30 +183,40 @@ class AccountIdTest extends TestCase
     public function equalityChecker(): void
     {
         $one = AccountId::fromString('ABCD-1234ABCD-27B9');
-        $two = AccountId::fromString('abcd-1234abcd-27b9');
+        $one1 = AccountId::fromString('ABCD-1234ABCD-27B9');
 
-        self::assertTrue($one->equals($two));
-        self::assertTrue($one->equals($two, true));
-        self::assertTrue($one->equals($two, false));
+        self::assertTrue($one->equals($one1, true));
+        self::assertTrue($one->equals($one1, false));
+        self::assertTrue($one->equals($one1));
 
-        self::assertTrue($two->equals($one));
-        self::assertTrue($two->equals($one, true));
-        self::assertTrue($two->equals($one, false));
+        $oneX = AccountId::fromString('ABCD-1234ABCD-XXXX');
 
-        $three = AccountId::fromString('ABCD-1234ABCD-XXXX');
-        $four = AccountId::fromString('abcd-1234abcd-xxxx');
+        self::assertFalse($one->equals($oneX, true));
+        self::assertTrue($one->equals($oneX, false));
+        self::assertTrue($one->equals($oneX));
 
-        self::assertTrue($three->equals($four, true));
-        self::assertTrue($three->equals($four, false));
-        self::assertTrue($three->equals($four));
+        self::assertFalse($oneX->equals($one, true));
+        self::assertTrue($oneX->equals($one, false));
+        self::assertTrue($oneX->equals($one));
 
-        self::assertTrue($four->equals($three, true));
-        self::assertTrue($four->equals($three, false));
-        self::assertTrue($four->equals($three));
+        $two = AccountId::fromIncompleteString('0000-1234ABCD', true);
 
-        self::assertFalse($one->equals($three, true));
+        self::assertFalse($one->equals($two, true));
+        self::assertFalse($one->equals($two, false));
+        self::assertFalse($one->equals($two));
 
-        self::assertTrue($one->equals($three, false));
-        self::assertTrue($one->equals($three));
+        self::assertFalse($two->equals($one, true));
+        self::assertFalse($two->equals($one, false));
+        self::assertFalse($two->equals($one));
+
+        $twoX = AccountId::fromIncompleteString('0000-1234ABCD', false);
+
+        self::assertFalse($one->equals($twoX, true));
+        self::assertFalse($one->equals($twoX, false));
+        self::assertFalse($one->equals($twoX));
+
+        self::assertFalse($twoX->equals($one, true));
+        self::assertFalse($twoX->equals($one, false));
+        self::assertFalse($twoX->equals($one));
     }
 }

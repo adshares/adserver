@@ -31,60 +31,19 @@ final class AccountId implements Id
     private const LOOSELY_VALID_CHECKSUM = 'XXXX';
 
     /** @var string */
-    private $account;
+    private $accountIdStringRepresentation;
 
-    private function __construct(string $account)
+    private function __construct(string $string)
     {
-        $this->account = $account;
+        $this->accountIdStringRepresentation = $string;
     }
 
     public static function random(bool $strict = true): AccountId
     {
         $nodeId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
         $userId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
-        $checksum = $strict
-            ? AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId))
-            : self::LOOSELY_VALID_CHECKSUM;
 
-        return self::fromString("{$nodeId}-{$userId}-{$checksum}");
-    }
-
-    public static function fromString(string $string, bool $strict = false): AccountId
-    {
-        if (!self::isValid($string, $strict)) {
-            throw new InvalidArgumentException("'$string' is NOT a"
-                .($strict ? ' STRICTLY' : '')
-                .' VALID AccountId representation.');
-        }
-
-        return new self(strtoupper($string));
-    }
-
-    public static function isValid(string $account, bool $strict = false): bool
-    {
-        $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|'
-            .self::LOOSELY_VALID_CHECKSUM
-            .')$/i';
-
-        if (1 === preg_match($pattern, $account)) {
-            $checksum = strtoupper(substr($account, -4));
-
-            if (self::LOOSELY_VALID_CHECKSUM === $checksum) {
-                return !$strict;
-            }
-
-            return $checksum === self::checksum($account);
-        }
-
-        return false;
-    }
-
-    private static function checksum(string $string): string
-    {
-        $nodeId = substr($string, 0, 4);
-        $userId = substr($string, 5, 8);
-
-        return AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId));
+        return self::fromIncompleteString("{$nodeId}-{$userId}", $strict);
     }
 
     public static function fromIncompleteString(string $string, bool $strict = true): AccountId
@@ -100,6 +59,44 @@ final class AccountId implements Id
         throw new InvalidArgumentException("'$string' is not a valid 'NODE-USER' string.");
     }
 
+    private static function checksum(string $string): string
+    {
+        $nodeId = substr($string, 0, 4);
+        $userId = substr($string, 5, 8);
+
+        return AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId));
+    }
+
+    public static function fromString(string $string, bool $strict = false): AccountId
+    {
+        if (!self::isValid($string, $strict)) {
+            throw new InvalidArgumentException("'$string' is NOT a"
+                .($strict ? ' STRICTLY' : '')
+                .' VALID AccountId representation.');
+        }
+
+        return new self(strtoupper($string));
+    }
+
+    public static function isValid(string $string, bool $strict = false): bool
+    {
+        $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|'
+            .self::LOOSELY_VALID_CHECKSUM
+            .')$/i';
+
+        if (1 === preg_match($pattern, $string)) {
+            $checksum = strtoupper(substr($string, -4));
+
+            if (self::LOOSELY_VALID_CHECKSUM === $checksum) {
+                return !$strict;
+            }
+
+            return $checksum === self::checksum($string);
+        }
+
+        return false;
+    }
+
     public function __toString(): string
     {
         return $this->toString();
@@ -107,15 +104,15 @@ final class AccountId implements Id
 
     public function toString(): string
     {
-        return $this->account;
+        return $this->accountIdStringRepresentation;
     }
 
     public function equals(Id $other, bool $strict = false): bool
     {
         if ($strict) {
-            return $this->account === $other->toString();
+            return $this->accountIdStringRepresentation === $other->toString();
         }
 
-        return strpos($other->toString(), substr($this->account, 0, 13)) === 0;
+        return strpos($other->toString(), substr($this->accountIdStringRepresentation, 0, 13)) === 0;
     }
 }
