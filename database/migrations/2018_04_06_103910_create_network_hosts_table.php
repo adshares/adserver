@@ -33,7 +33,7 @@ class CreateNetworkHostsTable extends Migration
     {
         Schema::create('network_hosts', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('address', 18);
+            $table->string('address', 18)->unique();
             $table->string('host', 128);
             $table->timestamp('last_broadcast');
 
