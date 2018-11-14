@@ -46,9 +46,6 @@ before_script:
     --name $BUILD_NAME
     $DOCKER_IMAGE
     sleep infinity
-  - in_docker add-apt-repository ppa:adshares/releases -y"
-  - in_docker apt-get -qq update"
-  - in_docker apt-get -qq -y install ads"
 
 after_script:
   - docker stop $BUILD_NAME && docker rm $BUILD_NAME
