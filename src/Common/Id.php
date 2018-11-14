@@ -18,24 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
+declare(strict_types = 1);
 
-class DatabaseSeeder extends Seeder
+namespace Adshares\Common;
+
+interface Id
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
-    {
-        Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-            MockDataNetworkHostsSeeder::class,
-        ]);
-    }
+    public function __toString(): string;
 }
-

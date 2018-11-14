@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Events;
 
-use Adshares\Adserver\Utilities\UUID;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -36,6 +36,6 @@ class GenerateUUID
      */
     public function __construct(Model $model)
     {
-        $model->uuid = UUID::v4();
+        $model->uuid = UuidStringGenerator::v4();
     }
 }

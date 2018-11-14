@@ -18,24 +18,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
+declare(strict_types = 1);
 
-class DatabaseSeeder extends Seeder
+namespace Adshares\Adserver\Utilities;
+
+use Adshares\Common\Id;
+use Ramsey\Uuid\UuidInterface;
+
+final class UniqueId implements Id
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    /** @var UuidInterface */
+    private $id;
+
+    public function __construct(UuidInterface $id)
     {
-        Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-            MockDataNetworkHostsSeeder::class,
-        ]);
+        $this->id = $id;
+    }
+
+    public function __toString(): string
+    {
+        return $this->id->toString();
     }
 }
-

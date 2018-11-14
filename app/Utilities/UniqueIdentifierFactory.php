@@ -17,25 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
-use Adshares\Adserver\Models\User;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
+namespace Adshares\Adserver\Utilities;
 
-class DatabaseSeeder extends Seeder
+use Ramsey\Uuid\Uuid;
+
+final class UniqueIdentifierFactory
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run()
+    private function __construct()
     {
-        Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-            MockDataNetworkHostsSeeder::class,
-        ]);
+    }
+
+    public static function fromString(string $id): UniqueId
+    {
+        return new UniqueId(Uuid::fromString($id));
+    }
+
+    public static function random(): UniqueId
+    {
+        return new UniqueId(Uuid::uuid4());
     }
 }
-
