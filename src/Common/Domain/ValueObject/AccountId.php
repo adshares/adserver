@@ -24,6 +24,7 @@ namespace Adshares\Common\Domain\ValueObject;
 use Adshares\Ads\Util\AdsChecksumGenerator;
 use Adshares\Common\Id;
 use InvalidArgumentException;
+use function preg_match;
 
 final class AccountId implements Id
 {
@@ -72,28 +73,28 @@ final class AccountId implements Id
                 return !$strict;
             }
 
-            $nodeId = substr($account, 0, 4);
-            $userId = substr($account, 5, 8);
-            $checksumComputed = AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId));
-
-            return $checksum === $checksumComputed;
+            return $checksum === self::checksum($account);
         }
 
         return false;
     }
 
+    private static function checksum(string $string): string
+    {
+        $nodeId = substr($string, 0, 4);
+        $userId = substr($string, 5, 8);
+
+        return AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId));
+    }
+
     public static function fromIncompleteString(string $string, bool $strict = true): AccountId
     {
-        $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}$/i';
-
-        if (1 === preg_match($pattern, $string)) {
-            $nodeId = substr($string, 0, 4);
-            $userId = substr($string, 5, 8);
+        if (1 === preg_match('/^[0-9A-F]{4}-[0-9A-F]{8}$/i', $string)) {
             $checksum = $strict
-                ? AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId))
+                ? self::checksum($string)
                 : self::LOOSELY_VALID_CHECKSUM;
 
-            return new self(strtoupper("{$nodeId}-{$userId}-{$checksum}"));
+            return new self(strtoupper("{$string}-{$checksum}"));
         }
 
         throw new InvalidArgumentException("'$string' is not a valid 'NODE-USER' string.");
@@ -109,13 +110,12 @@ final class AccountId implements Id
         return $this->account;
     }
 
-    public function compareTo(Id $other): int
+    public function equals(Id $other, bool $strict = false): bool
     {
-        return 0;
-    }
+        if ($strict) {
+            return $this->account === $other->toString();
+        }
 
-    public function equals(Id $other): bool
-    {
-        return $this->account === (string)$other;
+        return strpos($other->toString(), substr($this->account, 0, 13)) === 0;
     }
 }

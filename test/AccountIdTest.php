@@ -79,7 +79,7 @@ class AccountIdTest extends TestCase
      * @param string $string
      * @param bool $strict
      */
-    public function createFromString(string $string, bool $strict): void
+    public function createFromStringWithStrength(string $string, bool $strict): void
     {
         $id = AccountId::fromString($string, $strict);
 
@@ -108,7 +108,7 @@ class AccountIdTest extends TestCase
      * @param string $string
      * @param bool $strict
      */
-    public function failCreatingFromInvalidString(string $string, bool $strict): void
+    public function failCreatingFromInvalidStringWithStrength(string $string, bool $strict): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -131,6 +131,14 @@ class AccountIdTest extends TestCase
         return array_merge($invalidStrings, $invalidStrings2, $looselyValidStrings);
     }
 
+    /** @test */
+    public function createFromIncompleteString(): void
+    {
+        self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromIncompleteString('ABCD-1234ABCD'));
+        self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromIncompleteString('ABCD-1234ABCD', true));
+        self::assertSame('ABCD-1234ABCD-XXXX', (string)AccountId::fromIncompleteString('ABCD-1234ABCD', false));
+    }
+
     /**
      * @test
      * @dataProvider invalidPairProvider
@@ -138,7 +146,7 @@ class AccountIdTest extends TestCase
      * @param string $string
      * @param bool $strict
      */
-    public function failCreatingFromInvalidPair(string $string, bool $strict): void
+    public function failCreatingFromInvalidPairWithStrength(string $string, bool $strict): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -158,16 +166,47 @@ class AccountIdTest extends TestCase
     }
 
     /** @test */
-    public function createFromIncompleteString(): void
+    public function createFromStringWithoutStrength(): void
     {
-        self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromIncompleteString('ABCD-1234ABCD', true));
-        self::assertSame('ABCD-1234ABCD-XXXX', (string)AccountId::fromIncompleteString('ABCD-1234ABCD', false));
+        self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromString('ABCD-1234ABCD-27B9'));
     }
 
     /** @test */
     public function createRandom(): void
     {
+        self::assertSame(1, preg_match(self::VALID_STRICT_PATTERN, (string)AccountId::random()));
         self::assertSame(1, preg_match(self::VALID_STRICT_PATTERN, (string)AccountId::random(true)));
         self::assertSame(1, preg_match(self::VALID_LOOSE_PATTERN, (string)AccountId::random(false)));
+    }
+
+    /** @test */
+    public function equalityChecker(): void
+    {
+        $one = AccountId::fromString('ABCD-1234ABCD-27B9');
+        $two = AccountId::fromString('abcd-1234abcd-27b9');
+
+        self::assertTrue($one->equals($two));
+        self::assertTrue($one->equals($two, true));
+        self::assertTrue($one->equals($two, false));
+
+        self::assertTrue($two->equals($one));
+        self::assertTrue($two->equals($one, true));
+        self::assertTrue($two->equals($one, false));
+
+        $three = AccountId::fromString('ABCD-1234ABCD-XXXX');
+        $four = AccountId::fromString('abcd-1234abcd-xxxx');
+
+        self::assertTrue($three->equals($four, true));
+        self::assertTrue($three->equals($four, false));
+        self::assertTrue($three->equals($four));
+
+        self::assertTrue($four->equals($three, true));
+        self::assertTrue($four->equals($three, false));
+        self::assertTrue($four->equals($three));
+
+        self::assertFalse($one->equals($three, true));
+
+        self::assertTrue($one->equals($three, false));
+        self::assertTrue($one->equals($three));
     }
 }

@@ -18,35 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Faker\Generator as Faker;
 
-namespace Adshares\Adserver\Utilities;
+$factory->define(UserLedgerEntry::class, function (Faker $faker) {
+    $adsTx = new AdsTxIn();
+    $accNum = str_pad(dechex(mt_rand(0, 2047)), 8, '0', STR_PAD_LEFT);
+    $adsTx->txid = "0001:$accNum:0001";
+    $adsTx->amount = 1;
+    $adsTx->address = "0001-$accNum-XXXX";
+    $res = $adsTx->save();
 
-use Adshares\Common\Id;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
-{
-    /** @var UuidInterface */
-    private $id;
-
-    public function __construct(UuidInterface $id)
-    {
-        $this->id = $id;
-    }
-
-    public function __toString(): string
-    {
-        return $this->toString();
-    }
-
-    public function toString(): string
-    {
-        return $this->id->toString();
-    }
-
-    public function equals(Id $other): bool
-    {
-        return $other->toString() === $this->toString();
-    }
-}
+    return [
+        'amount' => '',
+        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+        'address_from' => '',
+        'address_to' => '',
+    ];
+});
