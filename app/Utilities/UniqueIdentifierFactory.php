@@ -25,7 +25,9 @@ use Ramsey\Uuid\Uuid;
 
 final class UniqueIdentifierFactory
 {
-    private function __construct() { }
+    private function __construct()
+    {
+    }
 
     public static function fromString(string $id): UniqueId
     {

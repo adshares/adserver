@@ -30,7 +30,10 @@ class UniqueIdTest extends TestCase
     /** @test */
     public function createRandom(): void
     {
-        UniqueIdentifierFactory::random();
+        $format = '%x%x%x%x%x%x%x%x-%x%x%x%x-%x%x%x%x-%x%x%x%x-%x%x%x%x%x%x%x%x%x%x%x%x';
+        $id = UniqueIdentifierFactory::random();
+
+        self::assertStringMatchesFormat($format, (string)$id);
     }
 
     /**

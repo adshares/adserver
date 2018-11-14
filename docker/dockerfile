@@ -26,7 +26,7 @@ RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
     && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get -q update && apt-get -qyf --no-install-recommends install \
         nmap mtr curl wget vim less dnsutils bash-completion net-tools iputils-* \
-        git bzip2 zip unzip tree mc \
+        git bzip2 zip unzip tree mc gettext-base \
         openssl openssh-client openssh-server \
         gnupg2 dirmngr connect-proxy iproute2 \
         mysql-client \
