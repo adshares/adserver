@@ -16,6 +16,9 @@ env:
     - MYSQL_ROOT_PASSWORD=root
     - APP_ENV=dev
     - APP_DEBUG=true
+  matrix:
+    - RUN_QUALITY_TESTS=true
+    - RUN_FUNCTIONAL_TESTS=true
 
 stages:
   - code test and quality
@@ -26,6 +29,8 @@ before_script:
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
   - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
+  - alias if_quality='if [ -v RUN_QUALITY_TESTS ]; then '
+  - alias if_functional='if [ -v RUN_FUNCTIONAL_TESTS ]; then '
   ## Setup test environment
   # Run docker container
   - time docker network create -d bridge test-network
@@ -62,27 +67,27 @@ jobs:
     - in_docker /bin/bash scripts/build.sh"
 
     # Pre-task dependency
-    - in_docker composer run-script install-codestandards"
+    - if_quality in_docker composer run-script install-codestandards" fi
 
     ## Test tasks
     # PHP Lint: check syntax errors in all PHP files
-    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+    - if_quality in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ." fi
 
 #    # PHP Code Beautifier and Fixer: fix code styles
 #    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || (git diff && exit 8)"
 #    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || (git diff && exit 8)"
 
     # PHP_CodeSniffer: check PHP compatibility
-    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+    - if_quality in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests" fi
 
     # PHP_CodeSniffer: check PSR2 standard
-    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+    - if_quality in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests" fi
 
     # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+    - if_functional in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit" fi
 
     # SonarQube
-    - time sonar-scanner
+    - if_quality time sonar-scanner fi
 
   - stage: build and install
     if: type = pull_request AND branch = master
