@@ -56,15 +56,17 @@ class NetworkHost extends Model
 
     public static function registerHost($address, $host)
     {
-        $h = self::find($address);
-        if (empty($h)) {
-            $h = new self();
-            $h->address = $address;
-            $h->host = $host;
-        }
-        $h->last_broadcast = time();
-        $h->save();
+        $networkHost = self::find($address);
 
-        return $h;
+        if (empty($networkHost)) {
+            $networkHost = new self();
+            $networkHost->address = $address;
+            $networkHost->host = $host;
+        }
+
+        $networkHost->last_broadcast = time();
+        $networkHost->save();
+
+        return $networkHost;
     }
 }

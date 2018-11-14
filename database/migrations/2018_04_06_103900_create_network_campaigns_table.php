@@ -18,6 +18,7 @@
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\NetworkCampaign;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
@@ -54,7 +55,7 @@ class CreateNetworkCampaignsTable extends Migration
             $table->dateTime('time_start');
             $table->dateTime('time_end');
 
-            $table->unsignedTinyInteger('status')->nullable(false)->default(1);
+            $table->unsignedTinyInteger('status')->nullable(false)->default(NetworkCampaign::STATUS_ACTIVE);
 
         });
 

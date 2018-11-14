@@ -23,9 +23,6 @@ use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
         $this->command->info('[mock] seeding: network_hosts');
