@@ -24,10 +24,13 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\UniqueId;
-use Ramsey\Uuid\Uuid;
+use Adshares\Common\Domain\Model\Uuid;
 
 final class Campaign
 {
+    const STATUS_ACTIVE = 1;
+    const STATUS_DELETED = 2;
+
     /** @var UniqueId */
     private $id;
 
@@ -59,6 +62,9 @@ final class Campaign
 
     private $targetingRequires = [];
 
+    /** @var int */
+    private $status;
+
 
     public function __construct(
         int $userId,
@@ -69,10 +75,11 @@ final class Campaign
         array $banners,
         Budget $budget,
         DemandServer $demandServer,
+        int $status,
         array $targetingRequires = [],
         array $targetingExcludes = []
     ) {
-        $this->id = Uuid::uuid4();
+        $this->id = new Uuid();
 
         $this->userId = $userId;
         $this->name = $name;
@@ -88,5 +95,21 @@ final class Campaign
 
         $this->targetingRequires = $targetingRequires;
         $this->targetingExcludes = $targetingExcludes;
+        $this->status = $status;
+    }
+
+    public function deactivate(): void
+    {
+        $this->status = self::STATUS_DELETED;
+    }
+
+    public function activate(): void
+    {
+        $this->status = self::STATUS_ACTIVE;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status;
     }
 }

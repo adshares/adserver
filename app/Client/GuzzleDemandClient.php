@@ -21,13 +21,11 @@
 namespace Adshares\Adserver\Client;
 
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use Adshares\Supply\Domain\Model\DemandServer;
 use Adshares\Supply\Domain\Service\DemandClient;
 
 class GuzzleDemandClient implements DemandClient
 {
-    public function fetchInventory(DemandServer $inventoryServer): CampaignCollection
+    public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
-
     }
 }

@@ -18,21 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+declare(strict_types = 1);
 
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Hash;
+namespace Adshares\Common\Domain\Model;
 
-trait CreatesApplication
+use Ramsey\Uuid\Uuid as BaseUuid;
+use Ramsey\Uuid\UuidInterface;
+
+class Uuid
 {
-    public function createApplication()
+    private $id;
+
+    public function __construct()
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
+        $this->id = BaseUuid::uuid4();
+    }
 
-        $app->make(Kernel::class)->bootstrap();
+    public function getId(): UuidInterface
+    {
+        return $this->id;
+    }
 
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
+    public function __toString()
+    {
+        return (string)$this->id;
     }
 }

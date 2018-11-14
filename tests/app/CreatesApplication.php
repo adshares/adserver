@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Tests;
 
-namespace Adshares\Adserver\Utilities;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Hash;
 
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
+trait CreatesApplication
 {
-    /** @var UuidInterface */
-    private $id;
-
-    public function __construct(UuidInterface $id)
+    public function createApplication()
     {
-        $this->id = $id;
-    }
+        $app = require __DIR__.'/../../bootstrap/app.php';
 
-    public function __toString(): string
-    {
-        return $this->id->toString();
+        $app->make(Kernel::class)->bootstrap();
+
+        Hash::driver('bcrypt')->setRounds(4);
+
+        return $app;
     }
 }

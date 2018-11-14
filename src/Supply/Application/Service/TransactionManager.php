@@ -18,11 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Repository\Supply;
+namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Inventory\Repository\InventoryRepository;
-
-class EloquentInventoryRepository implements InventoryRepository
+interface TransactionManager
 {
+    public function begin(): void;
 
+    public function commit(): void;
+
+    public function rollback(): void;
 }

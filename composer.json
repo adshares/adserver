@@ -37,8 +37,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Test\\Adshares\\": "test/",
-            "Adshares\\Adserver\\Tests\\": "tests/"
+            "Adshares\\Adserver\\Tests\\": "tests/app",
+            "Adshares\\Tests\\": "tests/src"
         }
     },
     "extra": {

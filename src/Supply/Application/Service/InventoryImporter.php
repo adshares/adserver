@@ -20,7 +20,9 @@
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
+use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Domain\Service\DemandClient;
 
 class InventoryImporter
@@ -31,35 +33,38 @@ class InventoryImporter
     /** @var CampaignRepository */
     private $campaignRepository;
 
-    public function __construct(CampaignRepository $campaignRepository, DemandClient $client)
-    {
+    /** @var TransactionManager */
+    private $transactionManager;
+
+    public function __construct(
+        CampaignRepository $campaignRepository,
+        DemandClient $client,
+        TransactionManager $transactionManager
+    ) {
         $this->client = $client;
         $this->campaignRepository = $campaignRepository;
+        $this->transactionManager = $transactionManager;
     }
 
     public function import(string $host): void
     {
-        $inventory = $this->client->fetchAllInventory($host);
+        $campaigns = $this->client->fetchAllInventory($host);
 
-        foreach ($inventory->getCampaigns() as $campaign) {
-            try {
+        $this->transactionManager->begin();
+
+        try {
+            $this->campaignRepository->deactivateAllCampaignFromHost($host);
+
+            /** @var Campaign $campaign */
+            foreach ($campaigns as $campaign) {
+                $campaign->activate();
+
                 $this->campaignRepository->save($campaign);
-            } catch (\Exception $ex) {
-                // delete old banners ???
-                // inventory przesyła wszystkie dane, my możemy jakieś już mieć. Co wtedy?
-                // a) Kasujemy stare banery i dodajemy tylko nowe? Tak raczej nie można.
-                // b) Dodajemy lub updatujemy nowe? Jeśli nie ma to kasujemy?
-                $this->campaignRepository->update($campaign);
             }
+        } catch (CampaignRepositoryException $ex) {
+            $this->transactionManager->rollback();
         }
-    }
 
-//    public function import(DemandServer $demandServer): void
-//    {
-//        $inventory = $this->client->fetchInventory($demandServer);
-//
-//        foreach ($inventory->getCampaigns() as $campaign) {
-//            $this->campaignRepository->save($campaign);
-//        }
-//    }
+        $this->transactionManager->commit();
+    }
 }
