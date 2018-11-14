@@ -20,6 +20,8 @@
 
 namespace Adshares\Supply\Domain\Model;
 
+use Adshares\Supply\Domain\Model\Exception\InvalidBudgetValueException;
+
 final class Budget
 {
     /** @var int */
@@ -33,6 +35,37 @@ final class Budget
 
     public function __construct(int $budget, ?int $maxCpc, ?int $maxCpm)
     {
+        if ($budget <= 0) {
+            throw new InvalidBudgetValueException(sprintf(
+                'Budget value: %s is invalid. The value Must be greater than 0',
+                $budget
+            ));
+        }
+
+        if ($maxCpc !== null && $maxCpc <= 0) {
+            throw new InvalidBudgetValueException(sprintf(
+                'Max Cpc value: %s is invalid. The value Must be greater than 0',
+                $maxCpc
+            ));
+        }
+
+        if ($maxCpm !== null && $maxCpm <= 0) {
+            throw new InvalidBudgetValueException(sprintf(
+                'Max Cpm value: %s is invalid. The value Must be greater than 0',
+                $maxCpm
+            ));
+        }
+
+        $total = (int)$maxCpc + (int)$maxCpm;
+
+        if ($budget < $total) {
+            throw new InvalidBudgetValueException(sprintf(
+                'Budget `%s` must be greater than total value `%s`.',
+                $budget,
+                $total
+            ));
+        }
+
         $this->budget = $budget;
         $this->maxCpc = $maxCpc;
         $this->maxCpm = $maxCpm;
