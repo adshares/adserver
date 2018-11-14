@@ -54,6 +54,7 @@ after_script:
 jobs:
   include:
   - stage: code test
+    if: type = push
     script:
     # Run build script
     - in_docker /bin/bash scripts/pre-build.sh"
@@ -65,7 +66,7 @@ jobs:
     - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
   - stage: code quality
-    if: branch = develop
+    if: type = pull_request
     script:
     # Run build script
     - in_docker /bin/bash scripts/pre-build.sh"
@@ -94,7 +95,7 @@ jobs:
     - time sonar-scanner
 
   - stage: build and install
-    if: branch = develop
+    if: type = pull_request
     script:
     # Backing services and tools
     - >
