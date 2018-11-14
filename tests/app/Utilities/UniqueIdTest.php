@@ -65,4 +65,3 @@ class UniqueIdTest extends TestCase
         UniqueIdentifierFactory::fromString('invalid uuid');
     }
 }
-
