@@ -37,6 +37,7 @@ RUN apt-get -q update && apt-get -qyf --no-install-recommends install \
         php-xdebug \
         ads \
         nodejs yarn \
+        cron \
     && apt-get -qy autoremove && apt-get -qy clean all \
     && rm -rf /var/lib/apt/lists/* /var/cache/apk/* /usr/share/doc/*
 
