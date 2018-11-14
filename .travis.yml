@@ -18,8 +18,7 @@ env:
     - APP_DEBUG=true
 
 stages:
-  - code test
-  - code quality
+  - code test and quality
   - build and install
 
 before_script:
@@ -53,20 +52,8 @@ after_script:
 
 jobs:
   include:
-  - stage: code test
+  - stage: code test and quality
     if: type = push
-    script:
-    # Run build script
-    - in_docker /bin/bash scripts/pre-build.sh"
-
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
-
-    # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
-
-  - stage: code quality
-    if: type = pull_request
     script:
     # Run build script
     - in_docker /bin/bash scripts/pre-build.sh"
@@ -91,11 +78,14 @@ jobs:
     # PHP_CodeSniffer: check PSR2 standard
     - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
+    # PHP unit tests
+    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+
     # SonarQube
     - time sonar-scanner
 
   - stage: build and install
-    if: type = pull_request
+    if: type = pull_request AND branch = master
     script:
     # Backing services and tools
     - >
@@ -107,7 +97,7 @@ jobs:
       -e MYSQL_PASSWORD=adserver
       -e MYSQL_DATABASE=adserver
       -d
-      mysql/mysql-server:5.7
+      percona/percona:5
 
     - in_docker /bin/bash scripts/pre-build.sh"
 
