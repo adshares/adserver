@@ -19,20 +19,19 @@ env:
 
 stages:
   - code quality
-  - build
   - build and install
 
 before_script:
   # Enable aliases for non-interactive shells
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
-  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
+  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
   ## Setup test environment
   # Run docker container
-  - docker network create -d bridge test-network
-  - docker pull $DOCKER_IMAGE
+  - time docker network create -d bridge test-network
+  - time docker pull $DOCKER_IMAGE
   - >
-    docker run -d
+    time docker run -d
     --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
     --network=test-network
     -e TRAVIS=true
@@ -82,25 +81,13 @@ jobs:
     - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
     # SonarQube
-    - sonar-scanner
-
-  - stage: build
-    script:
-    # Run pre-build
-    - in_docker /bin/bash scripts/pre-build.sh"
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
-
-    - in_docker php --ini"
-
-    # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http"
+    - time sonar-scanner
 
   - stage: build and install
     script:
     # Backing services and tools
     - >
-      docker run
+      time docker run
       --name mysql.dock
       --network=test-network
       -e MYSQL_ALLOW_EMPTY_PASSWORD=true
