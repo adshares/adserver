@@ -32,18 +32,14 @@ class CreateNetworkHostsTable extends Migration
     public function up()
     {
         Schema::create('network_hosts', function (Blueprint $table) {
-            $table->string('address', 6)->primary(); // binary // REQ CUSTOM ALTER // ESC address
-            $table->string('host', 128); // hostname !!
+            $table->bigIncrements('id');
+            $table->string('address', 18)->unique();
+            $table->string('host', 128);
+            $table->timestamp('last_broadcast');
 
             $table->timestamps();
             $table->softDeletes();
-
-            $table->integer('last_seen')->unsigned(); // TODO: rename last_broadcast
         });
-
-        if (DB::isMysql()) {
-            DB::statement("ALTER TABLE network_hosts MODIFY address varbinary(6)");
-        }
     }
 
 
