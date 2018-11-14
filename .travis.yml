@@ -18,6 +18,7 @@ env:
     - APP_DEBUG=true
 
 stages:
+  - code test
   - code quality
   - build and install
 
@@ -52,7 +53,19 @@ after_script:
 
 jobs:
   include:
+  - stage: code test
+    script:
+    # Run build script
+    - in_docker /bin/bash scripts/pre-build.sh"
+
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
+
+    # PHP unit tests
+    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+
   - stage: code quality
+    if: branch = develop
     script:
     # Run build script
     - in_docker /bin/bash scripts/pre-build.sh"
@@ -81,6 +94,7 @@ jobs:
     - time sonar-scanner
 
   - stage: build and install
+    if: branch = develop
     script:
     # Backing services and tools
     - >
