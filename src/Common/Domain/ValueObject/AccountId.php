@@ -21,10 +21,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Ads\Util\AdsChecksumGenerator;
 use Adshares\Common\Id;
 use InvalidArgumentException;
 use function preg_match;
+use function sprintf;
 
 final class AccountId implements Id
 {
@@ -64,7 +64,24 @@ final class AccountId implements Id
         $nodeId = substr($string, 0, 4);
         $userId = substr($string, 5, 8);
 
-        return AdsChecksumGenerator::getAccountChecksum(hexdec($nodeId), hexdec($userId));
+        return sprintf('%04X', self::crc16(sprintf('%04X%08X', hexdec($nodeId), hexdec($userId))));
+    }
+
+    private static function crc16(string $hexChars): int
+    {
+        $chars = hex2bin($hexChars);
+        if ($chars) {
+            $crc = 0x1D0F;
+            for ($i = 0, $iMax = \strlen($chars); $i < $iMax; $i++) {
+                $x = ($crc >> 8) ^ \ord($chars[$i]);
+                $x ^= $x >> 4;
+                $crc = (($crc << 8) ^ ($x << 12) ^ ($x << 5) ^ $x) & 0xFFFF;
+            }
+        } else {
+            $crc = 0;
+        }
+
+        return $crc;
     }
 
     public static function fromString(string $string, bool $strict = false): AccountId
