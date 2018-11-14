@@ -29,7 +29,7 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsTxIn;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
@@ -202,7 +202,7 @@ class AdsProcessTx extends Command
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
                 // add to ledger
-                $ul = new UserLedger();
+                $ul = new UserLedgerEntry();
                 $ul->user_id = $user->id;
                 $ul->amount = $amount;
                 $ul->address_from = $senderAddress;

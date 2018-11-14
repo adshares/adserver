@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserAdserverWallet;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Database\Seeder;
 
 class MockDataUsersSeeder extends Seeder
@@ -59,6 +60,15 @@ class MockDataUsersSeeder extends Seeder
                 $wallet->adshares_address = $row->adserverWallet->adshares_address;
                 $wallet->total_funds = $row->adserverWallet->total_funds;
                 $wallet->save();
+
+                $ledgerEntry = UserLedgerEntry::make([
+                    'user_id' => $user->id,
+                    'amount' => $row->adserverWallet->total_funds * (10 ** 11),
+                    'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                    '' => $row->adserverWallet->adshares_address,
+                    'address_from' => '',
+                    'address_to' => '',
+                ]);
             }
 
             $this->command->info(" Added - <{$user->email}> with password '{$row->password}'");

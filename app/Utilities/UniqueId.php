@@ -37,6 +37,21 @@ final class UniqueId implements Id
 
     public function __toString(): string
     {
+        return $this->toString();
+    }
+
+    public function toString(): string
+    {
         return $this->id->toString();
+    }
+
+    public function compareTo(Id $other): int
+    {
+        throw new \Exception("Method compareTo() not implemented");
+    }
+
+    public function equals(Id $other): bool
+    {
+        throw new \Exception("Method equals() not implemented");
     }
 }

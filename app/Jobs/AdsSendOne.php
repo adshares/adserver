@@ -25,7 +25,7 @@ use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Exceptions\JobException;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -51,19 +51,19 @@ class AdsSendOne implements ShouldQueue
      */
     private $message;
     /**
-     * @var UserLedger user id
+     * @var UserLedgerEntry user id
      */
     private $userLedger;
 
     /**
      * Create a new job instance.
      *
-     * @param UserLedger $userLedger
+     * @param UserLedgerEntry $userLedger
      * @param string $addressTo
      * @param int $amount
      * @param null|string $message
      */
-    public function __construct(UserLedger $userLedger, string $addressTo, int $amount, ?string $message)
+    public function __construct(UserLedgerEntry $userLedger, string $addressTo, int $amount, ?string $message)
     {
         $this->userLedger = $userLedger;
         $this->addressTo = $addressTo;
@@ -83,11 +83,11 @@ class AdsSendOne implements ShouldQueue
     public function handle(AdsClient $adsClient)
     {
         $total = -$this->userLedger->amount;
-        $balance = UserLedger::getBalanceByUserId($this->userLedger->user_id);
+        $balance = UserLedgerEntry::getBalanceByUserId($this->userLedger->user_id);
 
         if ($balance < $total) {
             Log::notice("Insufficient funds.");
-            $this->userLedger->status = UserLedger::STATUS_REJECTED;
+            $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
             $this->userLedger->save();
 
             return;
@@ -101,7 +101,7 @@ class AdsSendOne implements ShouldQueue
 
         if (AdsValidator::isTransactionIdValid($txid)) {
             // TODO move to queue (or service in general) to assure user ledger entry update
-            $this->userLedger->status = UserLedger::STATUS_ACCEPTED;
+            $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
             $this->userLedger->txid = $txid;
             $this->userLedger->save();
         } else {

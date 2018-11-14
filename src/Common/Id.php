@@ -24,5 +24,9 @@ namespace Adshares\Common;
 
 interface Id
 {
-    public function __toString(): string;
+    public function toString(): string;
+
+    public function compareTo(Id $other): int;
+
+    public function equals(Id $other): bool;
 }
