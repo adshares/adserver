@@ -62,6 +62,8 @@ class AdsGetTxIn extends Command
      */
     public function handle(AdsClient $adsClient)
     {
+        $this->info('Start command ads:get-tx-in');
+
         /** @var $from Config */
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         if (null === $from) {
@@ -123,8 +125,12 @@ class AdsGetTxIn extends Command
                     $adsTx->save();
                     ++$count;
                 } catch (QueryException $exc) {
-                    $excMessage = $exc->getMessage();
-                    $this->error("Tx ${txid} rejected due to\n    ${excMessage}");
+                    if (is_array($exc->errorInfo) && count($exc->errorInfo) > 1 && $exc->errorInfo[1] === 1062) {
+                        $this->info("Tx [$txid] rejected. It is already in the database.");
+                    } else {
+                        $excMessage = $exc->getMessage();
+                        $this->error("Tx [$txid] rejected due to\n    ${excMessage}");
+                    }
                 }
             }
         }
