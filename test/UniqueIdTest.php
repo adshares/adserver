@@ -17,11 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Test\Adshares;
 
-use Adshares\Adserver\Utilities\UniqueId;
 use Adshares\Adserver\Utilities\UniqueIdentifierFactory;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -31,9 +30,10 @@ class UniqueIdTest extends TestCase
     /** @test */
     public function createRandom(): void
     {
-        $randomId = UniqueIdentifierFactory::random();
+        $format = '%x%x%x%x%x%x%x%x-%x%x%x%x-%x%x%x%x-%x%x%x%x-%x%x%x%x%x%x%x%x%x%x%x%x';
+        $id = UniqueIdentifierFactory::random();
 
-        self::assertInstanceOf(UniqueId::class, $randomId);
+        self::assertStringMatchesFormat($format, (string)$id);
     }
 
     /**
@@ -46,14 +46,13 @@ class UniqueIdTest extends TestCase
     {
         $uuid = UniqueIdentifierFactory::fromString($string);
 
-        self::assertInstanceOf(UniqueId::class, $uuid);
         self::assertEquals(strtolower($string), "$uuid");
     }
 
     public function fromStringProvider(): array
     {
         return [
-            ['b355acac-09cb-45d6-9f75-5dd298b3b862'],
+            ['b355a5ac-09cb-45d6-9f75-5dd298b3b862'],
             ['5CE9620E-50C6-4AB0-9445-E159D5AD9D08'],
         ];
     }
@@ -61,7 +60,7 @@ class UniqueIdTest extends TestCase
     /** @test */
     public function creationFailure(): void
     {
-        self::expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         UniqueIdentifierFactory::fromString('invalid uuid');
     }
