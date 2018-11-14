@@ -18,22 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\AdsTxIn;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Faker\Generator as Faker;
 
 $factory->define(UserLedgerEntry::class, function (Faker $faker) {
-    $adsTx = new AdsTxIn();
-    $accNum = str_pad(dechex(mt_rand(0, 2047)), 8, '0', STR_PAD_LEFT);
-    $adsTx->txid = "0001:$accNum:0001";
-    $adsTx->amount = 1;
-    $adsTx->address = "0001-$accNum-XXXX";
-    $res = $adsTx->save();
-
     return [
-        'amount' => '',
+        'amount' => $faker->numberBetween() * (10 ** 11),
         'status' => UserLedgerEntry::STATUS_ACCEPTED,
-        'address_from' => '',
-        'address_to' => '',
+        'address_from' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+        'address_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+        'txid' => $faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),
     ];
 });

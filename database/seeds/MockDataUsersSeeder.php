@@ -61,14 +61,12 @@ class MockDataUsersSeeder extends Seeder
                 $wallet->total_funds = $row->adserverWallet->total_funds;
                 $wallet->save();
 
-                $ledgerEntry = UserLedgerEntry::make([
-                    'user_id' => $user->id,
-                    'amount' => $row->adserverWallet->total_funds * (10 ** 11),
-                    'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                    '' => $row->adserverWallet->adshares_address,
-                    'address_from' => '',
-                    'address_to' => '',
-                ]);
+                if ($row->adserverWallet->total_funds) {
+                    factory(UserLedgerEntry::class)->create([
+                        'user_id' => $user->id,
+                        'amount' => $row->adserverWallet->total_funds * (10 ** 11),
+                    ]);
+                }
             }
 
             $this->command->info(" Added - <{$user->email}> with password '{$row->password}'");
