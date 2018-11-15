@@ -29,7 +29,7 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsTxIn;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
@@ -79,6 +79,8 @@ class AdsProcessTx extends Command
      */
     public function handle(AdsClient $adsClient)
     {
+        $this->info('Start command ads:process-tx');
+
         try {
             $this->updateBlockIds($adsClient);
         } catch (CommandException $exc) {
@@ -137,7 +139,20 @@ class AdsProcessTx extends Command
      */
     private function handleDbTx(AdsClient $adsClient, $dbTx)
     {
-        $transaction = $adsClient->getTransaction($dbTx->txid)->getTxn();
+        try {
+            $txid = $dbTx->txid;
+            $transaction = $adsClient->getTransaction($txid)->getTxn();
+        } catch (CommandException $exc) {
+            $code = $exc->getCode();
+            $message = $exc->getMessage();
+            $this->info(
+                "Cannot get transaction [$txid] data due to CommandException:\nCode:\n  ${code}\n"
+                ."Message:\n  ${message}\n"
+            );
+
+            return;
+        }
+
         $type = $transaction->getType();
         switch ($type) {
             case 'send_many':
@@ -202,7 +217,7 @@ class AdsProcessTx extends Command
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
                 // add to ledger
-                $ul = new UserLedger();
+                $ul = new UserLedgerEntry();
                 $ul->user_id = $user->id;
                 $ul->amount = $amount;
                 $ul->address_from = $senderAddress;

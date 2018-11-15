@@ -18,21 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+namespace Adshares\Test\Common\Domain\Model;
 
-use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Support\Facades\Hash;
+use Adshares\Common\Domain\Model\Uuid;
+use PHPUnit\Framework\TestCase;
 
-trait CreatesApplication
+class UuidTest extends TestCase
 {
-    public function createApplication()
+    public function testReturningAnIdWhenObjectIsCasted()
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
+        $uuid = new Uuid();
 
-        $app->make(Kernel::class)->bootstrap();
-
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
+        $this->assertEquals($uuid, (string)$uuid);
     }
 }

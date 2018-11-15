@@ -21,6 +21,13 @@ services:
     command: ['php','artisan','queue:work']
     user: ${SYSTEM_USER_ID}
 
+  cron:
+    extends:
+      service: application
+    command: ['bash','-c','crontab /etc/cron.d/adserver-crontab && cron -f']
+    volumes:
+      - ./docker/cron/crontab:/etc/cron.d/adserver-crontab
+
   webserver:
     image: nginx:alpine
     working_dir: /adserver/public

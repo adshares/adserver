@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Adserver\Repository\Supply;
 
-use Illuminate\Database\Eloquent\Model;
+use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 
-class UserLedger extends Model
+class NetworkCampaignRepository implements CampaignRepository
 {
-    const STATUS_ACCEPTED = 0;
-    const STATUS_PENDING = 1;
-    const STATUS_REJECTED = 2;
 
-    /**
-     * Returns account balance of particular user.
-     *
-     * @param int $userId user id
-     *
-     * @return int balance
-     */
-    public static function getBalanceByUserId(int $userId): int
+    public function deactivateAllCampaignsFromHost(string $host): void
     {
-        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
+        // TODO: Implement deactivateAllCampaignsFromHost() method.
+    }
+
+    public function save(Campaign $campaign): void
+    {
+        // TODO: Implement save() method.
     }
 }
