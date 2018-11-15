@@ -194,9 +194,9 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function check(Request $request)
+    public function check()
     {
-        return self::json(Auth::user()->load('AdserverWallet')->toArray(), 200);
+        return self::json(Auth::user());
     }
 
     /**
@@ -214,7 +214,7 @@ class AuthController extends Controller
         )) {
             Auth::user()->generateApiKey();
 
-            return response()->json(Auth::user()->load('AdserverWallet')->toArray(), Response::HTTP_OK);
+            return $this->check();
         }
 
         return response()->json([], Response::HTTP_BAD_REQUEST);
