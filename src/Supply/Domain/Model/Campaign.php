@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
-use Adshares\Common\Domain\UniqueId;
 use Adshares\Common\Domain\Model\Uuid;
+use Adshares\Common\Domain\UniqueId;
 
 final class Campaign
 {
@@ -64,7 +64,6 @@ final class Campaign
 
     /** @var int */
     private $status;
-
 
     public function __construct(
         int $userId,

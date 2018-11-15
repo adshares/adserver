@@ -17,37 +17,52 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
+use InvalidArgumentException;
 
-final class UniqueId implements Id
+final class TransactionId implements Id
 {
-    /** @var UuidInterface */
+    /** @var string */
     private $value;
 
     public function __construct(string $value)
     {
-        $this->value = Uuid::fromString($value);
+        if (!self::isValid($value)) {
+            throw new InvalidArgumentException("'$value' is NOT a VALID TransactionId representation.");
+        }
+
+        $this->value = strtoupper($value);
     }
 
-    public static function fromUuid(UuidInterface $uuid): UniqueId
+    private static function isValid(string $value): bool
     {
-        return new self($uuid->toString());
+        return 1 === preg_match('/^[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}$/i', $value);
+    }
+
+    public static function random(): TransactionId
+    {
+        $nodeId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
+        $tranId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
+        $mesgId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
+
+        return new self("{$nodeId}:{$tranId}:{$mesgId}");
     }
 
     public function __toString(): string
     {
-        return $this->value->toString();
+        return $this->value;
     }
 
     public function equals(object $other): bool
     {
-        return $this->value->equals($other->value);
+        if (!($other instanceof self)) {
+            return false;
+        }
+
+        return $this->value === $other->__toString();
     }
 }
