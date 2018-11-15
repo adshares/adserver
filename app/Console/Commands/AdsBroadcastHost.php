@@ -1,4 +1,23 @@
 <?php
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -15,26 +34,20 @@ class AdsBroadcastHost extends Command
     const EXIT_CODE_ERROR = 1;
 
     /**
-     * The name and signature of the console command.
-     *
      * @var string
      */
     protected $signature = 'ads:broadcast-host';
 
     /**
-     * The console command description.
-     *
      * @var string
      */
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
+    /**
+     * @var string
+     */
     private $host;
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         parent::__construct();
@@ -42,13 +55,11 @@ class AdsBroadcastHost extends Command
     }
 
     /**
-     * Execute the console command.
-     *
      * @param AdsClient $adsClient
      *
-     * @return mixed
+     * @return int
      */
-    public function handle(AdsClient $adsClient)
+    public function handle(AdsClient $adsClient): int
     {
         $this->info('Start command '.$this->signature);
 
