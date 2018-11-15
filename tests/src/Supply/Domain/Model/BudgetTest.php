@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Tests\Supply\Domain\Model;
+namespace Adshares\Test\Supply\Domain\Model;
 
 use Adshares\Supply\Domain\Model\Budget;
 use Adshares\Supply\Domain\Model\Exception\InvalidBudgetValueException;

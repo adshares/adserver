@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Tests\Supply\Domain\Model;
+namespace Adshares\Test\Supply\Domain\Model;
 
 use Adshares\Supply\Domain\Model\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
