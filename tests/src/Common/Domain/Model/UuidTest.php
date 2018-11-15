@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Tests\Common\Domain\Model;
+namespace Adshares\Test\Common\Domain\Model;
 
 use PHPUnit\Framework\TestCase;
 

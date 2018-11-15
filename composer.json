@@ -32,7 +32,8 @@
         ],
         "psr-4": {
             "Adshares\\Adserver\\": "app/",
-            "Adshares\\": "src/"
+            "Adshares\\": "src/",
+            "Adshares\\Test\\": "tests/"
         }
     },
     "autoload-dev": {
