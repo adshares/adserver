@@ -27,7 +27,6 @@ use Adshares\Common\Identifiable;
 
 final class Account implements Identifiable, Comparable
 {
-
     /** @var AccountId */
     private $id;
 
@@ -41,8 +40,12 @@ final class Account implements Identifiable, Comparable
         return $this->id;
     }
 
-    public function equals(self $object): bool
+    public function equals(object $other): bool
     {
-        return false;
+        if (!($other instanceof self)) {
+            return false;
+        }
+
+        return $this->id->equals($other);
     }
 }

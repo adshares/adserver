@@ -24,5 +24,5 @@ namespace Adshares\Common;
 
 interface Comparable
 {
-    public function equals(self $object): bool;
+    public function equals(object $other): bool;
 }

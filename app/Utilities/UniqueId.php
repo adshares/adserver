@@ -38,10 +38,7 @@ final class UniqueId implements Id
 
     public static function fromUuid(UuidInterface $uuid): UniqueId
     {
-        $object = new self('');
-        $object->value = $uuid;
-
-        return $object;
+        return new self($uuid->toString());
     }
 
     public function __toString(): string
@@ -49,7 +46,7 @@ final class UniqueId implements Id
         return $this->value->toString();
     }
 
-    public function equals(self $other): bool
+    public function equals(object $other): bool
     {
         return $this->value->equals($other->value);
     }

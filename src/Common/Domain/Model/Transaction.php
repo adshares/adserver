@@ -27,7 +27,6 @@ use Adshares\Common\Identifiable;
 
 final class Transaction implements Identifiable, Comparable
 {
-
     /** @var TransactionId */
     private $id;
 
@@ -41,8 +40,12 @@ final class Transaction implements Identifiable, Comparable
         return $this->id;
     }
 
-    public function equals(self $object): bool
+    public function equals(object $other): bool
     {
-        return $this->id->equals($object);
+        if (!($other instanceof self)) {
+            return false;
+        }
+
+        return $this->id->equals($other);
     }
 }

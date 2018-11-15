@@ -114,8 +114,12 @@ final class AccountId implements Id
         return $this->value;
     }
 
-    public function equals(self $other, bool $strict = false): bool
+    public function equals(object $other, bool $strict = false): bool
     {
+        if (!($other instanceof self)) {
+            return false;
+        }
+
         if ($strict) {
             return $this->value === $other->__toString();
         }
