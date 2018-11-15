@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,24 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\NetworkHost;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Auth;
 
-class DatabaseSeeder extends Seeder
+class MockDataNetworkHostsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
-        Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
-        $this->call([
-            MockDataUsersSeeder::class,
-            MockDataSitesSeeder::class,
-            MockDataCampaignsSeeder::class,
-            MockDataNetworkHostsSeeder::class,
-        ]);
+        $this->command->info('[mock] seeding: network_hosts');
+
+        $networkHost = new NetworkHost();
+        $networkHost->address = '0001-00000001-0001';
+        $networkHost->host = 'localhost:8101';
+        $networkHost->last_broadcast = new DateTime();
+
+        $networkHost->save();
     }
 }
-
