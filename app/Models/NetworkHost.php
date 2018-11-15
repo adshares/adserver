@@ -20,17 +20,22 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int id
+ * @property string address
+ * @property string host
+ * @property int created_at
+ * @property int updated_at
+ * @property int deleted_at
+ * @property int last_broadcast
+ */
 class NetworkHost extends Model
 {
-    use AccountAddress;
     use AutomateMutators;
 
-    public $incrementing = false;
-    protected $primaryKey = 'address';
     /**
      * The attributes that are mass assignable.
      *
@@ -39,8 +44,7 @@ class NetworkHost extends Model
     protected $fillable = [
         'address',
         'host',
-        'last_seen',
-        'banner_id',
+        'last_broadcast',
     ];
 
     /**
@@ -50,26 +54,19 @@ class NetworkHost extends Model
      */
     protected $hidden = [];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation
-     *
-     * @var array
-     */
-    protected $traitAutomate = [
-        'address' => 'AccountAddress',
-    ];
-
     public static function registerHost($address, $host)
     {
-        $h = self::find(hex2bin(self::decodeAddress($address)));
-        if (empty($h)) {
-            $h = new self();
-            $h->address = $address;
-            $h->host = $host;
-        }
-        $h->last_seen = time();
-        $h->save();
+        $networkHost = self::find($address);
 
-        return $h;
+        if (empty($networkHost)) {
+            $networkHost = new self();
+            $networkHost->address = $address;
+            $networkHost->host = $host;
+        }
+
+        $networkHost->last_broadcast = time();
+        $networkHost->save();
+
+        return $networkHost;
     }
 }
