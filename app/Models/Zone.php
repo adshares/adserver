@@ -171,8 +171,8 @@ HTML;
 
         if ($label) {
             $sizeLabel = self::ZONE_LABELS[$label] ?? false;
+            $this->attributes['label'] = $label;
             if ($sizeLabel) {
-                $this->attributes['label'] = $label;
                 $size = explode('x', $sizeLabel);
                 $this->attributes['width'] = $size[0];
                 $this->attributes['height'] = $size[1];
