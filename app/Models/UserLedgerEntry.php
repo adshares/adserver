@@ -22,7 +22,10 @@ namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserLedger extends Model
+/**
+ * @method static where(string $string, $userId): \Illuminate\Database\Query\Builder;
+ */
+class UserLedgerEntry extends Model
 {
     const STATUS_ACCEPTED = 0;
     const STATUS_PENDING = 1;

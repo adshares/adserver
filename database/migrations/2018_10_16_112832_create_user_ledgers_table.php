@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -32,11 +32,11 @@ class CreateUserLedgersTable extends Migration
      */
     public function up()
     {
-        Schema::create('user_ledgers', function (Blueprint $table) {
+        Schema::create('user_ledger_entries', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('user_id');
             $table->bigInteger('amount');
-            $table->tinyInteger('status')->default((string)UserLedger::STATUS_ACCEPTED);
+            $table->tinyInteger('status')->default((string)UserLedgerEntry::STATUS_ACCEPTED);
             $table->char('address_from', 18);
             $table->char('address_to', 18);
             $table->char('txid', 18)->nullable();
@@ -51,6 +51,6 @@ class CreateUserLedgersTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('user_ledgers');
+        Schema::dropIfExists('user_ledger_entries');
     }
 }

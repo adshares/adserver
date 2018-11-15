@@ -1,5 +1,13 @@
 [
   {
+    "email": "nofunds@dev.dev",
+    "password": "nofunds@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": false,
+    "isPublisher": true,
+    "isAdvertiser": true
+  },
+  {
     "email": "2@dev.dev",
     "password": "2@dev.dev",
     "isConfirmed": true,

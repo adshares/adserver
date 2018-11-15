@@ -46,7 +46,7 @@ class UniqueIdTest extends TestCase
     {
         $uuid = UniqueIdentifierFactory::fromString($string);
 
-        self::assertEquals(strtolower($string), "$uuid");
+        self::assertEquals(strtolower($string), (string)$uuid);
     }
 
     public function fromStringProvider(): array

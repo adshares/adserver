@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Tests\Http;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
@@ -124,7 +124,7 @@ class WalletControllerTest extends TestCase
     {
         $dateString = '2018-10-24 15:00:49';
 
-        $ul = new UserLedger();
+        $ul = new UserLedgerEntry();
         $ul->user_id = $userId;
         $ul->amount = $amount;
         $ul->address_from = '0001-00000000-XXXX';
@@ -280,7 +280,7 @@ class WalletControllerTest extends TestCase
         $this->generateUserIncome($userId, $amountInClicks);
         // add entry without txid
         $dateString = '2018-10-24 15:00:49';
-        $ul = new UserLedger();
+        $ul = new UserLedgerEntry();
         $ul->user_id = $userId;
         $ul->amount = -$amountInClicks;
         $ul->address_from = '0001-00000000-XXXX';

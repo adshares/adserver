@@ -20,34 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common;
 
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
+interface Comparable
 {
-    /** @var UuidInterface */
-    private $value;
-
-    public function __construct(string $value)
-    {
-        $this->value = Uuid::fromString($value);
-    }
-
-    public static function fromUuid(UuidInterface $uuid): UniqueId
-    {
-        return new self($uuid->toString());
-    }
-
-    public function __toString(): string
-    {
-        return $this->value->toString();
-    }
-
-    public function equals(object $other): bool
-    {
-        return $this->value->equals($other->value);
-    }
+    public function equals(object $other): bool;
 }
