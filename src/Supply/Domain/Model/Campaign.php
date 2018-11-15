@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Model;
 
@@ -28,6 +28,7 @@ use Adshares\Common\Domain\Model\Uuid;
 
 final class Campaign
 {
+    const STATUS_PROCESSING = 0;
     const STATUS_ACTIVE = 1;
     const STATUS_DELETED = 2;
 
@@ -74,11 +75,12 @@ final class Campaign
         \DateTime $dateEnd,
         array $banners,
         Budget $budget,
-        DemandServer $demandServer,
+        string $demandHost,
         int $status,
         array $targetingRequires = [],
         array $targetingExcludes = []
-    ) {
+    )
+    {
         $this->id = new Uuid();
 
         $this->userId = $userId;
@@ -91,7 +93,7 @@ final class Campaign
         $this->banners = new ArrayCollection($banners);
 
         $this->budget = $budget;
-        $this->demandServer = $demandServer;
+        $this->demandServer = $demandHost;
 
         $this->targetingRequires = $targetingRequires;
         $this->targetingExcludes = $targetingExcludes;
@@ -106,6 +108,36 @@ final class Campaign
     public function activate(): void
     {
         $this->status = self::STATUS_ACTIVE;
+    }
+
+    public static function fromArray(array $data): self
+    {
+        $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
+
+        $arrayBanners = $data['banners'];
+        $banners = [];
+
+        $campaign = new self(
+            $data['user_id'],
+            $data['name'],
+            $data['landing_url'],
+            $data['date_start'],
+            $data['date_start'],
+            $banners,
+            $budget,
+            $data['demand_host'],
+            self::STATUS_PROCESSING,
+            $data['targeting_requires'],
+            $data['targeting_excludes']
+        );
+
+        foreach ($arrayBanners as $banner) {
+            $banners[] = Banner::fromArray($campaign, $banner);
+        }
+
+        $campaign->banners = new ArrayCollection($banners);
+
+        return $campaign;
     }
 
     public function getStatus(): int

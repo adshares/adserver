@@ -26,5 +26,8 @@ class CampaignCollection extends ArrayCollection
 {
     public function __construct(array $campaigns)
     {
+        foreach ($campaigns as $campaign) {
+            $this->add($campaign);
+        }
     }
 }

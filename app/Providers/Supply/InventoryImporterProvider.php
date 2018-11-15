@@ -18,10 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Providers\Supply;
 
-class DemandServer
+use Adshares\Adserver\Client\InMemoryDemandClient;
+use Adshares\Adserver\Manager\EloquentTransactionManager;
+use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
+use Adshares\Supply\Application\Service\InventoryImporter;
+use Illuminate\Support\ServiceProvider;
+
+class InventoryImporterProvider extends ServiceProvider
 {
-    private $host;
-    private $address;
+    public function register()
+    {
+        $this->app->bind(InventoryImporter::class, function ($app) {
+            $campaignRepository = new NetworkCampaignRepository();
+
+            return new InventoryImporter($campaignRepository, new InMemoryDemandClient(), new EloquentTransactionManager());
+        });
+    }
 }

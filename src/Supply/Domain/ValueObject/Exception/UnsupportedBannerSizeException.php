@@ -18,10 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Supply\Domain\ValueObject;
 
-class DemandServer
+use RuntimeException;
+
+class UnsupportedBannerSizeException extends RuntimeException
 {
-    private $host;
-    private $address;
 }

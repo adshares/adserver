@@ -18,10 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Repository\Supply;
 
-class DemandServer
+use Adshares\Adserver\Models\NetworkHost;
+
+class NetworkHostRepository
 {
-    private $host;
-    private $address;
+    public function find()
+    {
+        return (new NetworkHost())->get();
+    }
 }

@@ -18,10 +18,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Manager;
 
-class DemandServer
+use Adshares\Common\Application\TransactionManager;
+
+class EloquentTransactionManager implements TransactionManager
 {
-    private $host;
-    private $address;
+
+    public function begin(): void
+    {
+        // TODO: Implement begin() method.
+    }
+
+    public function commit(): void
+    {
+        // TODO: Implement commit() method.
+    }
+
+    public function rollback(): void
+    {
+        // TODO: Implement rollback() method.
+    }
 }

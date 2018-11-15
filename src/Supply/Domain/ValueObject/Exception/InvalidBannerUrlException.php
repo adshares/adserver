@@ -18,15 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Supply\Domain\ValueObject\Exception;
 
-namespace Adshares\Supply\Application\Service;
-
-interface TransactionManager
+class InvalidBannerUrlException extends \InvalidArgumentException
 {
-    public function begin(): void;
 
-    public function commit(): void;
-
-    public function rollback(): void;
 }

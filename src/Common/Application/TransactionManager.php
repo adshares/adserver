@@ -18,10 +18,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+declare(strict_types=1);
 
-class DemandServer
+namespace Adshares\Common\Application;
+
+interface TransactionManager
 {
-    private $host;
-    private $address;
+    public function begin(): void;
+
+    public function commit(): void;
+
+    public function rollback(): void;
 }
