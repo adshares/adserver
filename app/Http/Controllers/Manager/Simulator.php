@@ -558,6 +558,7 @@ FILTERING_JSON;
                     'id' => $sizeId + 1,
                     'name' => ucwords(str_replace('-', ' ', $key)),
                     'type' => $key,
+                    'label' => $key,
                     'size' => $sizeId,
                     'tags' => $tags,
                     'width' => explode('x', $value)[0],

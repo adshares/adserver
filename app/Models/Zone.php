@@ -162,6 +162,7 @@ HTML;
             'width' => $this->width,
             'height' => $this->height,
             'label' => $this->label,
+            'tags' => collect(Simulator::getZoneTypes())->firstWhere('label', $this->label) ?? [],
         ];
     }
 
