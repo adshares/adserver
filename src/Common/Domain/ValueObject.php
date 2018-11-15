@@ -18,13 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Common\Domain;
 
-namespace Adshares\Common;
+use Adshares\Common\Comparable;
 
-interface Id
+interface ValueObject extends Comparable
 {
-    public function toString(): string;
-
-    public function equals(Id $other): bool;
 }

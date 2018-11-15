@@ -17,25 +17,32 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common\Domain\Model;
 
-use Ramsey\Uuid\Uuid;
+use Adshares\Common\Comparable;
+use Adshares\Common\Domain;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Identifiable;
 
-final class UniqueIdentifierFactory
+final class Account implements Identifiable, Comparable
 {
-    private function __construct()
+
+    /** @var AccountId */
+    private $id;
+
+    public function __construct(AccountId $id)
     {
+        $this->id = $id;
     }
 
-    public static function fromString(string $id): UniqueId
+    public function id(): Domain\Id
     {
-        return UniqueId::fromUuid(Uuid::fromString($id));
+        return $this->id;
     }
 
-    public static function random(): UniqueId
+    public function equals(self $object): bool
     {
-        return UniqueId::fromUuid(Uuid::uuid4());
+        return false;
     }
 }

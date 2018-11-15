@@ -61,7 +61,7 @@ class TransactionIdTest extends TestCase
      * \     */
     public function createFromString(string $string): void
     {
-        $id = TransactionId::fromString($string);
+        $id = new TransactionId($string);
 
         self::assertSame(strtoupper($string), (string)$id);
     }
@@ -83,7 +83,7 @@ class TransactionIdTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        TransactionId::fromString($string);
+        new TransactionId($string);
     }
 
     public function invalidStringProvider(): array
@@ -102,13 +102,13 @@ class TransactionIdTest extends TestCase
     /** @test */
     public function equalityChecker(): void
     {
-        $one = TransactionId::fromString('ABCD:EF123456:7890');
-        $one1 = TransactionId::fromString('ABCD:EF123456:7890');
+        $one = new TransactionId('ABCD:EF123456:7890');
+        $one1 = new TransactionId('ABCD:EF123456:7890');
 
         self::assertTrue($one->equals($one1));
         self::assertTrue($one1->equals($one));
 
-        $two = TransactionId::fromString('0000:00000000:0000');
+        $two = new TransactionId('0000:00000000:0000');
 
         self::assertFalse($one->equals($two));
         self::assertFalse($two->equals($one));

@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Id;
+use Adshares\Common\Domain\Id;
 use InvalidArgumentException;
 use function preg_match;
 use function sprintf;
@@ -31,38 +31,42 @@ final class AccountId implements Id
     private const LOOSELY_VALID_CHECKSUM = 'XXXX';
 
     /** @var string */
-    private $accountIdStringRepresentation;
+    private $value;
 
-    private function __construct(string $string)
+    public function __construct(string $value, bool $strict = false)
     {
-        $this->accountIdStringRepresentation = $string;
-    }
-
-    public static function random(bool $strict = true): AccountId
-    {
-        $nodeId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
-        $userId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
-
-        return self::fromIncompleteString("{$nodeId}-{$userId}", $strict);
-    }
-
-    public static function fromIncompleteString(string $string, bool $strict = true): AccountId
-    {
-        if (1 === preg_match('/^[0-9A-F]{4}-[0-9A-F]{8}$/i', $string)) {
-            $checksum = $strict
-                ? self::checksum($string)
-                : self::LOOSELY_VALID_CHECKSUM;
-
-            return new self(strtoupper("{$string}-{$checksum}"));
+        if (!self::isValid($value, $strict)) {
+            throw new InvalidArgumentException("'$value' is NOT a"
+                .($strict ? ' STRICTLY' : '')
+                .' VALID AccountId representation.');
         }
 
-        throw new InvalidArgumentException("'$string' is not a valid 'NODE-USER' string.");
+        $this->value = strtoupper($value);
     }
 
-    private static function checksum(string $string): string
+    public static function isValid(string $value, bool $strict = false): bool
     {
-        $nodeId = substr($string, 0, 4);
-        $userId = substr($string, 5, 8);
+        $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|'
+            .self::LOOSELY_VALID_CHECKSUM
+            .')$/i';
+
+        if (1 === preg_match($pattern, $value)) {
+            $checksum = strtoupper(substr($value, -4));
+
+            if (self::LOOSELY_VALID_CHECKSUM === $checksum) {
+                return !$strict;
+            }
+
+            return $checksum === self::checksum($value);
+        }
+
+        return false;
+    }
+
+    private static function checksum(string $value): string
+    {
+        $nodeId = substr($value, 0, 4);
+        $userId = substr($value, 5, 8);
 
         return sprintf('%04X', self::crc16(sprintf('%04X%08X', hexdec($nodeId), hexdec($userId))));
     }
@@ -84,52 +88,38 @@ final class AccountId implements Id
         return $crc;
     }
 
-    public static function fromString(string $string, bool $strict = false): AccountId
+    public static function random(bool $strict = true): AccountId
     {
-        if (!self::isValid($string, $strict)) {
-            throw new InvalidArgumentException("'$string' is NOT a"
-                .($strict ? ' STRICTLY' : '')
-                .' VALID AccountId representation.');
-        }
+        $nodeId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
+        $userId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
 
-        return new self(strtoupper($string));
+        return self::fromIncompleteString("{$nodeId}-{$userId}", $strict);
     }
 
-    public static function isValid(string $string, bool $strict = false): bool
+    public static function fromIncompleteString(string $value, bool $strict = true): AccountId
     {
-        $pattern = '/^[0-9A-F]{4}-[0-9A-F]{8}-([0-9A-F]{4}|'
-            .self::LOOSELY_VALID_CHECKSUM
-            .')$/i';
+        if (1 === preg_match('/^[0-9A-F]{4}-[0-9A-F]{8}$/i', $value)) {
+            $checksum = $strict
+                ? self::checksum($value)
+                : self::LOOSELY_VALID_CHECKSUM;
 
-        if (1 === preg_match($pattern, $string)) {
-            $checksum = strtoupper(substr($string, -4));
-
-            if (self::LOOSELY_VALID_CHECKSUM === $checksum) {
-                return !$strict;
-            }
-
-            return $checksum === self::checksum($string);
+            return new self("{$value}-{$checksum}");
         }
 
-        return false;
+        throw new InvalidArgumentException("'$value' is not a valid 'NODE-USER' string.");
     }
 
     public function __toString(): string
     {
-        return $this->toString();
+        return $this->value;
     }
 
-    public function toString(): string
-    {
-        return $this->accountIdStringRepresentation;
-    }
-
-    public function equals(Id $other, bool $strict = false): bool
+    public function equals(self $other, bool $strict = false): bool
     {
         if ($strict) {
-            return $this->accountIdStringRepresentation === $other->toString();
+            return $this->value === $other->__toString();
         }
 
-        return strpos($other->toString(), substr($this->accountIdStringRepresentation, 0, 13)) === 0;
+        return strpos($other->__toString(), substr($this->value, 0, 13)) === 0;
     }
 }

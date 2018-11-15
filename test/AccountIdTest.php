@@ -81,7 +81,7 @@ class AccountIdTest extends TestCase
      */
     public function createFromStringWithStrength(string $string, bool $strict): void
     {
-        $id = AccountId::fromString($string, $strict);
+        $id = new AccountId($string, $strict);
 
         self::assertSame(strtoupper($string), (string)$id);
     }
@@ -112,7 +112,7 @@ class AccountIdTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        AccountId::fromString($string, $strict);
+        new AccountId($string, $strict);
     }
 
     public function invalidStringProvider(): array
@@ -168,7 +168,7 @@ class AccountIdTest extends TestCase
     /** @test */
     public function createFromStringWithoutStrength(): void
     {
-        self::assertSame('ABCD-1234ABCD-27B9', (string)AccountId::fromString('ABCD-1234ABCD-27B9'));
+        self::assertSame('ABCD-1234ABCD-27B9', (string)new AccountId('ABCD-1234ABCD-27B9'));
     }
 
     /** @test */
@@ -182,14 +182,14 @@ class AccountIdTest extends TestCase
     /** @test */
     public function equalityChecker(): void
     {
-        $one = AccountId::fromString('ABCD-1234ABCD-27B9');
-        $one1 = AccountId::fromString('ABCD-1234ABCD-27B9');
+        $one = new AccountId('ABCD-1234ABCD-27B9');
+        $one1 = new AccountId('ABCD-1234ABCD-27B9');
 
         self::assertTrue($one->equals($one1, true));
         self::assertTrue($one->equals($one1, false));
         self::assertTrue($one->equals($one1));
 
-        $oneX = AccountId::fromString('ABCD-1234ABCD-XXXX');
+        $oneX = new AccountId('ABCD-1234ABCD-XXXX');
 
         self::assertFalse($one->equals($oneX, true));
         self::assertTrue($one->equals($oneX, false));

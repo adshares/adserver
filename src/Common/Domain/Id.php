@@ -17,25 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common\Domain;
 
-use Ramsey\Uuid\Uuid;
-
-final class UniqueIdentifierFactory
+interface Id extends ValueObject
 {
-    private function __construct()
-    {
-    }
+    public function __construct(string $value);
 
-    public static function fromString(string $id): UniqueId
-    {
-        return UniqueId::fromUuid(Uuid::fromString($id));
-    }
-
-    public static function random(): UniqueId
-    {
-        return UniqueId::fromUuid(Uuid::uuid4());
-    }
+    public function __toString(): string;
 }

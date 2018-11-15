@@ -21,17 +21,26 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Id;
+use Adshares\Common\Domain\Id;
 use InvalidArgumentException;
 
 final class TransactionId implements Id
 {
     /** @var string */
-    private $transactionIdStringRepresentation;
+    private $value;
 
-    private function __construct(string $string)
+    public function __construct(string $value)
     {
-        $this->transactionIdStringRepresentation = $string;
+        if (!self::isValid($value)) {
+            throw new InvalidArgumentException("'$value' is NOT a VALID TransactionId representation.");
+        }
+
+        $this->value = strtoupper($value);
+    }
+
+    private static function isValid(string $value): bool
+    {
+        return 1 === preg_match('/^[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}$/i', $value);
     }
 
     public static function random(): TransactionId
@@ -40,35 +49,16 @@ final class TransactionId implements Id
         $tranId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
         $mesgId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
 
-        return self::fromString("{$nodeId}:{$tranId}:{$mesgId}");
-    }
-
-    public static function fromString(string $string): TransactionId
-    {
-        if (!self::isValid($string)) {
-            throw new InvalidArgumentException("'$string' is NOT a VALID TransactionId representation.");
-        }
-
-        return new self(strtoupper($string));
-    }
-
-    public static function isValid(string $string): bool
-    {
-        return 1 === preg_match('/^[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}$/i', $string);
+        return new self("{$nodeId}:{$tranId}:{$mesgId}");
     }
 
     public function __toString(): string
     {
-        return $this->toString();
+        return $this->value;
     }
 
-    public function toString(): string
+    public function equals(self $other): bool
     {
-        return $this->transactionIdStringRepresentation;
-    }
-
-    public function equals(Id $other): bool
-    {
-        return $this->transactionIdStringRepresentation === $other->toString();
+        return $this->value === $other->__toString();
     }
 }
