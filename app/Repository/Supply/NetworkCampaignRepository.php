@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Repository\Supply;
 
-namespace Adshares\Adserver\Utilities;
+use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
+class NetworkCampaignRepository implements CampaignRepository
 {
-    /** @var UuidInterface */
-    private $id;
 
-    public function __construct(UuidInterface $id)
+    public function deactivateAllCampaignsFromHost(string $host): void
     {
-        $this->id = $id;
+        // TODO: Implement deactivateAllCampaignsFromHost() method.
     }
 
-    public function __toString(): string
+    public function save(Campaign $campaign): void
     {
-        return $this->id->toString();
+        // TODO: Implement save() method.
     }
 }
