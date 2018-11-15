@@ -26,8 +26,9 @@ use Adshares\Supply\Domain\Model\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\DemandServer;
 use PHPUnit\Framework\TestCase;
+use DateTime;
 
-class CampaignTest extends TestCase
+final class CampaignTest extends TestCase
 {
     public function testCampaignActivate()
     {
@@ -35,11 +36,11 @@ class CampaignTest extends TestCase
             1,
             'campaign name',
             'http://example.com',
-            new \DateTime(),
-            new \DateTime(),
+            new DateTime(),
+            new DateTime(),
             [],
             new Budget(10, 1, null),
-            new DemandServer(),
+            'example.com',
             Campaign::STATUS_DELETED,
             [],
             []
@@ -58,11 +59,11 @@ class CampaignTest extends TestCase
             1,
             'campaign name',
             'http://example.com',
-            new \DateTime(),
-            new \DateTime(),
+            new DateTime(),
+            new DateTime(),
             [],
             new Budget(10, 1, 1),
-            new DemandServer(),
+            'example.com',
             Campaign::STATUS_ACTIVE,
             [],
             []

@@ -18,18 +18,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Common\Domain\Model;
+namespace Adshares\Test\src\Supply\Domain\ValueObject;
 
+use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
 use PHPUnit\Framework\TestCase;
 
-use Adshares\Common\Domain\Model\Uuid;
-
-final class UuidTest extends TestCase
+class SizeTest extends TestCase
 {
-    public function testReturningAnIdWhenObjectIsCasted(): void
+    public function testWhenNonValidValue()
     {
-        $uuid = new Uuid();
+        $this->expectException(UnsupportedBannerSizeException::class);
 
-        $this->assertEquals($uuid, (string)$uuid);
+        new Size(1, 1);
     }
 }

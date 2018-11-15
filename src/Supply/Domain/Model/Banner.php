@@ -81,8 +81,28 @@ class Banner
         return (string)$this->id->getId();
     }
 
+    public function getCampaignId(): string
+    {
+        return (string)$this->campaign->getId();
+    }
+
     public function getBannerUrl(): BannerUrl
     {
         return $this->bannerUrl;
+    }
+
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    public function getWidth(): int
+    {
+        return $this->size->getWidth();
+    }
+
+    public function getHeight(): int
+    {
+        return $this->size->getHeight();
     }
 }

@@ -21,6 +21,8 @@
 namespace Adshares\Adserver\Repository\Supply;
 
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 
@@ -38,12 +40,24 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkBanners = [];
 
+        /** @var Banner $banner */
         foreach ($banners as $banner) {
+            $bannerUrl = $banner->getBannerUrl();
+
             $networkBanner = new NetworkBanner();
             $networkBanner->uuid = $banner->getId();
+            $networkBanner->serve_url = $bannerUrl->getServeUrl();
+            $networkBanner->click_url = $bannerUrl->getClickUrl();
+            $networkBanner->view_url = $bannerUrl->getViewUrl();
+            $networkBanner->creative_type = $banner->getType();
+            $networkBanner->creative_width = $banner->getWidth();
+            $networkBanner->creative_height = $banner->getHeight();
 
             $networkBanners[] = $networkBanner;
         }
 
+        $networkCampaign = new NetworkCampaign();
+        $networkCampaign->uuid = $campaign->getId();
+//        $networkCampaign->$networkBanner->network_campaign_id = $banner->getCampaignId();
     }
 }

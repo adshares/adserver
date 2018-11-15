@@ -24,44 +24,44 @@ use Adshares\Supply\Domain\Model\Budget;
 use Adshares\Supply\Domain\Model\Exception\InvalidBudgetValueException;
 use PHPUnit\Framework\TestCase;
 
-class BudgetTest extends TestCase
+final class BudgetTest extends TestCase
 {
-    public function testWhenBudgetValueIsNegative()
+    public function testWhenBudgetValueIsNegative(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
         new Budget(-10, 1, 1);
     }
 
-    public function testWhenMaxCpcValueIsNegative()
+    public function testWhenMaxCpcValueIsNegative(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
         new Budget(1, 0, 1);
     }
 
-    public function testWhenMaxCpmValueIsNegative()
+    public function testWhenMaxCpmValueIsNegative(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
         new Budget(10, 1, -1);
     }
 
-    public function testWhenTotalIsSmallerThanBudget()
+    public function testWhenTotalIsSmallerThanBudget(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
         new Budget(10, 6, 6);
     }
 
-    public function testWhenMaxCpcIsSmallerThanBudget()
+    public function testWhenMaxCpcIsSmallerThanBudget():void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
         new Budget(10, 11, null);
     }
 
-    public function testWhenMaxCpmIsSmallerThanBudget()
+    public function testWhenMaxCpmIsSmallerThanBudget():void
     {
         $this->expectException(InvalidBudgetValueException::class);
 

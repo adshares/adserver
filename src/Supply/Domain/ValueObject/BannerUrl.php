@@ -25,7 +25,7 @@ namespace Adshares\Supply\Domain\ValueObject;
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidBannerUrlException;
 use function filter_var;
 
-class BannerUrl
+final class BannerUrl
 {
     /** @var string */
     private $serveUrl;

@@ -149,4 +149,9 @@ final class Campaign
     {
         return $this->banners;
     }
+
+    public function getId(): string
+    {
+        return (string)$this->id->getId();
+    }
 }

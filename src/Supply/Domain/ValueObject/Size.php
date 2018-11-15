@@ -24,7 +24,7 @@ namespace Adshares\Supply\Domain\ValueObject;
 
 use function in_array;
 
-class Size
+final class Size
 {
     const SUPPORTED_SIZES = [
         '728x90',
@@ -69,5 +69,15 @@ class Size
     private function isValid(int $width, int $height): bool
     {
         return in_array($width . 'x' . $height, self::SUPPORTED_SIZES);
+    }
+
+    public function getWidth(): int
+    {
+        return $this->width;
+    }
+
+    public function getHeight(): int
+    {
+        return $this->height;
     }
 }
