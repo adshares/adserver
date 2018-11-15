@@ -24,9 +24,9 @@ services:
   cron:
     extends:
       service: application
-    command: ['bash','-c','crontab /etc/cron.d/ads-scanner && cron -f']
+    command: ['bash','-c','crontab /etc/cron.d/adserver-crontab && cron -f']
     volumes:
-    - ./docker/ads-scanner-cron:/etc/cron.d/ads-scanner
+    - ./docker/cron/crontab:/etc/cron.d/adserver-crontab
 
   webserver:
     image: nginx:alpine

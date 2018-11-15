@@ -29,13 +29,13 @@
          stopOnFailure="false">
     <testsuites>
         <testsuite name="Console">
-            <directory suffix="Test.php">./tests/Console</directory>
+            <directory suffix="Test.php">./tests/app/Console</directory>
         </testsuite>
         <testsuite name="Http">
-            <directory suffix="Test.php">./tests/Http</directory>
+            <directory suffix="Test.php">./tests/app/Http</directory>
         </testsuite>
         <testsuite name="Unit">
-            <directory suffix="Test.php">./test</directory>
+            <directory suffix="Test.php">./tests/src</directory>
         </testsuite>
     </testsuites>
     <filter>
