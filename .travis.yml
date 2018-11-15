@@ -9,7 +9,7 @@ services:
 
 env:
   global:
-    - DOCKER_IMAGE=adshares/adserver:devops
+    - DOCKER_IMAGE=awlodarkiewicz/devops:adserver
     - HOST_PATH=/home/travis/build/adshares/adserver
     - BUILD_PATH=/build/adserver
     - BUILD_NAME=adserver_build
@@ -18,20 +18,20 @@ env:
     - APP_DEBUG=true
 
 stages:
-  - test
-#  - build and install
+  - code test and quality
+  - build and install
 
 before_script:
   # Enable aliases for non-interactive shells
   - shopt -s expand_aliases
   # Set alias - please note the missing quote you need to append.
-  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && '
+  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
   ## Setup test environment
   # Run docker container
-  - docker network create -d bridge test-network
-  - docker pull $DOCKER_IMAGE
+  - time docker network create -d bridge test-network
+  - time docker pull $DOCKER_IMAGE
   - >
-    docker run -d
+    time docker run -d
     --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
     --network=test-network
     -e TRAVIS=true
@@ -52,59 +52,61 @@ after_script:
 
 jobs:
   include:
-    - stage: test
-      script:
-        # Run build script
-        - in_docker /bin/bash scripts/pre-build.sh"
+  - stage: code test and quality
+    if: type = push
+    script:
+    # Run build script
+    - in_docker /bin/bash scripts/pre-build.sh"
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
 
-        # Pre-task dependency
-        - in_docker composer run-script install-codestandards"
+    # Pre-task dependency
+    - in_docker composer run-script install-codestandards"
 
-        ## Test tasks
-        # PHP Lint: check syntax errors in all PHP files
-        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+    ## Test tasks
+    # PHP Lint: check syntax errors in all PHP files
+    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-        #    # PHP Code Beautifier and Fixer: fix code styles
-        #    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || (git diff && exit 8)"
-        #    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || (git diff && exit 8)"
+#    # PHP Code Beautifier and Fixer: fix code styles
+#    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || (git diff && exit 8)"
+#    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || (git diff && exit 8)"
 
-        # PHP_CodeSniffer: check PHP compatibility
-        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
+    # PHP_CodeSniffer: check PHP compatibility
+    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
 
-        # PHP_CodeSniffer: check PSR2 standard
-        - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+    # PHP_CodeSniffer: check PSR2 standard
+    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
 
-        # SonarQube
-        - sonar-scanner
+    # PHP unit tests
+    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
-        # PHP unit tests
-        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+    # SonarQube
+    - time sonar-scanner
 
-    - stage: build and install
-      script:
-        # Backing services and tools
-        - >
-          docker run
-          --name mysql.dock
-          --network=test-network
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
-          -e MYSQL_USER=adserver
-          -e MYSQL_PASSWORD=adserver
-          -e MYSQL_DATABASE=adserver
-          -d
-          percona:5
+  - stage: build and install
+    if: type = pull_request AND branch = master
+    script:
+    # Backing services and tools
+    - >
+      time docker run
+      --name mysql.dock
+      --network=test-network
+      -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+      -e MYSQL_USER=adserver
+      -e MYSQL_PASSWORD=adserver
+      -e MYSQL_DATABASE=adserver
+      -d
+      percona/percona:5
 
-        - in_docker /bin/bash scripts/pre-build.sh"
+    - in_docker /bin/bash scripts/pre-build.sh"
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-        - in_docker /bin/bash scripts/pre-install.sh"
+    # Run build script
+    - in_docker /bin/bash scripts/build.sh"
+    - in_docker /bin/bash scripts/pre-install.sh"
 
-        - docker ps -a
-        - in_docker /bin/bash scripts/install.sh"
+    - docker ps -a
+    - in_docker /bin/bash scripts/install.sh"
 
 # After a build, send email notification with the build results
 notifications:
