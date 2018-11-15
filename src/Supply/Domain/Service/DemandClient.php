@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -20,23 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Supply\Domain\Service;
 
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\UuidInterface;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
-final class UniqueId implements Id
+interface DemandClient
 {
-    /** @var UuidInterface */
-    private $id;
-
-    public function __construct(UuidInterface $id)
-    {
-        $this->id = $id;
-    }
-
-    public function __toString(): string
-    {
-        return $this->id->toString();
-    }
+    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
 }
