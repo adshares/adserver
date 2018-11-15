@@ -11,6 +11,9 @@ class AdsBroadcastHost extends Command
 {
     const BROADCAST_PREFIX = 'AdServer.';
 
+    const EXIT_CODE_SUCCESS = 0;
+    const EXIT_CODE_ERROR = 1;
+
     /**
      * The name and signature of the console command.
      *
@@ -58,9 +61,11 @@ class AdsBroadcastHost extends Command
             $this->info("Broadcast message sent successfully. Txid: [$txid]");
         } catch (CommandException $exc) {
             $this->error('Cannot send broadcast due to error '.$exc->getCode());
+
+            return self::EXIT_CODE_ERROR;
         }
 
-        return;
+        return self::EXIT_CODE_SUCCESS;
     }
 
     private function strToHex(string $string): string
