@@ -29,7 +29,7 @@ use Adshares\Adserver\Console\Commands\AdsBroadcastHost;
 use Adshares\Adserver\Tests\TestCase;
 use PHPUnit\Framework\Assert;
 
-class AdsBroadcastHostTest extends TestCase
+final class AdsBroadcastHostTest extends TestCase
 {
     public function testAdsBroadcastHost()
     {
