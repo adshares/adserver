@@ -65,7 +65,7 @@ class NetworkBanner extends Model
      * @var array
      */
     protected $traitAutomate = [
-        'uuid' => 'BinHex',
+//        'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',
     ];
 

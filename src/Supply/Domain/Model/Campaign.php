@@ -144,4 +144,9 @@ final class Campaign
     {
         return $this->status;
     }
+
+    public function getBanners(): ArrayCollection
+    {
+        return $this->banners;
+    }
 }

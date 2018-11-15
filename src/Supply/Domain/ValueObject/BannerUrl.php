@@ -18,9 +18,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidBannerUrlException;
+use function filter_var;
 
 class BannerUrl
 {
@@ -50,5 +53,20 @@ class BannerUrl
         $this->serveUrl = $serveUrl;
         $this->clickUrl = $clickUrl;
         $this->viewUrl = $viewUrl;
+    }
+
+    public function getServeUrl(): string
+    {
+        return $this->serveUrl;
+    }
+
+    public function getClickUrl(): string
+    {
+        return $this->clickUrl;
+    }
+
+    public function getViewUrl(): string
+    {
+        return $this->viewUrl;
     }
 }

@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Model\Uuid;
@@ -72,5 +74,15 @@ class Banner
             $data['type'],
             $size
         );
+    }
+
+    public function getId(): string
+    {
+        return (string)$this->id->getId();
+    }
+
+    public function getBannerUrl(): BannerUrl
+    {
+        return $this->bannerUrl;
     }
 }

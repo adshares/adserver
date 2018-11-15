@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Repository\Supply;
 
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 
@@ -33,6 +34,16 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function save(Campaign $campaign): void
     {
-        // TODO: Implement save() method.
+        $banners = $campaign->getBanners();
+
+        $networkBanners = [];
+
+        foreach ($banners as $banner) {
+            $networkBanner = new NetworkBanner();
+            $networkBanner->uuid = $banner->getId();
+
+            $networkBanners[] = $networkBanner;
+        }
+
     }
 }

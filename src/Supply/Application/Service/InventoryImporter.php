@@ -43,7 +43,8 @@ class InventoryImporter
         CampaignRepository $campaignRepository,
         DemandClient $client,
         TransactionManager $transactionManager
-    ) {
+    )
+    {
         $this->client = $client;
         $this->campaignRepository = $campaignRepository;
         $this->transactionManager = $transactionManager;
