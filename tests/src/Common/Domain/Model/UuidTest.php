@@ -20,9 +20,8 @@
 
 namespace Adshares\Test\Common\Domain\Model;
 
-use PHPUnit\Framework\TestCase;
-
 use Adshares\Common\Domain\Model\Uuid;
+use PHPUnit\Framework\TestCase;
 
 class UuidTest extends TestCase
 {

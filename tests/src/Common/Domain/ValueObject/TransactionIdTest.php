@@ -19,7 +19,7 @@
  */
 declare(strict_types = 1);
 
-namespace Test\Adshares;
+namespace Adshares\Test\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\ValueObject\TransactionId;
 use InvalidArgumentException;
