@@ -54,6 +54,10 @@ class InventoryImporter
     {
         $campaigns = $this->client->fetchAllInventory($host);
 
+        if (!$campaigns) {
+            return;
+        }
+
         $this->transactionManager->begin();
 
         try {

@@ -8,6 +8,7 @@ mkdir -pm 777 ${INSTALLATION_PATH}/storage
 
 # Move directories
 mv app ${INSTALLATION_PATH}/
+mv src ${INSTALLATION_PATH}/
 mv bin ${INSTALLATION_PATH}/
 mv bootstrap ${INSTALLATION_PATH}/
 mv config ${INSTALLATION_PATH}/
