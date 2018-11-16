@@ -22,10 +22,9 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Model;
 
-use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
-
+use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Datetime;
 
 final class Campaign

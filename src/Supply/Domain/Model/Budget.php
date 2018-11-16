@@ -78,12 +78,12 @@ final class Budget
         return $this->budget;
     }
 
-    public function getMaxCpc():? int
+    public function getMaxCpc(): ?int
     {
         return $this->maxCpc;
     }
 
-    public function getMaxCpm():? int
+    public function getMaxCpm(): ?int
     {
         return $this->maxCpm;
     }

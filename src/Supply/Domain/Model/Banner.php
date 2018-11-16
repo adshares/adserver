@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Model;
 
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Adshares\Common\Domain\ValueObject\Uuid;
 
 class Banner
 {

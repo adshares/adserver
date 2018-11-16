@@ -22,11 +22,11 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Domain\Service\DemandClient;
-use Adshares\Common\Application\TransactionManager;
 
 class InventoryImporter
 {
