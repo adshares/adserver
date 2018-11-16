@@ -22,7 +22,7 @@ namespace Adshares\Test\Common\Domain\Model;
 
 use PHPUnit\Framework\TestCase;
 
-use Adshares\Common\Domain\Model\Uuid;
+use Adshares\Common\Domain\ValueObject\Uuid;
 
 final class UuidTest extends TestCase
 {

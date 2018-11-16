@@ -18,10 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Supply\Domain\Model;
+namespace Adshares\Test\Supply\ValueObject\Model;
 
-use Adshares\Supply\Domain\Model\Budget;
-use Adshares\Supply\Domain\Model\Exception\InvalidBudgetValueException;
+use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidBudgetValueException;
 use PHPUnit\Framework\TestCase;
 
 final class BudgetTest extends TestCase

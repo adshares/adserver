@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject\Exception;
 
-class InvalidBannerUrlException extends \InvalidArgumentException
+class InvalidUrlException extends \InvalidArgumentException
 {
 
 }

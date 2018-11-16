@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Supply\Domain\ValueObject;
 
-use Adshares\Supply\Domain\Model\Exception\InvalidBudgetValueException;
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidBudgetValueException;
 
 final class Budget
 {

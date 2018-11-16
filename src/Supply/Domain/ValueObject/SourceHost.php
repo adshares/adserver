@@ -20,6 +20,7 @@
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
 use DateTime;
 
 class SourceHost
@@ -47,6 +48,10 @@ class SourceHost
         string $version
     )
     {
+        if (!filter_var($host, FILTER_VALIDATE_DOMAIN)) {
+            throw new InvalidUrlException(sprintf('Host value `%s` is invalid. It must be a valid URL.', $host));
+        }
+
         $this->host = $host;
         $this->address = $address;
         $this->createdAt = $createdAt;

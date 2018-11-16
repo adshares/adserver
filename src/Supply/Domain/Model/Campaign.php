@@ -25,6 +25,7 @@ namespace Adshares\Supply\Domain\Model;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
+use Adshares\Supply\Domain\ValueObject\Budget;
 use Datetime;
 
 final class Campaign

@@ -49,7 +49,8 @@ class InventoryImporterCommand extends Command
         $networkHosts = $this->networkHost->find();
 
         if (!$networkHosts) {
-
+            $this->info('Stoped importing. No hosts found.');
+            return;
         }
 
         foreach ($networkHosts as $networkHost) {

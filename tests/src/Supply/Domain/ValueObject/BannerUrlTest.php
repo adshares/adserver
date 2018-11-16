@@ -21,7 +21,7 @@
 namespace Adshares\Test\src\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
-use Adshares\Supply\Domain\ValueObject\Exception\InvalidBannerUrlException;
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
 use PHPUnit\Framework\TestCase;
 
 final class BannerUrlTest extends TestCase
@@ -40,7 +40,7 @@ final class BannerUrlTest extends TestCase
     public function testIfBannerUrlIsValid($serveUrl, $clickUrl, $viewUrl, bool $valid = self::VALID): void
     {
         if (!$valid) {
-            $this->expectException(InvalidBannerUrlException::class);
+            $this->expectException(InvalidUrlException::class);
         }
 
         $bannerUrl = new BannerUrl($serveUrl, $clickUrl, $viewUrl);

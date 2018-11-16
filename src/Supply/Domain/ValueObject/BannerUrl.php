@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use Adshares\Supply\Domain\ValueObject\Exception\InvalidBannerUrlException;
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
 use function filter_var;
 
 final class BannerUrl
@@ -39,15 +39,15 @@ final class BannerUrl
     public function __construct(string $serveUrl, string $clickUrl, string $viewUrl)
     {
         if (!filter_var($serveUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidBannerUrlException(sprintf('Serve url value `%s` is invalid. It must be a valid URL.', $serveUrl));
+            throw new InvalidUrlException(sprintf('Serve url value `%s` is invalid. It must be a valid URL.', $serveUrl));
         }
 
         if (!filter_var($clickUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidBannerUrlException(sprintf('Click url value `%s` is invalid. It must be a valid URL.', $clickUrl));
+            throw new InvalidUrlException(sprintf('Click url value `%s` is invalid. It must be a valid URL.', $clickUrl));
         }
 
         if (!filter_var($viewUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidBannerUrlException(sprintf('View url value `%s` is invalid. It must be a valid URL.', $viewUrl));
+            throw new InvalidUrlException(sprintf('View url value `%s` is invalid. It must be a valid URL.', $viewUrl));
         }
 
         $this->serveUrl = $serveUrl;

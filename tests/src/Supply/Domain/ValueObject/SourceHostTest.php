@@ -18,26 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers\Supply;
+namespace Adshares\Test\src\Supply\Domain\ValueObject;
 
-use Adshares\Adserver\Client\InMemoryDemandClient;
-use Adshares\Adserver\Manager\EloquentTransactionManager;
-use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
-use Adshares\Supply\Application\Service\InventoryImporter;
-use Illuminate\Support\ServiceProvider;
+use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
+use Adshares\Supply\Domain\ValueObject\SourceHost;
+use PHPUnit\Framework\TestCase;
+use DateTime;
 
-class InventoryImporterProvider extends ServiceProvider
+final class SourceHostTest extends TestCase
 {
-    public function register()
+    public function testWhenHostIsInvalid(): void
     {
-        $this->app->bind(InventoryImporter::class, function ($app) {
-            $campaignRepository = new NetworkCampaignRepository();
+        $this->expectException(InvalidUrlException::class);
 
-            return new InventoryImporter(
-                $campaignRepository,
-                new InMemoryDemandClient(),
-                new EloquentTransactionManager()
-            );
-        });
+        new SourceHost('', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
     }
 }
