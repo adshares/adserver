@@ -74,11 +74,11 @@ class Banner extends Model
 
     public static function size($size)
     {
-        if (!isset(Zone::ZONE_SIZE[$size])) {
+        if (!isset(Zone::ZONE_SIZES[$size])) {
             throw new \RuntimeException(sprintf('Wrong image size.'));
         }
 
-        return Zone::ZONE_SIZE[$size];
+        return Zone::ZONE_SIZES[$size];
     }
 
     public function campaign()

@@ -134,7 +134,7 @@ class Campaign extends Model
         foreach ($this->banners as &$banner) {
             $size = $banner->creative_width.'x'.$banner->creative_height;
             $banner['type'] = $banner['creative_type'] === 'image' ? 0 : 1;
-            $banner['size'] = array_search($size, Zone::ZONE_SIZE);
+            $banner['size'] = array_search($size, Zone::ZONE_SIZES);
         }
 
         return $this->banners;
