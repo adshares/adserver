@@ -44,10 +44,6 @@ services:
       PHP__xdebug.extended_info: "1"
 
   database:
-    networks:
-      default:
-        aliases:
-          - db.server.dock
     ports:
       - "3306:3306"
 
