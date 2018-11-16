@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types = 1);
+
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
@@ -37,8 +39,6 @@ class NetworkHost extends Model
     use AutomateMutators;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var array
      */
     protected $fillable = [
@@ -47,24 +47,17 @@ class NetworkHost extends Model
         'last_broadcast',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = [];
-
-    public static function registerHost($address, $host)
+    public static function registerHost(string $address, string $host, ?\DateTime $lastBroadcast = null): NetworkHost
     {
-        $networkHost = self::find($address);
+        $networkHost = self::where('address', $address)->first();
 
         if (empty($networkHost)) {
             $networkHost = new self();
             $networkHost->address = $address;
-            $networkHost->host = $host;
         }
 
-        $networkHost->last_broadcast = time();
+        $networkHost->host = $host;
+        $networkHost->last_broadcast = (null === $lastBroadcast) ? time() : $lastBroadcast;
         $networkHost->save();
 
         return $networkHost;
