@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
@@ -176,7 +175,7 @@ class WalletController extends Controller
         $userId = Auth::user()->id;
         $resp = [];
         foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
-            $amount = AdsConverter::clicksToAds($ledgerItem->amount);
+            $amount = (int)$ledgerItem->amount;
             $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
             $txid = $ledgerItem->txid;
 

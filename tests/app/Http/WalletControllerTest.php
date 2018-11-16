@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -246,7 +245,6 @@ class WalletControllerTest extends TestCase
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
@@ -255,13 +253,13 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJson(
             [
                 [
-                    'status' => $amountInAds,
+                    'status' => $amountInClicks,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
                 ],
                 [
-                    'status' => -$amountInAds,
+                    'status' => -$amountInClicks,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',
@@ -270,10 +268,6 @@ class WalletControllerTest extends TestCase
         );
     }
 
-    /**
-     * @param $userId
-     * @param $amountInClicks
-     */
     private function initUserLedger($userId, $amountInClicks): void
     {
         // add entry with a txid
@@ -296,7 +290,6 @@ class WalletControllerTest extends TestCase
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
@@ -305,7 +298,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJson(
             [
                 [
-                    'status' => $amountInAds,
+                    'status' => $amountInClicks,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
@@ -328,7 +321,6 @@ class WalletControllerTest extends TestCase
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
@@ -337,7 +329,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK)->assertJson(
             [
                 [
-                    'status' => -$amountInAds,
+                    'status' => -$amountInClicks,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
                     'link' => '-',

@@ -31,15 +31,16 @@ class UserLedgerEntry extends Model
     const STATUS_PENDING = 1;
     const STATUS_REJECTED = 2;
 
-    /**
-     * Returns account balance of particular user.
-     *
-     * @param int $userId user id
-     *
-     * @return int balance
-     */
+    protected $casts = [
+        'amount' => 'int',
+    ];
+
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
+        $sum = self::where('user_id', $userId)
+            ->where('status', self::STATUS_ACCEPTED)
+            ->sum('amount');
+
+        return $sum;
     }
 }
