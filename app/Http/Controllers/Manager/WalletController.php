@@ -20,11 +20,10 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -124,12 +123,12 @@ class WalletController extends Controller
         $total = $amount + $fee;
 
         $userId = Auth::user()->id;
-        $ul = new UserLedger();
+        $ul = new UserLedgerEntry();
         $ul->user_id = $userId;
         $ul->amount = -$total;
         $ul->address_from = $addressFrom;
         $ul->address_to = $addressTo;
-        $ul->status = UserLedger::STATUS_PENDING;
+        $ul->status = UserLedgerEntry::STATUS_PENDING;
         $result = $ul->save();
 
         if ($result) {
@@ -175,27 +174,28 @@ class WalletController extends Controller
 
         $userId = Auth::user()->id;
         $resp = [];
-        foreach (UserLedger::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ul) {
-            $amount = AdsConverter::clicksToAds($ul->amount);
-            $date = $ul->created_at->format(Carbon::RFC7231_FORMAT);
-            $txid = $ul->txid;
+        foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
+            $amount = (int)$ledgerItem->amount;
+            $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+            $txid = $ledgerItem->txid;
+
             if (null !== $txid) {
                 $link = self::getTransactionLink($txid);
             } else {
                 $link = '-';
             }
             if ($amount > 0) {
-                $address = $ul->address_to;
+                $address = $ledgerItem->address_to;
             } else {
-                $address = $ul->address_from;
+                $address = $ledgerItem->address_from;
             }
-            $entry = [
+
+            $resp[] = [
                 'status' => $amount,
                 'date' => $date,
                 'address' => $address,
                 'link' => $link,
             ];
-            array_push($resp, $entry);
         }
 
         return self::json($resp);

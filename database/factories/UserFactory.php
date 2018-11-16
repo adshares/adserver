@@ -18,9 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\User;
 use Faker\Generator as Faker;
 
-$factory->define(Adshares\Adserver\Models\User::class, function (Faker $faker) {
+$factory->define(User::class, function (Faker $faker) {
     return [
         'email' => $faker->unique()->safeEmail,
         'password' => $faker->password(8),

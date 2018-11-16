@@ -28,7 +28,7 @@ use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsTxIn;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedger;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -59,7 +59,7 @@ class AdsProcessTxTest extends TestCase
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsTxIn::STATUS_USER_DEPOSIT, AdsTxIn::all()->first()->status);
-        $amount = UserLedger::getBalanceByUserId($user->id);
+        $amount = UserLedgerEntry::getBalanceByUserId($user->id);
         $this->assertEquals($depositAmount, $amount);
     }
 

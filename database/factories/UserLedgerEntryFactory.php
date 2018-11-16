@@ -18,36 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Faker\Generator as Faker;
 
-namespace Adshares\Adserver\Utilities;
-
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
-{
-    /** @var UuidInterface */
-    private $value;
-
-    public function __construct(string $value)
-    {
-        $this->value = Uuid::fromString($value);
-    }
-
-    public static function fromUuid(UuidInterface $uuid): UniqueId
-    {
-        return new self($uuid->toString());
-    }
-
-    public function __toString(): string
-    {
-        return $this->value->toString();
-    }
-
-    public function equals(object $other): bool
-    {
-        return $this->value->equals($other->value);
-    }
-}
+$factory->define(UserLedgerEntry::class, function (Faker $faker) {
+    return [
+        'amount' => $faker->numberBetween(0, 3800000000000000000),
+        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+        'address_from' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+        'address_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+        'txid' => $faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),
+    ];
+});

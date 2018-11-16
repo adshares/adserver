@@ -22,21 +22,25 @@ namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserLedger extends Model
+/**
+ * @method static where(string $string, $userId): \Illuminate\Database\Query\Builder;
+ */
+class UserLedgerEntry extends Model
 {
     const STATUS_ACCEPTED = 0;
     const STATUS_PENDING = 1;
     const STATUS_REJECTED = 2;
 
-    /**
-     * Returns account balance of particular user.
-     *
-     * @param int $userId user id
-     *
-     * @return int balance
-     */
+    protected $casts = [
+        'amount' => 'int',
+    ];
+
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
+        $sum = self::where('user_id', $userId)
+            ->where('status', self::STATUS_ACCEPTED)
+            ->sum('amount');
+
+        return $sum;
     }
 }

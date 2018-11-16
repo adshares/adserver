@@ -18,36 +18,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Common\Domain\Model;
 
-namespace Adshares\Adserver\Utilities;
+use Adshares\Common\Comparable;
+use Adshares\Common\Domain;
+use Adshares\Common\Domain\ValueObject\TransactionId;
+use Adshares\Common\Identifiable;
 
-use Adshares\Common\Domain\Id;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
-
-final class UniqueId implements Id
+final class Transaction implements Identifiable, Comparable
 {
-    /** @var UuidInterface */
-    private $value;
+    /** @var TransactionId */
+    private $id;
 
-    public function __construct(string $value)
+    public function __construct(TransactionId $id)
     {
-        $this->value = Uuid::fromString($value);
+        $this->id = $id;
     }
 
-    public static function fromUuid(UuidInterface $uuid): UniqueId
+    public function id(): Domain\Id
     {
-        return new self($uuid->toString());
-    }
-
-    public function __toString(): string
-    {
-        return $this->value->toString();
+        return $this->id;
     }
 
     public function equals(object $other): bool
     {
-        return $this->value->equals($other->value);
+        if (!($other instanceof self)) {
+            return false;
+        }
+
+        return $this->id->equals($other);
     }
 }

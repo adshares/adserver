@@ -31,11 +31,11 @@ final class UniqueIdentifierFactory
 
     public static function fromString(string $id): UniqueId
     {
-        return new UniqueId(Uuid::fromString($id));
+        return UniqueId::fromUuid(Uuid::fromString($id));
     }
 
     public static function random(): UniqueId
     {
-        return new UniqueId(Uuid::uuid4());
+        return UniqueId::fromUuid(Uuid::uuid4());
     }
 }
