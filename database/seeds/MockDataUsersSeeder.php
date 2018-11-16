@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserAdserverWallet;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Database\Seeder;
 
@@ -56,11 +55,6 @@ class MockDataUsersSeeder extends Seeder
             $user->save();
 
             if (isset($row->adserverWallet)) {
-                $wallet = UserAdserverWallet::where('user_id', $user->id)->first();
-                $wallet->adshares_address = $row->adserverWallet->adshares_address;
-                $wallet->total_funds = $row->adserverWallet->total_funds;
-                $wallet->save();
-
                 if ($row->adserverWallet->total_funds) {
                     factory(UserLedgerEntry::class)->create([
                         'user_id' => $user->id,
