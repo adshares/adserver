@@ -121,15 +121,18 @@ class User extends Authenticatable
 
     public function getAdserverWalletAttribute()
     {
-// UserLedgerEntry::where('user_id', $this->id);
-// TODO reduce to single array
+        return UserLedgerEntry::where('user_id', $this->id)
+            ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
+            ->get()
+            ->reduce(function (?array $previous, UserLedgerEntry $current) {
+                return [
+                    "total_funds" => $current->amount + ($previous['total_funds'] ?? 0),
+                    "total_funds_in_currency" => "0.00",
+                    "total_funds_change" => "0.000000000",
+                    "last_payment_at" => (string)$current->created_at,
+                ];
+            });
 
-        return [
-            "total_funds" => "110.000000000",
-            "total_funds_in_currency" => "0.00",
-            "total_funds_change" => "0.000000000",
-            "last_payment_at" => null,
-        ];
     }
 
     public function setPasswordAttribute($value)

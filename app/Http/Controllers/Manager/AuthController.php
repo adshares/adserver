@@ -187,13 +187,6 @@ class AuthController extends Controller
         return self::json($user->toArray(), 200);
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @param \Illuminate\Http\Request $request
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function check()
     {
         return self::json(Auth::user());
