@@ -40,8 +40,47 @@ HTML;
     public const STATUS_DRAFT = 0;
     public const STATUS_ACTIVE = 1;
     public const STATUS_ARCHIVED = 2;
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_ACTIVE, self::STATUS_ARCHIVED];
-    public const ZONE_SIZE = [
+    public const STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_ACTIVE,
+        self::STATUS_ARCHIVED,
+    ];
+
+    public const TYPE_IMAGE = 'image';
+    public const TYPE_HTML = 'html';
+    public const ZONE_TYPES = [
+        self::TYPE_IMAGE,
+        self::TYPE_HTML,
+    ];
+
+    public const ZONE_LABELS = [
+        #best
+        'leaderboard' => '728x90',
+        'medium-rectangle' => '300x250',
+        'large-rectangle' => '336x280',
+        'half-page' => '300x600',
+        'large-mobile-banner' => '320x100',
+        #other
+        'banner' => '468x60',
+        'half-banner' => '234x60',
+        'button' => '125x125',
+        'skyscraper' => '120x600',
+        'wide-skyscraper' => '160x600',
+        'small-rectangle' => '180x150',
+        'vertical-banner' => '120x240',
+        'small-square' => '200x200',
+        'portrait' => '300x1050',
+        'square' => '250x250',
+        'mobile-banner' => '320x50',
+        'large-leaderboard' => '970x90',
+        'billboard' => '970x250',
+        #polish
+        'single-billboard' => '750x100',
+        'double-billboard' => '750x200',
+        'triple-billboard' => '750x300',
+    ];
+
+    public const ZONE_SIZES = [
         '728x90',
         '300x250',
         '336x280',
@@ -68,25 +107,21 @@ HTML;
     protected $fillable = [
         'short_headline',#@deprecated
         'name',
-        'size',#@deprecated
-        'width',
-        'height',
+        'size',
         'type',
-//        'status',
+        'status',
     ];
     protected $visible = [
         'id',
         'short_headline',#@deprecated
         'name',
         'code',
-        'size',#@deprecated
-        'width',
-        'height',
+        'size',
         'status',
         'type',
     ];
     protected $appends = [
-        'size',#@deprecated
+        'size',
         'short_headline',#@deprecated
         'code',
     ];
@@ -109,52 +144,63 @@ HTML;
         return strtr(self::CODE_TEMPLATE, $replaceArr);
     }
 
+    /** @deprecated */
     public function getShortHeadlineAttribute(): string
     {
         return $this->name;
     }
 
+    /** @deprecated */
     public function setShortHeadlineAttribute($value): void
     {
         $this->name = $value;
     }
 
-    public function setSizeAttribute(array $data): void
-    {
-        $oldSizeNumber = $data['size'] ?? null;
-        if ($oldSizeNumber !== null) {
-            $size = Simulator::getZoneTypes()[$oldSizeNumber];
-            $this->width = $size['width'];
-            $this->height = $size['height'];
-            $this->type = $size['type'] ?? Simulator::getZoneTypeName("{$size['width']}x{$size['height']}");
-        }
-    }
-
     public function getSizeAttribute(): array
     {
         return [
-            'name' => $this->name,
             'width' => $this->width,
             'height' => $this->height,
-            'type' => Simulator::getZoneTypeName("{$this->width}x{$this->height}"),
+            'label' => $this->label,
+            'tags' => collect(Simulator::getZoneTypes())->firstWhere('label', $this->label) ?? [],
         ];
     }
 
-    public function setWidthAttribute($width): void
+    public function setSizeAttribute(array $data): void
     {
-        $this->attributes['width'] = $width;
-        if ($this->attributes['height'] ?? false) {
-            $this->attributes['type'] =
-                Simulator::getZoneTypeName("{$this->attributes['width']}x{$this->attributes['height']}");
+        $label = $data['label'] ?? false;
+
+        if ($label) {
+            $sizeLabel = self::ZONE_LABELS[$label] ?? false;
+            $this->attributes['label'] = $label;
+            if ($sizeLabel) {
+                $size = explode('x', $sizeLabel);
+                $this->attributes['width'] = $size[0];
+                $this->attributes['height'] = $size[1];
+            }
+        } else {
+            $this->setWidth($data['width'] ?? false);
+            $this->setHeight($data['height'] ?? false);
         }
     }
 
-    public function setHeightAttribute($height): void
+    private function setWidth($width): void
+    {
+        $this->attributes['width'] = $width;
+        if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
+            $this->setSizeAttribute([
+                'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+            ]);
+        }
+    }
+
+    private function setHeight($height): void
     {
         $this->attributes['height'] = $height;
-        if ($this->attributes['width'] ?? false) {
-            $this->attributes['type'] =
-                Simulator::getZoneTypeName("{$this->attributes['width']}x{$this->attributes['height']}");
+        if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
+            $this->setSizeAttribute([
+                'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+            ]);
         }
     }
 }

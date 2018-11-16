@@ -24,9 +24,10 @@ use Faker\Generator as Faker;
 $factory->define(Zone::class, function (Faker $faker) {
     return [
         'name' => $faker->word(),
-        'width' => $faker->numberBetween(100, 1024),
-        'height' => $faker->numberBetween(100, 1024),
-        'status' => 0,
-        'type' => $faker->text(16),
+        'status' => Zone::STATUS_ACTIVE,
+        'type' => $faker->randomElement(Zone::ZONE_TYPES),
+        'size' => [
+            'label' => $faker->randomElement(array_keys(Zone::ZONE_LABELS)),
+        ],
     ];
 });

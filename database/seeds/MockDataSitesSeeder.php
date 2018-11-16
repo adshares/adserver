@@ -35,7 +35,7 @@ class MockDataSitesSeeder extends Seeder
             'height' => 600,
         ],
         'right' => [
-            'width' => 230,
+            'width' => 300,
             'height' => 600,
         ],
         'mid' => [
@@ -67,35 +67,35 @@ class MockDataSitesSeeder extends Seeder
             return 999;
         }
 
-        $sites_data = MockDataSeeder::mockDataLoad('sites-publishers.json');
+        $publishers = MockDataSeeder::mockDataLoad('sites-publishers.json');
 
         DB::beginTransaction();
-        foreach ($sites_data as $r) {
-            $u = User::where('email', $r->email)->first();
-            if (empty($u)) {
+        foreach ($publishers as $publisher) {
+            $user = User::where('email', $publisher->email)->first();
+            if (empty($user)) {
                 DB::rollback();
-                throw new Exception("User not found <{$r->email}>");
+                throw new Exception("User not found <{$publisher->email}>");
             }
 
-            foreach ($r->sites as $rs) {
-                $s = new Site();
-                $s->name = $rs->name;
-                $s->status = $rs->status;
-                $s->site_requires = isset($rs->site_requires) ? json_encode($rs->site_requires) : null;
-                $s->site_excludes = isset($rs->site_excludes) ? json_encode($rs->site_excludes) : null;
+            foreach ($publisher->sites as $site) {
+                $newSite = factory(Site::class)->create([
+                    'user_id' => $user->id,
+                    'name' => $site->name,
+                    'status' => $site->status,
+                    'site_requires' => isset($site->site_requires) ? json_encode($site->site_requires) : null,
+                    'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
+                ]);
 
-                $s->user_id = $u->id;
-                $s->save();
-                foreach ($this->zones as $zn => $zr) {
-                    $z = new Zone();
-                    $z->site_id = $s->id;
-                    $z->name = $zn;
-                    $z->width = $zr['width'];
-                    $z->height = $zr['height'];
-                    $z->type = "{$zr['width']}x{$zr['height']}";
-                    $z->save();
+                foreach ($this->zones as $zoneNames => $zone) {
+                    factory(Zone::class)->create([
+                        'name' => $zoneNames,
+                        'site_id' => $newSite->id,
+                        'width' => $zone['width'],
+                        'height' => $zone['height'],
+                    ]);
                 }
-                $this->command->info(" Added - [$s->name] for user <{$u->email}>");
+
+                $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
             }
         }
         DB::commit();
