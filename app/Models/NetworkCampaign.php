@@ -51,6 +51,7 @@ class NetworkCampaign extends Model
      */
     protected $fillable = [
         'uuid',
+        'parent_uuid',
         'source_created_at',
         'source_updated_at',
         'source_host',
@@ -79,6 +80,7 @@ class NetworkCampaign extends Model
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'parent_uuid' => 'BinHex',
     ];
 
     public static function fromJsonData(array $data)
@@ -185,16 +187,6 @@ class NetworkCampaign extends Model
     public function banners()
     {
         return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
-    }
-
-    public function campaignExcludes()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignExclude');
-    }
-
-    public function campaignRequires()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignRequire');
     }
 
     public function getAdselectJson()

@@ -22,9 +22,9 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Model;
 
-use Adshares\Common\Domain\Model\Uuid;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Common\Domain\ValueObject\Uuid;
 
 class Banner
 {
@@ -52,9 +52,9 @@ class Banner
 
     public function __construct(Campaign $campaign, BannerUrl $bannerUrl, string $type, Size $size)
     {
-        if (!in_array($type, self::SUPPORTED_TYPES)) {
-
-        }
+//        if (!in_array($type, self::SUPPORTED_TYPES)) {
+//
+//        }
 
         $this->id = new Uuid();
         $this->campaign = $campaign;
@@ -78,7 +78,7 @@ class Banner
 
     public function getId(): string
     {
-        return (string)$this->id->getId();
+        return (string)$this->id;
     }
 
     public function getCampaignId(): string

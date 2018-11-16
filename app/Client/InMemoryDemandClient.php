@@ -20,10 +20,10 @@
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Domain\Model\Uuid;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use \DateTime;
 
 class InMemoryDemandClient implements DemandClient
@@ -39,7 +39,13 @@ class InMemoryDemandClient implements DemandClient
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
                 'date_end' => (new DateTime())->modify('+2 days'),
-                'name' => 'Local campaign #1',
+                'source_host' => [
+                    'host' => 'localhost:8101',
+                    'address' => '0001-00000001-0001',
+                    'created_at' => (new DateTime())->modify('-1 days'),
+                    'updated_at' => (new DateTime())->modify('-1 days'),
+                    'version' => '0.1',
+                ],
                 'banners' => [
                     [
                         'serve_url' => 'http://localhost:8101/serve/1',
@@ -80,7 +86,13 @@ class InMemoryDemandClient implements DemandClient
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),
                 'date_end' => (new DateTime())->modify('+20 days'),
-                'name' => 'Global campaign #1',
+                'source_host' => [
+                    'host' => 'localhost:8101',
+                    'address' => '0001-00000001-0001',
+                    'created_at' => (new DateTime())->modify('-10 days'),
+                    'updated_at' => (new DateTime())->modify('-1 days'),
+                    'version' => '0.1',
+                ],
                 'banners' => [
                     [
                         'serve_url' => 'http://localhost:8101/serve/1',

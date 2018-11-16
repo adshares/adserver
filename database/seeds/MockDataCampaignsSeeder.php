@@ -109,7 +109,7 @@ class MockDataCampaignsSeeder extends Seeder
 
             foreach ($r->campaigns as $cr) {
                 $campaign = $this->createCampaign($u, $cr);
-                $nc = $this->createNetworkCampaign($cr);
+                $nc = $this->createNetworkCampaign($cr, $campaign);
 
                 $banners = [];
 
@@ -280,10 +280,12 @@ class MockDataCampaignsSeeder extends Seeder
         return $campaign;
     }
 
-    private function createNetworkCampaign($cr): NetworkCampaign
+    private function createNetworkCampaign($cr, $campaign): NetworkCampaign
     {
         $campaign = new NetworkCampaign();
         $campaign->uuid = uniqid() . '1';
+        $campaign->parent_uuid = $campaign->uuid;
+        $campaign->version = '0.1';
         $campaign->landing_url = $cr->url;
         $campaign->max_cpm = $cr->max_cpm;
         $campaign->max_cpc = $cr->max_cpc;

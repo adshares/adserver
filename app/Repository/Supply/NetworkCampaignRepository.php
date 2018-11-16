@@ -58,6 +58,26 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign = new NetworkCampaign();
         $networkCampaign->uuid = $campaign->getId();
-//        $networkCampaign->$networkBanner->network_campaign_id = $banner->getCampaignId();
+        $networkCampaign->parent_uuid = $campaign->getParentId();
+        $networkCampaign->landing_url = $campaign->getLandingUrl();
+
+        $networkCampaign->max_cpc = $campaign->getMaxCpc();
+        $networkCampaign->max_cpm = $campaign->getMaxCpm();
+        $networkCampaign->budget_per_hour = $campaign->getBudget();
+
+        $networkCampaign->source_host = $campaign->getSourceHost();
+        $networkCampaign->source_created_at = $campaign->getSourceCreatedAt();
+        $networkCampaign->source_updated_at = $campaign->getSourceUpdatedAt();
+        $networkCampaign->adshares_address = $campaign->getSourceAddress();
+        $networkCampaign->source_version = $campaign->getSourceVersion();
+
+        $networkCampaign->time_start = $campaign->getDateStart();
+        $networkCampaign->time_end = $campaign->getDateEnd();
+
+        $networkCampaign->save();
+
+        foreach ($networkBanners as $banner) {
+            $networkCampaign->banners()->save($banner);
+        }
     }
 }

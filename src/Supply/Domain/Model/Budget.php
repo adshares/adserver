@@ -35,7 +35,7 @@ final class Budget
     /** @var int|null */
     private $maxCpm;
 
-    public function __construct(int $budget, ?int $maxCpc, ?int $maxCpm)
+    public function __construct(float $budget, ?int $maxCpc, ?int $maxCpm)
     {
         if ($budget <= 0) {
             throw new InvalidBudgetValueException(sprintf(
@@ -71,5 +71,20 @@ final class Budget
         $this->budget = $budget;
         $this->maxCpc = $maxCpc;
         $this->maxCpm = $maxCpm;
+    }
+
+    public function getBudget(): float
+    {
+        return $this->budget;
+    }
+
+    public function getMaxCpc():? int
+    {
+        return $this->maxCpc;
+    }
+
+    public function getMaxCpm():? int
+    {
+        return $this->maxCpm;
     }
 }
