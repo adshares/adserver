@@ -132,7 +132,6 @@ class User extends Authenticatable
                     "last_payment_at" => (string)$current->created_at,
                 ];
             });
-
     }
 
     public function setPasswordAttribute($value)
