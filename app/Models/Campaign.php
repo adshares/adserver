@@ -50,7 +50,7 @@ use Illuminate\Support\Collection;
  */
 class Campaign extends Model
 {
-    use Ownership;
+//    use Ownership;
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;

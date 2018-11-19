@@ -39,8 +39,35 @@ class ApiController extends Controller
     {
         $campaigns = [];
         foreach ($this->campaignRepository->find() as $i => $campaign) {
-            $campaigns[$i] = $campaign->toArray();
-            $campaigns[$i]['adshares_address'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
+
+            $banners = [];
+
+            foreach ($campaign->ads as $banner) {
+                $banners[] = [
+                    'uuid' => $banner->uuid,
+                    'width' => $banner->width,
+                    'height' => $banner->height,
+                    'type' => $banner->type,
+                    'size' => $banner->size,
+                    'serve_url' => $banner->serve_url,
+                    'click_url' => $banner->click_url,
+                    'view_url' => $banner->view_url,
+                ];
+            }
+
+            $campaigns[] = [
+                'id' => $campaign->id,
+                'uuid' => $campaign->uuid,
+                'user_id' => $campaign->user_id,
+                'landing_url' => $campaign->landing_url,
+                'date_start' => $campaign->date_start,
+                'date_end' => $campaign->date_end,
+                'max_cpc' => $campaign->max_cpc,
+                'max_cpm' => $campaign->max_cpm,
+                'budget' => $campaign->budget,
+                'banners' => $banners,
+                'adshares_address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+            ];
         }
 
         return Response::json(['campaigns' => $campaigns], 200, [], JSON_PRETTY_PRINT);
