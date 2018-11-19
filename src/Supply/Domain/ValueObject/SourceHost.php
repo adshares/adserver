@@ -46,8 +46,7 @@ class SourceHost
         DateTime $createdAt,
         DateTime $updatedAt,
         string $version
-    )
-    {
+    ) {
         if (!filter_var($host, FILTER_VALIDATE_DOMAIN)) {
             throw new InvalidUrlException(sprintf('Host value `%s` is invalid. It must be a valid URL.', $host));
         }

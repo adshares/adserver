@@ -59,6 +59,8 @@ class CreateNetworkCampaignsTable extends Migration
 
             $table->unsignedTinyInteger('status')->nullable(false)->default(NetworkCampaign::STATUS_ACTIVE);
 
+            $table->json('targeting_excludes')->nullable(true);
+            $table->json('targeting_requires')->nullable(true);
         });
 
         if (DB::isMysql()) {

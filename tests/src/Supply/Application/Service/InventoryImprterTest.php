@@ -73,7 +73,6 @@ final class InventoryImprterTest extends TestCase
                 ->expects($this->once())
                 ->method('fetchAllInventory')
                 ->will($this->throwException(new EmptyInventoryException()));
-
         } else {
             $client
                 ->expects($this->once())

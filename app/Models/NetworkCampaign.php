@@ -44,6 +44,11 @@ class NetworkCampaign extends Model
         'time_end',
     ];
 
+    protected $casts = [
+        'targeting_requires' => 'json',
+        'targeting_excludes' => 'json',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -62,6 +67,8 @@ class NetworkCampaign extends Model
         'budget_per_hour',
         'time_start',
         'time_end',
+        'targeting_requires',
+        'targeting_excludes',
     ];
 
     /**

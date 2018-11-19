@@ -55,8 +55,9 @@ class Banner
     {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(
-                'Unsupported banner `%s` type. We support only: %s',
-                $type, implode(',', self::SUPPORTED_TYPES)
+                'Unsupported banner `%s` type. Only %s are allowed.',
+                $type,
+                implode(',', self::SUPPORTED_TYPES)
             ));
         }
 

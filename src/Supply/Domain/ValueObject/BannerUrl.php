@@ -39,7 +39,10 @@ final class BannerUrl
     public function __construct(string $serveUrl, string $clickUrl, string $viewUrl)
     {
         if (!filter_var($serveUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidUrlException(sprintf('Serve url value `%s` is invalid. It must be a valid URL.', $serveUrl));
+            throw new InvalidUrlException(sprintf(
+                'Serve url value `%s` is invalid. It must be a valid URL.',
+                $serveUrl
+            ));
         }
 
         if (!filter_var($clickUrl, FILTER_VALIDATE_URL)) {

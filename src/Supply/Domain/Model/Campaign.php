@@ -81,8 +81,7 @@ final class Campaign
         int $status,
         array $targetingRequires = [],
         array $targetingExcludes = []
-    )
-    {
+    ) {
         $this->id = new Uuid();
         $this->parentUuid = $parentUuid;
         $this->userId = $userId;
