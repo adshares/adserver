@@ -24,9 +24,8 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Domain\Model\Exception\InvalidCampaignArgumentException;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Datetime;
 
 final class Campaign
@@ -102,11 +101,6 @@ final class Campaign
         $this->status = $status;
     }
 
-    public function setBanners(ArrayCollection $banners): void
-    {
-        $this->banners = $banners;
-    }
-
     public function deactivate(): void
     {
         $this->status = self::STATUS_DELETED;
@@ -125,6 +119,11 @@ final class Campaign
     public function getBanners(): ArrayCollection
     {
         return $this->banners;
+    }
+
+    public function setBanners(ArrayCollection $banners): void
+    {
+        $this->banners = $banners;
     }
 
     public function getId(): string
