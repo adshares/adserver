@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\Model;
 
-use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
@@ -37,7 +37,7 @@ final class Banner
         self::IMAGE_TYPE,
     ];
 
-    /** @var Uuid  */
+    /** @var Id  */
     private $id;
 
     /** @var Campaign */
@@ -52,7 +52,7 @@ final class Banner
     /** @var Size */
     private $size;
 
-    public function __construct(Campaign $campaign, Uuid $id, BannerUrl $bannerUrl, string $type, Size $size)
+    public function __construct(Campaign $campaign, Id $id, BannerUrl $bannerUrl, string $type, Size $size)
     {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(

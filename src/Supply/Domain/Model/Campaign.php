@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
-use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Datetime;
@@ -34,7 +34,7 @@ final class Campaign
     const STATUS_ACTIVE = 1;
     const STATUS_DELETED = 2;
 
-    /** @var Uuid */
+    /** @var Id */
     private $id;
 
     /** @var int */
@@ -67,13 +67,12 @@ final class Campaign
     /** @var int */
     private $status;
 
-    /** @var Uuid */
+    /** @var Id */
     private $demandCampaignId;
 
-
     public function __construct(
-        Uuid $id,
-        UUid $demandCampaignId,
+        Id $id,
+        Id $demandCampaignId,
         int $userId,
         string $landingUrl,
         DateTime $dateStart,
