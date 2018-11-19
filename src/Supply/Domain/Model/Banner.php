@@ -25,6 +25,7 @@ namespace Adshares\Supply\Domain\Model;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
 
 class Banner
 {
@@ -52,28 +53,18 @@ class Banner
 
     public function __construct(Campaign $campaign, BannerUrl $bannerUrl, string $type, Size $size)
     {
-//        if (!in_array($type, self::SUPPORTED_TYPES)) {
-//
-//        }
+        if (!in_array($type, self::SUPPORTED_TYPES)) {
+            throw new UnsupportedBannerSizeException(sprintf(
+                'Unsupported banner `%s` type. We support only: %s',
+                $type, implode(',', self::SUPPORTED_TYPES)
+            ));
+        }
 
         $this->id = new Uuid();
         $this->campaign = $campaign;
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
         $this->size = $size;
-    }
-
-    public static function fromArray(Campaign $campaign, array $data): self
-    {
-        $bannerUrl = new BannerUrl($data['serve_url'], $data['click_url'], $data['view_url']);
-        $size = new Size($data['width'], $data['height']);
-
-        return new self(
-            $campaign,
-            $bannerUrl,
-            $data['type'],
-            $size
-        );
     }
 
     public function getId(): string

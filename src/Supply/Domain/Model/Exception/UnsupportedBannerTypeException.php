@@ -20,7 +20,7 @@
 
 namespace Adshares\Supply\Domain\Model\Exception;
 
-class InvalidCampaignArgumentException extends \RuntimeException
+class UnsupportedBannerTypeException extends \RuntimeException
 {
 
 }

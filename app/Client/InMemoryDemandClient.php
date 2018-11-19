@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
 use \DateTime;
@@ -32,7 +32,7 @@ final class InMemoryDemandClient implements DemandClient
     public function __construct()
     {
         $this->campaigns = [
-            Campaign::createFromArray([
+            CampaignFactory::createFromArray([
                 'id' => 1,
                 'uuid' => '4a27f6a938254573abe47810a0b03748',
                 'user_id' => 1,
@@ -79,7 +79,7 @@ final class InMemoryDemandClient implements DemandClient
                 'targeting_excludes' => [],
                 'targeting_requires' => [],
             ]),
-            Campaign::createFromArray([
+            CampaignFactory::createFromArray([
                 'id' => 2,
                 'uuid' => '4a27f6a938254573abe47810a0b03748',
                 'user_id' => 2,
