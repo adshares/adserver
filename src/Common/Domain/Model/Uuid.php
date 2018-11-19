@@ -18,24 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Common\Domain;
+namespace Adshares\Common\Domain\Model;
 
+use Ramsey\Uuid\Uuid as BaseUuid;
 use Ramsey\Uuid\UuidInterface;
 
-final class UniqueId implements Id
+class Uuid
 {
-    /** @var UuidInterface */
     private $id;
 
-    public function __construct(UuidInterface $id)
+    public function __construct()
     {
-        $this->id = $id;
+        $this->id = BaseUuid::uuid4();
     }
 
-    public function __toString(): string
+    public function getId(): UuidInterface
     {
-        return $this->id->toString();
+        return $this->id;
+    }
+
+    public function __toString()
+    {
+        return (string)$this->id;
     }
 }

@@ -168,9 +168,9 @@ then
     ${DOCKER_COMPOSE} run --rm worker yarn run dev
 
     echo " >> Setting upload directory"
-    ${DOCKER_COMPOSE} run --rm application mkdir -p storage/app/public/banners
-    ${DOCKER_COMPOSE} run --rm application chown -R dev:www-data storage/app/public/banners
-    ${DOCKER_COMPOSE} run --rm application php artisan storage:link -q
+    ${DOCKER_COMPOSE} run --rm worker mkdir -p storage/app/public/banners
+    ${DOCKER_COMPOSE} run --rm worker php artisan storage:link -q
+    ${DOCKER_COMPOSE} run --rm --user root worker chown -R dev:www-data storage/app/public/banners
 
 
     echo " < DONE"
@@ -190,33 +190,33 @@ then
     if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Recreate database"
-        if [ ${OPT_START} -eq 1 ]
-        then
-            ${DOCKER_COMPOSE} exec -T worker ./artisan migrate:fresh
-        else
-            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate:fresh
-        fi
+#        if [ ${OPT_START} -eq 1 ]
+#        then
+#            ${DOCKER_COMPOSE} exec -T worker --wait-for-db php artisan migrate:fresh
+#        else
+            ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan migrate:fresh
+#        fi
         echo " < DONE"
 
         if [ ${OPT_SEED} -eq 1 ]
         then
             echo " > Seed database"
-            if [ ${OPT_START} -eq 1 ]
-            then
-                ${DOCKER_COMPOSE} exec -T worker ./artisan db:seed
-            else
-                ${DOCKER_COMPOSE} run --rm worker ./artisan db:seed
-            fi
+#            if [ ${OPT_START} -eq 1 ]
+#            then
+#                ${DOCKER_COMPOSE} exec -T worker php artisan db:seed
+#            else
+                ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan db:seed
+#            fi
             echo " < DONE"
         fi
     else
         echo " > Update database"
-        if [ ${OPT_START} -eq 1 ]
-        then
-            ${DOCKER_COMPOSE} exec -T worker ./artisan migrate
-        else
-            ${DOCKER_COMPOSE} run --rm worker ./artisan migrate
-        fi
+#        if [ ${OPT_START} -eq 1 ]
+#        then
+#            ${DOCKER_COMPOSE} exec -T worker php artisan migrate
+#        else
+            ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan migrate
+#        fi
         echo " < DONE"
     fi
 fi

@@ -80,9 +80,16 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $hidden = [
-        'password',
-        'id',
+    protected $visible = [
+        'uuid',
+        'email',
+        'name',
+        'is_advertiser',
+        'is_publisher',
+        'is_admin',
+        'api_token',
+        'is_email_confirmed',
+        'adserver_wallet',
     ];
     /**
      * The attributes that use some Models\Traits with mutator settings automation.
@@ -91,6 +98,10 @@ class User extends Authenticatable
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+    ];
+    protected $appends = [
+        'adserver_wallet',
+        'is_email_confirmed',
     ];
 
     public static function register($data)
@@ -103,9 +114,24 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function adserverWallet()
+    public function getIsEmailConfirmedAttribute()
     {
-        return $this->hasOne('Adshares\Adserver\Models\UserAdserverWallet');
+        return (bool)$this->created_at;
+    }
+
+    public function getAdserverWalletAttribute()
+    {
+        return UserLedgerEntry::where('user_id', $this->id)
+            ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
+            ->get()
+            ->reduce(function (?array $previous, UserLedgerEntry $current) {
+                return [
+                    'total_funds' => $current->amount + ($previous['total_funds'] ?? 0),
+                    'total_funds_in_currency' => "0.00",
+                    'total_funds_change' => "0.000000000",
+                    'last_payment_at' => (string)$current->created_at,
+                ];
+            });
     }
 
     public function setPasswordAttribute($value)

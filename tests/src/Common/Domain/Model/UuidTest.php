@@ -20,13 +20,12 @@
 
 namespace Adshares\Test\Common\Domain\Model;
 
+use Adshares\Common\Domain\Model\Uuid;
 use PHPUnit\Framework\TestCase;
 
-use Adshares\Common\Domain\ValueObject\Uuid;
-
-final class UuidTest extends TestCase
+class UuidTest extends TestCase
 {
-    public function testReturningAnIdWhenObjectIsCasted(): void
+    public function testReturningAnIdWhenObjectIsCasted()
     {
         $uuid = new Uuid();
 

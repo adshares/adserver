@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Zone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -530,43 +531,17 @@ TARGETING_JSON;
           }
         ]
 FILTERING_JSON;
-    public const ZONE_SIZES = [
-        #best
-        'leaderboard' => '728x90',
-        'medium-rectangle' => '300x250',
-        'large-rectangle' => '336x280',
-        'half-page' => '300x600',
-        'large-mobile-banner' => '320x100',
-        #other
-        'banner' => '468x60',
-        'half-banner' => '234x60',
-        'button' => '125x125',
-        'skyscraper' => '120x600',
-        'wide-skyscraper' => '160x600',
-        'small-rectangle' => '180x150',
-        'vertical-banner' => '120x240',
-        'small-square' => '200x200',
-        'portrait' => '300x1050',
-        'square' => '250x250',
-        'mobile-banner' => '320x50',
-        'large-leaderboard' => '970x90',
-        'billboard' => '970x250',
-        #polish
-        'single-billboard' => '750x100',
-        'double-billboard' => '750x200',
-        'triple-billboard' => '750x300',
-    ];
 
-    public static function getZoneTypeName(string $size): string
+    public static function findLabelBySize(string $size): string
     {
-        return Collection::make(self::ZONE_SIZES)->search($size) ?: $size;
+        return Collection::make(Zone::ZONE_LABELS)->search($size) ?: $size;
     }
 
     public static function getZoneTypes(): array
     {
         return array_map(
             function ($key, $value) {
-                $sizeId = array_search($key, array_keys(self::ZONE_SIZES), false);
+                $sizeId = array_search($key, array_keys(Zone::ZONE_LABELS), false);
 
                 $tags = ['Desktop'];
                 if (strpos($key, 'mobile') !== false) {
@@ -583,14 +558,15 @@ FILTERING_JSON;
                     'id' => $sizeId + 1,
                     'name' => ucwords(str_replace('-', ' ', $key)),
                     'type' => $key,
+                    'label' => $key,
                     'size' => $sizeId,
                     'tags' => $tags,
                     'width' => explode('x', $value)[0],
                     'height' => explode('x', $value)[1],
                 ];
             },
-            array_keys(self::ZONE_SIZES),
-            self::ZONE_SIZES
+            array_keys(Zone::ZONE_LABELS),
+            Zone::ZONE_LABELS
         );
     }
 
