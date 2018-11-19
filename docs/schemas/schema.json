@@ -49,7 +49,7 @@
     "schema": {
       "$id": "#schema",
       "type": "string",
-      "format": "uri"
+      "format": "urn"
     },
     "endpoint": {
       "$id": "#endpoint",
