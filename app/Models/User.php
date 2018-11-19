@@ -117,7 +117,7 @@ class User extends Authenticatable
         return null !== $this->email_confirmed_at;
     }
 
-    public function getAdserverWalletAttribute()
+    public function getAdserverWalletAttribute(): array
     {
         return UserLedgerEntry::where('user_id', $this->id)
             ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
@@ -125,11 +125,17 @@ class User extends Authenticatable
             ->reduce(function (?array $previous, UserLedgerEntry $current) {
                 return [
                     'total_funds' => $current->amount + ($previous['total_funds'] ?? 0),
-                    'total_funds_in_currency' => "0.00",
-                    'total_funds_change' => "0.000000000",
+                    'total_funds_in_currency' => 0,
+                    'total_funds_change' => 0,
                     'last_payment_at' => (string)$current->created_at,
                 ];
-            });
+            })
+            ?: [
+                'total_funds' => 0,
+                'total_funds_in_currency' => 0,
+                'total_funds_change' => 0,
+                'last_payment_at' => 0,
+            ];
     }
 
     public function setPasswordAttribute($value)
