@@ -83,6 +83,9 @@ class NetworkCampaignRepository implements CampaignRepository
         $networkCampaign->time_start = $campaign->getDateStart();
         $networkCampaign->time_end = $campaign->getDateEnd();
 
+        $networkCampaign->targeting_requires = $campaign->getTargetingRequires();
+        $networkCampaign->targeting_excludes = $campaign->getTargetingExcludes();
+
         $networkCampaign->save();
 
         foreach ($networkBanners as $banner) {

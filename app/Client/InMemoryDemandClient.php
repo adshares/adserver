@@ -76,7 +76,11 @@ final class InMemoryDemandClient implements DemandClient
                 'max_cpm' => 1,
                 'budget' => 10,
                 'demand_host' => 'localhost:8101',
-                'targeting_excludes' => [],
+                'targeting_excludes' => [
+                    'site' => [
+                        'one', 'two',
+                    ]
+                ],
                 'targeting_requires' => [],
             ]),
             CampaignFactory::createFromArray([

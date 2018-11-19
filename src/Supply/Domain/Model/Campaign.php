@@ -191,4 +191,14 @@ final class Campaign
     {
         return $this->dateEnd;
     }
+
+    public function getTargetingRequires(): array
+    {
+        return $this->targetingRequires;
+    }
+
+    public function getTargetingExcludes(): array
+    {
+        return $this->targetingExcludes;
+    }
 }
