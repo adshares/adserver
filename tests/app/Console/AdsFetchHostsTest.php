@@ -145,7 +145,8 @@ final class AdsFetchHostsTest extends TestCase
             "previous_block_time": "1542382592",
             "tx": {
                 "data": "1202000400000000E6EE5B56E7EE5B",
-                "signature": "96EADE470198C2F8BE2BB50C2A9DEB66E68EE70C867E40BC6BA232B58226BDE33CF4024F599241DED3D27BFBAE08F0D777AD54A1CB679B2990D708B21621280B",
+                "signature": "96EADE470198C2F8BE2BB50C2A9DEB66E68EE70C867E40BC6BA232B58226BD'
+            .'E33CF4024F599241DED3D27BFBAE08F0D777AD54A1CB679B2990D708B21621280B",
                 "time": "1542383446"
             },
             "error": "Broadcast not ready, try again later"
