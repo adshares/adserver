@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Test\Supply\Domain\Model;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\Model\Exception\InvalidCampaignArgumentException;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
@@ -41,7 +42,7 @@ final class CampaignTest extends TestCase
             new DateTime(),
             new DateTime(),
             [],
-            new Budget(10, 1, null),
+            new Budget((float)10, (float)1, null),
             $sourceHost,
             Campaign::STATUS_DELETED,
             [],
@@ -65,7 +66,7 @@ final class CampaignTest extends TestCase
             new DateTime(),
             new DateTime(),
             [],
-            new Budget(10, 1, null),
+            new Budget((float)10, (float)1, null),
             $sourceHost,
             Campaign::STATUS_ACTIVE,
             [],
@@ -77,5 +78,59 @@ final class CampaignTest extends TestCase
         $campaign->deactivate();
 
         $this->assertEquals(Campaign::STATUS_DELETED, $campaign->getStatus());
+    }
+
+    public function testCreateFromArray()
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = [
+            'id' => 1,
+            'uuid' => (string) (new Uuid()),
+            'user_id' => 1,
+            'landing_url' => 'http://adshares.pl',
+            'date_start' => (new DateTime())->modify('-1 day'),
+            'date_end' => (new DateTime())->modify('+2 days'),
+            'source_host' => [
+                'host' => 'localhost:8101',
+                'address' => '0001-00000001-0001',
+                'created_at' => (new DateTime())->modify('-1 days'),
+                'updated_at' => (new DateTime())->modify('-1 days'),
+            ],
+            'banners' => [
+                [
+                    'serve_url' => 'http://localhost:8101/serve/1',
+                    'click_url' => 'http://localhost:8101/click/1',
+                    'view_url' => 'http://localhost:8101/view/1',
+                    'type' => 'image',
+                    'width' => 728,
+                    'height' => 90,
+                ],
+                [
+                    'serve_url' => 'http://localhost:8101/serve/1',
+                    'click_url' => 'http://localhost:8101/click/1',
+                    'view_url' => 'http://localhost:8101/view/1',
+                    'type' => 'image',
+                    'width' => 728,
+                    'height' => 90,
+                ],
+                [
+                    'serve_url' => 'http://localhost:8101/serve/1',
+                    'click_url' => 'http://localhost:8101/click/1',
+                    'view_url' => 'http://localhost:8101/view/1',
+                    'type' => 'image',
+                    'width' => 728,
+                    'height' => 90,
+                ],
+            ],
+            'max_cpc' => 1,
+            'max_cpm' => 1,
+            'budget' => 10,
+            'demand_host' => 'localhost:8101',
+            'targeting_excludes' => [],
+            'targeting_requires' => [],
+        ];
+
+        Campaign::createFromArray($data);
     }
 }

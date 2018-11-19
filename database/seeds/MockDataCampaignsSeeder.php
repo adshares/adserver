@@ -285,11 +285,11 @@ class MockDataCampaignsSeeder extends Seeder
         $campaign = new NetworkCampaign();
         $campaign->uuid = uniqid() . '1';
         $campaign->parent_uuid = $campaign->uuid;
-        $campaign->version = '0.1';
         $campaign->landing_url = $cr->url;
         $campaign->max_cpm = $cr->max_cpm;
         $campaign->max_cpc = $cr->max_cpc;
         $campaign->source_host = config('app.url');
+        $campaign->source_version = '0.1';
         $campaign->budget_per_hour = $cr->budget_per_hour;
         $campaign->adshares_address = '0001-00000001-0001';
 

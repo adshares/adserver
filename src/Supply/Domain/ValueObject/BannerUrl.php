@@ -43,11 +43,17 @@ final class BannerUrl
         }
 
         if (!filter_var($clickUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidUrlException(sprintf('Click url value `%s` is invalid. It must be a valid URL.', $clickUrl));
+            throw new InvalidUrlException(sprintf(
+                'Click url value `%s` is invalid. It must be a valid URL.',
+                $clickUrl
+            ));
         }
 
         if (!filter_var($viewUrl, FILTER_VALIDATE_URL)) {
-            throw new InvalidUrlException(sprintf('View url value `%s` is invalid. It must be a valid URL.', $viewUrl));
+            throw new InvalidUrlException(sprintf(
+                'View url value `%s` is invalid. It must be a valid URL.',
+                $viewUrl
+            ));
         }
 
         $this->serveUrl = $serveUrl;

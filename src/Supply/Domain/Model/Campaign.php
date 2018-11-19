@@ -24,6 +24,7 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\Model\Exception\InvalidCampaignArgumentException;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Datetime;
@@ -102,8 +103,10 @@ final class Campaign
         $this->status = $status;
     }
 
-    public static function fromArray(array $data): self
+    public static function createFromArray(array $data): self
     {
+        self::validateArrayParameters($data);
+
         $source = $data['source_host'];
 
         $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
@@ -123,7 +126,7 @@ final class Campaign
             $data['user_id'],
             $data['landing_url'],
             $data['date_start'],
-            $data['date_start'],
+            $data['date_end'],
             $banners,
             $budget,
             $sourceHost,
@@ -139,6 +142,62 @@ final class Campaign
         $campaign->banners = new ArrayCollection($banners);
 
         return $campaign;
+    }
+
+    private static function validateArrayParameters(array $data): void
+    {
+        $pattern = [
+            'source_host' => [
+                'host' => '',
+                'address' => '',
+                'created_at' => '',
+                'updated_at' => '',
+                'version' => '',
+            ],
+            'budget',
+            'max_cpc',
+            'max_cpm',
+            'uuid',
+            'user_id',
+            'landing_url',
+            'date_start',
+            'date_end',
+            'targeting_requires',
+            'targeting_excludes',
+            'banners' => [
+                'server_url' => '',
+                'click_url' => '',
+                'view_url' => '',
+                'width' => '',
+                'height' => '',
+                'type' => '',
+            ],
+        ];
+
+        $checkAllKeys = function (array $pattern, $parent = null) use (&$checkAllKeys, $data) {
+            foreach ($pattern as $key => $value) {
+                if (is_array($value)) {
+                    return $checkAllKeys($value, $key);
+                }
+
+                if ($parent && !isset($data[$parent][$key])) {
+                    throw new InvalidCampaignArgumentException(sprintf(
+                        '%s field (%s) is missing. THe field is required.',
+                        $key,
+                        $parent
+                    ));
+                }
+
+                if (!$parent && !isset($data[$key])) {
+                    throw new InvalidCampaignArgumentException(sprintf(
+                        '%s field is missing. THe field is required.',
+                        $key
+                    ));
+                }
+            }
+        };
+
+        $checkAllKeys($pattern);
     }
 
     public function deactivate(): void
@@ -201,12 +260,12 @@ final class Campaign
         return $this->sourceHost->getVersion();
     }
 
-    public function getMaxCpc(): int
+    public function getMaxCpc(): float
     {
         return $this->budget->getMaxCpc();
     }
 
-    public function getMaxCpm(): int
+    public function getMaxCpm(): float
     {
         return $this->budget->getMaxCpm();
     }

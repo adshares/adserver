@@ -216,4 +216,9 @@ class NetworkCampaign extends Model
 
         return $json;
     }
+
+    public static function getTableName()
+    {
+        return with(new static)->getTable();
+    }
 }

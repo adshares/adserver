@@ -27,19 +27,24 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Domain\Service\DemandClient;
+use Adshares\Supply\Domain\Service\Exception\EmptyInventoryException;
 
 class InventoryImporter
 {
-    /*** @var DemandClient */
-    private $client;
+    /** @var MarkedCampaignsAsDeleted */
+    private $markedCampaignsAsDeletedService;
 
     /** @var CampaignRepository */
     private $campaignRepository;
+
+    /*** @var DemandClient */
+    private $client;
 
     /** @var TransactionManager */
     private $transactionManager;
 
     public function __construct(
+        MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
         TransactionManager $transactionManager
@@ -48,20 +53,21 @@ class InventoryImporter
         $this->client = $client;
         $this->campaignRepository = $campaignRepository;
         $this->transactionManager = $transactionManager;
+        $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
     }
 
     public function import(string $host): void
     {
-        $campaigns = $this->client->fetchAllInventory($host);
-
-        if (!$campaigns) {
+        try {
+            $campaigns = $this->client->fetchAllInventory($host);
+        } catch (EmptyInventoryException $exception) {
             return;
         }
 
         $this->transactionManager->begin();
 
         try {
-            $this->campaignRepository->deactivateAllCampaignsFromHost($host);
+            $this->markedCampaignsAsDeletedService->execute($host);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -69,7 +75,7 @@ class InventoryImporter
 
                 $this->campaignRepository->save($campaign);
             }
-        } catch (CampaignRepositoryException $ex) {
+        } catch (CampaignRepositoryException $exception) {
             $this->transactionManager->rollback();
         }
 

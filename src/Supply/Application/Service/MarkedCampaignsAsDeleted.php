@@ -18,26 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Manager;
+namespace Adshares\Supply\Application\Service;
 
-use Adshares\Common\Application\TransactionManager;
-use Adshares\Adserver\Facades\DB;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 
-class EloquentTransactionManager implements TransactionManager
+class MarkedCampaignsAsDeleted
 {
+    /** @var CampaignRepository */
+    private $campaignRepository;
 
-    public function begin(): void
+    public function __construct(CampaignRepository $campaignRepository)
     {
-        DB::beginTransaction();
+        $this->campaignRepository = $campaignRepository;
     }
 
-    public function commit(): void
+    public function execute(string $host)
     {
-        DB::commit();
-    }
-
-    public function rollback(): void
-    {
-        DB::rollBack();
+        $this->campaignRepository->markedAsDeletedByHost($host);
     }
 }

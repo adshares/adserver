@@ -23,18 +23,18 @@ namespace Adshares\Adserver\Client;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use \DateTime;
 
-class InMemoryDemandClient implements DemandClient
+final class InMemoryDemandClient implements DemandClient
 {
+    public $campaigns;
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function __construct()
     {
-        $campaigns = [
-            Campaign::fromArray([
+        $this->campaigns = [
+            Campaign::createFromArray([
                 'id' => 1,
-                'uuid' => (string) (new Uuid()),
+                'uuid' => '4a27f6a938254573abe47810a0b03748',
                 'user_id' => 1,
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
@@ -79,9 +79,9 @@ class InMemoryDemandClient implements DemandClient
                 'targeting_excludes' => [],
                 'targeting_requires' => [],
             ]),
-            Campaign::fromArray([
+            Campaign::createFromArray([
                 'id' => 2,
-                'uuid' => (string) (new Uuid()),
+                'uuid' => '4a27f6a938254573abe47810a0b03748',
                 'user_id' => 2,
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),
@@ -127,7 +127,10 @@ class InMemoryDemandClient implements DemandClient
                 'targeting_requires' => [],
             ]),
         ];
+    }
 
-        return new CampaignCollection($campaigns);
+    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    {
+        return new CampaignCollection($this->campaigns);
     }
 }

@@ -24,6 +24,7 @@ use Adshares\Adserver\Client\InMemoryDemandClient;
 use Adshares\Adserver\Manager\EloquentTransactionManager;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\InventoryImporter;
+use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
 use Illuminate\Support\ServiceProvider;
 
 class InventoryImporterProvider extends ServiceProvider
@@ -32,8 +33,10 @@ class InventoryImporterProvider extends ServiceProvider
     {
         $this->app->bind(InventoryImporter::class, function ($app) {
             $campaignRepository = new NetworkCampaignRepository();
+            $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
 
             return new InventoryImporter(
+                $markedCampaignsAsDeactivatedService,
                 $campaignRepository,
                 new InMemoryDemandClient(),
                 new EloquentTransactionManager()

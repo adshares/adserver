@@ -29,13 +29,13 @@ final class Budget
     /** @var int */
     private $budget;
 
-    /** @var int|null */
+    /** @var float|null */
     private $maxCpc;
 
-    /** @var int|null */
+    /** @var float|null */
     private $maxCpm;
 
-    public function __construct(float $budget, ?int $maxCpc, ?int $maxCpm)
+    public function __construct(float $budget, ?float $maxCpc, ?float $maxCpm)
     {
         if ($budget <= 0) {
             throw new InvalidBudgetValueException(sprintf(
@@ -58,7 +58,7 @@ final class Budget
             ));
         }
 
-        $total = (int)$maxCpc + (int)$maxCpm;
+        $total = $maxCpc + $maxCpm;
 
         if ($budget < $total) {
             throw new InvalidBudgetValueException(sprintf(
@@ -78,12 +78,12 @@ final class Budget
         return $this->budget;
     }
 
-    public function getMaxCpc(): ?int
+    public function getMaxCpc(): ?float
     {
         return $this->maxCpc;
     }
 
-    public function getMaxCpm(): ?int
+    public function getMaxCpm(): ?float
     {
         return $this->maxCpm;
     }

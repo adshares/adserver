@@ -18,26 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Manager;
+namespace Adshares\Supply\Domain\Model\Exception;
 
-use Adshares\Common\Application\TransactionManager;
-use Adshares\Adserver\Facades\DB;
-
-class EloquentTransactionManager implements TransactionManager
+class InvalidCampaignArgumentException extends \RuntimeException
 {
 
-    public function begin(): void
-    {
-        DB::beginTransaction();
-    }
-
-    public function commit(): void
-    {
-        DB::commit();
-    }
-
-    public function rollback(): void
-    {
-        DB::rollBack();
-    }
 }

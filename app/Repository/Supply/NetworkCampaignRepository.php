@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Repository\Supply;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Supply\Domain\Model\Banner;
@@ -29,9 +30,17 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 class NetworkCampaignRepository implements CampaignRepository
 {
 
-    public function deactivateAllCampaignsFromHost(string $host): void
+    public function markedAsDeletedByHost(string $host): void
     {
-        // TODO: Implement deactivateAllCampaignsFromHost() method.
+        DB::update(
+            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
+            [
+                Campaign::STATUS_DELETED,
+                $host
+            ]
+        );
+
+//        throw new CampaignRepositoryException('tetete');
     }
 
     public function save(Campaign $campaign): void
