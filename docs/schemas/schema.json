@@ -2,6 +2,18 @@
   "$schema": "http://json-schema.org/schema#",
   "$id": "urn:x-adshares",
   "definitions": {
+    "dataType": {
+      "$id": "#dataType",
+      "type": "string",
+      "enum": [
+        "boolean",
+        "number",
+        "integer",
+        "enum",
+        "input",
+        "dict"
+      ]
+    },
     "semanticVersion": {
       "$id": "#semver",
       "type": "string",
@@ -78,6 +90,9 @@
         },
         "input": {
           "$ref": "#schema"
+        },
+        "inputParams": {
+          "type": "object"
         },
         "output": {
           "$ref": "#schema"

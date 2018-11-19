@@ -1,0 +1,16 @@
+{
+  "$schema": "urn:x-adshares:taxonomy:0.1",
+  "meta": {
+    "name": "example-name",
+    "version": "0.0.0"
+  },
+  "data": [
+    {
+      "key": "human_score",
+      "label": "Human Score",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  ]
+}

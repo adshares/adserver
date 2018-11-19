@@ -1,0 +1,15 @@
+{
+  "$schema": "urn:x-adshares:context:0.1",
+  "data": [
+    {
+      "key": "human_score",
+      "label": "Human Score",
+      "value": "0.4"
+    },
+    {
+      "key": "uid",
+      "label": "Use Identifier",
+      "value": "my_uid"
+    }
+  ]
+}
