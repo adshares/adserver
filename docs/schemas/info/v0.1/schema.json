@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/schema#",
   "$id": "urn:x-adshares:info:0.1",
   "type": "object",
   "title": "Service Information Schema",
@@ -7,25 +7,6 @@
   "required": [
     "service"
   ],
-  "definitions": {
-    "availableSchemas": {
-      "$id": "#schemas",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "format": "uri"
-      },
-      "examples": [
-        [
-          "urn:x-adshares:info:0.1"
-        ],
-        [
-          "urn:x-adshares:vocabulary:0.1",
-          "urn:x-adshares:vocabulary:0.2"
-        ]
-      ]
-    }
-  },
   "properties": {
     "service": {
       "type": "object",
@@ -34,7 +15,7 @@
           "type": "string",
           "format": "uri"
         },
-        "function": {
+        "role": {
           "type": "string",
           "enum": [
             "adclassify",
@@ -52,50 +33,8 @@
     "endpoints": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "url": {
-            "type": "string",
-            "format": "uri-reference"
-          },
-          "method": {
-            "type": "string",
-            "enum": [
-              "delete",
-              "get",
-              "patch",
-              "post",
-              "put"
-            ]
-          },
-          "description": {
-            "type": "string"
-          },
-          "inputSchemas": {
-            "$ref": "#schemas"
-          },
-          "outputSchemas": {
-            "$ref": "#schemas"
-          }
-        }
+        "$ref": "urn:x-adshares#endpoint"
       }
     }
-  },
-  "examples": [
-    {
-      "service": {
-        "host": "http://example.com",
-        "function": "aduser",
-        "endpoints": [
-          {
-            "url": "vocabulary.json",
-            "method": "get",
-            "outputSchemas": [
-              "urn:x-adshares:vocabulary:0.1"
-            ]
-          }
-        ]
-      }
-    }
-  ]
+  }
 }
