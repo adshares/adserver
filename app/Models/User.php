@@ -55,7 +55,10 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $dates = ['deleted_at'];
+    protected $dates = [
+        'deleted_at',
+        'email_confirmed_at',
+    ];
     /**
      * The event map for the model.
      *
@@ -91,11 +94,6 @@ class User extends Authenticatable
         'is_email_confirmed',
         'adserver_wallet',
     ];
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
@@ -114,9 +112,9 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function getIsEmailConfirmedAttribute()
+    public function getIsEmailConfirmedAttribute(): bool
     {
-        return (bool)$this->created_at;
+        return null !== $this->email_confirmed_at;
     }
 
     public function getAdserverWalletAttribute()
@@ -162,15 +160,5 @@ class User extends Authenticatable
     {
         $this->api_token = null;
         $this->save();
-    }
-
-    /**
-     * check toArrayExtrasCheck() in AutomateMutators trait.
-     */
-    protected function toArrayExtras($array)
-    {
-        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
-
-        return $array;
     }
 }
