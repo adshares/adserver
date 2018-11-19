@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:x-adshares:info:0.1",
+  "type": "object",
+  "title": "Service Information Schema",
+  "readOnly": true,
+  "required": [
+    "service"
+  ],
+  "definitions": {
+    "availableSchemas": {
+      "$id": "#schemas",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "examples": [
+        [
+          "urn:x-adshares:info:0.1"
+        ],
+        [
+          "urn:x-adshares:vocabulary:0.1",
+          "urn:x-adshares:vocabulary:0.2"
+        ]
+      ]
+    }
+  },
+  "properties": {
+    "service": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "format": "uri"
+        },
+        "function": {
+          "type": "string",
+          "enum": [
+            "adclassify",
+            "adpanel",
+            "adpay",
+            "adselect",
+            "adserver",
+            "aduser",
+            "node",
+            "operator"
+          ]
+        }
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri-reference"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "delete",
+              "get",
+              "patch",
+              "post",
+              "put"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "inputSchemas": {
+            "$ref": "#schemas"
+          },
+          "outputSchemas": {
+            "$ref": "#schemas"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "service": {
+        "host": "http://example.com",
+        "function": "aduser",
+        "endpoints": [
+          {
+            "url": "vocabulary.json",
+            "method": "get",
+            "outputSchemas": [
+              "urn:x-adshares:vocabulary:0.1"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
