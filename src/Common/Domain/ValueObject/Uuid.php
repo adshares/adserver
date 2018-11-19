@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -20,19 +20,24 @@
 
 namespace Adshares\Common\Domain\ValueObject;
 
+use Adshares\Common\Domain\Id;
 use function mt_rand;
 use function sprintf;
 
-final class Uuid
+final class Uuid implements Id
 {
     private $id;
 
-    public function __construct()
+    public function __construct(string $value)
     {
-        $this->id = self::v4();
+        if (!self::isValid($value)) {
+            throw new \RuntimeException('TETETETETETE');
+        }
+
+        $this->id = $value;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         return $this->id;
     }
@@ -47,9 +52,9 @@ final class Uuid
         return 1 === $pregMatch;
     }
 
-    public static function v4(): string
+    public static function v4(): self
     {
-        return sprintf(
+        $id = sprintf(
             '%04x%04x%04x%04x%04x%04x%04x%04x',
             // 32 bits for "time_low"
             mt_rand(0, 0xffff),
@@ -68,5 +73,21 @@ final class Uuid
             mt_rand(0, 0xffff),
             mt_rand(0, 0xffff)
         );
+
+        return new self($id);
+    }
+
+    public static function fromString(string $value): self
+    {
+        return new self($value);
+    }
+
+    public function equals(object $other): bool
+    {
+        if (!($other instanceof self)) {
+            return false;
+        }
+
+        return $this->id === $other->id;
     }
 }

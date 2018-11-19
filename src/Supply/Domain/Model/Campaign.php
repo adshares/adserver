@@ -58,18 +58,22 @@ final class Campaign
     /** @var Budget */
     private $budget;
 
+    /** @var array  */
     private $targetingExcludes = [];
 
+    /** @var array  */
     private $targetingRequires = [];
 
     /** @var int */
     private $status;
-    /** @var string */
-    private $parentUuid;
+
+    /** @var Uuid */
+    private $demandCampaignId;
 
 
     public function __construct(
-        string $parentUuid,
+        Uuid $id,
+        UUid $demandCampaignId,
         int $userId,
         string $landingUrl,
         DateTime $dateStart,
@@ -81,8 +85,8 @@ final class Campaign
         array $targetingRequires = [],
         array $targetingExcludes = []
     ) {
-        $this->id = new Uuid();
-        $this->parentUuid = $parentUuid;
+        $this->id = $id;
+        $this->demandCampaignId = $demandCampaignId;
         $this->userId = $userId;
 
         $this->landingUrl = $landingUrl;
@@ -131,9 +135,9 @@ final class Campaign
         return (string)$this->id;
     }
 
-    public function getParentId()
+    public function getDemandCampaignId(): string
     {
-        return $this->parentUuid;
+        return (string)$this->demandCampaignId;
     }
 
     public function getLandingUrl(): string

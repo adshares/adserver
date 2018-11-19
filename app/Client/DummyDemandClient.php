@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
@@ -34,7 +35,7 @@ final class DummyDemandClient implements DemandClient
         $this->campaigns = [
             CampaignFactory::createFromArray([
                 'id' => 1,
-                'uuid' => '4a27f6a938254573abe47810a0b03748',
+                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
                 'user_id' => 1,
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
@@ -85,7 +86,7 @@ final class DummyDemandClient implements DemandClient
             ]),
             CampaignFactory::createFromArray([
                 'id' => 2,
-                'uuid' => '4a27f6a938254573abe47810a0b03748',
+                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
                 'user_id' => 2,
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),

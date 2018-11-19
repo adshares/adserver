@@ -56,7 +56,7 @@ class NetworkCampaign extends Model
      */
     protected $fillable = [
         'uuid',
-        'parent_uuid',
+        'demand_campaign_id',
         'source_created_at',
         'source_updated_at',
         'source_host',
@@ -87,7 +87,7 @@ class NetworkCampaign extends Model
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
-        'parent_uuid' => 'BinHex',
+        'demand_campaign_id' => 'BinHex',
     ];
 
     public static function fromJsonData(array $data)

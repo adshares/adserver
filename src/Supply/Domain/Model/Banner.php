@@ -27,7 +27,7 @@ use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
 
-class Banner
+final class Banner
 {
     const HTML_TYPE = 'html';
     const IMAGE_TYPE = 'image';
@@ -37,6 +37,7 @@ class Banner
         self::IMAGE_TYPE,
     ];
 
+    /** @var Uuid  */
     private $id;
 
     /** @var Campaign */
@@ -45,13 +46,13 @@ class Banner
     /** @var BannerUrl */
     private $bannerUrl;
 
-    /** @var int */
+    /** @var string */
     private $type;
 
     /** @var Size */
     private $size;
 
-    public function __construct(Campaign $campaign, BannerUrl $bannerUrl, string $type, Size $size)
+    public function __construct(Campaign $campaign, Uuid $id, BannerUrl $bannerUrl, string $type, Size $size)
     {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(
@@ -61,7 +62,7 @@ class Banner
             ));
         }
 
-        $this->id = new Uuid();
+        $this->id = $id;
         $this->campaign = $campaign;
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;

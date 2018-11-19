@@ -37,7 +37,7 @@ class InventoryImporter
     /** @var CampaignRepository */
     private $campaignRepository;
 
-    /*** @var DemandClient */
+    /** @var DemandClient */
     private $client;
 
     /** @var TransactionManager */

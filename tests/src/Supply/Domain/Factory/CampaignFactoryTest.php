@@ -33,7 +33,7 @@ final class CampaignFactoryTest
 
         $data = [
             'id' => 1,
-            'uuid' => (string) (new Uuid()),
+            'uuid' => Uuid::v4(),
             'user_id' => 1,
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),

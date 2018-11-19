@@ -49,7 +49,8 @@ final class BannerTest extends TestCase
         }
 
         $campaign = new Campaign(
-            new Uuid(),
+            Uuid::v4(),
+            UUid::fromString('4a27f6a938254573abe47810a0b03748'),
             1,
             'http://example.com',
             new DateTime(),
@@ -63,7 +64,7 @@ final class BannerTest extends TestCase
         );
 
         $bannerUrl = new BannerUrl('http://example.com', 'http://example.com', 'http://example.com');
-        $banner = new Banner($campaign, $bannerUrl, $type, new Size(728, 90));
+        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90));
 
         $this->assertEquals($type, $banner->getType());
     }

@@ -65,7 +65,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign = new NetworkCampaign();
         $networkCampaign->uuid = $campaign->getId();
-        $networkCampaign->parent_uuid = $campaign->getParentId();
+        $networkCampaign->demand_campaign_id = $campaign->getDemandCampaignId();
         $networkCampaign->landing_url = $campaign->getLandingUrl();
 
         $networkCampaign->max_cpc = $campaign->getMaxCpc();
@@ -86,8 +86,6 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign->save();
 
-        foreach ($networkBanners as $banner) {
-            $networkCampaign->banners()->save($banner);
-        }
+        $networkCampaign->banners()->saveMany($networkBanners);
     }
 }

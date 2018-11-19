@@ -284,7 +284,7 @@ class MockDataCampaignsSeeder extends Seeder
     {
         $campaign = new NetworkCampaign();
         $campaign->uuid = uniqid() . '1';
-        $campaign->parent_uuid = $campaign->uuid;
+        $campaign->demand_campaign_id = $campaign->uuid;
         $campaign->landing_url = $cr->url;
         $campaign->max_cpm = $cr->max_cpm;
         $campaign->max_cpc = $cr->max_cpc;

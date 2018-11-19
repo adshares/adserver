@@ -32,7 +32,7 @@ use Adshares\Supply\Domain\Service\DemandClient;
 use Adshares\Supply\Domain\Service\Exception\EmptyInventoryException;
 use PHPUnit\Framework\TestCase;
 
-final class InventoryImprterTest extends TestCase
+final class InventoryImporterTest extends TestCase
 {
     public function testImportWhenDemandClientReturnsNoCampaigns(): void
     {

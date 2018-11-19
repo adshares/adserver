@@ -35,7 +35,7 @@ class CreateNetworkCampaignsTable extends Migration
         Schema::create('network_campaigns', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->binary('uuid', 16); // REQ CUSTOM ALTER
-            $table->binary('parent_uuid', 16); // REQ CUSTOM ALTER
+            $table->binary('demand_campaign_id', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
             $table->timestamp('source_created_at')->nullable();
@@ -65,7 +65,7 @@ class CreateNetworkCampaignsTable extends Migration
 
         if (DB::isMysql()) {
             DB::statement("ALTER TABLE network_campaigns MODIFY uuid varbinary(16) NOT NULL");
-            DB::statement("ALTER TABLE network_campaigns MODIFY parent_uuid varbinary(16) NOT NULL");
+            DB::statement("ALTER TABLE network_campaigns MODIFY demand_campaign_id varbinary(16) NOT NULL");
         }
 
         Schema::table('network_campaigns', function (Blueprint $table) {

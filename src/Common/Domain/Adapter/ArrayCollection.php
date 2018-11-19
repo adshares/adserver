@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Adapter;
 

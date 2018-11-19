@@ -21,6 +21,7 @@
 namespace Adshares\Supply\Domain\Factory;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
@@ -50,6 +51,7 @@ class CampaignFactory
         $banners = [];
 
         $campaign = new Campaign(
+            Uuid::v4(),
             $data['uuid'],
             $data['user_id'],
             $data['landing_url'],
@@ -67,7 +69,7 @@ class CampaignFactory
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
 
-            $banners[] = new Banner($campaign, $bannerUrl, $banner['type'], $size);
+            $banners[] = new Banner($campaign, Uuid::v4(), $bannerUrl, $banner['type'], $size);
         }
 
         $campaign->setBanners(new ArrayCollection($banners));

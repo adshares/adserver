@@ -36,7 +36,8 @@ final class CampaignTest extends TestCase
     {
         $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
         $campaign = new Campaign(
-            (string) new Uuid(),
+            Uuid::v4(),
+            UUid::v4(),
             1,
             'http://example.com',
             new DateTime(),
@@ -60,7 +61,8 @@ final class CampaignTest extends TestCase
     {
         $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
         $campaign = new Campaign(
-            (string) new Uuid(),
+            Uuid::v4(),
+            Uuid::v4(),
             1,
             'http://example.com',
             new DateTime(),
