@@ -25,7 +25,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
 use \DateTime;
 
-final class InMemoryDemandClient implements DemandClient
+final class DummyDemandClient implements DemandClient
 {
     public $campaigns;
 

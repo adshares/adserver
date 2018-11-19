@@ -20,7 +20,7 @@
 
 namespace Adshares\Test\Supply\Application\Service;
 
-use Adshares\Adserver\Client\InMemoryDemandClient;
+use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
@@ -92,7 +92,7 @@ final class InventoryImprterTest extends TestCase
 
     public function testImportWhenMarkedCampaignsServiceThrowsAnException()
     {
-        $inMemoryDemandClient = new InMemoryDemandClient();
+        $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection($inMemoryDemandClient->campaigns);
 
         $repository = $this->repositoryMock();
@@ -128,7 +128,7 @@ final class InventoryImprterTest extends TestCase
 
     public function testImportWhenActivateIsSuccessful()
     {
-        $inMemoryDemandClient = new InMemoryDemandClient();
+        $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection($inMemoryDemandClient->campaigns);
 
         $repository = $this->repositoryMock();

@@ -39,8 +39,6 @@ class NetworkCampaignRepository implements CampaignRepository
                 $host
             ]
         );
-
-//        throw new CampaignRepositoryException('tetete');
     }
 
     public function save(Campaign $campaign): void

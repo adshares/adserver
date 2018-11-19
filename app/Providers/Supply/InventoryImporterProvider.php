@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Adserver\Client\InMemoryDemandClient;
+use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Adserver\Manager\EloquentTransactionManager;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -38,7 +38,7 @@ class InventoryImporterProvider extends ServiceProvider
             return new InventoryImporter(
                 $markedCampaignsAsDeactivatedService,
                 $campaignRepository,
-                new InMemoryDemandClient(),
+                new DummyDemandClient(),
                 new EloquentTransactionManager()
             );
         });
