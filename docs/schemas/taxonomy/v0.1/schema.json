@@ -3,6 +3,146 @@
   "$id": "urn:x-adshares:taxonomy:0.1",
   "type": "object",
   "definitions": {
+    "dataItem": {
+      "$id": "#dataItem",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "type",
+            "values"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "dict",
+                "enum"
+              ]
+            },
+            "values": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "type",
+            "value"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "boolean"
+              ]
+            },
+            "value": {
+              "type": "boolean"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "type",
+            "value"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "number"
+              ]
+            },
+            "value": {
+              "type": "number"
+            },
+            "min": {
+              "type": "number"
+            },
+            "max": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "type",
+            "value"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "integer"
+              ]
+            },
+            "value": {
+              "type": "integer"
+            },
+            "min": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "key",
+            "type",
+            "value"
+          ],
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "input",
+                "string"
+              ]
+            },
+            "value": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
     "metaData": {
       "$id": "#metaData",
       "type": "object",
@@ -23,21 +163,7 @@
     "data": {
       "type": "array",
       "items": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          },
-          "value": {
-            "type": "string"
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
+        "$ref": "#dataItem"
       }
     }
   },
