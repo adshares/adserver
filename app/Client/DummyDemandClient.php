@@ -76,7 +76,6 @@ final class DummyDemandClient implements DemandClient
                 'max_cpc' => 1,
                 'max_cpm' => 1,
                 'budget' => 10,
-                'demand_host' => 'localhost:8101',
                 'targeting_excludes' => [
                     'site' => [
                         'one', 'two',
