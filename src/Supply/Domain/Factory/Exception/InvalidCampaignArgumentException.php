@@ -20,7 +20,9 @@
 
 namespace Adshares\Supply\Domain\Factory\Exception;
 
-class InvalidCampaignArgumentException extends \RuntimeException
+use RuntimeException;
+
+class InvalidCampaignArgumentException extends RuntimeException
 {
 
 }

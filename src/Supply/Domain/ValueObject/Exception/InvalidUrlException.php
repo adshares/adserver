@@ -22,7 +22,9 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject\Exception;
 
-class InvalidUrlException extends \InvalidArgumentException
+use RuntimeException;
+
+class InvalidUrlException extends RuntimeException
 {
 
 }

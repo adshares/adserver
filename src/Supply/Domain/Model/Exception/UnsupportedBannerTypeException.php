@@ -20,7 +20,9 @@
 
 namespace Adshares\Supply\Domain\Model\Exception;
 
-class UnsupportedBannerTypeException extends \RuntimeException
+use RuntimeException;
+
+class UnsupportedBannerTypeException extends RuntimeException
 {
 
 }
