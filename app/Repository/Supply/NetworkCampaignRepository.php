@@ -20,19 +20,72 @@
 
 namespace Adshares\Adserver\Repository\Supply;
 
+use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
 
-    public function deactivateAllCampaignsFromHost(string $host): void
+    public function markedAsDeletedByHost(string $host): void
     {
-        // TODO: Implement deactivateAllCampaignsFromHost() method.
+        DB::update(
+            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
+            [
+                Campaign::STATUS_DELETED,
+                $host
+            ]
+        );
     }
 
     public function save(Campaign $campaign): void
     {
-        // TODO: Implement save() method.
+        $banners = $campaign->getBanners();
+
+        $networkBanners = [];
+
+        /** @var Banner $banner */
+        foreach ($banners as $banner) {
+            $bannerUrl = $banner->getBannerUrl();
+
+            $networkBanner = new NetworkBanner();
+            $networkBanner->uuid = $banner->getId();
+            $networkBanner->serve_url = $bannerUrl->getServeUrl();
+            $networkBanner->click_url = $bannerUrl->getClickUrl();
+            $networkBanner->view_url = $bannerUrl->getViewUrl();
+            $networkBanner->creative_type = $banner->getType();
+            $networkBanner->creative_width = $banner->getWidth();
+            $networkBanner->creative_height = $banner->getHeight();
+
+            $networkBanners[] = $networkBanner;
+        }
+
+        $networkCampaign = new NetworkCampaign();
+        $networkCampaign->uuid = $campaign->getId();
+        $networkCampaign->demand_campaign_id = $campaign->getDemandCampaignId();
+        $networkCampaign->landing_url = $campaign->getLandingUrl();
+
+        $networkCampaign->max_cpc = $campaign->getMaxCpc();
+        $networkCampaign->max_cpm = $campaign->getMaxCpm();
+        $networkCampaign->budget_per_hour = $campaign->getBudget();
+
+        $networkCampaign->source_host = $campaign->getSourceHost();
+        $networkCampaign->source_created_at = $campaign->getSourceCreatedAt();
+        $networkCampaign->source_updated_at = $campaign->getSourceUpdatedAt();
+        $networkCampaign->adshares_address = $campaign->getSourceAddress();
+        $networkCampaign->source_version = $campaign->getSourceVersion();
+
+        $networkCampaign->time_start = $campaign->getDateStart();
+        $networkCampaign->time_end = $campaign->getDateEnd();
+
+        $networkCampaign->targeting_requires = $campaign->getTargetingRequires();
+        $networkCampaign->targeting_excludes = $campaign->getTargetingExcludes();
+
+        $networkCampaign->save();
+
+        $networkCampaign->banners()->saveMany($networkBanners);
     }
 }

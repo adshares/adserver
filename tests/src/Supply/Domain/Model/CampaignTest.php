@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -22,24 +22,29 @@ declare(strict_types = 1);
 
 namespace Adshares\Test\Supply\Domain\Model;
 
-use Adshares\Supply\Domain\Model\Budget;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\Model\Exception\InvalidCampaignArgumentException;
+use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\DemandServer;
+use Adshares\Supply\Domain\ValueObject\SourceHost;
 use PHPUnit\Framework\TestCase;
+use DateTime;
 
-class CampaignTest extends TestCase
+final class CampaignTest extends TestCase
 {
-    public function testCampaignActivate()
+    public function testCampaignActivate(): void
     {
+        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
         $campaign = new Campaign(
+            Uuid::v4(),
+            UUid::v4(),
             1,
-            'campaign name',
             'http://example.com',
-            new \DateTime(),
-            new \DateTime(),
+            new DateTime(),
+            new DateTime(),
             [],
-            new Budget(10, 1, null),
-            new DemandServer(),
+            new Budget((float)10, (float)1, null),
+            $sourceHost,
             Campaign::STATUS_DELETED,
             [],
             []
@@ -52,17 +57,19 @@ class CampaignTest extends TestCase
         $this->assertEquals(Campaign::STATUS_ACTIVE, $campaign->getStatus());
     }
 
-    public function testCampaignDeactivated()
+    public function testCampaignDeactivated(): void
     {
+        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
         $campaign = new Campaign(
+            Uuid::v4(),
+            Uuid::v4(),
             1,
-            'campaign name',
             'http://example.com',
-            new \DateTime(),
-            new \DateTime(),
+            new DateTime(),
+            new DateTime(),
             [],
-            new Budget(10, 1, 1),
-            new DemandServer(),
+            new Budget((float)10, (float)1, null),
+            $sourceHost,
             Campaign::STATUS_ACTIVE,
             [],
             []
