@@ -30,6 +30,12 @@
           },
           "value": {
             "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
