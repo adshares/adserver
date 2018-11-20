@@ -28,10 +28,10 @@ use Illuminate\Database\Eloquent\Scope;
 
 class OwnershipScope implements Scope
 {
-    /** @var User */
+    /** @var User|null */
     private $user;
 
-    public function __construct(User $user)
+    public function __construct(?User $user)
     {
         $this->user = $user;
     }
