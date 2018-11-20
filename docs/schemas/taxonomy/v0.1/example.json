@@ -1,16 +1,38 @@
 {
   "$schema": "urn:x-adshares:taxonomy:0.1",
-  "meta": {
-    "name": "example-name",
-    "version": "0.0.0"
-  },
+  "version": "0.0.0",
   "data": [
     {
-      "key": "human_score",
-      "label": "Human Score",
-      "type": "number",
+      "key": "score",
+      "label": "Some Score",
+      "type": "num",
       "minimum": 0,
-      "maximum": 1
+      "maximum": 100
+    },
+    {
+      "key": "active",
+      "label": "Active User",
+      "type": "bool"
+    },
+    {
+      "key": "domain",
+      "label": "Web Domain",
+      "type": "input"
+    },
+    {
+      "key": "interests",
+      "label": "Interests",
+      "type": "dictionary",
+      "values": [
+        {
+          "value": "dc",
+          "label": "DC"
+        },
+        {
+          "value": "marvel",
+          "label": "Marvel"
+        }
+      ]
     }
   ]
 }

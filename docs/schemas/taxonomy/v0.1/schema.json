@@ -3,172 +3,142 @@
   "$id": "urn:x-adshares:taxonomy:0.1",
   "type": "object",
   "definitions": {
-    "dataItem": {
-      "$id": "#dataItem",
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "type",
-            "values"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "dict",
-                "enum"
-              ]
-            },
-            "values": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "key": {
-                    "type": "string"
-                  },
-                  "label": {
-                    "type": "string"
-                  }
-                }
+    "semanticVersion": {
+      "$id": "#semver",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "num": {
+      "$id": "#num",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "num"
+          ]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "simple": {
+      "$id": "#simple",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "bool",
+            "num",
+            "input"
+          ]
+        }
+      }
+    },
+    "dictionary": {
+      "$id": "#dictionary",
+      "type": "object",
+      "required": [
+        "key",
+        "type",
+        "values"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "dictionary"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
               }
             }
           }
-        },
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "type",
-            "value"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "boolean"
-              ]
-            },
-            "value": {
-              "type": "boolean"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "type",
-            "value"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "number"
-              ]
-            },
-            "value": {
-              "type": "number"
-            },
-            "min": {
-              "type": "number"
-            },
-            "max": {
-              "type": "number"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "type",
-            "value"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "integer"
-              ]
-            },
-            "value": {
-              "type": "integer"
-            },
-            "min": {
-              "type": "integer"
-            },
-            "max": {
-              "type": "integer"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "key",
-            "type",
-            "value"
-          ],
-          "properties": {
-            "key": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "input",
-                "string"
-              ]
-            },
-            "value": {
-              "type": "string"
-            }
-          }
         }
-      ]
+      }
     },
-    "metaData": {
-      "$id": "#metaData",
+    "keyword": {
+      "$id": "#keyword",
       "type": "object",
+      "required": [
+        "key"
+      ],
       "properties": {
-        "name": {
+        "key": {
           "type": "string"
         },
-        "version": {
-          "$ref": "urn:x-adshares#semver"
+        "label": {
+          "type": "string"
         }
       }
     }
   },
   "properties": {
-    "meta": {
-      "$ref": "#metaData"
+    "version": {
+      "$ref": "#semver"
     },
     "data": {
       "type": "array",
       "items": {
-        "$ref": "#dataItem"
+        "oneOf": [
+          {
+            "$ref": "#simple"
+          },
+          {
+            "$ref": "#num"
+          },
+          {
+            "$ref": "#dictionary"
+          },
+          {
+            "$ref": "#keyword"
+          }
+        ]
       }
     }
   },
   "required": [
-    "meta",
+    "version",
     "data"
   ]
 }
