@@ -18,7 +18,7 @@ services:
   worker:
     extends:
       service: application
-    command: ['php','artisan','queue:work']
+    command: ['bash', '-c', '`php artisan queue:work > /proc/1/fd/1 2>/proc/1/fd/2 & php artisan queue:work --queue=ads > /proc/1/fd/1 2>/proc/1/fd/2`']
     user: ${SYSTEM_USER_ID}
 
   cron:
