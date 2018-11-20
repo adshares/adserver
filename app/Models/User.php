@@ -55,7 +55,10 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $dates = ['deleted_at'];
+    protected $dates = [
+        'deleted_at',
+        'email_confirmed_at',
+    ];
     /**
      * The event map for the model.
      *
@@ -91,11 +94,6 @@ class User extends Authenticatable
         'is_email_confirmed',
         'adserver_wallet',
     ];
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
@@ -114,12 +112,12 @@ class User extends Authenticatable
         return $user;
     }
 
-    public function getIsEmailConfirmedAttribute()
+    public function getIsEmailConfirmedAttribute(): bool
     {
-        return (bool)$this->created_at;
+        return null !== $this->email_confirmed_at;
     }
 
-    public function getAdserverWalletAttribute()
+    public function getAdserverWalletAttribute(): array
     {
         return UserLedgerEntry::where('user_id', $this->id)
             ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
@@ -127,11 +125,17 @@ class User extends Authenticatable
             ->reduce(function (?array $previous, UserLedgerEntry $current) {
                 return [
                     'total_funds' => $current->amount + ($previous['total_funds'] ?? 0),
-                    'total_funds_in_currency' => "0.00",
-                    'total_funds_change' => "0.000000000",
+                    'total_funds_in_currency' => 0,
+                    'total_funds_change' => 0,
                     'last_payment_at' => (string)$current->created_at,
                 ];
-            });
+            })
+            ?: [
+                'total_funds' => 0,
+                'total_funds_in_currency' => 0,
+                'total_funds_change' => 0,
+                'last_payment_at' => 0,
+            ];
     }
 
     public function setPasswordAttribute($value)
@@ -162,15 +166,5 @@ class User extends Authenticatable
     {
         $this->api_token = null;
         $this->save();
-    }
-
-    /**
-     * check toArrayExtrasCheck() in AutomateMutators trait.
-     */
-    protected function toArrayExtras($array)
-    {
-        $array['is_email_confirmed'] = !empty($array['email_confirmed_at']);
-
-        return $array;
     }
 }

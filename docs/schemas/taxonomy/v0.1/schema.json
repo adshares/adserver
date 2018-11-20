@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "urn:x-adshares:taxonomy:0.1",
+  "type": "object",
+  "definitions": {
+    "metaData": {
+      "$id": "#metaData",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "urn:x-adshares#semver"
+        }
+      }
+    }
+  },
+  "properties": {
+    "meta": {
+      "$ref": "#metaData"
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "meta",
+    "data"
+  ]
+}

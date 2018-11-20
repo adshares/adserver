@@ -1,0 +1,22 @@
+{
+  "$schema": "urn:x-adshares:info:0.1",
+  "service": {
+    "host": "http://example.com",
+    "role": "aduser",
+    "endpoints": [
+      {
+        "path": "/info",
+        "output": "urn:x-adshares:info:0.1"
+      },
+      {
+        "path": "/taxonomy",
+        "output": "urn:x-adshares:taxonomy:0.1"
+      },
+      {
+        "path": "/data",
+        "output": "urn:x-adshares:context:0.1"
+      }
+    ]
+  }
+}
+

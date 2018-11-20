@@ -35,6 +35,7 @@ class CreateNetworkCampaignsTable extends Migration
         Schema::create('network_campaigns', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->binary('uuid', 16); // REQ CUSTOM ALTER
+            $table->binary('demand_campaign_id', 16); // REQ CUSTOM ALTER
 
             $table->timestamps();
             $table->timestamp('source_created_at')->nullable();
@@ -48,6 +49,7 @@ class CreateNetworkCampaignsTable extends Migration
             $table->string('adshares_address', 32);
 
             $table->string('landing_url', 1024);
+            $table->string('source_version', 4)->nullable(false);
 
             $table->decimal('max_cpm', 19, 11)->nullable(false);
             $table->decimal('max_cpc', 19, 11)->nullable(false);
@@ -57,10 +59,13 @@ class CreateNetworkCampaignsTable extends Migration
 
             $table->unsignedTinyInteger('status')->nullable(false)->default(NetworkCampaign::STATUS_ACTIVE);
 
+            $table->json('targeting_excludes')->nullable(true);
+            $table->json('targeting_requires')->nullable(true);
         });
 
         if (DB::isMysql()) {
             DB::statement("ALTER TABLE network_campaigns MODIFY uuid varbinary(16) NOT NULL");
+            DB::statement("ALTER TABLE network_campaigns MODIFY demand_campaign_id varbinary(16) NOT NULL");
         }
 
         Schema::table('network_campaigns', function (Blueprint $table) {

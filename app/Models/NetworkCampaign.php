@@ -44,6 +44,11 @@ class NetworkCampaign extends Model
         'time_end',
     ];
 
+    protected $casts = [
+        'targeting_requires' => 'json',
+        'targeting_excludes' => 'json',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -51,6 +56,7 @@ class NetworkCampaign extends Model
      */
     protected $fillable = [
         'uuid',
+        'demand_campaign_id',
         'source_created_at',
         'source_updated_at',
         'source_host',
@@ -61,6 +67,8 @@ class NetworkCampaign extends Model
         'budget_per_hour',
         'time_start',
         'time_end',
+        'targeting_requires',
+        'targeting_excludes',
     ];
 
     /**
@@ -79,6 +87,7 @@ class NetworkCampaign extends Model
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'demand_campaign_id' => 'BinHex',
     ];
 
     public static function fromJsonData(array $data)
@@ -187,16 +196,6 @@ class NetworkCampaign extends Model
         return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
     }
 
-    public function campaignExcludes()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignExclude');
-    }
-
-    public function campaignRequires()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignRequire');
-    }
-
     public function getAdselectJson()
     {
         $json = [
@@ -223,5 +222,10 @@ class NetworkCampaign extends Model
         $json['banners'] = $banners;
 
         return $json;
+    }
+
+    public static function getTableName()
+    {
+        return with(new static)->getTable();
     }
 }

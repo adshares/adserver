@@ -198,6 +198,7 @@ return [
         // Adshares\Adserver\Providers\BroadcastServiceProvider::class,
         Adshares\Adserver\Providers\EventServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
+        \Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
     ],
 
     /*

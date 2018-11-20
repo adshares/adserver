@@ -33,6 +33,8 @@ use Illuminate\Console\Command;
  * Crawl command =is called periodically. It queries blockchain for available adsevers.
  * It downloads available advertisements from each adserver and stores offers in local db
  * Updates are forwarded to adselect
+ *
+ * @deprecated Functionality of this command will be split into other classes.
  */
 class AdsharesCrawlCommand extends Command
 {
