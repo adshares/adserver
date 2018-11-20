@@ -21,6 +21,7 @@
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use function mt_rand;
 use function sprintf;
 
@@ -31,21 +32,16 @@ final class Uuid implements Id
     public function __construct(string $value)
     {
         if (!self::isValid($value)) {
-            throw new \RuntimeException('TETETETETETE');
+            throw new InvalidUuidException();
         }
 
         $this->id = $value;
     }
 
-    public function __toString(): string
-    {
-        return $this->id;
-    }
-
     public static function isValid(string $uuid): bool
     {
         $pregMatch = preg_match(
-            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?' . '[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
             $uuid
         );
 
@@ -80,6 +76,11 @@ final class Uuid implements Id
     public static function fromString(string $value): self
     {
         return new self($value);
+    }
+
+    public function __toString(): string
+    {
+        return $this->id;
     }
 
     public function equals(object $other): bool
