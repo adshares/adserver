@@ -41,7 +41,6 @@ class ApiController extends Controller
     {
         $campaigns = [];
         foreach ($this->campaignRepository->find() as $i => $campaign) {
-
             $banners = [];
 
             foreach ($campaign->ads as $banner) {

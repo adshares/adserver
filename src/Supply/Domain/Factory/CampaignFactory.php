@@ -36,7 +36,6 @@ class CampaignFactory
     {
         if (!isset($data['source_host'])) {
             $data['source_host'] = null;
-
         }
 
         self::validateArrayParameters($data);
@@ -84,11 +83,6 @@ class CampaignFactory
         $campaign->setBanners(new ArrayCollection($banners));
 
         return $campaign;
-    }
-
-    public static function createFromArrayExistedCampaign(array $data)
-    {
-
     }
 
     private static function validateArrayParameters(array $data): void
