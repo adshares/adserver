@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -46,7 +47,7 @@ class WalletController extends Controller
     const FIELD_TOTAL = 'total';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function calculateWithdrawal(Request $request)
+    public function calculateWithdrawal(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
@@ -83,16 +84,14 @@ class WalletController extends Controller
     }
 
     /**
-     * Returns AdServer address in ADS network.
-     *
-     * @return \Illuminate\Config\Repository|mixed
+     * @return string AdServer address in ADS network
      */
-    private function getAdServerAdsAddress()
+    private function getAdServerAdsAddress(): string
     {
         return config('app.adshares_address');
     }
 
-    public function withdraw(Request $request)
+    public function withdraw(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
@@ -139,7 +138,7 @@ class WalletController extends Controller
         return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function depositInfo()
+    public function depositInfo(): JsonResponse
     {
         $user = Auth::user();
         $uuid = $user->uuid;
@@ -159,7 +158,7 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function history(Request $request)
+    public function history(Request $request): JsonResponse
     {
         Validator::make(
             $request->all(),
