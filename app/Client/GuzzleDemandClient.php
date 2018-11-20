@@ -20,9 +20,14 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
 use GuzzleHttp\Client;
+use Symfony\Component\HttpFoundation\Response;
+use InvalidArgumentException;
+use DateTime;
 
 class GuzzleDemandClient implements DemandClient
 {
@@ -38,6 +43,53 @@ class GuzzleDemandClient implements DemandClient
         ]);
 
         $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+        $statusCode = $response->getStatusCode();
+        $body = (string) $response->getBody();
 
+        $this->validateResponse($statusCode, $body);
+
+        try {
+            $campaigns =\GuzzleHttp\json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new \Exception('');
+        }
+
+        $campaignsCollection = new CampaignCollection();
+        foreach ($campaigns as $data) {
+            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryHost));
+            $campaignsCollection->add($campaign);
+        }
+
+        return $campaignsCollection;
+    }
+
+    private function validateResponse(int $statusCode, string $body): void
+    {
+        if ($statusCode !== Response::HTTP_OK) {
+            // ERROR ERROR
+        }
+
+        if (!$body) {
+            // EMPTY EMPTY
+        }
+    }
+
+    private function processData(array $data, string $inventoryHost): array
+    {
+        $data['uuid'] = Uuid::fromString($data['uuid']);
+        $data['date_start'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_start']);
+        $data['date_end'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_end']);
+        $data['source_created_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']);
+        $data['source_updated_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']);
+
+        $data['source_host'] = [
+            'host' => $inventoryHost,
+            'address' => '',
+            'created_at' => new DateTime(),
+            'updated_at' => new DateTime(),
+            'version' => self::VERSION,
+        ];
+
+        return $data;
     }
 }

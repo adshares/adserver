@@ -26,10 +26,12 @@ use Adshares\Common\Domain\Adapter\ArrayCollection;
 
 class CampaignCollection extends ArrayCollection
 {
-    public function __construct(array $campaigns)
+    public function __construct(?array $campaigns = [])
     {
-        foreach ($campaigns as $campaign) {
-            $this->add($campaign);
+        if ($campaigns) {
+            foreach ($campaigns as $campaign) {
+                $this->add($campaign);
+            }
         }
     }
 }

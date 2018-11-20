@@ -34,18 +34,27 @@ class CampaignFactory
 {
     public static function createFromArray(array $data): Campaign
     {
+        if (!isset($data['source_host'])) {
+            $data['source_host'] = null;
+
+        }
+
         self::validateArrayParameters($data);
 
-        $source = $data['source_host'];
+        if ($data['source_host']) {
+            $source = $data['source_host'];
+            $sourceHost = new SourceHost(
+                $source['host'],
+                $source['address'],
+                $source['created_at'],
+                $source['updated_at'],
+                $source['version']
+            );
+        } else {
+            $sourceHost = null;
+        }
 
         $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
-        $sourceHost = new SourceHost(
-            $source['host'],
-            $source['address'],
-            $source['created_at'],
-            $source['updated_at'],
-            $source['version']
-        );
 
         $arrayBanners = $data['banners'];
         $banners = [];
@@ -75,6 +84,11 @@ class CampaignFactory
         $campaign->setBanners(new ArrayCollection($banners));
 
         return $campaign;
+    }
+
+    public static function createFromArrayExistedCampaign(array $data)
+    {
+
     }
 
     private static function validateArrayParameters(array $data): void
@@ -114,6 +128,10 @@ class CampaignFactory
                 }
 
                 if ($parent && !isset($data[$parent][$key])) {
+                    if ($data[$parent][$key] === null) {
+                        continue;
+                    }
+
                     throw new InvalidCampaignArgumentException(sprintf(
                         '%s field (%s) is missing. THe field is required.',
                         $key,
