@@ -22,10 +22,22 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
+use GuzzleHttp\Client;
 
 class GuzzleDemandClient implements DemandClient
 {
+    const VERSION = '0.1';
+
+    const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
+        $client = new Client([
+            'base_uri' => $inventoryHost,
+            'timeout'  => 5.0,
+        ]);
+
+        $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+
     }
 }
