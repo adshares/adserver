@@ -8,6 +8,87 @@
       "type": "string",
       "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
     },
+    "bool": {
+      "$id": "#bool",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "bool"
+          ]
+        }
+      }
+    },
+    "dict": {
+      "$id": "#dict",
+      "type": "object",
+      "required": [
+        "key",
+        "type",
+        "values"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "dict"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "input": {
+      "$id": "#input",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "input"
+          ]
+        }
+      }
+    },
     "num": {
       "$id": "#num",
       "type": "object",
@@ -36,8 +117,20 @@
         }
       }
     },
-    "simple": {
-      "$id": "#simple",
+    "key": {
+      "$id": "#key",
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    },
+    "list": {
+      "$id": "#list",
       "type": "object",
       "required": [
         "key",
@@ -53,62 +146,14 @@
         "type": {
           "type": "string",
           "enum": [
-            "bool",
-            "num",
-            "input"
-          ]
-        }
-      }
-    },
-    "dictionary": {
-      "$id": "#dictionary",
-      "type": "object",
-      "required": [
-        "key",
-        "type",
-        "values"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "dictionary"
+            "list"
           ]
         },
-        "values": {
+        "data": {
           "type": "array",
           "items": {
-            "type": "object",
-            "properties": {
-              "value": {
-                "type": "string"
-              },
-              "label": {
-                "type": "string"
-              }
-            }
+            "type": "string"
           }
-        }
-      }
-    },
-    "keyword": {
-      "$id": "#keyword",
-      "type": "object",
-      "required": [
-        "key"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
         }
       }
     }
@@ -122,16 +167,22 @@
       "items": {
         "oneOf": [
           {
-            "$ref": "#simple"
+            "$ref": "#bool"
+          },
+          {
+            "$ref": "#dict"
+          },
+          {
+            "$ref": "#input"
           },
           {
             "$ref": "#num"
           },
           {
-            "$ref": "#dictionary"
+            "$ref": "#key"
           },
           {
-            "$ref": "#keyword"
+            "$ref": "#list"
           }
         ]
       }

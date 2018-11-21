@@ -3,36 +3,48 @@
   "version": "0.0.0",
   "data": [
     {
-      "key": "score",
-      "label": "Some Score",
-      "type": "num",
-      "minimum": 0,
-      "maximum": 100
+      "key": "country",
+      "label": "Country",
+      "type": "dict",
+      "data": [
+        {
+          "key": "AF",
+          "label": "Afghanistan"
+        }
+      ]
     },
     {
-      "key": "active",
-      "label": "Active User",
+      "key": "device_type",
+      "label": "Device type",
+      "type": "dict",
+      "data": [
+        {
+          "key": "car_entertainment_system",
+          "label": "Car Entertainment System"
+        }
+      ]
+    },
+    {
+      "key": "javascript",
+      "label": "JavaScript",
       "type": "bool"
     },
     {
-      "key": "domain",
-      "label": "Web Domain",
-      "type": "input"
-    },
-    {
-      "key": "interests",
-      "label": "Interests",
-      "type": "dictionary",
-      "values": [
+      "key": "browser",
+      "label": "Browser",
+      "type": "dict",
+      "data": [
         {
-          "value": "dc",
-          "label": "DC"
-        },
-        {
-          "value": "marvel",
-          "label": "Marvel"
+          "key": "115_browser",
+          "label": "115 Browser"
         }
       ]
+    },
+    {
+      "keywords": {
+        "type": "list",
+        "label": "Site Keywords"
+      }
     }
   ]
 }
