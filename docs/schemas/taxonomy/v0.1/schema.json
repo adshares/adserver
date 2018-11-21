@@ -36,7 +36,7 @@
       "required": [
         "key",
         "type",
-        "values"
+        "data"
       ],
       "properties": {
         "key": {
@@ -51,12 +51,16 @@
             "dict"
           ]
         },
-        "values": {
+        "data": {
           "type": "array",
           "items": {
+            "$id": "#key",
             "type": "object",
+            "required": [
+              "key"
+            ],
             "properties": {
-              "value": {
+              "key": {
                 "type": "string"
               },
               "label": {
@@ -117,18 +121,6 @@
         }
       }
     },
-    "key": {
-      "$id": "#key",
-      "type": "object",
-      "required": [
-        "key"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        }
-      }
-    },
     "list": {
       "$id": "#list",
       "type": "object",
@@ -148,16 +140,14 @@
           "enum": [
             "list"
           ]
-        },
-        "data": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
         }
       }
     }
   },
+  "required": [
+    "version",
+    "data"
+  ],
   "properties": {
     "version": {
       "$ref": "#semver"
@@ -179,17 +169,10 @@
             "$ref": "#num"
           },
           {
-            "$ref": "#key"
-          },
-          {
             "$ref": "#list"
           }
         ]
       }
     }
-  },
-  "required": [
-    "version",
-    "data"
-  ]
+  }
 }
