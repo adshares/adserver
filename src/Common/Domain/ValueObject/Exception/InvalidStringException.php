@@ -17,27 +17,17 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Domain\ValueObject\Exception;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Exception;
 
-class CampaignOptionsController extends Controller
+final class InvalidStringException extends Exception
 {
-
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public static function forString(string $string): self
     {
-        $this->optionsRepository = $optionsRepository;
-    }
-
-    public function targeting(): JsonResponse
-    {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        return new self("The string $string is not valid.");
     }
 }

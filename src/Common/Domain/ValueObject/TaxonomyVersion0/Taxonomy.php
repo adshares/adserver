@@ -20,32 +20,35 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository;
+namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
 
-use Adshares\Common\Domain\Service\AdUserClient;
-use Adshares\Common\Domain\Service\OptionsRepository;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\TargetingOptions;
-use Exception;
+use function array_map;
 
-final class DummyOptionsRepository implements OptionsRepository
+final class Taxonomy extends ArrayCollection
 {
-    /** @var AdUserClient */
-    private $adUserClient;
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
 
-    public function __construct(AdUserClient $adUserClient)
+    public function __construct(Schema $schema, SemVer $version, TaxonomyItem...$items)
     {
-        $this->adUserClient = $adUserClient;
+        $this->schema = $schema;
+        $this->version = $version;
+
+        parent::__construct($items);
     }
 
-    public function storeTargetingOptions(TargetingOptions $options): void
+    public function toTargetingOptions(): TargetingOptions
     {
-        throw new Exception("Method storeTargetingOptions() not implemented");
-    }
+        $items = array_map(
+            function (TaxonomyItem $item) {
+                return $item->toTargetingOption();
+            }, $this->toArray());
 
-    public function fetchTargetingOptions(): TargetingOptions
-    {
-        $taxonomy = $this->adUserClient->fetchTaxonomy();
-
-        return $taxonomy->toTargetingOptions();
+        return new TargetingOptions(...$items);
     }
 }

@@ -17,29 +17,41 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
 
-class TaxonomyImporter
+use InvalidArgumentException;
+
+final class Schema
 {
-    /** @var AdUserClient */
-    private $client;
-    /** @var OptionsRepository */
-    private $repository;
+    private const SCHEMA_PREFIX = 'urn:x-adshares:taxonomy';
 
-    public function __construct(AdUserClient $client, OptionsRepository $repository)
+    /** @var string */
+    private $value;
+
+    private function __construct(string $value)
     {
-        $this->client = $client;
-        $this->repository = $repository;
+        $this->validateSchema($value);
+        $this->value = $value;
     }
 
-    public function import(): void
+    private function validateSchema(string $schema): void
     {
-        $taxonomy = $this->client->fetchTaxonomy();
-
-        $options = $taxonomy->toTargetingOptions();
-
-        $this->repository->storeTargetingOptions($options);
+        if (stripos($schema, self::SCHEMA_PREFIX) !== 0) {
+            throw new InvalidArgumentException("Schema '$schema' does not match: ".self::SCHEMA_PREFIX);
+        }
     }
+
+    public static function fromString(string $string): self
+    {
+        return new self($string);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
 }

@@ -24,9 +24,8 @@ namespace Adshares\Common\Domain\Adapter;
 
 use Adshares\Common\Domain\Collection;
 use Doctrine\Common\Collections\ArrayCollection as DoctrineArrayCollection;
-use Illuminate\Contracts\Support\Arrayable;
 
-class ArrayCollection extends DoctrineArrayCollection implements Collection, Arrayable
+class ArrayCollection extends DoctrineArrayCollection implements Collection
 {
 
 }

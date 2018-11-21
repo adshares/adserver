@@ -20,14 +20,14 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Common\Domain\Service\TaxonomyImporter;
+use Adshares\Common\Domain\Service\TargetingOptionsImporter;
 use Illuminate\Console\Command;
 
 class UpdateTaxonomy extends Command
 {
     protected $signature = 'ops:taxonomy:update';
 
-    public function handle(TaxonomyImporter $service): void
+    public function handle(TargetingOptionsImporter $service): void
     {
         $service->import();
     }

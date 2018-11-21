@@ -22,12 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
 
-final class TargetingOption implements Arrayable
+final class TargetingOption
 {
     public const TYPE_STRING = 'string';
     public const TYPE_NUMBER = 'number';
@@ -81,14 +80,14 @@ final class TargetingOption implements Arrayable
         );
     }
 
-    public function toArray(): array
+    public function toArrayRecursive(): array
     {
         return array_filter([
             'value_type' => $this->type,
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArray(),
+            'children' => $this->children->toArrayRecursive(),
             'values' => array_map(function (TargetingOptionValue $option) {
                 return $option->toArray();
             }, $this->values),

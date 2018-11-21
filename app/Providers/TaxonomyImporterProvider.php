@@ -22,16 +22,23 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers;
 
+use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Repository\DummyOptionsRepository;
+use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class TaxonomyImporterProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(OptionsRepository::class, function () {
-            return new DummyOptionsRepository();
+        $this->app->bind(AdUserClient::class, function () {
+            return new DummyAdUserClient();
+        });
+
+        $this->app->bind(OptionsRepository::class, function (Application $app) {
+            return new DummyOptionsRepository($app->make(AdUserClient::class));
         });
     }
 }

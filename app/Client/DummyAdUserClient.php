@@ -20,26 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Adserver\Client;
 
-use InvalidArgumentException;
-use function in_array;
+use Adshares\Common\Domain\Service\AdUserClient;
+use Adshares\Common\Domain\ValueObject\TaxonomyVersion0\Taxonomy;
+use Adshares\Common\Domain\ValueObject\TaxonomyVersion0\TaxonomyFactory;
+use function file_get_contents;
 
-final class TaxonomyItem
+final class DummyAdUserClient implements AdUserClient
 {
-    public const TYPE_STRING = 'string';
-    public const TYPE_NUMBER = 'number';
-    public const TYPE_BOOLEAN = 'boolean';
-    public const TYPES = [self::TYPE_STRING, self::TYPE_NUMBER, self::TYPE_BOOLEAN];
-    /** @var string */
-    private $type;
-
-    public function __construct(string $type)
+    public function fetchTaxonomy(): Taxonomy
     {
-        if (!in_array($type, self::TYPES, true)) {
-            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES).']');
-        }
-        $this->type = $type;
-    }
+        $path = base_path('docs/schemas/taxonomy/v0.1/example.json');
+        $var = file_get_contents($path);
+        $taxonomy = json_decode($var, true);
 
+        return TaxonomyFactory::fromArray($taxonomy);
+    }
 }

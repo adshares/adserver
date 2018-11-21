@@ -41,10 +41,9 @@
       ]
     },
     {
-      "keywords": {
-        "type": "list",
-        "label": "Site Keywords"
-      }
+      "key": "keywords",
+      "label": "Site Keywords",
+      "type": "list"
     }
   ]
 }

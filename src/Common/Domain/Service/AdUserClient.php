@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Domain\ValueObject\Taxonomy;
+use Adshares\Common\Domain\ValueObject\TaxonomyVersion0\Taxonomy;
 
 interface AdUserClient
 {

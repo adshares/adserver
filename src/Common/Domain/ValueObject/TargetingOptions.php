@@ -38,10 +38,10 @@ final class TargetingOptions extends ArrayCollection
         }, $input));
     }
 
-    public function toArray(): array
+    public function toArrayRecursive(): array
     {
         return array_map(function (TargetingOption $option) {
-            return $option->toArray();
+            return $option->toArrayRecursive();
         }, parent::toArray());
     }
 }
