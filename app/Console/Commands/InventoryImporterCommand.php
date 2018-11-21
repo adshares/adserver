@@ -54,8 +54,6 @@ class InventoryImporterCommand extends Command
         }
 
         foreach ($networkHosts as $networkHost) {
-            $networkHost->updateHost();
-
             $this->inventoryImporterService->import($networkHost->host);
         }
     }

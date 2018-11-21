@@ -63,10 +63,4 @@ class NetworkHost extends Model
 
         return $networkHost;
     }
-
-    public function updateHost(): void
-    {
-        $this->last_broadcast = new \DateTime();
-        $this->update();
-    }
 }
