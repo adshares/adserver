@@ -25,6 +25,7 @@ use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use DateTime;
 use DateTimeZone;
 
@@ -77,7 +78,7 @@ class ApiController extends Controller
             ];
         }
 
-        return Response::json($campaigns, 200, [], JSON_PRETTY_PRINT);
+        return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
     }
 
     private function parseDateToISO8601(string $date): string

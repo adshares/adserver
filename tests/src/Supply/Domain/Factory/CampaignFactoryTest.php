@@ -101,7 +101,6 @@ final class CampaignFactoryTest extends TestCase
         unset($data['source_host']['version']);
 
         CampaignFactory::createFromArray($data);
-
     }
 
     public function testCreateFromArrayWhenAllRequiredFieldsAreFilled(): void

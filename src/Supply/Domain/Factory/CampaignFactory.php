@@ -106,7 +106,6 @@ class CampaignFactory
                         implode(',', $diff),
                         $key
                     ));
-
                 }
 
                 continue;
@@ -118,7 +117,6 @@ class CampaignFactory
                     $value
                 ));
             }
-
         }
     }
 }
