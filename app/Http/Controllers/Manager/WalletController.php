@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\JsonResponse;
