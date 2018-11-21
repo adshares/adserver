@@ -17,17 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\Taxonomy;
 
-class CampaignCollection extends ArrayCollection
+interface AdUserClient
 {
-    public function __construct(Campaign ...$campaigns)
-    {
-        parent::__construct($campaigns);
-    }
+    public function fetchTaxonomy(): Taxonomy;
 }

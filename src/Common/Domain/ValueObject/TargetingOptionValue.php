@@ -20,14 +20,33 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Illuminate\Contracts\Support\Arrayable;
 
-class CampaignCollection extends ArrayCollection
+final class TargetingOptionValue implements Arrayable
 {
-    public function __construct(Campaign ...$campaigns)
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
+
+    public function __construct(string $label, string $value)
     {
-        parent::__construct($campaigns);
+        $this->label = $label;
+        $this->value = $value;
+    }
+
+    public static function fromArray(array $input): self
+    {
+        return new self($input['label'], $input['value']);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

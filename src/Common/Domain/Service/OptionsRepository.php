@@ -20,14 +20,13 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\TargetingOptions;
 
-class CampaignCollection extends ArrayCollection
+interface OptionsRepository
 {
-    public function __construct(Campaign ...$campaigns)
-    {
-        parent::__construct($campaigns);
-    }
+    public function storeTargetingOptions(TargetingOptions $options);
+
+    public function fetchTargetingOptions(): TargetingOptions;
 }

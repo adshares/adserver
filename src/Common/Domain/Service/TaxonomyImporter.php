@@ -17,17 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
-
-class CampaignCollection extends ArrayCollection
+class TaxonomyImporter
 {
-    public function __construct(Campaign ...$campaigns)
+    /** @var AdUserClient */
+    private $client;
+    /** @var OptionsRepository */
+    private $repository;
+
+    public function __construct(AdUserClient $client, OptionsRepository $repository)
     {
-        parent::__construct($campaigns);
+        $this->client = $client;
+        $this->repository = $repository;
+    }
+
+    public function import(): void
+    {
+        $taxonomy = $this->client->fetchTaxonomy();
+
+        $options = $taxonomy->toTargetingOptions();
+
+        $this->repository->storeTargetingOptions($options);
     }
 }

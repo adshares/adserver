@@ -20,14 +20,18 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Providers;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Adserver\Repository\DummyOptionsRepository;
+use Adshares\Common\Domain\Service\OptionsRepository;
+use Illuminate\Support\ServiceProvider;
 
-class CampaignCollection extends ArrayCollection
+class TaxonomyImporterProvider extends ServiceProvider
 {
-    public function __construct(Campaign ...$campaigns)
+    public function register(): void
     {
-        parent::__construct($campaigns);
+        $this->app->bind(OptionsRepository::class, function () {
+            return new DummyOptionsRepository();
+        });
     }
 }

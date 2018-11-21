@@ -17,15 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Common\Domain\Service\OptionsRepository;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class CampaignOptionsController extends Controller
 {
-    public function targeting()
+
+    /** @var OptionsRepository */
+    private $optionsRepository;
+
+    public function __construct(OptionsRepository $optionsRepository)
     {
-        return self::json(json_decode(Simulator::TARGETING_JSON));
+        $this->optionsRepository = $optionsRepository;
+    }
+
+    public function targeting(): JsonResponse
+    {
+//        return self::json(json_decode(Simulator::TARGETING_JSON,true));
+        return self::json($this->optionsRepository->fetchTargetingOptions());
     }
 }

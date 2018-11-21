@@ -20,14 +20,22 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Repository;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Adserver\Http\Controllers\Manager\Simulator;
+use Adshares\Common\Domain\Service\OptionsRepository;
+use Adshares\Common\Domain\ValueObject\TargetingOptions;
+use Exception;
 
-class CampaignCollection extends ArrayCollection
+final class DummyOptionsRepository implements OptionsRepository
 {
-    public function __construct(Campaign ...$campaigns)
+    public function storeTargetingOptions(TargetingOptions $options)
     {
-        parent::__construct($campaigns);
+        throw new Exception("Method storeTargetingOptions() not implemented");
+    }
+
+    public function fetchTargetingOptions(): TargetingOptions
+    {
+        return TargetingOptions::fromArray(json_decode(Simulator::TARGETING_JSON, true));
     }
 }

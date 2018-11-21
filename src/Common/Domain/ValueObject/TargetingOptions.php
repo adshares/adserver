@@ -20,14 +20,28 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 
-class CampaignCollection extends ArrayCollection
+final class TargetingOptions extends ArrayCollection
 {
-    public function __construct(Campaign ...$campaigns)
+    public function __construct(TargetingOption ...$items)
     {
-        parent::__construct($campaigns);
+        parent::__construct($items);
+    }
+
+    public static function fromArray(array $input): self
+    {
+        return new self(...array_map(function (array $item) {
+            return TargetingOption::fromArray($item);
+        }, $input));
+    }
+
+    public function toArray(): array
+    {
+        return array_map(function (TargetingOption $option) {
+            return $option->toArray();
+        }, parent::toArray());
     }
 }

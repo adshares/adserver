@@ -20,14 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
-
-class CampaignCollection extends ArrayCollection
+final class Taxonomy
 {
-    public function __construct(Campaign ...$campaigns)
+    public function toTargetingOptions(): TargetingOptions
     {
-        parent::__construct($campaigns);
+        return new TargetingOptions();
     }
 }

@@ -20,14 +20,26 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use InvalidArgumentException;
+use function in_array;
 
-class CampaignCollection extends ArrayCollection
+final class TaxonomyItem
 {
-    public function __construct(Campaign ...$campaigns)
+    public const TYPE_STRING = 'string';
+    public const TYPE_NUMBER = 'number';
+    public const TYPE_BOOLEAN = 'boolean';
+    public const TYPES = [self::TYPE_STRING, self::TYPE_NUMBER, self::TYPE_BOOLEAN];
+    /** @var string */
+    private $type;
+
+    public function __construct(string $type)
     {
-        parent::__construct($campaigns);
+        if (!in_array($type, self::TYPES, true)) {
+            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES).']');
+        }
+        $this->type = $type;
     }
+
 }
