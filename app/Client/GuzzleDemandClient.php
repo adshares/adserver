@@ -24,12 +24,14 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
+use Adshares\Supply\Domain\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Domain\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use Symfony\Component\HttpFoundation\Response;
 use InvalidArgumentException;
 use DateTime;
 
-class GuzzleDemandClient implements DemandClient
+final class GuzzleDemandClient implements DemandClient
 {
     const VERSION = '0.1';
 
@@ -51,7 +53,7 @@ class GuzzleDemandClient implements DemandClient
         try {
             $campaigns =\GuzzleHttp\json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new \Exception('');
+            throw new \RuntimeException('Invalid json data.');
         }
 
         $campaignsCollection = new CampaignCollection();
@@ -66,11 +68,11 @@ class GuzzleDemandClient implements DemandClient
     private function validateResponse(int $statusCode, string $body): void
     {
         if ($statusCode !== Response::HTTP_OK) {
-            // ERROR ERROR
+            throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`.', $statusCode));
         }
 
-        if (!$body) {
-            // EMPTY EMPTY
+        if (empty($body)) {
+            throw new EmptyInventoryException('Empty inventory list');
         }
     }
 
@@ -79,14 +81,12 @@ class GuzzleDemandClient implements DemandClient
         $data['uuid'] = Uuid::fromString($data['uuid']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_start']);
         $data['date_end'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_end']);
-        $data['source_created_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']);
-        $data['source_updated_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']);
+        $data['created_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']);
+        $data['updated_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']);
 
         $data['source_host'] = [
             'host' => $inventoryHost,
             'address' => '',
-            'created_at' => new DateTime(),
-            'updated_at' => new DateTime(),
             'version' => self::VERSION,
         ];
 

@@ -23,26 +23,29 @@ namespace Adshares\Test\Supply\Domain\Factory;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
+use Adshares\Supply\Domain\Model\Campaign;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 
-final class CampaignFactoryTest
+final class CampaignFactoryTest extends TestCase
 {
-    public function testCreateFromArray()
-    {
-        $this->expectException(InvalidCampaignArgumentException::class);
+    private $data;
 
-        $data = [
+    public function setUp()
+    {
+        $this->data = [
             'id' => 1,
             'uuid' => Uuid::v4(),
             'user_id' => 1,
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),
             'date_end' => (new DateTime())->modify('+2 days'),
+            'created_at' => (new DateTime())->modify('-1 days'),
+            'updated_at' => (new DateTime())->modify('-1 days'),
             'source_host' => [
                 'host' => 'localhost:8101',
                 'address' => '0001-00000001-0001',
-                'created_at' => (new DateTime())->modify('-1 days'),
-                'updated_at' => (new DateTime())->modify('-1 days'),
+                'version' => '0.1',
             ],
             'banners' => [
                 [
@@ -77,7 +80,34 @@ final class CampaignFactoryTest
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];
+    }
+
+    public function testCreateFromArrayWhenInvalid()
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        unset($data['budget']);
 
         CampaignFactory::createFromArray($data);
+    }
+
+    public function testCreateFromArrayWhenNestedItemIsInvalid()
+    {
+        $this->expectException(InvalidCampaignArgumentException::class);
+
+        $data = $this->data;
+        unset($data['source_host']['host']);
+        unset($data['source_host']['version']);
+
+        CampaignFactory::createFromArray($data);
+
+    }
+
+    public function testCreateFromArrayWhenAllRequiredFieldsAreFilled(): void
+    {
+        $instance = CampaignFactory::createFromArray($this->data);
+
+        $this->assertInstanceOf(Campaign::class, $instance);
     }
 }

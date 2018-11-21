@@ -18,15 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Supply\Domain\Service\Exception;
 
-namespace Adshares\Supply\Application\Service;
+use RuntimeException;
 
-interface TransactionManager
+class UnexpectedClientResponseException extends RuntimeException
 {
-    public function begin(): void;
 
-    public function commit(): void;
-
-    public function rollback(): void;
 }
