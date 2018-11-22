@@ -135,6 +135,7 @@ class WalletController extends Controller
         $ul->address_from = $addressFrom;
         $ul->address_to = $addressTo;
         $ul->status = UserLedgerEntry::STATUS_PENDING;
+        $ul->type = UserLedgerEntry::TYPE_WITHDRAWAL;
         $result = $ul->save();
 
         if ($result) {
@@ -197,7 +198,9 @@ class WalletController extends Controller
             }
 
             $resp[] = [
-                'status' => $amount,
+                'amount' => $amount,
+                'status' => $ledgerItem->status,
+                'type' => $ledgerItem->type,
                 'date' => $date,
                 'address' => $address,
                 'link' => $link,

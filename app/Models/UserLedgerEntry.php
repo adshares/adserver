@@ -31,6 +31,12 @@ class UserLedgerEntry extends Model
     const STATUS_PENDING = 1;
     const STATUS_REJECTED = 2;
 
+    const TYPE_UNKNOWN = 0;
+    const TYPE_DEPOSIT = 1;
+    const TYPE_WITHDRAWAL = 2;
+    const TYPE_AD_INCOME = 3;
+    const TYPE_AD_EXPENDITURE = 4;
+
     protected $casts = [
         'amount' => 'int',
     ];
