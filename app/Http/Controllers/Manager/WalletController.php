@@ -186,11 +186,8 @@ class WalletController extends Controller
             $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
             $txid = $ledgerItem->txid;
 
-            if (null !== $txid) {
-                $link = self::getTransactionLink($txid);
-            } else {
-                $link = '-';
-            }
+            $link = (null !== $txid) ? self::getTransactionLink($txid) : null;
+
             if ($amount > 0) {
                 $address = $ledgerItem->address_to;
             } else {
