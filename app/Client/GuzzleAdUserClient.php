@@ -20,25 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Application\Dto\TaxonomyVersion0\Taxonomy;
+use Adshares\Common\Application\Dto\TaxonomyVersion0\TaxonomyFactory;
+use Adshares\Common\Domain\Service\AdUserClient;
+use GuzzleHttp\Client;
+use function GuzzleHttp\json_decode;
 
-final class TaxonomyFactory
+final class GuzzleAdUserClient implements AdUserClient
 {
-    public static function fromJson(string $json): Taxonomy
+    /** @var Client */
+    private $client;
+
+    public function __construct(Client $client)
     {
-        return self::fromArray(json_decode($json, true));
+        $this->client = $client;
     }
 
-    public static function fromArray(array $taxonomy): Taxonomy
+    public function fetchTaxonomy(): Taxonomy
     {
-        return new Taxonomy(
-            Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy'),
-            SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']),
-            ...array_map(function (array $item) {
-                return TaxonomyItemFactory::fromAdUser($item);
-            }, $taxonomy['data'])
-        );
+        $response = $this->client->get('/getTaxonomy');
+        $taxonomy = json_decode($response->getBody()->getContents(), true);
+
+        return TaxonomyFactory::fromArray($taxonomy);
     }
 }

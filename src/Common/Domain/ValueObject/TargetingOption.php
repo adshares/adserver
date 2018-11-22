@@ -25,6 +25,7 @@ namespace Adshares\Common\Domain\ValueObject;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
+use function is_bool;
 
 final class TargetingOption
 {
@@ -92,7 +93,7 @@ final class TargetingOption
                 return $option->toArray();
             }, $this->values),
         ], function ($item) {
-            return null !== $item;
+            return !empty($item) || is_bool($item);
         });
     }
 }

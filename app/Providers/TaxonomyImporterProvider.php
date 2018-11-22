@@ -22,10 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers;
 
-use Adshares\Adserver\Client\DummyAdUserClient;
+use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Repository\DummyOptionsRepository;
 use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
+use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -34,7 +35,11 @@ class TaxonomyImporterProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(AdUserClient::class, function () {
-            return new DummyAdUserClient();
+//            return new DummyAdUserClient();
+            return new GuzzleAdUserClient(new Client([
+                'base_uri' => config('app.aduser_internal_location'),
+                'timeout' => 5.0,
+            ]));
         });
 
         $this->app->bind(OptionsRepository::class, function (Application $app) {

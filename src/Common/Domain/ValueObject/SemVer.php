@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\ValueObject\Exception\InvalidVersionStringException;
 use InvalidArgumentException;
 
 final class SemVer
@@ -46,7 +45,7 @@ final class SemVer
         if (!preg_match(
             '#^'
             .'(v|release\-)?'
-            .'(?P<core>(?:[0-9]|[1-9][0-9]+)(?:\.(?:[0-9]|[1-9][0-9]+)){2})'
+            .'(?P<core>(?:[0-9]|[1-9][0-9]+)(?:\.(?:[0-9]|[1-9][0-9]+)){0,2})'
             .'$#',
             $string,
             $parts
@@ -54,9 +53,9 @@ final class SemVer
             throw new InvalidArgumentException("'$string' is not valid.");
         }
 
-        [$major, $minor, $patch] = explode('.', $parts['core']);
+        $core = explode('.', $parts['core']);
 
-        return new self((int)$major, (int)$minor, (int)$patch);
+        return new self((int)($core[0] ?? 0), (int)($core[1] ?? 0), (int)($core[2] ?? 0));
     }
 
     public function __toString(): string
