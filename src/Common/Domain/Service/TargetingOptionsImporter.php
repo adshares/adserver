@@ -19,25 +19,27 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Domain\Service;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
-
-class CampaignOptionsController extends Controller
+class TargetingOptionsImporter
 {
-
+    /** @var AdUserClient */
+    private $client;
     /** @var OptionsRepository */
-    private $optionsRepository;
+    private $repository;
 
-    public function __construct(OptionsRepository $optionsRepository)
+    public function __construct(AdUserClient $client, OptionsRepository $repository)
     {
-        $this->optionsRepository = $optionsRepository;
+        $this->client = $client;
+        $this->repository = $repository;
     }
 
-    public function targeting(): JsonResponse
+    public function import(): void
     {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        $taxonomy = $this->client->fetchTaxonomy();
+
+        $options = $taxonomy->toTargetingOptions();
+
+        $this->repository->storeTargetingOptions($options);
     }
 }

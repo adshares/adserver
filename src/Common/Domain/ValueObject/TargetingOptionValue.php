@@ -17,27 +17,36 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Contracts\Support\Arrayable;
 
-class CampaignOptionsController extends Controller
+final class TargetingOptionValue implements Arrayable
 {
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
 
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public function __construct(string $label, string $value)
     {
-        $this->optionsRepository = $optionsRepository;
+        $this->label = $label;
+        $this->value = $value;
     }
 
-    public function targeting(): JsonResponse
+    public static function fromArray(array $input): self
     {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        return new self($input['label'], $input['value']);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

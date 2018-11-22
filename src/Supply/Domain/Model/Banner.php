@@ -24,8 +24,8 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
+use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
 
 final class Banner
 {

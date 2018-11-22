@@ -17,27 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
-
-class CampaignOptionsController extends Controller
+final class TaxonomyItemFactory
 {
-
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public static function fromAdUser(array $item): TaxonomyItem
     {
-        $this->optionsRepository = $optionsRepository;
-    }
-
-    public function targeting(): JsonResponse
-    {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        return new TaxonomyItem(
+            Type::fromAdUser($item['type']),
+            $item['key'],
+            $item['label'],
+            ...array_map(function (array $datum) {
+                return new Value($datum['key'], $datum['label']);
+            }, $item['data'] ?? [])
+        );
     }
 }

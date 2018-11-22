@@ -26,11 +26,11 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
+use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
-use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
-use PHPUnit\Framework\TestCase;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 
 final class BannerTest extends TestCase
 {

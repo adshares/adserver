@@ -17,27 +17,40 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use InvalidArgumentException;
 
-class CampaignOptionsController extends Controller
+final class Schema
 {
+    private const SCHEMA_PREFIX = 'urn:x-adshares:taxonomy';
 
-    /** @var OptionsRepository */
-    private $optionsRepository;
+    /** @var string */
+    private $value;
 
-    public function __construct(OptionsRepository $optionsRepository)
+    private function __construct(string $value)
     {
-        $this->optionsRepository = $optionsRepository;
+        $this->validateSchema($value);
+        $this->value = $value;
     }
 
-    public function targeting(): JsonResponse
+    private function validateSchema(string $schema): void
     {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        if (stripos($schema, self::SCHEMA_PREFIX) !== 0) {
+            throw new InvalidArgumentException("Schema '$schema' does not match: ".self::SCHEMA_PREFIX);
+        }
+    }
+
+    public static function fromString(string $string): self
+    {
+        return new self($string);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
     }
 }

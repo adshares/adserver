@@ -17,27 +17,35 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Adserver\Repository;
 
-use Adshares\Adserver\Http\Controller;
+use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Adshares\Common\Domain\ValueObject\TargetingOptions;
+use Exception;
 
-class CampaignOptionsController extends Controller
+final class DummyOptionsRepository implements OptionsRepository
 {
+    /** @var AdUserClient */
+    private $adUserClient;
 
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public function __construct(AdUserClient $adUserClient)
     {
-        $this->optionsRepository = $optionsRepository;
+        $this->adUserClient = $adUserClient;
     }
 
-    public function targeting(): JsonResponse
+    public function storeTargetingOptions(TargetingOptions $options): void
     {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        throw new Exception("Method storeTargetingOptions() not implemented");
+    }
+
+    public function fetchTargetingOptions(): TargetingOptions
+    {
+        $taxonomy = $this->adUserClient->fetchTaxonomy();
+
+        return $taxonomy->toTargetingOptions();
     }
 }

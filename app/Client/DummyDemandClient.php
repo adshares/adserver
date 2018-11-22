@@ -24,7 +24,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Service\DemandClient;
-use \DateTime;
+use DateTime;
 
 final class DummyDemandClient implements DemandClient
 {
@@ -135,6 +135,6 @@ final class DummyDemandClient implements DemandClient
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
-        return new CampaignCollection($this->campaigns);
+        return new CampaignCollection(...$this->campaigns);
     }
 }
