@@ -53,5 +53,4 @@ final class Schema
     {
         return $this->value;
     }
-
 }

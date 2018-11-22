@@ -41,5 +41,4 @@ final class TaxonomyFactory
             }, $taxonomy['data'])
         );
     }
-
 }

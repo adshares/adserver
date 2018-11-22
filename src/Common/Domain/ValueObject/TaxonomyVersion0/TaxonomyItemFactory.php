@@ -26,8 +26,8 @@ final class TaxonomyItemFactory
 {
     public static function fromAdUser(array $item): TaxonomyItem
     {
-        return new TaxonomyItem(Type::fromAdUser(
-            $item['type']),
+        return new TaxonomyItem(
+            Type::fromAdUser($item['type']),
             $item['key'],
             $item['label'],
             ...array_map(function (array $datum) {
@@ -35,5 +35,4 @@ final class TaxonomyItemFactory
             }, $item['data'] ?? [])
         );
     }
-
 }

@@ -47,7 +47,9 @@ final class Taxonomy extends ArrayCollection
         $items = array_map(
             function (TaxonomyItem $item) {
                 return $item->toTargetingOption();
-            }, $this->toArray());
+            },
+            $this->toArray()
+        );
 
         return new TargetingOptions(...$items);
     }

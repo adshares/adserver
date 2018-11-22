@@ -64,12 +64,14 @@ final class TaxonomyItem
                 return $value->toTargetingOptionValue();
             }, $this->values);
 
-            return new TargetingOption(null,
+            return new TargetingOption(
+                null,
                 $this->key,
                 $this->label,
                 null,
                 new TargetingOptions(),
-                ...$values);
+                ...$values
+            );
         }
 
         if ($this->type->is(Type::TYPE_LIST)) {
@@ -98,5 +100,4 @@ final class TaxonomyItem
 
         return new TargetingOption((string)$this->type, $this->key, $this->label, false, new TargetingOptions());
     }
-
 }

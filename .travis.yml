@@ -68,15 +68,8 @@ jobs:
     # PHP Lint: check syntax errors in all PHP files
     - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-#    # PHP Code Beautifier and Fixer: fix code styles
-      #    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app src tests || (git diff && exit 8)"
-      #    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app src tests || (git diff && exit 8)"
-
     # PHP_CodeSniffer: check PHP compatibility
-    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app src tests"
-
-    # PHP_CodeSniffer: check PSR2 standard
-    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app src tests"
+    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
 
     # PHP unit tests
     - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"

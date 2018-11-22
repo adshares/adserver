@@ -63,5 +63,4 @@ final class SemVer
     {
         return "{$this->major}.{$this->minor}.{$this->patch}";
     }
-
 }
