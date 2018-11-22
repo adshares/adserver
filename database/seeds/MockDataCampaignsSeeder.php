@@ -29,9 +29,9 @@ class MockDataCampaignsSeeder extends Seeder
 {
     private $bannerSizes = [
         [728, 90],
-        [728, 200],
+        [750, 200],
+        [120, 600],
         [160, 600],
-        [230, 600],
     ];
 
     private static function getRandValue($type)
@@ -265,6 +265,8 @@ class MockDataCampaignsSeeder extends Seeder
         $campaign->user_id = $u->id;
         $campaign->name = $cr->name;
         $campaign->budget = $cr->budget_per_hour;
+        $campaign->max_cpc = $cr->max_cpc;
+        $campaign->max_cpm = $cr->max_cpm;
         $campaign->status = 2; // active
         $campaign->targeting_requires = $cr->targeting_requires ?? null;
         $campaign->targeting_excludes = $cr->targeting_excludes ?? null;

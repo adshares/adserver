@@ -33,11 +33,11 @@ final class BudgetTest extends TestCase
         new Budget(-10, 1, 1);
     }
 
-    public function testWhenMaxCpcValueIsNegative(): void
+    public function testWhenMaxCpcValueIsSmallerThan0(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
-        new Budget(1, 0, 1);
+        new Budget(1, -1, 1);
     }
 
     public function testWhenMaxCpmValueIsNegative(): void

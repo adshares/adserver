@@ -18,17 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Common\Domain\Model;
+namespace Adshares\Supply\Domain\Service\Exception;
 
-use Adshares\Common\Domain\Model\Uuid;
-use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
-class UuidTest extends TestCase
+class UnexpectedClientResponseException extends RuntimeException
 {
-    public function testReturningAnIdWhenObjectIsCasted()
-    {
-        $uuid = new Uuid();
 
-        $this->assertEquals($uuid, (string)$uuid);
-    }
 }

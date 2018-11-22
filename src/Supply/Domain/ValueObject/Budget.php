@@ -44,14 +44,14 @@ final class Budget
             ));
         }
 
-        if ($maxCpc !== null && $maxCpc <= 0) {
+        if ($maxCpc !== null && $maxCpc < 0) {
             throw new InvalidBudgetValueException(sprintf(
                 'Max Cpc value: %s is invalid. The value Must be greater than 0',
                 $maxCpc
             ));
         }
 
-        if ($maxCpm !== null && $maxCpm <= 0) {
+        if ($maxCpm !== null && $maxCpm < 0) {
             throw new InvalidBudgetValueException(sprintf(
                 'Max Cpm value: %s is invalid. The value Must be greater than 0',
                 $maxCpm

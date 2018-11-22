@@ -25,6 +25,7 @@ use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
@@ -53,11 +54,10 @@ final class BannerTest extends TestCase
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
             1,
             'http://example.com',
-            new DateTime(),
-            new DateTime(),
+            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
             [],
             new Budget(10, null, 2),
-            new SourceHost('localhost', '0000-00000000-0001', new DateTime(), new DateTime(), '0.1'),
+            new SourceHost('localhost', '0000-00000000-0001', '0.1'),
             Campaign::STATUS_PROCESSING,
             [],
             []

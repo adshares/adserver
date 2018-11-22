@@ -21,18 +21,11 @@
 namespace Adshares\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
-use DateTime;
 
 class SourceHost
 {
     /** @var string */
     private $host;
-
-    /** @var int */
-    private $createdAt;
-
-    /** @var int */
-    private $updatedAt;
 
     /** @var string */
     private $address;
@@ -43,8 +36,6 @@ class SourceHost
     public function __construct(
         string $host,
         string $address,
-        DateTime $createdAt,
-        DateTime $updatedAt,
         string $version
     ) {
         if (!filter_var($host, FILTER_VALIDATE_DOMAIN)) {
@@ -53,8 +44,6 @@ class SourceHost
 
         $this->host = $host;
         $this->address = $address;
-        $this->createdAt = $createdAt;
-        $this->updatedAt = $updatedAt;
         $this->version = $version;
     }
 
@@ -66,16 +55,6 @@ class SourceHost
     public function getAddress(): string
     {
         return $this->address;
-    }
-
-    public function getCreatedAt(): DateTime
-    {
-        return $this->createdAt;
-    }
-
-    public function getUpdatedAt(): DateTime
-    {
-        return $this->updatedAt;
     }
 
     public function getVersion(): string

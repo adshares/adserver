@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Illuminate\Database\Eloquent\Model;
+use DateTime;
 
 /**
  * @property int id
@@ -57,7 +58,7 @@ class NetworkHost extends Model
         }
 
         $networkHost->host = $host;
-        $networkHost->last_broadcast = (null === $lastBroadcast) ? time() : $lastBroadcast;
+        $networkHost->last_broadcast = (null === $lastBroadcast) ? new DateTime() : $lastBroadcast;
         $networkHost->save();
 
         return $networkHost;
