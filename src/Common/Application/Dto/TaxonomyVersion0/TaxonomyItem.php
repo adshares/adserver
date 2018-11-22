@@ -65,10 +65,10 @@ final class TaxonomyItem
             }, $this->values);
 
             return new TargetingOption(
-                null,
+                TargetingOption::TYPE_STRING,
                 $this->key,
                 $this->label,
-                null,
+                false,
                 new TargetingOptions(),
                 ...$values
             );
@@ -76,7 +76,7 @@ final class TaxonomyItem
 
         if ($this->type->is(Type::TYPE_LIST)) {
             return new TargetingOption(
-                null,
+                TargetingOption::TYPE_STRING,
                 $this->key,
                 $this->label,
                 true,
@@ -86,7 +86,7 @@ final class TaxonomyItem
 
         if ($this->type->is(Type::TYPE_BOOLEAN)) {
             return new TargetingOption(
-                null,
+                TargetingOption::TYPE_BOOLEAN,
                 $this->key,
                 $this->label,
                 true,

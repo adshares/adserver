@@ -92,7 +92,7 @@ final class TargetingOption
                 return $option->toArray();
             }, $this->values),
         ], function ($item) {
-            return !empty($item);
+            return null !== $item;
         });
     }
 }
