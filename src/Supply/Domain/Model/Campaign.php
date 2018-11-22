@@ -25,6 +25,7 @@ namespace Adshares\Supply\Domain\Model;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 use Datetime;
 
@@ -42,12 +43,6 @@ final class Campaign
 
     /** @var string */
     private $landingUrl;
-
-    /** @var \DateTime */
-    private $dateStart;
-
-    /** @var \DateTime */
-    private $dateEnd;
 
     /** @var ArrayCollection */
     private $banners;
@@ -70,13 +65,15 @@ final class Campaign
     /** @var Id */
     private $demandCampaignId;
 
+    /** @var CampaignDate */
+    private $campaignDate;
+
     public function __construct(
         Id $id,
         Id $demandCampaignId,
         int $userId,
         string $landingUrl,
-        DateTime $dateStart,
-        DateTime $dateEnd,
+        CampaignDate $campaignDate,
         array $banners,
         Budget $budget,
         SourceHost $sourceHost,
@@ -90,9 +87,6 @@ final class Campaign
 
         $this->landingUrl = $landingUrl;
 
-        $this->dateStart = $dateStart;
-        $this->dateEnd = $dateEnd;
-
         $this->banners = new ArrayCollection($banners);
 
         $this->budget = $budget;
@@ -102,6 +96,7 @@ final class Campaign
         $this->targetingExcludes = $targetingExcludes;
 
         $this->status = $status;
+        $this->campaignDate = $campaignDate;
     }
 
     public function deactivate(): void
@@ -154,14 +149,14 @@ final class Campaign
         return $this->sourceHost->getAddress();
     }
 
-    public function getSourceCreatedAt(): DateTime
+    public function getCreatedAt(): DateTime
     {
-        return $this->sourceHost->getCreatedAt();
+        return $this->campaignDate->getCreatedAt();
     }
 
-    public function getSourceUpdatedAt(): DateTime
+    public function getUpdatedAt(): DateTime
     {
-        return $this->sourceHost->getUpdatedAt();
+        return $this->campaignDate->getUpdatedAt();
     }
 
     public function getSourceVersion(): string
@@ -186,12 +181,12 @@ final class Campaign
 
     public function getDateStart(): DateTime
     {
-        return $this->dateStart;
+        return $this->campaignDate->getDateStart();
     }
 
     public function getDateEnd(): DateTime
     {
-        return $this->dateEnd;
+        return $this->campaignDate->getDateEnd();
     }
 
     public function getTargetingRequires(): array

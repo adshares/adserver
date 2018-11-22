@@ -40,11 +40,11 @@ final class DummyDemandClient implements DemandClient
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
                 'date_end' => (new DateTime())->modify('+2 days'),
+                'created_at' => (new DateTime())->modify('-1 days'),
+                'updated_at' => (new DateTime())->modify('-1 days'),
                 'source_host' => [
                     'host' => 'localhost:8101',
                     'address' => '0001-00000001-0001',
-                    'created_at' => (new DateTime())->modify('-1 days'),
-                    'updated_at' => (new DateTime())->modify('-1 days'),
                     'version' => '0.1',
                 ],
                 'banners' => [
@@ -90,11 +90,11 @@ final class DummyDemandClient implements DemandClient
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),
                 'date_end' => (new DateTime())->modify('+20 days'),
+                'created_at' => (new DateTime())->modify('-10 days'),
+                'updated_at' => (new DateTime())->modify('-1 days'),
                 'source_host' => [
                     'host' => 'localhost:8101',
                     'address' => '0001-00000001-0001',
-                    'created_at' => (new DateTime())->modify('-10 days'),
-                    'updated_at' => (new DateTime())->modify('-1 days'),
                     'version' => '0.1',
                 ],
                 'banners' => [

@@ -29,7 +29,7 @@ class MockDataNetworkHostsSeeder extends Seeder
 
         $networkHost = new NetworkHost();
         $networkHost->address = '0001-00000001-0001';
-        $networkHost->host = 'localhost:8101';
+        $networkHost->host = 'http://webserver';
         $networkHost->last_broadcast = new DateTime();
 
         $networkHost->save();

@@ -23,9 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Test\Supply\Domain\Model;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Domain\Model\Exception\InvalidCampaignArgumentException;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 use PHPUnit\Framework\TestCase;
 use DateTime;
@@ -34,14 +34,13 @@ final class CampaignTest extends TestCase
 {
     public function testCampaignActivate(): void
     {
-        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
+        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', '0.1');
         $campaign = new Campaign(
             Uuid::v4(),
             UUid::v4(),
             1,
             'http://example.com',
-            new DateTime(),
-            new DateTime(),
+            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
             [],
             new Budget((float)10, (float)1, null),
             $sourceHost,
@@ -59,14 +58,13 @@ final class CampaignTest extends TestCase
 
     public function testCampaignDeactivated(): void
     {
-        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', new DateTime(), new DateTime(), '0.1');
+        $sourceHost = new SourceHost('example.com', '0001-00000001-0001', '0.1');
         $campaign = new Campaign(
             Uuid::v4(),
             Uuid::v4(),
             1,
             'http://example.com',
-            new DateTime(),
-            new DateTime(),
+            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
             [],
             new Budget((float)10, (float)1, null),
             $sourceHost,

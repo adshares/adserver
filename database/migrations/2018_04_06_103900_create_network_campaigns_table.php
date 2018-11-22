@@ -49,7 +49,7 @@ class CreateNetworkCampaignsTable extends Migration
             $table->string('adshares_address', 32);
 
             $table->string('landing_url', 1024);
-            $table->string('source_version', 4)->nullable(false);
+            $table->string('source_version', 16)->nullable(false);
 
             $table->decimal('max_cpm', 19, 11)->nullable(false);
             $table->decimal('max_cpc', 19, 11)->nullable(false);

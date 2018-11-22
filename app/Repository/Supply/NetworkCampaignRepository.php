@@ -32,13 +32,39 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function markedAsDeletedByHost(string $host): void
     {
-        DB::update(
-            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
+        $campaignIdsResult = DB::select(
+            sprintf('select id from %s where source_host = ?', NetworkCampaign::getTableName()),
             [
-                Campaign::STATUS_DELETED,
-                $host
+                $host,
             ]
         );
+
+        if (!$campaignIdsResult) {
+            return;
+        }
+
+        $campaignIds = [];
+        foreach ($campaignIdsResult as $campaignId) {
+            $campaignIds[] = $campaignId->id;
+        }
+
+        DB::table(NetworkBanner::getTableName())
+            ->whereIn('network_campaign_id', $campaignIds)
+            ->delete()
+            ;
+
+        DB::table(NetworkCampaign::getTableName())
+            ->whereIn('id', $campaignIds)
+            ->delete()
+        ;
+
+//        DB::update(
+//            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
+//            [
+//                Campaign::STATUS_DELETED,
+//                $host
+//            ]
+//        );
     }
 
     public function save(Campaign $campaign): void
@@ -73,8 +99,8 @@ class NetworkCampaignRepository implements CampaignRepository
         $networkCampaign->budget_per_hour = $campaign->getBudget();
 
         $networkCampaign->source_host = $campaign->getSourceHost();
-        $networkCampaign->source_created_at = $campaign->getSourceCreatedAt();
-        $networkCampaign->source_updated_at = $campaign->getSourceUpdatedAt();
+        $networkCampaign->source_created_at = $campaign->getCreatedAt();
+        $networkCampaign->source_updated_at = $campaign->getUpdatedAt();
         $networkCampaign->adshares_address = $campaign->getSourceAddress();
         $networkCampaign->source_version = $campaign->getSourceVersion();
 

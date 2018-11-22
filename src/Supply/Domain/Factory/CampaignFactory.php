@@ -27,6 +27,7 @@ use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
+use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceHost;
 
@@ -37,15 +38,13 @@ class CampaignFactory
         self::validateArrayParameters($data);
 
         $source = $data['source_host'];
-
-        $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
         $sourceHost = new SourceHost(
             $source['host'],
             $source['address'],
-            $source['created_at'],
-            $source['updated_at'],
             $source['version']
         );
+
+        $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
 
         $arrayBanners = $data['banners'];
         $banners = [];
@@ -55,8 +54,7 @@ class CampaignFactory
             $data['uuid'],
             $data['user_id'],
             $data['landing_url'],
-            $data['date_start'],
-            $data['date_end'],
+            new CampaignDate($data['date_start'], $data['date_end'], $data['created_at'], $data['updated_at']),
             $banners,
             $budget,
             $sourceHost,
@@ -80,13 +78,9 @@ class CampaignFactory
     private static function validateArrayParameters(array $data): void
     {
         $pattern = [
-            'source_host' => [
-                'host' => '',
-                'address' => '',
-                'created_at' => '',
-                'updated_at' => '',
-                'version' => '',
-            ],
+            'source_host' => ['host', 'address', 'version'],
+            'created_at',
+            'updated_at',
             'budget',
             'max_cpc',
             'max_cpm',
@@ -97,39 +91,32 @@ class CampaignFactory
             'date_end',
             'targeting_requires',
             'targeting_excludes',
-            'banners' => [
-                'server_url' => '',
-                'click_url' => '',
-                'view_url' => '',
-                'width' => '',
-                'height' => '',
-                'type' => '',
-            ],
         ];
 
-        $checkAllKeys = function (array $pattern, $parent = null) use (&$checkAllKeys, $data) {
-            foreach ($pattern as $key => $value) {
-                if (is_array($value)) {
-                    return $checkAllKeys($value, $key);
-                }
+        foreach ($pattern as $key => $value) {
+            if (is_array($value)) {
+                $nestedPatternKeys = array_values($value);
+                $nestedDataKeys = array_keys($data[$key]);
 
-                if ($parent && !isset($data[$parent][$key])) {
-                    throw new InvalidCampaignArgumentException(sprintf(
-                        '%s field (%s) is missing. THe field is required.',
-                        $key,
-                        $parent
-                    ));
-                }
+                $diff = array_diff($nestedPatternKeys, $nestedDataKeys);
 
-                if (!$parent && !isset($data[$key])) {
+                if ($diff) {
                     throw new InvalidCampaignArgumentException(sprintf(
-                        '%s field is missing. THe field is required.',
+                        '(%s) field (%s) is missing. The field is required.',
+                        implode(',', $diff),
                         $key
                     ));
                 }
-            }
-        };
 
-        $checkAllKeys($pattern);
+                continue;
+            }
+
+            if (!isset($data[$value])) {
+                throw new InvalidCampaignArgumentException(sprintf(
+                    '%s field is missing. THe field is required.',
+                    $value
+                ));
+            }
+        }
     }
 }

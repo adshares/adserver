@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Adserver\Client\DummyDemandClient;
+use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Manager\EloquentTransactionManager;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -31,14 +31,14 @@ class InventoryImporterProvider extends ServiceProvider
 {
     public function register()
     {
-        $this->app->bind(InventoryImporter::class, function ($app) {
+        $this->app->bind(InventoryImporter::class, function () {
             $campaignRepository = new NetworkCampaignRepository();
             $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
 
             return new InventoryImporter(
                 $markedCampaignsAsDeactivatedService,
                 $campaignRepository,
-                new DummyDemandClient(),
+                new GuzzleDemandClient(),
                 new EloquentTransactionManager()
             );
         });
