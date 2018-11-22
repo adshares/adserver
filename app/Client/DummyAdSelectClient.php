@@ -18,18 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Client;
 
-namespace Adshares\Supply\Domain\Repository;
-
+use Adshares\Supply\Domain\Model\Banner;
+use Adshares\Supply\Domain\Service\AdSelectClient;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
 
-interface CampaignRepository
+class DummyAdSelectClient implements AdSelectClient
 {
-    public function markedAsDeletedByHost(string $host): void;
+    public function exportInventory(Campaign $campaign): void
+    {
+        //AdSelectDTO
+        $banners = [];
 
-    public function save(Campaign $campaign): void;
+        /** @var Banner $banner */
+        foreach ($campaign->getBanners() as $banner) {
+            $banners[] = [
+                'banner_id' => $banner->getId(),
 
-    public function fetchActiveCampaigns(): CampaignCollection;
+            ];
+        }
+
+    }
 }

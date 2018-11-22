@@ -18,18 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
-
-namespace Adshares\Supply\Domain\Repository;
+namespace Adshares\Supply\Domain\Service;
 
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
 
-interface CampaignRepository
+interface AdSelectClient
 {
-    public function markedAsDeletedByHost(string $host): void;
-
-    public function save(Campaign $campaign): void;
-
-    public function fetchActiveCampaigns(): CampaignCollection;
+    public function exportInventory(Campaign $campaign): void;
 }

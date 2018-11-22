@@ -18,18 +18,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Adserver\Providers\Supply;
 
-namespace Adshares\Supply\Domain\Repository;
+use Adshares\Adserver\Client\DummyAdSelectClient;
+use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use Illuminate\Support\ServiceProvider;
 
-use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface CampaignRepository
+class AdSelectInventoryExporterProvider extends ServiceProvider
 {
-    public function markedAsDeletedByHost(string $host): void;
-
-    public function save(Campaign $campaign): void;
-
-    public function fetchActiveCampaigns(): CampaignCollection;
+    public function register()
+    {
+        $this->app->bind(AdSelectInventoryExporter::class, function () {
+            return new AdSelectInventoryExporter(new DummyAdSelectClient());
+        });
+    }
 }

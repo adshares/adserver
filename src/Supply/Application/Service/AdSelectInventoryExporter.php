@@ -18,18 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Supply\Application\Service;
 
-namespace Adshares\Supply\Domain\Repository;
-
+use Adshares\Supply\Domain\Service\AdSelectClient;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
 
-interface CampaignRepository
+class AdSelectInventoryExporter
 {
-    public function markedAsDeletedByHost(string $host): void;
+    private $client;
 
-    public function save(Campaign $campaign): void;
+    public function __construct(AdSelectClient $client)
+    {
+        $this->client = $client;
+    }
 
-    public function fetchActiveCampaigns(): CampaignCollection;
+    public function export(Campaign $campaign): void
+    {
+        $this->client->exportInventory($campaign);
+    }
 }

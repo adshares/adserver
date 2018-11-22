@@ -20,11 +20,13 @@
 
 namespace Adshares\Adserver\Repository\Supply;
 
+use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class NetworkCampaignRepository implements CampaignRepository
@@ -113,5 +115,11 @@ class NetworkCampaignRepository implements CampaignRepository
         $networkCampaign->save();
 
         $networkCampaign->banners()->saveMany($networkBanners);
+    }
+
+    public function fetchActiveCampaigns(): CampaignCollection
+    {
+        $dummy = new DummyDemandClient();
+        return new CampaignCollection($dummy->campaigns);
     }
 }
