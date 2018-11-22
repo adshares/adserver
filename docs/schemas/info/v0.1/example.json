@@ -2,18 +2,18 @@
   "$schema": "urn:x-adshares:info:0.1",
   "service": {
     "host": "http://example.com",
-    "role": "aduser",
+    "role": "AdUser",
     "endpoints": [
       {
         "path": "/info",
         "output": "urn:x-adshares:info:0.1"
       },
       {
-        "path": "/taxonomy",
+        "path": "/getTaxonomy",
         "output": "urn:x-adshares:taxonomy:0.1"
       },
       {
-        "path": "/data",
+        "path": "/getData",
         "output": "urn:x-adshares:context:0.1"
       }
     ]

@@ -9,26 +9,7 @@
   ],
   "properties": {
     "service": {
-      "type": "object",
-      "properties": {
-        "host": {
-          "type": "string",
-          "format": "uri"
-        },
-        "role": {
-          "type": "string",
-          "enum": [
-            "adclassify",
-            "adpanel",
-            "adpay",
-            "adselect",
-            "adserver",
-            "aduser",
-            "node",
-            "operator"
-          ]
-        }
-      }
+      "$ref": "urn:x-adshares#service"
     },
     "endpoints": {
       "type": "array",
