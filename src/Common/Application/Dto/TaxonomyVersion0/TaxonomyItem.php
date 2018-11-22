@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
 use Adshares\Common\Domain\ValueObject\TargetingOption;
 use Adshares\Common\Domain\ValueObject\TargetingOptions;

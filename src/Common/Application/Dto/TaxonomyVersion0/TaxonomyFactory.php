@@ -20,37 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\SemVer;
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
-use function array_map;
 
-final class Taxonomy extends ArrayCollection
+final class TaxonomyFactory
 {
-    /** @var Schema */
-    private $schema;
-    /** @var SemVer */
-    private $version;
-
-    public function __construct(Schema $schema, SemVer $version, TaxonomyItem...$items)
+    public static function fromJson(string $json): Taxonomy
     {
-        $this->schema = $schema;
-        $this->version = $version;
-
-        parent::__construct($items);
+        return self::fromArray(json_decode($json, true));
     }
 
-    public function toTargetingOptions(): TargetingOptions
+    public static function fromArray(array $taxonomy): Taxonomy
     {
-        $items = array_map(
-            function (TaxonomyItem $item) {
-                return $item->toTargetingOption();
-            },
-            $this->toArray()
+        return new Taxonomy(
+            Schema::fromString($taxonomy['$schema']),
+            SemVer::fromString($taxonomy['version']),
+            ...array_map(function (array $item) {
+                return TaxonomyItemFactory::fromAdUser($item);
+            }, $taxonomy['data'])
         );
-
-        return new TargetingOptions(...$items);
     }
 }

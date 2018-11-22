@@ -20,19 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-final class TaxonomyItemFactory
+use Adshares\Common\Domain\ValueObject\TargetingOptionValue;
+
+final class Value
 {
-    public static function fromAdUser(array $item): TaxonomyItem
+    /** @var string */
+    private $key;
+    /** @var string */
+    private $label;
+
+    public function __construct(string $key, string $label)
     {
-        return new TaxonomyItem(
-            Type::fromAdUser($item['type']),
-            $item['key'],
-            $item['label'],
-            ...array_map(function (array $datum) {
-                return new Value($datum['key'], $datum['label']);
-            }, $item['data'] ?? [])
-        );
+        $this->key = $key;
+        $this->label = $label;
+    }
+
+    public function toTargetingOptionValue(): TargetingOptionValue
+    {
+        return new TargetingOptionValue($this->label, $this->key);
     }
 }

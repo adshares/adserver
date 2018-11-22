@@ -20,25 +20,37 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptionValue;
+use InvalidArgumentException;
 
-final class Value
+final class Schema
 {
-    /** @var string */
-    private $key;
-    /** @var string */
-    private $label;
+    private const SCHEMA_PREFIX = 'urn:x-adshares:taxonomy';
 
-    public function __construct(string $key, string $label)
+    /** @var string */
+    private $value;
+
+    private function __construct(string $value)
     {
-        $this->key = $key;
-        $this->label = $label;
+        $this->validateSchema($value);
+        $this->value = $value;
     }
 
-    public function toTargetingOptionValue(): TargetingOptionValue
+    private function validateSchema(string $schema): void
     {
-        return new TargetingOptionValue($this->label, $this->key);
+        if (stripos($schema, self::SCHEMA_PREFIX) !== 0) {
+            throw new InvalidArgumentException("Schema '$schema' does not match: ".self::SCHEMA_PREFIX);
+        }
+    }
+
+    public static function fromString(string $string): self
+    {
+        return new self($string);
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
     }
 }

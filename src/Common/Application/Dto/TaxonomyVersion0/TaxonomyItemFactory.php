@@ -20,25 +20,19 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Common\Domain\ValueObject\SemVer;
-
-final class TaxonomyFactory
+final class TaxonomyItemFactory
 {
-    public static function fromJson(string $json): Taxonomy
+    public static function fromAdUser(array $item): TaxonomyItem
     {
-        return self::fromArray(json_decode($json, true));
-    }
-
-    public static function fromArray(array $taxonomy): Taxonomy
-    {
-        return new Taxonomy(
-            Schema::fromString($taxonomy['$schema']),
-            SemVer::fromString($taxonomy['version']),
-            ...array_map(function (array $item) {
-                return TaxonomyItemFactory::fromAdUser($item);
-            }, $taxonomy['data'])
+        return new TaxonomyItem(
+            Type::fromAdUser($item['type']),
+            $item['key'],
+            $item['label'],
+            ...array_map(function (array $datum) {
+                return new Value($datum['key'], $datum['label']);
+            }, $item['data'] ?? [])
         );
     }
 }
