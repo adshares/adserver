@@ -58,5 +58,4 @@ final class Taxonomy extends ArrayCollection
             $this->toArray()
         );
     }
-
 }

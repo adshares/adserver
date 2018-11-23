@@ -47,8 +47,10 @@ class TaxonomyImporterProvider extends ServiceProvider
         });
 
         $this->app->bind(OptionsRepository::class, function (Application $app) {
-            return new DummyOptionsRepository($app->make(AdUserClient::class),
-                $app->make(AdClassifyClient::class));
+            return new DummyOptionsRepository(
+                $app->make(AdUserClient::class),
+                $app->make(AdClassifyClient::class)
+            );
         });
     }
 }

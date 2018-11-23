@@ -117,13 +117,16 @@ final class Item
             true,
             new Selector()
         );
-
     }
 
     private function fromNumber(): Selector\Option
     {
-        return new Selector\Option(Type::TYPE_NUMBER,
-            $this->key, $this->label, false, new Selector());
+        return new Selector\Option(
+            Type::TYPE_NUMBER,
+            $this->key,
+            $this->label,
+            false,
+            new Selector()
+        );
     }
-
 }
