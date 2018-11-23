@@ -22,17 +22,23 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-final class TaxonomyItemFactory
+use Adshares\Common\Application\Dto\Selector\OptionValue;
+
+final class ListItemValue
 {
-    public static function fromAdUser(array $item): TaxonomyItem
+    /** @var string */
+    private $value;
+    /** @var string */
+    private $label;
+
+    public function __construct(string $value, string $label)
     {
-        return new TaxonomyItem(
-            Type::fromAdUser($item['type']),
-            $item['key'],
-            $item['label'],
-            ...array_map(function (array $datum) {
-                return new Value($datum['key'], $datum['label']);
-            }, $item['data'] ?? [])
-        );
+        $this->value = $value;
+        $this->label = $label;
+    }
+
+    public function toOptionValue(): OptionValue
+    {
+        return new OptionValue($this->label, $this->value);
     }
 }

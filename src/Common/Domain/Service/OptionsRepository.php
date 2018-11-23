@@ -22,11 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
+use Adshares\Common\Application\Dto\Selector;
 
 interface OptionsRepository
 {
-    public function storeTargetingOptions(TargetingOptions $options);
+    public function storeTargetingOptions(Selector $options);
 
-    public function fetchTargetingOptions(): TargetingOptions;
+    public function storeFilteringOptions(Selector $options);
+
+    public function fetchTargetingOptions(): Selector;
+
+    public function fetchFilteringOptions(): Selector;
 }

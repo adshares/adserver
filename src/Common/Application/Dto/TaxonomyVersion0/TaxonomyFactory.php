@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
 use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
 final class TaxonomyFactory
 {
@@ -33,12 +34,12 @@ final class TaxonomyFactory
 
     public static function fromArray(array $taxonomy): Taxonomy
     {
-        return new Taxonomy(
-            Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy'),
-            SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']),
-            ...array_map(function (array $item) {
-                return TaxonomyItemFactory::fromAdUser($item);
-            }, $taxonomy['data'])
-        );
+        $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
+        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
+        $items = array_map(function (array $item) {
+            return ItemFactory::fromArray($item);
+        }, $taxonomy['data']);
+
+        return new Taxonomy($schema, $version, ...$items);
     }
 }

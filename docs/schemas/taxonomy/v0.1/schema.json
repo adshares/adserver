@@ -51,16 +51,15 @@
             "dict"
           ]
         },
-        "data": {
+        "list": {
           "type": "array",
           "items": {
-            "$id": "#key",
             "type": "object",
             "required": [
               "key"
             ],
             "properties": {
-              "key": {
+              "value": {
                 "type": "string"
               },
               "label": {

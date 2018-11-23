@@ -22,30 +22,46 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository;
 
+use Adshares\Common\Application\Dto\Selector;
+use Adshares\Common\Domain\Service\AdClassifyClient;
 use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
 use Exception;
 
 final class DummyOptionsRepository implements OptionsRepository
 {
     /** @var AdUserClient */
-    private $adUserClient;
+    private $adUser;
+    /** @var AdClassifyClient */
+    private $adClassify;
 
-    public function __construct(AdUserClient $adUserClient)
+    public function __construct(AdUserClient $userClient, AdClassifyClient $classifyClient)
     {
-        $this->adUserClient = $adUserClient;
+        $this->adUser = $userClient;
+        $this->adClassify = $classifyClient;
     }
 
-    public function storeTargetingOptions(TargetingOptions $options): void
+    public function storeTargetingOptions(Selector $options): void
     {
-        throw new Exception("Method storeTargetingOptions() not implemented");
+        throw new Exception('Method storeTargetingOptions() not implemented');
     }
 
-    public function fetchTargetingOptions(): TargetingOptions
+    public function fetchTargetingOptions(): Selector
     {
-        $taxonomy = $this->adUserClient->fetchTaxonomy();
+        $taxonomy = $this->adUser->fetchTaxonomy();
 
         return $taxonomy->toTargetingOptions();
+    }
+
+    public function fetchFilteringOptions(): Selector
+    {
+        $taxonomy = $this->adClassify->fetchTaxonomy();
+
+        return $taxonomy->toTargetingOptions();
+    }
+
+    public function storeFilteringOptions(Selector $options): void
+    {
+        throw new Exception('Method storeFilteringOptions() not implemented');
     }
 }

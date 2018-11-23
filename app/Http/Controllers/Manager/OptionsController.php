@@ -17,24 +17,45 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Domain\Service\OptionsRepository;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
-class SiteOptionsController extends Controller
+class OptionsController extends Controller
 {
-    public function filtering()
+    /** @var OptionsRepository */
+    private $optionsRepository;
+
+    public function __construct(OptionsRepository $optionsRepository)
     {
-        return self::json(json_decode(Simulator::FILTERING_JSON));
+        $this->optionsRepository = $optionsRepository;
     }
 
-    public function languages()
+    public function targeting(): JsonResponse
+    {
+        $options = $this->optionsRepository->fetchTargetingOptions();
+
+        return self::json(new OptionsSelector($options));
+    }
+
+    public function filtering(): JsonResponse
+    {
+        $options = $this->optionsRepository->fetchFilteringOptions();
+
+        return self::json(new OptionsSelector($options));
+    }
+
+    public function languages(): JsonResponse
     {
         return self::json(Simulator::getAvailableLanguages());
     }
 
-    public function zones()
+    public function zones(): JsonResponse
     {
         return self::json(Simulator::getZoneTypes());
     }

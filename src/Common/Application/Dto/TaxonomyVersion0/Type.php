@@ -31,37 +31,44 @@ final class Type
     public const TYPE_BOOLEAN = 'boolean';
     public const TYPE_DICTIONARY = 'dictionary';
     public const TYPE_INPUT = 'input';
-    public const TYPE_LIST = 'list';
     private const TYPES = [
         self::TYPE_NUMBER,
+        self::TYPE_INPUT,
         self::TYPE_BOOLEAN,
         self::TYPE_DICTIONARY,
-        self::TYPE_INPUT,
-        self::TYPE_LIST,
     ];
 
     /** @var string[] */
     private const MAP_TYPE = [
         'num' => self::TYPE_NUMBER,
+        'number' => self::TYPE_NUMBER,
         'bool' => self::TYPE_BOOLEAN,
+        'boolean' => self::TYPE_BOOLEAN,
         'dict' => self::TYPE_DICTIONARY,
+        'list' => self::TYPE_DICTIONARY,
         'input' => self::TYPE_INPUT,
-        'list' => self::TYPE_LIST,
+        'text' => self::TYPE_INPUT,
+        'string' => self::TYPE_INPUT,
     ];
 
     /** @var string */
     private $value;
 
-    private function __construct(string $value)
+    public function __construct(string $value)
     {
-        if (!in_array($value, self::TYPES, true)) {
-            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $value");
-        }
+        $this->validateValue($value);
 
         $this->value = $value;
     }
 
-    public static function fromAdUser($value): self
+    private function validateValue(string $value): void
+    {
+        if (!in_array($value, self::TYPES, true)) {
+            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $value");
+        }
+    }
+
+    public static function map($value): self
     {
         return new self(self::MAP_TYPE[$value]);
     }

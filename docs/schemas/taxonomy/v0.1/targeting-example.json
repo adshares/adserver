@@ -1,14 +1,14 @@
 {
-  "$schema": "urn:x-adshares:taxonomy:0.1",
+  "$schema": "urn:x-adshares:taxonomy",
   "version": "0.0.0",
   "data": [
     {
       "key": "country",
       "label": "Country",
       "type": "dict",
-      "data": [
+      "list": [
         {
-          "key": "AF",
+          "value": "AF",
           "label": "Afghanistan"
         }
       ]
@@ -17,9 +17,9 @@
       "key": "device_type",
       "label": "Device type",
       "type": "dict",
-      "data": [
+      "list": [
         {
-          "key": "car_entertainment_system",
+          "value": "car_entertainment_system",
           "label": "Car Entertainment System"
         }
       ]
@@ -33,9 +33,9 @@
       "key": "browser",
       "label": "Browser",
       "type": "dict",
-      "data": [
+      "list": [
         {
-          "key": "115_browser",
+          "value": "115_browser",
           "label": "115 Browser"
         }
       ]
@@ -43,7 +43,7 @@
     {
       "key": "keywords",
       "label": "Site Keywords",
-      "type": "list"
+      "type": "input"
     }
   ]
 }

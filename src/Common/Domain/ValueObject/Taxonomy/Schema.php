@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Domain\ValueObject\Taxonomy;
 
 use InvalidArgumentException;
 
@@ -40,7 +40,11 @@ final class Schema
     private function validateSchema(string $schema): void
     {
         if (stripos($schema, self::SCHEMA_PREFIX) !== 0) {
-            throw new InvalidArgumentException("Schema '$schema' does not match: ".self::SCHEMA_PREFIX);
+            throw new InvalidArgumentException(sprintf(
+                'Schema "%s" does not match prefix "%s"',
+                $schema,
+                self::SCHEMA_PREFIX
+            ));
         }
     }
 

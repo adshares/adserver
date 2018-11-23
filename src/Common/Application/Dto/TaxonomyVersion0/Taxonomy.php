@@ -22,10 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
+use Adshares\Common\Application\Dto\Selector;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\SemVer;
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
-use function array_map;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
 final class Taxonomy extends ArrayCollection
 {
@@ -34,7 +34,7 @@ final class Taxonomy extends ArrayCollection
     /** @var SemVer */
     private $version;
 
-    public function __construct(Schema $schema, SemVer $version, TaxonomyItem...$items)
+    public function __construct(Schema $schema, SemVer $version, Item...$items)
     {
         $this->schema = $schema;
         $this->version = $version;
@@ -42,15 +42,21 @@ final class Taxonomy extends ArrayCollection
         parent::__construct($items);
     }
 
-    public function toTargetingOptions(): TargetingOptions
+    public function toTargetingOptions(): Selector
     {
-        $items = array_map(
-            function (TaxonomyItem $item) {
-                return $item->toTargetingOption();
+        $items = $this->toTargetingOptionArray();
+
+        return new Selector(...$items);
+    }
+
+    private function toTargetingOptionArray(): array
+    {
+        return array_map(
+            function (Item $item) {
+                return $item->toSelectorOption();
             },
             $this->toArray()
         );
-
-        return new TargetingOptions(...$items);
     }
+
 }

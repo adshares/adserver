@@ -20,14 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Common\Application\Dto\Selector;
 
+use Adshares\Common\Application\Dto\Selector;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
 use function is_bool;
 
-final class TargetingOption
+final class Option
 {
     public const TYPE_STRING = 'string';
     public const TYPE_NUMBER = 'number';
@@ -41,9 +42,9 @@ final class TargetingOption
     private $label;
     /** @var bool */
     private $allowInput;
-    /** @var TargetingOptions */
+    /** @var Selector */
     private $children;
-    /** @var TargetingOptionValue[] */
+    /** @var OptionValue[] */
     private $values;
 
     public function __construct(
@@ -51,8 +52,8 @@ final class TargetingOption
         string $key,
         string $label,
         ?bool $allowInput,
-        TargetingOptions $children,
-        TargetingOptionValue ...$values
+        Selector $children,
+        OptionValue ...$values
     ) {
         if (($type ?? false) && !in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $type");
@@ -68,7 +69,7 @@ final class TargetingOption
     public static function fromArray(array $item): self
     {
         $values = array_map(function (array $value) {
-            return TargetingOptionValue::fromArray($value);
+            return OptionValue::fromArray($value);
         }, $item['values'] ?? []);
 
         return new self(
@@ -76,7 +77,7 @@ final class TargetingOption
             $item['key'],
             $item['label'],
             $item['allow_input'] ?? null,
-            TargetingOptions::fromArray($item['children'] ?? []),
+            Selector::fromArray($item['children'] ?? []),
             ...$values
         );
     }
@@ -88,8 +89,10 @@ final class TargetingOption
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursive(),
-            'values' => array_map(function (TargetingOptionValue $option) {
+            'children' => array_map(function (Option $option) {
+                return $option->toArrayRecursive();
+            }, $this->children->toArray()),
+            'values' => array_map(function (OptionValue $option) {
                 return $option->toArray();
             }, $this->values),
         ], function ($item) {

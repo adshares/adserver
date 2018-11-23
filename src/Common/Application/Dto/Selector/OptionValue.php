@@ -20,23 +20,33 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Common\Application\Dto\Selector;
 
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Taxonomy;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\TaxonomyFactory;
-use Adshares\Common\Domain\Service\AdUserClient;
-use function base_path;
-use function file_get_contents;
-use function json_decode;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class DummyAdUserClient implements AdUserClient
+final class OptionValue implements Arrayable
 {
-    public function fetchTaxonomy(): Taxonomy
-    {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
 
-        return TaxonomyFactory::fromArray($taxonomy);
+    public function __construct(string $label, string $value)
+    {
+        $this->label = $label;
+        $this->value = $value;
+    }
+
+    public static function fromArray(array $input): self
+    {
+        return new self($input['label'], $input['value']);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

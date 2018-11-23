@@ -20,25 +20,31 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Adserver\ViewModel;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptionValue;
+use Adshares\Common\Application\Dto\Selector;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class Value
+final class OptionsSelector implements Arrayable
 {
-    /** @var string */
-    private $key;
-    /** @var string */
-    private $label;
 
-    public function __construct(string $key, string $label)
+    /** @var Selector */
+    private $options;
+
+    public function __construct(Selector $options)
     {
-        $this->key = $key;
-        $this->label = $label;
+        $this->options = $options;
     }
 
-    public function toTargetingOptionValue(): TargetingOptionValue
+    public function toArray(): array
     {
-        return new TargetingOptionValue($this->label, $this->key);
+        return $this->toArrayRecursive();
+    }
+
+    private function toArrayRecursive(): array
+    {
+        return array_map(function (Selector\Option $option) {
+            return $option->toArrayRecursive();
+        }, $this->options->toArray());
     }
 }
