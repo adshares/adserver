@@ -51,7 +51,7 @@ final class Option
         ?string $type,
         string $key,
         string $label,
-        ?bool $allowInput
+        bool $allowInput
     ) {
         if (($type ?? false) && !in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $type");

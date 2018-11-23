@@ -89,7 +89,6 @@ final class Item
             $this->key,
             $this->label,
             false
-
         ))->withValues(...$values);
     }
 
@@ -111,7 +110,6 @@ final class Item
             $this->key,
             $this->label,
             false
-
         ))->withValues(...$values);
     }
 
