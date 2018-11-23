@@ -66,13 +66,16 @@ final class Item
             return $this->fromBoolean();
         }
 
-        if ($this->type->is(Type::TYPE_INPUT)) {
-            return $this->fromInput();
-        }
-
         if ($this->type->is(Type::TYPE_NUMBER)) {
             return $this->fromNumber();
         }
+
+        return new Selector\Option(
+            Selector\Option::TYPE_STRING,
+            $this->key,
+            $this->label,
+            true
+        );
     }
 
     private function fromDictionary(): Selector\Option
@@ -81,42 +84,35 @@ final class Item
             return $listItemValue->toOptionValue();
         }, $this->list);
 
-        return new Selector\Option(
+        return (new Selector\Option(
             Selector\Option::TYPE_STRING,
             $this->key,
             $this->label,
-            false,
-            new Selector(),
-            ...$values
-        );
+            false
+
+        ))->withValues(...$values);
     }
 
     private function fromBoolean(): Selector\Option
     {
-        $defaultBooleanValues = [
-            new OptionValue('Yes', 'true'),
-            new OptionValue('No', 'false'),
-        ];
+        $values = array_map(function (ListItemValue $listItemValue) {
+            return $listItemValue->toOptionValue();
+        }, $this->list);
 
-        return new Selector\Option(
+        if (empty($values)) {
+            $values = [
+                new OptionValue('Yes', 'true'),
+                new OptionValue('No', 'false'),
+            ];
+        }
+
+        return (new Selector\Option(
             Selector\Option::TYPE_BOOLEAN,
             $this->key,
             $this->label,
-            false,
-            new Selector(),
-            ...$defaultBooleanValues
-        );
-    }
+            false
 
-    private function fromInput(): Selector\Option
-    {
-        return new Selector\Option(
-            Selector\Option::TYPE_STRING,
-            $this->key,
-            $this->label,
-            true,
-            new Selector()
-        );
+        ))->withValues(...$values);
     }
 
     private function fromNumber(): Selector\Option
@@ -125,8 +121,7 @@ final class Item
             Type::TYPE_NUMBER,
             $this->key,
             $this->label,
-            false,
-            new Selector()
+            false
         );
     }
 }

@@ -45,15 +45,13 @@ final class Option
     /** @var Selector */
     private $children;
     /** @var OptionValue[] */
-    private $values;
+    private $values = [];
 
     public function __construct(
         ?string $type,
         string $key,
         string $label,
-        ?bool $allowInput,
-        Selector $children,
-        OptionValue ...$values
+        ?bool $allowInput
     ) {
         if (($type ?? false) && !in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $type");
@@ -62,8 +60,7 @@ final class Option
         $this->key = $key;
         $this->label = $label;
         $this->allowInput = $allowInput;
-        $this->children = $children;
-        $this->values = $values;
+        $this->children = new Selector();
     }
 
     public static function fromArray(array $item): self
@@ -72,14 +69,28 @@ final class Option
             return OptionValue::fromArray($value);
         }, $item['values'] ?? []);
 
-        return new self(
+        return (new self(
             $item['value_type'] ?? null,
             $item['key'],
             $item['label'],
-            $item['allow_input'] ?? null,
-            Selector::fromArray($item['children'] ?? []),
-            ...$values
-        );
+            $item['allow_input'] ?? null
+        ))
+            ->withChildren(Selector::fromArray($item['children'] ?? []))
+            ->withValues(...$values);
+    }
+
+    public function withValues(OptionValue ...$values)
+    {
+        $this->values = $values;
+
+        return $this;
+    }
+
+    public function withChildren(Selector $children): self
+    {
+        $this->children = $children;
+
+        return $this;
     }
 
     public function toArrayRecursive(): array
