@@ -40,8 +40,7 @@ class AdSelectInventoryExporterCommand extends Command
     public function __construct(
         AdSelectInventoryExporter $inventoryExporterService,
         NetworkCampaignRepository $campaignRepository
-    )
-    {
+    ) {
         $this->inventoryExporterService = $inventoryExporterService;
         $this->campaignRepository = $campaignRepository;
 
