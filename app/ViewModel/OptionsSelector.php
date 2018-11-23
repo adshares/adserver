@@ -38,11 +38,6 @@ final class OptionsSelector implements Arrayable
 
     public function toArray(): array
     {
-        return $this->toArrayRecursive();
-    }
-
-    private function toArrayRecursive(): array
-    {
         return array_map(function (Selector\Option $option) {
             return $option->toArrayRecursive();
         }, $this->options->toArray());
