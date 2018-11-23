@@ -17,11 +17,14 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
+use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\Service\AdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class CampaignOptionsTest extends TestCase
@@ -31,6 +34,7 @@ class CampaignOptionsTest extends TestCase
 
     public function testTargeting(): void
     {
+
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI.'/targeting');
@@ -57,12 +61,21 @@ class CampaignOptionsTest extends TestCase
                 self::assertFalse($item['valueType'] ?? false);
                 self::assertFalse($item['allowInput'] ?? false);
             } else {
-                self::assertInternalType('array', $item['values']);
+                self::assertInternalType('array', $item['values'] ?? []);
                 self::assertInternalType('string', $item['valueType']);
                 self::assertInternalType('bool', $item['allowInput']);
             }
             self::assertInternalType('string', $item['key']);
             self::assertInternalType('string', $item['label']);
         }
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->bind(AdUserClient::class, function () {
+            return new DummyAdUserClient();
+        });
     }
 }

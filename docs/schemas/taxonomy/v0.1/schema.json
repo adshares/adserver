@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "$id": "urn:x-adshares:taxonomy:0.1",
+  "$id": "urn:x-adshares:taxonomy",
   "type": "object",
   "definitions": {
     "semanticVersion": {
@@ -120,28 +120,6 @@
           "type": "number"
         }
       }
-    },
-    "list": {
-      "$id": "#list",
-      "type": "object",
-      "required": [
-        "key",
-        "type"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "label": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string",
-          "enum": [
-            "list"
-          ]
-        }
-      }
     }
   },
   "required": [
@@ -167,9 +145,6 @@
           },
           {
             "$ref": "#num"
-          },
-          {
-            "$ref": "#list"
           }
         ]
       }
