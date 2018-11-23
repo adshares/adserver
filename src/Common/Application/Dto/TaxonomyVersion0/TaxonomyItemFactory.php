@@ -18,26 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Client;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\Model\Banner;
-use Adshares\Supply\Domain\Service\AdSelectClient;
-use Adshares\Supply\Domain\Model\Campaign;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-class DummyAdSelectClient implements AdSelectClient
+final class TaxonomyItemFactory
 {
-    public function exportInventory(Campaign $campaign): void
+    public static function fromAdUser(array $item): TaxonomyItem
     {
-        //AdSelectDTO
-        $banners = [];
-
-        /** @var Banner $banner */
-        foreach ($campaign->getBanners() as $banner) {
-            $banners[] = [
-                'banner_id' => $banner->getId(),
-
-            ];
-        }
-
+        return new TaxonomyItem(
+            Type::fromAdUser($item['type']),
+            $item['key'],
+            $item['label'],
+            ...array_map(function (array $datum) {
+                return new Value($datum['key'], $datum['label']);
+            }, $item['data'] ?? [])
+        );
     }
 }

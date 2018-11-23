@@ -27,4 +27,5 @@ use Doctrine\Common\Collections\ArrayCollection as DoctrineArrayCollection;
 
 class ArrayCollection extends DoctrineArrayCollection implements Collection
 {
+
 }

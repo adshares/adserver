@@ -59,7 +59,7 @@ class WalletController extends Controller
         Validator::make(
             $request->all(),
             [
-                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+                self::FIELD_AMOUNT => ['integer', 'min:1'],
                 self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
             ]
         )->validate();
@@ -69,6 +69,13 @@ class WalletController extends Controller
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
             return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (null === $amount) {
+            //calculate max available amount
+            $userId = Auth::user()->id;
+            $balance = UserLedgerEntry::getBalanceByUserId($userId);
+            $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
@@ -128,6 +135,7 @@ class WalletController extends Controller
         $ul->address_from = $addressFrom;
         $ul->address_to = $addressTo;
         $ul->status = UserLedgerEntry::STATUS_PENDING;
+        $ul->type = UserLedgerEntry::TYPE_WITHDRAWAL;
         $result = $ul->save();
 
         if ($result) {
@@ -190,7 +198,9 @@ class WalletController extends Controller
             }
 
             $resp[] = [
-                'status' => $amount,
+                'amount' => $amount,
+                'status' => $ledgerItem->status,
+                'type' => $ledgerItem->type,
                 'date' => $date,
                 'address' => $address,
                 'link' => $link,

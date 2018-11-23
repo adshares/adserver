@@ -93,7 +93,7 @@ final class InventoryImporterTest extends TestCase
     public function testImportWhenMarkedCampaignsServiceThrowsAnException()
     {
         $inMemoryDemandClient = new DummyDemandClient();
-        $campaigns = new CampaignCollection($inMemoryDemandClient->campaigns);
+        $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
 
         $repository = $this->repositoryMock();
         $repository
@@ -129,7 +129,7 @@ final class InventoryImporterTest extends TestCase
     public function testImportWhenActivateIsSuccessful()
     {
         $inMemoryDemandClient = new DummyDemandClient();
-        $campaigns = new CampaignCollection($inMemoryDemandClient->campaigns);
+        $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
 
         $repository = $this->repositoryMock();
         $repository

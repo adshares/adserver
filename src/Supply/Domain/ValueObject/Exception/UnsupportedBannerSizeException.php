@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Adshares\Supply\Domain\ValueObject;
+namespace Adshares\Supply\Domain\ValueObject\Exception;
 
 use RuntimeException;
 

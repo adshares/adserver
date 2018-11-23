@@ -129,6 +129,11 @@ final class Campaign
         return (string)$this->id;
     }
 
+    public function getUserId(): int
+    {
+        return $this->userId;
+    }
+
     public function getDemandCampaignId(): string
     {
         return (string)$this->demandCampaignId;

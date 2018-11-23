@@ -20,14 +20,37 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\TargetingOptions;
+use function array_map;
 
-class CampaignCollection extends ArrayCollection
+final class Taxonomy extends ArrayCollection
 {
-    public function __construct(Campaign ...$campaigns)
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
+
+    public function __construct(Schema $schema, SemVer $version, TaxonomyItem...$items)
     {
-        parent::__construct($campaigns);
+        $this->schema = $schema;
+        $this->version = $version;
+
+        parent::__construct($items);
+    }
+
+    public function toTargetingOptions(): TargetingOptions
+    {
+        $items = array_map(
+            function (TaxonomyItem $item) {
+                return $item->toTargetingOption();
+            },
+            $this->toArray()
+        );
+
+        return new TargetingOptions(...$items);
     }
 }

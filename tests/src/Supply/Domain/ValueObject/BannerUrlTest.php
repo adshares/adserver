@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\src\Supply\Domain\ValueObject;
+namespace Adshares\Test\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;

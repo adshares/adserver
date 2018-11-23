@@ -17,27 +17,31 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
 
-class CampaignOptionsController extends Controller
+final class TargetingOptions extends ArrayCollection
 {
-
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public function __construct(TargetingOption ...$items)
     {
-        $this->optionsRepository = $optionsRepository;
+        parent::__construct($items);
     }
 
-    public function targeting(): JsonResponse
+    public static function fromArray(array $input): self
     {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        return new self(...array_map(function (array $item) {
+            return TargetingOption::fromArray($item);
+        }, $input));
+    }
+
+    public function toArrayRecursive(): array
+    {
+        return array_map(function (TargetingOption $option) {
+            return $option->toArrayRecursive();
+        }, parent::toArray());
     }
 }

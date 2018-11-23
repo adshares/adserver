@@ -17,27 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Adserver\Providers;
 
-use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Client\DummyAdUserClient;
+use Adshares\Adserver\Repository\DummyOptionsRepository;
+use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 
-class CampaignOptionsController extends Controller
+class TaxonomyImporterProvider extends ServiceProvider
 {
-
-    /** @var OptionsRepository */
-    private $optionsRepository;
-
-    public function __construct(OptionsRepository $optionsRepository)
+    public function register(): void
     {
-        $this->optionsRepository = $optionsRepository;
-    }
+        $this->app->bind(AdUserClient::class, function () {
+            return new DummyAdUserClient();
+        });
 
-    public function targeting(): JsonResponse
-    {
-        return self::json($this->optionsRepository->fetchTargetingOptions()->toArrayRecursive());
+        $this->app->bind(OptionsRepository::class, function (Application $app) {
+            return new DummyOptionsRepository($app->make(AdUserClient::class));
+        });
     }
 }

@@ -29,7 +29,7 @@ use Illuminate\Support\ServiceProvider;
 
 class InventoryImporterProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         $this->app->bind(InventoryImporter::class, function () {
             $campaignRepository = new NetworkCampaignRepository();

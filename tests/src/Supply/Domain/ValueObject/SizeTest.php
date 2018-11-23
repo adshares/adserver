@@ -18,10 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\src\Supply\Domain\ValueObject;
+namespace Adshares\Test\Supply\Domain\ValueObject;
 
+use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Adshares\Supply\Domain\ValueObject\UnsupportedBannerSizeException;
 use PHPUnit\Framework\TestCase;
 
 class SizeTest extends TestCase

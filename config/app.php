@@ -200,6 +200,7 @@ return [
         Adshares\Adserver\Providers\RouteServiceProvider::class,
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
         Adshares\Adserver\Providers\Supply\AdSelectInventoryExporterProvider::class,
+        Adshares\Adserver\Providers\TaxonomyImporterProvider::class,
     ],
 
     /*

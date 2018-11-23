@@ -20,8 +20,9 @@
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Adserver\Client\DummyAdSelectClient;
+use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 
 class AdSelectInventoryExporterProvider extends ServiceProvider
@@ -29,7 +30,13 @@ class AdSelectInventoryExporterProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(AdSelectInventoryExporter::class, function () {
-            return new AdSelectInventoryExporter(new DummyAdSelectClient());
+            $client = new Client([
+                'headers' => [ 'Content-Type' => 'application/json' ],
+                'base_uri' => 'http://dev.e11.click:8091',
+                'timeout'  => 5.0,
+            ]);
+
+            return new AdSelectInventoryExporter(new GuzzleAdSelectClient($client));
         });
     }
 }

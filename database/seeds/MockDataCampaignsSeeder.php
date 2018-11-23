@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkBanner;
@@ -285,7 +286,7 @@ class MockDataCampaignsSeeder extends Seeder
     private function createNetworkCampaign($cr, $campaign): NetworkCampaign
     {
         $campaign = new NetworkCampaign();
-        $campaign->uuid = uniqid() . '1';
+        $campaign->uuid = Uuid::v4();
         $campaign->demand_campaign_id = $campaign->uuid;
         $campaign->landing_url = $cr->url;
         $campaign->max_cpm = $cr->max_cpm;
