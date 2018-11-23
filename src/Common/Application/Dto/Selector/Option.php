@@ -63,22 +63,6 @@ final class Option
         $this->children = new Selector();
     }
 
-    public static function fromArray(array $item): self
-    {
-        $values = array_map(function (array $value) {
-            return OptionValue::fromArray($value);
-        }, $item['values'] ?? []);
-
-        return (new self(
-            $item['value_type'] ?? null,
-            $item['key'],
-            $item['label'],
-            $item['allow_input'] ?? null
-        ))
-            ->withChildren(Selector::fromArray($item['children'] ?? []))
-            ->withValues(...$values);
-    }
-
     public function withValues(OptionValue ...$values)
     {
         $this->values = $values;
@@ -100,9 +84,7 @@ final class Option
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => array_map(function (Option $option) {
-                return $option->toArrayRecursive();
-            }, $this->children->toArray()),
+            'children' => $this->children->toArrayRecursive(),
             'values' => array_map(function (OptionValue $option) {
                 return $option->toArray();
             }, $this->values),

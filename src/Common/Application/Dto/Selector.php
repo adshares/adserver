@@ -31,10 +31,10 @@ final class Selector extends ArrayCollection
         parent::__construct($items);
     }
 
-    public static function fromArray(array $input): self
+    public function toArrayRecursive(): array
     {
-        return new self(...array_map(function (array $item) {
-            return Selector\Option::fromArray($item);
-        }, $input));
+        return array_map(function (Selector\Option $option) {
+            return $option->toArrayRecursive();
+        }, $this->toArray());
     }
 }
