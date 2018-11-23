@@ -47,7 +47,7 @@ class GuzzleAdSelectClient implements AdSelectClient
     public function exportInventory(Campaign $campaign): void
     {
         try {
-            $body = json_encode($this->prepareDataFromAdSelect($campaign));
+            $body = json_encode($this->prepareDataForAdSelect($campaign));
         } catch (InvalidArgumentException $exception) {
             throw new RuntimeException('Invalid data format.');
         }
@@ -74,7 +74,7 @@ class GuzzleAdSelectClient implements AdSelectClient
         }
     }
 
-    private function prepareDataFromAdSelect(Campaign $campaign): array
+    private function prepareDataForAdSelect(Campaign $campaign): array
     {
         $banners = [];
 

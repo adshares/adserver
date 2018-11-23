@@ -32,7 +32,7 @@ class AdSelectInventoryExporterProvider extends ServiceProvider
         $this->app->bind(AdSelectInventoryExporter::class, function () {
             $client = new Client([
                 'headers' => [ 'Content-Type' => 'application/json' ],
-                'base_uri' => 'http://dev.e11.click:8091',
+                'base_uri' => config('app.adselect_endpoint'),
                 'timeout'  => 5.0,
             ]);
 
