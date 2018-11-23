@@ -42,7 +42,7 @@ final class Taxonomy extends ArrayCollection
         parent::__construct($items);
     }
 
-    public function toTargetingOptions(): Selector
+    public function toSelector(): Selector
     {
         $items = $this->toTargetingOptionArray();
 

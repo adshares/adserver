@@ -50,14 +50,14 @@ final class DummyOptionsRepository implements OptionsRepository
     {
         $taxonomy = $this->adUser->fetchTaxonomy();
 
-        return $taxonomy->toTargetingOptions();
+        return $taxonomy->toSelector();
     }
 
     public function fetchFilteringOptions(): Selector
     {
         $taxonomy = $this->adClassify->fetchTaxonomy();
 
-        return $taxonomy->toTargetingOptions();
+        return $taxonomy->toSelector();
     }
 
     public function storeFilteringOptions(Selector $options): void

@@ -18,18 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\Service\FilteringOptionsImporter;
+use Illuminate\Console\Command;
 
-class UpdateTaxonomyTest extends TestCase
+class UpdateFilteringOptions extends Command
 {
-    public function testUpdate(): void
+    protected $signature = 'ops:filtering-options:update';
+
+    public function handle(FilteringOptionsImporter $service): void
     {
-        $this->markTestIncomplete(
-            'Method storeTargetingOptions() not implemented.'
-        );
-        $this->artisan('ops:taxonomy:update')
-            ->assertExitCode(0);
+        $service->import();
     }
 }

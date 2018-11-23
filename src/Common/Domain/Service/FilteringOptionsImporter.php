@@ -17,28 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel;
+namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Application\Dto\Selector;
-use Illuminate\Contracts\Support\Arrayable;
-
-final class OptionsSelector implements Arrayable
+class FilteringOptionsImporter
 {
-    /** @var Selector */
-    private $options;
+    /** @var AdClassifyClient */
+    private $client;
+    /** @var OptionsRepository */
+    private $repository;
 
-    public function __construct(Selector $options)
+    public function __construct(AdClassifyClient $client, OptionsRepository $repository)
     {
-        $this->options = $options;
+        $this->client = $client;
+        $this->repository = $repository;
     }
 
-    public function toArray(): array
+    public function import(): void
     {
-        return array_map(function (Selector\Option $option) {
-            return $option->toArrayRecursive();
-        }, $this->options->toArray());
+        $taxonomy = $this->client->fetchTaxonomy();
+
+        $options = $taxonomy->toSelector();
+
+        $this->repository->storeFilteringOptions($options);
     }
 }

@@ -38,7 +38,7 @@ class TargetingOptionsImporter
     {
         $taxonomy = $this->client->fetchTaxonomy();
 
-        $options = $taxonomy->toTargetingOptions();
+        $options = $taxonomy->toSelector();
 
         $this->repository->storeTargetingOptions($options);
     }
