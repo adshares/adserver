@@ -20,21 +20,31 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto;
+namespace Adshares\Adserver\ViewModel;
 
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class Selector extends ArrayCollection
+final class Selector extends ArrayCollection implements Arrayable
 {
     public function __construct(Selector\Option ...$items)
     {
         parent::__construct($items);
     }
 
-    public function toArrayRecursive(): array
+    public function toArray(): array
     {
         return array_map(function (Selector\Option $option) {
-            return $option->toArrayRecursive();
-        }, $this->toArray());
+            return $option->toArrayRecursiveWithoutEmptyFields();
+        }, parent::toArray());
+    }
+
+    public static function fromTaxonomy(Taxonomy $taxonomy): Selector
+    {
+        return new Selector(...array_map(function (Item $item) {
+            return $item->toSelectorOption();
+        }, $taxonomy->toArray()));
     }
 }

@@ -22,7 +22,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Domain\Service\OptionsRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
@@ -40,14 +39,14 @@ class OptionsController extends Controller
     {
         $options = $this->optionsRepository->fetchTargetingOptions();
 
-        return self::json(new OptionsSelector($options));
+        return self::json($options);
     }
 
     public function filtering(): JsonResponse
     {
         $options = $this->optionsRepository->fetchFilteringOptions();
 
-        return self::json(new OptionsSelector($options));
+        return self::json($options);
     }
 
     public function languages(): JsonResponse

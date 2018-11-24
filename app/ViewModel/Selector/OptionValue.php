@@ -20,25 +20,28 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel;
+namespace Adshares\Adserver\ViewModel\Selector;
 
-use Adshares\Common\Application\Dto\Selector;
 use Illuminate\Contracts\Support\Arrayable;
 
-final class OptionsSelector implements Arrayable
+final class OptionValue implements Arrayable
 {
-    /** @var Selector */
-    private $options;
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
 
-    public function __construct(Selector $options)
+    public function __construct(string $label, string $value)
     {
-        $this->options = $options;
+        $this->label = $label;
+        $this->value = $value;
     }
 
     public function toArray(): array
     {
-        return array_map(function (Selector\Option $option) {
-            return $option->toArrayRecursive();
-        }, $this->options->toArray());
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

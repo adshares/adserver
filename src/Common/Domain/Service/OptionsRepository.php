@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Application\Dto\Selector;
+use Adshares\Adserver\ViewModel\Selector;
 
 interface OptionsRepository
 {

@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\Taxonomy;
 
-use Adshares\Common\Application\Dto\Selector;
-use Adshares\Common\Application\Dto\Selector\OptionValue;
+use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Adserver\ViewModel\Selector\OptionValue;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
 use InvalidArgumentException;
@@ -53,22 +53,27 @@ final class Item
 
     private function validateList(Value ...$list): void
     {
-        if (empty($list) && $this->type->is(Type::TYPE_DICTIONARY)) {
+        if (empty($list) && $this->ofType(Type::TYPE_DICTIONARY)) {
             throw new InvalidArgumentException('Dictionary type needs predefined values. None given.');
         }
     }
 
+    public function ofType(string $type): bool
+    {
+        return $this->type->is($type);
+    }
+
     public function toSelectorOption(): Selector\Option
     {
-        if ($this->type->is(Type::TYPE_DICTIONARY)) {
+        if ($this->ofType(Type::TYPE_DICTIONARY)) {
             return $this->fromDictionary();
         }
 
-        if ($this->type->is(Type::TYPE_BOOLEAN)) {
+        if ($this->ofType(Type::TYPE_BOOLEAN)) {
             return $this->fromBoolean();
         }
 
-        if ($this->type->is(Type::TYPE_NUMBER)) {
+        if ($this->ofType(Type::TYPE_NUMBER)) {
             return $this->fromNumber();
         }
 

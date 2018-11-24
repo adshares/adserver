@@ -20,15 +20,16 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\Selector;
+namespace Adshares\Adserver\ViewModel\Selector;
 
-use Adshares\Common\Application\Dto\Selector;
+use Adshares\Adserver\ViewModel\Selector;
+use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
 use function is_bool;
 
-final class Option
+final class Option implements Arrayable
 {
     public const TYPE_STRING = 'string';
     public const TYPE_NUMBER = 'number';
@@ -77,19 +78,29 @@ final class Option
         return $this;
     }
 
-    public function toArrayRecursive(): array
+    public function toArray(): array
     {
-        return array_filter([
+        return array_filter($this->toArrayRecursive(), function ($item) {
+            return !empty($item) || is_bool($item);
+        });
+    }
+
+    private function toArrayRecursive(): array
+    {
+        return [
             'value_type' => $this->type,
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursive(),
-            'values' => array_map(function (OptionValue $option) {
-                return $option->toArray();
-            }, $this->values),
-        ], function ($item) {
-            return !empty($item) || is_bool($item);
-        });
+            'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+            'values' => $this->valuesToArray(),
+        ];
+    }
+
+    private function valuesToArray(): array
+    {
+        return array_map(function (OptionValue $option) {
+            return $option->toArray();
+        }, $this->values);
     }
 }

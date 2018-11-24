@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
-use Adshares\Common\Application\Dto\Selector\OptionValue;
+use Adshares\Adserver\ViewModel\Selector;
 
 final class Value
 {
@@ -37,9 +37,8 @@ final class Value
         $this->label = $label;
     }
 
-    /** @deprecated */
-    public function toOptionValue(): OptionValue
+    public function toOptionValue(): Selector\OptionValue
     {
-        return new OptionValue($this->label, $this->value);
+        return new Selector\OptionValue($this->label, $this->value);
     }
 }

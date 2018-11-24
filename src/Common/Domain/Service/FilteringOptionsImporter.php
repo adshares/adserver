@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Service;
 
-use Adshares\Common\Application\Factory\SelectorFactory;
+use Adshares\Adserver\ViewModel\Selector;
 
 class FilteringOptionsImporter
 {
@@ -40,7 +40,7 @@ class FilteringOptionsImporter
     {
         $taxonomy = $this->client->fetchTaxonomy();
 
-        $options = SelectorFactory::fromTaxonomy($taxonomy);
+        $options = Selector::fromTaxonomy($taxonomy);
 
         $this->repository->storeFilteringOptions($options);
     }
