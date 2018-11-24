@@ -20,10 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\Taxonomy;
 
 use Adshares\Common\Application\Dto\Selector;
 use Adshares\Common\Application\Dto\Selector\OptionValue;
+use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
+use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
 use InvalidArgumentException;
 use function array_map;
 
@@ -35,10 +37,10 @@ final class Item
     private $key;
     /** @var string */
     private $label;
-    /** @var ItemValue[] */
+    /** @var Value[] */
     private $list;
 
-    public function __construct(Type $type, string $key, string $label, ItemValue ...$list)
+    public function __construct(Type $type, string $key, string $label, Value ...$list)
     {
         $this->type = $type;
         $this->key = $key;
@@ -49,7 +51,7 @@ final class Item
         $this->list = $list;
     }
 
-    private function validateList(ItemValue ...$list): void
+    private function validateList(Value ...$list): void
     {
         if (empty($list) && $this->type->is(Type::TYPE_DICTIONARY)) {
             throw new InvalidArgumentException('Dictionary type needs predefined values. None given.');
@@ -80,7 +82,7 @@ final class Item
 
     private function fromDictionary(): Selector\Option
     {
-        $values = array_map(function (ItemValue $listItemValue) {
+        $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
         }, $this->list);
 
@@ -94,7 +96,7 @@ final class Item
 
     private function fromBoolean(): Selector\Option
     {
-        $values = array_map(function (ItemValue $listItemValue) {
+        $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
         }, $this->list);
 

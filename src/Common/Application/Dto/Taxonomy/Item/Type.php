@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
 use InvalidArgumentException;
 use function in_array;

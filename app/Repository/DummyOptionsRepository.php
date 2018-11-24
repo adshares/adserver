@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Common\Application\Dto\Selector;
+use Adshares\Common\Application\Factory\SelectorFactory;
 use Adshares\Common\Domain\Service\AdClassifyClient;
 use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
@@ -50,14 +51,14 @@ final class DummyOptionsRepository implements OptionsRepository
     {
         $taxonomy = $this->adUser->fetchTaxonomy();
 
-        return $taxonomy->toSelector();
+        return SelectorFactory::fromTaxonomy($taxonomy);
     }
 
     public function fetchFilteringOptions(): Selector
     {
         $taxonomy = $this->adClassify->fetchTaxonomy();
 
-        return $taxonomy->toSelector();
+        return SelectorFactory::fromTaxonomy($taxonomy);
     }
 
     public function storeFilteringOptions(Selector $options): void

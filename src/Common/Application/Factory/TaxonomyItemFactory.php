@@ -22,9 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Item;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\ItemValue;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Type;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
+use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
 
 final class TaxonomyItemFactory
 {
@@ -52,13 +52,13 @@ final class TaxonomyItemFactory
         }, $value);
     }
 
-    private static function fromValue(array $value): ItemValue
+    private static function fromValue(array $value): Value
     {
         if (!isset($value['value']) && isset($value['key'])) {
             $value['value'] = $value['key'];
             unset($value['key']);
         }
 
-        return new ItemValue($value['value'], $value['label']);
+        return new Value($value['value'], $value['label']);
     }
 }

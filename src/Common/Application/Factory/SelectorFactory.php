@@ -5,21 +5,19 @@ namespace Adshares\Common\Application\Factory;
 
 use Adshares\Common\Application\Dto\Selector;
 use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Item;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
 
 final class SelectorFactory
 {
-    private $taxonomy;
 
-    public function __construct(Taxonomy $taxonomy)
+    private function __construct()
     {
-        $this->taxonomy = $taxonomy;
     }
 
-    public function toSelector(): Selector
+    public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
         return new Selector(...array_map(function (Item $item) {
             return $item->toSelectorOption();
-        }, $this->taxonomy->toArray()));
+        }, $taxonomy->toArray()));
     }
 }

@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Item;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
 use Adshares\Common\Application\Factory\SelectorFactory;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\SemVer;
@@ -45,6 +45,6 @@ final class Taxonomy extends ArrayCollection
 
     public function toSelector(): Selector
     {
-        return (new SelectorFactory($this))->toSelector();
+        return SelectorFactory::fromTaxonomy($this);
     }
 }
