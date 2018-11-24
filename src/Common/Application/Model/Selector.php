@@ -20,19 +20,20 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\ViewModel;
+namespace Adshares\Common\Application\Model;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Dto\Taxonomy\Item;
-use Adshares\Common\Application\ViewModel\Selector\Option;
-use Adshares\Common\Domain\Adapter\ArrayCollection;
-use Illuminate\Contracts\Support\Arrayable;
+use Adshares\Common\Application\Model\Selector\Option;
 
-final class Selector extends ArrayCollection implements Arrayable
+final class Selector
 {
+    /** @var Option[] */
+    private $items;
+
     public function __construct(Option ...$items)
     {
-        parent::__construct($items);
+        $this->items = $items;
     }
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
@@ -42,10 +43,10 @@ final class Selector extends ArrayCollection implements Arrayable
         }, $taxonomy->toArray()));
     }
 
-    public function toArray(): array
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
         return array_map(function (Option $option) {
-            return $option->toArray();
-        }, parent::toArray());
+            return $option->toArrayRecursiveWithoutEmptyFields();
+        }, $this->items);
     }
 }

@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
-use Adshares\Common\Application\ViewModel\Selector\OptionValue;
+use Adshares\Common\Application\Model\Selector\OptionValue;
 
 final class Value
 {

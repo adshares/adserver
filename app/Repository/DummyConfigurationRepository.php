@@ -20,12 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Infrastructure\Repository;
+namespace Adshares\Adserver\Repository;
 
+use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\AdClassifyClient;
 use Adshares\Common\Application\Service\AdUserClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Application\ViewModel\Selector;
 use Exception;
 
 final class DummyConfigurationRepository implements ConfigurationRepository

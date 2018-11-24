@@ -20,16 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\ViewModel\Selector;
+namespace Adshares\Common\Application\Model\Selector;
 
-use Adshares\Common\Application\ViewModel\Selector;
-use Illuminate\Contracts\Support\Arrayable;
+use Adshares\Common\Application\Model\Selector;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
 use function is_bool;
 
-final class Option implements Arrayable
+final class Option
 {
     public const TYPE_STRING = 'string';
     public const TYPE_NUMBER = 'number';
@@ -78,23 +77,18 @@ final class Option implements Arrayable
         return $this;
     }
 
-    public function toArray(): array
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        return array_filter($this->toArrayRecursive(), function ($item) {
-            return !empty($item) || is_bool($item);
-        });
-    }
-
-    private function toArrayRecursive(): array
-    {
-        return [
+        return array_filter([
             'value_type' => $this->type,
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArray(),
+            'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
             'values' => $this->valuesToArray(),
-        ];
+        ], function ($item) {
+            return !empty($item) || is_bool($item);
+        });
     }
 
     private function valuesToArray(): array

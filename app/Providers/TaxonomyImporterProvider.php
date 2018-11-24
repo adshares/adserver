@@ -24,10 +24,10 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Repository\DummyConfigurationRepository;
 use Adshares\Common\Application\Service\AdClassifyClient;
 use Adshares\Common\Application\Service\AdUserClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Infrastructure\Repository\DummyConfigurationRepository;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;

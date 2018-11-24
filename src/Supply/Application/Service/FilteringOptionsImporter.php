@@ -21,9 +21,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\AdClassifyClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Application\ViewModel\Selector;
 
 class FilteringOptionsImporter
 {

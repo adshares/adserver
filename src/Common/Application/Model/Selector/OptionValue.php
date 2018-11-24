@@ -20,11 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\ViewModel\Selector;
+namespace Adshares\Common\Application\Model\Selector;
 
-use Illuminate\Contracts\Support\Arrayable;
-
-final class OptionValue implements Arrayable
+final class OptionValue
 {
     /** @var string */
     private $label;

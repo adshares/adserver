@@ -24,8 +24,8 @@ namespace Adshares\Common\Application\Dto\Taxonomy;
 
 use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
-use Adshares\Common\Application\ViewModel\Selector\Option;
-use Adshares\Common\Application\ViewModel\Selector\OptionValue;
+use Adshares\Common\Application\Model\Selector\Option;
+use Adshares\Common\Application\Model\Selector\OptionValue;
 use InvalidArgumentException;
 use function array_map;
 
