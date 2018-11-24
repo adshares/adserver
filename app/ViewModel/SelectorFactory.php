@@ -9,5 +9,4 @@ final class SelectorFactory
     private function __construct()
     {
     }
-
 }
