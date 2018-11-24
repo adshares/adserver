@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/schema#",
-  "$id": "urn:x-adshares:taxonomy",
+  "$id": "urn:x-adshares:taxonomy#",
   "type": "object",
   "definitions": {
     "semanticVersion": {
@@ -56,7 +56,7 @@
           "items": {
             "type": "object",
             "required": [
-              "key"
+              "value"
             ],
             "properties": {
               "value": {

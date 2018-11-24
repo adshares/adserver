@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Taxonomy;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\TaxonomyFactory;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Domain\Service\AdUserClient;
 use GuzzleHttp\Client;
 use function GuzzleHttp\json_decode;

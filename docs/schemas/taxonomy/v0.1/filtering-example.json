@@ -1,5 +1,5 @@
 {
-  "$schema": "urn:x-adshares:taxonomy",
+  "$schema": "urn:x-adshares:taxonomy#",
   "version": "0.0.0",
   "data": [
     {

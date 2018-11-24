@@ -20,42 +20,27 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Factory;
 
-use Adshares\Common\Application\Dto\Selector;
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
-final class Taxonomy extends ArrayCollection
+final class TaxonomyFactory
 {
-    /** @var Schema */
-    private $schema;
-    /** @var SemVer */
-    private $version;
-
-    public function __construct(Schema $schema, SemVer $version, Item...$items)
+    public static function fromJson(string $json): Taxonomy
     {
-        $this->schema = $schema;
-        $this->version = $version;
-
-        parent::__construct($items);
+        return self::fromArray(json_decode($json, true));
     }
 
-    public function toSelector(): Selector
+    public static function fromArray(array $taxonomy): Taxonomy
     {
-        $items = $this->toTargetingOptionArray();
+        $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
+        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
+        $items = array_map(function (array $item) {
+            return TaxonomyItemFactory::fromArray($item);
+        }, $taxonomy['items'] ?? $taxonomy['data']);
 
-        return new Selector(...$items);
-    }
-
-    private function toTargetingOptionArray(): array
-    {
-        return array_map(
-            function (Item $item) {
-                return $item->toSelectorOption();
-            },
-            $this->toArray()
-        );
+        return new Taxonomy($schema, $version, ...$items);
     }
 }

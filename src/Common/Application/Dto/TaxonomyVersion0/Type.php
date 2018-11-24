@@ -68,6 +68,9 @@ final class Type
         }
     }
 
+    /**
+     * @deprecated Move to client side
+     */
     public static function map($value): self
     {
         return new self(self::MAP_TYPE[$value]);

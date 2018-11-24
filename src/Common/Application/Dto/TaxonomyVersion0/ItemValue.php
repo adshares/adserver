@@ -22,24 +22,23 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
 
-use Adshares\Common\Domain\ValueObject\SemVer;
-use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+use Adshares\Common\Application\Dto\Selector\OptionValue;
 
-final class TaxonomyFactory
+final class ItemValue
 {
-    public static function fromJson(string $json): Taxonomy
+    /** @var string */
+    private $value;
+    /** @var string */
+    private $label;
+
+    public function __construct(string $value, string $label)
     {
-        return self::fromArray(json_decode($json, true));
+        $this->value = $value;
+        $this->label = $label;
     }
 
-    public static function fromArray(array $taxonomy): Taxonomy
+    public function toOptionValue(): OptionValue
     {
-        $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
-        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
-        $items = array_map(function (array $item) {
-            return ItemFactory::fromArray($item);
-        }, $taxonomy['data']);
-
-        return new Taxonomy($schema, $version, ...$items);
+        return new OptionValue($this->label, $this->value);
     }
 }

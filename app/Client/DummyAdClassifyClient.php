@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Application\Dto\TaxonomyVersion0\Taxonomy;
-use Adshares\Common\Application\Dto\TaxonomyVersion0\TaxonomyFactory;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Domain\Service\AdClassifyClient;
 use function base_path;
 use function file_get_contents;

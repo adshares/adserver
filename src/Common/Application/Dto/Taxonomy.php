@@ -20,25 +20,32 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\Selector\OptionValue;
+use Adshares\Common\Application\Dto\TaxonomyVersion0\Item;
+use Adshares\Common\Application\Factory\SelectorFactory;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
-final class ListItemValue
+final class Taxonomy extends ArrayCollection
 {
-    /** @var string */
-    private $value;
-    /** @var string */
-    private $label;
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
 
-    public function __construct(string $value, string $label)
+    public function __construct(Schema $schema, SemVer $version, Item...$items)
     {
-        $this->value = $value;
-        $this->label = $label;
+        $this->schema = $schema;
+        $this->version = $version;
+
+        parent::__construct($items);
     }
 
-    public function toOptionValue(): OptionValue
+    public function toSelector(): Selector
     {
-        return new OptionValue($this->label, $this->value);
+        return (new SelectorFactory($this))->toSelector();
     }
+
 }

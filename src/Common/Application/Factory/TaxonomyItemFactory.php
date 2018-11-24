@@ -20,41 +20,46 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Factory;
 
-final class ItemFactory
+use Adshares\Common\Application\Dto\TaxonomyVersion0\Item;
+use Adshares\Common\Application\Dto\TaxonomyVersion0\ItemValue;
+use Adshares\Common\Application\Dto\TaxonomyVersion0\Type;
+
+final class TaxonomyItemFactory
 {
     public static function fromArray(array $item): Item
     {
-        if (!isset($item['list'])) {
-            if (isset($item['data'])) {
-                $item['list'] = $item['data'];
-                unset($item['data']);
-            } elseif (isset($item['values'])) {
-                $item['list'] = $item['values'];
-                unset($item['values']);
-            }
+        if (!isset($item['values']) && isset($item['data'])) {
+            $item['values'] = $item['data'];
+            unset($item['data']);
         }
 
-        $list = $item['list'] ?? [];
+        $values = $item['values'] ?? [];
 
         return new Item(
             Type::map($item['type']),
             $item['key'],
             $item['label'],
-            ...self::fromList($list)
+            ...self::fromValues($values)
         );
     }
 
-    private static function fromList(array $list): array
+    private static function fromValues(array $value): array
     {
         return array_map(function (array $listItem) {
-            if (!isset($listItem['value']) && isset($listItem['key'])) {
-                $listItem['value'] = $listItem['key'];
-                unset($listItem['key']);
-            }
-
-            return new ListItemValue($listItem['value'], $listItem['label']);
-        }, $list);
+            return self::fromValue($listItem);
+        }, $value);
     }
+
+    private static function fromValue(array $value): ItemValue
+    {
+        if (!isset($value['value']) && isset($value['key'])) {
+            $value['value'] = $value['key'];
+            unset($value['key']);
+        }
+
+        return new ItemValue($value['value'], $value['label']);
+    }
+
 }

@@ -35,10 +35,10 @@ final class Item
     private $key;
     /** @var string */
     private $label;
-    /** @var ListItemValue[] */
+    /** @var ItemValue[] */
     private $list;
 
-    public function __construct(Type $type, string $key, string $label, ListItemValue ...$list)
+    public function __construct(Type $type, string $key, string $label, ItemValue ...$list)
     {
         $this->type = $type;
         $this->key = $key;
@@ -49,7 +49,7 @@ final class Item
         $this->list = $list;
     }
 
-    private function validateList(ListItemValue ...$list): void
+    private function validateList(ItemValue ...$list): void
     {
         if (empty($list) && $this->type->is(Type::TYPE_DICTIONARY)) {
             throw new InvalidArgumentException('Dictionary type needs predefined values. None given.');
@@ -80,7 +80,7 @@ final class Item
 
     private function fromDictionary(): Selector\Option
     {
-        $values = array_map(function (ListItemValue $listItemValue) {
+        $values = array_map(function (ItemValue $listItemValue) {
             return $listItemValue->toOptionValue();
         }, $this->list);
 
@@ -94,7 +94,7 @@ final class Item
 
     private function fromBoolean(): Selector\Option
     {
-        $values = array_map(function (ListItemValue $listItemValue) {
+        $values = array_map(function (ItemValue $listItemValue) {
             return $listItemValue->toOptionValue();
         }, $this->list);
 
