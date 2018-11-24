@@ -37,7 +37,7 @@ final class Selector extends ArrayCollection implements Arrayable
     public function toArray(): array
     {
         return array_map(function (Selector\Option $option) {
-            return $option->toArrayRecursiveWithoutEmptyFields();
+            return $option->toArray();
         }, parent::toArray());
     }
 

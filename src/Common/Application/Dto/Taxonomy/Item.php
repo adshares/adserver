@@ -40,15 +40,15 @@ final class Item
     /** @var Value[] */
     private $list;
 
-    public function __construct(Type $type, string $key, string $label, Value ...$list)
+    public function __construct(Type $type, string $key, string $label, Value ...$values)
     {
         $this->type = $type;
         $this->key = $key;
         $this->label = $label;
 
-        $this->validateList(...$list);
+        $this->validateList(...$values);
 
-        $this->list = $list;
+        $this->list = $values;
     }
 
     private function validateList(Value ...$list): void

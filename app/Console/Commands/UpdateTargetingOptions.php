@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Common\Domain\Service\TargetingOptionsImporter;
+use Adshares\Demand\Application\Service\TargetingOptionsImporter;
 use Illuminate\Console\Command;
 
 class UpdateTargetingOptions extends Command

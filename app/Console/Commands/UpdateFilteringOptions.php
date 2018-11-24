@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Common\Domain\Service\FilteringOptionsImporter;
+use Adshares\Supply\Application\Service\FilteringOptionsImporter;
 use Illuminate\Console\Command;
 
 class UpdateFilteringOptions extends Command

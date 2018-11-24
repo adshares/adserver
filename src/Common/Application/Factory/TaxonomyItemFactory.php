@@ -41,18 +41,18 @@ final class TaxonomyItemFactory
             Type::map($item['type']),
             $item['key'],
             $item['label'],
-            ...self::fromValues($values)
+            ...self::mapValues($values)
         );
     }
 
-    private static function fromValues(array $value): array
+    private static function mapValues(array $values): array
     {
         return array_map(function (array $listItem) {
-            return self::fromValue($listItem);
-        }, $value);
+            return self::mapValue($listItem);
+        }, $values);
     }
 
-    private static function fromValue(array $value): Value
+    private static function mapValue(array $value): Value
     {
         if (!isset($value['value']) && isset($value['key'])) {
             $value['value'] = $value['key'];

@@ -19,18 +19,20 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Supply\Application\Service;
 
 use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Common\Domain\Service\AdClassifyClient;
+use Adshares\Common\Domain\Service\OptionsRepository;
 
-class TargetingOptionsImporter
+class FilteringOptionsImporter
 {
-    /** @var AdUserClient */
+    /** @var AdClassifyClient */
     private $client;
     /** @var OptionsRepository */
     private $repository;
 
-    public function __construct(AdUserClient $client, OptionsRepository $repository)
+    public function __construct(AdClassifyClient $client, OptionsRepository $repository)
     {
         $this->client = $client;
         $this->repository = $repository;
@@ -42,6 +44,6 @@ class TargetingOptionsImporter
 
         $options = Selector::fromTaxonomy($taxonomy);
 
-        $this->repository->storeTargetingOptions($options);
+        $this->repository->storeFilteringOptions($options);
     }
 }
