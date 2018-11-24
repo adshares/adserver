@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository\Common;
+namespace Adshares\Common\Infrastructure\Repository;
 
 use Adshares\Common\Application\Service\AdClassifyClient;
 use Adshares\Common\Application\Service\AdUserClient;
