@@ -30,15 +30,15 @@ final class TaxonomyItemFactory
 {
     /** @var string[] */
     public const MAP_TYPE = [
-        'num' => self::TYPE_NUMBER,
-        'number' => self::TYPE_NUMBER,
-        'bool' => self::TYPE_BOOLEAN,
-        'boolean' => self::TYPE_BOOLEAN,
-        'dict' => self::TYPE_DICTIONARY,
-        'list' => self::TYPE_DICTIONARY,
-        'input' => self::TYPE_INPUT,
-        'text' => self::TYPE_INPUT,
-        'string' => self::TYPE_INPUT,
+        'num' => Type::TYPE_NUMBER,
+        'number' => Type::TYPE_NUMBER,
+        'bool' => Type::TYPE_BOOLEAN,
+        'boolean' => Type::TYPE_BOOLEAN,
+        'dict' => Type::TYPE_DICTIONARY,
+        'list' => Type::TYPE_DICTIONARY,
+        'input' => Type::TYPE_INPUT,
+        'text' => Type::TYPE_INPUT,
+        'string' => Type::TYPE_INPUT,
     ];
 
     public static function fromArray(array $item): Item
