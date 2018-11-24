@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\ViewModel;
 
+use Adshares\Adserver\ViewModel\Selector\Option;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Dto\Taxonomy\Item;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
@@ -29,16 +30,9 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class Selector extends ArrayCollection implements Arrayable
 {
-    public function __construct(Selector\Option ...$items)
+    public function __construct(Option ...$items)
     {
         parent::__construct($items);
-    }
-
-    public function toArray(): array
-    {
-        return array_map(function (Selector\Option $option) {
-            return $option->toArray();
-        }, parent::toArray());
     }
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
@@ -46,5 +40,12 @@ final class Selector extends ArrayCollection implements Arrayable
         return new Selector(...array_map(function (Item $item) {
             return $item->toSelectorOption();
         }, $taxonomy->toArray()));
+    }
+
+    public function toArray(): array
+    {
+        return array_map(function (Option $option) {
+            return $option->toArray();
+        }, parent::toArray());
     }
 }
