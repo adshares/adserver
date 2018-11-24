@@ -20,11 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\ViewModel\Selector;
 
-interface OptionsRepository
+interface ConfigurationRepository
 {
     public function storeTargetingOptions(Selector $options);
 

@@ -19,11 +19,11 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 
-interface AdUserClient
+interface AdClassifyClient
 {
     public function fetchTaxonomy(): Taxonomy;
 }

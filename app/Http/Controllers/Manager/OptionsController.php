@@ -22,15 +22,15 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Common\Domain\Service\OptionsRepository;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class OptionsController extends Controller
 {
-    /** @var OptionsRepository */
+    /** @var ConfigurationRepository */
     private $optionsRepository;
 
-    public function __construct(OptionsRepository $optionsRepository)
+    public function __construct(ConfigurationRepository $optionsRepository)
     {
         $this->optionsRepository = $optionsRepository;
     }

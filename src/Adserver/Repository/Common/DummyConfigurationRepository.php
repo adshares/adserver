@@ -20,15 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository;
+namespace Adshares\Adserver\Repository\Common;
 
+use Adshares\Common\Application\Service\AdClassifyClient;
+use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\ViewModel\Selector;
-use Adshares\Common\Domain\Service\AdClassifyClient;
-use Adshares\Common\Domain\Service\AdUserClient;
-use Adshares\Common\Domain\Service\OptionsRepository;
 use Exception;
 
-final class DummyOptionsRepository implements OptionsRepository
+final class DummyConfigurationRepository implements ConfigurationRepository
 {
     /** @var AdUserClient */
     private $adUser;

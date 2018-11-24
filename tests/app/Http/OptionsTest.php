@@ -25,8 +25,8 @@ use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Domain\Service\AdClassifyClient;
-use Adshares\Common\Domain\Service\AdUserClient;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use Adshares\Common\Application\Service\AdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class OptionsTest extends TestCase

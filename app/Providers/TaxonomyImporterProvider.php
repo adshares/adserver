@@ -24,10 +24,10 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
-use Adshares\Adserver\Repository\DummyOptionsRepository;
-use Adshares\Common\Domain\Service\AdClassifyClient;
-use Adshares\Common\Domain\Service\AdUserClient;
-use Adshares\Common\Domain\Service\OptionsRepository;
+use Adshares\Adserver\Repository\Common\DummyConfigurationRepository;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -46,8 +46,8 @@ class TaxonomyImporterProvider extends ServiceProvider
             return new DummyAdClassifyClient();
         });
 
-        $this->app->bind(OptionsRepository::class, function (Application $app) {
-            return new DummyOptionsRepository(
+        $this->app->bind(ConfigurationRepository::class, function (Application $app) {
+            return new DummyConfigurationRepository(
                 $app->make(AdUserClient::class),
                 $app->make(AdClassifyClient::class)
             );

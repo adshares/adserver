@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Domain\Service\AdUserClient;
+use Adshares\Common\Application\Service\AdUserClient;
 use GuzzleHttp\Client;
 use function GuzzleHttp\json_decode;
 

@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Domain\Service\AdUserClient;
+use Adshares\Common\Application\Service\AdUserClient;
 use function base_path;
 use function file_get_contents;
 use function json_decode;

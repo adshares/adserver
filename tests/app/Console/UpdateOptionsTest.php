@@ -24,8 +24,8 @@ namespace Adshares\Adserver\Tests\Console;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Domain\Service\AdClassifyClient;
-use Adshares\Common\Domain\Service\AdUserClient;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use Adshares\Common\Application\Service\AdUserClient;
 
 class UpdateOptionsTest extends TestCase
 {
