@@ -7,7 +7,7 @@
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
- * or (at your Selector\Option) any later version.
+ * or (at your Option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\Taxonomy;
 
-use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Adserver\ViewModel\Selector\Option;
 use Adshares\Adserver\ViewModel\Selector\OptionValue;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
@@ -63,7 +63,7 @@ final class Item
         return $this->type->is($type);
     }
 
-    public function toSelectorOption(): Selector\Option
+    public function toSelectorOption(): Option
     {
         if ($this->ofType(Type::TYPE_DICTIONARY)) {
             return $this->fromDictionary();
@@ -77,29 +77,29 @@ final class Item
             return $this->fromNumber();
         }
 
-        return new Selector\Option(
-            Selector\Option::TYPE_STRING,
+        return new Option(
+            Option::TYPE_STRING,
             $this->key,
             $this->label,
             true
         );
     }
 
-    private function fromDictionary(): Selector\Option
+    private function fromDictionary(): Option
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
         }, $this->list);
 
-        return (new Selector\Option(
-            Selector\Option::TYPE_STRING,
+        return (new Option(
+            Option::TYPE_STRING,
             $this->key,
             $this->label,
             false
         ))->withValues(...$values);
     }
 
-    private function fromBoolean(): Selector\Option
+    private function fromBoolean(): Option
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
@@ -112,17 +112,17 @@ final class Item
             ];
         }
 
-        return (new Selector\Option(
-            Selector\Option::TYPE_BOOLEAN,
+        return (new Option(
+            Option::TYPE_BOOLEAN,
             $this->key,
             $this->label,
             false
         ))->withValues(...$values);
     }
 
-    private function fromNumber(): Selector\Option
+    private function fromNumber(): Option
     {
-        return new Selector\Option(
+        return new Option(
             Type::TYPE_NUMBER,
             $this->key,
             $this->label,
