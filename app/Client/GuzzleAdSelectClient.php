@@ -20,16 +20,16 @@
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Supply\Domain\Model\Banner;
-use Adshares\Supply\Domain\Service\AdSelectClient;
+use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Service\AdSelectClient;
 use Adshares\Supply\Domain\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use Illuminate\Http\Response;
 use InvalidArgumentException;
 use RuntimeException;
-use function GuzzleHttp\json_encode;
 use function GuzzleHttp\json_decode;
+use function GuzzleHttp\json_encode;
 
 class GuzzleAdSelectClient implements AdSelectClient
 {
@@ -47,7 +47,7 @@ class GuzzleAdSelectClient implements AdSelectClient
     public function exportInventory(Campaign $campaign): void
     {
         try {
-            $body = json_encode($this->prepareDataForAdSelect($campaign));
+            $body = json_encode(CampaignToAdSelectMapper::map($campaign));
         } catch (InvalidArgumentException $exception) {
             throw new RuntimeException('Invalid data format.');
         }
@@ -72,35 +72,5 @@ class GuzzleAdSelectClient implements AdSelectClient
         if (!isset($bodyDecoded['result']) || !$bodyDecoded['result']) {
             throw new RuntimeException('Campaign has not been updated. Data format is not correct.');
         }
-    }
-
-    private function prepareDataForAdSelect(Campaign $campaign): array
-    {
-        $banners = [];
-
-        /** @var Banner $banner */
-        foreach ($campaign->getBanners() as $banner) {
-            $banners[] = [
-                'banner_id' => $banner->getId(),
-                'banner_size' => $banner->getSize(),
-                'campaign_id' => $campaign->getDemandCampaignId(),
-            ];
-        }
-
-        $params = [
-            [
-                'campaign_id' => $campaign->getDemandCampaignId(),
-                'time_start' => (int) $campaign->getDateStart()->format('U'),
-                'time_end' => (int) $campaign->getDateEnd()->format('U'),
-                'banners' => $banners,
-            ],
-        ];
-
-        return [
-            'id' => 0,
-            'jsonrpc' => self::RPC_VERSION,
-            'method' => self::UPDATE_METHOD,
-            'params' => $params,
-        ];
     }
 }
