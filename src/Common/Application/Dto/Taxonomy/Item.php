@@ -38,7 +38,7 @@ final class Item
     /** @var string */
     private $label;
     /** @var Value[] */
-    private $list;
+    private $values;
 
     public function __construct(Type $type, string $key, string $label, Value ...$values)
     {
@@ -48,12 +48,12 @@ final class Item
 
         $this->validateList(...$values);
 
-        $this->list = $values;
+        $this->values = $values;
     }
 
-    private function validateList(Value ...$list): void
+    private function validateList(Value ...$values): void
     {
-        if (empty($list) && $this->ofType(Type::TYPE_DICTIONARY)) {
+        if (empty($values) && $this->ofType(Type::TYPE_DICTIONARY)) {
             throw new InvalidArgumentException('Dictionary type needs predefined values. None given.');
         }
     }
@@ -89,7 +89,7 @@ final class Item
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
-        }, $this->list);
+        }, $this->values);
 
         return (new Option(
             Option::TYPE_STRING,
@@ -103,7 +103,7 @@ final class Item
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
-        }, $this->list);
+        }, $this->values);
 
         if (empty($values)) {
             $values = [

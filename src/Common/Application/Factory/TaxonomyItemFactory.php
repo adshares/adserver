@@ -28,6 +28,19 @@ use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
 
 final class TaxonomyItemFactory
 {
+    /** @var string[] */
+    public const MAP_TYPE = [
+        'num' => self::TYPE_NUMBER,
+        'number' => self::TYPE_NUMBER,
+        'bool' => self::TYPE_BOOLEAN,
+        'boolean' => self::TYPE_BOOLEAN,
+        'dict' => self::TYPE_DICTIONARY,
+        'list' => self::TYPE_DICTIONARY,
+        'input' => self::TYPE_INPUT,
+        'text' => self::TYPE_INPUT,
+        'string' => self::TYPE_INPUT,
+    ];
+
     public static function fromArray(array $item): Item
     {
         if (!isset($item['values']) && isset($item['data'])) {
@@ -35,14 +48,24 @@ final class TaxonomyItemFactory
             unset($item['data']);
         }
 
+        if (!isset($item['values']) && isset($item['list'])) {
+            $item['values'] = $item['list'];
+            unset($item['list']);
+        }
+
         $values = $item['values'] ?? [];
 
         return new Item(
-            Type::map($item['type']),
+            self::map($item['type']),
             $item['key'],
             $item['label'],
             ...self::mapValues($values)
         );
+    }
+
+    public static function map($value): Type
+    {
+        return new Type(self::MAP_TYPE[$value]);
     }
 
     private static function mapValues(array $values): array

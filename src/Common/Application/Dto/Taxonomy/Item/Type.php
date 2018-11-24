@@ -38,19 +38,6 @@ final class Type
         self::TYPE_DICTIONARY,
     ];
 
-    /** @var string[] */
-    private const MAP_TYPE = [
-        'num' => self::TYPE_NUMBER,
-        'number' => self::TYPE_NUMBER,
-        'bool' => self::TYPE_BOOLEAN,
-        'boolean' => self::TYPE_BOOLEAN,
-        'dict' => self::TYPE_DICTIONARY,
-        'list' => self::TYPE_DICTIONARY,
-        'input' => self::TYPE_INPUT,
-        'text' => self::TYPE_INPUT,
-        'string' => self::TYPE_INPUT,
-    ];
-
     /** @var string */
     private $value;
 
@@ -66,14 +53,6 @@ final class Type
         if (!in_array($value, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $value");
         }
-    }
-
-    /**
-     * @deprecated Move to client side
-     */
-    public static function map($value): self
-    {
-        return new self(self::MAP_TYPE[$value]);
     }
 
     public function is(string $type): bool
