@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Demand\Application\Service;
 
-use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Common\Application\ViewModel\Selector;
 use Adshares\Common\Domain\Service\AdUserClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
 

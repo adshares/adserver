@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel\Selector;
+namespace Adshares\Common\Application\ViewModel\Selector;
 
-use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Common\Application\ViewModel\Selector;
 use Illuminate\Contracts\Support\Arrayable;
 use InvalidArgumentException;
 use function array_filter;
@@ -92,7 +92,7 @@ final class Option implements Arrayable
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+            'children' => $this->children->toArray(),
             'values' => $this->valuesToArray(),
         ];
     }

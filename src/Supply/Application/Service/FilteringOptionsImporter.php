@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Adserver\ViewModel\Selector;
+use Adshares\Common\Application\ViewModel\Selector;
 use Adshares\Common\Domain\Service\AdClassifyClient;
 use Adshares\Common\Domain\Service\OptionsRepository;
 

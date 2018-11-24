@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel\Selector;
+namespace Adshares\Common\Application\ViewModel\Selector;
 
 use Illuminate\Contracts\Support\Arrayable;
 

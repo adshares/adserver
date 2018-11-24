@@ -20,11 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel;
+namespace Adshares\Common\Application\ViewModel;
 
-use Adshares\Adserver\ViewModel\Selector\Option;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Application\ViewModel\Selector\Option;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Illuminate\Contracts\Support\Arrayable;
 

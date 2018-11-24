@@ -22,8 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
-use Adshares\Adserver\ViewModel\Selector;
-
 final class Value
 {
     /** @var string */
