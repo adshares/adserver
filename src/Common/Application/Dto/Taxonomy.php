@@ -47,5 +47,4 @@ final class Taxonomy extends ArrayCollection
     {
         return (new SelectorFactory($this))->toSelector();
     }
-
 }

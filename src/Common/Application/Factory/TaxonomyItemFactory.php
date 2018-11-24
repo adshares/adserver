@@ -61,5 +61,4 @@ final class TaxonomyItemFactory
 
         return new ItemValue($value['value'], $value['label']);
     }
-
 }
