@@ -62,8 +62,7 @@ final class Banner
         string $type,
         Size $size,
         string $checksum
-    )
-    {
+    ) {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(
                 'Unsupported banner `%s` type. Only %s are allowed.',
@@ -83,9 +82,8 @@ final class Banner
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'banner_url' => $this->bannerUrl,
-            'type' => $this->type,
+            'id' => $this->getId(),
+            'type' => $this->getType(),
             'size' => (string)$this->size,
             'width' => $this->size->getWidth(),
             'height' => $this->size->getHeight(),
@@ -104,11 +102,6 @@ final class Banner
     public function getCampaignId(): string
     {
         return (string)$this->campaign->getId();
-    }
-
-    public function getBannerUrl(): BannerUrl
-    {
-        return $this->bannerUrl;
     }
 
     public function getType(): string

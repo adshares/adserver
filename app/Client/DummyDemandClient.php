@@ -20,10 +20,10 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use Adshares\Supply\Domain\Service\DemandClient;
 use DateTime;
 
 final class DummyDemandClient implements DemandClient

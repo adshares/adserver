@@ -18,11 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Service\Exception;
+namespace Adshares\Supply\Application\Service;
 
-use RuntimeException;
+use Adshares\Supply\Domain\Model\Campaign;
 
-class UnexpectedClientResponseException extends RuntimeException
+interface AdSelectClient
 {
-
+    public function exportInventory(Campaign $campaign): void;
 }

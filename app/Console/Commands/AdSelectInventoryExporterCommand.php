@@ -28,7 +28,7 @@ use Illuminate\Console\Command;
 
 class AdSelectInventoryExporterCommand extends Command
 {
-    protected $signature = 'inventory:export';
+    protected $signature = 'ops:inventory:export';
 
     protected $description = 'Export campaigns inventory to AdSelect';
 

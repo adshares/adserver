@@ -67,4 +67,13 @@ final class BudgetTest extends TestCase
 
         new Budget(10, null, 12);
     }
+
+    public function testWhenInputDataAreCorrect(): void
+    {
+        $budget = new Budget(10, 1, 2);
+
+        $this->assertEquals(10, $budget->getBudget());
+        $this->assertEquals(1, $budget->getMaxCpc());
+        $this->assertEquals(2, $budget->getMaxCpm());
+    }
 }

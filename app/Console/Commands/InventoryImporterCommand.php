@@ -26,7 +26,7 @@ use Illuminate\Console\Command;
 
 class InventoryImporterCommand extends Command
 {
-    protected $signature = 'inventory:import';
+    protected $signature = 'ops:inventory:import';
 
     protected $description = 'Import data from all defined inventories';
 

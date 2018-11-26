@@ -18,9 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Service\Exception;
+namespace Adshares\Supply\Application\Service\Exception;
 
-class EmptyInventoryException extends \RuntimeException
+use RuntimeException;
+
+class UnexpectedClientResponseException extends RuntimeException
 {
 
 }

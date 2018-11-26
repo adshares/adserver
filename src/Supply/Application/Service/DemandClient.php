@@ -18,11 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Service;
+declare(strict_types=1);
 
-use Adshares\Supply\Domain\Model\Campaign;
+namespace Adshares\Supply\Application\Service;
 
-interface AdSelectClient
+use Adshares\Supply\Domain\Model\CampaignCollection;
+
+interface DemandClient
 {
-    public function exportInventory(Campaign $campaign): void;
+    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
 }

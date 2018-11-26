@@ -22,8 +22,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Service\AdSelectClient;
-use Adshares\Supply\Domain\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\AdSelectClient;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use Illuminate\Http\Response;
 use InvalidArgumentException;

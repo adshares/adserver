@@ -26,9 +26,8 @@ use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
-use Adshares\Supply\Domain\Service\DemandClient;
-use Adshares\Supply\Domain\Service\Exception\EmptyInventoryException;
-use Adshares\Supply\Domain\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
 class InventoryImporter
 {

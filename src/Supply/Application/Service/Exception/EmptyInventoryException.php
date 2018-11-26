@@ -18,13 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Supply\Application\Service\Exception;
 
-namespace Adshares\Supply\Domain\Service;
-
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class EmptyInventoryException extends \RuntimeException
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+
 }

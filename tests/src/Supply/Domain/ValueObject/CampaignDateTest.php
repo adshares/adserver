@@ -41,10 +41,14 @@ final class CampaignDateTest extends TestCase
     {
         $dateStart = new DateTime();
         $dateEnd = (new DateTime())->modify('+1 hour');
+        $createdAt = new DateTime();
+        $updatedAt = new DateTime();
 
-        $campaignDate = new CampaignDate($dateStart, $dateEnd, new DateTime(), new DateTime());
+        $campaignDate = new CampaignDate($dateStart, $dateEnd, $createdAt, $updatedAt);
 
         $this->assertEquals($dateStart, $campaignDate->getDateStart());
         $this->assertEquals($dateEnd, $campaignDate->getDateEnd());
+        $this->assertEquals($createdAt, $campaignDate->getCreatedAt());
+        $this->assertEquals($updatedAt, $campaignDate->getUpdatedAt());
     }
 }

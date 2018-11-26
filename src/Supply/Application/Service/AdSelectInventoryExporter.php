@@ -20,7 +20,6 @@
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Domain\Service\AdSelectClient;
 use Adshares\Supply\Domain\Model\Campaign;
 
 class AdSelectInventoryExporter

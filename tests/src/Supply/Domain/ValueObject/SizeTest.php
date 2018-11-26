@@ -24,12 +24,21 @@ use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use PHPUnit\Framework\TestCase;
 
-class SizeTest extends TestCase
+final class SizeTest extends TestCase
 {
-    public function testWhenNonValidValue()
+    public function testWhenNonValidValue(): void
     {
         $this->expectException(UnsupportedBannerSizeException::class);
 
         new Size(1, 1);
+    }
+
+    public function testReturnedValueWhenCastToString(): void
+    {
+        $size = new Size(728, 90);
+
+        $this->assertEquals(728, $size->getWidth());
+        $this->assertEquals(90, $size->getHeight());
+        $this->assertEquals('728x90', (string) $size);
     }
 }
