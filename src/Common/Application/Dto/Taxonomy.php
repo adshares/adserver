@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Common\Application\Dto;
 
 use Adshares\Common\Application\Dto\Taxonomy\Item;
-use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
@@ -41,10 +40,5 @@ final class Taxonomy extends ArrayCollection
         $this->version = $version;
 
         parent::__construct($items);
-    }
-
-    public function toSelector(): Selector
-    {
-        return Selector::fromTaxonomy($this);
     }
 }
