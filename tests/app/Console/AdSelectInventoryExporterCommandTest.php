@@ -26,10 +26,6 @@ class AdSelectInventoryExporterCommandTest extends TestCase
 {
     public function testExport(): void
     {
-        $this->markTestIncomplete(
-            'Method storeTargetingOptions() not implemented.'
-        );
-
         $this->artisan('ops:inventory:export')
             ->assertExitCode(0);
     }

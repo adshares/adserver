@@ -18,12 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Adserver\Client\Mapper;
 
 class TargetingToAdSelectMapper
 {
     public static function map(array $requires, array $excludes): array
     {
-        return [];
+        return [
+            'exclude' => [
+                [
+                    'filter' => [
+                        'args' => "18-20",
+                        'type' => '=',
+                    ],
+                    'keyword' => 'age_bracket',
+                ],
+            ],
+        ];
     }
 }

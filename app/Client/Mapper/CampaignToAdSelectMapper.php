@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Adserver\Client\Mapper;
 
 use Adshares\Supply\Domain\Model\Banner;
