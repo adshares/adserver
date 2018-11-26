@@ -28,26 +28,34 @@ class CampaignToAdSelectMapper
     public static function map(Campaign $campaign): array
     {
         $banners = [];
+        $campaignArray = $campaign->toArray();
 
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
             $banners[] = [
                 'banner_id' => $banner->getId(),
                 'banner_size' => $banner->getSize(),
-                'campaign_id' => $campaign->getDemandCampaignId(),
+                'campaign_id' => $campaignArray['demand_campaign_id'],
+                'keywords' => [
+                    'type' => $banner->getType(),
+                ],
             ];
         }
 
         $targeting = TargetingToAdSelectMapper::map(
-            $campaign->getTargetingRequires(),
-            $campaign->getTargetingExcludes()
+            $campaignArray['targeting_requires'],
+            $campaignArray['targeting_excludes']
         );
 
         $mapped = [
-            'campaign_id' => $campaign->getDemandCampaignId(),
-            'time_start' => (int)$campaign->getDateStart()->format('U'),
-            'time_end' => (int)$campaign->getDateEnd()->format('U'),
+            'campaign_id' => $campaignArray['demand_campaign_id'],
+            'time_start' => (int)$campaignArray['date_start']->format('U'),
+            'time_end' => (int)$campaignArray['date_end']->format('U'),
             'banners' => $banners,
+            'keywords' => [
+                'source_host' => $campaignArray['source_host'],
+                'adshares_address' => $campaignArray['source_address'],
+            ],
         ];
 
         if ($targeting) {

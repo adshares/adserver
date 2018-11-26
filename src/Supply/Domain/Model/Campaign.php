@@ -107,9 +107,9 @@ final class Campaign
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'demand_campaign_id' => $this->demandCampaignId,
-            'publisher_id' => $this->publisherId,
+            'id' => (string)$this->id,
+            'demand_campaign_id' => (string)$this->demandCampaignId,
+            'publisher_id' => (string)$this->publisherId,
             'landing_url' => $this->landingUrl,
             'max_cpc' => $this->budget->getMaxCpc(),
             'max_cpm' => $this->budget->getMaxCpm(),
