@@ -189,16 +189,8 @@ class WalletController extends Controller
                 $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
-
-                $txid = (null !== $ledgerItem->txid
-                    && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
-                    ? $ledgerItem->txid : null;
-
-                if ($amount > 0) {
-                    $address = $ledgerItem->address_to;
-                } else {
-                    $address = $ledgerItem->address_from;
-                }
+                $txid = $this->getUserLedgerEntryTxid($ledgerItem);
+                $address = $this->getUserLedgerEntryAddress($ledgerItem);
 
                 $items[] = [
                     'amount' => $amount,
@@ -217,5 +209,36 @@ class WalletController extends Controller
         $resp['items'] = $items;
 
         return self::json($resp);
+    }
+
+    /**
+     * @param $ledgerItem
+     *
+     * @return string
+     */
+    private function getUserLedgerEntryAddress($ledgerItem): string
+    {
+        if ((int)$ledgerItem->amount > 0) {
+            $address = $ledgerItem->address_to;
+        } else {
+            $address = $ledgerItem->address_from;
+        }
+
+        return $address;
+    }
+
+    /**
+     * @param $ledgerItem
+     *
+     * @return null|string
+     */
+    private function getUserLedgerEntryTxid($ledgerItem): ?string
+    {
+        $type = (int)$ledgerItem->type;
+        $txid = (null !== $ledgerItem->txid
+            && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
+            ? $ledgerItem->txid : null;
+
+        return $txid;
     }
 }
