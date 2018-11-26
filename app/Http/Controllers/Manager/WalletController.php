@@ -20,12 +20,12 @@
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -47,7 +47,7 @@ class WalletController extends Controller
     const FIELD_TOTAL = 'total';
     const VALIDATOR_RULE_REQUIRED = 'required';
 
-    public function calculateWithdrawal(Request $request)
+    public function calculateWithdrawal(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
@@ -59,7 +59,7 @@ class WalletController extends Controller
         Validator::make(
             $request->all(),
             [
-                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
+                self::FIELD_AMOUNT => ['integer', 'min:1'],
                 self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
             ]
         )->validate();
@@ -69,6 +69,13 @@ class WalletController extends Controller
         if (!AdsValidator::isAccountAddressValid($addressTo)) {
             // invalid input for calculating fee
             return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        if (null === $amount) {
+            //calculate max available amount
+            $userId = Auth::user()->id;
+            $balance = UserLedgerEntry::getBalanceByUserId($userId);
+            $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
@@ -84,16 +91,14 @@ class WalletController extends Controller
     }
 
     /**
-     * Returns AdServer address in ADS network.
-     *
-     * @return \Illuminate\Config\Repository|mixed
+     * @return string AdServer address in ADS network
      */
-    private function getAdServerAdsAddress()
+    private function getAdServerAdsAddress(): string
     {
         return config('app.adshares_address');
     }
 
-    public function withdraw(Request $request)
+    public function withdraw(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
@@ -130,6 +135,7 @@ class WalletController extends Controller
         $ul->address_from = $addressFrom;
         $ul->address_to = $addressTo;
         $ul->status = UserLedgerEntry::STATUS_PENDING;
+        $ul->type = UserLedgerEntry::TYPE_WITHDRAWAL;
         $result = $ul->save();
 
         if ($result) {
@@ -140,7 +146,7 @@ class WalletController extends Controller
         return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function depositInfo()
+    public function depositInfo(): JsonResponse
     {
         $user = Auth::user();
         $uuid = $user->uuid;
@@ -160,7 +166,7 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function history(Request $request)
+    public function history(Request $request): JsonResponse
     {
         Validator::make(
             $request->all(),
@@ -174,45 +180,65 @@ class WalletController extends Controller
         $offset = $request->input(self::FIELD_OFFSET, 0);
 
         $userId = Auth::user()->id;
+        $count = UserLedgerEntry::where('user_id', $userId)->count();
         $resp = [];
-        foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
-            $amount = AdsConverter::clicksToAds($ledgerItem->amount);
-            $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
-            $txid = $ledgerItem->txid;
+        $items = [];
+        if ($count > 0) {
+            foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
+                $amount = (int)$ledgerItem->amount;
+                $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+                $status = (int)$ledgerItem->status;
+                $type = (int)$ledgerItem->type;
+                $txid = $this->getUserLedgerEntryTxid($ledgerItem);
+                $address = $this->getUserLedgerEntryAddress($ledgerItem);
 
-            if (null !== $txid) {
-                $link = self::getTransactionLink($txid);
-            } else {
-                $link = '-';
+                $items[] = [
+                    'amount' => $amount,
+                    'status' => $status,
+                    'type' => $type,
+                    'date' => $date,
+                    'address' => $address,
+                    'txid' => $txid,
+                ];
             }
-            if ($amount > 0) {
-                $address = $ledgerItem->address_to;
-            } else {
-                $address = $ledgerItem->address_from;
-            }
-
-            $resp[] = [
-                'status' => $amount,
-                'date' => $date,
-                'address' => $address,
-                'link' => $link,
-            ];
         }
+        $resp['limit'] = (int)$limit;
+        $resp['offset'] = (int)$offset;
+        $resp['items_count'] = count($items);
+        $resp['items_count_all'] = $count;
+        $resp['items'] = $items;
 
         return self::json($resp);
     }
 
     /**
-     * Returns link to transaction data.
+     * @param $ledgerItem
      *
-     * @param $txid string transaction id
-     *
-     * @return string link to transaction
+     * @return string
      */
-    private static function getTransactionLink(string $txid): string
+    private function getUserLedgerEntryAddress($ledgerItem): string
     {
-        $adsOperator = config('app.ads_operator_url');
+        if ((int)$ledgerItem->amount > 0) {
+            $address = $ledgerItem->address_to;
+        } else {
+            $address = $ledgerItem->address_from;
+        }
 
-        return "$adsOperator/blockexplorer/transactions/$txid";
+        return $address;
+    }
+
+    /**
+     * @param $ledgerItem
+     *
+     * @return null|string
+     */
+    private function getUserLedgerEntryTxid($ledgerItem): ?string
+    {
+        $type = (int)$ledgerItem->type;
+        $txid = (null !== $ledgerItem->txid
+            && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
+            ? $ledgerItem->txid : null;
+
+        return $txid;
     }
 }

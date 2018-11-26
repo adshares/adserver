@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-if [ ! -e ads_broadcast_host ]; then
-    touch ads_broadcast_host
+if [ ! -e ads_broadcast_host_in_progress ]; then
+    touch ads_broadcast_host_in_progress
 
     ./artisan ads:broadcast-host
 
-    rm -f ads_broadcast_host
+    rm -f ads_broadcast_host_in_progress
 fi

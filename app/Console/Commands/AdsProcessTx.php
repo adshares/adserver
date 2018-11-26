@@ -223,6 +223,7 @@ class AdsProcessTx extends Command
                 $ul->address_from = $senderAddress;
                 $ul->address_to = $targetAddr;
                 $ul->txid = $dbTx->txid;
+                $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
 
                 $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
                 // dbTx added to ledger will not be processed again

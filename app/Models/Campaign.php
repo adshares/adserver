@@ -55,33 +55,29 @@ class Campaign extends Model
     use AutomateMutators;
     use BinHex;
 
-    const STATUS_DRAFT = 0;
-    const STATUS_INACTIVE = 1;
-    const STATUS_ACTIVE = 2;
-
+    public const STATUS_DRAFT = 0;
+    public const STATUS_INACTIVE = 1;
+    public const STATUS_ACTIVE = 2;
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
 //        'budget' => 'required:numeric',
     ];
-
     protected $dates = [
         'deleted_at',
         'time_start',
         'time_end',
     ];
-
     protected $casts = [
         'time_start' => 'string',
         'time_end' => 'string',
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
     ];
-
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
-
     protected $fillable = [
         'landing_url',
         'time_start',
@@ -99,7 +95,6 @@ class Campaign extends Model
         'classification_status',
         'classification_tags',
     ];
-
     protected $visible = [
         'id',
         'uuid',
@@ -111,17 +106,15 @@ class Campaign extends Model
         'targeting',
         'ads',
     ];
-
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
-
     /** @var array Aditional fields to be included in collections */
     protected $appends = ['basic_information', 'targeting', 'ads'];
 
     public static function isStatusAllowed(int $status): bool
     {
-        return in_array($status, [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE]);
+        return in_array($status, self::STATUSES);
     }
 
     public function banners()
@@ -134,7 +127,7 @@ class Campaign extends Model
         foreach ($this->banners as &$banner) {
             $size = $banner->creative_width.'x'.$banner->creative_height;
             $banner['type'] = $banner['creative_type'] === 'image' ? 0 : 1;
-            $banner['size'] = array_search($size, Zone::ZONE_SIZE);
+            $banner['size'] = array_search($size, Zone::ZONE_SIZES);
         }
 
         return $this->banners;

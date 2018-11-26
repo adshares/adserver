@@ -24,8 +24,9 @@ use Faker\Generator as Faker;
 
 $factory->define(UserLedgerEntry::class, function (Faker $faker) {
     return [
-        'amount' => $faker->numberBetween() * (10 ** 11),
+        'amount' => $faker->numberBetween(0, 3800000000000000000),
         'status' => UserLedgerEntry::STATUS_ACCEPTED,
+        'type' => UserLedgerEntry::TYPE_DEPOSIT,
         'address_from' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
         'address_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
         'txid' => $faker->regexify('[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}'),

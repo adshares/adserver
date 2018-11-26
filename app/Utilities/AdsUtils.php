@@ -26,14 +26,54 @@ final class AdsUtils
      * Minimum transfer fee `TXS_MIN_FEE`
      */
     const TXS_MIN_FEE = 10000;
+
     /**
      * Local transfer coefficient `TXS_PUT_FEE`
      */
     const TXS_LOCAL_FEE = 0.0005;
+
+    const TXS_LOCAL_FEE_DIVISOR = 2000;
+
     /**
      * Remote transfer coefficient `TXS_LNG_FEE`
      */
     const TXS_REMOTE_FEE = 0.0005;
+
+    const TXS_REMOTE_FEE_DIVISOR = 2000;
+
+    /**
+     * Calculates transfer amount basing on total (amount + fee).
+     *
+     * @param string $addressFrom sender address
+     * @param string $addressTo recipient address
+     * @param int $total total
+     *
+     * @return int transfer amount
+     */
+    public static function calculateAmount(string $addressFrom, string $addressTo, int $total): int
+    {
+        if ($total <= self::TXS_MIN_FEE) {
+            return 0;
+        }
+
+        if (AdsUtils::calculateFee($addressFrom, $addressTo, $total - self::TXS_MIN_FEE) === self::TXS_MIN_FEE) {
+            return $total - self::TXS_MIN_FEE;
+        }
+
+        $isSameNode = 0 === substr_compare($addressFrom, $addressTo, 0, 4);
+
+        $coefficient = $isSameNode ? self::TXS_LOCAL_FEE : self::TXS_LOCAL_FEE + self::TXS_REMOTE_FEE;
+
+        $amount = intval(floor($total / (1 + $coefficient)));
+
+        do {
+            $amount++;
+        } while ($total - $amount - AdsUtils::calculateFee($addressFrom, $addressTo, $amount) >= 0);
+
+        $amount--;
+
+        return $amount;
+    }
 
     /**
      * Calculates transfer fee.
@@ -46,11 +86,11 @@ final class AdsUtils
      */
     public static function calculateFee(string $addressFrom, string $addressTo, int $amount): int
     {
-        $fee = ceil($amount * self::TXS_LOCAL_FEE);
+        $fee = intdiv($amount, self::TXS_LOCAL_FEE_DIVISOR);
 
         if (0 !== substr_compare($addressFrom, $addressTo, 0, 4)) {
             // different nodes
-            $fee += ceil($amount * self::TXS_REMOTE_FEE);
+            $fee += intdiv($amount, self::TXS_REMOTE_FEE_DIVISOR);
         }
 
         return intval(max($fee, self::TXS_MIN_FEE));

@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\Model;
 
@@ -42,10 +43,10 @@ final class Transaction implements Identifiable, Comparable
 
     public function equals(object $other): bool
     {
-        if (!($other instanceof self)) {
-            return false;
+        if ($other instanceof self) {
+            return $this->id->equals($other->id);
         }
 
-        return $this->id->equals($other);
+        return false;
     }
 }

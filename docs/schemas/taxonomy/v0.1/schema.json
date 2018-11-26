@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "urn:x-adshares:taxonomy#",
+  "type": "object",
+  "definitions": {
+    "semanticVersion": {
+      "$id": "#semver",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "bool": {
+      "$id": "#bool",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "bool"
+          ]
+        }
+      }
+    },
+    "dict": {
+      "$id": "#dict",
+      "type": "object",
+      "required": [
+        "key",
+        "type",
+        "data"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "dict"
+          ]
+        },
+        "list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "input": {
+      "$id": "#input",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "input"
+          ]
+        }
+      }
+    },
+    "num": {
+      "$id": "#num",
+      "type": "object",
+      "required": [
+        "key",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "num"
+          ]
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    }
+  },
+  "required": [
+    "version",
+    "data"
+  ],
+  "properties": {
+    "version": {
+      "$ref": "#semver"
+    },
+    "data": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#bool"
+          },
+          {
+            "$ref": "#dict"
+          },
+          {
+            "$ref": "#input"
+          },
+          {
+            "$ref": "#num"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -69,5 +69,17 @@
       "adshares_address": "0001-00000003-AB0C",
       "total_funds": 1000
     }
+  },
+  {
+    "email": "postman@dev.dev",
+    "password": "postman@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": true,
+    "isPublisher": true,
+    "isAdvertiser": true,
+    "adserverWallet": {
+      "adshares_address": "0001-00000001-8B4E",
+      "total_funds": 324
+    }
   }
 ]

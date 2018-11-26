@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "urn:x-adshares:info:0.1",
+  "type": "object",
+  "title": "Service Information Schema",
+  "readOnly": true,
+  "required": [
+    "service"
+  ],
+  "properties": {
+    "service": {
+      "$ref": "urn:x-adshares#service"
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "urn:x-adshares#endpoint"
+      }
+    }
+  }
+}

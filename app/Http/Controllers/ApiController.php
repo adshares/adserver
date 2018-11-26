@@ -21,10 +21,14 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use DateTime;
+use DateTimeZone;
 
 class ApiController extends Controller
 {
@@ -39,11 +43,50 @@ class ApiController extends Controller
     {
         $campaigns = [];
         foreach ($this->campaignRepository->find() as $i => $campaign) {
-            $campaigns[$i] = $campaign->toArray();
-            $campaigns[$i]['adshares_address'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
+            $banners = [];
+
+            foreach ($campaign->ads as $banner) {
+                $bannerArray = $banner->toArray();
+
+                $banners[] = [
+                    'uuid' => $bannerArray['uuid'],
+                    'width' => $bannerArray['creative_width'],
+                    'height' => $bannerArray['creative_height'],
+                    'type' => $bannerArray['creative_type'],
+                    'serve_url' => $bannerArray['serve_url'],
+                    'click_url' => $bannerArray['click_url'],
+                    'view_url' => $bannerArray['view_url'],
+                ];
+            }
+
+            $date_start = ($campaign->time_start !== null) ? $this->parseDateToISO8601($campaign->time_start) : null;
+            $date_end = ($campaign->time_end !== null) ? $this->parseDateToISO8601($campaign->time_end) : null;
+            $campaigns[] = [
+                'uuid' => $campaign->uuid,
+                'publisher_id' => User::find($campaign->user_id)->uuid,
+                'landing_url' => $campaign->landing_url,
+                'date_start' => $date_start,
+                'date_end' => $date_end,
+                'created_at' => $campaign->created_at->format(DateTime::ISO8601),
+                'updated_at' => $campaign->updated_at->format(DateTime::ISO8601),
+                'max_cpc' => $campaign->max_cpc,
+                'max_cpm' => $campaign->max_cpm,
+                'budget' => $campaign->budget,
+                'banners' => $banners,
+                'targeting_requires' => (array)$campaign->targeting_requires,
+                'targeting_excludes' => (array)$campaign->targeting_excludes,
+                'address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+            ];
         }
 
-        return Response::json(['campaigns' => $campaigns], 200, [], JSON_PRETTY_PRINT);
+        return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
+    }
+
+    private function parseDateToISO8601(string $date): string
+    {
+        $date = DateTime::createFromFormat('Y-m-d H:i:s', $date, new DateTimeZone('UTC'));
+
+        return $date->format(DateTime::ISO8601);
     }
 
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)

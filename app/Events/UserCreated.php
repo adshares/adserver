@@ -22,7 +22,6 @@ namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserAdserverWallet;
 use Adshares\Adserver\Models\UserSettings;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -38,7 +37,6 @@ class UserCreated
     {
         $this->createWelcomeNotification($user);
         $this->initNotificationsSettings($user);
-        $this->initWallet($user);
     }
 
     protected function createWelcomeNotification(User $user)
@@ -65,13 +63,5 @@ class UserCreated
             ]
         );
         $us->save();
-    }
-
-    protected function initWallet(User $user)
-    {
-        $uaw = new UserAdserverWallet();
-        $uaw->user_id = $user->id;
-        $uaw->payment_memo = 'User '.$user->uuid;
-        $uaw->save();
     }
 }

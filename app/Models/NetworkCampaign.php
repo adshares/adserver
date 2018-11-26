@@ -40,8 +40,15 @@ class NetworkCampaign extends Model
      * @var array
      */
     protected $dates = [
-        'time_start',
-        'time_end',
+        'date_start',
+        'date_end',
+        'source_created_at',
+        'source_updated_at',
+    ];
+
+    protected $casts = [
+        'targeting_requires' => 'json',
+        'targeting_excludes' => 'json',
     ];
 
     /**
@@ -51,16 +58,21 @@ class NetworkCampaign extends Model
      */
     protected $fillable = [
         'uuid',
+        'demand_campaign_id',
+        'publisher_id',
         'source_created_at',
         'source_updated_at',
         'source_host',
-        'adshares_address',
+        'source_address',
+        'source_version',
         'landing_url',
         'max_cpm',
         'max_cpc',
-        'budget_per_hour',
-        'time_start',
-        'time_end',
+        'budget',
+        'date_start',
+        'date_end',
+        'targeting_requires',
+        'targeting_excludes',
     ];
 
     /**
@@ -79,6 +91,8 @@ class NetworkCampaign extends Model
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'demand_campaign_id' => 'BinHex',
+        'publisher_id' => 'BinHex',
     ];
 
     public static function fromJsonData(array $data)
@@ -187,24 +201,14 @@ class NetworkCampaign extends Model
         return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
     }
 
-    public function campaignExcludes()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignExclude');
-    }
-
-    public function campaignRequires()
-    {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkCampaignRequire');
-    }
-
     public function getAdselectJson()
     {
         $json = [
             'campaign_id' => $this->source_host.'/'.$this->uuid,
             // TODO: discuss, missing in inventory
             // 'advertiser_id' => $this->source_host . '/'. $this->getAdvertiserId(),
-            'time_start' => $this->time_start->getTimestamp(),
-            'time_end' => $this->time_end->getTimestamp(),
+            'date_start' => $this->date_start->getTimestamp(),
+            'date_end' => $this->date_end->getTimestamp(),
             // 'filters' => Filter::getFilter($this->getRequire(), $this->getExclude()),
             'keywords' => [
                 'source_host' => $this->source_host,
@@ -223,5 +227,20 @@ class NetworkCampaign extends Model
         $json['banners'] = $banners;
 
         return $json;
+    }
+
+    public static function getTableName()
+    {
+        return with(new static)->getTable();
+    }
+
+    public function getTargetingRequiresAttribute()
+    {
+        return $this->targeting_requires ?? [];
+    }
+
+    public function getTargetingExcludesAttribute()
+    {
+        return $this->targeting_excludes ?? [];
     }
 }

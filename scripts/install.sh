@@ -16,6 +16,7 @@ mv node_modules ${INSTALLATION_PATH}/
 mv public ${INSTALLATION_PATH}/
 mv resources ${INSTALLATION_PATH}/
 mv routes ${INSTALLATION_PATH}/
+mv src ${INSTALLATION_PATH}/
 mv tests ${INSTALLATION_PATH}/
 mv vendor ${INSTALLATION_PATH}/
 

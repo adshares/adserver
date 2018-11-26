@@ -7,6 +7,7 @@ set -e
 FOUND_OPTION=0
 ARGS=("$@")
 XDEBUG=${XDEBUG:-0}
+DB_WAIT=0
 
 while [ "$1" != "" ] && [ "${1#-}" != "$1" ]
 do
@@ -17,6 +18,10 @@ do
             ;;
         --keep-xdebug )
             XDEBUG=1
+            FOUND_OPTION=1
+            ;;
+        --wait-for-db )
+            DB_WAIT=1
             FOUND_OPTION=1
             ;;
         -- )
@@ -48,6 +53,8 @@ then
         done
     fi
 fi
+
+[ "$DB_WAIT" == "0" ] || wait_for_database.sh
 
 echo "=> $@"
 exec "$@"

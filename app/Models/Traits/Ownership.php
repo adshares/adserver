@@ -34,8 +34,12 @@ trait Ownership
         static::addGlobalScope(new OwnershipScope(Auth::user()));
     }
 
-    public function scopeOwnedBy(Builder $query, User $user): Builder
+    public function scopeOwnedBy(Builder $query, ?User $user): Builder
     {
+        if (!$user) {
+            return $query;
+        }
+
         return $query->where('user_id', '=', $user->id);
     }
 }

@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "urn:x-adshares",
+  "definitions": {
+    "dataType": {
+      "$id": "#dataType",
+      "type": "string",
+      "enum": [
+        "bool",
+        "num",
+        "input",
+        "dict"
+      ]
+    },
+    "semanticVersion": {
+      "$id": "#semver",
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "service": {
+      "$id": "#service",
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string",
+          "format": "uri"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "AdClassify",
+            "AdPanel",
+            "AdPay",
+            "AdSelect",
+            "AdServer",
+            "AdUser",
+            "AdsNode",
+            "AdsOperator"
+          ]
+        }
+      },
+      "required": [
+        "host",
+        "role"
+      ]
+    },
+    "schema": {
+      "$id": "#schema",
+      "type": "string",
+      "format": "urn"
+    },
+    "endpoint": {
+      "$id": "#endpoint",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "rest",
+            "rpc",
+            "simple"
+          ],
+          "default": "simple"
+        },
+        "auth": {
+          "type": "string",
+          "enum": [
+            "none"
+          ],
+          "default": "none"
+        },
+        "path": {
+          "type": "string",
+          "format": "uri-reference"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "delete",
+            "get",
+            "patch",
+            "post",
+            "put"
+          ],
+          "default": "get"
+        },
+        "description": {
+          "type": "string"
+        },
+        "input": {
+          "$ref": "#schema"
+        },
+        "inputParams": {
+          "type": "object"
+        },
+        "output": {
+          "$ref": "#schema"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    }
+  }
+}

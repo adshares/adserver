@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,27 +18,33 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
-use Adshares\Supply\Domain\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
 class InventoryImporter
 {
-    /*** @var DemandClient */
-    private $client;
+    /** @var MarkedCampaignsAsDeleted */
+    private $markedCampaignsAsDeletedService;
 
     /** @var CampaignRepository */
     private $campaignRepository;
+
+    /** @var DemandClient */
+    private $client;
 
     /** @var TransactionManager */
     private $transactionManager;
 
     public function __construct(
+        MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
         TransactionManager $transactionManager
@@ -46,16 +52,24 @@ class InventoryImporter
         $this->client = $client;
         $this->campaignRepository = $campaignRepository;
         $this->transactionManager = $transactionManager;
+        $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
     }
 
     public function import(string $host): void
     {
-        $campaigns = $this->client->fetchAllInventory($host);
+        try {
+            $campaigns = $this->client->fetchAllInventory($host);
+        } catch (EmptyInventoryException $exception) {
+            return;
+        } catch (UnexpectedClientResponseException $exception) {
+            // we can add to a log file this information, not now
+            return;
+        }
 
         $this->transactionManager->begin();
 
         try {
-            $this->campaignRepository->deactivateAllCampaignsFromHost($host);
+            $this->markedCampaignsAsDeletedService->execute($host);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -63,7 +77,7 @@ class InventoryImporter
 
                 $this->campaignRepository->save($campaign);
             }
-        } catch (CampaignRepositoryException $ex) {
+        } catch (CampaignRepositoryException $exception) {
             $this->transactionManager->rollback();
         }
 

@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -33,7 +32,7 @@ class WalletControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testCalculateWithdrawSameNode()
+    public function testCalculateWithdrawSameNode(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
@@ -53,7 +52,7 @@ class WalletControllerTest extends TestCase
         );
     }
 
-    public function testCalculateWithdrawDiffNode()
+    public function testCalculateWithdrawDiffNode(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
@@ -73,7 +72,7 @@ class WalletControllerTest extends TestCase
         );
     }
 
-    public function testCalculateWithdrawInvalidAddress()
+    public function testCalculateWithdrawInvalidAddress(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->postJson(
@@ -87,7 +86,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testCalculateWithdrawInvalidAdServerAddress()
+    public function testCalculateWithdrawInvalidAdServerAddress(): void
     {
         Config::set('app.adshares_address', '');//invalid ADS address set for AdServer
         $this->actingAs(factory(User::class)->create(), 'api');
@@ -102,7 +101,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testWithdraw()
+    public function testWithdraw(): void
     {
         $this->expectsJobs(AdsSendOne::class);
 
@@ -120,7 +119,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
-    private function generateUserIncome(int $userId, int $amount)
+    private function generateUserIncome(int $userId, int $amount): void
     {
         $dateString = '2018-10-24 15:00:49';
 
@@ -130,12 +129,13 @@ class WalletControllerTest extends TestCase
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';
         $ul->txid = '0001:0000000A:0001';
+        $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
         $ul->setCreatedAt($dateString);
         $ul->setUpdatedAt($dateString);
         $ul->save();
     }
 
-    public function testWithdrawWithMemo()
+    public function testWithdrawWithMemo(): void
     {
         $this->expectsJobs(AdsSendOne::class);
 
@@ -154,7 +154,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
-    public function testWithdrawInvalidAddress()
+    public function testWithdrawInvalidAddress(): void
     {
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
@@ -170,7 +170,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testWithdrawInvalidMemo()
+    public function testWithdrawInvalidMemo(): void
     {
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
@@ -187,7 +187,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testWithdrawInvalidAdServerAddress()
+    public function testWithdrawInvalidAdServerAddress(): void
     {
         Config::set('app.adshares_address', '');//invalid ASD address set for AdServer
         $user = factory(User::class)->create();
@@ -204,7 +204,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testWithdrawInsufficientFunds()
+    public function testWithdrawInsufficientFunds(): void
     {
         $this->expectsJobs(AdsSendOne::class);
 
@@ -223,7 +223,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
 
-    public function testDepositInfo()
+    public function testDepositInfo(): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
@@ -240,40 +240,45 @@ class WalletControllerTest extends TestCase
         $this->assertTrue(strpos($message, $user->uuid) !== false);
     }
 
-    public function testHistory()
+    public function testHistory(): void
     {
         $user = factory(User::class)->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history');
 
-        $response->assertStatus(Response::HTTP_OK)->assertJson(
+        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                [
-                    'status' => $amountInAds,
-                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                    'address' => '0001-00000000-XXXX',
-                    'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
-                ],
-                [
-                    'status' => -$amountInAds,
-                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                    'address' => '0001-00000000-XXXX',
-                    'link' => '-',
+                'limit' => 10,
+                'offset' => 0,
+                'itemsCount' => 2,
+                'itemsCountAll' => 2,
+                'items' => [
+                    [
+                        'amount' => $amountInClicks,
+                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'address' => '0001-00000000-XXXX',
+                        'txid' => '0001:0000000A:0001',
+                    ],
+                    [
+                        'amount' => -$amountInClicks,
+                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'address' => '0001-00000000-XXXX',
+                        'txid' => null,
+                    ],
                 ],
             ]
         );
     }
 
-    /**
-     * @param $userId
-     * @param $amountInClicks
-     */
     private function initUserLedger($userId, $amountInClicks): void
     {
         // add entry with a txid
@@ -285,36 +290,44 @@ class WalletControllerTest extends TestCase
         $ul->amount = -$amountInClicks;
         $ul->address_from = '0001-00000000-XXXX';
         $ul->address_to = '0001-00000000-XXXX';
+        $ul->type = UserLedgerEntry::TYPE_WITHDRAWAL;
         $ul->setCreatedAt($dateString);
         $ul->setUpdatedAt($dateString);
         $ul->save();
     }
 
-    public function testHistoryLimit()
+    public function testHistoryLimit(): void
     {
         $user = factory(User::class)->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history?limit=1');
 
-        $response->assertStatus(Response::HTTP_OK)->assertJson(
+        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                [
-                    'status' => $amountInAds,
-                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                    'address' => '0001-00000000-XXXX',
-                    'link' => 'https://operator1.e11.click/blockexplorer/transactions/0001:0000000A:0001',
+                'limit' => 1,
+                'offset' => 0,
+                'itemsCount' => 1,
+                'itemsCountAll' => 2,
+                'items' => [
+                    [
+                        'amount' => $amountInClicks,
+                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'address' => '0001-00000000-XXXX',
+                        'txid' => '0001:0000000A:0001',
+                    ],
                 ],
             ]
         );
     }
 
-    public function testHistoryLimitInvalid()
+    public function testHistoryLimitInvalid(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->getJson('/api/wallet/history?limit=0');
@@ -322,31 +335,38 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testHistoryOffset()
+    public function testHistoryOffset(): void
     {
         $user = factory(User::class)->create();
         $userId = $user->id;
 
         $amountInClicks = 200000000000;
-        $amountInAds = AdsConverter::clicksToAds($amountInClicks);
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history?limit=1&offset=1');
 
-        $response->assertStatus(Response::HTTP_OK)->assertJson(
+        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
             [
-                [
-                    'status' => -$amountInAds,
-                    'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                    'address' => '0001-00000000-XXXX',
-                    'link' => '-',
+                'limit' => 1,
+                'offset' => 1,
+                'itemsCount' => 1,
+                'itemsCountAll' => 2,
+                'items' => [
+                    [
+                        'amount' => -$amountInClicks,
+                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'address' => '0001-00000000-XXXX',
+                        'txid' => null,
+                    ],
                 ],
             ]
         );
     }
 
-    public function testHistoryOffsetInvalid()
+    public function testHistoryOffsetInvalid(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->getJson('/api/wallet/history?limit=1&offset=-1');

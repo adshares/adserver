@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkBanner;
@@ -29,9 +30,9 @@ class MockDataCampaignsSeeder extends Seeder
 {
     private $bannerSizes = [
         [728, 90],
-        [728, 200],
+        [750, 200],
+        [120, 600],
         [160, 600],
-        [230, 600],
     ];
 
     private static function getRandValue($type)
@@ -100,16 +101,16 @@ class MockDataCampaignsSeeder extends Seeder
         $camp_data = MockDataSeeder::mockDataLoad('campaigns-advertisers.json');
 
         DB::beginTransaction();
-        foreach ($camp_data as $i => $r) {
-            $u = User::where('email', $r->email)->first();
-            if (empty($u)) {
+        foreach ($camp_data as $i => $mockCampaign) {
+            $user = User::where('email', $mockCampaign->email)->first();
+            if (empty($user)) {
                 DB::rollback();
-                throw new Exception("User not found <{$r->email}>");
+                throw new Exception("User not found <{$mockCampaign->email}>");
             }
 
-            foreach ($r->campaigns as $cr) {
-                $campaign = $this->createCampaign($u, $cr);
-                $nc = $this->createNetworkCampaign($cr);
+            foreach ($mockCampaign->campaigns as $cr) {
+                $campaign = $this->createCampaign($user, $cr);
+                $nc = $this->createNetworkCampaign($cr, $campaign, $user);
 
                 $banners = [];
 
@@ -137,7 +138,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b->save();
                 }
 
-                $this->command->info(" Added - [$campaign->landing_url] for user <{$u->email}>");
+                $this->command->info(" Added - [$campaign->landing_url] for user <{$user->email}>");
             }
         }
         DB::commit();
@@ -222,10 +223,10 @@ class MockDataCampaignsSeeder extends Seeder
         $b = new NetworkBanner();
         $b->fill([
             'network_campaign_id' => $nc->id,
-            'uuid' => uniqid() . '1',
-            'creative_type' => 'image',
-            'creative_width' => $banner->creative_width,
-            'creative_height' => $banner->creative_height,
+            'uuid' => Uuid::v4(),
+            'type' => 'image',
+            'width' => $banner->creative_width,
+            'height' => $banner->creative_height,
             'serve_url' => $serveUrl,
             'click_url' => route('banner-click', [
                 'id' => $banner->id,
@@ -265,7 +266,9 @@ class MockDataCampaignsSeeder extends Seeder
         $campaign->user_id = $u->id;
         $campaign->name = $cr->name;
         $campaign->budget = $cr->budget_per_hour;
-        $campaign->status = 2; // active
+        $campaign->max_cpc = $cr->max_cpc;
+        $campaign->max_cpm = $cr->max_cpm;
+        $campaign->status = Campaign::STATUS_ACTIVE;
         $campaign->targeting_requires = $cr->targeting_requires ?? null;
         $campaign->targeting_excludes = $cr->targeting_excludes ?? null;
         $campaign->classification_status = $cr->classification_status ?? 0;
@@ -280,20 +283,26 @@ class MockDataCampaignsSeeder extends Seeder
         return $campaign;
     }
 
-    private function createNetworkCampaign($cr): NetworkCampaign
+    private function createNetworkCampaign($mockCampaign, $sourceCampaign, $user): NetworkCampaign
     {
         $campaign = new NetworkCampaign();
-        $campaign->uuid = uniqid() . '1';
-        $campaign->landing_url = $cr->url;
-        $campaign->max_cpm = $cr->max_cpm;
-        $campaign->max_cpc = $cr->max_cpc;
+        $campaign->uuid = Uuid::v4();
+        $campaign->demand_campaign_id = $sourceCampaign->uuid;
+        $campaign->publisher_id = $user->uuid;
+        $campaign->landing_url = $mockCampaign->url;
+        $campaign->max_cpm = $mockCampaign->max_cpm;
+        $campaign->max_cpc = $mockCampaign->max_cpc;
         $campaign->source_host = config('app.url');
-        $campaign->budget_per_hour = $cr->budget_per_hour;
-        $campaign->adshares_address = '0001-00000001-0001';
+        $campaign->source_version = '0.1';
+        $campaign->source_address = '0001-00000001-0001';
+        $campaign->source_created_at = new DateTime();
+        $campaign->source_updated_at = new DateTime();
+        $campaign->budget = $mockCampaign->budget_per_hour;
+
 
         $campaign->fill([
-            'time_start' => date('Y-m-d H:i:s'),
-            'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
+            'date_start' => date('Y-m-d H:i:s'),
+            'date_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
         ]);
         $campaign->save();
 

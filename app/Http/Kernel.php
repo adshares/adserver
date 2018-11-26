@@ -38,16 +38,18 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
-    const USER_ACCESS = 'only-authenticated-users';
-    const GUEST_ACCESS = 'only-guest-users';
-    const JSON_API = 'api';
-    const SNAKE_CASING = 'snake_casing';
+    public const USER_ACCESS = 'only-authenticated-users';
+    public const GUEST_ACCESS = 'only-guest-users';
+    public const JSON_API = 'api';
+    public const SNAKE_CASING = 'snake_casing';
+
     protected $middleware = [
         #pre
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
     ];
+
     protected $middlewareGroups = [
         self::USER_ACCESS => [
             self::AUTH.':api',
@@ -66,9 +68,9 @@ class Kernel extends HttpKernel
             CamelizeJsonResponse::class,
         ],
     ];
+
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
-        self::SNAKE_CASING => SnakizeRequest::class,
     ];
 }

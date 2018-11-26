@@ -68,15 +68,8 @@ jobs:
     # PHP Lint: check syntax errors in all PHP files
     - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-#    # PHP Code Beautifier and Fixer: fix code styles
-#    - in_docker ./vendor/bin/phpcbf --standard=PHPCompatibility app tests || (git diff && exit 8)"
-#    - in_docker ./vendor/bin/phpcbf --standard=PSR2 app tests || (git diff && exit 8)"
-
     # PHP_CodeSniffer: check PHP compatibility
-    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility app tests"
-
-    # PHP_CodeSniffer: check PSR2 standard
-    - in_docker ./vendor/bin/phpcs -s --standard=PSR2 app tests"
+    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
 
     # PHP unit tests
     - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
@@ -97,7 +90,7 @@ jobs:
       -e MYSQL_PASSWORD=adserver
       -e MYSQL_DATABASE=adserver
       -d
-      percona/percona:5
+      percona:5
 
     - in_docker /bin/bash scripts/pre-build.sh"
 

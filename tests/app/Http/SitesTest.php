@@ -35,7 +35,19 @@ class SitesTest extends TestCase
         'id',
         'name',
         'filtering',
-        'adUnits' => ['*' => ['shortHeadline', 'code', 'size', 'status', 'width', 'height', 'type']],
+        'adUnits' => [
+            '*' => [
+                'name',
+                'code',
+                'size' => [
+                    'width',
+                    'height',
+                    'label',
+                ],
+                'status',
+                'type',
+            ],
+        ],
         'status',
         'primaryLanguage',
     ];
@@ -146,20 +158,15 @@ class SitesTest extends TestCase
     },
     "adUnits": [
       {
-        "shortHeadline": "ssss",
-        "type": 0,
+        "name": "ssss",
+        "type": "image",
         "size": {
-          "id": 3,
-          "name": "Large Rectangle",
-          "type": "large-rectangle",
+          "label": "large-rectangle",
           "size": 2,
           "tags": [
             "Desktop",
             "best"
-          ],
-          "width": "336",
-          "height": "280",
-          "selected": true
+          ]
         }
       }
     ]
@@ -193,7 +200,7 @@ JSON
             [
                 'name' => $data['name'] ?? $site->name,
                 'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
-                'status' => $data['status'] ?? $site->status,
+                'status' => $data['status'] ?? "{$site->status}",
             ]
         );
     }
@@ -334,14 +341,18 @@ JSON
                         "status" => "0",
                         "type" => "zone-type-1",
                         "name" => "title1",
-                        "width" => 100,
-                        "height" => 200,
+                        'size' => [
+                            "width" => 100,
+                            "height" => 200,
+                        ],
                     ],
                     [
                         "status" => "1",
                         "name" => "title2",
-                        "width" => 300,
-                        "height" => 400,
+                        'size' => [
+                            "width" => 300,
+                            "height" => 400,
+                        ],
                     ],
                 ],
             ],
@@ -352,14 +363,19 @@ JSON
                         "status" => "0",
                         "type" => "zone-type-1",
                         "name" => "new-title1",
-                        "width" => 100,
-                        "height" => 200,
+                        'size' => [
+                            "width" => 100,
+                            "height" => 200,
+                        ],
                     ],
+
                     [
                         "status" => "1",
                         "name" => "new-title2",
-                        "width" => 300,
-                        "height" => 400,
+                        'size' => [
+                            "width" => 300,
+                            "height" => 400,
+                        ],
                     ],
                 ],
             ],
@@ -370,15 +386,19 @@ JSON
                         "status" => "0",
                         "type" => "zone-type-1",
                         "name" => "new-title1",
-                        "width" => 100,
-                        "height" => 200,
+                        'size' => [
+                            "width" => 100,
+                            "height" => 200,
+                        ],
                     ],
                     [
                         "id" => "2",
                         "status" => "1",
                         "name" => "new-title2",
-                        "width" => 300,
-                        "height" => 400,
+                        'size' => [
+                            "width" => 300,
+                            "height" => 400,
+                        ],
                     ],
                 ],
             ],

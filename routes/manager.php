@@ -18,14 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Manager\CampaignOptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
+use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
-use Adshares\Adserver\Http\Controllers\Manager\SiteOptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
@@ -67,11 +66,10 @@ Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress
 Route::get('notifications', [NotificationsController::class, 'read']);
 Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
 
-Route::get('options/campaigns/targeting', [CampaignOptionsController::class, 'targeting']);
-
-Route::get('options/sites/filtering', [SiteOptionsController::class, 'filtering']);
-Route::get('options/sites/languages', [SiteOptionsController::class, 'languages']);
-Route::get('options/sites/zones', [SiteOptionsController::class, 'zones']);
+Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
+Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
+Route::get('options/sites/languages', [OptionsController::class, 'languages']);
+Route::get('options/sites/zones', [OptionsController::class, 'zones']);
 
 // Routes for Withdraw/Deposit
 Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdrawal']);
