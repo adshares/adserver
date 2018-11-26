@@ -92,7 +92,11 @@ class SupplyController extends Controller
     // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
     public function findScript(Request $request)
     {
-        $params = [json_encode($request->getSchemeAndHttpHost()), json_encode(config('app.aduser_external_location'))];
+        $params = [
+            json_encode($request->getSchemeAndHttpHost()),
+            json_encode(config('app.aduser_external_location')),
+            json_encode('div.a-name-that-does-not-collide'),
+        ];
 
         $jsPath = public_path('-/find.js');
 
@@ -103,6 +107,7 @@ class SupplyController extends Controller
                     [
                         "'{{ ORIGIN }}'",
                         "'{{ ADUSER }}'",
+                        "'{{ SELECTOR }}'",
                     ],
                     $params,
                     file_get_contents($jsPath)

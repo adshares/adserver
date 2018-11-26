@@ -21,7 +21,10 @@
 namespace Adshares\Adserver\Providers\Supply;
 
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use Adshares\Supply\Application\Service\BannerFinderClient;
 use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,12 +34,22 @@ class AdSelectInventoryExporterProvider extends ServiceProvider
     {
         $this->app->bind(AdSelectInventoryExporter::class, function () {
             $client = new Client([
-                'headers' => [ 'Content-Type' => 'application/json' ],
+                'headers' => ['Content-Type' => 'application/json'],
                 'base_uri' => config('app.adselect_endpoint'),
-                'timeout'  => 5.0,
+                'timeout' => 5.0,
             ]);
 
             return new AdSelectInventoryExporter(new GuzzleAdSelectClient($client));
+        });
+
+        $this->app->bind(BannerFinderClient::class, function () {
+            $client = new Client([
+                'headers' => ['Content-Type' => 'application/json'],
+                'base_uri' => config('app.adselect_endpoint'),
+                'timeout' => 5.0,
+            ]);
+
+            return new JsonRpcAdSelectClient(new JsonRpc($client));
         });
     }
 }
