@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Console\Command;
@@ -60,7 +61,11 @@ class AdSelectInventoryExporterCommand extends Command
 
         /** @var Campaign $campaign */
         foreach ($campaigns as $campaign) {
-            $this->inventoryExporterService->export($campaign);
+            try {
+                $this->inventoryExporterService->export($campaign);
+            } catch (NoBannersForGivenCampaign $exception) {
+                // skip campaign without banners
+            }
         }
     }
 }

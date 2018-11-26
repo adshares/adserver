@@ -18,26 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Adserver\Tests\Console;
 
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
-use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Adserver\Tests\TestCase;
 
-class AdSelectInventoryExporter
+class AdSelectInventoryExporterCommandTest extends TestCase
 {
-    private $client;
-
-    public function __construct(AdSelectClient $client)
+    public function testExport(): void
     {
-        $this->client = $client;
-    }
+        $this->markTestIncomplete(
+            'Method storeTargetingOptions() not implemented.'
+        );
 
-    public function export(Campaign $campaign): void
-    {
-        if ($campaign->getBanners()->count() === 0) {
-            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
-        }
-
-        $this->client->exportInventory($campaign);
+        $this->artisan('ops:inventory:export')
+            ->assertExitCode(0);
     }
 }

@@ -46,8 +46,15 @@ class GuzzleAdSelectClient implements AdSelectClient
 
     public function exportInventory(Campaign $campaign): void
     {
+        $requestParams = [
+            'id' => 0,
+            'jsonrpc' => self::RPC_VERSION,
+            'method' => self::UPDATE_METHOD,
+            'params' => CampaignToAdSelectMapper::map($campaign),
+        ] ;
+
         try {
-            $body = json_encode(CampaignToAdSelectMapper::map($campaign));
+            $body = json_encode($requestParams);
         } catch (InvalidArgumentException $exception) {
             throw new RuntimeException('Invalid data format.');
         }

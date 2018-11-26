@@ -38,17 +38,22 @@ class CampaignToAdSelectMapper
             ];
         }
 
-        return [
-            [
-                'campaign_id' => $campaign->getDemandCampaignId(),
-                'time_start' => (int)$campaign->getDateStart()->format('U'),
-                'time_end' => (int)$campaign->getDateEnd()->format('U'),
-                'banners' => $banners,
-                'filters' => TargetingToAdSelectMapper::map(
-                    $campaign->getTargetingRequires(),
-                    $campaign->getTargetingExcludes()
-                ),
-            ],
+        $targeting = TargetingToAdSelectMapper::map(
+            $campaign->getTargetingRequires(),
+            $campaign->getTargetingExcludes()
+        );
+
+        $mapped = [
+            'campaign_id' => $campaign->getDemandCampaignId(),
+            'time_start' => (int)$campaign->getDateStart()->format('U'),
+            'time_end' => (int)$campaign->getDateEnd()->format('U'),
+            'banners' => $banners,
         ];
+
+        if ($targeting) {
+            $mapped['filters'] = $targeting;
+        }
+
+        return [$mapped];
     }
 }
