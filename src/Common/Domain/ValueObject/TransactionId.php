@@ -59,10 +59,10 @@ final class TransactionId implements Id
 
     public function equals(object $other): bool
     {
-        if (!($other instanceof self)) {
-            return false;
+        if ($other instanceof self) {
+            return $this->value === $other->value;
         }
 
-        return $this->value === $other->__toString();
+        return false;
     }
 }

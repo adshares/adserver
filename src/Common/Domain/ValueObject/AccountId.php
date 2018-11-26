@@ -23,8 +23,11 @@ namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
 use InvalidArgumentException;
+use function dechex;
 use function preg_match;
+use function random_int;
 use function sprintf;
+use function str_pad;
 
 final class AccountId implements Id
 {
@@ -121,9 +124,9 @@ final class AccountId implements Id
         }
 
         if ($strict) {
-            return $this->value === $other->__toString();
+            return $this->value === $other->value;
         }
 
-        return strpos($other->__toString(), substr($this->value, 0, 13)) === 0;
+        return strpos($other->value, substr($this->value, 0, 13)) === 0;
     }
 }

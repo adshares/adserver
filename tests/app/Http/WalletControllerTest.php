@@ -267,7 +267,7 @@ class WalletControllerTest extends TestCase
                     'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
-                    'link' => '-',
+                    'link' => null,
                 ],
             ]
         );
@@ -342,7 +342,7 @@ class WalletControllerTest extends TestCase
                     'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
                     'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
                     'address' => '0001-00000000-XXXX',
-                    'link' => '-',
+                    'link' => null,
                 ],
             ]
         );

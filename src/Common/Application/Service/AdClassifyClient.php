@@ -17,16 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-interface OptionsRepository
+interface AdClassifyClient
 {
-    public function storeTargetingOptions(TargetingOptions $options);
-
-    public function fetchTargetingOptions(): TargetingOptions;
+    public function fetchTaxonomy(): Taxonomy;
 }

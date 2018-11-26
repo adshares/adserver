@@ -17,28 +17,33 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Demand\Application\Service;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptionValue;
+use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 
-final class Value
+class TargetingOptionsImporter
 {
-    /** @var string */
-    private $key;
-    /** @var string */
-    private $label;
+    /** @var AdUserClient */
+    private $client;
+    /** @var ConfigurationRepository */
+    private $repository;
 
-    public function __construct(string $key, string $label)
+    public function __construct(AdUserClient $client, ConfigurationRepository $repository)
     {
-        $this->key = $key;
-        $this->label = $label;
+        $this->client = $client;
+        $this->repository = $repository;
     }
 
-    public function toTargetingOptionValue(): TargetingOptionValue
+    public function import(): void
     {
-        return new TargetingOptionValue($this->label, $this->key);
+        $taxonomy = $this->client->fetchTaxonomy();
+
+        $options = Selector::fromTaxonomy($taxonomy);
+
+        $this->repository->storeTargetingOptions($options);
     }
 }

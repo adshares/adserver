@@ -20,33 +20,44 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
 use InvalidArgumentException;
+use function in_array;
 
-final class Schema
+final class Type
 {
-    private const SCHEMA_PREFIX = 'urn:x-adshares:taxonomy';
+    public const TYPE_NUMBER = 'number';
+    public const TYPE_BOOLEAN = 'boolean';
+    public const TYPE_DICTIONARY = 'dictionary';
+    public const TYPE_INPUT = 'input';
+    private const TYPES = [
+        self::TYPE_NUMBER,
+        self::TYPE_INPUT,
+        self::TYPE_BOOLEAN,
+        self::TYPE_DICTIONARY,
+    ];
 
     /** @var string */
     private $value;
 
-    private function __construct(string $value)
+    public function __construct(string $value)
     {
-        $this->validateSchema($value);
+        $this->validateValue($value);
+
         $this->value = $value;
     }
 
-    private function validateSchema(string $schema): void
+    private function validateValue(string $value): void
     {
-        if (stripos($schema, self::SCHEMA_PREFIX) !== 0) {
-            throw new InvalidArgumentException("Schema '$schema' does not match: ".self::SCHEMA_PREFIX);
+        if (!in_array($value, self::TYPES, true)) {
+            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $value");
         }
     }
 
-    public static function fromString(string $string): self
+    public function is(string $type): bool
     {
-        return new self($string);
+        return $type === $this->value;
     }
 
     public function __toString(): string

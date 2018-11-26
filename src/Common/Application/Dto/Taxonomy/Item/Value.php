@@ -20,33 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
-use Illuminate\Contracts\Support\Arrayable;
+use Adshares\Common\Application\Model\Selector\OptionValue;
 
-final class TargetingOptionValue implements Arrayable
+final class Value
 {
     /** @var string */
-    private $label;
-    /** @var string */
     private $value;
+    /** @var string */
+    private $label;
 
-    public function __construct(string $label, string $value)
+    public function __construct(string $value, string $label)
     {
-        $this->label = $label;
         $this->value = $value;
+        $this->label = $label;
     }
 
-    public static function fromArray(array $input): self
+    public function toOptionValue(): OptionValue
     {
-        return new self($input['label'], $input['value']);
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'label' => $this->label,
-            'value' => $this->value,
-        ];
+        return new OptionValue($this->label, $this->value);
     }
 }

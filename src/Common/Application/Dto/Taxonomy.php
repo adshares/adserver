@@ -20,19 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Dto;
 
-final class TaxonomyItemFactory
+use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+
+final class Taxonomy extends ArrayCollection
 {
-    public static function fromAdUser(array $item): TaxonomyItem
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
+
+    public function __construct(Schema $schema, SemVer $version, Item...$items)
     {
-        return new TaxonomyItem(
-            Type::fromAdUser($item['type']),
-            $item['key'],
-            $item['label'],
-            ...array_map(function (array $datum) {
-                return new Value($datum['key'], $datum['label']);
-            }, $item['data'] ?? [])
-        );
+        $this->schema = $schema;
+        $this->version = $version;
+
+        parent::__construct($items);
     }
 }

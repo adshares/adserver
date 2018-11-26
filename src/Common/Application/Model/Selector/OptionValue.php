@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,17 +18,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Console\Commands;
+declare(strict_types = 1);
 
-use Adshares\Common\Domain\Service\TargetingOptionsImporter;
-use Illuminate\Console\Command;
+namespace Adshares\Common\Application\Model\Selector;
 
-class UpdateTaxonomy extends Command
+final class OptionValue
 {
-    protected $signature = 'ops:taxonomy:update';
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
 
-    public function handle(TargetingOptionsImporter $service): void
+    public function __construct(string $label, string $value)
     {
-        $service->import();
+        $this->label = $label;
+        $this->value = $value;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

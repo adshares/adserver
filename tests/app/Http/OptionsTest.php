@@ -17,23 +17,27 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
+use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use Adshares\Common\Application\Service\AdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class CampaignOptionsTest extends TestCase
+class OptionsTest extends TestCase
 {
     use RefreshDatabase;
-    const URI = '/api/options/campaigns';
 
     public function testTargeting(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->getJson(self::URI.'/targeting');
+        $response = $this->getJson('/api/options/campaigns/targeting');
         $response->assertStatus(200)
             ->assertJsonStructure(
                 [
@@ -57,12 +61,44 @@ class CampaignOptionsTest extends TestCase
                 self::assertFalse($item['valueType'] ?? false);
                 self::assertFalse($item['allowInput'] ?? false);
             } else {
-                self::assertInternalType('array', $item['values']);
+                self::assertInternalType('array', $item['values'] ?? []);
                 self::assertInternalType('string', $item['valueType']);
                 self::assertInternalType('bool', $item['allowInput']);
             }
             self::assertInternalType('string', $item['key']);
             self::assertInternalType('string', $item['label']);
         }
+    }
+
+    public function testFiltering(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson('/api/options/sites/filtering');
+        $response->assertStatus(200)
+            ->assertJsonStructure(
+                [
+                    '*' => [
+                        'key',
+                        'label',
+                    ],
+                ]
+            );
+
+        $content = json_decode($response->content(), true);
+        $this->assertStructure($content);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->bind(AdUserClient::class, function () {
+            return new DummyAdUserClient();
+        });
+
+        $this->app->bind(AdClassifyClient::class, function () {
+            return new DummyAdClassifyClient();
+        });
     }
 }

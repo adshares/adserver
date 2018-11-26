@@ -17,29 +17,32 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Service;
+namespace Adshares\Adserver\Client;
 
-class TargetingOptionsImporter
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Service\AdUserClient;
+use GuzzleHttp\Client;
+use function GuzzleHttp\json_decode;
+
+final class GuzzleAdUserClient implements AdUserClient
 {
-    /** @var AdUserClient */
+    /** @var Client */
     private $client;
-    /** @var OptionsRepository */
-    private $repository;
 
-    public function __construct(AdUserClient $client, OptionsRepository $repository)
+    public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->repository = $repository;
     }
 
-    public function import(): void
+    public function fetchTaxonomy(): Taxonomy
     {
-        $taxonomy = $this->client->fetchTaxonomy();
+        $response = $this->client->get('/getTaxonomy');
+        $taxonomy = json_decode($response->getBody()->getContents(), true);
 
-        $options = $taxonomy->toTargetingOptions();
-
-        $this->repository->storeTargetingOptions($options);
+        return TaxonomyFactory::fromArray($taxonomy);
     }
 }

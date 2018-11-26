@@ -20,28 +20,23 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use function base_path;
+use function file_get_contents;
+use function json_decode;
 
-final class TargetingOptions extends ArrayCollection
+final class DummyAdClassifyClient implements AdClassifyClient
 {
-    public function __construct(TargetingOption ...$items)
+    public function fetchTaxonomy(): Taxonomy
     {
-        parent::__construct($items);
-    }
+        $path = base_path('docs/schemas/taxonomy/v0.1/filtering-example.json');
+        $var = file_get_contents($path);
+        $taxonomy = json_decode($var, true);
 
-    public static function fromArray(array $input): self
-    {
-        return new self(...array_map(function (array $item) {
-            return TargetingOption::fromArray($item);
-        }, $input));
-    }
-
-    public function toArrayRecursive(): array
-    {
-        return array_map(function (TargetingOption $option) {
-            return $option->toArrayRecursive();
-        }, parent::toArray());
+        return TaxonomyFactory::fromArray($taxonomy);
     }
 }

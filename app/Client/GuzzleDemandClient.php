@@ -28,10 +28,11 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use GuzzleHttp\Client;
-use Symfony\Component\HttpFoundation\Response;
-use InvalidArgumentException;
 use DateTime;
+use GuzzleHttp\Client;
+use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
+use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -43,17 +44,17 @@ final class GuzzleDemandClient implements DemandClient
     {
         $client = new Client([
             'base_uri' => $inventoryHost,
-            'timeout'  => 5.0,
+            'timeout' => 5.0,
         ]);
 
         $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
         $statusCode = $response->getStatusCode();
-        $body = (string) $response->getBody();
+        $body = (string)$response->getBody();
 
         $this->validateResponse($statusCode, $body);
 
         try {
-            $campaigns =\GuzzleHttp\json_decode($body, true);
+            $campaigns = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
             throw new \RuntimeException('Invalid json data.');
         }

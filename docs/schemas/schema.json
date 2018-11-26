@@ -6,10 +6,8 @@
       "$id": "#dataType",
       "type": "string",
       "enum": [
-        "boolean",
-        "number",
-        "integer",
-        "enum",
+        "bool",
+        "num",
         "input",
         "dict"
       ]
