@@ -17,28 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Domain\ValueObject\TargetingOptionValue;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-final class Value
+interface AdClassifyClient
 {
-    /** @var string */
-    private $key;
-    /** @var string */
-    private $label;
-
-    public function __construct(string $key, string $label)
-    {
-        $this->key = $key;
-        $this->label = $label;
-    }
-
-    public function toTargetingOptionValue(): TargetingOptionValue
-    {
-        return new TargetingOptionValue($this->label, $this->key);
-    }
+    public function fetchTaxonomy(): Taxonomy;
 }

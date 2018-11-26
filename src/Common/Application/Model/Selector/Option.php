@@ -20,14 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Common\Application\Model\Selector;
 
+use Adshares\Common\Application\Model\Selector;
 use InvalidArgumentException;
 use function array_filter;
 use function in_array;
 use function is_bool;
 
-final class TargetingOption
+final class Option
 {
     public const TYPE_STRING = 'string';
     public const TYPE_NUMBER = 'number';
@@ -41,18 +42,16 @@ final class TargetingOption
     private $label;
     /** @var bool */
     private $allowInput;
-    /** @var TargetingOptions */
+    /** @var Selector */
     private $children;
-    /** @var TargetingOptionValue[] */
-    private $values;
+    /** @var OptionValue[] */
+    private $values = [];
 
     public function __construct(
         ?string $type,
         string $key,
         string $label,
-        ?bool $allowInput,
-        TargetingOptions $children,
-        TargetingOptionValue ...$values
+        bool $allowInput
     ) {
         if (($type ?? false) && !in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $type");
@@ -61,39 +60,41 @@ final class TargetingOption
         $this->key = $key;
         $this->label = $label;
         $this->allowInput = $allowInput;
-        $this->children = $children;
-        $this->values = $values;
+        $this->children = new Selector();
     }
 
-    public static function fromArray(array $item): self
+    public function withValues(OptionValue ...$values)
     {
-        $values = array_map(function (array $value) {
-            return TargetingOptionValue::fromArray($value);
-        }, $item['values'] ?? []);
+        $this->values = $values;
 
-        return new self(
-            $item['value_type'] ?? null,
-            $item['key'],
-            $item['label'],
-            $item['allow_input'] ?? null,
-            TargetingOptions::fromArray($item['children'] ?? []),
-            ...$values
-        );
+        return $this;
     }
 
-    public function toArrayRecursive(): array
+    public function withChildren(Selector $children): self
+    {
+        $this->children = $children;
+
+        return $this;
+    }
+
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
         return array_filter([
             'value_type' => $this->type,
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursive(),
-            'values' => array_map(function (TargetingOptionValue $option) {
-                return $option->toArray();
-            }, $this->values),
+            'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+            'values' => $this->valuesToArray(),
         ], function ($item) {
             return !empty($item) || is_bool($item);
         });
+    }
+
+    private function valuesToArray(): array
+    {
+        return array_map(function (OptionValue $option) {
+            return $option->toArray();
+        }, $this->values);
     }
 }

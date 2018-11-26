@@ -20,25 +20,17 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Dto\TaxonomyVersion0;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Application\Model\Selector;
 
-final class TaxonomyFactory
+interface ConfigurationRepository
 {
-    public static function fromJson(string $json): Taxonomy
-    {
-        return self::fromArray(json_decode($json, true));
-    }
+    public function storeTargetingOptions(Selector $options);
 
-    public static function fromArray(array $taxonomy): Taxonomy
-    {
-        return new Taxonomy(
-            Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy'),
-            SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']),
-            ...array_map(function (array $item) {
-                return TaxonomyItemFactory::fromAdUser($item);
-            }, $taxonomy['data'])
-        );
-    }
+    public function storeFilteringOptions(Selector $options);
+
+    public function fetchTargetingOptions(): Selector;
+
+    public function fetchFilteringOptions(): Selector;
 }

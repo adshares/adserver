@@ -20,32 +20,33 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository;
+namespace Adshares\Common\Application\Model;
 
-use Adshares\Common\Domain\Service\AdUserClient;
-use Adshares\Common\Domain\Service\OptionsRepository;
-use Adshares\Common\Domain\ValueObject\TargetingOptions;
-use Exception;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Application\Model\Selector\Option;
 
-final class DummyOptionsRepository implements OptionsRepository
+final class Selector
 {
-    /** @var AdUserClient */
-    private $adUserClient;
+    /** @var Option[] */
+    private $items;
 
-    public function __construct(AdUserClient $adUserClient)
+    public function __construct(Option ...$items)
     {
-        $this->adUserClient = $adUserClient;
+        $this->items = $items;
     }
 
-    public function storeTargetingOptions(TargetingOptions $options): void
+    public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
-        throw new Exception("Method storeTargetingOptions() not implemented");
+        return new Selector(...array_map(function (Item $item) {
+            return $item->toSelectorOption();
+        }, $taxonomy->toArray()));
     }
 
-    public function fetchTargetingOptions(): TargetingOptions
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        $taxonomy = $this->adUserClient->fetchTaxonomy();
-
-        return $taxonomy->toTargetingOptions();
+        return array_map(function (Option $option) {
+            return $option->toArrayRecursiveWithoutEmptyFields();
+        }, $this->items);
     }
 }

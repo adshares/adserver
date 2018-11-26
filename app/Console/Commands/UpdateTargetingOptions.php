@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,24 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Controllers\Manager;
+namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Http\Controller;
+use Adshares\Demand\Application\Service\TargetingOptionsImporter;
+use Illuminate\Console\Command;
 
-class SiteOptionsController extends Controller
+class UpdateTargetingOptions extends Command
 {
-    public function filtering()
-    {
-        return self::json(json_decode(Simulator::FILTERING_JSON));
-    }
+    protected $signature = 'ops:targeting-options:update';
 
-    public function languages()
+    public function handle(TargetingOptionsImporter $service): void
     {
-        return self::json(Simulator::getAvailableLanguages());
-    }
-
-    public function zones()
-    {
-        return self::json(Simulator::getZoneTypes());
+        $service->import();
     }
 }
