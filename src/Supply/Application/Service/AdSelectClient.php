@@ -18,13 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Supply\Application\Service;
 
-namespace Adshares\Supply\Domain\ValueObject\Exception;
+use Adshares\Supply\Domain\Model\Campaign;
 
-use RuntimeException;
-
-class InvalidCampaignDateException extends RuntimeException
+interface AdSelectClient
 {
-
+    public function exportInventory(Campaign $campaign): void;
 }

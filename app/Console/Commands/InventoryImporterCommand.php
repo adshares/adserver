@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Repository\Supply\NetworkHostRepository;
@@ -26,7 +28,7 @@ use Illuminate\Console\Command;
 
 class InventoryImporterCommand extends Command
 {
-    protected $signature = 'inventory:import';
+    protected $signature = 'ops:inventory:import';
 
     protected $description = 'Import data from all defined inventories';
 
@@ -49,7 +51,7 @@ class InventoryImporterCommand extends Command
         $networkHosts = $this->networkHost->find();
 
         if (!$networkHosts) {
-            $this->info('Stoped importing. No hosts found.');
+            $this->info('Stopped importing. No hosts found.');
             return;
         }
 

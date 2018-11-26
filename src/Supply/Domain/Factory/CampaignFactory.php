@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Supply\Domain\Factory;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
@@ -29,19 +31,22 @@ use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
+use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 
 class CampaignFactory
 {
     public static function createFromArray(array $data): Campaign
     {
+
         self::validateArrayParameters($data);
 
-        $source = $data['source_host'];
-        $sourceHost = new SourceHost(
+        $source = $data['source_campaign'];
+        $sourceHost = new SourceCampaign(
             $source['host'],
             $source['address'],
-            $source['version']
+            $source['version'],
+            $source['created_at'],
+            $source['updated_at'] ?? null
         );
 
         $budget = new Budget($data['budget'], $data['max_cpc'], $data['max_cpm']);
@@ -52,7 +57,7 @@ class CampaignFactory
         $campaign = new Campaign(
             Uuid::v4(),
             $data['uuid'],
-            $data['user_id'],
+            $data['publisher_id'],
             $data['landing_url'],
             new CampaignDate($data['date_start'], $data['date_end'], $data['created_at'], $data['updated_at']),
             $banners,
@@ -67,7 +72,7 @@ class CampaignFactory
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
 
-            $banners[] = new Banner($campaign, Uuid::v4(), $bannerUrl, $banner['type'], $size);
+            $banners[] = new Banner($campaign, Uuid::v4(), $bannerUrl, $banner['type'], $size, '');
         }
 
         $campaign->setBanners(new ArrayCollection($banners));
@@ -78,17 +83,19 @@ class CampaignFactory
     private static function validateArrayParameters(array $data): void
     {
         $pattern = [
-            'source_host' => ['host', 'address', 'version'],
+            'source_campaign' => ['host', 'address', 'version', 'created_at', 'updated_at'],
             'created_at',
             'updated_at',
             'budget',
             'max_cpc',
             'max_cpm',
             'uuid',
-            'user_id',
+            'publisher_id',
             'landing_url',
             'date_start',
             'date_end',
+            'created_at',
+            'updated_at',
             'targeting_requires',
             'targeting_excludes',
         ];

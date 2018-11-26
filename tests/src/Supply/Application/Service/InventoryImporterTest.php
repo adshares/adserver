@@ -22,14 +22,15 @@ namespace Adshares\Test\Supply\Application\Service;
 
 use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
-use Adshares\Supply\Domain\Service\DemandClient;
-use Adshares\Supply\Domain\Service\Exception\EmptyInventoryException;
 use PHPUnit\Framework\TestCase;
 
 final class InventoryImporterTest extends TestCase
@@ -57,6 +58,29 @@ final class InventoryImporterTest extends TestCase
         $this->doesNotPerformAssertions();
     }
 
+    public function testImportWhenDemandClientReturnsUnexpectedResponse(): void
+    {
+        $repository = $this->repositoryMock();
+        $demandClient = $this->clientMock(null, true);
+        $transactionManager = $this->transactionManagerMock();
+        $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
+
+        $transactionManager
+            ->expects($this->never())
+            ->method('begin');
+
+        $inventoryImporter = new InventoryImporter(
+            $markCampaignAsDeletedService,
+            $repository,
+            $demandClient,
+            $transactionManager
+        );
+
+        $inventoryImporter->import('localhost:8101');
+
+        $this->doesNotPerformAssertions();
+    }
+
     private function repositoryMock()
     {
         $repository = $this->createMock(CampaignRepository::class);
@@ -64,9 +88,18 @@ final class InventoryImporterTest extends TestCase
         return $repository;
     }
 
-    private function clientMock(?CampaignCollection $campaigns = null)
+    private function clientMock(?CampaignCollection $campaigns = null, bool $badResponse = false)
     {
         $client = $this->createMock(DemandClient::class);
+
+        if ($badResponse) {
+            $client
+                ->expects($this->once())
+                ->method('fetchAllInventory')
+                ->will($this->throwException(new UnexpectedClientResponseException()));
+
+            return $client;
+        }
 
         if (null === $campaigns) {
             $client

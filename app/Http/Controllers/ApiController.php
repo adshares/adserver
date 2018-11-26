@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\Request;
@@ -62,7 +63,7 @@ class ApiController extends Controller
             $date_end = ($campaign->time_end !== null) ? $this->parseDateToISO8601($campaign->time_end) : null;
             $campaigns[] = [
                 'uuid' => $campaign->uuid,
-                'user_id' => $campaign->user_id,
+                'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $date_start,
                 'date_end' => $date_end,
@@ -74,7 +75,7 @@ class ApiController extends Controller
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
-                'adshares_address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                'address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
             ];
         }
 

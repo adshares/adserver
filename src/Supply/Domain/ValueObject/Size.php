@@ -81,4 +81,9 @@ final class Size
     {
         return $this->height;
     }
+
+    public function __toString(): string
+    {
+        return $this->width.'x'.$this->height;
+    }
 }

@@ -52,8 +52,17 @@ final class Banner
     /** @var Size */
     private $size;
 
-    public function __construct(Campaign $campaign, Id $id, BannerUrl $bannerUrl, string $type, Size $size)
-    {
+    /** @var string */
+    private $checksum;
+
+    public function __construct(
+        Campaign $campaign,
+        Id $id,
+        BannerUrl $bannerUrl,
+        string $type,
+        Size $size,
+        string $checksum
+    ) {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(
                 'Unsupported banner `%s` type. Only %s are allowed.',
@@ -67,6 +76,22 @@ final class Banner
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
         $this->size = $size;
+        $this->checksum = $checksum;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->getId(),
+            'type' => $this->getType(),
+            'size' => (string)$this->size,
+            'width' => $this->size->getWidth(),
+            'height' => $this->size->getHeight(),
+            'checksum' => $this->checksum,
+            'serve_url' => $this->bannerUrl->getServeUrl(),
+            'click_url' => $this->bannerUrl->getClickUrl(),
+            'view_url' => $this->bannerUrl->getViewUrl(),
+        ];
     }
 
     public function getId(): string
@@ -77,11 +102,6 @@ final class Banner
     public function getCampaignId(): string
     {
         return (string)$this->campaign->getId();
-    }
-
-    public function getBannerUrl(): BannerUrl
-    {
-        return $this->bannerUrl;
     }
 
     public function getType(): string
@@ -97,5 +117,10 @@ final class Banner
     public function getHeight(): int
     {
         return $this->size->getHeight();
+    }
+
+    public function getSize(): string
+    {
+        return (string)$this->size;
     }
 }

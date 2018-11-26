@@ -18,9 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Service\Exception;
+declare(strict_types=1);
 
-class EmptyInventoryException extends \RuntimeException
+namespace Adshares\Adserver\Client\Mapper;
+
+class TargetingToAdSelectMapper
 {
-
+    public static function map(array $requires, array $excludes): array
+    {
+        return [
+            'exclude' => [
+                [
+                    'filter' => [
+                        'args' => "18-20",
+                        'type' => '=',
+                    ],
+                    'keyword' => 'age_bracket',
+                ],
+            ],
+        ];
+    }
 }

@@ -20,10 +20,10 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use Adshares\Supply\Domain\Service\DemandClient;
 use DateTime;
 
 final class DummyDemandClient implements DemandClient
@@ -36,16 +36,18 @@ final class DummyDemandClient implements DemandClient
             CampaignFactory::createFromArray([
                 'id' => 1,
                 'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
-                'user_id' => 1,
+                'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
                 'date_end' => (new DateTime())->modify('+2 days'),
                 'created_at' => (new DateTime())->modify('-1 days'),
                 'updated_at' => (new DateTime())->modify('-1 days'),
-                'source_host' => [
+                'source_campaign' => [
                     'host' => 'localhost:8101',
                     'address' => '0001-00000001-0001',
                     'version' => '0.1',
+                    'created_at' => new DateTime(),
+                    'updated_at' => new DateTime(),
                 ],
                 'banners' => [
                     [
@@ -86,16 +88,18 @@ final class DummyDemandClient implements DemandClient
             CampaignFactory::createFromArray([
                 'id' => 2,
                 'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
-                'user_id' => 2,
+                'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),
                 'date_end' => (new DateTime())->modify('+20 days'),
                 'created_at' => (new DateTime())->modify('-10 days'),
                 'updated_at' => (new DateTime())->modify('-1 days'),
-                'source_host' => [
+                'source_campaign' => [
                     'host' => 'localhost:8101',
                     'address' => '0001-00000001-0001',
                     'version' => '0.1',
+                    'created_at' => (new DateTime()),
+                    'updated_at' => (new DateTime()),
                 ],
                 'banners' => [
                     [

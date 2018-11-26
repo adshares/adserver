@@ -18,13 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+namespace Adshares\Supply\Application\Service;
 
-namespace Adshares\Supply\Domain\Service;
+use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
+use Adshares\Supply\Domain\Model\Campaign;
 
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class AdSelectInventoryExporter
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+    private $client;
+
+    public function __construct(AdSelectClient $client)
+    {
+        $this->client = $client;
+    }
+
+    public function export(Campaign $campaign): void
+    {
+        if ($campaign->getBanners()->count() === 0) {
+            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
+        }
+
+        $this->client->exportInventory($campaign);
+    }
 }

@@ -18,11 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Service\Exception;
+declare(strict_types=1);
 
-use RuntimeException;
+namespace Adshares\Supply\Application\Service;
 
-class UnexpectedClientResponseException extends RuntimeException
+use Adshares\Supply\Domain\Model\CampaignCollection;
+
+interface DemandClient
 {
-
+    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
 }

@@ -18,11 +18,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Domain\Model;
+namespace Adshares\Adserver\Tests\Console;
 
-class DemandServer
+use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+class AdSelectInventoryExporterCommandTest extends TestCase
 {
-    private $id;
+    use RefreshDatabase;
 
-    private $address;
+    public function testExport(): void
+    {
+        $this->artisan('ops:inventory:export')
+            ->assertExitCode(0);
+    }
 }

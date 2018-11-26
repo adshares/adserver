@@ -26,7 +26,7 @@ use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
+use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Datetime;
 
 final class Campaign
@@ -39,7 +39,7 @@ final class Campaign
     private $id;
 
     /** @var int */
-    private $userId;
+    private $publisherId;
 
     /** @var string */
     private $landingUrl;
@@ -47,8 +47,8 @@ final class Campaign
     /** @var ArrayCollection */
     private $banners;
 
-    /** @var SourceHost */
-    private $sourceHost;
+    /** @var SourceCampaign */
+    private $sourceCampaign;
 
     /** @var Budget */
     private $budget;
@@ -71,32 +71,27 @@ final class Campaign
     public function __construct(
         Id $id,
         Id $demandCampaignId,
-        int $userId,
+        Id $publisherId,
         string $landingUrl,
         CampaignDate $campaignDate,
         array $banners,
         Budget $budget,
-        SourceHost $sourceHost,
+        SourceCampaign $sourceCampaign,
         int $status,
         array $targetingRequires = [],
         array $targetingExcludes = []
     ) {
         $this->id = $id;
         $this->demandCampaignId = $demandCampaignId;
-        $this->userId = $userId;
-
+        $this->publisherId = $publisherId;
         $this->landingUrl = $landingUrl;
-
-        $this->banners = new ArrayCollection($banners);
-
         $this->budget = $budget;
-        $this->sourceHost = $sourceHost;
-
+        $this->sourceCampaign = $sourceCampaign;
         $this->targetingRequires = $targetingRequires;
         $this->targetingExcludes = $targetingExcludes;
-
         $this->status = $status;
         $this->campaignDate = $campaignDate;
+        $this->banners = new ArrayCollection($banners);
     }
 
     public function deactivate(): void
@@ -107,6 +102,30 @@ final class Campaign
     public function activate(): void
     {
         $this->status = self::STATUS_ACTIVE;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => (string)$this->id,
+            'demand_campaign_id' => (string)$this->demandCampaignId,
+            'publisher_id' => (string)$this->publisherId,
+            'landing_url' => $this->landingUrl,
+            'max_cpc' => $this->budget->getMaxCpc(),
+            'max_cpm' => $this->budget->getMaxCpm(),
+            'budget' => $this->budget->getBudget(),
+            'source_host' => $this->sourceCampaign->getHost(),
+            'source_version' => $this->sourceCampaign->getVersion(),
+            'source_address' => $this->sourceCampaign->getAddress(),
+            'source_created_at' => $this->sourceCampaign->getCreatedAt(),
+            'source_updated_at' => $this->sourceCampaign->getUpdatedAt(),
+            'created_at' => $this->campaignDate->getCreatedAt(),
+            'updated_at' => $this->campaignDate->getUpdatedAt(),
+            'date_start' => $this->campaignDate->getDateStart(),
+            'date_end' => $this->campaignDate->getDateEnd(),
+            'targeting_requires' => $this->targetingRequires,
+            'targeting_excludes' => $this->targetingExcludes,
+        ];
     }
 
     public function getStatus(): int
@@ -129,54 +148,14 @@ final class Campaign
         return (string)$this->id;
     }
 
+    public function getPublisherId(): string
+    {
+        return (string)$this->publisherId;
+    }
+
     public function getDemandCampaignId(): string
     {
         return (string)$this->demandCampaignId;
-    }
-
-    public function getLandingUrl(): string
-    {
-        return $this->landingUrl;
-    }
-
-    public function getSourceHost(): string
-    {
-        return $this->sourceHost->getHost();
-    }
-
-    public function getSourceAddress(): string
-    {
-        return $this->sourceHost->getAddress();
-    }
-
-    public function getCreatedAt(): DateTime
-    {
-        return $this->campaignDate->getCreatedAt();
-    }
-
-    public function getUpdatedAt(): DateTime
-    {
-        return $this->campaignDate->getUpdatedAt();
-    }
-
-    public function getSourceVersion(): string
-    {
-        return $this->sourceHost->getVersion();
-    }
-
-    public function getMaxCpc(): float
-    {
-        return $this->budget->getMaxCpc();
-    }
-
-    public function getMaxCpm(): float
-    {
-        return $this->budget->getMaxCpm();
-    }
-
-    public function getBudget(): float
-    {
-        return $this->budget->getBudget();
     }
 
     public function getDateStart(): DateTime

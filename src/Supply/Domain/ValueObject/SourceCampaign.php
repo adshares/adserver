@@ -18,11 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types=1);
+
 namespace Adshares\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
+use DateTime;
 
-class SourceHost
+class SourceCampaign
 {
     /** @var string */
     private $host;
@@ -33,10 +36,18 @@ class SourceHost
     /** @var string */
     private $version;
 
+    /** @var DateTime */
+    private $createdAt;
+
+    /** @var DateTime|null */
+    private $updatedAt;
+
     public function __construct(
         string $host,
         string $address,
-        string $version
+        string $version,
+        DateTime $createdAt,
+        ?DateTime $updatedAt
     ) {
         if (!filter_var($host, FILTER_VALIDATE_DOMAIN)) {
             throw new InvalidUrlException(sprintf('Host value `%s` is invalid. It must be a valid URL.', $host));
@@ -45,6 +56,8 @@ class SourceHost
         $this->host = $host;
         $this->address = $address;
         $this->version = $version;
+        $this->updatedAt = $updatedAt;
+        $this->createdAt = $createdAt;
     }
 
     public function getHost(): string
@@ -60,5 +73,15 @@ class SourceHost
     public function getVersion(): string
     {
         return $this->version;
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?DateTime
+    {
+        return $this->updatedAt;
     }
 }

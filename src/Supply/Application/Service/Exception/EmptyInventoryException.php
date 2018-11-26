@@ -18,18 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Test\Supply\Domain\ValueObject;
+namespace Adshares\Supply\Application\Service\Exception;
 
-use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
-use PHPUnit\Framework\TestCase;
-
-final class SourceHostTest extends TestCase
+class EmptyInventoryException extends \RuntimeException
 {
-    public function testWhenHostIsInvalid(): void
-    {
-        $this->expectException(InvalidUrlException::class);
 
-        new SourceHost('', '0001-00000001-0001', '0.1');
-    }
 }

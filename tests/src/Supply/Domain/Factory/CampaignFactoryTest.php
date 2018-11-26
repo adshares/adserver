@@ -36,16 +36,18 @@ final class CampaignFactoryTest extends TestCase
         $this->data = [
             'id' => 1,
             'uuid' => Uuid::v4(),
-            'user_id' => 1,
+            'publisher_id' => Uuid::v4(),
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),
             'date_end' => (new DateTime())->modify('+2 days'),
             'created_at' => (new DateTime())->modify('-1 days'),
             'updated_at' => (new DateTime())->modify('-1 days'),
-            'source_host' => [
+            'source_campaign' => [
                 'host' => 'localhost:8101',
                 'address' => '0001-00000001-0001',
                 'version' => '0.1',
+                'created_at' => new DateTime(),
+                'updated_at' => new DateTime(),
             ],
             'banners' => [
                 [
@@ -97,8 +99,8 @@ final class CampaignFactoryTest extends TestCase
         $this->expectException(InvalidCampaignArgumentException::class);
 
         $data = $this->data;
-        unset($data['source_host']['host']);
-        unset($data['source_host']['version']);
+        unset($data['source_campaign']['host']);
+        unset($data['source_campaign']['version']);
 
         CampaignFactory::createFromArray($data);
     }

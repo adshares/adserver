@@ -18,13 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
-
-namespace Adshares\Supply\Domain\ValueObject\Exception;
+namespace Adshares\Supply\Application\Service\Exception;
 
 use RuntimeException;
 
-class InvalidCampaignDateException extends RuntimeException
+class UnexpectedClientResponseException extends RuntimeException
 {
 
 }

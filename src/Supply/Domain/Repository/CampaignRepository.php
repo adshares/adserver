@@ -23,10 +23,13 @@ declare(strict_types=1);
 namespace Adshares\Supply\Domain\Repository;
 
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
 interface CampaignRepository
 {
     public function markedAsDeletedByHost(string $host): void;
 
     public function save(Campaign $campaign): void;
+
+    public function fetchActiveCampaigns(): CampaignCollection;
 }
