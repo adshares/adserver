@@ -42,11 +42,10 @@ class NetworkBanner extends Model
         'serve_url',
         'click_url',
         'view_url',
-        'creative_contents',
-        'creative_type',
-        'creative_sha1',
-        'creative_width',
-        'creative_height',
+        'type',
+        'checksum',
+        'width',
+        'height',
     ];
 
     /**
@@ -66,16 +65,16 @@ class NetworkBanner extends Model
      */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
-        'creative_sha1' => 'BinHex',
+        'checksum' => 'BinHex',
     ];
 
     public function getAdselectJson()
     {
         return [
             'banner_id' => $this->uuid,
-            'banner_size' => $this->creative_width.'x'.$this->creative_height,
+            'banner_size' => $this->width.'x'.$this->height,
             'keywords' => [
-                'type' => $this->creative_type,
+                'type' => $this->type,
             ],
         ];
     }

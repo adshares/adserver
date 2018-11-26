@@ -52,7 +52,17 @@ final class Banner
     /** @var Size */
     private $size;
 
-    public function __construct(Campaign $campaign, Id $id, BannerUrl $bannerUrl, string $type, Size $size)
+    /** @var string */
+    private $checksum;
+
+    public function __construct(
+        Campaign $campaign,
+        Id $id,
+        BannerUrl $bannerUrl,
+        string $type,
+        Size $size,
+        string $checksum
+    )
     {
         if (!in_array($type, self::SUPPORTED_TYPES)) {
             throw new UnsupportedBannerSizeException(sprintf(
@@ -67,6 +77,23 @@ final class Banner
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
         $this->size = $size;
+        $this->checksum = $checksum;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'banner_url' => $this->bannerUrl,
+            'type' => $this->type,
+            'size' => (string)$this->size,
+            'width' => $this->size->getWidth(),
+            'height' => $this->size->getHeight(),
+            'checksum' => $this->checksum,
+            'serve_url' => $this->bannerUrl->getServeUrl(),
+            'click_url' => $this->bannerUrl->getClickUrl(),
+            'view_url' => $this->bannerUrl->getViewUrl(),
+        ];
     }
 
     public function getId(): string

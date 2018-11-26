@@ -28,7 +28,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
+use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 
@@ -41,6 +41,8 @@ final class BannerTest extends TestCase
      * @param string $type
      * @param bool $valid
      *
+     * @throws \Exception
+     *
      * @dataProvider dataProvider
      */
     public function testWhenTypeIsInvalid(string $type, bool $valid)
@@ -52,23 +54,23 @@ final class BannerTest extends TestCase
         $campaign = new Campaign(
             Uuid::v4(),
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
-            1,
+            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
             [],
             new Budget(10, null, 2),
-            new SourceHost('localhost', '0000-00000000-0001', '0.1'),
+            new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
             Campaign::STATUS_PROCESSING,
             [],
             []
         );
 
+        $checksum = '';
         $bannerUrl = new BannerUrl('http://example.com', 'http://example.com', 'http://example.com');
-        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90));
+        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90), $checksum);
 
         $this->assertEquals($type, $banner->getType());
     }
-
     public function dataProvider()
     {
         return [

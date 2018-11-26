@@ -79,16 +79,20 @@ final class GuzzleDemandClient implements DemandClient
     private function processData(array $data, string $inventoryHost): array
     {
         $data['uuid'] = Uuid::fromString($data['uuid']);
+        $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_start']);
         $data['date_end'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_end']);
-        $data['created_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']);
-        $data['updated_at'] = DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']);
 
-        $data['source_host'] = [
+        $data['source_campaign'] = [
             'host' => $inventoryHost,
-            'address' => '',
+            'address' => $data['address'],
             'version' => self::VERSION,
+            'created_at' => DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']),
+            'updated_at' => DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']),
         ];
+
+        $data['created_at'] = new DateTime();
+        $data['updated_at'] = new DateTime();
 
         return $data;
     }

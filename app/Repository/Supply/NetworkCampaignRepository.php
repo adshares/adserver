@@ -76,45 +76,22 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkBanners = [];
 
-        /** @var Banner $banner */
-        foreach ($banners as $banner) {
-            $bannerUrl = $banner->getBannerUrl();
+        /** @var Banner $domainBanner */
+        foreach ($banners as $domainBanner) {
+            $banner = $domainBanner->toArray();
+            $banner['uuid'] = $banner['id'];
+            unset($banner['id']);
 
-            $networkBanner = new NetworkBanner();
-            $networkBanner->uuid = $banner->getId();
-            $networkBanner->serve_url = $bannerUrl->getServeUrl();
-            $networkBanner->click_url = $bannerUrl->getClickUrl();
-            $networkBanner->view_url = $bannerUrl->getViewUrl();
-            $networkBanner->creative_type = $banner->getType();
-            $networkBanner->creative_width = $banner->getWidth();
-            $networkBanner->creative_height = $banner->getHeight();
-
-            $networkBanners[] = $networkBanner;
+            $networkBanners[] = new NetworkBanner($banner);
         }
 
-        $networkCampaign = new NetworkCampaign();
-        $networkCampaign->uuid = $campaign->getId();
-        $networkCampaign->demand_campaign_id = $campaign->getDemandCampaignId();
-        $networkCampaign->landing_url = $campaign->getLandingUrl();
+        $campaign = $campaign->toArray();
+        $campaign['uuid'] = $campaign['id'];
+        unset($campaign['id']);
 
-        $networkCampaign->max_cpc = $campaign->getMaxCpc();
-        $networkCampaign->max_cpm = $campaign->getMaxCpm();
-        $networkCampaign->budget_per_hour = $campaign->getBudget();
-
-        $networkCampaign->source_host = $campaign->getSourceHost();
-        $networkCampaign->source_created_at = $campaign->getCreatedAt();
-        $networkCampaign->source_updated_at = $campaign->getUpdatedAt();
-        $networkCampaign->adshares_address = $campaign->getSourceAddress();
-        $networkCampaign->source_version = $campaign->getSourceVersion();
-
-        $networkCampaign->time_start = $campaign->getDateStart();
-        $networkCampaign->time_end = $campaign->getDateEnd();
-
-        $networkCampaign->targeting_requires = $campaign->getTargetingRequires();
-        $networkCampaign->targeting_excludes = $campaign->getTargetingExcludes();
+        $networkCampaign = new NetworkCampaign($campaign);
 
         $networkCampaign->save();
-
         $networkCampaign->banners()->saveMany($networkBanners);
     }
 
@@ -140,30 +117,32 @@ class NetworkCampaignRepository implements CampaignRepository
                 'serve_url' => $networkBanner->serve_url,
                 'click_url' => $networkBanner->click_url,
                 'view_url' => $networkBanner->view_url,
-                'type' => $networkBanner->creative_type,
-                'width' => $networkBanner->creative_width,
-                'height' => $networkBanner->creative_height,
+                'type' => $networkBanner->type,
+                'width' => $networkBanner->width,
+                'height' => $networkBanner->height,
             ];
         }
 
         return CampaignFactory::createFromArray([
             'id' => 1,
             'uuid' => Uuid::fromString($networkCampaign->uuid),
-            'user_id' => 1, //$networkCampaign->user_id, @todo make user_id uuid
+            'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
             'landing_url' => $networkCampaign->landing_url,
-            'date_start' => $networkCampaign->time_start,
-            'date_end' => $networkCampaign->time_end,
+            'date_start' => $networkCampaign->date_start,
+            'date_end' => $networkCampaign->date_end,
+            'source_campaign' => [
+                'host' => $networkCampaign->source_host,
+                'address' => $networkCampaign->source_address,
+                'version' => $networkCampaign->source_version,
+                'created_at' => $networkCampaign->source_created_at,
+                'updated_at' => $networkCampaign->source_updated_at,
+            ],
             'created_at' => $networkCampaign->created_at,
             'updated_at' => $networkCampaign->updated_at,
-            'source_host' => [
-                'host' => 'localhost:8101',
-                'address' => '0001-00000001-0001',
-                'version' => '0.1',
-            ],
             'banners' => $banners,
             'max_cpc' => $networkCampaign->max_cpc,
             'max_cpm' => $networkCampaign->max_cpm,
-            'budget' => $networkCampaign->budget_per_hour,
+            'budget' => $networkCampaign->budget,
             'targeting_excludes' => $networkCampaign->targeting_excludes,
             'targeting_requires' => $networkCampaign->targeting_requires,
         ]);

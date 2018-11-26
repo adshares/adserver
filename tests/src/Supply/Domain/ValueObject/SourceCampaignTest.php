@@ -21,15 +21,16 @@
 namespace Adshares\Test\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
-use Adshares\Supply\Domain\ValueObject\SourceHost;
+use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use DateTime;
 use PHPUnit\Framework\TestCase;
 
-final class SourceHostTest extends TestCase
+final class SourceCampaignTest extends TestCase
 {
     public function testWhenHostIsInvalid(): void
     {
         $this->expectException(InvalidUrlException::class);
 
-        new SourceHost('', '0001-00000001-0001', '0.1');
+        new SourceCampaign('', '0001-00000001-0001', '0.1', new DateTime(), new DateTime());
     }
 }

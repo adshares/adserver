@@ -67,6 +67,10 @@ class GuzzleAdSelectClient implements AdSelectClient
             throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`.', $statusCode));
         }
 
+        if (empty($body)) {
+            throw new UnexpectedClientResponseException(sprintf('Empty response body.'));
+        }
+
         $bodyDecoded = json_decode($body, true);
 
         if (!isset($bodyDecoded['result']) || !$bodyDecoded['result']) {
