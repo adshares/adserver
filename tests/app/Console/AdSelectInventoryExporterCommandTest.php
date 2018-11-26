@@ -21,9 +21,12 @@
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdSelectInventoryExporterCommandTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testExport(): void
     {
         $this->artisan('ops:inventory:export')

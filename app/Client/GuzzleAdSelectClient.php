@@ -67,7 +67,7 @@ class GuzzleAdSelectClient implements AdSelectClient
         $statusCode = $response->getStatusCode();
         $body = $response->getBody();
 
-        $this->validateResponse($statusCode, $body);
+        $this->validateResponse($statusCode, (string)$body);
     }
 
     private function validateResponse(int $statusCode, string $body): void
