@@ -53,5 +53,4 @@ class BannerFinderClientTest extends TestCase
 
         self::assertGreaterThan(0, count($banners));
     }
-
 }
