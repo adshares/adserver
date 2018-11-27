@@ -59,7 +59,9 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(BannerFinder::class, function (Application $app) {
             return new JsonRpcAdSelectClient(
                 new JsonRpc(
-                    $app->make(AdSelectHttpClient::class)));
+                    $app->make(AdSelectHttpClient::class)
+                )
+            );
         });
 
         $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
@@ -73,7 +75,9 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(AdSelectInventoryExporter::class, function (Application $app) {
             return new AdSelectInventoryExporter(
                 new GuzzleAdSelectClient(
-                    $app->make(AdSelectHttpClient::class)));
+                    $app->make(AdSelectHttpClient::class)
+                )
+            );
         });
     }
 }

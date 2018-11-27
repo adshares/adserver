@@ -50,7 +50,5 @@ final class OptionsProvider extends ServiceProvider
                 $app->make(FilteringOptionsSource::class)
             );
         });
-
     }
-
 }

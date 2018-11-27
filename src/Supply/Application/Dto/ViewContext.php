@@ -32,8 +32,7 @@ final class ViewContext
             }
 
             return $param;
-        }, $this->params()
-        );
+        }, $this->params());
     }
 
     private function params(): array
