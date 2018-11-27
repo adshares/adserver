@@ -73,11 +73,11 @@ final class ClientProvider extends ServiceProvider
         });
 
         $this->app->bind(AdSelectInventoryExporter::class, function (Application $app) {
-            return new AdSelectInventoryExporter(
-                new GuzzleAdSelectClient(
-                    $app->make(AdSelectHttpClient::class)
-                )
-            );
+//            return new AdSelectInventoryExporter(
+//                new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)))
+//            );
+
+            return new AdSelectInventoryExporter(new GuzzleAdSelectClient($app->make(AdSelectHttpClient::class)));
         });
     }
 }

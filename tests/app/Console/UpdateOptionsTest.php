@@ -56,7 +56,7 @@ class UpdateOptionsTest extends TestCase
     /** @test */
     public function remember(): void
     {
-        $this->markTestIncomplete('Remember to implement Options Storage');
+        $this->markTestIncomplete('Options storage NOT implemented');
         self::assertTrue(false);
     }
 }
