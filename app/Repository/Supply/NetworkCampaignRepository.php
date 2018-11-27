@@ -143,8 +143,8 @@ class NetworkCampaignRepository implements CampaignRepository
             'max_cpc' => (float)$networkCampaign->max_cpc,
             'max_cpm' => (float)$networkCampaign->max_cpm,
             'budget' => (float)$networkCampaign->budget,
-            'targeting_excludes' => $networkCampaign->targeting_excludes,
-            'targeting_requires' => $networkCampaign->targeting_requires,
+            'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
+            'targeting_requires' => $networkCampaign->targeting_requires ?? [],
         ]);
     }
 }
