@@ -24,11 +24,11 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\TargetingOptionsSource;
 use GuzzleHttp\Client;
 use function GuzzleHttp\json_decode;
 
-final class GuzzleAdUserClient implements AdUserClient
+final class GuzzleAdUserClient implements TargetingOptionsSource
 {
     /** @var Client */
     private $client;

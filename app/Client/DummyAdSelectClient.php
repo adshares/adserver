@@ -24,9 +24,9 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ViewContext;
-use Adshares\Supply\Application\Service\BannerFinderClient;
+use Adshares\Supply\Application\Service\BannerFinder;
 
-final class DummyAdSelectClient implements BannerFinderClient
+final class DummyAdSelectClient implements BannerFinder
 {
     public function findBanners(ViewContext $context): FoundBanners
     {

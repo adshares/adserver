@@ -20,12 +20,8 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Adserver\HttpClient;
 
-use Adshares\Supply\Application\Dto\FoundBanners;
-use Adshares\Supply\Application\Dto\ViewContext;
-
-interface BannerFinderClient
+interface AdClassifyHttpClient
 {
-    public function findBanners(ViewContext $context): FoundBanners;
 }

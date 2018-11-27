@@ -22,17 +22,17 @@ declare(strict_types = 1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Common\Application\Model\Selector;
-use Adshares\Common\Application\Service\AdUserClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Application\Service\TargetingOptionsSource;
 
 class TargetingOptionsImporter
 {
-    /** @var AdUserClient */
+    /** @var TargetingOptionsSource */
     private $client;
     /** @var ConfigurationRepository */
     private $repository;
 
-    public function __construct(AdUserClient $client, ConfigurationRepository $repository)
+    public function __construct(TargetingOptionsSource $client, ConfigurationRepository $repository)
     {
         $this->client = $client;
         $this->repository = $repository;

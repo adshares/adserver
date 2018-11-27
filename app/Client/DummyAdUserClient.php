@@ -24,12 +24,12 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\TargetingOptionsSource;
 use function base_path;
 use function file_get_contents;
-use function json_decode;
+use function GuzzleHttp\json_decode;
 
-final class DummyAdUserClient implements AdUserClient
+final class DummyAdUserClient implements TargetingOptionsSource
 {
     public function fetchTaxonomy(): Taxonomy
     {

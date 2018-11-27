@@ -17,26 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
 
-final class DummyAdClassifyClient implements FilteringOptionsSource
+interface FilteringOptionsSource
 {
-    public function fetchTaxonomy(): Taxonomy
-    {
-        $path = base_path('docs/schemas/taxonomy/v0.1/filtering-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
-
-        return TaxonomyFactory::fromArray($taxonomy);
-    }
+    public function fetchTaxonomy(): Taxonomy;
 }

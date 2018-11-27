@@ -22,14 +22,19 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Adserver\HttpClient\JsonRpc;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ViewContext;
-use Adshares\Supply\Application\Service\BannerFinderClient;
-use function GuzzleHttp\json_decode;
+use Adshares\Supply\Application\Service\AdSelectClient;
+use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Domain\Model\Campaign;
 
-final class JsonRpcAdSelectClient implements BannerFinderClient
+final class JsonRpcAdSelectClient implements BannerFinder, AdSelectClient
 {
+    private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
+    private const METHOD_BANNER_SELECT = 'banner_select';
 
     /** @var JsonRpc */
     private $client;
@@ -39,39 +44,23 @@ final class JsonRpcAdSelectClient implements BannerFinderClient
         $this->client = $client;
     }
 
+    /**
+     * @throws RemoteCallException
+     */
     public function findBanners(ViewContext $context): FoundBanners
     {
-        $result = $this->client->call('banner_select', $this->params());
+        $procedure = new JsonRpc\Procedure(self::METHOD_BANNER_SELECT, $context->toArray());
+        $result = $this->client->call($procedure);
 
         return new FoundBanners($result->toArray());
     }
 
-    private function params()
+    /**
+     * @throws RemoteCallException
+     */
+    public function exportInventory(Campaign $campaign): void
     {
-        return json_decode(<<<JSON
-[{
-            "banner_filters": {
-                "require": [],
-                "exclude": []
-            },
-            "keywords": {},
-            "banner_size": "300x300",
-            "publisher_id": "321",
-            "request_id": 123,
-            "user_id": "uid"
-        },
-        {
-            "banner_filters": {
-                "require": [],
-                "exclude": []
-            },
-            "keywords": {},
-            "banner_size": "150x150",
-            "publisher_id": "248",
-            "request_id": 842,
-            "user_id": "uid"
-        }]
-JSON
-            , true);
+        $procedure = new JsonRpc\Procedure(self::METHOD_CAMPAIGN_UPDATE, CampaignToAdSelectMapper::map($campaign));
+        $this->client->call($procedure);
     }
 }

@@ -24,7 +24,7 @@ namespace Adshares\Tests\Supply\Application\Service;
 
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Supply\Application\Dto\ViewContext;
-use Adshares\Supply\Application\Service\BannerFinderClient;
+use Adshares\Supply\Application\Service\BannerFinder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class BannerFinderClientTest extends TestCase
@@ -33,17 +33,7 @@ class BannerFinderClientTest extends TestCase
 
     public function testFindBanners(): void
     {
-//        $this->app->bind(BannerFinderClient::class, function () {
-//            $client = new Client([
-//                'headers' => ['Content-Type' => 'application/json'],
-//                'base_uri' => ,
-//                'timeout' => 5.0,
-//            ]);
-//
-//            return new JsonRpcAdSelectClient(new JsonRpc($client));
-//        });
-
-        $finder = $this->app->make(BannerFinderClient::class);
+        $finder = $this->app->make(BannerFinder::class);
         $banners = $finder->findBanners(new ViewContext());
 
         self::assertCount(5, $banners);

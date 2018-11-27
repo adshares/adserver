@@ -24,4 +24,44 @@ namespace Adshares\Supply\Application\Dto;
 
 final class ViewContext
 {
+    public function toArray(): array
+    {
+        return array_map(function (array $param) {
+            if (isset($param['keywords']) && empty($param['keywords'])) {
+                unset($param['keywords']);
+            }
+
+            return $param;
+        }, $this->params()
+        );
+    }
+
+    private function params(): array
+    {
+        return json_decode(<<<JSON
+[{
+            "banner_filters": {
+                "require": [],
+                "exclude": []
+            },
+            "keywords": {},
+            "banner_size": "300x300",
+            "publisher_id": "321",
+            "request_id": 123,
+            "user_id": "uid"
+        },
+        {
+            "banner_filters": {
+                "require": [],
+                "exclude": []
+            },
+            "keywords": {},
+            "banner_size": "150x150",
+            "publisher_id": "248",
+            "request_id": 842,
+            "user_id": "uid"
+        }]
+JSON
+            , true);
+    }
 }

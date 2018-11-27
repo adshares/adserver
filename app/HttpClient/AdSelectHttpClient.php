@@ -20,23 +20,10 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Adserver\HttpClient;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
+use GuzzleHttp\ClientInterface;
 
-final class DummyAdClassifyClient implements FilteringOptionsSource
+interface AdSelectHttpClient extends ClientInterface
 {
-    public function fetchTaxonomy(): Taxonomy
-    {
-        $path = base_path('docs/schemas/taxonomy/v0.1/filtering-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
-
-        return TaxonomyFactory::fromArray($taxonomy);
-    }
 }

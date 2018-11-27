@@ -17,10 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers;
 
-use Adshares\Adserver\Http\Controllers\App\AppController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -30,7 +30,7 @@ class RouteServiceProvider extends ServiceProvider
     private const PREFIX_AUTH = 'auth';
     private const PREFIX_API = 'api';
 
-    public function map()
+    public function map(): void
     {
         Route::group([], base_path('routes/web.php'));
 

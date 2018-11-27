@@ -17,13 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Supply\Application\Service;
 
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Supply\Application\Dto\FoundBanners;
+use Adshares\Supply\Application\Dto\ViewContext;
 
-interface AdClassifyClient
+interface BannerFinder
 {
-    public function fetchTaxonomy(): Taxonomy;
+    public function findBanners(ViewContext $context): FoundBanners;
 }
