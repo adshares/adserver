@@ -18,14 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 
-class CampaignToAdSelectMapper
+class CampaignMapper
 {
     public static function map(Campaign $campaign): array
     {
@@ -44,7 +44,7 @@ class CampaignToAdSelectMapper
             ];
         }
 
-        $targeting = TargetingToAdSelectMapper::map(
+        $targeting = TargetingMapper::map(
             $campaignArray['targeting_requires'],
             $campaignArray['targeting_excludes']
         );

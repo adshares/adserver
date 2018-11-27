@@ -18,20 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Domain\Factory\CampaignFactory;
-use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use GuzzleHttp\Client;
-use Symfony\Component\HttpFoundation\Response;
-use InvalidArgumentException;
+use Adshares\Supply\Domain\Factory\CampaignFactory;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use GuzzleHttp\Client;
+use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Response;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -43,17 +43,17 @@ final class GuzzleDemandClient implements DemandClient
     {
         $client = new Client([
             'base_uri' => $inventoryHost,
-            'timeout'  => 5.0,
+            'timeout' => 5.0,
         ]);
 
         $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
         $statusCode = $response->getStatusCode();
-        $body = (string) $response->getBody();
+        $body = (string)$response->getBody();
 
         $this->validateResponse($statusCode, $body);
 
         try {
-            $campaigns =\GuzzleHttp\json_decode($body, true);
+            $campaigns = \GuzzleHttp\json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
             throw new \RuntimeException('Invalid json data.');
         }
@@ -95,6 +95,9 @@ final class GuzzleDemandClient implements DemandClient
 
         $data['created_at'] = new DateTime();
         $data['updated_at'] = new DateTime();
+        $data['budget'] = (float)$data['budget'];
+        $data['max_cpc'] = (float)$data['max_cpc'];
+        $data['max_cpm'] = (float)$data['max_cpm'];
 
         return $data;
     }

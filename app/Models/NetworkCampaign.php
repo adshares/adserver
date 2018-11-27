@@ -233,14 +233,4 @@ class NetworkCampaign extends Model
     {
         return with(new static)->getTable();
     }
-
-    public function getTargetingRequiresAttribute()
-    {
-        return $this->targeting_requires ?? [];
-    }
-
-    public function getTargetingExcludesAttribute()
-    {
-        return $this->targeting_excludes ?? [];
-    }
 }
