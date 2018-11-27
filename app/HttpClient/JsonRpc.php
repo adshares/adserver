@@ -55,5 +55,4 @@ final class JsonRpc
 
         return $response->toResult();
     }
-
 }
