@@ -24,10 +24,13 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\Repository\DummyConfigurationRepository;
 use Adshares\Common\Application\Service\AdClassifyClient;
 use Adshares\Common\Application\Service\AdUserClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Supply\Application\Service\BannerFinderClient;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -51,6 +54,16 @@ class TaxonomyImporterProvider extends ServiceProvider
                 $app->make(AdUserClient::class),
                 $app->make(AdClassifyClient::class)
             );
+        });
+
+        $this->app->bind(BannerFinderClient::class, function () {
+            $client = new Client([
+                'headers' => ['Content-Type' => 'application/json'],
+                'base_uri' => config('app.adselect_endpoint'),
+                'timeout' => 5.0,
+            ]);
+
+            return new JsonRpcAdSelectClient(new JsonRpc($client));
         });
     }
 }

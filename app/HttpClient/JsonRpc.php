@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient;
 
 use Adshares\Adserver\Client\Exception\RemoteCallException;
-use Adshares\Adserver\HttpClient\JsonRpc\Request;
+use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
@@ -41,17 +41,18 @@ final class JsonRpc
 
     public function call(string $method, array $params): Result
     {
-        $request = new Request($method, $params);
+        $procedure = new Procedure($method, $params);
 
         try {
-            $response = new Response($this->client->request('POST', '/', [
-                'body' => $request->toJson(),
-            ]));
+            $resp = $this->client->request('POST', '/', [
+                'body' => $procedure->toJson(),
+            ]);
         } catch (GuzzleException $e) {
             throw RemoteCallException::fromOther($e);
         }
 
-        $response->failIfInvalidFor($request);
+        $response = new Response($resp, $procedure);
+        $response->failIfInvalid();
 
         return $response->toResult();
     }

@@ -32,38 +32,41 @@ final class Response
     private $response;
     /** @var [] */
     private $content;
+    /** @var Procedure */
+    private $procedure;
 
-    public function __construct(ResponseInterface $response)
+    public function __construct(ResponseInterface $response, Procedure $procedure)
     {
         $this->response = $response;
+        $this->procedure = $procedure;
     }
 
-    public function failIfInvalidFor(Request $request): void
+    public function failIfInvalid(): void
     {
         $this->decode();
 
-        if ($this->content['id'] ?? false) {
-            throw new RemoteCallException('Missing JSON-RPC id');
+        if (!isset($this->content['id']) || !$this->content['id']) {
+            throw  RemoteCallException::missingField('id');
         }
 
-        $id = $request->id();
+        $id = $this->procedure->id();
 
         if ($this->content['id'] !== $id) {
             throw RemoteCallException::mismatchedIds($id, $this->content['id']);
         }
 
-        if ($this->content['error'] ?? false) {
+        if (isset($this->content['error'])) {
             throw RemoteCallException::fromResponseError($this->content['error']);
         }
 
-        if ($this->content['result'] ?? false) {
-            throw new RemoteCallException('Missing JSON-RPC result');
+        if (!isset($this->content['result'])) {
+            throw  RemoteCallException::missingField('result');
         }
     }
 
     private function decode(): void
     {
-        if ($this->content) {
+        if (!empty($this->content)) {
             return;
         }
 
@@ -71,6 +74,10 @@ final class Response
             $this->content = json_decode($this->response->getBody()->getContents(), true);
         } catch (\InvalidArgumentException $e) {
             RemoteCallException::fromOther($e);
+        }
+
+        if (empty($this->content)) {
+            throw new RemoteCallException('Missing JSON-RPC');
         }
     }
 

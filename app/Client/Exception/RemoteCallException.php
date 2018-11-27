@@ -42,6 +42,11 @@ final class RemoteCallException extends Exception
         return new self($error['message'], (int)$error['code']);
     }
 
+    public static function missingField(string $fieldName): self
+    {
+        return new self(sprintf('Missing JSON-RPC field "%s"', $fieldName));
+    }
+
     public static function mismatchedIds($sent, $got): self
     {
         return new self(sprintf('Mismatched JSON-RPC IDs {sent: %s, got: %s}', $sent, $got));

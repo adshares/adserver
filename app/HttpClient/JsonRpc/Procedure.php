@@ -25,7 +25,7 @@ namespace Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use function GuzzleHttp\json_encode;
 
-final class Request
+final class Procedure
 {
     private const RPC_VERSION = '2.0';
     /** @var string */

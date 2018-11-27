@@ -26,6 +26,7 @@ use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ViewContext;
 use Adshares\Supply\Application\Service\BannerFinderClient;
+use function GuzzleHttp\json_decode;
 
 final class JsonRpcAdSelectClient implements BannerFinderClient
 {
@@ -40,8 +41,37 @@ final class JsonRpcAdSelectClient implements BannerFinderClient
 
     public function findBanners(ViewContext $context): FoundBanners
     {
-        $result = $this->client->call('banner_select', []);
+        $result = $this->client->call('banner_select', $this->params());
 
         return new FoundBanners($result->toArray());
+    }
+
+    private function params()
+    {
+        return json_decode(<<<JSON
+[{
+            "banner_filters": {
+                "require": [],
+                "exclude": []
+            },
+            "keywords": {},
+            "banner_size": "300x300",
+            "publisher_id": "321",
+            "request_id": 123,
+            "user_id": "uid"
+        },
+        {
+            "banner_filters": {
+                "require": [],
+                "exclude": []
+            },
+            "keywords": {},
+            "banner_size": "150x150",
+            "publisher_id": "248",
+            "request_id": 842,
+            "user_id": "uid"
+        }]
+JSON
+            , true);
     }
 }
