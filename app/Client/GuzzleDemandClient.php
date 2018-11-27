@@ -31,7 +31,9 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use GuzzleHttp\Client;
 use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -53,9 +55,9 @@ final class GuzzleDemandClient implements DemandClient
         $this->validateResponse($statusCode, $body);
 
         try {
-            $campaigns = \GuzzleHttp\json_decode($body, true);
+            $campaigns = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new \RuntimeException('Invalid json data.');
+            throw new RuntimeException('Invalid json data.');
         }
 
         $campaignsCollection = new CampaignCollection();
