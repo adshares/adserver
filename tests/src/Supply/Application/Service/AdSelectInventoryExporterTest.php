@@ -45,7 +45,7 @@ class AdSelectInventoryExporterTest extends TestCase
             'http://example.com',
             new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
             [],
-            new Budget(10, null, 2),
+            new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
             Campaign::STATUS_PROCESSING,
             [],
