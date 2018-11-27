@@ -17,36 +17,20 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Model\Selector;
 
-final class Transaction implements Identifiable, Comparable
+interface ConfigurationRepository
 {
-    /** @var TransactionId */
-    private $id;
+    public function storeTargetingOptions(Selector $options);
 
-    public function __construct(TransactionId $id)
-    {
-        $this->id = $id;
-    }
+    public function storeFilteringOptions(Selector $options);
 
-    public function id(): Domain\Id
-    {
-        return $this->id;
-    }
+    public function fetchTargetingOptions(): Selector;
 
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
-    }
+    public function fetchFilteringOptions(): Selector;
 }

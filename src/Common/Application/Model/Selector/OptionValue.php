@@ -17,36 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Common\Application\Model\Selector;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
-
-final class Transaction implements Identifiable, Comparable
+final class OptionValue
 {
-    /** @var TransactionId */
-    private $id;
+    /** @var string */
+    private $label;
+    /** @var string */
+    private $value;
 
-    public function __construct(TransactionId $id)
+    public function __construct(string $label, string $value)
     {
-        $this->id = $id;
+        $this->label = $label;
+        $this->value = $value;
     }
 
-    public function id(): Domain\Id
+    public function toArray(): array
     {
-        return $this->id;
-    }
-
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
+        return [
+            'label' => $this->label,
+            'value' => $this->value,
+        ];
     }
 }

@@ -17,36 +17,26 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
+use Adshares\Common\Application\Service\AdClassifyClient;
+use function base_path;
+use function file_get_contents;
+use function json_decode;
 
-final class Transaction implements Identifiable, Comparable
+final class DummyAdClassifyClient implements AdClassifyClient
 {
-    /** @var TransactionId */
-    private $id;
-
-    public function __construct(TransactionId $id)
+    public function fetchTaxonomy(): Taxonomy
     {
-        $this->id = $id;
-    }
+        $path = base_path('docs/schemas/taxonomy/v0.1/filtering-example.json');
+        $var = file_get_contents($path);
+        $taxonomy = json_decode($var, true);
 
-    public function id(): Domain\Id
-    {
-        return $this->id;
-    }
-
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
+        return TaxonomyFactory::fromArray($taxonomy);
     }
 }

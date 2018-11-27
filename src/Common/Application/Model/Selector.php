@@ -17,36 +17,36 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Common\Application\Model;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Application\Model\Selector\Option;
 
-final class Transaction implements Identifiable, Comparable
+final class Selector
 {
-    /** @var TransactionId */
-    private $id;
+    /** @var Option[] */
+    private $items;
 
-    public function __construct(TransactionId $id)
+    public function __construct(Option ...$items)
     {
-        $this->id = $id;
+        $this->items = $items;
     }
 
-    public function id(): Domain\Id
+    public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
-        return $this->id;
+        return new Selector(...array_map(function (Item $item) {
+            return $item->toSelectorOption();
+        }, $taxonomy->toArray()));
     }
 
-    public function equals(object $other): bool
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
+        return array_map(function (Option $option) {
+            return $option->toArrayRecursiveWithoutEmptyFields();
+        }, $this->items);
     }
 }

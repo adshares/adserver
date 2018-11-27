@@ -180,47 +180,65 @@ class WalletController extends Controller
         $offset = $request->input(self::FIELD_OFFSET, 0);
 
         $userId = Auth::user()->id;
+        $count = UserLedgerEntry::where('user_id', $userId)->count();
         $resp = [];
-        foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
-            $amount = (int)$ledgerItem->amount;
-            $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
-            $txid = $ledgerItem->txid;
+        $items = [];
+        if ($count > 0) {
+            foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
+                $amount = (int)$ledgerItem->amount;
+                $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+                $status = (int)$ledgerItem->status;
+                $type = (int)$ledgerItem->type;
+                $txid = $this->getUserLedgerEntryTxid($ledgerItem);
+                $address = $this->getUserLedgerEntryAddress($ledgerItem);
 
-            if (null !== $txid) {
-                $link = self::getTransactionLink($txid);
-            } else {
-                $link = '-';
+                $items[] = [
+                    'amount' => $amount,
+                    'status' => $status,
+                    'type' => $type,
+                    'date' => $date,
+                    'address' => $address,
+                    'txid' => $txid,
+                ];
             }
-            if ($amount > 0) {
-                $address = $ledgerItem->address_to;
-            } else {
-                $address = $ledgerItem->address_from;
-            }
-
-            $resp[] = [
-                'amount' => $amount,
-                'status' => $ledgerItem->status,
-                'type' => $ledgerItem->type,
-                'date' => $date,
-                'address' => $address,
-                'link' => $link,
-            ];
         }
+        $resp['limit'] = (int)$limit;
+        $resp['offset'] = (int)$offset;
+        $resp['items_count'] = count($items);
+        $resp['items_count_all'] = $count;
+        $resp['items'] = $items;
 
         return self::json($resp);
     }
 
     /**
-     * Returns link to transaction data.
+     * @param $ledgerItem
      *
-     * @param $txid string transaction id
-     *
-     * @return string link to transaction
+     * @return string
      */
-    private static function getTransactionLink(string $txid): string
+    private function getUserLedgerEntryAddress($ledgerItem): string
     {
-        $adsOperator = config('app.ads_operator_url');
+        if ((int)$ledgerItem->amount > 0) {
+            $address = $ledgerItem->address_to;
+        } else {
+            $address = $ledgerItem->address_from;
+        }
 
-        return "$adsOperator/blockexplorer/transactions/$txid";
+        return $address;
+    }
+
+    /**
+     * @param $ledgerItem
+     *
+     * @return null|string
+     */
+    private function getUserLedgerEntryTxid($ledgerItem): ?string
+    {
+        $type = (int)$ledgerItem->type;
+        $txid = (null !== $ledgerItem->txid
+            && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
+            ? $ledgerItem->txid : null;
+
+        return $txid;
     }
 }

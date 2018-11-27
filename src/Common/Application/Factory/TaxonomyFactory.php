@@ -20,23 +20,27 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Common\Application\Factory;
 
 use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\AdUserClient;
-use function base_path;
-use function file_get_contents;
-use function json_decode;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
-final class DummyAdUserClient implements AdUserClient
+final class TaxonomyFactory
 {
-    public function fetchTaxonomy(): Taxonomy
+    public static function fromJson(string $json): Taxonomy
     {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+        return self::fromArray(json_decode($json, true));
+    }
 
-        return TaxonomyFactory::fromArray($taxonomy);
+    public static function fromArray(array $taxonomy): Taxonomy
+    {
+        $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
+        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
+        $items = array_map(function (array $item) {
+            return TaxonomyItemFactory::fromArray($item);
+        }, $taxonomy['items'] ?? $taxonomy['data']);
+
+        return new Taxonomy($schema, $version, ...$items);
     }
 }

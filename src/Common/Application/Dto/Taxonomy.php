@@ -17,36 +17,28 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Dto\Taxonomy\Item;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Common\Domain\ValueObject\SemVer;
+use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
-final class Transaction implements Identifiable, Comparable
+final class Taxonomy extends ArrayCollection
 {
-    /** @var TransactionId */
-    private $id;
+    /** @var Schema */
+    private $schema;
+    /** @var SemVer */
+    private $version;
 
-    public function __construct(TransactionId $id)
+    public function __construct(Schema $schema, SemVer $version, Item...$items)
     {
-        $this->id = $id;
-    }
+        $this->schema = $schema;
+        $this->version = $version;
 
-    public function id(): Domain\Id
-    {
-        return $this->id;
-    }
-
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
+        parent::__construct($items);
     }
 }

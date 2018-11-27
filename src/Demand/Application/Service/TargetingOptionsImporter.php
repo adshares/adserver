@@ -19,34 +19,31 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Demand\Application\Service;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 
-final class Transaction implements Identifiable, Comparable
+class TargetingOptionsImporter
 {
-    /** @var TransactionId */
-    private $id;
+    /** @var AdUserClient */
+    private $client;
+    /** @var ConfigurationRepository */
+    private $repository;
 
-    public function __construct(TransactionId $id)
+    public function __construct(AdUserClient $client, ConfigurationRepository $repository)
     {
-        $this->id = $id;
+        $this->client = $client;
+        $this->repository = $repository;
     }
 
-    public function id(): Domain\Id
+    public function import(): void
     {
-        return $this->id;
-    }
+        $taxonomy = $this->client->fetchTaxonomy();
 
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
+        $options = Selector::fromTaxonomy($taxonomy);
 
-        return false;
+        $this->repository->storeTargetingOptions($options);
     }
 }

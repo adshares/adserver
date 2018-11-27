@@ -19,34 +19,11 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\Model;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Comparable;
-use Adshares\Common\Domain;
-use Adshares\Common\Domain\ValueObject\TransactionId;
-use Adshares\Common\Identifiable;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-final class Transaction implements Identifiable, Comparable
+interface AdUserClient
 {
-    /** @var TransactionId */
-    private $id;
-
-    public function __construct(TransactionId $id)
-    {
-        $this->id = $id;
-    }
-
-    public function id(): Domain\Id
-    {
-        return $this->id;
-    }
-
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->id->equals($other->id);
-        }
-
-        return false;
-    }
+    public function fetchTaxonomy(): Taxonomy;
 }

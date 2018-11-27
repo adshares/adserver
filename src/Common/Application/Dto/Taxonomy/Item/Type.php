@@ -17,52 +17,51 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Common\Application\Dto\Taxonomy\Item;
 
-use Adshares\Common\Domain\Id;
 use InvalidArgumentException;
+use function in_array;
 
-final class TransactionId implements Id
+final class Type
 {
+    public const TYPE_NUMBER = 'number';
+    public const TYPE_BOOLEAN = 'boolean';
+    public const TYPE_DICTIONARY = 'dictionary';
+    public const TYPE_INPUT = 'input';
+    private const TYPES = [
+        self::TYPE_NUMBER,
+        self::TYPE_INPUT,
+        self::TYPE_BOOLEAN,
+        self::TYPE_DICTIONARY,
+    ];
+
     /** @var string */
     private $value;
 
     public function __construct(string $value)
     {
-        if (!self::isValid($value)) {
-            throw new InvalidArgumentException("'$value' is NOT a VALID TransactionId representation.");
+        $this->validateValue($value);
+
+        $this->value = $value;
+    }
+
+    private function validateValue(string $value): void
+    {
+        if (!in_array($value, self::TYPES, true)) {
+            throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $value");
         }
-
-        $this->value = strtoupper($value);
     }
 
-    private static function isValid(string $value): bool
+    public function is(string $type): bool
     {
-        return 1 === preg_match('/^[0-9A-F]{4}:[0-9A-F]{8}:[0-9A-F]{4}$/i', $value);
-    }
-
-    public static function random(): TransactionId
-    {
-        $nodeId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
-        $tranId = str_pad(dechex(random_int(0, 2047)), 8, '0', STR_PAD_LEFT);
-        $mesgId = str_pad(dechex(random_int(0, 2047)), 4, '0', STR_PAD_LEFT);
-
-        return new self("{$nodeId}:{$tranId}:{$mesgId}");
+        return $type === $this->value;
     }
 
     public function __toString(): string
     {
         return $this->value;
-    }
-
-    public function equals(object $other): bool
-    {
-        if ($other instanceof self) {
-            return $this->value === $other->value;
-        }
-
-        return false;
     }
 }

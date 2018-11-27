@@ -28,6 +28,7 @@ class MockDataSeeder extends Seeder
     public function run()
     {
         $this->call(MockDataUsersSeeder::class);
+        $this->call(MockDataUserLedgerSeeder::class);
         $this->call(MockDataSitesSeeder::class);
         $this->call(MockDataCampaignsSeeder::class);
         $this->call(MockDataNetworkHostsSeeder::class);

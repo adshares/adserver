@@ -1,0 +1,49 @@
+{
+  "$schema": "urn:x-adshares:taxonomy",
+  "version": "0.0.0",
+  "data": [
+    {
+      "key": "country",
+      "label": "Country",
+      "type": "dict",
+      "list": [
+        {
+          "value": "AF",
+          "label": "Afghanistan"
+        }
+      ]
+    },
+    {
+      "key": "device_type",
+      "label": "Device type",
+      "type": "dict",
+      "list": [
+        {
+          "value": "car_entertainment_system",
+          "label": "Car Entertainment System"
+        }
+      ]
+    },
+    {
+      "key": "javascript",
+      "label": "JavaScript",
+      "type": "bool"
+    },
+    {
+      "key": "browser",
+      "label": "Browser",
+      "type": "dict",
+      "list": [
+        {
+          "value": "115_browser",
+          "label": "115 Browser"
+        }
+      ]
+    },
+    {
+      "key": "keywords",
+      "label": "Site Keywords",
+      "type": "input"
+    }
+  ]
+}
