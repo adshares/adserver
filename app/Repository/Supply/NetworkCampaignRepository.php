@@ -124,7 +124,6 @@ class NetworkCampaignRepository implements CampaignRepository
         }
 
         return CampaignFactory::createFromArray([
-            'id' => 1,
             'uuid' => Uuid::fromString($networkCampaign->uuid),
             'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
             'landing_url' => $networkCampaign->landing_url,
