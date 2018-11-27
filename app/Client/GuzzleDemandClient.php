@@ -97,9 +97,9 @@ final class GuzzleDemandClient implements DemandClient
 
         $data['created_at'] = new DateTime();
         $data['updated_at'] = new DateTime();
-        $data['budget'] = (float)$data['budget'];
-        $data['max_cpc'] = (float)$data['max_cpc'];
-        $data['max_cpm'] = (float)$data['max_cpm'];
+        $data['budget'] = (int)$data['budget'];
+        $data['max_cpc'] = (int)$data['max_cpc'];
+        $data['max_cpm'] = (int)$data['max_cpm'];
 
         return $data;
     }
