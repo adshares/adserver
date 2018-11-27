@@ -124,7 +124,6 @@ class NetworkCampaignRepository implements CampaignRepository
         }
 
         return CampaignFactory::createFromArray([
-            'id' => 1,
             'uuid' => Uuid::fromString($networkCampaign->uuid),
             'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
             'landing_url' => $networkCampaign->landing_url,
@@ -140,9 +139,9 @@ class NetworkCampaignRepository implements CampaignRepository
             'created_at' => $networkCampaign->created_at,
             'updated_at' => $networkCampaign->updated_at,
             'banners' => $banners,
-            'max_cpc' => $networkCampaign->max_cpc,
-            'max_cpm' => $networkCampaign->max_cpm,
-            'budget' => $networkCampaign->budget,
+            'max_cpc' => (int)$networkCampaign->max_cpc,
+            'max_cpm' => (int)$networkCampaign->max_cpm,
+            'budget' => (int)$networkCampaign->budget,
             'targeting_excludes' => $networkCampaign->targeting_excludes,
             'targeting_requires' => $networkCampaign->targeting_requires,
         ]);

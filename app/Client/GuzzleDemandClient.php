@@ -18,19 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Domain\Factory\CampaignFactory;
-use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\Factory\CampaignFactory;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use GuzzleHttp\Client;
 use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use function GuzzleHttp\json_decode;
 
@@ -56,7 +57,7 @@ final class GuzzleDemandClient implements DemandClient
         try {
             $campaigns = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new \RuntimeException('Invalid json data.');
+            throw new RuntimeException('Invalid json data.');
         }
 
         $campaignsCollection = new CampaignCollection();
@@ -96,6 +97,9 @@ final class GuzzleDemandClient implements DemandClient
 
         $data['created_at'] = new DateTime();
         $data['updated_at'] = new DateTime();
+        $data['budget'] = (float)$data['budget'];
+        $data['max_cpc'] = (float)$data['max_cpc'];
+        $data['max_cpm'] = (float)$data['max_cpm'];
 
         return $data;
     }
