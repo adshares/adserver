@@ -5,9 +5,9 @@
       {
         "code":"ads",
         "url":"https://adshares.net/",
-        "max_cpm": 1,
-        "max_cpc": 10,
-        "budget_per_hour": 100,
+        "max_cpm": 100000000000,
+        "max_cpc": 1000000000000,
+        "budget_per_hour": 10000000000000,
         "targeting_excludes": {
           "site": {
             "domain": [
@@ -49,9 +49,9 @@
       {
         "code":"ads-pl",
         "url":"https://adshares.pl/",
-        "max_cpm": 1,
-        "max_cpc": 10,
-        "budget_per_hour": 100,
+        "max_cpm": 100000000000,
+        "max_cpc": 1000000000000,
+        "budget_per_hour": 10000000000000,
         "name": "Internal campaign"
       }
     ]

@@ -18,24 +18,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-class TargetingToAdSelectMapper
+use Adshares\Adserver\Client\Mapper\FilterMapper;
+
+class TargetingMapper
 {
+    use FilterMapper;
+
+    const FILTER_OR = 'or';
+    const FILTER_AND = 'and';
+    const FILTER_EQUAL = '=';
+
     public static function map(array $requires, array $excludes): array
     {
+        $exclude = self::generateNestedStructure($excludes);
+        $require = self::generateNestedStructure($requires);
+
         return [
-            'exclude' => [
-                [
-                    'filter' => [
-                        'args' => "18-20",
-                        'type' => '=',
-                    ],
-                    'keyword' => 'age_bracket',
-                ],
-            ],
+            'exclude' => $exclude,
+            'require' => $require,
         ];
     }
 }

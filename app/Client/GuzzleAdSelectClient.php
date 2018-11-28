@@ -18,12 +18,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
+use Adshares\Supply\Application\Service\AdSelectClient;
 use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 use GuzzleHttp\Client;
@@ -52,8 +55,8 @@ class GuzzleAdSelectClient implements InventoryExporter
             'id' => 0,
             'jsonrpc' => self::RPC_VERSION,
             'method' => self::UPDATE_METHOD,
-            'params' => CampaignToAdSelectMapper::map($campaign),
-        ] ;
+            'params' => CampaignMapper::map($campaign),
+        ];
 
         try {
             $body = json_encode($requestParams);
@@ -64,6 +67,7 @@ class GuzzleAdSelectClient implements InventoryExporter
         $response = $this->client->post('', [
             'body' => $body,
         ]);
+
         $statusCode = $response->getStatusCode();
         $body = $response->getBody();
 
