@@ -18,17 +18,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Banner;
-use Faker\Generator as Faker;
+declare(strict_types = 1);
 
-$factory->define(Banner::class, function (Faker $faker) {
-    return [
-        'creative_contents' => $faker->sha1(),
-        'creative_type' => $faker->word(),
-        'creative_sha1' => $faker->sha1(),
+namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
 
-        'creative_width' => $faker->numberBetween(100,1024),
-        'creative_height' => $faker->numberBetween(100,1024),
-        'name' => $faker->word(),
-    ];
-});
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
+use Adshares\Adserver\HttpClient\JsonRpc\Result;
+
+final class BoolResult implements Result
+{
+    /** @var bool */
+    private $value;
+
+    public function __construct(bool $value)
+    {
+        $this->value = $value;
+    }
+
+    public function isTrue(): bool
+    {
+        return $this->value;
+    }
+
+    public function toArray(): array
+    {
+        throw new ResultException('This is a `bool');
+    }
+}

@@ -23,10 +23,16 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
+use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
+use Adshares\Adserver\HttpClient\JsonRpc\Result\BoolResult;
+use Adshares\Adserver\HttpClient\JsonRpc\Result\ObjectResult;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Response;
 use function GuzzleHttp\json_decode;
+use function is_array;
+use function is_bool;
 
 final class RawResponse
 {
@@ -88,6 +94,34 @@ final class RawResponse
 
     public function result(): Result
     {
-        return new Result($this->content[self::FIELD_RESULT]);
+        $content = $this->content[self::FIELD_RESULT];
+
+        if (is_array($content)) {
+            if ($this->isSequential($content)) {
+                return new ArrayResult($content);
+            }
+
+            return ObjectResult::fromArray($content);
+        }
+
+        if (is_bool($content)) {
+            return new BoolResult($content);
+        }
+
+        throw new ResultException('Unsupported result type');
+    }
+
+    private function isSequential(array $arr): bool
+    {
+        if ([] === $arr) {
+            return false;
+        }
+
+        return array_keys($arr) === range(0, count($arr) - 1);
+    }
+
+    private function hasStringKeys(array $array)
+    {
+        return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
 }

@@ -22,18 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-final class Result
+interface Result
 {
-    /** @var array */
-    private $content;
+    public function isTrue(): bool;
 
-    public function __construct(array $content)
-    {
-        $this->content = $content;
-    }
-
-    public function toArray(): array
-    {
-        return $this->content;
-    }
+    public function toArray(): array;
 }
