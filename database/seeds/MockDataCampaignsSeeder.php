@@ -114,7 +114,7 @@ class MockDataCampaignsSeeder extends Seeder
 
                 $banners = [];
 
-                $files = glob(base_path('var') . "/{$cr->code}/*.png");
+                $files = glob(__DIR__."/assets/{$cr->code}/*.png");
 
                 foreach ($files as $filename) {
                     $b = $this->makeBanner($campaign, getimagesize($filename), $filename);

@@ -1,10 +1,10 @@
 [
   {
-    "email":"advertiser@e11.click",
-    "campaigns":[
+    "email": "advertiser@e11.click",
+    "campaigns": [
       {
-        "code":"ads",
-        "url":"https://adshares.net/",
+        "code": "adults",
+        "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
@@ -47,12 +47,60 @@
         "name": "Campaign for adults only"
       },
       {
-        "code":"ads-pl",
-        "url":"https://adshares.pl/",
+        "code": "ads-pl",
+        "url": "https://adshares.pl/",
         "max_cpm": 100000000000,
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
         "name": "Internal campaign"
+      },
+      {
+        "code": "ads",
+        "name": "Adshares Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 10000000000,
+        "max_cpc": 10000000000,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200186", "200087"]},
+        "classification_status": 2,
+        "classification_tags": "advertising, blockchain, technology"
+      },
+      {
+        "code": "cats",
+        "name": "Cat Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 166666667,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200142"]},
+        "classification_status": 2,
+        "classification_tags": "cats"
+      },
+      {
+        "code": "tea",
+        "name": "Tea Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 0,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200079"]},
+        "classification_status": 2,
+        "classification_tags": "tea"
+      },
+      {
+        "code": "travel",
+        "name": "Travel Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 0,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200205", "200417"]},
+        "classification_status": 2,
+        "classification_tags": "travel"
       }
     ]
   }
