@@ -139,9 +139,9 @@ class NetworkCampaignRepository implements CampaignRepository
             'created_at' => $networkCampaign->created_at,
             'updated_at' => $networkCampaign->updated_at,
             'banners' => $banners,
-            'max_cpc' => (float)$networkCampaign->max_cpc,
-            'max_cpm' => (float)$networkCampaign->max_cpm,
-            'budget' => (float)$networkCampaign->budget,
+            'max_cpc' => (int)$networkCampaign->max_cpc,
+            'max_cpm' => (int)$networkCampaign->max_cpm,
+            'budget' => (int)$networkCampaign->budget,
             'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
             'targeting_requires' => $networkCampaign->targeting_requires ?? [],
         ]);
