@@ -32,14 +32,6 @@ class BannerFinderClientTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testFindBannersLive(): void
-    {
-        $finder = $this->app->make(BannerFinder::class);
-        $banners = $finder->findBanners(new ViewContext());
-
-        self::assertTrue(count($banners) > 0);
-    }
-
     public function testFindBanners(): void
     {
         $this->markTestIncomplete('Create banners for selection');

@@ -23,10 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
-use Adshares\Supply\Application\Service\AdSelectClient;
-use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 use GuzzleHttp\Client;
