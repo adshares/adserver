@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
-use Adshares\Supply\Application\Service\AdSelectClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 use GuzzleHttp\Client;
 use Illuminate\Http\Response;
@@ -33,7 +33,7 @@ use RuntimeException;
 use function GuzzleHttp\json_decode;
 use function GuzzleHttp\json_encode;
 
-class GuzzleAdSelectClient implements AdSelectClient
+class GuzzleAdSelectClient implements InventoryExporter
 {
     const RPC_VERSION = '2.0';
     const UPDATE_METHOD = 'campaign_update';

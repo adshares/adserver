@@ -197,8 +197,8 @@ return [
         Adshares\Adserver\Providers\EventServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
-        Adshares\Adserver\Providers\Supply\AdSelectInventoryExporterProvider::class,
-        Adshares\Adserver\Providers\TaxonomyImporterProvider::class,
+        Adshares\Adserver\Providers\Common\ClientProvider::class,
+        Adshares\Adserver\Providers\Common\OptionsProvider::class,
     ],
 
     /*

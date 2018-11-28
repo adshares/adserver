@@ -25,6 +25,7 @@ namespace Adshares\Common\Application\Factory;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+use function GuzzleHttp\json_decode;
 
 final class TaxonomyFactory
 {

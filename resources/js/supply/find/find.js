@@ -19,12 +19,13 @@
 
 var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
+var selectorClass = '{{ SELECTOR }}';
 
 var UrlSafeBase64Encode = function (data) {
     return btoa(data).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
     });
-}
+};
 
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
@@ -56,7 +57,7 @@ var encodeZones = function (zone_data) {
         result[0] = entry.join(VALUE_GLUE);
     }
     return UrlSafeBase64Encode(result.join(ZONE_GLUE)); // url safe encoding
-}
+};
 
 var replaceTag = function (oldTag, newTag) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
@@ -67,7 +68,7 @@ var replaceTag = function (oldTag, newTag) {
     }
     newTag.style.overflow = 'hidden';
     oldTag.parentNode.replaceChild(newTag, oldTag);
-}
+};
 
 var addListener = function (element, event, handler, phase) {
     if (element.addEventListener) {
@@ -75,7 +76,7 @@ var addListener = function (element, event, handler, phase) {
     } else {
         return element.attachEvent('on' + event, handler);
     }
-}
+};
 
 navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
     fetchURL(url, {
@@ -235,7 +236,7 @@ var addUrlParam = function (url, names, value) {
         }
     }
     return url;
-}
+};
 
 var impressionId;
 var getImpressionId = function () {
@@ -252,7 +253,7 @@ var getImpressionId = function () {
         impressionId = UrlSafeBase64Encode(chars.join(''));
     }
     return impressionId;
-}
+};
 
 var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
@@ -262,7 +263,7 @@ var aduserPixel = function (impressionId) {
     img.setAttribute('height', 1);
     img.src = aduserOrigin + '/pixel/' + impressionId;
     document.body.appendChild(img);
-}
+};
 
 var getPageKeywords = function () {
 
@@ -278,7 +279,7 @@ var getPageKeywords = function () {
         metaKeywords = metaKeywords.join(',');
     }
     return metaKeywords;
-}
+};
 
 var getBrowserContext = function () {
     return {
@@ -290,13 +291,13 @@ var getBrowserContext = function () {
         keywords: getPageKeywords()
         // agent: window.navigator.userAgent
     }
-}
+};
 
 domReady(function () {
 
     aduserPixel(getImpressionId());
 
-    var tags = document.querySelectorAll('div[data-pub]');
+    var tags = document.querySelectorAll(selectorClass + '[data-pub]');
     var n = tags.length;
 
     if (n == 0) {
@@ -367,7 +368,7 @@ var addTrackingPixel = function (context, banner, element) {
     img.setAttribute('height', 1);
     img.src = context.view_url;
     element.parentNode.insertBefore(img, element);
-}
+};
 
 var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {
@@ -414,7 +415,7 @@ var fetchBanner = function (banner, context) {
                 replaceTag(banner.destElement, element);
                 addTrackingPixel(context, banner, element);
             });
-        }
+        };
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
                 if (hash == banner.creative_sha1) {
@@ -429,4 +430,4 @@ var fetchBanner = function (banner, context) {
     }, function () {
         console.log('could not fetch url', banner);
     });
-}
+};

@@ -17,12 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-interface AdSelectClient
+interface TargetingOptionsSource
 {
-    public function exportInventory(Campaign $campaign): void;
+    public function fetchTargetingOptions(): Taxonomy;
 }

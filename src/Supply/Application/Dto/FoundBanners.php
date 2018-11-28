@@ -20,23 +20,10 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
 
-final class DummyAdUserClient implements TargetingOptionsSource
+final class FoundBanners extends ArrayCollection
 {
-    public function fetchTargetingOptions(): Taxonomy
-    {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
-
-        return TaxonomyFactory::fromArray($taxonomy);
-    }
 }

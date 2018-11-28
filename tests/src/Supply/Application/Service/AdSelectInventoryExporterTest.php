@@ -21,15 +21,15 @@
 namespace Adshares\Tests\Supply\Application\Service;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Application\Service\AdSelectClient;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
+use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
-use PHPUnit\Framework\TestCase;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 
 class AdSelectInventoryExporterTest extends TestCase
 {
@@ -52,7 +52,7 @@ class AdSelectInventoryExporterTest extends TestCase
             []
         );
 
-        $client = $this->createMock(AdSelectClient::class);
+        $client = $this->createMock(InventoryExporter::class);
 
         $service = new AdSelectInventoryExporter($client);
         $service->export($campaign);

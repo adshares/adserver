@@ -23,7 +23,7 @@ namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 
-interface AdUserClient
+interface FilteringOptionsSource
 {
-    public function fetchTaxonomy(): Taxonomy;
+    public function fetchFilteringOptions(): Taxonomy;
 }

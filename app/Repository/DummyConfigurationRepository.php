@@ -23,19 +23,19 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Common\Application\Model\Selector;
-use Adshares\Common\Application\Service\AdClassifyClient;
-use Adshares\Common\Application\Service\AdUserClient;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Application\Service\FilteringOptionsSource;
+use Adshares\Common\Application\Service\TargetingOptionsSource;
 use Exception;
 
 final class DummyConfigurationRepository implements ConfigurationRepository
 {
-    /** @var AdUserClient */
+    /** @var TargetingOptionsSource */
     private $adUser;
-    /** @var AdClassifyClient */
+    /** @var FilteringOptionsSource */
     private $adClassify;
 
-    public function __construct(AdUserClient $userClient, AdClassifyClient $classifyClient)
+    public function __construct(TargetingOptionsSource $userClient, FilteringOptionsSource $classifyClient)
     {
         $this->adUser = $userClient;
         $this->adClassify = $classifyClient;
@@ -48,14 +48,14 @@ final class DummyConfigurationRepository implements ConfigurationRepository
 
     public function fetchTargetingOptions(): Selector
     {
-        $taxonomy = $this->adUser->fetchTaxonomy();
+        $taxonomy = $this->adUser->fetchTargetingOptions();
 
         return Selector::fromTaxonomy($taxonomy);
     }
 
     public function fetchFilteringOptions(): Selector
     {
-        $taxonomy = $this->adClassify->fetchTaxonomy();
+        $taxonomy = $this->adClassify->fetchFilteringOptions();
 
         return Selector::fromTaxonomy($taxonomy);
     }

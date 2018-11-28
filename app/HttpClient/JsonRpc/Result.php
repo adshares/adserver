@@ -20,23 +20,20 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
-use function base_path;
-use function file_get_contents;
-use function GuzzleHttp\json_decode;
-
-final class DummyAdUserClient implements TargetingOptionsSource
+final class Result
 {
-    public function fetchTargetingOptions(): Taxonomy
-    {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+    /** @var array */
+    private $content;
 
-        return TaxonomyFactory::fromArray($taxonomy);
+    public function __construct(array $content)
+    {
+        $this->content = $content;
+    }
+
+    public function toArray(): array
+    {
+        return $this->content;
     }
 }

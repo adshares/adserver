@@ -18,25 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers\Supply;
+namespace Adshares\Supply\Application\Service;
 
-use Adshares\Adserver\Client\GuzzleAdSelectClient;
-use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
-use GuzzleHttp\Client;
-use Illuminate\Support\ServiceProvider;
+use Adshares\Supply\Domain\Model\Campaign;
 
-class AdSelectInventoryExporterProvider extends ServiceProvider
+interface InventoryExporter
 {
-    public function register()
-    {
-        $this->app->bind(AdSelectInventoryExporter::class, function () {
-            $client = new Client([
-                'headers' => [ 'Content-Type' => 'application/json' ],
-                'base_uri' => config('app.adselect_endpoint'),
-                'timeout'  => 5.0,
-            ]);
-
-            return new AdSelectInventoryExporter(new GuzzleAdSelectClient($client));
-        });
-    }
+    public function exportInventory(Campaign $campaign): void;
 }
