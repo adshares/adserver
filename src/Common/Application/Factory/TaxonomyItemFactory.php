@@ -53,13 +53,11 @@ final class TaxonomyItemFactory
             unset($item['list']);
         }
 
-        $values = $item['values'] ?? [];
-
         return new Item(
             self::map($item['type']),
             $item['key'],
             $item['label'],
-            ...self::mapValues($values)
+            ...self::mapValues($item['values'] ?? [])
         );
     }
 

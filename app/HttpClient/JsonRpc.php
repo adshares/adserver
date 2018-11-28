@@ -52,8 +52,6 @@ final class JsonRpc
             throw RemoteCallException::fromOther($e);
         }
 
-        $response = new RawResponse($resp, $procedure);
-
-        return $response->result();
+        return (new RawResponse($resp, $procedure))->result();
     }
 }

@@ -40,7 +40,7 @@ class FilteringOptionsImporter
 
     public function import(): void
     {
-        $taxonomy = $this->client->fetchTaxonomy();
+        $taxonomy = $this->client->fetchFilteringOptions();
 
         $options = Selector::fromTaxonomy($taxonomy);
 

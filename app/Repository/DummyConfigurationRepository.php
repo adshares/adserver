@@ -48,14 +48,14 @@ final class DummyConfigurationRepository implements ConfigurationRepository
 
     public function fetchTargetingOptions(): Selector
     {
-        $taxonomy = $this->adUser->fetchTaxonomy();
+        $taxonomy = $this->adUser->fetchTargetingOptions();
 
         return Selector::fromTaxonomy($taxonomy);
     }
 
     public function fetchFilteringOptions(): Selector
     {
-        $taxonomy = $this->adClassify->fetchTaxonomy();
+        $taxonomy = $this->adClassify->fetchFilteringOptions();
 
         return Selector::fromTaxonomy($taxonomy);
     }

@@ -25,5 +25,5 @@ use Adshares\Common\Application\Dto\Taxonomy;
 
 interface TargetingOptionsSource
 {
-    public function fetchTaxonomy(): Taxonomy;
+    public function fetchTargetingOptions(): Taxonomy;
 }

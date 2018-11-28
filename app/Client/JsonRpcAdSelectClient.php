@@ -28,11 +28,11 @@ use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ViewContext;
-use Adshares\Supply\Application\Service\AdSelectClient;
 use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 
-final class JsonRpcAdSelectClient implements BannerFinder, AdSelectClient
+final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
     private const METHOD_BANNER_SELECT = 'banner_select';

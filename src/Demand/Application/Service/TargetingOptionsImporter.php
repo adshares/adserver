@@ -40,7 +40,7 @@ class TargetingOptionsImporter
 
     public function import(): void
     {
-        $taxonomy = $this->client->fetchTaxonomy();
+        $taxonomy = $this->client->fetchTargetingOptions();
 
         $options = Selector::fromTaxonomy($taxonomy);
 

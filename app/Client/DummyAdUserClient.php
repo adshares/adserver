@@ -31,7 +31,7 @@ use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements TargetingOptionsSource
 {
-    public function fetchTaxonomy(): Taxonomy
+    public function fetchTargetingOptions(): Taxonomy
     {
         $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
         $var = file_get_contents($path);
