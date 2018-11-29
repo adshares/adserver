@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use Adshares\Adserver\Client\Mapper\AdSelect\TargetingMapper;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 
@@ -44,7 +45,7 @@ class CampaignToAdSelectMapper
             ];
         }
 
-        $targeting = TargetingToAdSelectMapper::map(
+        $targeting = TargetingMapper::map(
             $campaignArray['targeting_requires'],
             $campaignArray['targeting_excludes']
         );

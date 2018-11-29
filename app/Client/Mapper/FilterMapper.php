@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper;
 
 use function implode;
+use function is_array;
 use function is_string;
 
 trait FilterMapper
