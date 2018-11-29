@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
@@ -66,7 +66,7 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
     {
         $procedure = new Procedure(
             self::METHOD_CAMPAIGN_UPDATE,
-            CampaignToAdSelectMapper::map($campaign)
+            CampaignMapper::map($campaign)
         );
         $this->client->call($procedure);
     }
