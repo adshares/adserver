@@ -24,10 +24,9 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\CampaignToAdSelectMapper;
 use Adshares\Adserver\HttpClient\JsonRpc;
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Supply\Application\Dto\FoundBanners;
-use Adshares\Supply\Application\Dto\ViewContext;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
@@ -45,29 +44,24 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
         $this->client = $client;
     }
 
-    /**
-     * @throws RemoteCallException
-     */
-    public function findBanners(ViewContext $context): FoundBanners
+    public function findBanners(ImpressionContext $context): FoundBanners
     {
         $procedure = new Procedure(
             self::METHOD_BANNER_SELECT,
-            $context->toArray()
+            $context->jsonRpcParams()
         );
         $result = $this->client->call($procedure);
 
         return new FoundBanners($result->toArray());
     }
 
-    /**
-     * @throws RemoteCallException
-     */
     public function exportInventory(Campaign $campaign): void
     {
         $procedure = new Procedure(
             self::METHOD_CAMPAIGN_UPDATE,
             CampaignToAdSelectMapper::map($campaign)
         );
+
         $this->client->call($procedure);
     }
 }

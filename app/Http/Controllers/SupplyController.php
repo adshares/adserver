@@ -24,18 +24,20 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
-use Adshares\Adserver\Services\BannerFinder;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\ImpressionContextProvider;
+use DateTime;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-
-// TODO: review request headers // extract & organize ??
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class SupplyController extends Controller
 {
-    public function find(Request $request)
+    public function find(Request $request, ImpressionContextProvider $contextProvider, BannerFinder $bannerFinder)
     {
         $response = new Response();
 
@@ -46,47 +48,37 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
-        if ('GET' == $request->getRealMethod()) {
+        if ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
-        } elseif ('POST' == $request->getRealMethod()) {
+        } elseif ('POST' === $request->getRealMethod()) {
             $data = $request->getContent();
-        } elseif ('OPTIONS' == $request->getRealMethod()) {
+        } elseif ('OPTIONS' === $request->getRealMethod()) {
             $response->setStatusCode(204);
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
             return $response;
+        } else {
+            throw new BadRequestHttpException('Invalid method');
         }
 
-        $decoded = Utils::decodeZones($data);
-        $zones = $decoded['zones'];
+        $tid = Utils::attachOrProlongTrackingCookie(
+            config('app.adserver_secret'), $request, $response, '', new DateTime());
 
-        $tid = Utils::attachTrackingCookie(config('app.adserver_secret'), $request, $response, '', new \DateTime());
+        $context = new ImpressionContext(
+            Utils::decodeZones($data)['zones'],
+            Utils::getImpressionContext($request, $data),
+            $contextProvider->getContext($tid)
+        );
 
-        // use adselect here
-        $context = Utils::getImpressionContext($request, $data);
+        $banners = $bannerFinder->findBanners($context);
 
-        $impressionId = $decoded['page']['iid'];
-        if ($impressionId) {
-            $aduser_endpoint = config('app.aduser_internal_location');
-            if ($aduser_endpoint) {
-                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
-            } else {
-                $userdata = [];
-            }
-        }
-
-        $keywords = array_merge($context, $userdata);
-
-        $banners = BannerFinder::getBestBanners($zones, $keywords);
-
-        foreach ($banners as &$banner) {
+        foreach ($banners as $banner) {
             if ($banner) {
                 $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
             }
         }
-        $response->setContent(json_encode($banners, JSON_PRETTY_PRINT));
 
-        return $response;
+        return self::json($banners);
     }
 
     // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
