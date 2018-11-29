@@ -58,16 +58,6 @@ final class Budget
             ));
         }
 
-        $total = $maxCpc + $maxCpm;
-
-        if ($budget < $total) {
-            throw new InvalidBudgetValueException(sprintf(
-                'Budget `%s` must be greater than total value `%s`.',
-                $budget,
-                $total
-            ));
-        }
-
         $this->budget = $budget;
         $this->maxCpc = $maxCpc;
         $this->maxCpm = $maxCpm;
