@@ -26,18 +26,25 @@ use function implode;
 use function is_array;
 use function is_string;
 
-trait FilterMapper
+abstract class AbstractFilterMapper
 {
+    private const FILTER_OR = 'or';
+    private const FILTER_AND = 'and';
+    private const FILTER_EQUAL = '=';
+
     public static function generateNestedStructure(array $data, array $keyword = []): array
     {
         $values = [];
         foreach ($data as $key => $item) {
             if (is_array($item)) {
+
+                $path = implode(':', self::generateFullPath($item, [$key]));
+
                 $keyword[] = $key;
                 $filter = [
-                    'keyword' => $key,
+                    'keyword' => $path,
                     'filter' => [
-                        'args' => self::generateNestedStructure($item, $keyword),
+                        'args' => self::generateNestedStructure($item, $keyword, $data),
                         'type' => self::chooseFilterType($item),
                     ],
                 ];
@@ -46,7 +53,7 @@ trait FilterMapper
                 $keyword = [];
             } else {
                 $filter = [
-                    'keyword' => implode('_', $keyword),
+                    'keyword' => implode(':', $keyword) . ':' . $item,
                     'filter' => [
                         'args' => $item,
                         'type' => self::FILTER_EQUAL,
@@ -77,5 +84,21 @@ trait FilterMapper
         }
 
         return self::FILTER_OR;
+    }
+
+    public static function generateFullPath(array $data, array $path = []): array
+    {
+        foreach ($data as $key => $item) {
+
+            if (is_string($key)) {
+                $path[] = $key;
+            }
+
+            if (is_array($item)) {
+                $path = self::generateFullPath($item, $path);
+            }
+        }
+
+        return $path;
     }
 }

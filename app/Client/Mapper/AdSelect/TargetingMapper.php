@@ -22,16 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Client\Mapper\FilterMapper;
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 
-class TargetingMapper
+class TargetingMapper extends AbstractFilterMapper
 {
-    use FilterMapper;
-
-    const FILTER_OR = 'or';
-    const FILTER_AND = 'and';
-    const FILTER_EQUAL = '=';
-
     public static function map(array $requires, array $excludes): array
     {
         $exclude = self::generateNestedStructure($excludes);
