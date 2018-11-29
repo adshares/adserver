@@ -78,4 +78,14 @@ final class ImpressionContext
 JSON
             , true);
     }
+
+    public function zones(): array
+    {
+        return $this->zones;
+    }
+
+    public function keywords(): array
+    {
+        return $this->http['site']['keywords'];
+    }
 }

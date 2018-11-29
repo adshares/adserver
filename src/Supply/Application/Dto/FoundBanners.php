@@ -23,7 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class FoundBanners extends ArrayCollection
+final class FoundBanners extends ArrayCollection implements Arrayable
 {
 }

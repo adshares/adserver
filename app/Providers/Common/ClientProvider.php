@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\DummyAdSelectClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\HttpClient\AdSelectHttpClient;
@@ -57,12 +58,8 @@ final class ClientProvider extends ServiceProvider
             ]);
         });
 
-        $this->app->bind(BannerFinder::class, function (Application $app) {
-            return new JsonRpcAdSelectClient(
-                new JsonRpc(
-                    $app->make(AdSelectHttpClient::class)
-                )
-            );
+        $this->app->bind(BannerFinder::class, function () {
+            return new DummyAdSelectClient();
         });
 
         $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
