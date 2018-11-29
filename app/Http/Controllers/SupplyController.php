@@ -62,7 +62,12 @@ class SupplyController extends Controller
         }
 
         $tid = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'), $request, $response, '', new DateTime());
+            config('app.adserver_secret'),
+            $request,
+            $response,
+            '',
+            new DateTime()
+        );
 
         $context = new ImpressionContext(
             Utils::decodeZones($data)['zones'],

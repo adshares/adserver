@@ -90,5 +90,4 @@ final class DummyAdSelectClient implements BannerFinder
 
         return $banners;
     }
-
 }

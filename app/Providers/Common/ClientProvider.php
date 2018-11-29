@@ -83,6 +83,5 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(ImpressionContextProvider::class, function () {
             return new DummyAdUserClient();
         });
-
     }
 }
