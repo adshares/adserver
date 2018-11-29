@@ -99,11 +99,11 @@
         "status": 2,
         "zones": {
           "left": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "right": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "center": {
@@ -117,11 +117,11 @@
         "status": 2,
         "zones": {
           "left": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "right": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "center": {
@@ -139,11 +139,11 @@
         "status": 2,
         "zones": {
           "left": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "right": {
-            "width": 120,
+            "width": 160,
             "height": 600
           },
           "center": {
