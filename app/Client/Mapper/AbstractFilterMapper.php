@@ -37,7 +37,6 @@ abstract class AbstractFilterMapper
         $values = [];
         foreach ($data as $key => $item) {
             if (is_array($item)) {
-
                 if (empty($keyword)) {
                     $path = implode(':', self::generateFullPath($item, [$key]));
                 } else {
@@ -93,7 +92,6 @@ abstract class AbstractFilterMapper
     public static function generateFullPath(array $data, array $path = []): array
     {
         foreach ($data as $key => $item) {
-
             if (is_string($key)) {
                 $path[] = $key;
             }
