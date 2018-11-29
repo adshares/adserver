@@ -67,7 +67,7 @@ final class DummyAdSelectClient implements BannerFinder
                         ->where('network_campaigns.targeting_requires', 'LIKE', "%$key%")
                         ->where('network_banners.width', $zone->width)
                         ->where('network_banners.height', $zone->height)
-//                            ->whereIn('type', $typeDefault)
+                        ->whereIn('type', $typeDefault)
                         ->get();
 
 //                        NetworkBanner::where('width', $zone->width)
