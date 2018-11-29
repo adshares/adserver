@@ -30,7 +30,7 @@ final class CampaignDate
     /** @var DateTime */
     private $dateStart;
 
-    /** @var DateTime */
+    /** @var DateTime|null */
     private $dateEnd;
 
     /** @var DateTime */
@@ -39,9 +39,9 @@ final class CampaignDate
     /** @var DateTime */
     private $updatedAt;
 
-    public function __construct(DateTime $dateStart, DateTime $dateEnd, DateTime $createdAt, DateTime $updatedAt)
+    public function __construct(DateTime $dateStart, ?DateTime $dateEnd, DateTime $createdAt, DateTime $updatedAt)
     {
-        if ($dateEnd <= $dateStart) {
+        if ($dateEnd !== null && $dateEnd <= $dateStart) {
             throw new InvalidCampaignDateException('End date must be greater than start date.');
         }
 
@@ -56,7 +56,7 @@ final class CampaignDate
         return $this->dateStart;
     }
 
-    public function getDateEnd(): DateTime
+    public function getDateEnd(): ?DateTime
     {
         return $this->dateEnd;
     }

@@ -47,27 +47,6 @@ final class BudgetTest extends TestCase
         new Budget(1000000000000, 100000000000, -100000000000);
     }
 
-    public function testWhenTotalIsSmallerThanBudget(): void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(1000000000000, 600000000000, 600000000000);
-    }
-
-    public function testWhenMaxCpcIsSmallerThanBudget():void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(1000000000000, 1100000000000, null);
-    }
-
-    public function testWhenMaxCpmIsSmallerThanBudget():void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(1000000000000, null, 1200000000000);
-    }
-
     public function testWhenInputDataAreCorrect(): void
     {
         $budget = new Budget(1000000000000, 100000000000, 200000000000);
