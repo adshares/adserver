@@ -1,15 +1,15 @@
 [
   {
-    "email":"publisher@e11.click",
-    "sites":[
+    "email": "publisher@e11.click",
+    "sites": [
       {
-        "name":"publisher.ads1",
+        "name": "publisher.ads1",
         "status": 2,
         "site_requires": [
           {
             "id": "category",
             "label": "Creative type",
-            "key":"category"
+            "key": "category"
           },
           {
             "id": "lang",
@@ -26,13 +26,13 @@
         ]
       },
       {
-        "name":"publisher.ads3",
+        "name": "publisher.ads3",
         "status": 2,
         "site_requires": [
           {
             "id": "category",
             "label": "Creative type",
-            "key":"category"
+            "key": "category"
           },
           {
             "id": "lang",
@@ -49,13 +49,13 @@
         ]
       },
       {
-        "name":"publisher.ads4",
+        "name": "publisher.ads4",
         "status": 2,
         "site_requires": [
           {
             "id": "category",
             "label": "Creative type",
-            "key":"category"
+            "key": "category"
           },
           {
             "id": "lang",
@@ -72,13 +72,13 @@
         ]
       },
       {
-        "name":"publisher.ads2",
+        "name": "publisher.ads2",
         "status": 2,
         "site_requires": [
           {
             "id": "category",
             "label": "Creative type",
-            "key":"category"
+            "key": "category"
           },
           {
             "id": "lang",
@@ -93,6 +93,69 @@
             "key": "js_enabled"
           }
         ]
-      }    ]
+      },
+      {
+        "name": "tea site",
+        "status": 2,
+        "zones": {
+          "left": {
+            "width": 120,
+            "height": 600
+          },
+          "right": {
+            "width": 120,
+            "height": 600
+          },
+          "center": {
+            "width": 970,
+            "height": 90
+          }
+        }
+      },
+      {
+        "name": "travel site",
+        "status": 2,
+        "zones": {
+          "left": {
+            "width": 120,
+            "height": 600
+          },
+          "right": {
+            "width": 120,
+            "height": 600
+          },
+          "center": {
+            "width": 970,
+            "height": 90
+          },
+          "center-mobile": {
+            "width": 320,
+            "height": 50
+          }
+        }
+      },
+      {
+        "name": "veterinarian site",
+        "status": 2,
+        "zones": {
+          "left": {
+            "width": 120,
+            "height": 600
+          },
+          "right": {
+            "width": 120,
+            "height": 600
+          },
+          "center": {
+            "width": 970,
+            "height": 90
+          },
+          "center-mobile": {
+            "width": 320,
+            "height": 50
+          }
+        }
+      }
+    ]
   }
 ]
