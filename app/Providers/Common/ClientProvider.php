@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
-use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\HttpClient\AdSelectHttpClient;
 use Adshares\Adserver\HttpClient\AdUserHttpClient;

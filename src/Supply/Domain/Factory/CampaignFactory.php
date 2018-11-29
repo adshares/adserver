@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use function array_key_exists;
 
 class CampaignFactory
 {
@@ -118,7 +119,7 @@ class CampaignFactory
                 continue;
             }
 
-            if (!isset($data[$value])) {
+            if (!array_key_exists($value, $data)) {
                 throw new InvalidCampaignArgumentException(sprintf(
                     '%s field is missing. THe field is required.',
                     $value

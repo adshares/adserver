@@ -49,10 +49,13 @@ class CampaignMapper
             $campaignArray['targeting_excludes']
         );
 
+        $dateStart = (int)$campaignArray['date_start']->format('U');
+        $dateEnd = $campaignArray['date_end'] ? (int)$campaignArray['date_end']->format('U') : 0;
+
         $mapped = [
             'campaign_id' => $campaignArray['demand_campaign_id'],
-            'time_start' => (int)$campaignArray['date_start']->format('U'),
-            'time_end' => (int)$campaignArray['date_end']->format('U'),
+            'time_start' => $dateStart,
+            'time_end' => $dateEnd,
             'banners' => $banners,
             'keywords' => [
                 'source_host' => $campaignArray['source_host'],
