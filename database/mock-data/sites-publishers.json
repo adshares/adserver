@@ -127,6 +127,10 @@
           "center": {
             "width": 970,
             "height": 90
+          },
+          "center-mobile": {
+            "width": 320,
+            "height": 50
           }
         }
       },
@@ -145,6 +149,10 @@
           "center": {
             "width": 970,
             "height": 90
+          },
+          "center-mobile": {
+            "width": 320,
+            "height": 50
           }
         }
       }
