@@ -38,7 +38,11 @@ abstract class AbstractFilterMapper
         foreach ($data as $key => $item) {
             if (is_array($item)) {
 
-                $path = implode(':', self::generateFullPath($item, [$key]));
+                if (empty($keyword)) {
+                    $path = implode(':', self::generateFullPath($item, [$key]));
+                } else {
+                    $path = $key;
+                }
 
                 $keyword[] = $key;
                 $filter = [
