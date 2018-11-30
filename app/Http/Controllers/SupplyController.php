@@ -37,6 +37,8 @@ class SupplyController extends Controller
 {
     public function find(Request $request)
     {
+        $userId = $request->cookie('user_id');
+
         $response = new Response();
 
         if ($request->headers->has('Origin')) {
@@ -278,6 +280,25 @@ class SupplyController extends Controller
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
         $response->headers->set('Content-Type', 'image/gif');
+
+        return $response;
+    }
+
+    public function pixel(Request $request)
+    {
+        $response = new Response();
+
+        $userId = Utils::attachUserId($request, $response);
+
+        $adServerId = config('app.adserver_secret');
+        $adUserUrl = sprintf(
+            '%s/pixel_path?%s_%s.gif',
+            config('app.aduser_external_location'),
+            $adServerId,
+            $userId
+        );
+
+        $response->headers->set('Location', $adUserUrl);
 
         return $response;
     }

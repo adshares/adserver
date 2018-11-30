@@ -40,6 +40,7 @@ Route::get('/l/keywords/{log_id}', [DemandController::class, 'logKeywords'])->na
 
 Route::get('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
 Route::get('/supply/find.js', [SupplyController::class, 'findScript'])->name('supply-find.js');
+Route::get('/supply/pixel', [SupplyController::class, 'pixel'])->name('supply-pixel');
 
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name('log-network-view');
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->name('log-network-click');
