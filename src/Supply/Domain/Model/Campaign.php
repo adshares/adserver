@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Model;
 
@@ -28,6 +28,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Datetime;
+use const DATE_ATOM;
 
 final class Campaign
 {
@@ -35,6 +36,7 @@ final class Campaign
     const STATUS_ACTIVE = 1;
     const STATUS_DELETED = 2;
 
+    protected $dateFormat = DATE_ATOM;
     /** @var Id */
     private $id;
 
@@ -53,10 +55,10 @@ final class Campaign
     /** @var Budget */
     private $budget;
 
-    /** @var array  */
+    /** @var array */
     private $targetingExcludes = [];
 
-    /** @var array  */
+    /** @var array */
     private $targetingRequires = [];
 
     /** @var int */
