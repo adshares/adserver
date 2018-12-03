@@ -22,10 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Application\Dto\FoundBanners;
-use Adshares\Supply\Application\Dto\ImpressionContext;
-
-interface BannerFinder
+interface ImpressionContextProvider
 {
-    public function findBanners(ImpressionContext $context): FoundBanners;
+    public function getContext(string $userId): array;
 }

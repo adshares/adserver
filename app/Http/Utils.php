@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http;
 
 use BrowscapPHP\Helper\LoggerHelper;
+use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
@@ -47,7 +48,7 @@ class Utils
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
         if ($contextStr) {
-            if (is_string($contextStr)) {
+            if (\is_string($contextStr)) {
                 $context = self::decodeZones($contextStr);
             } else {
                 $context = ['page' => $contextStr];
@@ -206,20 +207,6 @@ class Utils
         }
 
         return $device;
-//         devicetype
-//         make
-//         model
-//         os
-//         osv
-//         hwv
-//         h
-//         w
-//         ppi
-//         pxratio
-//         js
-//         flashver
-//         carrier
-//         geo
     }
 
     private static function getGeoData($clientIp)
@@ -267,12 +254,12 @@ class Utils
         return bin2hex(substr($input, 0, 16));
     }
 
-    public static function attachTrackingCookie(
+    public static function attachOrProlongTrackingCookie(
         $secret,
         Request $request,
         Response $response,
         $contentSha1,
-        \DateTime $contentModified
+        DateTime $contentModified
     ) {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
@@ -282,7 +269,7 @@ class Utils
                 $tag = str_replace('"', '', $etags[0]);
                 $tid = self::decodeEtag($tag);
             }
-            if (is_null($tid) || !self::validTrackingId($tid, $secret)) {
+            if ($tid === null || !self::validTrackingId($tid, $secret)) {
                 $tid = self::createTrackingId($secret);
             }
         }
@@ -290,7 +277,7 @@ class Utils
             new Cookie(
                 'tid',
                 $tid,
-                new \DateTime('+ 1 month'),
+                new DateTime('+ 1 month'),
                 '/',
                 $request->getHost()
             )
@@ -310,16 +297,16 @@ class Utils
         return $tid;
     }
 
-    public static function validTrackingId($input, $secret)
+    public static function validTrackingId($input, $secret): bool
     {
-        if (!is_string($input)) {
+        if (!\is_string($input)) {
             return false;
         }
         $input = self::urlSafeBase64Decode($input);
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
 
-        return substr(sha1($id.$secret, true), 0, 6) == $checksum;
+        return strpos(sha1($id.$secret, true), $checksum) === 0;
     }
 
     private static function decodeEtag($etag)
@@ -346,11 +333,6 @@ class Utils
         );
     }
 
-    /**
-     * @param string $secret
-     *
-     * @return string
-     */
     public static function createTrackingId($secret)
     {
         $input = [];
@@ -373,49 +355,7 @@ class Utils
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
-    public static function arrayRemoveValues(array &$array, $value) // former array_erase
-    {
-        foreach ($array as $key => $val) {
-            if ($val === $value) {
-                unset($array[$key]);
-            }
-        }
-
-        return;
-    }
-
-    public static function arrayRemoveFirstValue(array &$array, $value) // former array_erase_one
-    {
-        foreach ($array as $key => $val) {
-            if ($val === $value) {
-                unset($array[$key]);
-
-                return;
-            }
-        }
-
-        return;
-    }
-
-    public static function toJsonString($value)
-    {
-        if ($value instanceof \DateTime) {
-            return $value->format(DATE_ISO8601);
-        }
-
-        return (string)$value;
-    }
-
-    public static function fromJsonString($field, $value)
-    {
-        if (stristr($field, 'time')) {
-            return \DateTime::createFromFormat(DATE_ISO8601, $value);
-        }
-
-        return $value;
-    }
-
-    public static function flattenKeywords(array $keywords, $prefix = '')
+    public static function flattenKeywords(array $keywords, $prefix = ''): array
     {
         $ret = [];
 

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client\Mapper;
 
 use function implode;
 use function is_array;
+use function is_numeric;
 use function is_string;
 
 abstract class AbstractFilterMapper
@@ -56,9 +57,9 @@ abstract class AbstractFilterMapper
                 $keyword = [];
             } else {
                 $filter = [
-                    'keyword' => implode(':', $keyword) . ':' . $item,
+                    'keyword' => implode(':', $keyword).':'.$item,
                     'filter' => [
-                        'args' => $item,
+                        'args' => is_numeric($item) ? (int)$item : (string)$item,
                         'type' => self::FILTER_EQUAL,
                     ],
                 ];
@@ -68,6 +69,21 @@ abstract class AbstractFilterMapper
         }
 
         return $values;
+    }
+
+    public static function generateFullPath(array $data, array $path = []): array
+    {
+        foreach ($data as $key => $item) {
+            if (is_string($key)) {
+                $path[] = $key;
+            }
+
+            if (is_array($item)) {
+                $path = self::generateFullPath($item, $path);
+            }
+        }
+
+        return $path;
     }
 
     private static function chooseFilterType($item): string
@@ -87,20 +103,5 @@ abstract class AbstractFilterMapper
         }
 
         return self::FILTER_OR;
-    }
-
-    public static function generateFullPath(array $data, array $path = []): array
-    {
-        foreach ($data as $key => $item) {
-            if (is_string($key)) {
-                $path[] = $key;
-            }
-
-            if (is_array($item)) {
-                $path = self::generateFullPath($item, $path);
-            }
-        }
-
-        return $path;
     }
 }

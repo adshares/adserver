@@ -24,7 +24,7 @@ namespace Adshares\Tests\Supply\Application\Service;
 
 use Adshares\Adserver\Client\DummyAdSelectClient;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Supply\Application\Dto\ViewContext;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -41,7 +41,7 @@ class BannerFinderClientTest extends TestCase
         });
 
         $finder = $this->app->make(BannerFinder::class);
-        $banners = $finder->findBanners(new ViewContext());
+        $banners = $finder->findBanners(new ImpressionContext([], [], []));
 
         self::assertGreaterThan(0, count($banners));
     }

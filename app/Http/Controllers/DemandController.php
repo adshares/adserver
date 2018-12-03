@@ -73,7 +73,7 @@ class DemandController extends Controller
             $mime = 'image/png';
         }
 
-        $tid = Utils::attachTrackingCookie(
+        $tid = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
