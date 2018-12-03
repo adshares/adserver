@@ -65,11 +65,14 @@ final class DummyAdSelectClient implements BannerFinder
                     $pluck = DB::table('network_banners')
                         ->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id')
                         ->select('network_banners.uuid')
-//                        ->where('network_campaigns.targeting_requires', 'LIKE', "%$key%")
-                        ->whereRaw("(network_campaigns.targeting_requires LIKE ? OR network_campaigns.targeting_requires = '[]')",
-                            "%$key%")
-                        ->whereRaw("(network_campaigns.targeting_excludes NOT LIKE ? OR network_campaigns.targeting_excludes = '[]')",
-                            "%$key%")
+                        ->whereRaw(
+                            "(network_campaigns.targeting_requires LIKE ? OR network_campaigns.targeting_requires = '[]')",
+                            "%$key%"
+                        )
+                        ->whereRaw(
+                            "(network_campaigns.targeting_excludes NOT LIKE ? OR network_campaigns.targeting_excludes = '[]')",
+                            "%$key%"
+                        )
                         ->where('network_campaigns.status', Campaign::STATUS_ACTIVE)
                         ->where('network_banners.width', $zone->width)
                         ->where('network_banners.height', $zone->height)
