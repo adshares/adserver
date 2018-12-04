@@ -28,12 +28,12 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\ImpressionContextProvider;
-use DateTime;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function uniqid;
 use function urlencode;
 
@@ -65,13 +65,11 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
-        $tid = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
-            $request,
-            $response,
-            '',
-            new DateTime()
-        );
+        $tid = $request->cookies->get('tid', null);
+
+        if ($tid === null) {
+            throw new NotFoundHttpException('User not found');
+        }
 
         $context = new ImpressionContext(
             Utils::decodeZones($data)['zones'],
@@ -296,7 +294,7 @@ class SupplyController extends Controller
         $response = new Response();
         $impressionId = $request->query->get('impressionId', md5(uniqid().time()));
 
-        $trackingId = Utils::attachTrackingCookie(
+        $trackingId = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
