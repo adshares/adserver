@@ -37,8 +37,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function uniqid;
 use function urlencode;
 
-// TODO: review request headers // extract & organize ??
-
 class SupplyController extends Controller
 {
     public function find(Request $request, ImpressionContextProvider $contextProvider, BannerFinder $bannerFinder)
