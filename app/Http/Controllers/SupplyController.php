@@ -30,6 +30,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use function uniqid;
+use function urlencode;
 
 // TODO: review request headers // extract & organize ??
 
@@ -71,7 +73,7 @@ class SupplyController extends Controller
         if ($impressionId) {
             $aduser_endpoint = config('app.aduser_internal_location');
             if ($aduser_endpoint) {
-                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+                $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/getData/{$userId}"), true);
             } else {
                 $userdata = [];
             }
@@ -284,18 +286,33 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function pixel(Request $request)
+    /**
+     * Create or prolong tracking cookie and connect it with AdUser.
+     *
+     * @param Request $request
+     *
+     * @return Response
+     * @throws \Exception
+     */
+    public function register(Request $request)
     {
         $response = new Response();
+        $impressionId = $request->query->get('impressionId', md5(uniqid().time()));
 
-        $userId = Utils::attachUserId($request, $response);
+        $trackingId = Utils::attachTrackingCookie(
+            config('app.adserver_secret'),
+            $request,
+            $response,
+            '',
+            new \DateTime()
+        );
 
-        $adServerId = config('app.adserver_secret');
         $adUserUrl = sprintf(
-            '%s/pixel_path?%s_%s.gif',
+            '%s/register/%s/%s/%s.gif',
             config('app.aduser_external_location'),
-            $adServerId,
-            $userId
+            urlencode(config('app.adserver_id')),
+            $trackingId,
+            $impressionId
         );
 
         $response->headers->set('Location', $adUserUrl);

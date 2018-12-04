@@ -262,7 +262,8 @@ var aduserPixel = function (impressionId) {
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
-    img.src = serverOrigin + '/supply/pixel?' + impressionId;
+    img.src = serverOrigin + '/supply/register?impressionId=' + impressionId;
+
     document.body.appendChild(img);
 };
 

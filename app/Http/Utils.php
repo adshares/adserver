@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Http;
 
-use Adshares\Common\Domain\ValueObject\Uuid;
 use BrowscapPHP\Helper\LoggerHelper;
 use Doctrine\Common\Cache\FilesystemCache;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
@@ -372,27 +371,6 @@ class Utils
         $sha1 = pack('H*', $contentSha1);
 
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
-    }
-
-    public static function attachUserId(Request $request, Response $response)
-    {
-        $userId = $request->cookies->get('user_id');
-
-        if (!$userId) {
-            $userId = Uuid::v4();
-        }
-
-        $response->headers->setCookie(
-            new Cookie(
-                'user_id',
-                $userId,
-                new \DateTime('+1 month'),
-                '/',
-                $request->getHost()
-            )
-        );
-
-        return $userId;
     }
 
     public static function arrayRemoveValues(array &$array, $value) // former array_erase
