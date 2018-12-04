@@ -23,8 +23,6 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class NetworkCampaign extends Model
 {
@@ -95,13 +93,13 @@ class NetworkCampaign extends Model
         'publisher_id' => 'BinHex',
     ];
 
+    public static function getTableName()
+    {
+        return with(new static())->getTable();
+    }
+
     public function banners()
     {
         return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
-    }
-
-    public static function getTableName()
-    {
-        return with(new static)->getTable();
     }
 }

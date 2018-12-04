@@ -22,9 +22,24 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-final class ViewContext
+final class ImpressionContext
 {
-    public function toArray(): array
+
+    /** @var array */
+    private $zones;
+    /** @var array */
+    private $http;
+    /** @var ImpressionContext */
+    private $userContext;
+
+    public function __construct(array $zones, array $http, array $userContext)
+    {
+        $this->zones = $zones;
+        $this->http = $http;
+        $this->userContext = $userContext;
+    }
+
+    public function jsonRpcParams(): array
     {
         return array_map(function (array $param) {
             if (isset($param['keywords']) && empty($param['keywords'])) {
@@ -32,10 +47,10 @@ final class ViewContext
             }
 
             return $param;
-        }, $this->params());
+        }, $this->fixedParams());
     }
 
-    private function params(): array
+    private function fixedParams(): array
     {
         return json_decode(<<<JSON
 [{
@@ -62,5 +77,15 @@ final class ViewContext
         }]
 JSON
             , true);
+    }
+
+    public function zones(): array
+    {
+        return $this->zones;
+    }
+
+    public function keywords(): array
+    {
+        return $this->http['site']['keywords'];
     }
 }

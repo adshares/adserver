@@ -18,11 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -34,50 +31,6 @@ class MockDataCampaignsSeeder extends Seeder
         [120, 600],
         [160, 600],
     ];
-
-    private static function getRandValue($type)
-    {
-        switch ($type) {
-            case 'browser_name':
-                $values = [
-                    'chrome',
-                    'firefox',
-                    'opera',
-                    'edge',
-                ];
-                break;
-            case 'platform_name':
-                $values = [
-                    'win',
-                    'linux',
-                    'mac',
-                ];
-                break;
-            case 'device_type':
-                $values = [
-                    'desktop',
-                    'tablet',
-                    'phone',
-                ];
-                break;
-            case 'inframe':
-            case 'keyword_games':
-                $values = [
-                    '1',
-                    '0',
-                ];
-                break;
-            case 'browser_name:version':
-                $values = [
-                    'chrome:00053',
-                    'opera:00009',
-                    'firefox:00025',
-                ];
-                break;
-        }
-
-        return $values[array_rand($values, 1)];
-    }
 
     /**
      * Run the database seeds.
@@ -110,7 +63,6 @@ class MockDataCampaignsSeeder extends Seeder
 
             foreach ($mockCampaign->campaigns as $cr) {
                 $campaign = $this->createCampaign($user, $cr);
-//                $nc = $this->createNetworkCampaign($cr, $campaign, $user);
 
                 $banners = [];
 
@@ -132,19 +84,77 @@ class MockDataCampaignsSeeder extends Seeder
                     }
                 }
 
-                // NETWORK BANNERS
-//                foreach ($banners as $banner) {
-//                    $b = $this->makeNetworkBanner($banner, $nc);
-//                    $b->save();
-//                }
-
                 $this->command->info(" Added - [$campaign->landing_url] for user <{$user->email}>");
             }
         }
         DB::commit();
 
-        $this->command->info('Campaigns mock data seeded - for first user and last ' . ($i) . ' users');
+        $this->command->info('Campaigns mock data seeded - for first user and last '.($i).' users');
     }
+
+    private function createCampaign($u, $cr): Campaign
+    {
+        $campaign = factory(Campaign::class)->create([
+            'landing_url' => $cr->url,
+            'user_id' => $u->id,
+            'name' => $cr->name,
+            'budget' => $cr->budget_per_hour,
+            'max_cpc' => $cr->max_cpc,
+            'max_cpm' => $cr->max_cpm,
+            'status' => Campaign::STATUS_ACTIVE,
+            'targeting_requires' => $cr->targeting_requires ?? null,
+            'targeting_excludes' => $cr->targeting_excludes ?? null,
+            'classification_status' => $cr->classification_status ?? 0,
+            'classification_tags' => $cr->classification_tags ?? null,
+        ]);
+
+        return $campaign;
+    }
+
+    private function makeBanner($c, $s = [], $filename = null): Banner
+    {
+        $t = 'image';
+        $b = new Banner();
+        $b->fill([
+            'campaign_id' => $c->id,
+            'creative_type' => $t,
+            'creative_width' => $s[0],
+            'creative_height' => $s[1],
+        ]);
+
+        if (!empty($filename)) {
+            $b->creative_contents = file_get_contents($filename);
+        } else {
+            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $s[0], $s[1], "CID: $c->id");
+        }
+
+        return $b;
+    }
+
+//    private function makeNetworkBanner(Banner $banner, $nc): NetworkBanner
+//    {
+//        $serveUrl = route('banner-serve', [
+//            'id' => $banner,
+//        ]);
+//
+//        $b = new NetworkBanner();
+//        $b->fill([
+//            'network_campaign_id' => $nc->id,
+//            'uuid' => Uuid::v4(),
+//            'type' => 'image',
+//            'width' => $banner->creative_width,
+//            'height' => $banner->creative_height,
+//            'serve_url' => $serveUrl,
+//            'click_url' => route('banner-click', [
+//                'id' => $banner->id,
+//            ]),
+//            'view_url' => route('banner-view', [
+//                'id' => $banner->id,
+//            ]),
+//        ]);
+//
+//        return $b;
+//    }
 
     private function generateBannernPng($id, $width, $height, $text = '')
     {
@@ -186,101 +196,32 @@ class MockDataCampaignsSeeder extends Seeder
         <head>
             <meta http-equiv="content-type" content="text/html; charset=utf-8">
             <meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src \'self\' data: '
-            . $server_url
-            . ' '
-            . $server_url
-            . '; frame-src \'self\' data:; script-src \'self\' '
-            . $server_url
-            . ' '
-            . $server_url
-            . ' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
+            .$server_url
+            .' '
+            .$server_url
+            .'; frame-src \'self\' data:; script-src \'self\' '
+            .$server_url
+            .' '
+            .$server_url
+            .' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
             <script src="'
-            . $view_js_route
-            . '"></script>
+            .$view_js_route
+            .'"></script>
             <a id="adsharesLink">
             <img src="data:image/png;base64,'
-            . $base64Image
-            . '" width="'
-            . $width
-            . '" height="'
-            . $height
-            . '" border="0">
+            .$base64Image
+            .'" width="'
+            .$width
+            .'" height="'
+            .$height
+            .'" border="0">
             </a>
 
         </body>
         </html>
         ';
-    }
-
-//    private function makeNetworkBanner(Banner $banner, $nc): NetworkBanner
-//    {
-//        $serveUrl = route('banner-serve', [
-//            'id' => $banner,
-//        ]);
-//
-//        $b = new NetworkBanner();
-//        $b->fill([
-//            'network_campaign_id' => $nc->id,
-//            'uuid' => Uuid::v4(),
-//            'type' => 'image',
-//            'width' => $banner->creative_width,
-//            'height' => $banner->creative_height,
-//            'serve_url' => $serveUrl,
-//            'click_url' => route('banner-click', [
-//                'id' => $banner->id,
-//            ]),
-//            'view_url' => route('banner-view', [
-//                'id' => $banner->id,
-//            ]),
-//        ]);
-//
-//        return $b;
-//    }
-
-    private function makeBanner($c, $s = [], $filename = null): Banner
-    {
-        $t = 'image';
-        $b = new Banner();
-        $b->fill([
-            'campaign_id' => $c->id,
-            'creative_type' => $t,
-            'creative_width' => $s[0],
-            'creative_height' => $s[1],
-        ]);
-
-        if (!empty($filename)) {
-            $b->creative_contents = file_get_contents($filename);
-        } else {
-            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $s[0], $s[1], "CID: $c->id");
-        }
-
-        return $b;
-    }
-
-    private function createCampaign($u, $cr): Campaign
-    {
-        $campaign = new Campaign();
-        $campaign->landing_url = $cr->url;
-        $campaign->user_id = $u->id;
-        $campaign->name = $cr->name;
-        $campaign->budget = $cr->budget_per_hour;
-        $campaign->max_cpc = $cr->max_cpc;
-        $campaign->max_cpm = $cr->max_cpm;
-        $campaign->status = Campaign::STATUS_ACTIVE;
-        $campaign->targeting_requires = $cr->targeting_requires ?? null;
-        $campaign->targeting_excludes = $cr->targeting_excludes ?? null;
-        $campaign->classification_status = $cr->classification_status ?? 0;
-        $campaign->classification_tags = $cr->classification_tags ?? null;
-
-        $campaign->fill([
-            'time_start' => date('Y-m-d H:i:s'),
-            'time_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
-        ]);
-        $campaign->save();
-
-        return $campaign;
     }
 
 //    private function createNetworkCampaign($mockCampaign, $sourceCampaign, $user): NetworkCampaign

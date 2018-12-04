@@ -25,11 +25,12 @@ namespace Adshares\Adserver\Client;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Supply\Application\Service\ImpressionContextProvider;
 use function base_path;
 use function file_get_contents;
 use function GuzzleHttp\json_decode;
 
-final class DummyAdUserClient implements TargetingOptionsSource
+final class DummyAdUserClient implements TargetingOptionsSource, ImpressionContextProvider
 {
     public function fetchTargetingOptions(): Taxonomy
     {
@@ -38,5 +39,14 @@ final class DummyAdUserClient implements TargetingOptionsSource
         $taxonomy = json_decode($var, true);
 
         return TaxonomyFactory::fromArray($taxonomy);
+    }
+
+    public function getContext(string $userId): array
+    {
+        return [
+            'human_score' => '0.9',
+            'keywords' => ['device_type' => 'desktop', 'javascript' => true],
+            'uid' => $userId,
+        ];
     }
 }

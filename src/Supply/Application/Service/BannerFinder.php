@@ -23,9 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Application\Dto\FoundBanners;
-use Adshares\Supply\Application\Dto\ViewContext;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 
 interface BannerFinder
 {
-    public function findBanners(ViewContext $context): FoundBanners;
+    public function findBanners(ImpressionContext $context): FoundBanners;
 }
