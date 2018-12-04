@@ -80,13 +80,6 @@ class ApiController extends Controller
         return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
     }
 
-    private function parseDateToISO8601(string $date): string
-    {
-        $date = DateTime::createFromFormat('Y-m-d H:i:s', $date, new DateTimeZone('UTC'));
-
-        return $date->format(DateTime::ISO8601);
-    }
-
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)
     {
         // TODO : convert 2 laravel
