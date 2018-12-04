@@ -59,14 +59,12 @@ class ApiController extends Controller
                 ];
             }
 
-            $date_start = ($campaign->time_start !== null) ? $this->parseDateToISO8601($campaign->time_start) : null;
-            $date_end = ($campaign->time_end !== null) ? $this->parseDateToISO8601($campaign->time_end) : null;
             $campaigns[] = [
                 'uuid' => $campaign->uuid,
                 'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
-                'date_start' => $date_start,
-                'date_end' => $date_end,
+                'date_start' => $campaign->time_start,
+                'date_end' => $campaign->time_end,
                 'created_at' => $campaign->created_at->format(DateTime::ISO8601),
                 'updated_at' => $campaign->updated_at->format(DateTime::ISO8601),
                 'max_cpc' => $campaign->max_cpc,
