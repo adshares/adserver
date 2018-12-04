@@ -18,21 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Campaign;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Models\Traits;
 
-$factory->define(Campaign::class, function (Faker $faker) {
-    return [
-        'landing_url' => $faker->url(),
-        'time_start' => $faker->dateTimeThisMonth()->format(DATE_ATOM),
-        'status' => '0',
-        'name' => $faker->word(),
-        'max_cpc' => '200000000000',
-        'max_cpm' => '100000000000',
-        'budget' => '10000000000000',
-        'targeting_excludes' => [],
-        'targeting_requires' => [],
-        'classification_status' => 0,
-        'classification_tags' => null,
-    ];
-});
+use DateTime;
+use const DATE_ATOM;
+
+trait DateAtom
+{
+    public function dateAtomMutator($key, ?string $value): void
+    {
+        $this->attributes[$key] = $value !== null ? DateTime::createFromFormat(DATE_ATOM, $value) : null;
+    }
+
+    public function dateAtomAccessor(?DateTime $value)
+    {
+        return $value === null ? null : $value->format(DATE_ATOM);
+    }
+}

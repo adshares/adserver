@@ -36,7 +36,7 @@ class CamelizeJsonResponse
         return $response;
     }
 
-    private function camelizeJsonResponse(JsonResponse $response)
+    private function camelizeJsonResponse(JsonResponse $response): JsonResponse
     {
         $content = $response->content();
 
