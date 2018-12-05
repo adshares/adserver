@@ -61,7 +61,7 @@ class Kernel extends HttpKernel
             ValidatePostSize::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
-            SnakizeRequest::class,
+            self::SNAKE_CASING,
             SubstituteBindings::class,
             #post
             SetCacheHeaders::class,
@@ -72,5 +72,6 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
+        self::SNAKE_CASING => SnakizeRequest::class,
     ];
 }
