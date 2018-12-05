@@ -45,6 +45,7 @@ class CreateBannersTable extends Migration
             $table->integer('creative_width');
             $table->integer('creative_height');
             $table->string('name', 255)->nullable(true);
+            $table->unsignedTinyInteger('status')->nullable(false)->default(0);
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
