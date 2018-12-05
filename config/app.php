@@ -133,6 +133,7 @@ return [
 
     'adserver_host' => env('ADSERVER_HOST'),
     'adserver_secret' => env('ADSERVER_SECRET'),
+    'adserver_id' => env('ADSERVER_ID'),
 
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),

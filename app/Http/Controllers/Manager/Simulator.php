@@ -328,11 +328,6 @@ FILTERING_JSON;
         );
     }
 
-    public function pixel()
-    {
-        return new Response();
-    }
-
     public function view()
     {
         return new Response();

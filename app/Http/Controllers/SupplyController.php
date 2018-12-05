@@ -28,12 +28,15 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\ImpressionContextProvider;
-use DateTime;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use DateTime;
+use function uniqid;
+use function urlencode;
 
 class SupplyController extends Controller
 {
@@ -68,6 +71,10 @@ class SupplyController extends Controller
             '',
             new DateTime()
         );
+
+        if ($tid === null) {
+            throw new NotFoundHttpException('User not found');
+        }
 
         $context = new ImpressionContext(
             Utils::decodeZones($data)['zones'],
@@ -275,6 +282,40 @@ class SupplyController extends Controller
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
         $response->headers->set('Content-Type', 'image/gif');
+
+        return $response;
+    }
+
+    /**
+     * Create or prolong tracking cookie and connect it with AdUser.
+     *
+     * @param Request $request
+     *
+     * @return Response
+     * @throws \Exception
+     */
+    public function register(Request $request)
+    {
+        $response = new Response();
+        $impressionId = $request->query->get('impressionId', md5(uniqid().time()));
+
+        $trackingId = Utils::attachOrProlongTrackingCookie(
+            config('app.adserver_secret'),
+            $request,
+            $response,
+            '',
+            new \DateTime()
+        );
+
+        $adUserUrl = sprintf(
+            '%s/register/%s/%s/%s.gif',
+            config('app.aduser_external_location'),
+            urlencode(config('app.adserver_id')),
+            $trackingId,
+            $impressionId
+        );
+
+        $response->headers->set('Location', $adUserUrl);
 
         return $response;
     }
