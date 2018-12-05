@@ -58,7 +58,6 @@ class Banner extends Model
         'status',
     ];
     protected $hidden = [
-        'id',
         'creative_contents',
         'campaign_id',
         'deleted_at',
@@ -67,6 +66,11 @@ class Banner extends Model
         'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',
     ];
+
+    public static function isStatusAllowed(int $status): bool
+    {
+        return in_array($status, self::STATUSES);
+    }
 
     public static function type($type)
     {
