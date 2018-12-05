@@ -265,12 +265,15 @@ class Utils
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
             $etags = $request->getETags();
+
             if (isset($etags[0])) {
                 $tag = str_replace('"', '', $etags[0]);
                 $tid = self::decodeEtag($tag);
             }
+
             if ($tid === null || !self::validTrackingId($tid, $secret)) {
-                $tid = self::createTrackingId($secret);
+                $impressionId = $request->query->get('impressionId');
+                $tid = self::createTrackingId($secret, $impressionId);
             }
         }
         $response->headers->setCookie(
@@ -333,14 +336,22 @@ class Utils
         );
     }
 
-    public static function createTrackingId($secret)
+    public static function createTrackingId(string $secret, ?string $impressionId = null)
     {
         $input = [];
-        $input[] = microtime();
-        $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
-        $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
-        $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
-        $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+
+        if ($impressionId !== null) {
+            $input[] = $impressionId;
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
+            $input[] = $_SERVER['REMOTE_PORT'] ?? '';
+            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? '';
+        } else {
+            $input[] = microtime();
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
+            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
+            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
+            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+        }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
         $checksum = substr(sha1($id.$secret, true), 0, 6);

@@ -34,6 +34,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use DateTime;
 use function uniqid;
 use function urlencode;
 
@@ -63,7 +64,13 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
-        $tid = $request->cookies->get('tid', null);
+        $tid = Utils::attachOrProlongTrackingCookie(
+            config('app.adserver_secret'),
+            $request,
+            $response,
+            '',
+            new DateTime()
+        );
 
         if ($tid === null) {
             throw new NotFoundHttpException('User not found');
