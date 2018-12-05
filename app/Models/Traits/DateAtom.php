@@ -18,18 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Banner;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Models\Traits;
 
-$factory->define(Banner::class, function (Faker $faker) {
-    return [
-        'creative_contents' => $faker->sha1(),
-        'creative_type' => $faker->word(),
-        'creative_sha1' => $faker->sha1(),
+use DateTime;
+use const DATE_ATOM;
 
-        'creative_width' => $faker->numberBetween(100,1024),
-        'creative_height' => $faker->numberBetween(100,1024),
-        'name' => $faker->word(),
-        'status' => Banner::STATUS_ACTIVE,
-    ];
-});
+trait DateAtom
+{
+    public function dateAtomMutator($key, ?string $value): void
+    {
+        $this->attributes[$key] = $value !== null ? DateTime::createFromFormat(DATE_ATOM, $value) : null;
+    }
+
+    public function dateAtomAccessor(?DateTime $value)
+    {
+        return $value === null ? null : $value->format(DATE_ATOM);
+    }
+}

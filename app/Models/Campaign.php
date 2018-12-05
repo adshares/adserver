@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -54,7 +55,7 @@ class Campaign extends Model
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
-
+    use DateAtom;
     public const STATUS_DRAFT = 0;
     public const STATUS_INACTIVE = 1;
     public const STATUS_ACTIVE = 2;
@@ -64,14 +65,13 @@ class Campaign extends Model
 //        'landing_url' => 'required|max:1024',
 //        'budget' => 'required:numeric',
     ];
+
     protected $dates = [
         'deleted_at',
         'time_start',
         'time_end',
     ];
     protected $casts = [
-        'time_start' => 'string',
-        'time_end' => 'string',
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
     ];
@@ -108,6 +108,9 @@ class Campaign extends Model
     ];
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'time_start' => 'DateAtom',
+        'time_end' => 'DateAtom',
+
     ];
     /** @var array Aditional fields to be included in collections */
     protected $appends = ['basic_information', 'targeting', 'ads'];

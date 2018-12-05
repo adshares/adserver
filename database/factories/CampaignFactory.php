@@ -22,12 +22,9 @@ use Adshares\Adserver\Models\Campaign;
 use Faker\Generator as Faker;
 
 $factory->define(Campaign::class, function (Faker $faker) {
-    $startEnd = $faker->dateTimeThisMonth();
-    $startTime = $faker->dateTimeThisMonth($startEnd);
     return [
         'landing_url' => $faker->url(),
-        'time_start' => $startTime,
-        'time_end' => $startEnd,
+        'time_start' => $faker->dateTimeThisMonth()->format(DATE_ATOM),
         'status' => '0',
         'name' => $faker->word(),
         'max_cpc' => '200000000000',
