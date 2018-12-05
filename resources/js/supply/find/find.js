@@ -257,11 +257,13 @@ var getImpressionId = function () {
 
 var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
+
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
-    img.src = aduserOrigin + '/pixel/' + impressionId;
+    img.src = serverOrigin + '/supply/register?impressionId=' + impressionId;
+
     document.body.appendChild(img);
 };
 
