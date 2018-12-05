@@ -80,6 +80,7 @@ final class ClientProvider extends ServiceProvider
             UserContextProvider::class,
             function (Application $app) {
                 return new GuzzleAdUserClient($app->make(AdUserHttpClient::class));
-        });
+            }
+        );
     }
 }
