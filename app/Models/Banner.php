@@ -31,6 +31,10 @@ class Banner extends Model
 {
     public const IMAGE_TYPE = 0;
     public const HTML_TYPE = 1;
+    public const STATUS_DRAFT = 0;
+    public const STATUS_INACTIVE = 1;
+    public const STATUS_ACTIVE = 2;
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
 
     use AutomateMutators;
     use BinHex;
@@ -51,9 +55,9 @@ class Banner extends Model
         'creative_width',
         'creative_height',
         'name',
+        'status',
     ];
     protected $hidden = [
-        'id',
         'creative_contents',
         'campaign_id',
         'deleted_at',
@@ -62,6 +66,11 @@ class Banner extends Model
         'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',
     ];
+
+    public static function isStatusAllowed(int $status): bool
+    {
+        return in_array($status, self::STATUSES);
+    }
 
     public static function type($type)
     {
