@@ -24,23 +24,22 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
-use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
-use Adshares\Supply\Application\Service\ImpressionContextProvider;
+use Adshares\Supply\Application\Service\UserContextProvider;
+use DateTime;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use DateTime;
 use function uniqid;
 use function urlencode;
 
 class SupplyController extends Controller
 {
-    public function find(Request $request, ImpressionContextProvider $contextProvider, BannerFinder $bannerFinder)
+    public function find(Request $request, UserContextProvider $contextProvider, BannerFinder $bannerFinder)
     {
         $response = new Response();
 
@@ -79,18 +78,11 @@ class SupplyController extends Controller
         $context = new ImpressionContext(
             Utils::decodeZones($data)['zones'],
             Utils::getImpressionContext($request, $data),
-            $contextProvider->getContext($tid)
+            $contextProvider->getUserContext($tid)
         );
 
         $banners = $bannerFinder->findBanners($context);
 
-        $banners = $bannerFinder->findBanners($context);
-
-        foreach ($banners as $banner) {
-            if ($banner) {
-                $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
-            }
-        }
 
         return self::json($banners);
     }

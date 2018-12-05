@@ -260,7 +260,7 @@ class Utils
         Response $response,
         $contentSha1,
         DateTime $contentModified
-    ) {
+    ): string {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;

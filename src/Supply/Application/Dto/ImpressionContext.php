@@ -29,10 +29,11 @@ final class ImpressionContext
     private $zones;
     /** @var array */
     private $http;
-    /** @var ImpressionContext */
+
+    /** @var UserContext */
     private $userContext;
 
-    public function __construct(array $zones, array $http, array $userContext)
+    public function __construct(array $zones, array $http, UserContext $userContext)
     {
         $this->zones = $zones;
         $this->http = $http;

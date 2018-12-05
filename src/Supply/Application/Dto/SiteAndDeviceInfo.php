@@ -20,9 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Supply\Application\Dto;
 
-interface ImpressionContextProvider
+use Adshares\Common\Application\Format\Json\JsonDataRequest;
+
+final class SiteAndDeviceInfo implements JsonDataRequest
 {
-    public function getContext(string $userId): array;
+    public function __toString(): string
+    {
+        return <<<JSON
+{
+    "domain": "adshares.net",
+    "ip": "192.168.10.10",
+    "ua": "Mozilla/5.0 (X11; U; Linux i686; pl-PL; rv:1.7.10) Gecko/20050717 Firefox/1.0.6",
+    "uid": "uid1"
+}
+JSON;
+    }
 }
