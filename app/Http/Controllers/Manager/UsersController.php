@@ -73,8 +73,7 @@ class UsersController extends Controller
     public function browse(Request $request)
     {
 //        return self::json([], 501, ['message' => 'not yet implemented <3']);
-        // TODO check privileges
-        $users = User::with('AdserverWallet')->get();
+        $users = User::get();
 
         return self::json($users->toArray());
     }
