@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -42,11 +43,15 @@ class ApiController extends Controller
     public function adsharesInventoryList()
     {
         $campaigns = [];
-        foreach ($this->campaignRepository->find() as $i => $campaign) {
+        foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
             $banners = [];
 
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
+
+                if (Banner::STATUS_ACTIVE != $bannerArray['status']) {
+                    continue;
+                }
 
                 $banners[] = [
                     'uuid' => $bannerArray['uuid'],
