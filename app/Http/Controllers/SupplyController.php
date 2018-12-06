@@ -39,8 +39,12 @@ use function urlencode;
 
 class SupplyController extends Controller
 {
-    public function find(Request $request, UserContextProvider $contextProvider, BannerFinder $bannerFinder)
-    {
+    public function find(
+        Request $request,
+        UserContextProvider $contextProvider,
+        BannerFinder $bannerFinder,
+        string $data = null
+    ) {
         $response = new Response();
 
         if ($request->headers->has('Origin')) {
@@ -50,7 +54,8 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
-        if ('GET' === $request->getRealMethod()) {
+        if ($data) {
+        } elseif ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
         } elseif ('POST' === $request->getRealMethod()) {
             $data = $request->getContent();
@@ -82,7 +87,6 @@ class SupplyController extends Controller
         );
 
         $banners = $bannerFinder->findBanners($context);
-
 
         return self::json($banners);
     }
@@ -235,7 +239,7 @@ class SupplyController extends Controller
             $log->save();
             // TODO: process?
         } else {
-            $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+            $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
             $log->our_userdata = $userdata['user']['keywords'];
             $log->human_score = $userdata['user']['human_score'];

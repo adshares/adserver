@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Http\Utils;
 use Generator;
 use InvalidArgumentException;
+use function iterator_to_array;
 
 final class UserContext
 {
@@ -47,16 +48,20 @@ final class UserContext
 
     public static function fromAdUserArray(array $context): self
     {
-        return new self((array) self::mapInput($context['keywords']), (float) $context['human_score'], $context['uid']);
+        return new self(
+            iterator_to_array(self::mapInput($context['keywords'])), (float) $context['human_score'], $context['uid']
+        );
     }
 
     private static function mapInput(array $input): Generator
     {
-        foreach ($input as $key => $value) {
-            yield [
-                'key' => $key,
-                'value' => $value,
-            ];
+        foreach ($input as $item) {
+            foreach ($item as $key => $value) {
+                yield [
+                    'key' => $key,
+                    'value' => $value,
+                ];
+            }
         }
     }
 

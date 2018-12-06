@@ -32,6 +32,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Domain\Model\Campaign;
+use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 use function array_map;
 use function str_replace;
@@ -69,23 +70,8 @@ final class DummyAdSelectClient implements BannerFinder
             }
 
             try {
-                $pluck = DB::table('network_banners')->join(
-                    'network_campaigns',
-                    'network_banners.network_campaign_id',
-                    '=',
-                    'network_campaigns.id'
-                )->select('network_banners.uuid')->whereRaw(
-                    '(network_campaigns.targeting_requires LIKE ? '."OR network_campaigns.targeting_requires = '[]')",
-                    "%$key%"
-                )->whereRaw(
-                    '(network_campaigns.targeting_excludes NOT LIKE ? '
-                    ."OR network_campaigns.targeting_excludes = '[]')",
-                    "%$key%"
-                )->where('network_campaigns.status', Campaign::STATUS_ACTIVE)->where(
-                    'network_banners.width',
-                    $zone->width
-                )->where('network_banners.height', $zone->height)->whereIn('type', $typeDefault)->get();
-                $bannerIds[] = bin2hex($pluck->random()->uuid);
+                $queryBuilder = $this->queryBuilder($key, $zone, $typeDefault);
+                $bannerIds[] = bin2hex($queryBuilder->get('network_banners.uuid')->random()->uuid);
             } catch (InvalidArgumentException $e) {
                 $bannerIds[] = '';
             }
@@ -123,5 +109,26 @@ final class DummyAdSelectClient implements BannerFinder
         }
 
         return $banners;
+    }
+
+    private function queryBuilder($key, $zone, array $typeDefault): Builder
+    {
+        $queryBuilder = DB::table('network_banners')->join(
+            'network_campaigns',
+            'network_banners.network_campaign_id',
+            '=',
+            'network_campaigns.id'
+        )->select('network_banners.uuid')->whereRaw(
+            '(network_campaigns.targeting_requires LIKE ? '."OR network_campaigns.targeting_requires = '[]')",
+            "%$key%"
+        )->whereRaw(
+            '(network_campaigns.targeting_excludes NOT LIKE ? '."OR network_campaigns.targeting_excludes = '[]')",
+            "%$key%"
+        )->where('network_campaigns.status', Campaign::STATUS_ACTIVE)->where(
+            'network_banners.width',
+            $zone->width
+        )->where('network_banners.height', $zone->height)->whereIn('type', $typeDefault);
+
+        return $queryBuilder;
     }
 }
