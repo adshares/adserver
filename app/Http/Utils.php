@@ -272,7 +272,7 @@ class Utils
             }
 
             if ($tid === null || !self::validTrackingId($tid, $secret)) {
-                $impressionId = $request->query->get('impressionId');
+                $impressionId = $request->query->get('iid');
                 $tid = self::createTrackingId($secret, $impressionId);
             }
         }

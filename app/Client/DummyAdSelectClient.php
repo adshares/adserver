@@ -88,7 +88,7 @@ final class DummyAdSelectClient implements BannerFinder
                 $banners[] = [
                     'pay_from' => $campaign->source_address,
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
-                    'serve_url' => str_replace('webserver', 'localhost:8101', $banner->serve_url),
+                    'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->checksum,
                     'click_url' => route(
                         'log-network-click',
