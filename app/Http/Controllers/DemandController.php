@@ -99,19 +99,17 @@ class DemandController extends Controller
             }
         );
 
-//        $cid = Utils::createTrackingId(config('app.adserver_secret'));
-        $cid = $request->query->get('cid');
-
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
 
         $log = new EventLog();
-        $log->banner_id = $banner->id;
-        $log->cid = Utils::getRawTrackingId($cid);
-        $log->tid = Utils::getRawTrackingId($tid);
+        $log->banner_id = $banner->uuid;
+        $log->event_id = $eventId;
+        $log->user_id = Utils::getRawTrackingId($tid);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->event_type = 'request';
         $log->save();
 
-        $response->headers->set('X-Adshares-Cid', $cid);
+        $response->headers->set('X-Adshares-Cid', $eventId);
         $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
@@ -215,6 +213,7 @@ class DemandController extends Controller
         $payTo = $request->query->get('pto');
 
         $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
+        $context = Utils::decodeZones($request->query->get('ctx'));
 
         if (empty($log)) {
             $log = new EventLog();
@@ -223,6 +222,7 @@ class DemandController extends Controller
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->their_context = Utils::getImpressionContext($request);

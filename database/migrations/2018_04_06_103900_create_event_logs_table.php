@@ -39,6 +39,7 @@ class CreateEventLogsTable extends Migration
             $table->binary('event_id', 16);
             $table->binary('user_id', 16);
             $table->binary('banner_id', 16);
+            $table->bigInteger('zone_id')->unsigned()->nullable(true);
 
             $table->string('event_type', 16);
 
