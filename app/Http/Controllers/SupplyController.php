@@ -82,12 +82,11 @@ class SupplyController extends Controller
             $contextProvider->getContext($tid)
         );
 
-        $banners = $bannerFinder->findBanners($context);
+        $foundBanners = $bannerFinder->findBanners($context);
+        $banners = $foundBanners->toArray();
 
-        foreach ($banners as $banner) {
-            if ($banner) {
-                $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
-            }
+        foreach ($banners as &$banner) {
+            $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
         }
 
         return self::json($banners);
@@ -198,7 +197,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, $id)
+    public function logNetworkView(Request $request, Adselect $adselect, $bannerId)
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -220,31 +219,32 @@ class SupplyController extends Controller
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
-        $cid = Utils::getRawTrackingId($request->query->get('cid'));
-        $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $impressionId = $request->query->get('iid');
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
+        $payTo = $request->query->get('pto');
 
         $log = new NetworkEventLog();
-        $log->cid = $cid;
-        $log->banner_id = $id;
+        $log->event_id = $eventId; // event id
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
         $log->pay_from = $payFrom;
-        $log->tid = $tid;
         $log->ip = $logIp;
         $log->event_type = 'view';
         $log->context = Utils::getImpressionContext($request);
 
         // GET kewords from aduser
-        $impressionId = $request->query->get('iid');
         $aduser_endpoint = config('app.aduser_internal_location');
 
         if (empty($aduser_endpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
         } else {
-            $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+//            $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
-            $log->our_userdata = $userdata['user']['keywords'];
-            $log->human_score = $userdata['user']['human_score'];
+//            $log->our_userdata = $userdata['user']['keywords'];
+//            $log->human_score = $userdata['user']['human_score'];
             // $log->user_id = $userdata['user']['user_id']; // TODO: review process and data
             $log->save();
         }
@@ -255,11 +255,10 @@ class SupplyController extends Controller
             ]
         );
 
-        $backUrl = route('banner-view', ['id' => $log->id]);
+        $url = Utils::addUrlParameter($url, 'cid', $log->event_id);
+        $url = Utils::addUrlParameter($url, 'pto', $payTo);
 
-        $url = Utils::addUrlParameter($url, 'pid', $log->id);
         $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($log->our_userdata)));
-        $url = Utils::addUrlParameter($url, 'r', Utils::urlSafeBase64Encode($backUrl));
 
         return new RedirectResponse($url);
     }

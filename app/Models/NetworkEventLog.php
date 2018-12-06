@@ -42,15 +42,13 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $fillable = [
-        'cid',
-        'tid',
+        'event_id',
+        'user_id',
         'banner_id',
         'pay_from',
         'event_type',
-        'pay_to',
         'ip',
         'context',
-        'user_id',
         'human_score',
         'our_userdata',
         'their_userdata',
@@ -73,13 +71,12 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
-        'cid' => 'BinHex',
-        'tid' => 'BinHex',
+        'event_id' => 'BinHex',
+        'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'context' => 'JsonValue',
-        'user_id' => 'BinHex',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
         'event_value' => 'Money',
@@ -91,10 +88,9 @@ class NetworkEventLog extends Model
         return [
             'event_id' => (string)$this->id,
             'banner_id' => (string)$this->banner_id,
+            'user_id' => $this->user_id,
             'keywords' => Utils::flattenKeywords($this->getKeywords()),
             'paid_amount' => $this->event_value,
-            'user_id' => $this->user_id,
-            'publisher_id' => "1",
             'human_score' => $this->human_score,
         ];
     }

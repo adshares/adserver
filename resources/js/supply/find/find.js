@@ -327,12 +327,14 @@ domReady(function () {
     }
 
     var data = encodeZones(params);
-    var url = serverOrigin + '/supply/find';
+
+    var url = serverOrigin + '/supply/find?impressionId=' + impressionId;
     var options = {
         json: true
     };
-    if (data.length <= 800) { // safe limit for url
-        url += '?' + data;
+    if (data.length <= 760) {
+        // safe limit for url
+        url += '&' + data;
     } else {
         options.method = 'post';
         options.post = data;

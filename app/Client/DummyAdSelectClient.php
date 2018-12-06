@@ -91,7 +91,7 @@ final class DummyAdSelectClient implements BannerFinder
             if (!empty($banner)) {
                 $campaign = NetworkCampaign::find($banner->network_campaign_id);
                 $banners[] = [//TODO: change it to proper value
-                    'serve_url' => str_replace('webserver', 'localhost:8101', $banner->serve_url),
+                    'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->checksum,
                     'pay_from' => $campaign->source_address, // send this info to log
                     'click_url' => route(
