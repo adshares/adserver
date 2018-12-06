@@ -226,7 +226,7 @@ class SupplyController extends Controller
         $payTo = $request->query->get('pto');
 
         $log = new NetworkEventLog();
-        $log->event_id = $eventId; // event id
+        $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->pay_from = $payFrom;
