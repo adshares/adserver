@@ -262,7 +262,7 @@ var aduserPixel = function (impressionId) {
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
-    img.src = serverOrigin + '/supply/register?impressionId=' + impressionId;
+    img.src = serverOrigin + '/supply/register?iid=' + impressionId;
 
     document.body.appendChild(img);
 };
@@ -328,7 +328,7 @@ domReady(function () {
 
     var data = encodeZones(params);
 
-    var url = serverOrigin + '/supply/find?impressionId=' + impressionId;
+    var url = serverOrigin + '/supply/find?iid=' + impressionId;
     var options = {
         json: true
     };
