@@ -29,6 +29,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use DateTime;
+use function hex2bin;
 
 /**
  * API commands used to serve banners and log relevant events.
@@ -37,14 +39,11 @@ class DemandController extends Controller
 {
     public function serve(Request $request, $id)
     {
-        $banner = Banner::find($id);
+        $banner = Banner::where('uuid', hex2bin($id))->first();
+
         if (empty($banner)) {
             abort(404);
         }
-
-        // TODO:  ID / UUID here =>
-        // TODO: no need for obfuscation
-        // TODO: Yoda smell stuff here // this should be cleaned up
 
         if ('OPTIONS' == $request->getRealMethod()) {
             $response = new Response('', 204);
@@ -100,7 +99,9 @@ class DemandController extends Controller
             }
         );
 
-        $cid = Utils::createTrackingId(config('app.adserver_secret'));
+//        $cid = Utils::createTrackingId(config('app.adserver_secret'));
+        $cid = $request->query->get('cid');
+
 
         $log = new EventLog();
         $log->banner_id = $banner->id;
@@ -200,7 +201,7 @@ class DemandController extends Controller
         return new RedirectResponse($url);
     }
 
-    public function view(Request $request, $id)
+    public function view(Request $request, $bannerId)
     {
         if ($request->query->get('r')) {
             $url = $request->query->get('r');
@@ -209,26 +210,20 @@ class DemandController extends Controller
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
-        $cid = Utils::getRawTrackingId($request->query->get('cid'));
-        $pid = $request->query->get('pid');
-        $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $eventId = $request->query->get('cid');
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
 
         $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
 
-        $lid = $request->query->get('lid');
-        if ($lid) {
-            $log = EventLog::find($lid);
-        }
         if (empty($log)) {
             $log = new EventLog();
         }
-        $log->publisher_event_id = $pid;
 
-        $log->cid = $cid;
-        $log->banner_id = $id;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
         $log->pay_to = $payTo;
-        $log->tid = $tid;
         $log->ip = $logIp;
         $log->their_context = Utils::getImpressionContext($request);
         $log->event_type = 'view';
@@ -237,39 +232,28 @@ class DemandController extends Controller
         $log->save();
 
         $aduser_endpoint = config('app.aduser_external_location');
+        $response = new \Symfony\Component\HttpFoundation\Response();
 
         if ($aduser_endpoint) {
-            $iid = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
-            $backUrl = route(
-                'log-keywords',
-                [
-                    'iid' => $iid,
-                    'log_id' => $log->id,
-                    'r' => $url,
-                ]
+            $impressionId = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
+
+            $demandTrackingId = Utils::attachOrProlongTrackingCookie(
+                config('app.adserver_secret'),
+                $request,
+                $response,
+                '',
+                new DateTime()
             );
 
-            $response = new RedirectResponse(
-                $aduser_endpoint.'/pixel/'.$iid.'?r='.Utils::urlSafeBase64Encode($backUrl)
+            $adUserUrl = sprintf(
+                '%s/register/%s/%s/%s.gif',
+                $aduser_endpoint,
+                urlencode(config('app.adserver_id')),
+                $demandTrackingId,
+                $impressionId
             );
-        } else {
-            throw new Exception('ADAPY');
-            $response = new Response();
 
-            //transparent 1px gif
-            $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-            $response->headers->set('Content-Type', 'image/gif');
-
-            $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-            $adpayService instanceof Adpay;
-
-            if ($adpayService) {
-                $adpayService->addEvents(
-                    [
-                        $log->getAdpayJson(),
-                    ]
-                );
-            }
+            $response = new RedirectResponse($adUserUrl);
         }
 
         return $response;
