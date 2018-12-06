@@ -97,9 +97,9 @@ class Banner extends Model
 
     protected function toArrayExtras($array)
     {
-        $array['serve_url'] = route('banner-serve', ['id' => $this->id]);
-        $array['view_url'] = route('log-network-view', ['id' => $this->id]);
-        $array['click_url'] = route('log-network-click', ['id' => $this->id]);
+        $array['serve_url'] = route('banner-serve', ['id' => $this->uuid]);
+        $array['view_url'] = route('banner-view', ['id' => $this->uuid]);
+        $array['click_url'] = route('banner-click', ['id' => $this->uuid]);
 
         if ($this->type === self::HTML_TYPE) {
             $array['html'] = $this->creative_contents;

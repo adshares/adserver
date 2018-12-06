@@ -262,7 +262,7 @@ var aduserPixel = function (impressionId) {
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
-    img.src = serverOrigin + '/supply/register?impressionId=' + impressionId;
+    img.src = serverOrigin + '/supply/register?iid=' + impressionId;
 
     document.body.appendChild(img);
 };
@@ -327,12 +327,14 @@ domReady(function () {
     }
 
     var data = encodeZones(params);
-    var url = serverOrigin + '/supply/find';
+
+    var url = serverOrigin + '/supply/find?iid=' + impressionId;
     var options = {
         json: true
     };
-    if (data.length <= 800) { // safe limit for url
-        url += '?' + data;
+    if (data.length <= 760) {
+        // safe limit for url
+        url += '&' + data;
     } else {
         options.method = 'post';
         options.post = data;

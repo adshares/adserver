@@ -29,7 +29,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use DateTime;
-use DateTimeZone;
 
 class ApiController extends Controller
 {
@@ -40,7 +39,7 @@ class ApiController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function adsharesInventoryList()
+    public function adsharesInventoryList(Request $request)
     {
         $campaigns = [];
         foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
@@ -58,9 +57,9 @@ class ApiController extends Controller
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
-                    'serve_url' => $bannerArray['serve_url'],
-                    'click_url' => $bannerArray['click_url'],
-                    'view_url' => $bannerArray['view_url'],
+                    'serve_url' => $this->changeHost($bannerArray['serve_url'], $request),
+                    'click_url' => $this->changeHost($bannerArray['click_url'], $request),
+                    'view_url' => $this->changeHost($bannerArray['view_url'], $request),
                 ];
             }
 
@@ -83,6 +82,14 @@ class ApiController extends Controller
         }
 
         return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
+    }
+
+    private function changeHost(string $url, Request $request): string
+    {
+        $currentHost = $request->getHttpHost();
+        $bannerHost = config('app.adserver_banner_host');
+
+        return str_replace($currentHost, $bannerHost, $url);
     }
 
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)
