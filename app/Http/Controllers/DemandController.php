@@ -201,11 +201,6 @@ class DemandController extends Controller
 
     public function view(Request $request, $bannerId)
     {
-        if ($request->query->get('r')) {
-            $url = $request->query->get('r');
-            $request->query->remove('r');
-        }
-
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
         $eventId = $request->query->get('cid');
