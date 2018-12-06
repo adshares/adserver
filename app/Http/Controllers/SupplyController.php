@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\SiteAndDeviceInfo;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\UserContextProvider;
 use DateTime;
@@ -80,13 +81,18 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
+
         $context = new ImpressionContext(
-            Utils::decodeZones($data)['zones'],
-            Utils::getImpressionContext($request, $data),
-            $contextProvider->getUserContext($tid)
+            $site,
+            $device,
+            $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]))
+                ->toAdSelectPartialArray()
         );
 
-        $banners = $bannerFinder->findBanners($context);
+        $zones = Utils::decodeZones($data)['zones'];
+
+        $banners = $bannerFinder->findBanners($zones, $context);
 
         return self::json($banners);
     }

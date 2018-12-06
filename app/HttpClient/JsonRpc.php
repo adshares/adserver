@@ -46,8 +46,9 @@ final class JsonRpc
     public function call(Procedure $procedure): Result
     {
         try {
+            $body = $procedure->toJson();
             $resp = $this->client->request('POST', '/', [
-                'body' => $procedure->toJson(),
+                'body' => $body,
             ]);
         } catch (GuzzleException $e) {
             throw RemoteCallException::fromOther($e);

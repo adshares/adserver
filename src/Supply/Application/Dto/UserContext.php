@@ -49,11 +49,13 @@ final class UserContext
     public static function fromAdUserArray(array $context): self
     {
         return new self(
-            iterator_to_array(self::mapInput($context['keywords'])), (float) $context['human_score'], $context['uid']
+            iterator_to_array(self::mapAdUserInput($context['keywords'])),
+            (float) $context['human_score'],
+            $context['uid']
         );
     }
 
-    private static function mapInput(array $input): Generator
+    private static function mapAdUserInput(array $input): Generator
     {
         foreach ($input as $item) {
             foreach ($item as $key => $value) {
@@ -65,31 +67,9 @@ final class UserContext
         }
     }
 
-    public function __toString(): string
+    public function toAdSelectPartialArray(): array
     {
-        return <<<JSON
-{
-    "keywords": [
-        {
-            "platform": "Linux"
-        },
-        {
-            "device_type": "Desktop"
-        },
-        {
-            "javascript": true
-        },
-        {
-            "browser": "Firefox"
-        },
-        {
-            "interest": "200402"
-        }
-    ],
-    "human_score": 1,
-    "uid": "uid1"
-}
-JSON;
+        return ['uid' => $this->userId, 'keywords' => $this->keywords];
     }
 
     private function failIfInvalid(): void

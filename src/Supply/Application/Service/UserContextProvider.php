@@ -22,9 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 
 interface UserContextProvider
 {
-    public function getUserContext(string $userId): UserContext;
+    public function getUserContext(ImpressionContext $context): UserContext;
 }

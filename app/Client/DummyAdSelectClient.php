@@ -39,9 +39,9 @@ use function str_replace;
 
 final class DummyAdSelectClient implements BannerFinder
 {
-    public function findBanners(ImpressionContext $context): FoundBanners
+    public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
-        $banners = $this->getBestBanners($context->zones(), $context->keywords());
+        $banners = $this->getBestBanners($zones, $context->keywords());
 
         return new FoundBanners($banners);
     }

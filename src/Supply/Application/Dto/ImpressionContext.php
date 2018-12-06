@@ -22,71 +22,82 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use function array_keys;
+
 final class ImpressionContext
 {
+    /** @var array */
+    private $site;
 
     /** @var array */
-    private $zones;
+    private $device;
+
     /** @var array */
-    private $http;
+    private $user;
 
-    /** @var UserContext */
-    private $userContext;
-
-    public function __construct(array $zones, array $http, UserContext $userContext)
+    public function __construct(array $site, array $device, array $user)
     {
-        $this->zones = $zones;
-        $this->http = $http;
-        $this->userContext = $userContext;
+        $this->site = $site;
+        $this->device = $device;
+        $this->user = $user;
     }
 
-    public function jsonRpcParams(): array
+    /** @deprecated This needs to include all data */
+    public function adUserRequestBody(): string
     {
-        return array_map(function (array $param) {
-            if (isset($param['keywords']) && empty($param['keywords'])) {
-                unset($param['keywords']);
-            }
-
-            return $param;
-        }, $this->fixedParams());
+        return <<<"JSON"
+{
+    "domain": "{$this->site['domain']}",
+    "ip": "192.168.10.10",
+    "ua": "Mozilla/5.0 (X11; U; Linux i686; pl-PL; rv:1.7.10) Gecko/20050717 Firefox/1.0.6",
+    "uid": "{$this->user['uid']}"
+}
+JSON;
     }
 
-    private function fixedParams(): array
+    public function adSelectRequestParams(array $zones): array
     {
-        return json_decode(<<<JSON
-[{
-            "banner_filters": {
-                "require": [],
-                "exclude": []
+        return array_map(
+            function (array $param) {
+                if (isset($param['keywords']) && empty($param['keywords'])) {
+                    unset($param['keywords']);
+                }
+
+                return $param;
             },
-            "keywords": {},
-            "banner_size": "300x300",
-            "publisher_id": "321",
-            "request_id": 123,
-            "user_id": "uid"
-        },
-        {
-            "banner_filters": {
-                "require": [],
-                "exclude": []
-            },
-            "keywords": {},
-            "banner_size": "150x150",
-            "publisher_id": "248",
-            "request_id": 842,
-            "user_id": "uid"
-        }]
+            $this->fixedParams($zones)
+        );
+    }
+
+    /** $deprecated */
+    private function fixedParams(array $zones): array
+    {
+        return array_map(
+            function ($key) {
+                return json_decode(
+                    <<<"JSON"
+{
+    "banner_filters": {
+        "require": [],
+        "exclude": []
+    },
+    "keywords": {},
+    "banner_size": "300x300",
+    "publisher_id": "321",
+    "request_id": {$key},
+    "user_id": "{$this->user['uid']}"
+}
 JSON
-            , true);
+                    ,
+                    true
+                );
+            },
+            array_keys($zones)
+        );
     }
 
-    public function zones(): array
+    public function keywords()
     {
-        return $this->zones;
-    }
-
-    public function keywords(): array
-    {
-        return $this->http['site']['keywords'];
+        return $this->site['keywords'];
     }
 }
