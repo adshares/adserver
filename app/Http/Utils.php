@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Http;
 use BrowscapPHP\Helper\LoggerHelper;
 use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
+use ErrorException;
+use Illuminate\Support\Facades\Log;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -77,7 +79,16 @@ class Utils
             $propStrs = explode(self::PROP_GLUE, $zoneStr);
             foreach ($propStrs as $propStr) {
                 $prop = explode(self::VALUE_GLUE, $propStr);
-                $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
+
+                try {
+                    $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
+                } catch (ErrorException $ex) {
+                    Log::debug(sprintf("[ERROR] \nKEY: %s\n", $prop[0]));
+                    Log::debug(sprintf("FIELDS: %s\n", implode(':', $fields)));
+                    Log::debug(sprintf("ALL: %s\n", $zoneStr));
+                    Log::debug(sprintf("PROP: %s\n\n", $prop[1]));
+                }
+
             }
             $data[] = $zone;
         }
@@ -343,8 +354,6 @@ class Utils
         if ($impressionId !== null) {
             $input[] = $impressionId;
             $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
-            $input[] = $_SERVER['REMOTE_PORT'] ?? '';
-            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? '';
         } else {
             $input[] = microtime();
             $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();

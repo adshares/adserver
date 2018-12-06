@@ -25,11 +25,12 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\EventLog;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use DateTime;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use function hex2bin;
 
 /**
@@ -226,10 +227,10 @@ class DemandController extends Controller
 
         $log->save();
 
-        $aduser_endpoint = config('app.aduser_external_location');
-        $response = new \Symfony\Component\HttpFoundation\Response();
+        $adUserEndpoint = config('app.aduser_external_location');
+        $response = new SymfonyResponse();
 
-        if ($aduser_endpoint) {
+        if ($adUserEndpoint) {
             $impressionId = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
 
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
@@ -242,13 +243,13 @@ class DemandController extends Controller
 
             $adUserUrl = sprintf(
                 '%s/register/%s/%s/%s.gif',
-                $aduser_endpoint,
+                $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $demandTrackingId,
                 $impressionId
             );
 
-            $response = new RedirectResponse($adUserUrl);
+            $response->headers->set('Location', $adUserUrl);
         }
 
         return $response;
