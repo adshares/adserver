@@ -220,15 +220,17 @@ class SupplyController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
         $impressionId = $request->query->get('iid');
+        $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
-        $payTo = $request->query->get('pto');
+        $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         $log = new NetworkEventLog();
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->event_type = 'view';
@@ -296,7 +298,7 @@ class SupplyController extends Controller
     public function register(Request $request)
     {
         $response = new Response();
-        $impressionId = $request->query->get('impressionId', md5(uniqid().time()));
+        $impressionId = $request->query->get('iid', md5(uniqid().time()));
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
