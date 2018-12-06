@@ -39,16 +39,15 @@ class EventLog extends Model
      * @var array
      */
     protected $fillable = [
-        'cid',
-        'tid',
-        'publisher_event_id',
+        'event_id',
+        'user_id',
         'banner_id',
+        'zone_id',
         'event_type',
         'pay_to',
         'ip',
         'our_context',
         'their_context',
-        'user_id',
         'human_score',
         'our_userdata',
         'their_userdata',
@@ -71,13 +70,13 @@ class EventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
-        'cid' => 'BinHex',
-        'tid' => 'BinHex',
+        'event_id' => 'BinHex',
+        'user_id' => 'BinHex',
+        'banner_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
         'ip' => 'BinHex',
         'our_context' => 'JsonValue',
         'their_context' => 'JsonValue',
-        'user_id' => 'BinHex',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
         'event_value' => 'Money',
@@ -87,10 +86,11 @@ class EventLog extends Model
     public function getAdpayJson()
     {
         return [
-            'event_id' => (string)$this->id,
+            'event_id' => (string)$this->event_id,
             'event_type' => $this->event_type,
             'event_value' => $this->event_value,
             'banner_id' => (string)$this->banner_id,
+            'zone_id' => $this->zone_id,
             'our_keywords' => Utils::flattenKeywords($this->getOurKeywords()),
             'their_keywords' => Utils::flattenKeywords($this->getTheirKeywords()),
             'timestamp' => $this->updated_at,

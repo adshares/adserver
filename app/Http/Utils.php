@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Http;
 use BrowscapPHP\Helper\LoggerHelper;
 use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
+use ErrorException;
+use Illuminate\Support\Facades\Log;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -343,8 +345,6 @@ class Utils
         if ($impressionId !== null) {
             $input[] = $impressionId;
             $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
-            $input[] = $_SERVER['REMOTE_PORT'] ?? '';
-            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? '';
         } else {
             $input[] = microtime();
             $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
