@@ -79,16 +79,7 @@ class Utils
             $propStrs = explode(self::PROP_GLUE, $zoneStr);
             foreach ($propStrs as $propStr) {
                 $prop = explode(self::VALUE_GLUE, $propStr);
-
-                try {
-                    $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
-                } catch (ErrorException $ex) {
-                    Log::debug(sprintf("[ERROR] \nKEY: %s\n", $prop[0]));
-                    Log::debug(sprintf("FIELDS: %s\n", implode(':', $fields)));
-                    Log::debug(sprintf("ALL: %s\n", $zoneStr));
-                    Log::debug(sprintf("PROP: %s\n\n", $prop[1]));
-                }
-
+                $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
             }
             $data[] = $zone;
         }
