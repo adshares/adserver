@@ -61,7 +61,8 @@ final class ClientProvider extends ServiceProvider
             BannerFinder::class,
             function (Application $app) {
                 return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
-        });
+            }
+        );
 
         $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
             return $app->make(AdUserHttpClient::class);
