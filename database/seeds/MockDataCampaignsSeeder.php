@@ -120,6 +120,8 @@ class MockDataCampaignsSeeder extends Seeder
             'creative_type' => $t,
             'creative_width' => $s[0],
             'creative_height' => $s[1],
+            'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
+            'status' => Banner::STATUS_ACTIVE,
         ]);
 
         if (!empty($filename)) {
