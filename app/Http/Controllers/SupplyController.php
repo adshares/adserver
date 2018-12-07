@@ -64,8 +64,8 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
-        $decodedZones = Utils::decodeZones($data);
-        $impressionId = $decodedZones['page']['iid'];
+        $decodedQueryData = Utils::decodeZones($data);
+        $impressionId = $decodedQueryData['page']['iid'];
 
         $tid = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
@@ -81,7 +81,7 @@ class SupplyController extends Controller
         }
 
         $context = new ImpressionContext(
-            $decodedZones['zones'],
+            $decodedQueryData['zones'],
             Utils::getImpressionContext($request, $data),
             $contextProvider->getContext($tid)
         );
