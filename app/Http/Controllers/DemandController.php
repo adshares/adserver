@@ -238,7 +238,8 @@ class DemandController extends Controller
                 $request,
                 $response,
                 '',
-                new DateTime()
+                new DateTime(),
+                $impressionId
             );
 
             $adUserUrl = sprintf(
