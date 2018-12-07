@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use DateTime;
 
 class CampaignMapper
 {
@@ -37,7 +38,6 @@ class CampaignMapper
             $banners[] = [
                 'banner_id' => $banner->getId(),
                 'banner_size' => $banner->getSize(),
-                'campaign_id' => $campaignArray['demand_campaign_id'],
                 'keywords' => [
                     'type' => $banner->getType(),
                 ],
@@ -49,8 +49,9 @@ class CampaignMapper
             $campaignArray['targeting_excludes']
         );
 
+        $futureDate = (new DateTime())->modify('+1 year')->getTimestamp();
         $dateStart = (int)$campaignArray['date_start']->format('U');
-        $dateEnd = $campaignArray['date_end'] ? (int)$campaignArray['date_end']->format('U') : 0;
+        $dateEnd = $campaignArray['date_end'] ? (int)$campaignArray['date_end']->format('U') : $futureDate;
 
         $mapped = [
             'campaign_id' => $campaignArray['demand_campaign_id'],
@@ -63,9 +64,7 @@ class CampaignMapper
             ],
         ];
 
-        if ($targeting) {
-            $mapped['filters'] = $targeting;
-        }
+        $mapped['filters'] = $targeting;
 
         return [$mapped];
     }

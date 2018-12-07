@@ -24,84 +24,31 @@ namespace Adshares\Adserver\Client\Mapper;
 
 use function implode;
 use function is_array;
-use function is_numeric;
 use function is_string;
 
 abstract class AbstractFilterMapper
 {
-    private const FILTER_OR = 'or';
-    private const FILTER_AND = 'and';
-    private const FILTER_EQUAL = '=';
-
-    public static function generateNestedStructure(array $data, array $keyword = []): array
+    public static function generateNestedStructure(array $data, array $fullPath = [], array &$values = []): array
     {
-        $values = [];
         foreach ($data as $key => $item) {
-            if (is_array($item)) {
-                if (empty($keyword)) {
-                    $path = implode(':', self::generateFullPath($item, [$key]));
-                } else {
-                    $path = $key;
+            if (is_array($item) && is_string($key)) {
+                $fullPath[] = $key;
+                self::generateNestedStructure($item, $fullPath, $values);
+
+                $fullPath = array_slice($fullPath, 0, 1);
+
+                if ($fullPath[0] === $key) {
+                    $fullPath = [];
                 }
-
-                $keyword[] = $key;
-                $filter = [
-                    'keyword' => $path,
-                    'filter' => [
-                        'args' => self::generateNestedStructure($item, $keyword, $data),
-                        'type' => self::chooseFilterType($item),
-                    ],
-                ];
-
-                $values[] = $filter;
-                $keyword = [];
             } else {
-                $filter = [
-                    'keyword' => implode(':', $keyword).':'.$item,
-                    'filter' => [
-                        'args' => is_numeric($item) ? (int)$item : (string)$item,
-                        'type' => self::FILTER_EQUAL,
-                    ],
-                ];
+                $path = implode(':', $fullPath);
 
-                $values[] = $filter;
+                if (!empty($path)) {
+                    $values[$path] = (array) $data;
+                }
             }
         }
 
         return $values;
-    }
-
-    public static function generateFullPath(array $data, array $path = []): array
-    {
-        foreach ($data as $key => $item) {
-            if (is_string($key)) {
-                $path[] = $key;
-            }
-
-            if (is_array($item)) {
-                $path = self::generateFullPath($item, $path);
-            }
-        }
-
-        return $path;
-    }
-
-    private static function chooseFilterType($item): string
-    {
-        $isMulti = function ($data) {
-            foreach ($data as $key => $value) {
-                if (!is_string($key)) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-
-        if ($isMulti($item)) {
-            return self::FILTER_AND;
-        }
-
-        return self::FILTER_OR;
     }
 }
