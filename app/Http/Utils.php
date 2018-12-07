@@ -263,7 +263,7 @@ class Utils
         $contentSha1,
         DateTime $contentModified,
         ?string $impressionId = null
-    ) {
+    ): string {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
