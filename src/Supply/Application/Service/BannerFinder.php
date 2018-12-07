@@ -27,5 +27,5 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 
 interface BannerFinder
 {
-    public function findBanners(ImpressionContext $context): FoundBanners;
+    public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 }

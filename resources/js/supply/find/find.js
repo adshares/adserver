@@ -312,8 +312,8 @@ domReady(function () {
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
         param = {};
-//        param.width = parseInt(tag.style.width);
-//        param.height = parseInt(tag.style.height);
+        param.width = parseInt(tag.style.width);
+        param.height = parseInt(tag.style.height);
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
             var isData = (parts.shift() == "data");

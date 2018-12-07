@@ -37,12 +37,17 @@ use function is_bool;
 final class RawResponse
 {
     private const FIELD_ID = 'id';
+
     private const FIELD_RESULT = 'result';
+
     private const FIELD_ERROR = 'error';
+
     /** @var ResponseInterface */
     private $response;
+
     /** @var [] */
     private $content;
+
     /** @var Procedure */
     private $procedure;
 
@@ -68,7 +73,7 @@ final class RawResponse
         }
 
         try {
-            $this->content = json_decode((string)$this->response->getBody(), true);
+            $this->content = json_decode((string) $this->response->getBody(), true);
         } catch (InvalidArgumentException $e) {
             throw RemoteCallException::fromOther($e);
         }
@@ -96,16 +101,16 @@ final class RawResponse
     {
         $content = $this->content[self::FIELD_RESULT];
 
+        if (is_bool($content)) {
+            return new BoolResult($content);
+        }
+
         if (is_array($content)) {
-            if ($this->isSequential($content)) {
+            if (empty($content) || $this->isSequential($content)) {
                 return new ArrayResult($content);
             }
 
             return ObjectResult::fromArray($content);
-        }
-
-        if (is_bool($content)) {
-            return new BoolResult($content);
         }
 
         throw new ResultException('Unsupported result type');
