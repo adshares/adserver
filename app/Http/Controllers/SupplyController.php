@@ -36,7 +36,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use DateTime;
-use function uniqid;
 use function urlencode;
 
 class SupplyController extends Controller
