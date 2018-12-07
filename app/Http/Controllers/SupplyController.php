@@ -97,8 +97,7 @@ class SupplyController extends Controller
         return self::json($banners);
     }
 
-    // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
-    public function findScript(Request $request)
+    public function findScript(Request $request): StreamedResponse
     {
         $params = [
             json_encode($request->getSchemeAndHttpHost()),
@@ -143,7 +142,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, Adselect $adselect, $id)
+    public function logNetworkClick(Request $request, Adselect $adselect, $id): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -202,7 +201,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, $bannerId)
+    public function logNetworkView(Request $request, Adselect $adselect, $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -270,7 +269,7 @@ class SupplyController extends Controller
         return new RedirectResponse($url);
     }
 
-    public function logNetworkKeywords(Request $request, $log_id)
+    public function logNetworkKeywords(Request $request, $log_id): Response
     {
         $source = $request->query->get('s');
         $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
@@ -300,7 +299,7 @@ class SupplyController extends Controller
      * @return Response
      * @throws \Exception
      */
-    public function register(Request $request)
+    public function register(Request $request): Response
     {
         $response = new Response();
         $impressionId = $request->query->get('iid', md5(uniqid().time()));
