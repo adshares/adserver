@@ -23,17 +23,23 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
+use Generator;
+use function iterator_to_array;
 
 final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
+
     private const METHOD_BANNER_SELECT = 'banner_select';
 
     /** @var JsonRpc */
@@ -44,15 +50,73 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
         $this->client = $client;
     }
 
-    public function findBanners(ImpressionContext $context): FoundBanners
+    public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
-        $procedure = new Procedure(
-            self::METHOD_BANNER_SELECT,
-            $context->jsonRpcParams()
+        $params = $context->adSelectRequestParams($zones);
+        $result = $this->client->call(
+            new Procedure(
+                self::METHOD_BANNER_SELECT,
+                $params
+            )
         );
-        $result = $this->client->call($procedure);
 
-        return new FoundBanners($result->toArray());
+        $bannerIds = $this->fixBannerOrdering($zones, iterator_to_array($this->prepare($result->toArray())));
+
+        $banners = iterator_to_array($this->fetch(iterator_to_array($bannerIds)));
+
+        return new FoundBanners($banners);
+    }
+
+    private function fixBannerOrdering(array $zones, array $banners): Generator
+    {
+        foreach ($zones as $key => $zone) {
+            yield $banners[$key] ?? null;
+        }
+    }
+
+    private function prepare(array $bannerIds): Generator
+    {
+        foreach ($bannerIds as $item) {
+            if (isset($item['request_id'])) {
+                yield  $item['request_id'] => $item;
+            } else {
+                yield null;
+            }
+        }
+    }
+
+    private function fetch(array $bannerIds): Generator
+    {
+        foreach ($bannerIds as $bannerId) {
+            $banner =
+                $bannerId ? NetworkBanner::findByUid($bannerId) : null;
+
+            if (null === $banner) {
+                yield null;
+            } else {
+                $campaign = $banner->campaign;
+                yield [
+                    'pay_from' => $campaign->source_address,
+                    'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                    'serve_url' => str_replace('webserver', 'localhost:8101', $banner->serve_url),
+                    'creative_sha1' => $banner->checksum,
+                    'click_url' => route(
+                        'log-network-click',
+                        [
+                            'id' => $banner->uuid,
+                            'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                        ]
+                    ),
+                    'view_url' => route(
+                        'log-network-view',
+                        [
+                            'id' => $banner->uuid,
+                            'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                        ]
+                    ),
+                ];
+            }
+        }
     }
 
     public function exportInventory(Campaign $campaign): void

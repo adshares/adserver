@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Application\Format\Json;
 
-interface ImpressionContextProvider
+interface JsonDataRequest
 {
-    public function getContext(string $userId): array;
+    public function __toString(): string;
 }
