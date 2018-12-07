@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -138,13 +139,13 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, Adselect $adselect, $id)
+    public function logNetworkClick(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         } else {
-            $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
+            $banner = NetworkBanner::where('uuid', hex2bin($bannerId))->first();
 
             if (!$banner) {
                 throw new NotFoundHttpException();
@@ -168,23 +169,24 @@ class SupplyController extends Controller
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
-        $cid = Utils::getRawTrackingId($request->query->get('cid'));
-        $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
-        // TODO get user / website / zone
+        $context = Utils::decodeZones($request->query->get('ctx'));
+        $impressionId = $context['page']['iid'];
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
+        $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         $log = new NetworkEventLog();
-        $log->cid = $cid;
-        $log->banner_id = $id;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
         $log->pay_from = $payFrom;
-        $log->tid = $tid;
         $log->ip = $logIp;
         $log->event_type = 'click';
-        //         $log->setContext(Utils::getImpressionContext($this->container, $request));
+        $log->context = Utils::getImpressionContext($request);
 
         $log->save();
-
-        $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
         $adselect->addImpressions(
             [
@@ -192,12 +194,12 @@ class SupplyController extends Controller
             ]
         );
 
-        $response = new RedirectResponse($url);
+        $url = Utils::addUrlParameter($url, 'pto', $payTo);
 
-        return $response;
+        return new RedirectResponse($url);
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, $bannerId)
+    public function logNetworkView(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
