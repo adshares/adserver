@@ -65,12 +65,16 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
+        $decodedQueryData = Utils::decodeZones($data);
+        $impressionId = $decodedQueryData['page']['iid'];
+
         $tid = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
             '',
-            new DateTime()
+            new DateTime(),
+            $impressionId
         );
 
         if ($tid === null) {
@@ -78,7 +82,7 @@ class SupplyController extends Controller
         }
 
         $context = new ImpressionContext(
-            Utils::decodeZones($data)['zones'],
+            $decodedQueryData['zones'],
             Utils::getImpressionContext($request, $data),
             $contextProvider->getContext($tid)
         );
@@ -169,8 +173,8 @@ class SupplyController extends Controller
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
+        $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $impressionId = $context['page']['iid'];
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
@@ -239,9 +243,9 @@ class SupplyController extends Controller
         $log->context = Utils::getImpressionContext($request);
 
         // GET kewords from aduser
-        $aduser_endpoint = config('app.aduser_internal_location');
+        $adUserEndpoint = config('app.aduser_internal_location');
 
-        if (empty($aduser_endpoint) || empty($impressionId)) {
+        if (empty($adUserEndpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
         } else {
@@ -300,14 +304,15 @@ class SupplyController extends Controller
     public function register(Request $request)
     {
         $response = new Response();
-        $impressionId = $request->query->get('iid', md5(uniqid().time()));
+        $impressionId = $request->query->get('iid');
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
             '',
-            new \DateTime()
+            new \DateTime(),
+            $impressionId
         );
 
         $adUserUrl = sprintf(
