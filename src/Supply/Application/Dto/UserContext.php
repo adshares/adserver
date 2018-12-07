@@ -23,9 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Http\Utils;
-use Generator;
 use InvalidArgumentException;
-use function iterator_to_array;
 
 final class UserContext
 {
@@ -43,33 +41,7 @@ final class UserContext
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
         $this->userId = $userId;
-//        $this->failIfInvalid();
-    }
-
-    public static function fromAdUserArray(array $context): self
-    {
-        return new self(
-            iterator_to_array(self::mapAdUserInput($context['keywords'])),
-            (float) $context['human_score'],
-            $context['uid']
-        );
-    }
-
-    private static function mapAdUserInput(array $input): Generator
-    {
-        foreach ($input as $item) {
-            foreach ($item as $key => $value) {
-                yield [
-                    'key' => $key,
-                    'value' => $value,
-                ];
-            }
-        }
-    }
-
-    public function toAdSelectPartialArray(): array
-    {
-        return ['uid' => $this->userId, 'keywords' => $this->keywords];
+        $this->failIfInvalid();
     }
 
     private function failIfInvalid(): void
@@ -77,5 +49,17 @@ final class UserContext
         if (!Utils::validTrackingId($this->userId, config('app.adserver_secret'))) {
             throw new InvalidArgumentException('Invalid UID');
         }
+    }
+
+    public static function fromAdUserArray(array $context): self
+    {
+        return new self(
+            $context['keywords'], (float) $context['human_score'], $context['uid']
+        );
+    }
+
+    public function toAdSelectPartialArray(): array
+    {
+        return ['uid' => $this->userId, 'keywords' => $this->keywords];
     }
 }

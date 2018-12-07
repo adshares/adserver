@@ -77,10 +77,6 @@ JSON;
                 return json_decode(
                     <<<"JSON"
 {
-    "banner_filters": {
-        "require": [],
-        "exclude": []
-    },
     "keywords": {},
     "banner_size": "300x300",
     "publisher_id": "321",

@@ -27,7 +27,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
@@ -53,16 +52,16 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
 
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
+        $params = $context->adSelectRequestParams($zones);
         $result = $this->client->call(
             new Procedure(
-                self::METHOD_BANNER_SELECT,
-                $context->adSelectRequestParams($zones)
+                self::METHOD_BANNER_SELECT, $params
             )
         );
 
         $bannerIds = $this->fixBannerOrdering($zones, iterator_to_array($this->prepare($result->toArray())));
 
-        $banners = iterator_to_array($this->find(iterator_to_array($bannerIds)));
+        $banners = iterator_to_array($this->fetch(iterator_to_array($bannerIds)));
 
         return new FoundBanners($banners);
     }
@@ -85,15 +84,16 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
         }
     }
 
-    private function find(array $bannerIds): Generator
+    private function fetch(array $bannerIds): Generator
     {
         foreach ($bannerIds as $bannerId) {
-            $banner = $bannerId ? NetworkBanner::where('uuid', hex2bin($bannerId))->first() : NetworkBanner::first();
+            $banner =
+                $bannerId ? NetworkBanner::findByUid($bannerId) : NetworkBanner::findOneNeutralBannerWithMatchingSize();
 
-            if (empty($banner)) {
+            if (null === $banner) {
                 yield null;
             } else {
-                $campaign = NetworkCampaign::find($banner->network_campaign_id);
+                $campaign = $banner->campaign;
                 yield [
                     'pay_from' => $campaign->source_address,
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
@@ -121,8 +121,7 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
     public function exportInventory(Campaign $campaign): void
     {
         $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_UPDATE,
-            CampaignMapper::map($campaign)
+            self::METHOD_CAMPAIGN_UPDATE, CampaignMapper::map($campaign)
         );
 
         $this->client->call($procedure);
