@@ -119,10 +119,10 @@ final class DummyAdSelectClient implements BannerFinder
             '=',
             'network_campaigns.id'
         )->select('network_banners.uuid')->whereRaw(
-            '(network_campaigns.targeting_requires LIKE ? '."OR network_campaigns.targeting_requires = '[]')",
+            "(network_campaigns.targeting_requires LIKE ? OR network_campaigns.targeting_requires = '[]')",
             "%$key%"
         )->whereRaw(
-            '(network_campaigns.targeting_excludes NOT LIKE ? '."OR network_campaigns.targeting_excludes = '[]')",
+            "(network_campaigns.targeting_excludes NOT LIKE ? OR network_campaigns.targeting_excludes = '[]')",
             "%$key%"
         )->where('network_campaigns.status', Campaign::STATUS_ACTIVE)->where(
             'network_banners.width',
