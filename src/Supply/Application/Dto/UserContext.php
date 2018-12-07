@@ -54,7 +54,9 @@ final class UserContext
     public static function fromAdUserArray(array $context): self
     {
         return new self(
-            $context['keywords'], (float) $context['human_score'], $context['uid']
+            $context['keywords'],
+            (float) $context['human_score'],
+            $context['uid']
         );
     }
 

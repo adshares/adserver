@@ -100,6 +100,6 @@ class NetworkBanner extends Model
 
     public function campaign(): BelongsTo
     {
-        return $this->belongsTo(NetworkCampaign::class,'network_campaign_id');
+        return $this->belongsTo(NetworkCampaign::class, 'network_campaign_id');
     }
 }
