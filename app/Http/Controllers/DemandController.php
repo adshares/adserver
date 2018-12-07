@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\EventLog;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -159,9 +160,9 @@ class DemandController extends Controller
         return $response;
     }
 
-    public function click(Request $request, $id)
+    public function click(Request $request, string $bannerId): RedirectResponse
     {
-        $banner = Banner::with('Campaign')->find($id);
+        $banner = Banner::with('Campaign')->find($bannerId);
         if (!$banner) {
             throw new NotFoundHttpException();
         }
@@ -171,20 +172,24 @@ class DemandController extends Controller
         $url = $campaign->landing_url;
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
-        $cid = Utils::getRawTrackingId($request->query->get('cid'));
-        $pid = $request->query->get('pid');
-        $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $eventId = $request->query->get('cid');
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
 
+        $context = Utils::decodeZones($request->query->get('ctx'));
+        $keywords = $context['page']['keywords'];
+
         $log = new EventLog();
-        $log->cid = $cid;
-        $log->publisher_event_id = $pid;
-        $log->banner_id = $id;
-        $log->tid = $tid;
-        $log->ip = $logIp;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
         $log->pay_to = $payTo;
-        $log->event_type = 'click';
+        $log->ip = $logIp;
         $log->their_context = Utils::getImpressionContext($request);
+        $log->event_type = 'click';
+        $log->their_userdata = $keywords;
+
         $log->save();
 
         // TODO: fix adpay
@@ -200,7 +205,7 @@ class DemandController extends Controller
         return new RedirectResponse($url);
     }
 
-    public function view(Request $request, $bannerId)
+    public function view(Request $request, string $bannerId)
     {
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
@@ -208,13 +213,10 @@ class DemandController extends Controller
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
 
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
         $context = Utils::decodeZones($request->query->get('ctx'));
+        $keywords = $context['page']['keywords'];
 
-        if (empty($log)) {
-            $log = new EventLog();
-        }
-
+        $log = new EventLog();
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
