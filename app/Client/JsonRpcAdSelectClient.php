@@ -89,7 +89,7 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
     {
         foreach ($bannerIds as $bannerId) {
             $banner =
-                $bannerId ? NetworkBanner::findByUid($bannerId) : NetworkBanner::findOneNeutralBannerWithMatchingSize();
+                $bannerId ? NetworkBanner::findByUid($bannerId) : null;
 
             if (null === $banner) {
                 yield null;

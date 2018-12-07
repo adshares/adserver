@@ -77,11 +77,6 @@ class NetworkBanner extends Model
         return with(new static())->getTable();
     }
 
-    public static function findOneNeutralBannerWithMatchingSize(): self
-    {
-        return static::first();
-    }
-
     public static function findByUid(string $bannerId): self
     {
         return self::where('uuid', hex2bin($bannerId))->first();
