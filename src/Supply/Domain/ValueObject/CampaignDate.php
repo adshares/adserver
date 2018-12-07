@@ -45,6 +45,10 @@ final class CampaignDate
             throw new InvalidCampaignDateException('End date must be greater than start date.');
         }
 
+//        if ($dateEnd === null) {
+//            $dateEnd = (new DateTime())->modify('+1 year');
+//        }
+
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
         $this->createdAt = $createdAt;
