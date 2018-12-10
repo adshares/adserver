@@ -181,6 +181,9 @@ class DemandController extends Controller
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
 
+        $response = new RedirectResponse($url);
+        $response->send();
+
         $log = new EventLog();
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
@@ -192,20 +195,9 @@ class DemandController extends Controller
         $log->their_context = Utils::getImpressionContext($request);
         $log->event_type = 'click';
         $log->their_userdata = $keywords;
-
         $log->save();
 
-        // TODO: fix adpay
-        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        // $adpayService instanceof Adpay;
-        //
-        // if ($adpayService) {
-        //     $adpayService->addEvents([
-        //         $log->getAdpayJson(),
-        //     ]);
-        // }
-
-        return new RedirectResponse($url);
+        return $response;
     }
 
     public function view(Request $request, string $bannerId)
@@ -219,20 +211,6 @@ class DemandController extends Controller
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
-
-        $log = new EventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->pay_to = $payTo;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->their_context = Utils::getImpressionContext($request);
-        $log->event_type = 'view';
-        $log->their_userdata = $keywords;
-
-        $log->save();
 
         $adUserEndpoint = config('app.aduser_external_location');
         $response = new SymfonyResponse();
@@ -259,6 +237,21 @@ class DemandController extends Controller
 
             $response->headers->set('Location', $adUserUrl);
         }
+
+        $response->send();
+
+        $log = new EventLog();
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
+        $log->pay_to = $payTo;
+        $log->ip = $logIp;
+        $log->headers = $requestHeaders;
+        $log->their_context = Utils::getImpressionContext($request);
+        $log->event_type = 'view';
+        $log->their_userdata = $keywords;
+        $log->save();
 
         return $response;
     }
