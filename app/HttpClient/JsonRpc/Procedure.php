@@ -40,7 +40,7 @@ final class Procedure
 
     public function __construct(string $method, array $params)
     {
-        $this->id = (string) Uuid::v4();
+        $this->id = (string)Uuid::v4();
         $this->method = $method;
         $this->params = $params;
     }

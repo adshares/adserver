@@ -104,7 +104,7 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
     private function fetchInOrderOfAppearance(array $bannerIds): Generator
     {
         foreach ($bannerIds as $bannerId) {
-            $banner = $bannerId ? NetworkBanner::findByUid($bannerId) : null;
+            $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
             if (null === $banner) {
                 yield null;
