@@ -108,6 +108,7 @@ class DemandController extends Controller
         $log->event_id = $eventId;
         $log->user_id = Utils::getRawTrackingId($tid);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
+        $log->headers = $request->headers->all();
         $log->event_type = 'request';
         $log->save();
 
@@ -162,7 +163,7 @@ class DemandController extends Controller
 
     public function click(Request $request, string $bannerId): RedirectResponse
     {
-        $banner = Banner::with('Campaign')->find($bannerId);
+        $banner = Banner::with('Campaign')->where('uuid', hex2bin($bannerId))->first();
         if (!$banner) {
             throw new NotFoundHttpException();
         }
@@ -171,6 +172,7 @@ class DemandController extends Controller
 
         $url = $campaign->landing_url;
         $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $requestHeaders = $request->headers->all();
 
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
@@ -186,6 +188,7 @@ class DemandController extends Controller
         $log->zone_id = $context['page']['zone'];
         $log->pay_to = $payTo;
         $log->ip = $logIp;
+        $log->headers = $requestHeaders;
         $log->their_context = Utils::getImpressionContext($request);
         $log->event_type = 'click';
         $log->their_userdata = $keywords;
@@ -208,6 +211,7 @@ class DemandController extends Controller
     public function view(Request $request, string $bannerId)
     {
         $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $requestHeaders = $request->headers->all();
 
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
@@ -223,6 +227,7 @@ class DemandController extends Controller
         $log->zone_id = $context['page']['zone'];
         $log->pay_to = $payTo;
         $log->ip = $logIp;
+        $log->headers = $requestHeaders;
         $log->their_context = Utils::getImpressionContext($request);
         $log->event_type = 'view';
         $log->their_userdata = $keywords;

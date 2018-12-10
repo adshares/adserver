@@ -25,8 +25,8 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
+use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\SiteAndDeviceInfo;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\UserContextProvider;
 use DateTime;
@@ -175,6 +175,7 @@ class SupplyController extends Controller
         }
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $requestHeaders = $request->headers->all();
 
         $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
@@ -190,6 +191,7 @@ class SupplyController extends Controller
         $log->zone_id = $context['page']['zone'];
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
+        $log->headers = $requestHeaders;
         $log->event_type = 'click';
         $log->context = Utils::getImpressionContext($request);
 
@@ -227,6 +229,7 @@ class SupplyController extends Controller
         }
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $requestHeaders = $request->headers->all();
 
         $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
@@ -242,6 +245,7 @@ class SupplyController extends Controller
         $log->zone_id = $context['page']['zone'];
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
+        $log->headers = $requestHeaders;
         $log->event_type = 'view';
         $log->context = Utils::getImpressionContext($request);
 
