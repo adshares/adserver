@@ -184,6 +184,11 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
+        $url = Utils::addUrlParameter($url, 'pto', $payTo);
+
+        $response = new RedirectResponse($url);
+        $response->send();
+
         $log = new NetworkEventLog();
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
@@ -194,18 +199,9 @@ class SupplyController extends Controller
         $log->headers = $requestHeaders;
         $log->event_type = 'click';
         $log->context = Utils::getImpressionContext($request);
-
         $log->save();
 
-        $adselect->addImpressions(
-            [
-                $log->getAdselectJson(),
-            ]
-        );
-
-        $url = Utils::addUrlParameter($url, 'pto', $payTo);
-
-        return new RedirectResponse($url);
+        return $response;
     }
 
     public function logNetworkView(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
@@ -238,6 +234,12 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
+        $url = Utils::addUrlParameter($url, 'cid', $eventId);
+        $url = Utils::addUrlParameter($url, 'pto', $payTo);
+
+        $response = new RedirectResponse($url);
+        $response->send();
+
         $log = new NetworkEventLog();
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
@@ -248,34 +250,9 @@ class SupplyController extends Controller
         $log->headers = $requestHeaders;
         $log->event_type = 'view';
         $log->context = Utils::getImpressionContext($request);
+        $log->save();
 
-        // GET kewords from aduser
-        $adUserEndpoint = config('app.aduser_internal_location');
-
-        if (empty($adUserEndpoint) || empty($impressionId)) {
-            $log->save();
-            // TODO: process?
-        } else {
-//            $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
-
-//            $log->our_userdata = $userdata['user']['keywords'];
-//            $log->human_score = $userdata['user']['human_score'];
-            // $log->user_id = $userdata['user']['user_id']; // TODO: review process and data
-            $log->save();
-        }
-
-        $adselect->addImpressions(
-            [
-                $log->getAdselectJson(),
-            ]
-        );
-
-        $url = Utils::addUrlParameter($url, 'cid', $log->event_id);
-        $url = Utils::addUrlParameter($url, 'pto', $payTo);
-
-        $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($log->our_userdata)));
-
-        return new RedirectResponse($url);
+        return $response;
     }
 
     public function logNetworkKeywords(Request $request, $log_id): Response
