@@ -63,7 +63,8 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
 
         $result = $this->client->call(
             new Procedure(
-                self::METHOD_BANNER_SELECT, $context->adSelectRequestParams(Zone::findByIds($zoneIds))
+                self::METHOD_BANNER_SELECT,
+                $context->adSelectRequestParams(Zone::findByIds($zoneIds))
             )
         );
 
