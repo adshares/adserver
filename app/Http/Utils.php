@@ -23,13 +23,12 @@ namespace Adshares\Adserver\Http;
 use BrowscapPHP\Helper\LoggerHelper;
 use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
-use ErrorException;
-use Illuminate\Support\Facades\Log;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use function is_string;
 
 /**
  * Various helpful methods.
@@ -40,17 +39,22 @@ class Utils
     // TODO: remove $container
 
     const VALUE_GLUE = "\t";
+
     const PROP_GLUE = "\r";
+
     const ZONE_GLUE = "\n";
+
     const VALUE_MIN = "\x00";
+
     const VALUE_MAX = "\xFF";
+
     const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
         if ($contextStr) {
-            if (\is_string($contextStr)) {
+            if (is_string($contextStr)) {
                 $context = self::decodeZones($contextStr);
             } else {
                 $context = ['page' => $contextStr];
@@ -61,7 +65,12 @@ class Utils
 
         return [
             'site' => self::getSiteContext($request, $context),
-            'device' => self::getDeviceContext($request, $context),
+            'device' => [
+                'ua' => $request->userAgent(),
+                'ip' => $request->ip(),
+                'ips' => $request->ips(),
+                'headers' => $request->headers->all(),
+            ],
         ];
     }
 
@@ -147,8 +156,6 @@ class Utils
             $device['w'] = $page['width'] ?? null;
             $device['h'] = $page['height'] ?? null;
         }
-
-        // TODO: refactor into browsercap service
 
         $logger = LoggerHelper::createDefaultLogger(new NullOutput());
 
