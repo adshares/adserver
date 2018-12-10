@@ -33,8 +33,8 @@ class TargetingMapper extends AbstractFilterMapper
         $mappedRequires = self::generateNestedStructure($requires);
 
         return [
-            'excludes' => !empty($mappedExcludes) ? $mappedExcludes : new stdClass(),
-            'requires' => !empty($mappedRequires) ? $mappedRequires : new stdClass(),
+            'exclude' => !empty($mappedExcludes) ? $mappedExcludes : new stdClass(),
+            'require' => !empty($mappedRequires) ? $mappedRequires : new stdClass(),
         ];
     }
 }
