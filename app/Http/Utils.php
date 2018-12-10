@@ -261,8 +261,9 @@ class Utils
         Request $request,
         Response $response,
         $contentSha1,
-        DateTime $contentModified
-    ) {
+        DateTime $contentModified,
+        ?string $impressionId = null
+    ): string {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
@@ -274,7 +275,6 @@ class Utils
             }
 
             if ($tid === null || !self::validTrackingId($tid, $secret)) {
-                $impressionId = $request->query->get('iid');
                 $tid = self::createTrackingId($secret, $impressionId);
             }
         }

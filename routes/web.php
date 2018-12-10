@@ -39,6 +39,9 @@ Route::get('/l/context/{log_id}', [DemandController::class, 'logContext'])->name
 Route::get('/l/keywords/{log_id}', [DemandController::class, 'logKeywords'])->name('log-keywords');
 
 Route::get('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
+Route::get('/supply/find/{data}', [SupplyController::class, 'find'])->name('supply-find');
+Route::post('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
+
 Route::get('/supply/find.js', [SupplyController::class, 'findScript'])->name('supply-find.js');
 Route::get('/supply/register', [SupplyController::class, 'register'])->name('supply-register');
 

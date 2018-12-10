@@ -22,26 +22,30 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Services\Adselect;
-use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\SiteAndDeviceInfo;
 use Adshares\Supply\Application\Service\BannerFinder;
-use Adshares\Supply\Application\Service\ImpressionContextProvider;
+use Adshares\Supply\Application\Service\UserContextProvider;
+use DateTime;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use DateTime;
-use function uniqid;
 use function urlencode;
 
 class SupplyController extends Controller
 {
-    public function find(Request $request, ImpressionContextProvider $contextProvider, BannerFinder $bannerFinder)
-    {
+    public function find(
+        Request $request,
+        UserContextProvider $contextProvider,
+        BannerFinder $bannerFinder,
+        string $data = null
+    ) {
         $response = new Response();
 
         if ($request->headers->has('Origin')) {
@@ -51,7 +55,8 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
-        if ('GET' === $request->getRealMethod()) {
+        if ($data) {
+        } elseif ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
         } elseif ('POST' === $request->getRealMethod()) {
             $data = $request->getContent();
@@ -64,36 +69,39 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
+        $decodedQueryData = Utils::decodeZones($data);
+        $impressionId = $decodedQueryData['page']['iid'];
+
         $tid = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
             '',
-            new DateTime()
+            new DateTime(),
+            $impressionId
         );
 
         if ($tid === null) {
             throw new NotFoundHttpException('User not found');
         }
 
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
+
         $context = new ImpressionContext(
-            Utils::decodeZones($data)['zones'],
-            Utils::getImpressionContext($request, $data),
-            $contextProvider->getContext($tid)
+            $site,
+            $device,
+            $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]))
+                ->toAdSelectPartialArray()
         );
 
-        $foundBanners = $bannerFinder->findBanners($context);
-        $banners = $foundBanners->toArray();
+        $zones = Utils::decodeZones($data)['zones'];
 
-        foreach ($banners as &$banner) {
-            $banner['pay_to'] = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        }
+        $banners = $bannerFinder->findBanners($zones, $context);
 
         return self::json($banners);
     }
 
-    // we do it here because ORIGIN may be configured elsewhere with randomization of hostname
-    public function findScript(Request $request)
+    public function findScript(Request $request): StreamedResponse
     {
         $params = [
             json_encode($request->getSchemeAndHttpHost()),
@@ -138,13 +146,13 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, Adselect $adselect, $id)
+    public function logNetworkClick(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
         } else {
-            $banner = NetworkBanner::where('uuid', hex2bin($id))->first();
+            $banner = NetworkBanner::where('uuid', hex2bin($bannerId))->first();
 
             if (!$banner) {
                 throw new NotFoundHttpException();
@@ -168,23 +176,24 @@ class SupplyController extends Controller
 
         $logIp = bin2hex(inet_pton($request->getClientIp()));
 
-        $cid = Utils::getRawTrackingId($request->query->get('cid'));
-        $tid = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
-        // TODO get user / website / zone
+        $impressionId = $request->query->get('iid');
+        $context = Utils::decodeZones($request->query->get('ctx'));
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
+        $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
 
         $log = new NetworkEventLog();
-        $log->cid = $cid;
-        $log->banner_id = $id;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $context['page']['zone'];
         $log->pay_from = $payFrom;
-        $log->tid = $tid;
         $log->ip = $logIp;
         $log->event_type = 'click';
-        //         $log->setContext(Utils::getImpressionContext($this->container, $request));
+        $log->context = Utils::getImpressionContext($request);
 
         $log->save();
-
-        $url = Utils::addUrlParameter($url, 'pid', $log->id);
 
         $adselect->addImpressions(
             [
@@ -192,12 +201,12 @@ class SupplyController extends Controller
             ]
         );
 
-        $response = new RedirectResponse($url);
+        $url = Utils::addUrlParameter($url, 'pto', $payTo);
 
-        return $response;
+        return new RedirectResponse($url);
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, $bannerId)
+    public function logNetworkView(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -237,13 +246,13 @@ class SupplyController extends Controller
         $log->context = Utils::getImpressionContext($request);
 
         // GET kewords from aduser
-        $aduser_endpoint = config('app.aduser_internal_location');
+        $adUserEndpoint = config('app.aduser_internal_location');
 
-        if (empty($aduser_endpoint) || empty($impressionId)) {
+        if (empty($adUserEndpoint) || empty($impressionId)) {
             $log->save();
             // TODO: process?
         } else {
-//            $userdata = (array)json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
+//            $userdata = (array) json_decode(file_get_contents("{$aduser_endpoint}/get-data/{$impressionId}"), true);
 
 //            $log->our_userdata = $userdata['user']['keywords'];
 //            $log->human_score = $userdata['user']['human_score'];
@@ -265,7 +274,7 @@ class SupplyController extends Controller
         return new RedirectResponse($url);
     }
 
-    public function logNetworkKeywords(Request $request, $log_id)
+    public function logNetworkKeywords(Request $request, $log_id): Response
     {
         $source = $request->query->get('s');
         $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
@@ -295,17 +304,18 @@ class SupplyController extends Controller
      * @return Response
      * @throws \Exception
      */
-    public function register(Request $request)
+    public function register(Request $request): Response
     {
         $response = new Response();
-        $impressionId = $request->query->get('iid', md5(uniqid().time()));
+        $impressionId = $request->query->get('iid');
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
             $request,
             $response,
             '',
-            new \DateTime()
+            new \DateTime(),
+            $impressionId
         );
 
         $adUserUrl = sprintf(

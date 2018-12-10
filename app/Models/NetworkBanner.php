@@ -23,7 +23,11 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property NetworkCampaign campaign
+ */
 class NetworkBanner extends Model
 {
     use AutomateMutators;
@@ -68,7 +72,17 @@ class NetworkBanner extends Model
         'checksum' => 'BinHex',
     ];
 
-    public function getAdselectJson()
+    public static function getTableName()
+    {
+        return with(new static())->getTable();
+    }
+
+    public static function findByUid(string $bannerId): self
+    {
+        return self::where('uuid', hex2bin($bannerId))->first();
+    }
+
+    public function getAdSelectArray(): array
     {
         return [
             'banner_id' => $this->uuid,
@@ -79,8 +93,8 @@ class NetworkBanner extends Model
         ];
     }
 
-    public static function getTableName()
+    public function campaign(): BelongsTo
     {
-        return with(new static)->getTable();
+        return $this->belongsTo(NetworkCampaign::class, 'network_campaign_id');
     }
 }

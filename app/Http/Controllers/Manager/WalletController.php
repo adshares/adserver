@@ -184,7 +184,9 @@ class WalletController extends Controller
         $resp = [];
         $items = [];
         if ($count > 0) {
-            foreach (UserLedgerEntry::where('user_id', $userId)->skip($offset)->take($limit)->cursor() as $ledgerItem) {
+            foreach (UserLedgerEntry::where('user_id', $userId)->orderBy('created_at', 'desc')->skip($offset)->take(
+                $limit
+            )->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
                 $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
                 $status = (int)$ledgerItem->status;
