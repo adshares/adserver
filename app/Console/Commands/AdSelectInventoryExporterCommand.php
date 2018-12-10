@@ -26,7 +26,6 @@ use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Console\Command;
 
 class AdSelectInventoryExporterCommand extends Command
@@ -37,7 +36,7 @@ class AdSelectInventoryExporterCommand extends Command
 
     private $inventoryExporterService;
 
-    /** @var CampaignRepository */
+    /** @var NetworkCampaignRepository */
     private $campaignRepository;
 
     public function __construct(

@@ -22,7 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use function array_keys;
+use Adshares\Adserver\Models\Zone;
+use Illuminate\Support\Collection;
 
 final class ImpressionContext
 {
@@ -55,41 +56,19 @@ final class ImpressionContext
 JSON;
     }
 
-    public function adSelectRequestParams(array $zones): array
+    public function adSelectRequestParams(Collection $zones): array
     {
-        return array_map(
-            function (array $param) {
-                if (isset($param['keywords']) && empty($param['keywords'])) {
-                    unset($param['keywords']);
-                }
-
-                return $param;
-            },
-            $this->fixedParams($zones)
-        );
-    }
-
-    /** $deprecated */
-    private function fixedParams(array $zones): array
-    {
-        return array_map(
-            function ($key) {
-                return json_decode(
-                    <<<"JSON"
-{
-    "keywords": {},
-    "banner_size": "300x300",
-    "publisher_id": "321",
-    "request_id": {$key},
-    "user_id": "{$this->user['uid']}"
-}
-JSON
-                    ,
-                    true
-                );
-            },
-            array_keys($zones)
-        );
+        return $zones->map(
+            function (Zone $zone) {
+                return [
+                    'keywords' => ["interest" => "200142"],
+                    'banner_size' => "{$zone->width}x{$zone->height}",
+                    'publisher_id' => 'pid',
+                    'request_id' => $zone->id,
+                    'user_id' => $this->user['uid'],
+                ];
+            }
+        )->toArray();
     }
 
     public function keywords()

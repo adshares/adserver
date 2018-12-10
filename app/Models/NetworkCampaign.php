@@ -102,6 +102,6 @@ class NetworkCampaign extends Model
 
     public function banners(): HasMany
     {
-        return $this->hasMany(NetworkBanner::class);
+        return $this->hasMany(NetworkBanner::class)->orderBy('uuid');
     }
 }
