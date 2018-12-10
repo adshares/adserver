@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Tests\Client\Mapper\AdSelect;
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
-use PHPUnit\Framework\TestCase;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 use stdClass;
 
 final class CampaignMapperTest extends TestCase
@@ -37,8 +37,7 @@ final class CampaignMapperTest extends TestCase
         ?string $name = null,
         array $data = [],
         string $dataName = ''
-    )
-    {
+    ) {
         $this->campaignData = [
             'id' => 1,
             'uuid' => Uuid::v4(),
@@ -97,14 +96,14 @@ final class CampaignMapperTest extends TestCase
                     'banner_id' => $this->campaignData['banners'][0]['uuid'],
                     'banner_size' => '728x90',
                     'keywords' => [
-                        'type' => 'image'
+                        'type' => 'image',
                     ],
                 ],
                 [
                     'banner_id' => $this->campaignData['banners'][1]['uuid'],
                     'banner_size' => '728x90',
                     'keywords' => [
-                        'type' => 'image'
+                        'type' => 'image',
                     ],
                 ],
             ],
@@ -115,7 +114,7 @@ final class CampaignMapperTest extends TestCase
             'filters' => [
                 'requires' => new stdClass(),
                 'excludes' => new stdClass(),
-            ]
+            ],
         ];
 
         $campaign = CampaignFactory::createFromArray($this->campaignData);
