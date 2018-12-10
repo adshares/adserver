@@ -44,7 +44,7 @@ final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextPro
     public function fetchTargetingOptions(): Taxonomy
     {
         $response = $this->client->get('/getTaxonomy');
-        $taxonomy = json_decode((string) $response->getBody(), true);
+        $taxonomy = json_decode((string)$response->getBody(), true);
 
         return TaxonomyFactory::fromArray($taxonomy);
     }
@@ -58,7 +58,7 @@ final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextPro
             ]
         );
 
-        $context = json_decode((string) $response->getBody(), true);
+        $context = json_decode((string)$response->getBody(), true);
 
         return UserContext::fromAdUserArray($context);
     }

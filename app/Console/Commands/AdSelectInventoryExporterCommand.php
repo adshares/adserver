@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -58,6 +58,7 @@ class AdSelectInventoryExporterCommand extends Command
 
         if (!$campaigns) {
             $this->info('Stopped exporting. No campaigns found.');
+
             return;
         }
 

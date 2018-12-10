@@ -37,12 +37,12 @@ final class ObjectResult implements Result
 
     public static function fromArray(array $content): self
     {
-        return new self((object) $content);
+        return new self((object)$content);
     }
 
     public function toArray(): array
     {
-        return (array) $this->content;
+        return (array)$this->content;
     }
 
     public function isTrue(): bool

@@ -23,17 +23,18 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
 
 class TargetingMapper extends AbstractFilterMapper
 {
     public static function map(array $requires, array $excludes): array
     {
-        $exclude = self::generateNestedStructure($excludes);
-        $require = self::generateNestedStructure($requires);
+        $mappedExcludes = self::generateNestedStructure($excludes);
+        $mappedRequires = self::generateNestedStructure($requires);
 
         return [
-            'exclude' => $exclude,
-            'require' => $require,
+            'excludes' => !empty($mappedExcludes) ? $mappedExcludes : new stdClass(),
+            'requires' => !empty($mappedRequires) ? $mappedRequires : new stdClass(),
         ];
     }
 }
