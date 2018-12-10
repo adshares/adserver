@@ -114,6 +114,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->banners as $networkBanner) {
             $banners[] = [
+                'uuid' => $networkBanner->uuid,
                 'serve_url' => $networkBanner->serve_url,
                 'click_url' => $networkBanner->click_url,
                 'view_url' => $networkBanner->view_url,
