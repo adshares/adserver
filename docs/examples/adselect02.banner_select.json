@@ -1,0 +1,43 @@
+{
+  "jsonrpc": "2.0",
+  "id": "8fc76e797aae48229b08e924e95a04f2",
+  "method": "banner_select",
+  "params": [
+    {
+      "keywords": {
+        "interest": "200142"
+      },
+      "banner_size": "160x600",
+      "publisher_id": "pid",
+      "request_id": 28,
+      "user_id": "K5gHXv70A9vgS9jAM22PmTFA73goKA"
+    },
+    {
+      "keywords": {
+        "interest": "200142"
+      },
+      "banner_size": "160x600",
+      "publisher_id": "pid",
+      "request_id": 29,
+      "user_id": "K5gHXv70A9vgS9jAM22PmTFA73goKA"
+    },
+    {
+      "keywords": {
+        "interest": "200142"
+      },
+      "banner_size": "970x90",
+      "publisher_id": "pid",
+      "request_id": 30,
+      "user_id": "K5gHXv70A9vgS9jAM22PmTFA73goKA"
+    },
+    {
+      "keywords": {
+        "interest": "200142"
+      },
+      "banner_size": "320x50",
+      "publisher_id": "pid",
+      "request_id": 31,
+      "user_id": "K5gHXv70A9vgS9jAM22PmTFA73goKA"
+    }
+  ]
+}

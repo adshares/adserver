@@ -1,0 +1,40 @@
+{
+  "id": "upsert1",
+  "jsonrpc": "2.0",
+  "method": "campaign_update",
+  "params": [
+    {
+      "banners": [
+        {
+          "banner_id": "a",
+          "banner_size": "150x150",
+          "keywords": {
+            "type": "image"
+          }
+        },
+        {
+          "banner_id": "b",
+          "banner_size": "200x200",
+          "keywords": {
+            "type": "html"
+          }
+        }
+      ],
+      "campaign_id": "zibi-test-1",
+      "filters": {
+        "require": {
+          "color": [
+            "red","green"
+          ]
+        },
+        "exclude": {}
+      },
+      "keywords": {
+        "source_host": "http://webserver",
+        "adshares_address": "0001-00000003-AB0C"
+      },
+      "time_start":0,
+      "time_end": 1643504441
+    }
+  ]
+}
