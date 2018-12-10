@@ -49,9 +49,8 @@ class CampaignMapper
             $campaignArray['targeting_excludes']
         );
 
-        $futureDate = (new DateTime())->modify('+1 year')->getTimestamp();
         $dateStart = (int)$campaignArray['date_start']->format('U');
-        $dateEnd = $campaignArray['date_end'] ? (int)$campaignArray['date_end']->format('U') : $futureDate;
+        $dateEnd = self::processDateEnd($campaignArray['date_end']);
 
         $mapped = [
             'campaign_id' => $campaignArray['demand_campaign_id'],
@@ -67,5 +66,14 @@ class CampaignMapper
         $mapped['filters'] = $targeting;
 
         return [$mapped];
+    }
+
+    private static function processDateEnd(?DateTime $dateEnd): int
+    {
+        if ($dateEnd === null) {
+            return (int)(new DateTime())->modify('+1 year')->getTimestamp();
+        }
+
+        return (int)$dateEnd->getTimestamp();
     }
 }

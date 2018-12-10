@@ -18,8 +18,10 @@
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateEventLogsTable extends Migration
 {
@@ -45,6 +47,7 @@ class CreateEventLogsTable extends Migration
 
             $table->binary('pay_to', 6)->nullable();
             $table->binary('ip', 8);
+            $table->json('headers')->nullable();
 
             $table->text('our_context')->nullable();
             $table->text('their_context')->nullable();

@@ -53,13 +53,11 @@ class NetworkCampaignRepository implements CampaignRepository
 
         DB::table(NetworkBanner::getTableName())
             ->whereIn('network_campaign_id', $campaignIds)
-            ->delete()
-            ;
+            ->delete();
 
         DB::table(NetworkCampaign::getTableName())
             ->whereIn('id', $campaignIds)
-            ->delete()
-        ;
+            ->delete();
 
 //        DB::update(
 //            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
@@ -114,6 +112,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->banners as $networkBanner) {
             $banners[] = [
+                'uuid' => $networkBanner->uuid,
                 'serve_url' => $networkBanner->serve_url,
                 'click_url' => $networkBanner->click_url,
                 'view_url' => $networkBanner->view_url,

@@ -29,12 +29,12 @@ class TargetingMapper extends AbstractFilterMapper
 {
     public static function map(array $requires, array $excludes): array
     {
-        $exclude = self::generateNestedStructure($excludes);
-        $require = self::generateNestedStructure($requires);
+        $mappedExcludes = self::generateNestedStructure($excludes);
+        $mappedRequires = self::generateNestedStructure($requires);
 
         return [
-            'exclude' => !empty($exclude) ? $exclude : new stdClass(),
-            'require' => !empty($require) ? $require : new stdClass(),
+            'excludes' => !empty($mappedExcludes) ? $mappedExcludes : new stdClass(),
+            'requires' => !empty($mappedRequires) ? $mappedRequires : new stdClass(),
         ];
     }
 }
