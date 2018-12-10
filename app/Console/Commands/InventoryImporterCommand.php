@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -52,6 +52,7 @@ class InventoryImporterCommand extends Command
 
         if (!$networkHosts) {
             $this->info('Stopped importing. No hosts found.');
+
             return;
         }
 

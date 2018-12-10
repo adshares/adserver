@@ -73,7 +73,7 @@ final class RawResponse
         }
 
         try {
-            $this->content = json_decode((string) $this->response->getBody(), true);
+            $this->content = json_decode((string)$this->response->getBody(), true);
         } catch (InvalidArgumentException $e) {
             throw RemoteCallException::fromOther($e);
         }

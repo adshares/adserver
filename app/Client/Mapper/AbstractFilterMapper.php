@@ -44,7 +44,7 @@ abstract class AbstractFilterMapper
                 $path = implode(':', $fullPath);
 
                 if (!empty($path)) {
-                    $values[$path] = (array) $data;
+                    $values[$path] = (array)$data;
                 }
             }
         }

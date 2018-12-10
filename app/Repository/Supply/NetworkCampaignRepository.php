@@ -53,13 +53,11 @@ class NetworkCampaignRepository implements CampaignRepository
 
         DB::table(NetworkBanner::getTableName())
             ->whereIn('network_campaign_id', $campaignIds)
-            ->delete()
-            ;
+            ->delete();
 
         DB::table(NetworkCampaign::getTableName())
             ->whereIn('id', $campaignIds)
-            ->delete()
-        ;
+            ->delete();
 
 //        DB::update(
 //            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),

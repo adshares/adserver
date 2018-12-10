@@ -80,8 +80,9 @@ final class DummyDemandClient implements DemandClient
                 'budget' => 1000000000000,
                 'targeting_excludes' => [
                     'site' => [
-                        'one', 'two',
-                    ]
+                        'one',
+                        'two',
+                    ],
                 ],
                 'targeting_requires' => [],
             ]),
