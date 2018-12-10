@@ -30,7 +30,7 @@ trait DateAtom
         $this->attributes[$key] = $value !== null ? DateTime::createFromFormat(DATE_ATOM, $value) : null;
     }
 
-    public function dateAtomAccessor(?DateTime $value)
+    public function dateAtomAccessor(?DateTime $value): ?string
     {
         return $value === null ? null : $value->format(DATE_ATOM);
     }
