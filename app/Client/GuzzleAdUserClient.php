@@ -25,10 +25,13 @@ namespace Adshares\Adserver\Client;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Application\Service\UserContextProvider;
 use GuzzleHttp\Client;
 use function GuzzleHttp\json_decode;
 
-final class GuzzleAdUserClient implements TargetingOptionsSource
+final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextProvider
 {
     /** @var Client */
     private $client;
@@ -41,8 +44,22 @@ final class GuzzleAdUserClient implements TargetingOptionsSource
     public function fetchTargetingOptions(): Taxonomy
     {
         $response = $this->client->get('/getTaxonomy');
-        $taxonomy = json_decode((string)$response->getBody(), true);
+        $taxonomy = json_decode((string) $response->getBody(), true);
 
         return TaxonomyFactory::fromArray($taxonomy);
+    }
+
+    public function getUserContext(ImpressionContext $partialContext): UserContext
+    {
+        $response = $this->client->post(
+            '/getData',
+            [
+                'body' => $partialContext->adUserRequestBody(),
+            ]
+        );
+
+        $context = json_decode((string) $response->getBody(), true);
+
+        return UserContext::fromAdUserArray($context);
     }
 }

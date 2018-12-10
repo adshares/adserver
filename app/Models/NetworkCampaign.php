@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NetworkCampaign extends Model
 {
@@ -30,6 +31,7 @@ class NetworkCampaign extends Model
     use BinHex;
 
     const STATUS_ACTIVE = 1;
+
     const STATUS_DELETED = 2;
 
     /**
@@ -98,8 +100,8 @@ class NetworkCampaign extends Model
         return with(new static())->getTable();
     }
 
-    public function banners()
+    public function banners(): HasMany
     {
-        return $this->hasMany('Adshares\Adserver\Models\NetworkBanner');
+        return $this->hasMany(NetworkBanner::class);
     }
 }

@@ -23,8 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\DummyAdSelectClient;
-use Adshares\Adserver\Client\DummyAdUserClient;
+use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\HttpClient\AdSelectHttpClient;
 use Adshares\Adserver\HttpClient\AdUserHttpClient;
@@ -33,7 +32,7 @@ use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\BannerFinder;
-use Adshares\Supply\Application\Service\ImpressionContextProvider;
+use Adshares\Supply\Application\Service\UserContextProvider;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -58,9 +57,12 @@ final class ClientProvider extends ServiceProvider
             ]);
         });
 
-        $this->app->bind(BannerFinder::class, function () {
-            return new DummyAdSelectClient();
-        });
+        $this->app->bind(
+            BannerFinder::class,
+            function (Application $app) {
+                return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
+            }
+        );
 
         $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
             return $app->make(AdUserHttpClient::class);
@@ -76,8 +78,11 @@ final class ClientProvider extends ServiceProvider
             );
         });
 
-        $this->app->bind(ImpressionContextProvider::class, function () {
-            return new DummyAdUserClient();
-        });
+        $this->app->bind(
+            UserContextProvider::class,
+            function (Application $app) {
+                return new GuzzleAdUserClient($app->make(AdUserHttpClient::class));
+            }
+        );
     }
 }
