@@ -1,0 +1,20 @@
+{
+  "id": "get1",
+  "jsonrpc": "2.0",
+  "method": "banner_select",
+  "params": [
+    {
+      "keywords": {"color":"red"},
+      "banner_size": "150x150",
+      "publisher_id": "pid1",
+      "request_id": 1,
+      "user_id": "uid1"
+    },{
+      "keywords": {"color":"green"},
+      "banner_size": "200x200",
+      "publisher_id": "pid1",
+      "request_id": 2,
+      "user_id": "uid1"
+    }
+  ]
+}

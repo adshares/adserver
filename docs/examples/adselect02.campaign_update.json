@@ -1,0 +1,54 @@
+{
+  "jsonrpc": "2.0",
+  "id": "a8127b43db3348fabe6b3d760e03d50b",
+  "method": "campaign_update",
+  "params": [
+    {
+      "campaign_id": "54e4709c60cd4b348724c4ff953af122",
+      "time_start": 1543430192,
+      "time_end": 1575983544,
+      "banners": [
+        {
+          "banner_id": "67dbe5917c5b4f8bb48a520af98b3ef2",
+          "banner_size": "160x600",
+          "keywords": {
+            "type": "image"
+          }
+        },
+        {
+          "banner_id": "ea58b8eb1c564a31ace1246ee19d4078",
+          "banner_size": "320x50",
+          "keywords": {
+            "type": "image"
+          }
+        },
+        {
+          "banner_id": "0bf3a9c3b1724a7a8cddc4064ef473d2",
+          "banner_size": "468x60",
+          "keywords": {
+            "type": "image"
+          }
+        },
+        {
+          "banner_id": "016397fcb7714ce2a71c5ae01945cb98",
+          "banner_size": "970x90",
+          "keywords": {
+            "type": "image"
+          }
+        }
+      ],
+      "keywords": {
+        "source_host": "http://webserver",
+        "adshares_address": "0001-00000003-AB0C"
+      },
+      "filters": {
+        "exclude": {},
+        "require": {
+          "interest": [
+            "200142"
+          ]
+        }
+      }
+    }
+  ]
+}
