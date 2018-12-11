@@ -30,9 +30,14 @@ class Config extends Model
     const ADS_LOG_START = 'ads-log-start';
 
     /**
-     * Time of last campaign exported to AdPay
+     * Time of last campaign export to AdPay
      */
     const AD_PAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-exp';
+
+    /**
+     * Time of last event export to AdPay
+     */
+    const AD_PAY_EVENT_EXPORT_TIME = 'adpay-evt-exp';
 
     public $incrementing = false;
     protected $primaryKey = 'key';

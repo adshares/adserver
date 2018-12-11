@@ -28,7 +28,7 @@ interface AdPayClient
 
     public function deleteCampaign(array $campaignIds): void;
 
-    public function addEvents(array $event): void;
+    public function addEvents(array $events): void;
 
     public function getPayments(int $timestampFrom, int $timestampTo): array;
 }

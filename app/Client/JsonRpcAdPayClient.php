@@ -63,11 +63,11 @@ class JsonRpcAdPayClient implements AdPayClient
         $this->client->call($procedure);
     }
 
-    public function addEvents(array $event): void
+    public function addEvents(array $events): void
     {
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
-            $event
+            $events
         );
 
         $this->client->call($procedure);

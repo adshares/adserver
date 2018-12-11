@@ -84,7 +84,7 @@ class AdPayCampaignExportCommand extends Command
      *
      * @return array
      */
-    public function mapCampaignCollectionToCampaignArray($campaigns): array
+    private function mapCampaignCollectionToCampaignArray($campaigns): array
     {
         $campaignArray = $campaigns->map(
             function (Campaign $campaign) {
@@ -119,7 +119,7 @@ class AdPayCampaignExportCommand extends Command
      *
      * @return array
      */
-    public function mapCampaignCollectionToCampaignIds(Collection $campaigns): array
+    private function mapCampaignCollectionToCampaignIds(Collection $campaigns): array
     {
         $campaignIds = [];
         foreach ($campaigns as $deletedCampaign) {
