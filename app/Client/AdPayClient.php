@@ -18,29 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+declare(strict_types = 1);
 
-use Illuminate\Database\Eloquent\Model;
+namespace Adshares\Adserver\Client;
 
-class Config extends Model
+interface AdPayClient
 {
-    /**
-     * Time of last processed event in ADS user's log
-     */
-    const ADS_LOG_START = 'ads-log-start';
+    public function updateCampaign(array $campaigns): void;
 
-    /**
-     * Time of last campaign exported to AdPay
-     */
-    const AD_PAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-exp';
+    public function deleteCampaign(array $campaignIds): void;
 
-    public $incrementing = false;
-    protected $primaryKey = 'key';
-    protected $keyType = 'string';
-    /**
-     * The attributes that aren't mass assignable.
-     *
-     * @var array
-     */
-    protected $guarded = [];
+    public function addEvents(array $event): void;
+
+    public function getPayments(int $timestampFrom, int $timestampTo): array;
 }
