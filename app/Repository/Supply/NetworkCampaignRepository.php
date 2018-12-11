@@ -100,7 +100,6 @@ class NetworkCampaignRepository implements CampaignRepository
 
             $networkCampaign->save();
             $networkCampaign->banners()->saveMany($banners);
-
         }
     }
 
