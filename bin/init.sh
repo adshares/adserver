@@ -161,7 +161,6 @@ then
 
     echo " >> Front-end stuff"
     ${DOCKER_COMPOSE} run --rm worker php artisan package:discover
-    ${DOCKER_COMPOSE} run --rm worker php artisan browsercap:updater
 
     echo " >> Yarn"
     ${DOCKER_COMPOSE} run --rm worker yarn install

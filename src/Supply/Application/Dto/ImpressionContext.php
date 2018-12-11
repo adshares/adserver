@@ -41,6 +41,16 @@ final class ImpressionContext
 
     public function __construct(array $site, array $device, array $user)
     {
+        [$user, $site] = $this->accioFilter($site, $user);
+
+        $this->site = $site;
+        $this->device = $device;
+        $this->user = $user;
+    }
+
+    /** @deprecated */
+    private function accioFilter(array $site, array $user): array
+    {
         $userKeywords = array_filter(
             $site['keywords'],
             function (string $keyword) {
@@ -48,8 +58,9 @@ final class ImpressionContext
             }
         );
 
+        $user['keywords']['interest']=[];
         foreach ($userKeywords as $keyword) {
-            $user['keywords']['interest'] = str_replace('accio:', '', $keyword);
+            $user['keywords']['interest'][] = str_replace('accio:', '', $keyword);
         }
 
         $site['keywords'] = array_filter(
@@ -59,9 +70,7 @@ final class ImpressionContext
             }
         );
 
-        $this->site = $site;
-        $this->device = $device;
-        $this->user = $user;
+        return [$user, $site];
     }
 
     public function adUserRequestBody(): string
