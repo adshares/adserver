@@ -29,6 +29,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\UserContextProvider;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
 use function GuzzleHttp\json_decode;
 
 final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextProvider
@@ -51,15 +52,19 @@ final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextPro
 
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
-        $response = $this->client->post(
-            '/getData',
-            [
-                'body' => $partialContext->adUserRequestBody(),
-            ]
-        );
+        try {
+            $response = $this->client->post(
+                '/getData',
+                [
+                    'body' => $partialContext->adUserRequestBody(),
+                ]
+            );
 
-        $context = json_decode((string)$response->getBody(), true);
+            $context = json_decode((string)$response->getBody(), true);
 
-        return UserContext::fromAdUserArray($context);
+            return UserContext::fromAdUserArray($context);
+        } catch (ConnectException $exception) {
+            return new UserContext([], 1, $partialContext->userId());
+        }
     }
 }

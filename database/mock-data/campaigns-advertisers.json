@@ -3,44 +3,13 @@
     "email": "advertiser@e11.click",
     "campaigns": [
       {
-        "code": "adults",
+        "code": "adshares",
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
-        "targeting_excludes": {
-          "site": {
-            "domain": [
-              "coinmarketcap.com",
-              "icoalert.com"
-            ]
-          },
-          "user": {
-            "lang": [
-              "it"
-            ]
-          }
-        },
         "targeting_requires": {
-          "site": {
-            "lang": [
-              "pl",
-              "en",
-              "it",
-              "jp"
-            ]
-          },
-          "user": {
-            "gender": [
-              "pl"
-            ]
-          },
-          "device": {
-            "os": [
-              "Linux",
-              "Windows"
-            ]
-          }
+          "interest": ["100"]
         },
         "classification_status": 2,
         "classification_tags": "open source",
@@ -52,7 +21,8 @@
         "max_cpm": 100000000000,
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
-        "name": "Internal campaign"
+        "name": "Internal campaign",
+        "targeting_requires": {"interest": ["100"]}
       },
       {
         "code": "ads",
@@ -62,7 +32,7 @@
         "max_cpc": 10000000000,
         "budget_per_hour": 100000000000,
         "targeting_excludes": null,
-        "targeting_requires": {"interest": ["200186", "200087"]},
+        "targeting_requires": null,
         "classification_status": 2,
         "classification_tags": "advertising, blockchain, technology"
       },

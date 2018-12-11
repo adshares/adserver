@@ -58,7 +58,7 @@ final class ImpressionContext
             }
         );
 
-        $user['keywords']['interest']=[];
+        $user['keywords']['interest'] = [];
         foreach ($userKeywords as $keyword) {
             $user['keywords']['interest'][] = str_replace('accio:', '', $keyword);
         }
@@ -103,5 +103,10 @@ JSON;
     public function keywords()
     {
         return $this->site['keywords'];
+    }
+
+    public function userId(): string
+    {
+        return $this->user['uid'];
     }
 }

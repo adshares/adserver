@@ -73,6 +73,31 @@ final class Uuid implements Id
         return new self($id);
     }
 
+    public static function test(int $value): self
+    {
+        $id = sprintf(
+            '%04x%04x%04x%04x%04x%04x%04x%04x',
+            // 32 bits for "time_low"
+            0xffff,
+            0xffff,
+            // 16 bits for "time_mid"
+            0xffff,
+            // 16 bits for "time_hi_and_version",
+            // four most significant bits holds version number 4
+            0x0fff | 0x4000,
+            // 16 bits, 8 bits for "clk_seq_hi_res",
+            // 8 bits for "clk_seq_low",
+            // two most significant bits holds zero and one for variant DCE1.1
+            0x3fff | 0x8000,
+            // 48 bits for "node"
+            0xffff,
+            0xffff,
+            $value
+        );
+
+        return new self($id);
+    }
+
     public static function fromString(string $value): self
     {
         return new self($value);
