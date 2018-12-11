@@ -86,6 +86,21 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign->save();
         $networkCampaign->banners()->saveMany($networkBanners);
+
+        if (config('app.env') === 'local') {
+            $networkCampaign->uuid = (string)Uuid::test($networkCampaign->id);
+
+            $banners = $networkCampaign->banners->map(
+                function (NetworkBanner $banner) {
+                    $banner->uuid = (string)Uuid::test($banner->id);
+
+                    return $banner;
+                }
+            );
+
+            $networkCampaign->save();
+            $networkCampaign->banners()->saveMany($banners);
+        }
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
