@@ -18,25 +18,23 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers\Supply;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Client\GuzzleAdSelectClient;
-use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
-use GuzzleHttp\Client;
-use Illuminate\Support\ServiceProvider;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-class AdSelectInventoryExporterProvider extends ServiceProvider
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
+
+class TargetingMapper extends AbstractFilterMapper
 {
-    public function register()
+    public static function map(array $requires, array $excludes): array
     {
-        $this->app->bind(AdSelectInventoryExporter::class, function () {
-            $client = new Client([
-                'headers' => [ 'Content-Type' => 'application/json' ],
-                'base_uri' => config('app.adselect_endpoint'),
-                'timeout'  => 5.0,
-            ]);
+        $mappedExcludes = self::generateNestedStructure($excludes);
+        $mappedRequires = self::generateNestedStructure($requires);
 
-            return new AdSelectInventoryExporter(new GuzzleAdSelectClient($client));
-        });
+        return [
+            'exclude' => !empty($mappedExcludes) ? $mappedExcludes : new stdClass(),
+            'require' => !empty($mappedRequires) ? $mappedRequires : new stdClass(),
+        ];
     }
 }

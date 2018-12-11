@@ -26,8 +26,10 @@ $factory->define(Banner::class, function (Faker $faker) {
         'creative_contents' => $faker->sha1(),
         'creative_type' => $faker->word(),
         'creative_sha1' => $faker->sha1(),
+
         'creative_width' => $faker->numberBetween(100,1024),
         'creative_height' => $faker->numberBetween(100,1024),
         'name' => $faker->word(),
+        'status' => Banner::STATUS_ACTIVE,
     ];
 });

@@ -22,7 +22,7 @@ namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Domain\Model\Campaign;
 
-interface AdSelectClient
+interface InventoryExporter
 {
     public function exportInventory(Campaign $campaign): void;
 }

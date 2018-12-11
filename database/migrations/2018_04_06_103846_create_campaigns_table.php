@@ -44,9 +44,9 @@ class CreateCampaignsTable extends Migration
 
             $table->unsignedTinyInteger('status')->nullable(false)->default(0);
             $table->string('name', 255)->nullable(false)->default('<name>');
-            $table->decimal('max_cpm', 19, 11)->nullable(false)->default(0);
-            $table->decimal('max_cpc', 19,11)->nullable(false)->default(0);
-            $table->decimal('budget', 19, 11)->nullable(false)->default(0);
+            $table->bigInteger('max_cpm')->nullable(false)->default(0);
+            $table->bigInteger('max_cpc')->nullable(false)->default(0);
+            $table->bigInteger('budget')->nullable(false)->default(0);
 
             $table->json('targeting_excludes')->nullable(true);
             $table->json('targeting_requires')->nullable(true);

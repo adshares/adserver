@@ -18,8 +18,10 @@
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateNetworkEventLogsTable extends Migration
 {
@@ -36,19 +38,20 @@ class CreateNetworkEventLogsTable extends Migration
 
             $table->timestamps();
 
-            $table->binary('cid', 16); // REQ CUSTOM ALTER
-            $table->binary('tid', 16); // REQ CUSTOM ALTER
+            $table->binary('event_id', 16);
+            $table->binary('user_id', 16);
+            $table->binary('banner_id', 16);
+            $table->bigInteger('zone_id')->unsigned();
 
-            $table->binary('banner_id', 16); // REQ CUSTOM ALTER
             $table->string('event_type', 16);
 
-            $table->binary('pay_from', 6); // REQ CUSTOM ALTER
+            $table->binary('pay_from', 6);
 
-            $table->binary('ip', 8); // REQ CUSTOM ALTER
+            $table->binary('ip', 8);
+            $table->json('headers')->nullable();
 
             $table->text('context')->nullable();
 
-            $table->binary('user_id', 16)->nullable(); // REQ CUSTOM ALTER
             $table->integer('human_score')->nullable();
             $table->text('our_userdata')->nullable();
             $table->text('their_userdata')->nullable();
@@ -58,12 +61,11 @@ class CreateNetworkEventLogsTable extends Migration
         });
 
         if (DB::isMysql()) {
-            DB::statement("ALTER TABLE network_event_logs MODIFY cid varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY tid varbinary(16)");
+            DB::statement("ALTER TABLE network_event_logs MODIFY event_id varbinary(16)");
+            DB::statement("ALTER TABLE network_event_logs MODIFY user_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)");
             DB::statement("ALTER TABLE network_event_logs MODIFY ip varbinary(8)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY user_id varbinary(16)");
         }
     }
 

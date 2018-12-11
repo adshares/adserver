@@ -133,6 +133,7 @@ class CampaignsController extends Controller
 
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
+            $bannerModel->status = $banner['status'];
             $bannerModel->creative_width = $size[0];
             $bannerModel->creative_height = $size[1];
             $bannerModel->creative_type = Banner::type($banner['type']);
@@ -247,7 +248,7 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function changeStatus(Request $request, $campaignId)
+    public function changeStatus(Request $request, int $campaignId): JsonResponse
     {
         $this->validateRequestObject(
             $request,
@@ -268,6 +269,24 @@ class CampaignsController extends Controller
         $campaign->status = $status;
 
         $this->campaignRepository->update($campaign);
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function changeBannerStatus(Request $request, int $campaignId, int $bannerId): JsonResponse
+    {
+        $status = (int)$request->input('banner.status');
+
+        if (!Banner::isStatusAllowed($status)) {
+            $status = Banner::STATUS_INACTIVE;
+        }
+
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+
+        $banner = $campaign->banners()->where('id', $bannerId)->first();
+        $banner->status = $status;
+
+        $this->campaignRepository->update($campaign, [], [$banner], []);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }

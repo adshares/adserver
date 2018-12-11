@@ -30,6 +30,11 @@ class CampaignRepository
         return (new Campaign())->get();
     }
 
+    public function fetchActiveCampaigns()
+    {
+        return Campaign::where('status', Campaign::STATUS_ACTIVE)->get();
+    }
+
     public function fetchCampaignById(int $campaignId): Campaign
     {
         return (new Campaign())->findOrFail($campaignId);

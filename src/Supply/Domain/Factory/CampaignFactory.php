@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use function array_key_exists;
 
 class CampaignFactory
 {
@@ -55,7 +56,7 @@ class CampaignFactory
         $banners = [];
 
         $campaign = new Campaign(
-            Uuid::v4(),
+            $data['uuid'] ?? Uuid::v4(),
             $data['uuid'],
             $data['publisher_id'],
             $data['landing_url'],
@@ -71,8 +72,9 @@ class CampaignFactory
         foreach ($arrayBanners as $banner) {
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
+            $id = isset($banner['uuid']) ? Uuid::fromString($banner['uuid']) : Uuid::v4();
 
-            $banners[] = new Banner($campaign, Uuid::v4(), $bannerUrl, $banner['type'], $size, '');
+            $banners[] = new Banner($campaign, $id, $bannerUrl, $banner['type'], $size, '');
         }
 
         $campaign->setBanners(new ArrayCollection($banners));
@@ -118,7 +120,7 @@ class CampaignFactory
                 continue;
             }
 
-            if (!isset($data[$value])) {
+            if (!array_key_exists($value, $data)) {
                 throw new InvalidCampaignArgumentException(sprintf(
                     '%s field is missing. THe field is required.',
                     $value

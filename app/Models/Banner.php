@@ -25,23 +25,36 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Banner extends Model
 {
     public const IMAGE_TYPE = 0;
+
     public const HTML_TYPE = 1;
+
+    public const STATUS_DRAFT = 0;
+
+    public const STATUS_INACTIVE = 1;
+
+    public const STATUS_ACTIVE = 2;
+
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
 
     use AutomateMutators;
     use BinHex;
     use SoftDeletes;
+
     protected $dates = [
         'deleted_at',
     ];
+
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
         'saving' => CreativeSha1::class,
     ];
+
     protected $fillable = [
         'uuid',
         'campaign_id',
@@ -51,17 +64,24 @@ class Banner extends Model
         'creative_width',
         'creative_height',
         'name',
+        'status',
     ];
+
     protected $hidden = [
-        'id',
         'creative_contents',
         'campaign_id',
         'deleted_at',
     ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',
     ];
+
+    public static function isStatusAllowed(int $status): bool
+    {
+        return in_array($status, self::STATUSES);
+    }
 
     public static function type($type)
     {
@@ -81,16 +101,16 @@ class Banner extends Model
         return Zone::ZONE_SIZES[$size];
     }
 
-    public function campaign()
+    public function campaign(): BelongsTo
     {
-        return $this->belongsTo('Adshares\Adserver\Models\Campaign');
+        return $this->belongsTo(Campaign::class);
     }
 
     protected function toArrayExtras($array)
     {
-        $array['serve_url'] = route('banner-serve', ['id' => $this->id]);
-        $array['view_url'] = route('log-network-view', ['id' => $this->id]);
-        $array['click_url'] = route('log-network-click', ['id' => $this->id]);
+        $array['serve_url'] = route('banner-serve', ['id' => $this->uuid]);
+        $array['view_url'] = route('banner-view', ['id' => $this->uuid]);
+        $array['click_url'] = route('banner-click', ['id' => $this->uuid]);
 
         if ($this->type === self::HTML_TYPE) {
             $array['html'] = $this->creative_contents;

@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -28,7 +29,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use DateTime;
-use DateTimeZone;
 
 class ApiController extends Controller
 {
@@ -39,34 +39,36 @@ class ApiController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function adsharesInventoryList()
+    public function adsharesInventoryList(Request $request)
     {
         $campaigns = [];
-        foreach ($this->campaignRepository->find() as $i => $campaign) {
+        foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
             $banners = [];
 
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
+
+                if (Banner::STATUS_ACTIVE != $bannerArray['status']) {
+                    continue;
+                }
 
                 $banners[] = [
                     'uuid' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
-                    'serve_url' => $bannerArray['serve_url'],
-                    'click_url' => $bannerArray['click_url'],
-                    'view_url' => $bannerArray['view_url'],
+                    'serve_url' => $this->changeHost($bannerArray['serve_url'], $request),
+                    'click_url' => $this->changeHost($bannerArray['click_url'], $request),
+                    'view_url' => $this->changeHost($bannerArray['view_url'], $request),
                 ];
             }
 
-            $date_start = ($campaign->time_start !== null) ? $this->parseDateToISO8601($campaign->time_start) : null;
-            $date_end = ($campaign->time_end !== null) ? $this->parseDateToISO8601($campaign->time_end) : null;
             $campaigns[] = [
                 'uuid' => $campaign->uuid,
                 'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
-                'date_start' => $date_start,
-                'date_end' => $date_end,
+                'date_start' => $campaign->time_start,
+                'date_end' => $campaign->time_end,
                 'created_at' => $campaign->created_at->format(DateTime::ISO8601),
                 'updated_at' => $campaign->updated_at->format(DateTime::ISO8601),
                 'max_cpc' => $campaign->max_cpc,
@@ -82,11 +84,12 @@ class ApiController extends Controller
         return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
     }
 
-    private function parseDateToISO8601(string $date): string
+    private function changeHost(string $url, Request $request): string
     {
-        $date = DateTime::createFromFormat('Y-m-d H:i:s', $date, new DateTimeZone('UTC'));
+        $currentHost = $request->getHttpHost();
+        $bannerHost = config('app.adserver_banner_host');
 
-        return $date->format(DateTime::ISO8601);
+        return str_replace($currentHost, $bannerHost, $url);
     }
 
     public function adsharesTransactionReport(Request $request, $tx_id, $pay_to)

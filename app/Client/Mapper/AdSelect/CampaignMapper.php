@@ -18,14 +18,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use DateTime;
 
-class CampaignToAdSelectMapper
+class CampaignMapper
 {
     public static function map(Campaign $campaign): array
     {
@@ -37,22 +38,24 @@ class CampaignToAdSelectMapper
             $banners[] = [
                 'banner_id' => $banner->getId(),
                 'banner_size' => $banner->getSize(),
-                'campaign_id' => $campaignArray['demand_campaign_id'],
                 'keywords' => [
                     'type' => $banner->getType(),
                 ],
             ];
         }
 
-        $targeting = TargetingToAdSelectMapper::map(
+        $targeting = TargetingMapper::map(
             $campaignArray['targeting_requires'],
             $campaignArray['targeting_excludes']
         );
 
+        $dateStart = (int)$campaignArray['date_start']->format('U');
+        $dateEnd = self::processDateEnd($campaignArray['date_end']);
+
         $mapped = [
             'campaign_id' => $campaignArray['demand_campaign_id'],
-            'time_start' => (int)$campaignArray['date_start']->format('U'),
-            'time_end' => (int)$campaignArray['date_end']->format('U'),
+            'time_start' => $dateStart,
+            'time_end' => $dateEnd,
             'banners' => $banners,
             'keywords' => [
                 'source_host' => $campaignArray['source_host'],
@@ -60,10 +63,17 @@ class CampaignToAdSelectMapper
             ],
         ];
 
-        if ($targeting) {
-            $mapped['filters'] = $targeting;
-        }
+        $mapped['filters'] = $targeting;
 
         return [$mapped];
+    }
+
+    private static function processDateEnd(?DateTime $dateEnd): int
+    {
+        if ($dateEnd === null) {
+            return (int)(new DateTime())->modify('+1 year')->getTimestamp();
+        }
+
+        return (int)$dateEnd->getTimestamp();
     }
 }

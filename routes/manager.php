@@ -37,6 +37,8 @@ Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaig
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
 Route::put('campaigns/{campaign_id}/status', [CampaignsController::class, 'changeStatus'])
     ->name('app.campaigns.change_status');
+Route::put('campaigns/{campaign_id}/banner/{banner_id}/status', [CampaignsController::class, 'changeBannerStatus'])
+    ->name('app.campaigns.change_banner_status');
 Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])->name('app.campaigns.delete');
 
 Route::post('campaigns/banner', [CampaignsController::class, 'upload'])->name('app.campaigns.upload');

@@ -21,12 +21,14 @@
 namespace Adshares\Adserver\Http;
 
 use BrowscapPHP\Helper\LoggerHelper;
+use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
 use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use function is_string;
 
 /**
  * Various helpful methods.
@@ -37,10 +39,15 @@ class Utils
     // TODO: remove $container
 
     const VALUE_GLUE = "\t";
+
     const PROP_GLUE = "\r";
+
     const ZONE_GLUE = "\n";
+
     const VALUE_MIN = "\x00";
+
     const VALUE_MAX = "\xFF";
+
     const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public static function getImpressionContext(Request $request, $contextStr = null)
@@ -58,7 +65,12 @@ class Utils
 
         return [
             'site' => self::getSiteContext($request, $context),
-            'device' => self::getDeviceContext($request, $context),
+            'device' => [
+                'ua' => $request->userAgent(),
+                'ip' => $request->ip(),
+                'ips' => $request->ips(),
+                'headers' => $request->headers->all(),
+            ],
         ];
     }
 
@@ -145,8 +157,6 @@ class Utils
             $device['h'] = $page['height'] ?? null;
         }
 
-        // TODO: refactor into browsercap service
-
         $logger = LoggerHelper::createDefaultLogger(new NullOutput());
 
         $fileCache = new FilesystemCache(storage_path('framework/cache/browscap'));
@@ -206,20 +216,6 @@ class Utils
         }
 
         return $device;
-//         devicetype
-//         make
-//         model
-//         os
-//         osv
-//         hwv
-//         h
-//         w
-//         ppi
-//         pxratio
-//         js
-//         flashver
-//         carrier
-//         geo
     }
 
     private static function getGeoData($clientIp)
@@ -267,30 +263,33 @@ class Utils
         return bin2hex(substr($input, 0, 16));
     }
 
-    public static function attachTrackingCookie(
+    public static function attachOrProlongTrackingCookie(
         $secret,
         Request $request,
         Response $response,
         $contentSha1,
-        \DateTime $contentModified
-    ) {
+        DateTime $contentModified,
+        ?string $impressionId = null
+    ): string {
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
             $etags = $request->getETags();
+
             if (isset($etags[0])) {
                 $tag = str_replace('"', '', $etags[0]);
                 $tid = self::decodeEtag($tag);
             }
-            if (is_null($tid) || !self::validTrackingId($tid, $secret)) {
-                $tid = self::createTrackingId($secret);
+
+            if ($tid === null || !self::validTrackingId($tid, $secret)) {
+                $tid = self::createTrackingId($secret, $impressionId);
             }
         }
         $response->headers->setCookie(
             new Cookie(
                 'tid',
                 $tid,
-                new \DateTime('+ 1 month'),
+                new DateTime('+ 1 month'),
                 '/',
                 $request->getHost()
             )
@@ -310,16 +309,16 @@ class Utils
         return $tid;
     }
 
-    public static function validTrackingId($input, $secret)
+    public static function validTrackingId($input, $secret): bool
     {
-        if (!is_string($input)) {
+        if (!\is_string($input)) {
             return false;
         }
         $input = self::urlSafeBase64Decode($input);
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
 
-        return substr(sha1($id.$secret, true), 0, 6) == $checksum;
+        return strpos(sha1($id.$secret, true), $checksum) === 0;
     }
 
     private static function decodeEtag($etag)
@@ -346,19 +345,20 @@ class Utils
         );
     }
 
-    /**
-     * @param string $secret
-     *
-     * @return string
-     */
-    public static function createTrackingId($secret)
+    public static function createTrackingId(string $secret, ?string $impressionId = null)
     {
         $input = [];
-        $input[] = microtime();
-        $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
-        $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
-        $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
-        $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+
+        if ($impressionId !== null) {
+            $input[] = $impressionId;
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
+        } else {
+            $input[] = microtime();
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
+            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
+            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
+            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+        }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
         $checksum = substr(sha1($id.$secret, true), 0, 6);
@@ -373,49 +373,7 @@ class Utils
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
-    public static function arrayRemoveValues(array &$array, $value) // former array_erase
-    {
-        foreach ($array as $key => $val) {
-            if ($val === $value) {
-                unset($array[$key]);
-            }
-        }
-
-        return;
-    }
-
-    public static function arrayRemoveFirstValue(array &$array, $value) // former array_erase_one
-    {
-        foreach ($array as $key => $val) {
-            if ($val === $value) {
-                unset($array[$key]);
-
-                return;
-            }
-        }
-
-        return;
-    }
-
-    public static function toJsonString($value)
-    {
-        if ($value instanceof \DateTime) {
-            return $value->format(DATE_ISO8601);
-        }
-
-        return (string)$value;
-    }
-
-    public static function fromJsonString($field, $value)
-    {
-        if (stristr($field, 'time')) {
-            return \DateTime::createFromFormat(DATE_ISO8601, $value);
-        }
-
-        return $value;
-    }
-
-    public static function flattenKeywords(array $keywords, $prefix = '')
+    public static function flattenKeywords(array $keywords, $prefix = ''): array
     {
         $ret = [];
 

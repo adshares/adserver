@@ -47,11 +47,11 @@ class CreateNetworkCampaignsTable extends Migration
             $table->string('source_address', 32);
 
             $table->string('landing_url', 1024);
-            $table->decimal('max_cpm', 19, 11)->nullable(false);
-            $table->decimal('max_cpc', 19, 11)->nullable(false);
-            $table->decimal('budget', 19, 11)->nullable(false);
+            $table->bigInteger('max_cpm')->nullable(false);
+            $table->bigInteger('max_cpc')->nullable(false);
+            $table->bigInteger('budget')->nullable(false);
             $table->dateTime('date_start');
-            $table->dateTime('date_end');
+            $table->dateTime('date_end')->nullable(true);
 
             $table->unsignedTinyInteger('status')->nullable(false)->default(NetworkCampaign::STATUS_ACTIVE);
 

@@ -30,50 +30,29 @@ final class BudgetTest extends TestCase
     {
         $this->expectException(InvalidBudgetValueException::class);
 
-        new Budget(-10, 1, 1);
+        new Budget(-1000000000000, 100000000000, 100000000000);
     }
 
     public function testWhenMaxCpcValueIsSmallerThan0(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
-        new Budget(1, -1, 1);
+        new Budget(100000000000, -100000000000, 100000000000);
     }
 
     public function testWhenMaxCpmValueIsNegative(): void
     {
         $this->expectException(InvalidBudgetValueException::class);
 
-        new Budget(10, 1, -1);
-    }
-
-    public function testWhenTotalIsSmallerThanBudget(): void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(10, 6, 6);
-    }
-
-    public function testWhenMaxCpcIsSmallerThanBudget():void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(10, 11, null);
-    }
-
-    public function testWhenMaxCpmIsSmallerThanBudget():void
-    {
-        $this->expectException(InvalidBudgetValueException::class);
-
-        new Budget(10, null, 12);
+        new Budget(1000000000000, 100000000000, -100000000000);
     }
 
     public function testWhenInputDataAreCorrect(): void
     {
-        $budget = new Budget(10, 1, 2);
+        $budget = new Budget(1000000000000, 100000000000, 200000000000);
 
-        $this->assertEquals(10, $budget->getBudget());
-        $this->assertEquals(1, $budget->getMaxCpc());
-        $this->assertEquals(2, $budget->getMaxCpm());
+        $this->assertEquals(1000000000000, $budget->getBudget());
+        $this->assertEquals(100000000000, $budget->getMaxCpc());
+        $this->assertEquals(200000000000, $budget->getMaxCpm());
     }
 }

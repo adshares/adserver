@@ -1,58 +1,76 @@
 [
   {
-    "email":"advertiser@e11.click",
-    "campaigns":[
+    "email": "advertiser@e11.click",
+    "campaigns": [
       {
-        "code":"ads",
-        "url":"https://adshares.net/",
-        "max_cpm": 1,
-        "max_cpc": 10,
-        "budget_per_hour": 100,
-        "targeting_excludes": {
-          "site": {
-            "domain": [
-              "coinmarketcap.com",
-              "icoalert.com"
-            ]
-          },
-          "user": {
-            "lang": [
-              "it"
-            ]
-          }
-        },
+        "code": "adshares",
+        "url": "https://adshares.net/",
+        "max_cpm": 100000000000,
+        "max_cpc": 1000000000000,
+        "budget_per_hour": 10000000000000,
         "targeting_requires": {
-          "site": {
-            "lang": [
-              "pl",
-              "en",
-              "it",
-              "jp"
-            ]
-          },
-          "user": {
-            "gender": [
-              "pl"
-            ]
-          },
-          "device": {
-            "os": [
-              "Linux",
-              "Windows"
-            ]
-          }
+          "interest": ["100"]
         },
         "classification_status": 2,
         "classification_tags": "open source",
         "name": "Campaign for adults only"
       },
       {
-        "code":"ads-pl",
-        "url":"https://adshares.pl/",
-        "max_cpm": 1,
-        "max_cpc": 10,
-        "budget_per_hour": 100,
-        "name": "Internal campaign"
+        "code": "ads-pl",
+        "url": "https://adshares.pl/",
+        "max_cpm": 100000000000,
+        "max_cpc": 1000000000000,
+        "budget_per_hour": 10000000000000,
+        "name": "Internal campaign",
+        "targeting_requires": {"interest": ["100"]}
+      },
+      {
+        "code": "ads",
+        "name": "Adshares Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 10000000000,
+        "max_cpc": 10000000000,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": null,
+        "classification_status": 2,
+        "classification_tags": "advertising, blockchain, technology"
+      },
+      {
+        "code": "cats",
+        "name": "Cat Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 166666667,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200142"]},
+        "classification_status": 2,
+        "classification_tags": "cats"
+      },
+      {
+        "code": "tea",
+        "name": "Tea Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 0,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200079"]},
+        "classification_status": 2,
+        "classification_tags": "tea"
+      },
+      {
+        "code": "travel",
+        "name": "Travel Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 0,
+        "max_cpc": 0,
+        "budget_per_hour": 100000000000,
+        "targeting_excludes": null,
+        "targeting_requires": {"interest": ["200205", "200417"]},
+        "classification_status": 2,
+        "classification_tags": "travel"
       }
     ]
   }

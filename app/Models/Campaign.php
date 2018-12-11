@@ -23,8 +23,10 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
@@ -54,30 +56,37 @@ class Campaign extends Model
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
+    use DateAtom;
 
     public const STATUS_DRAFT = 0;
+
     public const STATUS_INACTIVE = 1;
+
     public const STATUS_ACTIVE = 2;
+
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
 //        'budget' => 'required:numeric',
     ];
+
     protected $dates = [
         'deleted_at',
         'time_start',
         'time_end',
     ];
+
     protected $casts = [
-        'time_start' => 'string',
-        'time_end' => 'string',
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
     ];
+
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
+
     protected $fillable = [
         'landing_url',
         'time_start',
@@ -95,6 +104,7 @@ class Campaign extends Model
         'classification_status',
         'classification_tags',
     ];
+
     protected $visible = [
         'id',
         'uuid',
@@ -106,10 +116,14 @@ class Campaign extends Model
         'targeting',
         'ads',
     ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'time_start' => 'DateAtom',
+        'time_end' => 'DateAtom',
+
     ];
-    /** @var array Aditional fields to be included in collections */
+
     protected $appends = ['basic_information', 'targeting', 'ads'];
 
     public static function isStatusAllowed(int $status): bool
@@ -117,7 +131,7 @@ class Campaign extends Model
         return in_array($status, self::STATUSES);
     }
 
-    public function banners()
+    public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
     }

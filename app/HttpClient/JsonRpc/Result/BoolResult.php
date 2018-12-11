@@ -18,24 +18,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper;
+namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
 
-class TargetingToAdSelectMapper
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
+use Adshares\Adserver\HttpClient\JsonRpc\Result;
+
+final class BoolResult implements Result
 {
-    public static function map(array $requires, array $excludes): array
+    /** @var bool */
+    private $value;
+
+    public function __construct(bool $value)
     {
-        return [
-            'exclude' => [
-                [
-                    'filter' => [
-                        'args' => "18-20",
-                        'type' => '=',
-                    ],
-                    'keyword' => 'age_bracket',
-                ],
-            ],
-        ];
+        $this->value = $value;
+    }
+
+    public function isTrue(): bool
+    {
+        return $this->value;
+    }
+
+    public function toArray(): array
+    {
+        throw new ResultException('This is a `bool');
     }
 }

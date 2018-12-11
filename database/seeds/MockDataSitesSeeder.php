@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -86,7 +87,9 @@ class MockDataSitesSeeder extends Seeder
                     'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
                 ]);
 
-                foreach ($this->zones as $zoneNames => $zone) {
+                $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
+
+                foreach ($zones as $zoneNames => $zone) {
                     factory(Zone::class)->create([
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,

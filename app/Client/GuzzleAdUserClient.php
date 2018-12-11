@@ -24,11 +24,15 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\AdUserClient;
+use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Application\Service\UserContextProvider;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
 use function GuzzleHttp\json_decode;
 
-final class GuzzleAdUserClient implements AdUserClient
+final class GuzzleAdUserClient implements TargetingOptionsSource, UserContextProvider
 {
     /** @var Client */
     private $client;
@@ -38,11 +42,29 @@ final class GuzzleAdUserClient implements AdUserClient
         $this->client = $client;
     }
 
-    public function fetchTaxonomy(): Taxonomy
+    public function fetchTargetingOptions(): Taxonomy
     {
         $response = $this->client->get('/getTaxonomy');
-        $taxonomy = json_decode($response->getBody()->getContents(), true);
+        $taxonomy = json_decode((string)$response->getBody(), true);
 
         return TaxonomyFactory::fromArray($taxonomy);
+    }
+
+    public function getUserContext(ImpressionContext $partialContext): UserContext
+    {
+        try {
+            $response = $this->client->post(
+                '/getData',
+                [
+                    'body' => $partialContext->adUserRequestBody(),
+                ]
+            );
+
+            $context = json_decode((string)$response->getBody(), true);
+
+            return UserContext::fromAdUserArray($context);
+        } catch (ConnectException $exception) {
+            return new UserContext([], 1, $partialContext->userId());
+        }
     }
 }

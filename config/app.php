@@ -133,6 +133,8 @@ return [
 
     'adserver_host' => env('ADSERVER_HOST'),
     'adserver_secret' => env('ADSERVER_SECRET'),
+    'adserver_id' => env('ADSERVER_ID'),
+    'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
 
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),
@@ -197,8 +199,8 @@ return [
         Adshares\Adserver\Providers\EventServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
-        Adshares\Adserver\Providers\Supply\AdSelectInventoryExporterProvider::class,
-        Adshares\Adserver\Providers\TaxonomyImporterProvider::class,
+        Adshares\Adserver\Providers\Common\ClientProvider::class,
+        Adshares\Adserver\Providers\Common\OptionsProvider::class,
     ],
 
     /*
