@@ -86,6 +86,22 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign->save();
         $networkCampaign->banners()->saveMany($networkBanners);
+
+        if (config('app.env') === 'local') {
+            $networkCampaign->uuid = (string)Uuid::test($networkCampaign->id);
+
+            $banners = $networkCampaign->banners->map(
+                function (NetworkBanner $banner) {
+                    $banner->uuid = (string)Uuid::test($banner->id);
+
+                    return $banner;
+                }
+            );
+
+            $networkCampaign->save();
+            $networkCampaign->banners()->saveMany($banners);
+
+        }
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
@@ -107,7 +123,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->banners as $networkBanner) {
             $banners[] = [
-                'uuid' => $networkBanner->uuid,
+                'uuid' => config('app.env') === 'local' ? (string)Uuid::test($networkBanner->id) : $networkBanner->uuid,
                 'serve_url' => $networkBanner->serve_url,
                 'click_url' => $networkBanner->click_url,
                 'view_url' => $networkBanner->view_url,
