@@ -134,11 +134,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         return CampaignFactory::createFromArray(
             [
-                'uuid' => config('app.env') === 'local'
-                    ? Uuid::test($networkCampaign->id)
-                    : Uuid::fromString(
-                        $networkCampaign->uuid
-                    ),
+                'uuid' => Uuid::fromString($networkCampaign->uuid),
                 'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
                 'landing_url' => $networkCampaign->landing_url,
                 'date_start' => $networkCampaign->date_start,
