@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Demand\Application\Service;
 
-interface AdPayClient
+interface AdPay
 {
     public function updateCampaign(array $campaigns): void;
 

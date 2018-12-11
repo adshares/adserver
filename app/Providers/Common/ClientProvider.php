@@ -31,6 +31,7 @@ use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\UserContextProvider;
@@ -42,7 +43,7 @@ final class ClientProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(AdPayClient::class, function () {
+        $this->app->bind(AdPay::class, function () {
             return new JsonRpcAdPayClient(
                 new JsonRpc(new Client([
                     'headers' => ['Content-Type' => 'application/json'],

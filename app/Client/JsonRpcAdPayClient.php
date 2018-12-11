@@ -24,8 +24,9 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
+use Adshares\Demand\Application\Service\AdPay;
 
-class JsonRpcAdPayClient implements AdPayClient
+class JsonRpcAdPayClient implements AdPay
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 
@@ -43,6 +44,12 @@ class JsonRpcAdPayClient implements AdPayClient
         $this->client = $client;
     }
 
+    /**
+     * @param array $campaigns
+     *
+     * @throws JsonRpc\Exception\RemoteCallException
+     * @throws JsonRpc\Exception\ResultException
+     */
     public function updateCampaign(array $campaigns): void
     {
         $procedure = new Procedure(
@@ -53,6 +60,12 @@ class JsonRpcAdPayClient implements AdPayClient
         $this->client->call($procedure);
     }
 
+    /**
+     * @param array $campaignIds
+     *
+     * @throws JsonRpc\Exception\RemoteCallException
+     * @throws JsonRpc\Exception\ResultException
+     */
     public function deleteCampaign(array $campaignIds): void
     {
         $procedure = new Procedure(
@@ -63,6 +76,12 @@ class JsonRpcAdPayClient implements AdPayClient
         $this->client->call($procedure);
     }
 
+    /**
+     * @param array $events
+     *
+     * @throws JsonRpc\Exception\RemoteCallException
+     * @throws JsonRpc\Exception\ResultException
+     */
     public function addEvents(array $events): void
     {
         $procedure = new Procedure(
@@ -73,6 +92,14 @@ class JsonRpcAdPayClient implements AdPayClient
         $this->client->call($procedure);
     }
 
+    /**
+     * @param int $timestampFrom
+     * @param int $timestampTo
+     *
+     * @return array
+     * @throws JsonRpc\Exception\RemoteCallException
+     * @throws JsonRpc\Exception\ResultException
+     */
     public function getPayments(int $timestampFrom, int $timestampTo): array
     {
         $procedure = new Procedure(self::METHOD_GET_PAYMENTS, ['from' => $timestampFrom, 'to' => $timestampTo]);

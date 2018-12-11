@@ -21,9 +21,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Client\AdPayClient;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
+use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
@@ -41,11 +41,11 @@ class AdPayCampaignExportCommand extends Command
     protected $description = 'Exports campaign data to AdPay';
 
     /**
-     * @param AdPayClient $adPayClient
+     * @param AdPay $adPay
      *
      * @throws \Exception
      */
-    public function handle(AdPayClient $adPayClient)
+    public function handle(AdPay $adPay)
     {
         $this->info('Start command '.$this->signature);
 
@@ -64,13 +64,13 @@ class AdPayCampaignExportCommand extends Command
         $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->get();
         if (count($updatedCampaigns) > 0) {
             $campaigns = $this->mapCampaignCollectionToCampaignArray($updatedCampaigns);
-            $adPayClient->updateCampaign($campaigns);
+            $adPay->updateCampaign($campaigns);
         }
 
         $deletedCampaigns = Campaign::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
         if (count($deletedCampaigns) > 0) {
             $campaignIds = $this->mapCampaignCollectionToCampaignIds($deletedCampaigns);
-            $adPayClient->deleteCampaign($campaignIds);
+            $adPay->deleteCampaign($campaignIds);
         }
 
         $configDate->value = $dateNow->format(DATE_ATOM);
@@ -80,11 +80,11 @@ class AdPayCampaignExportCommand extends Command
     }
 
     /**
-     * @param $campaigns
+     * @param Collection $campaigns
      *
      * @return array
      */
-    private function mapCampaignCollectionToCampaignArray($campaigns): array
+    private function mapCampaignCollectionToCampaignArray(Collection $campaigns): array
     {
         $campaignArray = $campaigns->map(
             function (Campaign $campaign) {
