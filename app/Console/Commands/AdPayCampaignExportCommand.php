@@ -99,6 +99,9 @@ class AdPayCampaignExportCommand extends Command
 
                 $mapped = [];
                 $mapped['uuid'] = $campaign->uuid;
+                $mapped['budget'] = $campaign->basic_information['budget'];
+                $mapped['max_cpc'] = $campaign->basic_information['max_cpc'];
+                $mapped['max_cpm'] = $campaign->basic_information['max_cpm'];
                 $mapped['status'] = $campaign->basic_information['status'];
                 $mapped['time_start'] = DateTime::createFromFormat(DATE_ATOM, $campaign->time_start)->getTimestamp();
                 $mapped['time_end'] =
