@@ -33,6 +33,12 @@ class EventLog extends Model
     use BinHex;
     use JsonValue;
 
+    public const TYPE_REQUEST = 'request';
+
+    public const TYPE_VIEW = 'view';
+
+    public const TYPE_CLICK = 'click';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -81,8 +87,6 @@ class EventLog extends Model
         'their_context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
-        'event_value' => 'Money',
-        'paid_amount' => 'Money',
     ];
 
     public function getAdpayJson()

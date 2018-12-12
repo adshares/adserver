@@ -109,7 +109,7 @@ class DemandController extends Controller
         $log->user_id = Utils::getRawTrackingId($tid);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->headers = $request->headers->all();
-        $log->event_type = 'request';
+        $log->event_type = EventLog::TYPE_REQUEST;
         $log->save();
 
         $response->headers->set('X-Adshares-Cid', $eventId);
@@ -193,7 +193,7 @@ class DemandController extends Controller
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
         $log->their_context = Utils::getImpressionContext($request);
-        $log->event_type = 'click';
+        $log->event_type = EventLog::TYPE_CLICK;
         $log->their_userdata = $keywords;
         $log->save();
 
@@ -249,7 +249,7 @@ class DemandController extends Controller
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
         $log->their_context = Utils::getImpressionContext($request);
-        $log->event_type = 'view';
+        $log->event_type = EventLog::TYPE_VIEW;
         $log->their_userdata = $keywords;
         $log->save();
 
