@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-final class ResultException extends \Exception
+use Adshares\Common\Exception\Exception;
+
+final class ResultException extends Exception
 {
 }

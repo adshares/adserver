@@ -20,10 +20,10 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use GuzzleHttp\ClientInterface;
+use Adshares\Common\Exception\Exception as AdsharesException;
 
-interface AdClassifyHttpClient extends ClientInterface
+class Exception extends AdsharesException
 {
 }

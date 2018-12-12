@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use Exception;
+use Adshares\Common\Exception\Exception;
 
 final class ErrorResponse extends Exception
 {

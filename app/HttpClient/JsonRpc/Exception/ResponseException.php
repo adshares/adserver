@@ -22,21 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use Exception;
-use Throwable;
+use Adshares\Common\Exception\Exception;
 
-final class RemoteCallException extends Exception
+final class ResponseException extends Exception
 {
-    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
-    {
-        parent::__construct($message, $code, $previous);
-    }
-
-    public static function fromOther(Exception $exception): self
-    {
-        return new self($exception->getMessage(), $exception->getCode());
-    }
-
     public static function missingField(string $fieldName): self
     {
         return new self(sprintf('Missing JSON-RPC field "%s"', $fieldName));

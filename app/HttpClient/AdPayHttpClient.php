@@ -24,6 +24,6 @@ namespace Adshares\Adserver\HttpClient;
 
 use GuzzleHttp\ClientInterface;
 
-interface AdClassifyHttpClient extends ClientInterface
+interface AdPayHttpClient extends ClientInterface
 {
 }
