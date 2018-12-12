@@ -22,7 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use Adshares\Common\Exception\Exception;
+
+use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
 final class ErrorResponse extends Exception
 {
@@ -30,8 +31,8 @@ final class ErrorResponse extends Exception
 
     private const FIELD_ERROR_CODE = 'code';
 
-    public static function fromResponseError(array $error): self
+    public static function fromResponseError(array $error)
     {
-        return new self($error[self::FIELD_ERROR_MESSAGE], (int)$error[self::FIELD_ERROR_CODE]);
+        return new static($error[self::FIELD_ERROR_MESSAGE], (int)$error[self::FIELD_ERROR_CODE]);
     }
 }

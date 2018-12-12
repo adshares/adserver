@@ -26,55 +26,30 @@ use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\HttpClient\AdPayHttpClient;
 use Adshares\Adserver\HttpClient\AdSelectHttpClient;
 use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
 use Adshares\Demand\Application\Service\AdPay;
-use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\InventoryExporter;
 use Adshares\Supply\Application\Service\UserContextProvider;
-use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
-final class ClientProvider extends ServiceProvider
+final class ExternalServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(AdPay::class, function () {
-            return new JsonRpcAdPayClient(
-                new JsonRpc(new Client([
-                    'headers' => ['Content-Type' => 'application/json'],
-                    'base_uri' => config('app.adpay_endpoint'),
-                    'timeout' => 5.0,
-                ]))
-            );
+        $this->app->bind(AdPay::class, function (Application $app) {
+            return new JsonRpcAdPayClient(new JsonRpc($app->make(AdPayHttpClient::class)));
         });
 
-        $this->app->bind(AdSelectHttpClient::class, function () {
-            return new Client([
-                'headers' => ['Content-Type' => 'application/json'],
-                'base_uri' => config('app.adselect_endpoint'),
-                'timeout' => 5.0,
-            ]);
+        $this->app->bind(BannerFinder::class, function (Application $app) {
+            return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
         });
-
-        $this->app->bind(AdUserHttpClient::class, function () {
-            return new Client([
-                'headers' => ['Content-Type' => 'application/json'],
-                'base_uri' => config('app.aduser_internal_location'),
-                'timeout' => 1,
-            ]);
-        });
-
-        $this->app->bind(
-            BannerFinder::class,
-            function (Application $app) {
-                return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
-            }
-        );
 
         $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
             return $app->make(AdUserHttpClient::class);
@@ -84,17 +59,12 @@ final class ClientProvider extends ServiceProvider
             return new DummyAdClassifyClient();
         });
 
-        $this->app->bind(AdSelectInventoryExporter::class, function (Application $app) {
-            return new AdSelectInventoryExporter(
-                new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)))
-            );
+        $this->app->bind(UserContextProvider::class, function (Application $app) {
+            return new GuzzleAdUserClient($app->make(AdUserHttpClient::class));
         });
 
-        $this->app->bind(
-            UserContextProvider::class,
-            function (Application $app) {
-                return new GuzzleAdUserClient($app->make(AdUserHttpClient::class));
-            }
-        );
+        $this->app->bind(InventoryExporter::class, function (Application $app) {
+            return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
+        });
     }
 }

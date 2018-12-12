@@ -22,22 +22,22 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use Adshares\Common\Exception\Exception;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
 final class ResponseException extends Exception
 {
-    public static function missingField(string $fieldName): self
+    public static function missingField(string $fieldName)
     {
-        return new self(sprintf('Missing JSON-RPC field "%s"', $fieldName));
+        return new static(sprintf('Missing JSON-RPC field "%s"', $fieldName));
     }
 
-    public static function unexpectedStatusCode(int $code): self
+    public static function unexpectedStatusCode(int $code)
     {
-        return new self(sprintf('Unexpected `%s` response code', $code));
+        return new static(sprintf('Unexpected `%s` response code', $code));
     }
 
-    public static function mismatchedIds($sent, $got): self
+    public static function mismatchedIds($sent, $got)
     {
-        return new self(sprintf('Mismatched JSON-RPC IDs {sent: %s, got: %s}', $sent, $got));
+        return new static(sprintf('Mismatched JSON-RPC IDs {sent: %s, got: %s}', $sent, $got));
     }
 }

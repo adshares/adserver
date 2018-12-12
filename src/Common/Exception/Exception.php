@@ -23,10 +23,16 @@ declare(strict_types = 1);
 namespace Adshares\Common\Exception;
 
 use Exception as PhpException;
+use Throwable;
 
 class Exception extends PhpException
 {
-    public static function fromOther(PhpException $exception): self
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public static function fromOther(PhpException $exception)
     {
         return new static($exception->getMessage(), $exception->getCode(), $exception);
     }

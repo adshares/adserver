@@ -40,9 +40,12 @@ final class JsonRpc
     }
 
     /**
+     * @param Procedure $procedure
+     *
      * @return Result
-     * @throws JsonRpc\Exception\ErrorResponse
-     * @throws JsonRpc\Exception\ResultException
+     * @throws Exception\ErrorResponse
+     * @throws Exception\ResponseException
+     * @throws Exception\ResultException
      * @throws \Adshares\Common\Exception\Exception
      */
     public function call(Procedure $procedure): Result
