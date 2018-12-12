@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -182,6 +183,7 @@ class SupplyController extends Controller
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
+        $zoneId = $context['page']['zone'];
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
 
@@ -193,6 +195,7 @@ class SupplyController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->publisher_id = Zone::fetchPublisherId($zoneId);
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -232,7 +235,7 @@ class SupplyController extends Controller
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-
+        $zoneId = $context['page']['zone'];
         $url = Utils::addUrlParameter($url, 'cid', $eventId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
 
@@ -243,7 +246,8 @@ class SupplyController extends Controller
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
+        $log->zone_id = $zoneId;
+        $log->publisher_id = Zone::fetchPublisherId($zoneId);
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;

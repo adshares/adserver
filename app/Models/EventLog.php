@@ -43,6 +43,7 @@ class EventLog extends Model
         'user_id',
         'banner_id',
         'zone_id',
+        'advertiser_id',
         'event_type',
         'pay_to',
         'ip',
@@ -74,6 +75,7 @@ class EventLog extends Model
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
+        'advertiser_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -84,43 +86,4 @@ class EventLog extends Model
         'event_value' => 'Money',
         'paid_amount' => 'Money',
     ];
-
-    public function getAdpayJson()
-    {
-        return [
-            'event_id' => (string)$this->event_id,
-            'event_type' => $this->event_type,
-            'event_value' => $this->event_value,
-            'banner_id' => (string)$this->banner_id,
-            'zone_id' => $this->zone_id,
-            'our_keywords' => Utils::flattenKeywords($this->getOurKeywords()),
-            'their_keywords' => Utils::flattenKeywords($this->getTheirKeywords()),
-            'timestamp' => $this->updated_at,
-            'user_id' => $this->user_id,
-            'advertiser_id' => 1, // TODO: chat with Jacek
-            'human_score' => $this->human_score,
-        ];
-    }
-
-    public function getOurKeywords()
-    {
-        return array_merge(
-            (array)$this->our_context,
-            [
-                'user' => $this->our_userdata,
-            ]
-        );
-    }
-
-    public function getTheirKeywords()
-    {
-        return array_merge(
-            (array)$this->their_context,
-            [
-                'user' => $this->their_userdata,
-            ]
-        );
-
-        return $data;
-    }
 }

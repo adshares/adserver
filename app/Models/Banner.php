@@ -122,4 +122,12 @@ class Banner extends Model
 
         return $array;
     }
+
+    public static function fetchAdvertiserId(int $bannerId): string
+    {
+        $banner = self::find($bannerId);
+        $user = $banner->campaign->user;
+
+        return $user->uuid;
+    }
 }

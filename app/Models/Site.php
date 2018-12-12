@@ -79,6 +79,11 @@ class Site extends Model
         return $this->hasMany(Zone::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function getAdUnitsAttribute()
     {
         return $this->zones->map(

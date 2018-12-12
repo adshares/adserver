@@ -107,6 +107,7 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->event_id = $eventId;
         $log->user_id = Utils::getRawTrackingId($tid);
+        $log->advertiser_id = Banner::fetchAdvertiserId($banner->id);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->headers = $request->headers->all();
         $log->event_type = 'request';
@@ -189,6 +190,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->advertiser_id = Banner::fetchAdvertiserId($banner->id);
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -245,6 +247,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->advertiser_id = Banner::fetchAdvertiserId($bannerId);
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
