@@ -258,28 +258,6 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkKeywords(Request $request, $log_id): Response
-    {
-        $source = $request->query->get('s');
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
-
-        $log = NetworkEventLog::find($log_id);
-        if ($log) {
-            $log->their_userdata = $keywords;
-            $log->save();
-        }
-        //         $keywords = print_r($keywords, 1);
-        //         $response = new Response("nKeywords logId={$log_id} source={$source} keywords={$keywords}");
-        //         return $response;
-
-        $response = new Response();
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->headers->set('Content-Type', 'image/gif');
-
-        return $response;
-    }
-
     /**
      * Create or prolong tracking cookie and connect it with AdUser.
      *

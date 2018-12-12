@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -123,9 +124,9 @@ class Banner extends Model
         return $array;
     }
 
-    public static function fetchAdvertiserId(int $bannerId): string
+    public static function fetchAdvertiserId(string $bannerUuid): string
     {
-        $banner = self::find($bannerId);
+        $banner = self::where('uuid', hex2bin($bannerUuid))->get()->first();
         $user = $banner->campaign->user;
 
         return $user->uuid;
