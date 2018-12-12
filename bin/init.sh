@@ -161,7 +161,6 @@ then
 
     echo " >> Front-end stuff"
     ${DOCKER_COMPOSE} run --rm worker php artisan package:discover
-    ${DOCKER_COMPOSE} run --rm worker php artisan browsercap:updater
 
     echo " >> Yarn"
     ${DOCKER_COMPOSE} run --rm worker yarn install
@@ -190,33 +189,18 @@ then
     if [ ${OPT_FORCE} -eq 1 ]
     then
         echo " > Recreate database"
-#        if [ ${OPT_START} -eq 1 ]
-#        then
-#            ${DOCKER_COMPOSE} exec -T worker --wait-for-db php artisan migrate:fresh
-#        else
             ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan migrate:fresh
-#        fi
         echo " < DONE"
 
         if [ ${OPT_SEED} -eq 1 ]
         then
             echo " > Seed database"
-#            if [ ${OPT_START} -eq 1 ]
-#            then
-#                ${DOCKER_COMPOSE} exec -T worker php artisan db:seed
-#            else
                 ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan db:seed
-#            fi
             echo " < DONE"
         fi
     else
         echo " > Update database"
-#        if [ ${OPT_START} -eq 1 ]
-#        then
-#            ${DOCKER_COMPOSE} exec -T worker php artisan migrate
-#        else
             ${DOCKER_COMPOSE} run --rm worker --wait-for-db php artisan migrate
-#        fi
         echo " < DONE"
     fi
 fi

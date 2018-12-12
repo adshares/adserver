@@ -24,9 +24,12 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
+use function array_filter;
 
 final class ImpressionContext
 {
+    private const ACCIO = 'accio:';
+
     /** @var array */
     private $site;
 
@@ -38,19 +41,45 @@ final class ImpressionContext
 
     public function __construct(array $site, array $device, array $user)
     {
+        [$user, $site] = $this->accioFilter($site, $user);
+
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
     }
 
-    /** @deprecated This needs to include all data */
+    /** @deprecated */
+    private function accioFilter(array $site, array $user): array
+    {
+        $userKeywords = array_filter(
+            $site['keywords'],
+            function (string $keyword) {
+                return stripos($keyword, self::ACCIO) === 0;
+            }
+        );
+
+        $user['keywords']['interest'] = [];
+        foreach ($userKeywords as $keyword) {
+            $user['keywords']['interest'][] = str_replace('accio:', '', $keyword);
+        }
+
+        $site['keywords'] = array_filter(
+            $site['keywords'],
+            function (string $keyword) {
+                return stripos($keyword, self::ACCIO) !== 0;
+            }
+        );
+
+        return [$user, $site];
+    }
+
     public function adUserRequestBody(): string
     {
         return <<<"JSON"
 {
     "domain": "{$this->site['domain']}",
-    "ip": "192.168.10.10",
-    "ua": "Mozilla/5.0 (X11; U; Linux i686; pl-PL; rv:1.7.10) Gecko/20050717 Firefox/1.0.6",
+    "ip": "{$this->device['ip']}",
+    "ua": "{$this->device['ua']}",
     "uid": "{$this->user['uid']}"
 }
 JSON;
@@ -61,7 +90,7 @@ JSON;
         return $zones->map(
             function (Zone $zone) {
                 return [
-                    'keywords' => ["interest" => "200142"],
+                    'keywords' => $this->user['keywords'],
                     'banner_size' => "{$zone->width}x{$zone->height}",
                     'publisher_id' => 'pid',
                     'request_id' => $zone->id,
@@ -74,5 +103,10 @@ JSON;
     public function keywords()
     {
         return $this->site['keywords'];
+    }
+
+    public function userId(): string
+    {
+        return $this->user['uid'];
     }
 }

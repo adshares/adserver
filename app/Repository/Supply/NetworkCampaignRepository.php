@@ -32,7 +32,6 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
-
     public function markedAsDeletedByHost(string $host): void
     {
         $campaignIdsResult = DB::select(
@@ -51,13 +50,9 @@ class NetworkCampaignRepository implements CampaignRepository
             $campaignIds[] = $campaignId->id;
         }
 
-        DB::table(NetworkBanner::getTableName())
-            ->whereIn('network_campaign_id', $campaignIds)
-            ->delete();
+        DB::table(NetworkBanner::getTableName())->whereIn('network_campaign_id', $campaignIds)->delete();
 
-        DB::table(NetworkCampaign::getTableName())
-            ->whereIn('id', $campaignIds)
-            ->delete();
+        DB::table(NetworkCampaign::getTableName())->whereIn('id', $campaignIds)->delete();
 
 //        DB::update(
 //            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
@@ -91,6 +86,21 @@ class NetworkCampaignRepository implements CampaignRepository
 
         $networkCampaign->save();
         $networkCampaign->banners()->saveMany($networkBanners);
+
+        if (config('app.env') === 'local') {
+            $networkCampaign->uuid = (string)Uuid::test($networkCampaign->id);
+
+            $banners = $networkCampaign->banners->map(
+                function (NetworkBanner $banner) {
+                    $banner->uuid = (string)Uuid::test($banner->id);
+
+                    return $banner;
+                }
+            );
+
+            $networkCampaign->save();
+            $networkCampaign->banners()->saveMany($banners);
+        }
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
@@ -122,27 +132,29 @@ class NetworkCampaignRepository implements CampaignRepository
             ];
         }
 
-        return CampaignFactory::createFromArray([
-            'uuid' => Uuid::fromString($networkCampaign->uuid),
-            'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
-            'landing_url' => $networkCampaign->landing_url,
-            'date_start' => $networkCampaign->date_start,
-            'date_end' => $networkCampaign->date_end,
-            'source_campaign' => [
-                'host' => $networkCampaign->source_host,
-                'address' => $networkCampaign->source_address,
-                'version' => $networkCampaign->source_version,
-                'created_at' => $networkCampaign->source_created_at,
-                'updated_at' => $networkCampaign->source_updated_at,
-            ],
-            'created_at' => $networkCampaign->created_at,
-            'updated_at' => $networkCampaign->updated_at,
-            'banners' => $banners,
-            'max_cpc' => (int)$networkCampaign->max_cpc,
-            'max_cpm' => (int)$networkCampaign->max_cpm,
-            'budget' => (int)$networkCampaign->budget,
-            'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
-            'targeting_requires' => $networkCampaign->targeting_requires ?? [],
-        ]);
+        return CampaignFactory::createFromArray(
+            [
+                'uuid' => Uuid::fromString($networkCampaign->uuid),
+                'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
+                'landing_url' => $networkCampaign->landing_url,
+                'date_start' => $networkCampaign->date_start,
+                'date_end' => $networkCampaign->date_end,
+                'source_campaign' => [
+                    'host' => $networkCampaign->source_host,
+                    'address' => $networkCampaign->source_address,
+                    'version' => $networkCampaign->source_version,
+                    'created_at' => $networkCampaign->source_created_at,
+                    'updated_at' => $networkCampaign->source_updated_at,
+                ],
+                'created_at' => $networkCampaign->created_at,
+                'updated_at' => $networkCampaign->updated_at,
+                'banners' => $banners,
+                'max_cpc' => (int)$networkCampaign->max_cpc,
+                'max_cpm' => (int)$networkCampaign->max_cpm,
+                'budget' => (int)$networkCampaign->budget,
+                'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
+                'targeting_requires' => $networkCampaign->targeting_requires ?? [],
+            ]
+        );
     }
 }

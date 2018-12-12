@@ -65,7 +65,7 @@ final class ClientProvider extends ServiceProvider
             return new Client([
                 'headers' => ['Content-Type' => 'application/json'],
                 'base_uri' => config('app.aduser_internal_location'),
-                'timeout' => 5.0,
+                'timeout' => 1,
             ]);
         });
 
