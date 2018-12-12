@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use DateTime;
 use Illuminate\Console\Command;
 
@@ -44,13 +45,21 @@ class AdSelectEventExportCommand extends Command
 
     public function handle()
     {
-        $this->info('Starting export events to AdSelect.');
+        $this->info('Started exporting events to AdSelect');
 
         $lastExportDate = Config::adselectLastImportDate();
-        $this->exporterService->export($lastExportDate);
+
+        try {
+            $this->exporterService->export($lastExportDate);
+        } catch (NoEventsForGivenTimePeriod $exception) {
+            $this->info($exception->getMessage());
+
+            return;
+        }
+
 
         Config::updateAdselectLastImportDate(new DateTime());
 
-        $this->info('Finish exporting events to AdSelect.');
+        $this->info('Finished exporting events to AdSelect.');
     }
 }

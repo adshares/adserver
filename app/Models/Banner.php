@@ -123,12 +123,4 @@ class Banner extends Model
 
         return $array;
     }
-
-    public static function fetchAdvertiserId(string $bannerUuid): string
-    {
-        $banner = self::where('uuid', hex2bin($bannerUuid))->get()->first();
-        $user = $banner->campaign->user;
-
-        return $user->uuid;
-    }
 }

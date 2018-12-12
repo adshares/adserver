@@ -44,13 +44,11 @@ class AdSelectEventExporter
 
         if (!$events) {
             throw new NoEventsForGivenTimePeriod(sprintf(
-                'No found events from: %s. Current time: %s',
+                'Events from: %s not found. Current time: %s',
                 $from->format(DateTime::ATOM),
                 (new DateTime())->format(DateTime::ATOM)
             ));
         }
-
-        // @todo update publisher_id
 
         $this->client->exportEvents($events);
     }

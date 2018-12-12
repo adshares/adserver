@@ -184,8 +184,9 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
-
+        $publisherId = Zone::fetchPublisherId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -195,7 +196,7 @@ class SupplyController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
-        $log->publisher_id = Zone::fetchPublisherId($zoneId);
+        $log->publisher_id = $publisherId;
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -236,8 +237,11 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
+        $publisherId = Zone::fetchPublisherId($zoneId);
+
         $url = Utils::addUrlParameter($url, 'cid', $eventId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -247,7 +251,7 @@ class SupplyController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $zoneId;
-        $log->publisher_id = Zone::fetchPublisherId($zoneId);
+        $log->publisher_id = $publisherId;
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;

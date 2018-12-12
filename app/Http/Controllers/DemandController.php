@@ -107,7 +107,6 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->event_id = $eventId;
         $log->user_id = Utils::getRawTrackingId($tid);
-        $log->advertiser_id = Banner::fetchAdvertiserId($banner->uuid);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->headers = $request->headers->all();
         $log->event_type = 'request';
@@ -178,6 +177,7 @@ class DemandController extends Controller
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -190,7 +190,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
-        $log->advertiser_id = Banner::fetchAdvertiserId($banner->uuid);
+        $log->publisher_id = $publisherId;
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -210,6 +210,7 @@ class DemandController extends Controller
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -247,7 +248,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
-        $log->advertiser_id = Banner::fetchAdvertiserId($bannerId);
+        $log->publisher_id = $publisherId;
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
