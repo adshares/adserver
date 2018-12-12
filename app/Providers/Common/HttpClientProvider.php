@@ -43,7 +43,7 @@ final class HttpClientProvider extends ServiceProvider
         $this->app->bind(AdPayHttpClient::class, function () {
             return new Client([
                 'headers' => ['Content-Type' => 'application/json'],
-                'base_uri' => config('app.adselect_endpoint'),
+                'base_uri' => config('app.adpay_endpoint'),
                 'timeout' => 5.0,
             ]);
         });
