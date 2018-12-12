@@ -18,26 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
-use Adshares\Supply\Domain\Model\Campaign;
+namespace Adshares\Adserver\Repository\Supply;
 
-class AdSelectInventoryExporter
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Supply\Domain\Repository\EventRepository;
+
+class NetworkEventRepository implements EventRepository
 {
-    private $client;
 
-    public function __construct(AdSelect $client)
+    public function fetchEventsFromDate(\DateTime $dateTime): array
     {
-        $this->client = $client;
-    }
+        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
 
-    public function export(Campaign $campaign): void
-    {
-        if ($campaign->getBanners()->count() === 0) {
-            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
-        }
-
-        $this->client->exportInventory($campaign);
+        return $events->toArray();
     }
 }

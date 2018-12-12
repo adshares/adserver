@@ -47,6 +47,7 @@ final class JsonRpc
     {
         try {
             $body = $procedure->toJson();
+
             $resp = $this->client->request('POST', '/', [
                 'body' => $body,
             ]);

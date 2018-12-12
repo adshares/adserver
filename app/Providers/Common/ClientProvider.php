@@ -30,6 +30,7 @@ use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\UserContextProvider;
@@ -58,7 +59,7 @@ final class ClientProvider extends ServiceProvider
         });
 
         $this->app->bind(
-            BannerFinder::class,
+            AdSelect::class,
             function (Application $app) {
                 return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
             }

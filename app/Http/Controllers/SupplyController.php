@@ -24,10 +24,9 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Services\Adselect;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\UserContextProvider;
 use DateTime;
 use Illuminate\Http\Request;
@@ -43,7 +42,7 @@ class SupplyController extends Controller
     public function find(
         Request $request,
         UserContextProvider $contextProvider,
-        BannerFinder $bannerFinder,
+        AdSelect $bannerFinder,
         string $data = null
     ) {
         $response = new Response();

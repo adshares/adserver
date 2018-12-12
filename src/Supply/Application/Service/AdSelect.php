@@ -18,14 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
-
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Domain\Model\Campaign;
 
-interface BannerFinder
+interface AdSelect
 {
+    public function exportInventory(Campaign $campaign): void;
+
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
+
+    public function exportEvents(array $events): void;
 }

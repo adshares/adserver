@@ -201,6 +201,7 @@ return [
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
         Adshares\Adserver\Providers\Common\ClientProvider::class,
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
+        Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
     ],
 
     /*

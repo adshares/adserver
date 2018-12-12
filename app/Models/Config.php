@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
@@ -28,8 +29,13 @@ class Config extends Model
      * Time of last processed event in ADS user's log
      */
     const ADS_LOG_START = 'ads-log-start';
+
+    const ADSELECT_LAST_IMPORT = 'adselect-last-import';
+
     public $incrementing = false;
+
     protected $primaryKey = 'key';
+
     protected $keyType = 'string';
     /**
      * The attributes that aren't mass assignable.
@@ -37,4 +43,29 @@ class Config extends Model
      * @var array
      */
     protected $guarded = [];
+
+
+    public static function adselectLastImportDate(): DateTime
+    {
+        $config = Config::where('key', self::ADSELECT_LAST_IMPORT)->first();
+
+        if (!$config) {
+            return new DateTime('@0');
+        }
+
+        return DateTime::createFromFormat(DateTime::ATOM, $config->value);
+    }
+
+    public static function updateAdselectLastImportDate(\DateTime $date): void
+    {
+        $config = Config::where('key', self::ADSELECT_LAST_IMPORT)->first();
+
+        if (!$config) {
+            $config = new self();
+            $config->key = self::ADSELECT_LAST_IMPORT;
+        }
+
+        $config->value = $date->format(DateTime::ATOM);
+        $config->save();
+    }
 }
