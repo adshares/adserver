@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponse;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
@@ -52,19 +53,22 @@ final class RawResponse
     private $procedure;
 
     /**
+     * @throws ErrorResponse
      * @throws RemoteCallException
      */
     public function __construct(ResponseInterface $response, Procedure $procedure)
     {
         $this->response = $response;
         $this->procedure = $procedure;
-        $this->failIfInvalid();
+        $this->failIfInvalidResponse();
+        $this->failOnResponseError();
+        $this->failIfNoResult();
     }
 
     /**
      * @throws RemoteCallException
      */
-    private function failIfInvalid(): void
+    private function failIfInvalidResponse(): void
     {
         $statusCode = $this->response->getStatusCode();
 
@@ -78,20 +82,28 @@ final class RawResponse
             throw RemoteCallException::fromOther($e);
         }
 
-        if (!isset($this->content[self::FIELD_ID]) || !$this->content[self::FIELD_ID]) {
+        $responseId = $this->content[self::FIELD_ID] ?? false;
+        if (!$responseId) {
             throw  RemoteCallException::missingField(self::FIELD_ID);
         }
 
         $id = $this->procedure->id();
 
-        if ($this->content[self::FIELD_ID] !== $id) {
-            throw RemoteCallException::mismatchedIds($id, $this->content[self::FIELD_ID]);
+        if ($responseId !== $id) {
+            throw RemoteCallException::mismatchedIds($id, $responseId);
         }
+    }
 
-        if (isset($this->content[self::FIELD_ERROR])) {
-            throw RemoteCallException::fromResponseError($this->content[self::FIELD_ERROR]);
+    private function failOnResponseError(): void
+    {
+        $responseError = $this->content[self::FIELD_ERROR] ?? [];
+        if ((bool)$responseError) {
+            throw ErrorResponse::fromResponseError($responseError);
         }
+    }
 
+    private function failIfNoResult(): void
+    {
         if (!isset($this->content[self::FIELD_RESULT])) {
             throw  RemoteCallException::missingField(self::FIELD_RESULT);
         }
