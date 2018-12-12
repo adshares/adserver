@@ -21,12 +21,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Collection;
 
 class AdPayCampaignExportCommand extends Command
 {
@@ -63,13 +63,13 @@ class AdPayCampaignExportCommand extends Command
 
         $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->get();
         if (count($updatedCampaigns) > 0) {
-            $campaigns = $this->mapCampaignCollectionToCampaignArray($updatedCampaigns);
+            $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
             $adPay->updateCampaign($campaigns);
         }
 
         $deletedCampaigns = Campaign::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
         if (count($deletedCampaigns) > 0) {
-            $campaignIds = $this->mapCampaignCollectionToCampaignIds($deletedCampaigns);
+            $campaignIds = DemandCampaignMapper::mapCampaignCollectionToCampaignIds($deletedCampaigns);
             $adPay->deleteCampaign($campaignIds);
         }
 
@@ -77,58 +77,5 @@ class AdPayCampaignExportCommand extends Command
         $configDate->save();
 
         $this->info('Finish command '.$this->signature);
-    }
-
-    /**
-     * @param Collection $campaigns
-     *
-     * @return array
-     */
-    private function mapCampaignCollectionToCampaignArray(Collection $campaigns): array
-    {
-        $campaignArray = $campaigns->map(
-            function (Campaign $campaign) {
-                $mappedAds = [];
-                $ads = $campaign->ads;
-                foreach ($ads as $ad) {
-                    $mappedAds[] = [
-                        'uuid' => $ad->uuid,
-                        'status' => $ad->status,
-                    ];
-                }
-
-                $mapped = [];
-                $mapped['uuid'] = $campaign->uuid;
-                $mapped['budget'] = $campaign->basic_information['budget'];
-                $mapped['max_cpc'] = $campaign->basic_information['max_cpc'];
-                $mapped['max_cpm'] = $campaign->basic_information['max_cpm'];
-                $mapped['status'] = $campaign->basic_information['status'];
-                $mapped['time_start'] = DateTime::createFromFormat(DATE_ATOM, $campaign->time_start)->getTimestamp();
-                $mapped['time_end'] =
-                    ($campaign->time_end === null)
-                        ? null : DateTime::createFromFormat(DATE_ATOM, $campaign->time_end)
-                        ->getTimestamp();
-                $mapped['ads'] = $mappedAds;
-
-                return $mapped;
-            }
-        )->toArray();
-
-        return $campaignArray;
-    }
-
-    /**
-     * @param $campaigns
-     *
-     * @return array
-     */
-    private function mapCampaignCollectionToCampaignIds(Collection $campaigns): array
-    {
-        $campaignIds = [];
-        foreach ($campaigns as $deletedCampaign) {
-            $campaignIds[] = $deletedCampaign->uuid;
-        }
-
-        return $campaignIds;
     }
 }
