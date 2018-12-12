@@ -94,19 +94,21 @@ class MockDataCampaignsSeeder extends Seeder
 
     private function createCampaign($u, $cr): Campaign
     {
-        $campaign = factory(Campaign::class)->create([
-            'landing_url' => $cr->url,
-            'user_id' => $u->id,
-            'name' => $cr->name,
-            'budget' => $cr->budget_per_hour,
-            'max_cpc' => $cr->max_cpc,
-            'max_cpm' => $cr->max_cpm,
-            'status' => Campaign::STATUS_ACTIVE,
-            'targeting_requires' => $cr->targeting_requires ?? null,
-            'targeting_excludes' => $cr->targeting_excludes ?? null,
-            'classification_status' => $cr->classification_status ?? 0,
-            'classification_tags' => $cr->classification_tags ?? null,
-        ]);
+        $campaign = factory(Campaign::class)->create(
+            [
+                'landing_url' => $cr->url,
+                'user_id' => $u->id,
+                'name' => $cr->name,
+                'budget' => $cr->budget_per_hour,
+                'max_cpc' => $cr->max_cpc,
+                'max_cpm' => $cr->max_cpm,
+                'status' => Campaign::STATUS_ACTIVE,
+                'targeting_requires' => $cr->targeting_requires ?? null,
+                'targeting_excludes' => $cr->targeting_excludes ?? null,
+                'classification_status' => $cr->classification_status ?? 0,
+                'classification_tags' => $cr->classification_tags ?? null,
+            ]
+        );
 
         return $campaign;
     }
@@ -115,14 +117,16 @@ class MockDataCampaignsSeeder extends Seeder
     {
         $t = 'image';
         $b = new Banner();
-        $b->fill([
-            'campaign_id' => $c->id,
-            'creative_type' => $t,
-            'creative_width' => $s[0],
-            'creative_height' => $s[1],
-            'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
-            'status' => Banner::STATUS_ACTIVE,
-        ]);
+        $b->fill(
+            [
+                'campaign_id' => $c->id,
+                'creative_type' => $t,
+                'creative_width' => $s[0],
+                'creative_height' => $s[1],
+                'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
+                'status' => Banner::STATUS_ACTIVE,
+            ]
+        );
 
         if (!empty($filename)) {
             $b->creative_contents = file_get_contents($filename);

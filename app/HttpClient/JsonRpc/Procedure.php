@@ -28,10 +28,13 @@ use function GuzzleHttp\json_encode;
 final class Procedure
 {
     private const RPC_VERSION = '2.0';
+
     /** @var string */
     private $id;
+
     /** @var string */
     private $method;
+
     /** @var array */
     private $params;
 

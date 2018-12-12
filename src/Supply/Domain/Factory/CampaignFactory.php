@@ -56,7 +56,7 @@ class CampaignFactory
         $banners = [];
 
         $campaign = new Campaign(
-            Uuid::v4(),
+            $data['uuid'] ?? Uuid::v4(),
             $data['uuid'],
             $data['publisher_id'],
             $data['landing_url'],

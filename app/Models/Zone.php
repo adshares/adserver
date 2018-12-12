@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 /**
  * @property Site site
@@ -36,10 +37,15 @@ class Zone extends Model
     data-zone="{{zoneId}}" 
     style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto;background-color: #FAA"></div>
 HTML;
+
     use SoftDeletes;
+
     public const STATUS_DRAFT = 0;
+
     public const STATUS_ACTIVE = 1;
+
     public const STATUS_ARCHIVED = 2;
+
     public const STATUSES = [
         self::STATUS_DRAFT,
         self::STATUS_ACTIVE,
@@ -47,7 +53,9 @@ HTML;
     ];
 
     public const TYPE_IMAGE = 'image';
+
     public const TYPE_HTML = 'html';
+
     public const ZONE_TYPES = [
         self::TYPE_IMAGE,
         self::TYPE_HTML,
@@ -103,7 +111,9 @@ HTML;
         '750x200',
         '750x300',
     ];
+
     public $publisher_id;
+
     protected $fillable = [
         'short_headline',#@deprecated
         'name',
@@ -111,6 +121,7 @@ HTML;
         'type',
         'status',
     ];
+
     protected $visible = [
         'id',
         'short_headline',#@deprecated
@@ -120,12 +131,19 @@ HTML;
         'status',
         'type',
     ];
+
     protected $appends = [
         'size',
         'short_headline',#@deprecated
         'code',
     ];
+
     protected $touches = ['site'];
+
+    public static function findByIds(array $zoneIdList): Collection
+    {
+        return self::whereIn('id', $zoneIdList)->get();
+    }
 
     public function site()
     {
@@ -188,9 +206,11 @@ HTML;
     {
         $this->attributes['width'] = $width;
         if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
-            $this->setSizeAttribute([
-                'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
-            ]);
+            $this->setSizeAttribute(
+                [
+                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                ]
+            );
         }
     }
 
@@ -198,9 +218,11 @@ HTML;
     {
         $this->attributes['height'] = $height;
         if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
-            $this->setSizeAttribute([
-                'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
-            ]);
+            $this->setSizeAttribute(
+                [
+                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                ]
+            );
         }
     }
 }
