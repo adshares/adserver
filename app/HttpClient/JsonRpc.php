@@ -40,8 +40,11 @@ final class JsonRpc
     }
 
     /**
-     * @throws RemoteCallException
+     * @param Procedure $procedure
+     *
+     * @return Result
      * @throws JsonRpc\Exception\ResultException
+     * @throws RemoteCallException
      */
     public function call(Procedure $procedure): Result
     {

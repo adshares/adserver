@@ -41,12 +41,6 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(
-            Adpay::class,
-            function ($app) {
-                return new Adpay(config('app.adpay_endpoint'), config('app.debug'));
-            }
-        );
-        $this->app->bind(
             Adselect::class,
             function ($app) {
                 return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
