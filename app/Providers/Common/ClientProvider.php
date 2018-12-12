@@ -24,12 +24,14 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\HttpClient\AdSelectHttpClient;
 use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\UserContextProvider;
@@ -41,6 +43,16 @@ final class ClientProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(AdPay::class, function () {
+            return new JsonRpcAdPayClient(
+                new JsonRpc(new Client([
+                    'headers' => ['Content-Type' => 'application/json'],
+                    'base_uri' => config('app.adpay_endpoint'),
+                    'timeout' => 5.0,
+                ]))
+            );
+        });
+
         $this->app->bind(AdSelectHttpClient::class, function () {
             return new Client([
                 'headers' => ['Content-Type' => 'application/json'],
