@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,20 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Console\Commands;
 
-namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
+use Adshares\Common\Exception\Exception;
+use Adshares\Demand\Application\Service\AdPay;
+use Illuminate\Console\Command;
+use function now;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception;
-
-final class ErrorResponse extends Exception
+class AdPayGetPayments extends Command
 {
-    private const FIELD_ERROR_MESSAGE = 'message';
+    protected $signature = 'adpay:payments';
 
-    private const FIELD_ERROR_CODE = 'code';
-
-    public static function fromResponseError(array $error)
+    public function handle(AdPay $adPay): void
     {
-        return new static($error[self::FIELD_ERROR_MESSAGE], (int)$error[self::FIELD_ERROR_CODE]);
+        $adPay->getPayments(now()->getTimestamp());
+
+        throw new Exception('Not implemented');
     }
 }
