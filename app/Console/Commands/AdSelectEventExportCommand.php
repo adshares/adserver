@@ -47,7 +47,7 @@ class AdSelectEventExportCommand extends Command
     {
         $this->info('Started exporting events to AdSelect');
 
-        $lastExportDate = Config::adselectLastImportDate();
+        $lastExportDate = Config::fetchAdSelectEventExportTime();
 
         try {
             $this->exporterService->export($lastExportDate);
@@ -58,7 +58,7 @@ class AdSelectEventExportCommand extends Command
         }
 
 
-        Config::updateAdselectLastImportDate(new DateTime());
+        Config::updateAdSelectEventExportTime(new DateTime());
 
         $this->info('Finished exporting events to AdSelect.');
     }

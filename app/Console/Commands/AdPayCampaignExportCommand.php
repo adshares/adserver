@@ -49,10 +49,10 @@ class AdPayCampaignExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $configDate = Config::where('key', Config::AD_PAY_CAMPAIGN_EXPORT_TIME)->first();
+        $configDate = Config::where('key', Config::ADPAY_CAMPAIGN_EXPORT_TIME)->first();
         if (null === $configDate) {
             $configDate = new Config();
-            $configDate->key = Config::AD_PAY_CAMPAIGN_EXPORT_TIME;
+            $configDate->key = Config::ADPAY_CAMPAIGN_EXPORT_TIME;
 
             $dateFrom = new DateTime('@0');
         } else {

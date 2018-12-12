@@ -33,15 +33,14 @@ class Config extends Model
     /**
      * Time of last campaign export to AdPay
      */
-    const AD_PAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-exp';
+    const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-export';
 
     /**
      * Time of last event export to AdPay
      */
-    const AD_PAY_EVENT_EXPORT_TIME = 'adpay-evt-exp';
+    const ADPAY_EVENT_EXPORT_TIME = 'adpay-evt-export';
 
-
-    const ADSELECT_LAST_IMPORT = 'adselect-last-import';
+    const ADSELECT_EVENT_EXPORT_TIME = 'adselect-evt-export';
 
     public $incrementing = false;
 
@@ -56,9 +55,9 @@ class Config extends Model
     protected $guarded = [];
 
 
-    public static function adselectLastImportDate(): DateTime
+    public static function fetchAdSelectEventExportTime(): DateTime
     {
-        $config = Config::where('key', self::ADSELECT_LAST_IMPORT)->first();
+        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             return new DateTime('@0');
@@ -67,13 +66,13 @@ class Config extends Model
         return DateTime::createFromFormat(DateTime::ATOM, $config->value);
     }
 
-    public static function updateAdselectLastImportDate(\DateTime $date): void
+    public static function updateAdSelectEventExportTime(\DateTime $date): void
     {
-        $config = Config::where('key', self::ADSELECT_LAST_IMPORT)->first();
+        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             $config = new self();
-            $config->key = self::ADSELECT_LAST_IMPORT;
+            $config->key = self::ADSELECT_EVENT_EXPORT_TIME;
         }
 
         $config->value = $date->format(DateTime::ATOM);
