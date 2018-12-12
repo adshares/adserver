@@ -57,7 +57,6 @@ class AdSelectEventExportCommand extends Command
             return;
         }
 
-
         Config::updateAdSelectEventExportTime(new DateTime());
 
         $this->info('Finished exporting events to AdSelect.');

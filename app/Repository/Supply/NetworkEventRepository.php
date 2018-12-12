@@ -24,11 +24,12 @@ namespace Adshares\Adserver\Repository\Supply;
 
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Domain\Repository\EventRepository;
+use DateTime;
 
 class NetworkEventRepository implements EventRepository
 {
 
-    public function fetchEventsFromDate(\DateTime $dateTime): array
+    public function fetchEventsFromDate(DateTime $dateTime): array
     {
         $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
 
