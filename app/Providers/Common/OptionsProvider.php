@@ -37,7 +37,8 @@ final class OptionsProvider extends ServiceProvider
             ConfigurationRepository::class,
             function (Application $app) {
                 return new DummyConfigurationRepository(
-                    $app->make(AdUser::class), $app->make(AdClassify::class)
+                    $app->make(AdUser::class),
+                    $app->make(AdClassify::class)
                 );
             }
         );
