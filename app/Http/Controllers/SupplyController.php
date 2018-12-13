@@ -273,7 +273,7 @@ class SupplyController extends Controller
     public function register(Request $request): Response
     {
         $response = new Response();
-        $impressionId = $request->query->get('iid');
+        $impressionId = $request->query->get('impressionId');
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
             config('app.adserver_secret'),
