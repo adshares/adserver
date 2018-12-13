@@ -64,4 +64,9 @@ final class UserContext
     {
         return ['uid' => $this->userId, 'keywords' => $this->keywords];
     }
+
+    public function toArray(): array
+    {
+        return ['uid' => $this->userId, 'keywords' => $this->keywords, 'human_score' => $this->humanScore];
+    }
 }

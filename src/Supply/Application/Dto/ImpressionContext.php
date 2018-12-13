@@ -51,6 +51,10 @@ final class ImpressionContext
     /** @deprecated */
     private function accioFilter(array $site, array $user): array
     {
+        if (!isset($site['keywords'])) {
+            return [$user, $site];
+        }
+
         $userKeywords = array_filter(
             $site['keywords'],
             function (string $keyword) {

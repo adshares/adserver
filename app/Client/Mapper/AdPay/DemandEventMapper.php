@@ -37,8 +37,8 @@ class DemandEventMapper
 
                 $timestamp = (new DateTime($eventArray['created_at']))->getTimestamp();
 
-                $theirKeywords = self::processKeywords($eventArray['their_userdata']);
-                $ourKeywords = self::processKeywords($eventArray['our_userdata']);
+                $theirKeywords = self::processTheirKeywords($eventArray['their_userdata']);
+                $ourKeywords = self::processOurKeywords($eventArray['our_userdata']);
 
                 $mapped = [
                     'banner_id' => $eventArray['banner_id'],
@@ -47,10 +47,13 @@ class DemandEventMapper
                     'timestamp' => $timestamp,
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
-                    'human_score' => $eventArray['human_score'] ?? 0,
-                    'publisher_id' => $eventArray['publisher_id'],
-                    'user_id' => $eventArray['user_id']
+                    'human_score' => $eventArray['human_score'] ?? 0.5,
+                    'user_id' => $eventArray['user_id'],
                 ];
+
+                if ($eventArray['publisher_id'] !== null) {
+                    $mapped['publisher_id'] = $eventArray['publisher_id'];
+                }
 
                 if ($eventArray['event_value'] !== null) {
                     $mapped['event_value'] = $eventArray['event_value'];
@@ -63,7 +66,16 @@ class DemandEventMapper
         return $eventArray;
     }
 
-    private static function processKeywords($keywords)
+    private static function processOurKeywords(?stdClass $keywords): stdClass
+    {
+        if ($keywords === null) {
+            return new stdClass();
+        }
+
+        return $keywords;
+    }
+
+    private static function processTheirKeywords($keywords)
     {
         if ($keywords === null) {
             return new stdClass();
