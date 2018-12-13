@@ -33,14 +33,14 @@ class Config extends Model
     /**
      * Time of last campaign export to AdPay
      */
-    const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-export';
+    const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
     /**
      * Time of last event export to AdPay
      */
-    const ADPAY_EVENT_EXPORT_TIME = 'adpay-evt-export';
+    const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
 
-    const ADSELECT_EVENT_EXPORT_TIME = 'adselect-evt-export';
+    const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
     public $incrementing = false;
 
