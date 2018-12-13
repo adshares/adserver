@@ -26,6 +26,9 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int event_id
+ */
 class EventLog extends Model
 {
     use AccountAddress;
@@ -83,7 +86,5 @@ class EventLog extends Model
         'their_context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
-        'event_value' => 'Money',
-        'paid_amount' => 'Money',
     ];
 }
