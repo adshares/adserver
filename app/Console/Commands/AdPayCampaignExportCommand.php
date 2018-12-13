@@ -33,7 +33,7 @@ class AdPayCampaignExportCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'adpay:campaign:export';
+    protected $signature = 'ops:adpay:campaign:export';
 
     /**
      * @var string
@@ -45,7 +45,7 @@ class AdPayCampaignExportCommand extends Command
      *
      * @throws \Exception
      */
-    public function handle(AdPay $adPay)
+    public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
 
