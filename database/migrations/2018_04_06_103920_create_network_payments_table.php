@@ -40,7 +40,8 @@ class CreateNetworkPaymentsTable extends Migration
             $table->binary('receiver_address', 6);
             $table->binary('sender_address', 6);
             $table->string('sender_host', 32);
-            $table->decimal('amount');
+            $table->bigInteger('amount')->unsigned()->nullable();
+
             $table->binary('tx_id', 8);
             $table->integer('tx_time');
             $table->boolean('detailed_data_used');

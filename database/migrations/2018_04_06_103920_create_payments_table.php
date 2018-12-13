@@ -46,7 +46,8 @@ class CreatePaymentsTable extends Migration
             $table->text('tx_data')->nullable();
             $table->binary('tx_id', 8);
             $table->integer('tx_time');
-            $table->decimal('fee', 20, 9);
+            $table->bigInteger('fee')->unsigned()->nullable(false);
+
             $table->boolean('completed');
         });
 

@@ -30,10 +30,10 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
     public function run(): void
     {
         $this->command->info('[mock] seeding: payments');
-        $payment1 = $this->createPayment('0001-00000005-0001', '0001:00000003:0001');
-        $payment2 = $this->createPayment('0001-00000005-0001', '0001:00000003:0002');
-        $payment3 = $this->createPayment('0001-00000005-0001', '0001:00000003:0003');
-        $payment4 = $this->createPayment('0001-00000005-0002', '0002:00000003:0002');
+        $payment1 = $this->createPayment('0001-00000005-0001', '0001:00000003:0001', 2);
+        $payment2 = $this->createPayment('0001-00000005-0001', '0001:00000003:0002', 3);
+        $payment3 = $this->createPayment('0001-00000005-0001', '0001:00000003:0003', 1);
+        $payment4 = $this->createPayment('0001-00000005-0002', '0002:00000003:0002', 5);
 
         $this->command->info('[mock] seeding: event_logs');
         $this->createEvent('0001-00000001-0001', 10, $payment1, 'view');
@@ -44,13 +44,13 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $this->createEvent('0001-00000002-0001', 3, $payment4, 'click');
     }
 
-    private function createPayment(string $accountAddress, string $transactionId): int
+    private function createPayment(string $accountAddress, string $transactionId, int $fee): int
     {
         $payment = new Payment();
         $payment->account_address = $accountAddress;
         $payment->tx_id = $transactionId;
         $payment->tx_time = time() - 3600;
-        $payment->fee = 2;
+        $payment->fee = $fee;
         $payment->completed = 1;
 
         $payment->save();
