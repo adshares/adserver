@@ -29,11 +29,11 @@ trait TransactionId
 {
     public function transactionIdMutator($key, $value)
     {
-        $this->attributes[$key] = null !== $value ? hex2bin(AdsUtils::decodeTransactionId($value)) : null;
+        $this->attributes[$key] = null !== $value ? hex2bin(AdsUtils::decodeTxId($value)) : null;
     }
 
     public function transactionIdAccessor($value)
     {
-        return null === $value ? null : AdsUtils::encodeTransactionId(bin2hex($value));
+        return null === $value ? null : AdsUtils::encodeTxId(bin2hex($value));
     }
 }

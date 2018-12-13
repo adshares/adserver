@@ -37,16 +37,17 @@ class CreatePaymentsTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->text('transfers');
+            $table->text('transfers')->nullable();
             $table->text('subthreshold_transfers')->nullable();
-            $table->binary('account_address', 6)->nullable(); // REQ CUSTOM ALTER
-            $table->binary('account_hashin', 32)->nullable(); // REQ CUSTOM ALTER
-            $table->binary('account_hashout', 32)->nullable(); // REQ CUSTOM ALTER
-            $table->integer('account_msid');
-            $table->text('tx_data');
-            $table->binary('tx_id', 8); // REQ CUSTOM ALTER
+            $table->binary('account_address', 6)->nullable();
+            $table->binary('account_hashin', 32)->nullable();
+            $table->binary('account_hashout', 32)->nullable();
+            $table->integer('account_msid')->nullable();
+            $table->text('tx_data')->nullable();
+            $table->binary('tx_id', 8);
             $table->integer('tx_time');
-            $table->decimal('fee', 20, 9);
+            $table->bigInteger('fee')->unsigned()->nullable(false);
+
             $table->boolean('completed');
         });
 
@@ -54,7 +55,7 @@ class CreatePaymentsTable extends Migration
             DB::statement("ALTER TABLE payments MODIFY account_address varbinary(6)");
             DB::statement("ALTER TABLE payments MODIFY account_hashin varbinary(32)");
             DB::statement("ALTER TABLE payments MODIFY account_hashout varbinary(32)");
-            DB::statement("ALTER TABLE payments MODIFY tx_id varbinary(6)");
+            DB::statement("ALTER TABLE payments MODIFY tx_id varbinary(8)");
         }
     }
 

@@ -73,6 +73,5 @@ class Payment extends Model
         'account_hashin' => 'BinHex',
         'account_hashout' => 'BinHex',
         'tx_id' => 'TransactionId',
-        'fee' => 'Money',
     ];
 }

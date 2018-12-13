@@ -96,11 +96,16 @@ final class AdsUtils
         return intval(max($fee, self::TXS_MIN_FEE));
     }
 
-    public static function encodeTxId($binAddress)
+    public static function encodeTxId($hexTxId)
     {
-        $binAddress = strtoupper($binAddress);
+        $hexTxId = strtoupper($hexTxId);
 
-        return sprintf('%s%s%s', substr($binAddress, 0, 4), substr($binAddress, 4, 8), substr($binAddress, 12, 4));
+        return sprintf(
+            '%s:%s:%s',
+            substr($hexTxId, 0, 4),
+            substr($hexTxId, 4, 8),
+            substr($hexTxId, 12, 4)
+        );
     }
 
     public static function decodeTxId($address)
