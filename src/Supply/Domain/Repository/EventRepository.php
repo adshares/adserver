@@ -22,7 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Repository;
 
+use DateTime;
+
 interface EventRepository
 {
-    public function fetchEventsFromDate(\DateTime $dateTime): array;
+    public function fetchEventsFromDate(DateTime $dateTime): array;
 }

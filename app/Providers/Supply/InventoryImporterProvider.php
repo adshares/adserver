@@ -38,7 +38,7 @@ class InventoryImporterProvider extends ServiceProvider
             return new InventoryImporter(
                 $markedCampaignsAsDeactivatedService,
                 $campaignRepository,
-                new GuzzleDemandClient(), //$app->make(AdUserHttpClient::class)
+                new GuzzleDemandClient(),
                 new EloquentTransactionManager()
             );
         });
