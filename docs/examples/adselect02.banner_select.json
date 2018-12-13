@@ -5,7 +5,9 @@
   "params": [
     {
       "keywords": {
-        "interest": "200142"
+        "interest": [
+          "200142"
+        ]
       },
       "banner_size": "160x600",
       "publisher_id": "pid",
@@ -14,7 +16,9 @@
     },
     {
       "keywords": {
-        "interest": "200142"
+        "interest": [
+          "200142"
+        ]
       },
       "banner_size": "160x600",
       "publisher_id": "pid",
@@ -23,7 +27,9 @@
     },
     {
       "keywords": {
-        "interest": "200142"
+        "interest": [
+          "200142"
+        ]
       },
       "banner_size": "970x90",
       "publisher_id": "pid",
@@ -32,7 +38,9 @@
     },
     {
       "keywords": {
-        "interest": "200142"
+        "interest": [
+          "200142"
+        ]
       },
       "banner_size": "320x50",
       "publisher_id": "pid",

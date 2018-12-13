@@ -20,10 +20,18 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use GuzzleHttp\ClientInterface;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-interface AdSelectHttpClient extends ClientInterface
+final class ErrorResponse extends Exception
 {
+    private const FIELD_ERROR_MESSAGE = 'message';
+
+    private const FIELD_ERROR_CODE = 'code';
+
+    public static function fromResponseError(array $error)
+    {
+        return new static($error[self::FIELD_ERROR_MESSAGE], (int)$error[self::FIELD_ERROR_CODE]);
+    }
 }

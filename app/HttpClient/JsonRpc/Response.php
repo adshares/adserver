@@ -22,19 +22,20 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\RemoteCallException;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponse;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\BoolResult;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ObjectResult;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use function GuzzleHttp\json_decode;
 use function is_array;
 use function is_bool;
 
-final class RawResponse
+final class Response
 {
     private const FIELD_ID = 'id';
 
@@ -52,48 +53,61 @@ final class RawResponse
     private $procedure;
 
     /**
-     * @throws RemoteCallException
+     * @throws ErrorResponse
+     * @throws ResponseException
+     * @throws \Adshares\Common\Exception\Exception
      */
     public function __construct(ResponseInterface $response, Procedure $procedure)
     {
         $this->response = $response;
         $this->procedure = $procedure;
-        $this->failIfInvalid();
+        $this->failIfInvalidResponse();
+        $this->failOnResponseError();
+        $this->failIfNoResult();
     }
 
     /**
-     * @throws RemoteCallException
+     * @throws ResponseException
+     * @throws \Adshares\Common\Exception\Exception
      */
-    private function failIfInvalid(): void
+    private function failIfInvalidResponse(): void
     {
         $statusCode = $this->response->getStatusCode();
 
-        if ($statusCode !== Response::HTTP_OK) {
-            throw  RemoteCallException::unexpectedStatusCode($statusCode);
+        if ($statusCode !== HttpResponse::HTTP_OK) {
+            throw  ResponseException::unexpectedStatusCode($statusCode);
         }
 
         try {
             $this->content = json_decode((string)$this->response->getBody(), true);
         } catch (InvalidArgumentException $e) {
-            throw RemoteCallException::fromOther($e);
+            throw ResponseException::fromOther($e);
         }
 
-        if (!isset($this->content[self::FIELD_ID]) || !$this->content[self::FIELD_ID]) {
-            throw  RemoteCallException::missingField(self::FIELD_ID);
+        $responseId = $this->content[self::FIELD_ID] ?? false;
+        if (!$responseId) {
+            throw  ResponseException::missingField(self::FIELD_ID);
         }
 
         $id = $this->procedure->id();
 
-        if ($this->content[self::FIELD_ID] !== $id) {
-            throw RemoteCallException::mismatchedIds($id, $this->content[self::FIELD_ID]);
+        if ($responseId !== $id) {
+            throw ResponseException::mismatchedIds($id, $responseId);
         }
+    }
 
-        if (isset($this->content[self::FIELD_ERROR])) {
-            throw RemoteCallException::fromResponseError($this->content[self::FIELD_ERROR]);
+    private function failOnResponseError(): void
+    {
+        $responseError = $this->content[self::FIELD_ERROR] ?? [];
+        if ((bool)$responseError) {
+            throw ErrorResponse::fromResponseError($responseError);
         }
+    }
 
+    private function failIfNoResult(): void
+    {
         if (!isset($this->content[self::FIELD_RESULT])) {
-            throw  RemoteCallException::missingField(self::FIELD_RESULT);
+            throw  ResponseException::missingField(self::FIELD_RESULT);
         }
     }
 
@@ -123,10 +137,5 @@ final class RawResponse
         }
 
         return array_keys($arr) === range(0, count($arr) - 1);
-    }
-
-    private function hasStringKeys(array $array)
-    {
-        return count(array_filter(array_keys($array), 'is_string')) > 0;
     }
 }

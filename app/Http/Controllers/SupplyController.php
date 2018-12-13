@@ -26,9 +26,9 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
-use Adshares\Supply\Application\Service\UserContextProvider;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,7 +42,7 @@ class SupplyController extends Controller
 {
     public function find(
         Request $request,
-        UserContextProvider $contextProvider,
+        AdUser $contextProvider,
         AdSelect $bannerFinder,
         string $data = null
     ) {
@@ -113,7 +113,7 @@ class SupplyController extends Controller
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $request, $params) {
+            function () use ($jsPath, $params) {
                 echo str_replace(
                     [
                         "'{{ ORIGIN }}'",

@@ -25,8 +25,8 @@ use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Common\Application\Service\AdClassify;
+use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class OptionsTest extends TestCase
@@ -93,11 +93,11 @@ class OptionsTest extends TestCase
     {
         parent::setUp();
 
-        $this->app->bind(TargetingOptionsSource::class, function () {
+        $this->app->bind(AdUser::class, function () {
             return new DummyAdUserClient();
         });
 
-        $this->app->bind(FilteringOptionsSource::class, function () {
+        $this->app->bind(AdClassify::class, function () {
             return new DummyAdClassifyClient();
         });
     }

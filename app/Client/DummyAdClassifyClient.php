@@ -24,12 +24,12 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
+use Adshares\Common\Application\Service\AdClassify;
 use function base_path;
 use function file_get_contents;
 use function GuzzleHttp\json_decode;
 
-final class DummyAdClassifyClient implements FilteringOptionsSource
+final class DummyAdClassifyClient implements AdClassify
 {
     public function fetchFilteringOptions(): Taxonomy
     {

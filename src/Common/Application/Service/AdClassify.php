@@ -17,15 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-interface UserContextProvider
+interface AdClassify
 {
-    public function getUserContext(ImpressionContext $context): UserContext;
+    public function fetchFilteringOptions(): Taxonomy;
 }
