@@ -35,9 +35,6 @@ Route::get('/serve/{id}', [DemandController::class, 'serve'])->name('banner-serv
 Route::get('/view/{id}', [DemandController::class, 'view'])->name('banner-view');
 Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
 
-Route::get('/l/context/{log_id}', [DemandController::class, 'logContext'])->name('log-context');
-Route::get('/l/keywords/{log_id}', [DemandController::class, 'logKeywords'])->name('log-keywords');
-
 Route::get('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
 Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
@@ -47,7 +44,6 @@ Route::get('/supply/register', [SupplyController::class, 'register'])->name('sup
 
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name('log-network-view');
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->name('log-network-click');
-Route::get('/l/n/keywords/{log_id}', [SupplyController::class, 'logNetworkKeywords'])->name('log-network-keywords');
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);

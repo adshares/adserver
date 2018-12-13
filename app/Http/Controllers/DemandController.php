@@ -177,6 +177,7 @@ class DemandController extends Controller
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -189,6 +190,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->publisher_id = $publisherId;
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -208,6 +210,7 @@ class DemandController extends Controller
         $eventId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -245,6 +248,7 @@ class DemandController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->publisher_id = $publisherId;
         $log->pay_to = $payTo;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -252,71 +256,6 @@ class DemandController extends Controller
         $log->event_type = 'view';
         $log->their_userdata = $keywords;
         $log->save();
-
-        return $response;
-    }
-
-    public function logKeywords(Request $request, $log_id)
-    {
-        $url = Utils::urlSafeBase64Decode($request->query->get('r'));
-
-        // GET kewords from aduser
-        $impressionId = $request->query->get('iid');
-        $aduser_endpoint = config('app.aduser_external_location');
-        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(
-            file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"),
-            true
-        ) : [];
-
-        $log = EventLog::find($log_id);
-        if (!empty($log)) {
-            $log->our_userdata = $userdata['keywords'];
-            $log->human_score = $userdata['human_score'];
-            $log->user_id = $userdata['user_id'];
-            $log->save();
-        }
-
-        $url = Utils::addUrlParameter($url, 's', parse_url($aduser_endpoint, PHP_URL_HOST));
-        $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($userdata['keywords'])));
-
-        $response = new RedirectResponse($url);
-
-        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        // $adpayService instanceof Adpay;
-        //
-        // if ($adpayService && $log->getOurContext() && $log->getUserId()) {
-        //     $adpayService->addEvents([
-        //       $log->getAdpayJson(),
-        //   ]);
-        // }
-
-        return $response;
-    }
-
-    public function logContext(Request $request, $log_id)
-    {
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
-
-        $context = Utils::getImpressionContext($request, $keywords);
-
-        $log = EventLog::find($log_id);
-
-        if (!empty($log)) {
-            $log->our_context = $context;
-            $log->save();
-        }
-
-        $response = Response::make(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->header('Content-Type', 'image/gif');
-
-        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        // $adpayService instanceof Adpay;
-        //
-        // if ($adpayService && $log->getOurContext() && $log->getUserId()) {
-        //     $adpayService->addEvents([
-        //       $log->getAdpayJson(),
-        //     ]);
-        // }
 
         return $response;
     }

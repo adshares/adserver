@@ -32,6 +32,7 @@ use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\FilteringOptionsSource;
 use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\BannerFinder;
 use Adshares\Supply\Application\Service\InventoryExporter;
@@ -47,7 +48,7 @@ final class ExternalServiceProvider extends ServiceProvider
             return new JsonRpcAdPayClient(new JsonRpc($app->make(AdPayHttpClient::class)));
         });
 
-        $this->app->bind(BannerFinder::class, function (Application $app) {
+        $this->app->bind(AdSelect::class, function (Application $app) {
             return new JsonRpcAdSelectClient(new JsonRpc($app->make(AdSelectHttpClient::class)));
         });
 

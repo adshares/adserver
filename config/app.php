@@ -202,6 +202,7 @@ return [
         Adshares\Adserver\Providers\Common\HttpClientProvider::class,
         Adshares\Adserver\Providers\Common\ExternalServiceProvider::class,
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
+        Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
     ],
 
     /*

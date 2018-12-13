@@ -24,10 +24,10 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Services\Adselect;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\UserContextProvider;
 use DateTime;
 use Illuminate\Http\Request;
@@ -43,7 +43,7 @@ class SupplyController extends Controller
     public function find(
         Request $request,
         UserContextProvider $contextProvider,
-        BannerFinder $bannerFinder,
+        AdSelect $bannerFinder,
         string $data = null
     ) {
         $response = new Response();
@@ -183,8 +183,10 @@ class SupplyController extends Controller
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-
+        $zoneId = $context['page']['zone'];
+        $publisherId = Zone::fetchPublisherId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -194,6 +196,7 @@ class SupplyController extends Controller
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $context['page']['zone'];
+        $log->publisher_id = $publisherId;
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
@@ -233,9 +236,12 @@ class SupplyController extends Controller
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
+        $zoneId = $context['page']['zone'];
+        $publisherId = Zone::fetchPublisherId($zoneId);
 
         $url = Utils::addUrlParameter($url, 'cid', $eventId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -244,35 +250,14 @@ class SupplyController extends Controller
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
         $log->pay_from = $payFrom;
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
         $log->event_type = 'view';
         $log->context = Utils::getImpressionContext($request);
         $log->save();
-
-        return $response;
-    }
-
-    public function logNetworkKeywords(Request $request, $log_id): Response
-    {
-        $source = $request->query->get('s');
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
-
-        $log = NetworkEventLog::find($log_id);
-        if ($log) {
-            $log->their_userdata = $keywords;
-            $log->save();
-        }
-        //         $keywords = print_r($keywords, 1);
-        //         $response = new Response("nKeywords logId={$log_id} source={$source} keywords={$keywords}");
-        //         return $response;
-
-        $response = new Response();
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->headers->set('Content-Type', 'image/gif');
 
         return $response;
     }

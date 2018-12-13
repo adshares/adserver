@@ -145,6 +145,14 @@ HTML;
         return self::whereIn('id', $zoneIdList)->get();
     }
 
+    public static function fetchPublisherId(int $zoneId): string
+    {
+        $zone = self::find($zoneId);
+        $user = $zone->site->user;
+
+        return $user->uuid;
+    }
+
     public function site()
     {
         return $this->belongsTo(Site::class);

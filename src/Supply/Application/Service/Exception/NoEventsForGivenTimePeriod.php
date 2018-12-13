@@ -18,26 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
-use Adshares\Supply\Domain\Model\Campaign;
+namespace Adshares\Supply\Application\Service\Exception;
 
-class AdSelectInventoryExporter
+use RuntimeException;
+
+class NoEventsForGivenTimePeriod extends RuntimeException
 {
-    private $client;
 
-    public function __construct(AdSelect $client)
-    {
-        $this->client = $client;
-    }
-
-    public function export(Campaign $campaign): void
-    {
-        if ($campaign->getBanners()->count() === 0) {
-            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
-        }
-
-        $this->client->exportInventory($campaign);
-    }
 }

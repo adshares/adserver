@@ -18,11 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\Model\Campaign;
+namespace Adshares\Adserver\Providers\Supply;
 
-interface InventoryExporter
+use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
+use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Illuminate\Support\ServiceProvider;
+
+class AdSelectEventExporterProvider extends ServiceProvider
 {
-    public function exportInventory(Campaign $campaign): void;
+    public function register(): void
+    {
+        $this->app->bind(AdSelectEventExporter::class, function ($app) {
+            $eventRepository = new NetworkEventRepository();
+
+            return new AdSelectEventExporter(
+                $app->make(AdSelect::class),
+                $eventRepository
+            );
+        });
+    }
 }

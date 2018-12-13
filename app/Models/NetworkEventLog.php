@@ -46,6 +46,7 @@ class NetworkEventLog extends Model
         'user_id',
         'banner_id',
         'zone_id',
+        'publisher_id',
         'pay_from',
         'event_type',
         'ip',
@@ -76,6 +77,7 @@ class NetworkEventLog extends Model
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
+        'publisher_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -85,29 +87,4 @@ class NetworkEventLog extends Model
         'event_value' => 'Money',
         'paid_amount' => 'Money',
     ];
-
-    public function getAdselectJson()
-    {
-        return [
-            'event_id' => (string)$this->id,
-            'banner_id' => (string)$this->banner_id,
-            'user_id' => $this->user_id,
-            'zone_id' => $this->zone_id,
-            'keywords' => Utils::flattenKeywords($this->getKeywords()),
-            'paid_amount' => $this->event_value,
-            'human_score' => $this->human_score,
-        ];
-    }
-
-    public function getKeywords()
-    {
-        $data = array_merge(
-            (array)$this->context,
-            [
-                'user' => $this->our_userdata,
-            ]
-        );
-
-        return $data;
-    }
 }
