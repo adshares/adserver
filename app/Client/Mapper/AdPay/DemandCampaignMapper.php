@@ -54,6 +54,8 @@ class DemandCampaignMapper
                     ];
                 }
 
+                $advertiserId = Campaign::fetchAdvertiserId($campaignArray['id']);
+
                 $targeting = self::processTargeting($campaignArray['targeting']);
 
                 $timeStart = self::processDate($campaignArray['time_start']);
@@ -61,6 +63,7 @@ class DemandCampaignMapper
 
                 $mapped = [
                     'campaign_id' => $campaignArray['uuid'],
+                    'advertiser_id' => $advertiserId,
                     'budget' => $campaignArray['basic_information']['budget'],
                     'max_cpc' => $campaignArray['basic_information']['max_cpc'],
                     'max_cpm' => $campaignArray['basic_information']['max_cpm'],

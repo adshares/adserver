@@ -131,6 +131,13 @@ class Campaign extends Model
         return in_array($status, self::STATUSES);
     }
 
+    public static function fetchAdvertiserId(int $campaignId): string
+    {
+        $campaign = self::find($campaignId);
+
+        return $campaign->user->uuid;
+    }
+
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
