@@ -179,7 +179,7 @@ class SupplyController extends Controller
 
         $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
@@ -232,7 +232,7 @@ class SupplyController extends Controller
 
         $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
