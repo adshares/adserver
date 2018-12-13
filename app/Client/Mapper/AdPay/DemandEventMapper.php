@@ -48,7 +48,8 @@ class DemandEventMapper
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
                     'human_score' => $eventArray['human_score'] ?? 0,
-                    'publisher_id' => $eventArray['publisher_id']
+                    'publisher_id' => $eventArray['publisher_id'],
+                    'user_id' => $eventArray['user_id']
                 ];
 
                 if ($eventArray['event_value'] !== null) {
