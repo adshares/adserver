@@ -22,8 +22,12 @@ declare(strict_types = 1);
 namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 
-interface FilteringOptionsSource
+interface AdUser
 {
-    public function fetchFilteringOptions(): Taxonomy;
+    public function fetchTargetingOptions(): Taxonomy;
+
+    public function getUserContext(ImpressionContext $context): UserContext;
 }

@@ -22,17 +22,17 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
 
 class FilteringOptionsImporter
 {
-    /** @var FilteringOptionsSource */
+    /** @var AdClassify */
     private $client;
     /** @var ConfigurationRepository */
     private $repository;
 
-    public function __construct(FilteringOptionsSource $client, ConfigurationRepository $repository)
+    public function __construct(AdClassify $client, ConfigurationRepository $repository)
     {
         $this->client = $client;
         $this->repository = $repository;

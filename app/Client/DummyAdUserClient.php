@@ -24,12 +24,14 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 use function base_path;
 use function file_get_contents;
 use function GuzzleHttp\json_decode;
 
-final class DummyAdUserClient implements TargetingOptionsSource
+final class DummyAdUserClient implements AdUser
 {
     public function fetchTargetingOptions(): Taxonomy
     {
@@ -38,5 +40,10 @@ final class DummyAdUserClient implements TargetingOptionsSource
         $taxonomy = json_decode($var, true);
 
         return TaxonomyFactory::fromArray($taxonomy);
+    }
+
+    public function getUserContext(ImpressionContext $context): UserContext
+    {
+        throw new Exception('Method getUserContext() not implemented');
     }
 }

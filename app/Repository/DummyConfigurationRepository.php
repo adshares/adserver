@@ -23,19 +23,19 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Service\AdClassify;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
 use Exception;
 
 final class DummyConfigurationRepository implements ConfigurationRepository
 {
-    /** @var TargetingOptionsSource */
+    /** @var AdUser */
     private $adUser;
-    /** @var FilteringOptionsSource */
+    /** @var AdClassify */
     private $adClassify;
 
-    public function __construct(TargetingOptionsSource $userClient, FilteringOptionsSource $classifyClient)
+    public function __construct(AdUser $userClient, AdClassify $classifyClient)
     {
         $this->adUser = $userClient;
         $this->adClassify = $classifyClient;

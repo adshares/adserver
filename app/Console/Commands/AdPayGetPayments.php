@@ -27,7 +27,7 @@ use function now;
 
 class AdPayGetPayments extends Command
 {
-    protected $signature = 'adpay:payments';
+    protected $signature = 'ops:adpay:payments';
 
     public function handle(AdPay $adPay): void
     {

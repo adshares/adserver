@@ -17,13 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Common\Application\Service;
 
-use GuzzleHttp\ClientInterface;
+use Adshares\Common\Application\Dto\Taxonomy;
 
-interface AdClassifyHttpClient extends ClientInterface
+interface AdClassify
 {
+    public function fetchFilteringOptions(): Taxonomy;
 }

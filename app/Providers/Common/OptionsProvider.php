@@ -22,13 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Common;
 
-use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\GuzzleAdUserClient;
-use Adshares\Adserver\HttpClient\AdUserHttpClient;
 use Adshares\Adserver\Repository\DummyConfigurationRepository;
+use Adshares\Common\Application\Service\AdClassify;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,19 +33,13 @@ final class OptionsProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(TargetingOptionsSource::class, function (Application $app) {
-            return new GuzzleAdUserClient($app->make(AdUserHttpClient::class));
-        });
-
-        $this->app->bind(FilteringOptionsSource::class, function () {
-            return new DummyAdClassifyClient();
-        });
-
-        $this->app->bind(ConfigurationRepository::class, function (Application $app) {
-            return new DummyConfigurationRepository(
-                $app->make(TargetingOptionsSource::class),
-                $app->make(FilteringOptionsSource::class)
-            );
-        });
+        $this->app->bind(
+            ConfigurationRepository::class,
+            function (Application $app) {
+                return new DummyConfigurationRepository(
+                    $app->make(AdUser::class), $app->make(AdClassify::class)
+                );
+            }
+        );
     }
 }
