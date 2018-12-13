@@ -79,6 +79,28 @@ final class JsonRpcAdSelectClient implements AdSelect
         return new FoundBanners($banners);
     }
 
+    public function exportInventory(Campaign $campaign): void
+    {
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_UPDATE,
+            CampaignMapper::map($campaign)
+        );
+
+        $this->client->call($procedure);
+    }
+
+    public function exportEvents(array $eventsInput): void
+    {
+        $events = [];
+
+        foreach ($eventsInput as $event) {
+            $events[] = EventMapper::map($event);
+        }
+
+        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
+        $this->client->call($procedure);
+    }
+
     private function createZoneToBannerMap(array $items): array
     {
         $idMap = [];
@@ -134,27 +156,5 @@ final class JsonRpcAdSelectClient implements AdSelect
                 ];
             }
         }
-    }
-
-    public function exportInventory(Campaign $campaign): void
-    {
-        $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_UPDATE,
-            CampaignMapper::map($campaign)
-        );
-
-        $this->client->call($procedure);
-    }
-
-    public function exportEvents(array $eventsInput): void
-    {
-        $events = [];
-
-        foreach ($eventsInput as $event) {
-            $events[] = EventMapper::map($event);
-        }
-
-        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
-        $this->client->call($procedure);
     }
 }

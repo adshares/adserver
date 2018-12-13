@@ -36,11 +36,9 @@ class EventMapper
             'banner_id' => $event['banner_id'],
             'user_id' => $event['user_id'],
             'event_id' => $event['event_id'],
+            'event_type' => $event['event_type'],
+            'paid_amount' => 0,
         ];
-
-        if (1 === 1) {
-            $mappedEvent['paid_amount'] = 0;
-        }
 
         return $mappedEvent;
     }
