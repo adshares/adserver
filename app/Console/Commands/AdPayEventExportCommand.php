@@ -21,27 +21,27 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
-use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Console\Command;
 
-class AdPayCampaignExportCommand extends Command
+class AdPayEventExportCommand extends Command
 {
-    protected $signature = 'ops:adpay:campaign:export';
+    protected $signature = 'ops:adpay:event:export';
 
-    protected $description = 'Exports campaign data to AdPay';
+    protected $description = 'Exports event data to AdPay';
 
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
 
-        $configDate = Config::where('key', Config::ADPAY_CAMPAIGN_EXPORT_TIME)->first();
+        $configDate = Config::where('key', Config::ADPAY_EVENT_EXPORT_TIME)->first();
         if (null === $configDate) {
             $configDate = new Config();
-            $configDate->key = Config::ADPAY_CAMPAIGN_EXPORT_TIME;
+            $configDate->key = Config::ADPAY_EVENT_EXPORT_TIME;
 
             $dateFrom = new DateTime('@0');
         } else {
@@ -50,16 +50,10 @@ class AdPayCampaignExportCommand extends Command
 
         $dateNow = new DateTime();
 
-        $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->get();
-        if (count($updatedCampaigns) > 0) {
-            $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
-            $adPay->updateCampaign($campaigns);
-        }
-
-        $deletedCampaigns = Campaign::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
-        if (count($deletedCampaigns) > 0) {
-            $campaignIds = DemandCampaignMapper::mapCampaignCollectionToCampaignIds($deletedCampaigns);
-            $adPay->deleteCampaign($campaignIds);
+        $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
+        if (count($createdEvents) > 0) {
+            $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
+            $adPay->addEvents($events);
         }
 
         $configDate->value = $dateNow->format(DATE_ATOM);
