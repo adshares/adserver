@@ -20,12 +20,19 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Adserver\Repository\Supply;
 
-use Adshares\Supply\Application\Dto\FoundBanners;
-use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Supply\Domain\Repository\EventRepository;
+use DateTime;
 
-interface BannerFinder
+class NetworkEventRepository implements EventRepository
 {
-    public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
+
+    public function fetchEventsFromDate(DateTime $dateTime): array
+    {
+        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
+
+        return $events->toArray();
+    }
 }

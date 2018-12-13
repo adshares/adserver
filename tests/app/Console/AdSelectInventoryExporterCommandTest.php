@@ -29,7 +29,7 @@ class AdSelectInventoryExporterCommandTest extends TestCase
 
     public function testExport(): void
     {
-        $this->artisan('ops:inventory:export')
+        $this->artisan('ops:adselect:inventory:export')
             ->assertExitCode(0);
     }
 }
