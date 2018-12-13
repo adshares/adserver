@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\TransactionId;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
@@ -74,4 +75,12 @@ class Payment extends Model
         'account_hashout' => 'BinHex',
         'tx_id' => 'TransactionId',
     ];
+
+    public static function fetchPayment(string $transactionId, string $accountAddress)
+    {
+        return self::where('tx_id', hex2bin($transactionId))
+            ->where('account_address', hex2bin($accountAddress))
+            ->get()
+            ->first();
+    }
 }

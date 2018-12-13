@@ -25,13 +25,16 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Utilities\AdsUtils;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function hex2bin;
 
 /**
@@ -47,7 +50,7 @@ class DemandController extends Controller
             abort(404);
         }
 
-        if ('OPTIONS' == $request->getRealMethod()) {
+        if ('OPTIONS' === $request->getRealMethod()) {
             $response = new Response('', 204);
         } else {
             $response = new GzippedStreamedResponse();
@@ -60,7 +63,7 @@ class DemandController extends Controller
             $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
-        if ('OPTIONS' == $request->getRealMethod()) {
+        if ('OPTIONS' === $request->getRealMethod()) {
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
             return $response;
@@ -68,7 +71,7 @@ class DemandController extends Controller
 
         $isIECompat = $request->query->has('xdr');
 
-        if ('html' == $banner->creative_type) {
+        if ('html' === $banner->creative_type) {
             $mime = 'text/html';
         } else {
             $mime = 'image/png';
@@ -258,5 +261,43 @@ class DemandController extends Controller
         $log->save();
 
         return $response;
+    }
+
+    public function paymentDetails(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature
+    ): JsonResponse {
+        $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
+        $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
+
+        if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
+
+        }
+
+        $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
+
+        if (!$payment) {
+
+        }
+
+        $events = EventLog::where('payment_id', $payment->id)->get();
+
+        $results = [];
+
+        foreach ($events as $event) {
+            $data = $event->toArray();
+            $results[] = [
+                'event_id' => $data['event_id'],
+                'event_type' => $data['event_id'],
+                'banner_id' => $data['banner_id'],
+                'zone_id' => $data['zone_id'],
+                'event_value' => $data['event_value'],
+                'paid_amount' => $data['paid_amount'],
+            ];
+        }
+
+        return new JsonResponse($results);
     }
 }
