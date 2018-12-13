@@ -20,10 +20,24 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-use GuzzleHttp\ClientInterface;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-interface AdUserHttpClient extends ClientInterface
+final class ResponseException extends Exception
 {
+    public static function missingField(string $fieldName)
+    {
+        return new static(sprintf('Missing JSON-RPC field "%s"', $fieldName));
+    }
+
+    public static function unexpectedStatusCode(int $code)
+    {
+        return new static(sprintf('Unexpected `%s` response code', $code));
+    }
+
+    public static function mismatchedIds($sent, $got)
+    {
+        return new static(sprintf('Mismatched JSON-RPC IDs {sent: %s, got: %s}', $sent, $got));
+    }
 }

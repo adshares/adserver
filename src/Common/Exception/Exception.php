@@ -17,13 +17,23 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Common\Exception;
 
-use Adshares\Common\Application\Dto\Taxonomy;
+use Exception as PhpException;
+use Throwable;
 
-interface FilteringOptionsSource
+class Exception extends PhpException
 {
-    public function fetchFilteringOptions(): Taxonomy;
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public static function fromOther(PhpException $exception)
+    {
+        return new static($exception->getMessage(), $exception->getCode(), $exception);
+    }
 }

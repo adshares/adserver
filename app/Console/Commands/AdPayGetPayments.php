@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License,
- * or (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,10 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Console\Commands;
 
-namespace Adshares\Adserver\HttpClient;
+use Adshares\Common\Exception\Exception;
+use Adshares\Demand\Application\Service\AdPay;
+use Illuminate\Console\Command;
+use function now;
 
-interface AdClassifyHttpClient
+class AdPayGetPayments extends Command
 {
+    protected $signature = 'ops:adpay:payments';
+
+    public function handle(AdPay $adPay): void
+    {
+        $adPay->getPayments(now()->getTimestamp());
+
+        throw new Exception('Not implemented');
+    }
 }

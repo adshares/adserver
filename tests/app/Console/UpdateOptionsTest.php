@@ -24,14 +24,14 @@ namespace Adshares\Adserver\Tests\Console;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Service\FilteringOptionsSource;
-use Adshares\Common\Application\Service\TargetingOptionsSource;
+use Adshares\Common\Application\Service\AdClassify;
+use Adshares\Common\Application\Service\AdUser;
 
 class UpdateOptionsTest extends TestCase
 {
     public function testTargetingOptionsUpdate(): void
     {
-        $this->app->bind(TargetingOptionsSource::class, function () {
+        $this->app->bind(AdUser::class, function () {
             return new DummyAdUserClient();
         });
 
@@ -43,7 +43,7 @@ class UpdateOptionsTest extends TestCase
 
     public function testFilteringOptionsUpdate(): void
     {
-        $this->app->bind(FilteringOptionsSource::class, function () {
+        $this->app->bind(AdClassify::class, function () {
             return new DummyAdClassifyClient();
         });
 

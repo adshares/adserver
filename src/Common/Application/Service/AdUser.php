@@ -19,31 +19,15 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Model\Selector;
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 
-class TargetingOptionsImporter
+interface AdUser
 {
-    /** @var AdUser */
-    private $client;
-    /** @var ConfigurationRepository */
-    private $repository;
+    public function fetchTargetingOptions(): Taxonomy;
 
-    public function __construct(AdUser $client, ConfigurationRepository $repository)
-    {
-        $this->client = $client;
-        $this->repository = $repository;
-    }
-
-    public function import(): void
-    {
-        $taxonomy = $this->client->fetchTargetingOptions();
-
-        $options = Selector::fromTaxonomy($taxonomy);
-
-        $this->repository->storeTargetingOptions($options);
-    }
+    public function getUserContext(ImpressionContext $context): UserContext;
 }
