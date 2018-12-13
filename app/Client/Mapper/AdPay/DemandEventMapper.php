@@ -53,7 +53,7 @@ class DemandEventMapper
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
                     'human_score' => $eventArray['human_score'] ?? 0,
-                    'publisher_id' => '1',//TODO add publisher id
+                    'publisher_id' => $eventArray['publisher_id']
                 ];
 
                 if ($eventArray['event_value'] !== null) {
