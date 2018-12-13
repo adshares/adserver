@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             MockDataSitesSeeder::class,
             MockDataCampaignsSeeder::class,
             MockDataNetworkHostsSeeder::class,
+            MockDataPaymentsAndEventLogsSeeder::class,
         ]);
     }
 }

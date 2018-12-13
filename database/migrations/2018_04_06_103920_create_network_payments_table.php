@@ -37,11 +37,11 @@ class CreateNetworkPaymentsTable extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->binary('receiver_address', 6); // REQ CUSTOM ALTER
-            $table->binary('sender_address', 6); // REQ CUSTOM ALTER
+            $table->binary('receiver_address', 6);
+            $table->binary('sender_address', 6);
             $table->string('sender_host', 32);
             $table->decimal('amount');
-            $table->string('tx_id', 128);
+            $table->binary('tx_id', 8);
             $table->integer('tx_time');
             $table->boolean('detailed_data_used');
             $table->boolean('processed');
@@ -50,6 +50,7 @@ class CreateNetworkPaymentsTable extends Migration
         if (DB::isMysql()) {
             DB::statement("ALTER TABLE network_payments MODIFY receiver_address varbinary(6)");
             DB::statement("ALTER TABLE network_payments MODIFY sender_address varbinary(6)");
+            DB::statement("ALTER TABLE network_payments MODIFY tx_id varbinary(8)");
         }
     }
 
