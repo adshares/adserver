@@ -25,35 +25,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
 {
-    /**
-     * Time of last processed event in ADS user's log
-     */
-    const ADS_LOG_START = 'ads-log-start';
+    public const ADS_LOG_START = 'ads-log-start';
 
-    /**
-     * Time of last campaign export to AdPay
-     */
-    const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
+    public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
-    /**
-     * Time of last event export to AdPay
-     */
-    const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
+    public const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
 
-    const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
+    private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
     public $incrementing = false;
 
     protected $primaryKey = 'key';
 
     protected $keyType = 'string';
-    /**
-     * The attributes that aren't mass assignable.
-     *
-     * @var array
-     */
-    protected $guarded = [];
 
+    protected $guarded = [];
 
     public static function fetchAdSelectEventExportTime(): DateTime
     {
