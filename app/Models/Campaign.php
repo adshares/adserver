@@ -136,6 +136,11 @@ class Campaign extends Model
         return $this->hasMany(Banner::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function getAdsAttribute()
     {
         foreach ($this->banners as &$banner) {

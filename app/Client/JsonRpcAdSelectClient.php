@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\EventMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
@@ -31,18 +32,19 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
-use Adshares\Supply\Application\Service\InventoryExporter;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
 use Generator;
 use function array_map;
 use function iterator_to_array;
 
-final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
+final class JsonRpcAdSelectClient implements AdSelect
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 
     private const METHOD_BANNER_SELECT = 'banner_select';
+
+    private const METHOD_EVENT_UPDATE = 'impression_add';
 
     /** @var JsonRpc */
     private $client;
@@ -75,6 +77,28 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
         return new FoundBanners($banners);
+    }
+
+    public function exportInventory(Campaign $campaign): void
+    {
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_UPDATE,
+            CampaignMapper::map($campaign)
+        );
+
+        $this->client->call($procedure);
+    }
+
+    public function exportEvents(array $eventsInput): void
+    {
+        $events = [];
+
+        foreach ($eventsInput as $event) {
+            $events[] = EventMapper::map($event);
+        }
+
+        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
+        $this->client->call($procedure);
     }
 
     private function createZoneToBannerMap(array $items): array
@@ -132,15 +156,5 @@ final class JsonRpcAdSelectClient implements BannerFinder, InventoryExporter
                 ];
             }
         }
-    }
-
-    public function exportInventory(Campaign $campaign): void
-    {
-        $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_UPDATE,
-            CampaignMapper::map($campaign)
-        );
-
-        $this->client->call($procedure);
     }
 }

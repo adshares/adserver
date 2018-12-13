@@ -20,32 +20,48 @@
 
 namespace Adshares\Adserver\Models;
 
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
 class Config extends Model
 {
-    /**
-     * Time of last processed event in ADS user's log
-     */
-    const ADS_LOG_START = 'ads-log-start';
+    public const ADS_LOG_START = 'ads-log-start';
 
-    /**
-     * Time of last campaign export to AdPay
-     */
-    const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-camp-export';
+    public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
-    /**
-     * Time of last event export to AdPay
-     */
-    const ADPAY_EVENT_EXPORT_TIME = 'adpay-evt-export';
+    public const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
+
+    private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
     public $incrementing = false;
+
     protected $primaryKey = 'key';
+
     protected $keyType = 'string';
-    /**
-     * The attributes that aren't mass assignable.
-     *
-     * @var array
-     */
+
     protected $guarded = [];
+
+    public static function fetchAdSelectEventExportTime(): DateTime
+    {
+        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+
+        if (!$config) {
+            return new DateTime('@0');
+        }
+
+        return DateTime::createFromFormat(DateTime::ATOM, $config->value);
+    }
+
+    public static function updateAdSelectEventExportTime(\DateTime $date): void
+    {
+        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+
+        if (!$config) {
+            $config = new self();
+            $config->key = self::ADSELECT_EVENT_EXPORT_TIME;
+        }
+
+        $config->value = $date->format(DateTime::ATOM);
+        $config->save();
+    }
 }

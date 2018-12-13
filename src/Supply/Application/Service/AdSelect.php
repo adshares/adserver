@@ -20,24 +20,15 @@
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
+use Adshares\Supply\Application\Dto\FoundBanners;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Domain\Model\Campaign;
 
-class AdSelectInventoryExporter
+interface AdSelect
 {
-    private $client;
+    public function exportInventory(Campaign $campaign): void;
 
-    public function __construct(AdSelect $client)
-    {
-        $this->client = $client;
-    }
+    public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 
-    public function export(Campaign $campaign): void
-    {
-        if ($campaign->getBanners()->count() === 0) {
-            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
-        }
-
-        $this->client->exportInventory($campaign);
-    }
+    public function exportEvents(array $events): void;
 }
