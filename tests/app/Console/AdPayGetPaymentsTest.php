@@ -79,6 +79,5 @@ class AdPayGetPaymentsTest extends TestCase
                 );
             }
         );
-
     }
 }
