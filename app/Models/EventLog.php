@@ -26,6 +26,9 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int event_id
+ */
 class EventLog extends Model
 {
     use AccountAddress;
