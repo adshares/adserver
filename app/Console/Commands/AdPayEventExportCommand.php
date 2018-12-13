@@ -50,10 +50,7 @@ class AdPayEventExportCommand extends Command
 
         $dateNow = new DateTime();
 
-        $createdEvents =
-            EventLog::where('created_at', '>=', $dateFrom)
-                ->whereIn('event_type', [EventLog::TYPE_CLICK, EventLog::TYPE_VIEW])
-                ->get();
+        $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
         if (count($createdEvents) > 0) {
             $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
             $adPay->addEvents($events);
