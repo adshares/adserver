@@ -30,21 +30,10 @@ use Illuminate\Console\Command;
 
 class AdPayEventExportCommand extends Command
 {
-    /**
-     * @var string
-     */
     protected $signature = 'ops:adpay:event:export';
 
-    /**
-     * @var string
-     */
     protected $description = 'Exports event data to AdPay';
 
-    /**
-     * @param AdPay $adPay
-     *
-     * @throws \Exception
-     */
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);

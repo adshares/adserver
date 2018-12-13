@@ -30,21 +30,10 @@ use Illuminate\Console\Command;
 
 class AdPayCampaignExportCommand extends Command
 {
-    /**
-     * @var string
-     */
     protected $signature = 'ops:adpay:campaign:export';
 
-    /**
-     * @var string
-     */
     protected $description = 'Exports campaign data to AdPay';
 
-    /**
-     * @param AdPay $adPay
-     *
-     * @throws \Exception
-     */
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);

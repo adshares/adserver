@@ -29,11 +29,6 @@ use stdClass;
 
 class DemandEventMapper
 {
-    /**
-     * @param Collection $events
-     *
-     * @return array
-     */
     public static function mapEventCollectionToEventArray(Collection $events): array
     {
         $eventArray = $events->map(

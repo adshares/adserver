@@ -30,11 +30,6 @@ use stdClass;
 
 class DemandCampaignMapper
 {
-    /**
-     * @param Collection $campaigns
-     *
-     * @return array
-     */
     public static function mapCampaignCollectionToCampaignArray(Collection $campaigns): array
     {
         $campaignArray = $campaigns->map(
@@ -78,12 +73,6 @@ class DemandCampaignMapper
         return $campaignArray;
     }
 
-    /**
-     * @param string|null $date
-     *
-     * @return int
-     * @throws \Exception
-     */
     private static function processDate(?string $date): int
     {
         if ($date === null) {
@@ -93,11 +82,6 @@ class DemandCampaignMapper
         return DateTime::createFromFormat(DATE_ATOM, $date)->getTimestamp();
     }
 
-    /**
-     * @param array $campaign
-     *
-     * @return stdClass
-     */
     private static function processKeywords(array $campaign)
     {
         if ($campaign['classification_status'] != 2 || $campaign['classification_tags'] === null) {
@@ -107,11 +91,6 @@ class DemandCampaignMapper
         return array_fill_keys(explode(',', $campaign['classification_tags']), 1);
     }
 
-    /**
-     * @param array $banner
-     *
-     * @return string
-     */
     private static function processSize(array $banner): string
     {
         return $banner['creative_width'].'x'.$banner['creative_height'];
@@ -125,11 +104,6 @@ class DemandCampaignMapper
         );
     }
 
-    /**
-     * @param Collection $campaigns
-     *
-     * @return array
-     */
     public static function mapCampaignCollectionToCampaignIds(Collection $campaigns): array
     {
         $campaignIds = [];
