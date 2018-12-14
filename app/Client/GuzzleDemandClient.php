@@ -39,7 +39,9 @@ final class GuzzleDemandClient implements DemandClient
 {
     const VERSION = '0.1';
 
-    const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+
+    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
@@ -102,5 +104,47 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
 
         return $data;
+    }
+
+    public function fetchPaymentDetails(string $host, string $transactionId): array
+    {
+        $client = new Client([
+            'base_uri' => $host,
+            'timeout' => 5.0,
+        ]);
+
+        $accountAddress = config('app.adshares_address');
+        $date = (new DateTime())->format(DATE_ATOM);
+        $signature = 'sg';//TODO create signature
+
+        $endpoint = str_replace(
+            [
+                '{transactionId}',
+                '{accountAddress}',
+                '{date}',
+                '{signature}',
+            ],
+            [
+                $transactionId,
+                $accountAddress,
+                $date,
+                $signature,
+            ],
+            self::PAYMENT_DETAILS_ENDPOINT
+        );
+
+        $response = $client->get($endpoint);
+        $statusCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        // TODO validate response
+
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
     }
 }

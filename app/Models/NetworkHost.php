@@ -48,6 +48,11 @@ class NetworkHost extends Model
         'last_broadcast',
     ];
 
+    public static function fetchByAddress(string $address): ?NetworkHost
+    {
+        return self::where('address', $address)->first();
+    }
+
     public static function registerHost(string $address, string $host, ?\DateTime $lastBroadcast = null): NetworkHost
     {
         $networkHost = self::where('address', $address)->first();
@@ -58,7 +63,7 @@ class NetworkHost extends Model
         }
 
         $networkHost->host = $host;
-        $networkHost->last_broadcast = (null === $lastBroadcast) ? new DateTime() : $lastBroadcast;
+        $networkHost->last_broadcast = $lastBroadcast ?? new DateTime();
         $networkHost->save();
 
         return $networkHost;

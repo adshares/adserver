@@ -26,10 +26,13 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Exception;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
@@ -133,7 +136,7 @@ class AdsProcessTx extends Command
         }
     }
 
-    private function handleSendManyTx($dbTx, $transaction): void
+    private function handleSendManyTx(AdsTxIn $dbTx, $transaction): void
     {
         $isTxTargetValid = false;
         $wiresCount = $transaction->getWireCount();
@@ -161,18 +164,13 @@ class AdsProcessTx extends Command
 
     private function handleReservedTx(AdsTxIn $dbTx): void
     {
-        // TODO check if tx is payment for events
-
-//            $txid = $dbTx->txid
-//            $this->adServerAddress
-        // TODO if payment is for events update status
-//            $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
-
-        $dbTx->status = AdsTxIn::STATUS_RESERVED;
-        $dbTx->save();
+        if (!$this->handleIfEventPayment($dbTx)) {
+            $dbTx->status = AdsTxIn::STATUS_RESERVED;
+            $dbTx->save();
+        }
     }
 
-    private function handleSendOneTx($dbTx, $transaction): void
+    private function handleSendOneTx(AdsTxIn $dbTx, $transaction): void
     {
         $targetAddr = $transaction->getTargetAddress();
 
@@ -212,5 +210,30 @@ class AdsProcessTx extends Command
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);
+    }
+
+    private function handleIfEventPayment(AdsTxIn $dbTx): bool
+    {
+        $networkHost = NetworkHost::fetchByAddress($dbTx->address);
+
+        if ($networkHost === null) {
+            return false;
+        }
+
+        $host = $networkHost->host;
+        $txid = $dbTx->txid;
+
+        try {
+            $paymentDetails = (new GuzzleDemandClient())->fetchPaymentDetails($host, $txid);
+        } catch (Exception $exception) {
+            return false;
+        }
+
+        // TODO process payment details
+
+        $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
+        $dbTx->save();
+
+        return true;
     }
 }
