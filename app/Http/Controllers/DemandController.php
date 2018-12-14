@@ -294,9 +294,10 @@ class DemandController extends Controller
             $data = $event->toArray();
             $results[] = [
                 'event_id' => $data['event_id'],
-                'event_type' => $data['event_id'],
+                'event_type' => $data['event_type'],
                 'banner_id' => $data['banner_id'],
                 'zone_id' => $data['zone_id'],
+                'publisher_id' => $data['publisher_id'],
                 'event_value' => $data['event_value'],
                 'paid_amount' => $data['paid_amount'],
             ];

@@ -21,9 +21,11 @@
 namespace Adshares\Adserver\Exceptions;
 
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -52,6 +54,18 @@ class Handler extends ExceptionHandler
             );
         }
 
+        if ($exception instanceof ModelNotFoundException) {
+            return $this->response($exception->getMessage(), Response::HTTP_NOT_FOUND, $exception->getTrace());
+        }
+
+        if ($exception instanceof ValidationException) {
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                $exception->getTrace()
+            );
+        }
+
         return $this->response(
             $env === self::ENV_DEV ? $exception->getMessage() : 'Internal error.',
             Response::HTTP_INTERNAL_SERVER_ERROR,
@@ -75,6 +89,6 @@ class Handler extends ExceptionHandler
             $data['detail'] = $detail;
         }
 
-        return new JsonResponse($data);
+        return new JsonResponse($data, $code);
     }
 }
