@@ -281,7 +281,10 @@ class DemandController extends Controller
         $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
 
         if (!$payment) {
-            throw new NotFoundHttpException('Payment for given transactionId not found.');
+            throw new NotFoundHttpException(sprintf(
+                'Payment for given transaction %s is not found.',
+                $transactionId)
+            );
         }
 
         $events = EventLog::fetchEvents($payment->id);
