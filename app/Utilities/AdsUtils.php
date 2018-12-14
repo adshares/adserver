@@ -124,7 +124,7 @@ final class AdsUtils
         $address = preg_replace('/[^0-9A-F]+/', '', strtoupper($address));
 
         if (!preg_match('/[0-9A-F]{16}/', $address)) {
-            throw new \InvalidArgumentException("Incorrect account address $address");
+            return null;
         }
 
         return substr($address, 0, 12);
