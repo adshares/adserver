@@ -58,9 +58,12 @@ final class ImpressionContext
             }
         );
 
-        $user['keywords']['interest'] = [];
+        if (!isset($user['keywords']['interest'])) {
+            $user['keywords']['interest'] = [];
+        }
+
         foreach ($userKeywords as $keyword) {
-            $user['keywords']['interest'][] = str_replace('accio:', '', $keyword);
+            $user['keywords']['interest'][] = str_replace(self::ACCIO, '', $keyword);
         }
 
         $site['keywords'] = array_filter(
@@ -75,12 +78,14 @@ final class ImpressionContext
 
     public function adUserRequestBody(): string
     {
+        $uid = config('app.adserver_id').'_'.$this->user['uid'];
+
         return <<<"JSON"
 {
     "domain": "{$this->site['domain']}",
     "ip": "{$this->device['ip']}",
     "ua": "{$this->device['ua']}",
-    "uid": "{$this->user['uid']}"
+    "uid": "{$uid}"
 }
 JSON;
     }

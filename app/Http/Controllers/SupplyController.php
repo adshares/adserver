@@ -87,12 +87,8 @@ class SupplyController extends Controller
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
 
-        $context = new ImpressionContext(
-            $site,
-            $device,
-            $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]))
-                ->toAdSelectPartialArray()
-        );
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
         $zones = Utils::decodeZones($data)['zones'];
 
