@@ -28,6 +28,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ConnectException;
 use function GuzzleHttp\json_decode;
 
@@ -52,10 +53,11 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         try {
+            $body = $partialContext->adUserRequestBody();
             $response = $this->client->post(
                 '/getData',
                 [
-                    'body' => $partialContext->adUserRequestBody(),
+                    'body' => $body,
                 ]
             );
 
@@ -63,6 +65,8 @@ final class GuzzleAdUserClient implements AdUser
 
             return UserContext::fromAdUserArray($context);
         } catch (ConnectException $exception) {
+            return new UserContext([], 1, $partialContext->userId());
+        } catch (ClientException $exception) {
             return new UserContext([], 1, $partialContext->userId());
         }
     }
