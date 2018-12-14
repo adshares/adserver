@@ -24,10 +24,12 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * @property int event_id
+ * @mixin Builder
  */
 class EventLog extends Model
 {

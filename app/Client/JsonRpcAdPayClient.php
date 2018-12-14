@@ -78,6 +78,6 @@ class JsonRpcAdPayClient implements AdPay
     {
         $procedure = new Procedure(self::METHOD_GET_PAYMENTS, [['timestamp' => $timestamp]]);
 
-        return $this->client->call($procedure)->toArray();
+        return $this->client->call($procedure)->toArray()['payments'];
     }
 }
