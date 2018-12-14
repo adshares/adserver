@@ -18,22 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+use Adshares\Adserver\Models\EventLog;
+use Faker\Generator as Faker;
 
-/**
- *  store money balance
- */
-trait Money
-{
-    public function moneyMutator($key, $value)
-    {
-        $this->attributes[$key] = $value;
+$factory->define(
+    EventLog::class,
+    function (Faker $faker) {
+        return [
+            'event_id' => $faker->uuid,
+            'user_id' => $faker->uuid,
+            'banner_id' => $faker->uuid,
+            'publisher_id' => $faker->uuid,
+            'event_type' => 'view',
+            'ip' => bin2hex(inet_pton($faker->ipv4)),
+        ];
     }
-
-    public function moneyAccessor($value)
-    {
-        return $value === null ? null : $value;
-    }
-
-    // TODO: this is just tmp mock, should be processed to Money class (Currency)
-}
+);

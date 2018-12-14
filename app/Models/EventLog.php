@@ -27,6 +27,9 @@ use Adshares\Adserver\Models\Traits\JsonValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
 
+/**
+ * @property int event_id
+ */
 class EventLog extends Model
 {
     use AccountAddress;

@@ -20,17 +20,20 @@
 
 namespace Adshares\Adserver\Models\Traits;
 
+use function str_replace;
+
 /**
  * binhex columns
  */
 trait BinHex
 {
-    public function binHexMutator($key, $value)
+    public function binHexMutator($key, $value): void
     {
-        $this->attributes[$key] = $value !== null ? hex2bin($value) : null;
+        $data = str_replace('-', '', $value);
+        $this->attributes[$key] = $value !== null ? hex2bin($data) : null;
     }
 
-    public function binHexAccessor($value)
+    public function binHexAccessor($value): ?string
     {
         return $value === null ? null : strtolower(bin2hex($value));
     }
