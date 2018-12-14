@@ -284,7 +284,7 @@ class DemandController extends Controller
             throw new NotFoundHttpException('Payment for given transactionId not found.');
         }
 
-        $events = EventLog::where('payment_id', $payment->id)->get();
+        $events = EventLog::fetchEvents($payment->id);
 
         $results = [];
 

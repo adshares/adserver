@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 
 class EventLog extends Model
 {
@@ -90,4 +91,9 @@ class EventLog extends Model
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
     ];
+
+    public static function fetchEvents(int $paymentId): Collection
+    {
+        return self::where('payment_id', $paymentId)->get();
+    }
 }
