@@ -72,8 +72,6 @@ class AdsProcessTx extends Command
             $this->handleDbTx($adsClient, $dbTx);
         }
 
-        $this->handleReservedTx();
-
         return self::EXIT_CODE_SUCCESS;
     }
 
@@ -153,7 +151,24 @@ class AdsProcessTx extends Command
             }
         }
 
-        $dbTx->status = $isTxTargetValid ? AdsTxIn::STATUS_RESERVED : AdsTxIn::STATUS_INVALID;
+        if ($isTxTargetValid) {
+            $this->handleReservedTx($dbTx);
+        } else {
+            $dbTx->status = AdsTxIn::STATUS_INVALID;
+            $dbTx->save();
+        }
+    }
+
+    private function handleReservedTx(AdsTxIn $dbTx): void
+    {
+        // TODO check if tx is payment for events
+
+//            $txid = $dbTx->txid
+//            $this->adServerAddress
+        // TODO if payment is for events update status
+//            $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
+
+        $dbTx->status = AdsTxIn::STATUS_RESERVED;
         $dbTx->save();
     }
 
@@ -166,8 +181,7 @@ class AdsProcessTx extends Command
             $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
 
             if (null === $user) {
-                $dbTx->status = AdsTxIn::STATUS_RESERVED;
-                $dbTx->save();
+                $this->handleReservedTx($dbTx);
             } else {
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
@@ -198,19 +212,5 @@ class AdsProcessTx extends Command
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);
-    }
-
-    private function handleReservedTx(): void
-    {
-        $dbTxs = AdsTxIn::where('status', AdsTxIn::STATUS_RESERVED)->get();
-
-        foreach ($dbTxs as $dbTx) {
-            // TODO check if tx is payment for events
-//            $txid = $dbTx->txid
-//            $this->adServerAddress
-            // TODO if payment is for events update status
-//            $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
-//            $dbTx->save();
-        }
     }
 }
