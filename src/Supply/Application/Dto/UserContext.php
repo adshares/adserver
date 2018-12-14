@@ -75,9 +75,11 @@ final class UserContext
 
     public function toAdSelectPartialArray(): array
     {
+        $keywords = array_merge($this->keywords, ['human_score' => [$this->humanScore]]);
+
         return [
             'uid' => $this->userId,
-            'keywords' => array_merge($this->keywords, ['human_score' => [$this->humanScore]]),
+            'keywords' => $keywords,
         ];
     }
 }
