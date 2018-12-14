@@ -37,47 +37,36 @@ class AdPayGetPaymentsTest extends TestCase
     public function testHandle(): void
     {
         /** @var Collection|EventLog[] $events */
-        $events = factory(EventLog::class)->times(3)->create(
-            [
-                'event_value' => null,
-            ]
-        );
+        $events = factory(EventLog::class)->times(3)->create([
+            'event_value' => null,
+        ]);
 
-        $calculatedEvents = $events->map(
-            function (EventLog $entry) {
-                return [
-                    'event_id' => $entry->event_id,
-                    'amount' => mt_rand(),
-                ];
-            }
-        );
+        $calculatedEvents = $events->map(function (EventLog $entry) {
+            return [
+                'event_id' => $entry->event_id,
+                'amount' => mt_rand(),
+            ];
+        });
 
-        $this->app->bind(
-            AdPay::class,
-            function () use ($calculatedEvents) {
-                $adsClient = $this->createMock(AdPay::class);
-                $adsClient->method('getPayments')->willReturn(
-                    $calculatedEvents->toArray()
-                );
+        $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
+            $adsClient = $this->createMock(AdPay::class);
+            $adsClient->method('getPayments')->willReturn($calculatedEvents->toArray());
 
-                return $adsClient;
-            }
-        );
+            return $adsClient;
+        });
 
-        $this->artisan('ops:adpay:payments')->assertExitCode(0);
+        $this->artisan('ops:adpay:payments')
+             ->assertExitCode(0)
+             ->expectsOutput('Found 3 calculations.')
+             ->expectsOutput('Updated 3 entries.');
 
-        $calculatedEvents->each(
-            function (array $eventValue) {
-                $eventValue['event_id'] = hex2bin($eventValue['event_id']);
+        $calculatedEvents->each(function (array $eventValue) {
+            $eventValue['event_id'] = hex2bin($eventValue['event_id']);
 
-                $eventValue['event_value'] = $eventValue['amount'];
-                unset($eventValue['amount']);
+            $eventValue['event_value'] = $eventValue['amount'];
+            unset($eventValue['amount']);
 
-                $this->assertDatabaseHas(
-                    'event_logs',
-                    $eventValue
-                );
-            }
-        );
+            $this->assertDatabaseHas('event_logs', $eventValue);
+        });
     }
 }
