@@ -58,17 +58,11 @@ final class GuzzleAdUserClient implements AdUser
             $context = json_decode((string)$response->getBody(), true);
 
             return UserContext::fromAdUserArray($context);
-        } catch (ConnectException $exception) {
+        } catch (ConnectException|ClientException $exception) {
             return UserContext::fromAdUserArray([
                 'uid' => $partialContext->userId(),
                 'keywords' => $partialContext->keywords(),
-                'human_score' => '0.6',
-            ]);
-        } catch (ClientException $exception) {
-            return UserContext::fromAdUserArray([
-                'uid' => $partialContext->userId(),
-                'keywords' => $partialContext->keywords(),
-                'human_score' => '0.4',
+                'human_score' => AdUser::DEFAULT_HUMAN_SCORE,
             ]);
         }
     }
