@@ -34,18 +34,20 @@ class AdPayGetPayments extends Command
     {
         $calculations = collect($adPay->getPayments(now()->getTimestamp()));
 
-        $idList = $calculations->map(
-            function ($amount) {
-                return hex2bin($amount['event_id']);
-            }
-        )->toArray();
+        $this->info('Found '.count($calculations).' calculations.');
 
-        EventLog::whereIn('event_id', $idList)->get()->each(
-            function (EventLog $entry) use ($calculations) {
+        $idList = $calculations->map(function (array $amount) {
+            return hex2bin($amount['event_id']);
+        });
+
+        $entries = EventLog::whereIn('event_id', $idList)
+            ->get()
+            ->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
 
                 $entry->update(['event_value' => $calculation['amount']]);
-            }
-        );
+            });
+
+        $this->info('Updated '.count($entries).' entries.');
     }
 }

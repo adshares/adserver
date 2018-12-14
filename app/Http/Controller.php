@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Http;
 
-use Adshares\Adserver\Exceptions\JsonResponseException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -29,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 abstract class Controller extends BaseController
 {
@@ -88,8 +88,9 @@ abstract class Controller extends BaseController
     protected function validateRequestObject(Request $request, String $name, array $rules)
     {
         if (!$request->has($name)) {
-            throw new JsonResponseException(self::json([], 422, ['message' => "Missing request object '$name'"]));
+            throw new UnprocessableEntityHttpException("Missing request object '$name'");
         }
+
         /* @var $validator \Illuminate\Validation\Validator */
         $validator = Validator::make($request->input($name), $rules);
 
