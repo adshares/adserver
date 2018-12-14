@@ -54,20 +54,16 @@ final class GuzzleAdUserClient implements AdUser
     {
         try {
             $body = $partialContext->adUserRequestBody();
-            $response = $this->client->post(
-                '/getData',
-                [
-                    'body' => $body,
-                ]
-            );
-
+            $response = $this->client->post('/getData', ['body' => $body]);
             $context = json_decode((string)$response->getBody(), true);
 
             return UserContext::fromAdUserArray($context);
-        } catch (ConnectException $exception) {
-            return new UserContext([], 1, $partialContext->userId());
-        } catch (ClientException $exception) {
-            return new UserContext([], 1, $partialContext->userId());
+        } catch (ConnectException|ClientException $exception) {
+            return UserContext::fromAdUserArray([
+                'uid' => $partialContext->userId(),
+                'keywords' => $partialContext->keywords(),
+                'human_score' => '0.5',
+            ]);
         }
     }
 }

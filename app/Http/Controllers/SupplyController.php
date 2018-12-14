@@ -87,12 +87,8 @@ class SupplyController extends Controller
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
 
-        $context = new ImpressionContext(
-            $site,
-            $device,
-            $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]))
-                ->toAdSelectPartialArray()
-        );
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
         $zones = Utils::decodeZones($data)['zones'];
 
@@ -106,7 +102,7 @@ class SupplyController extends Controller
         $params = [
             json_encode($request->getSchemeAndHttpHost()),
             json_encode(config('app.aduser_external_location')),
-            json_encode('div.a-name-that-does-not-collide'),
+            json_encode(config('app.website_banner_selector')),
         ];
 
         $jsPath = public_path('-/find.js');
