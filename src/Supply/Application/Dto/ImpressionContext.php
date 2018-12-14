@@ -92,7 +92,7 @@ JSON;
                 return [
                     'keywords' => $this->user['keywords'],
                     'banner_size' => "{$zone->width}x{$zone->height}",
-                    'publisher_id' => 'pid',
+                    'publisher_id' => Zone::fetchPublisherId($zone->id),
                     'request_id' => $zone->id,
                     'user_id' => $this->user['uid'],
                 ];
