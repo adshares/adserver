@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Utilities\AdsUtils;
 use DateTime;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -282,8 +281,8 @@ class DemandController extends Controller
 
         if (!$payment) {
             throw new NotFoundHttpException(sprintf(
-                'Payment for given transaction %s is not found.',
-                $transactionId)
+                    'Payment for given transaction %s is not found.',
+                    $transactionId)
             );
         }
 
