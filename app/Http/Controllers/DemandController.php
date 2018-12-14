@@ -281,8 +281,8 @@ class DemandController extends Controller
 
         if (!$payment) {
             throw new NotFoundHttpException(sprintf(
-                    'Payment for given transaction %s is not found.',
-                    $transactionId
+                'Payment for given transaction %s is not found.',
+                $transactionId
             ));
         }
 
