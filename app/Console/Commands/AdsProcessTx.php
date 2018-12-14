@@ -34,50 +34,23 @@ use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
 {
-    /**
-     * Command ended without error
-     */
-    const EXIT_CODE_SUCCESS = 0;
-    /**
-     * Command ended prematurely because block ids could not be updated
-     */
-    const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    public const EXIT_CODE_SUCCESS = 0;
+
+    public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
+
     protected $signature = 'ads:process-tx';
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+
     protected $description = 'Processes incoming txs';
-    /**
-     * @var string blockchain address of AdServer
-     */
+
     private $adServerAddress;
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @param AdsClient $adsClient
-     *
-     * @return int
-     */
-    public function handle(AdsClient $adsClient)
+    public function handle(AdsClient $adsClient): int
     {
         $this->info('Start command ads:process-tx');
 
@@ -99,17 +72,12 @@ class AdsProcessTx extends Command
             $this->handleDbTx($adsClient, $dbTx);
         }
 
+        $this->handleReservedTx();
+
         return self::EXIT_CODE_SUCCESS;
     }
 
-    /**
-     * Updates block data.
-     *
-     * @param AdsClient $adsClient
-     *
-     * @throws CommandException
-     */
-    private function updateBlockIds(AdsClient $adsClient)
+    private function updateBlockIds(AdsClient $adsClient): void
     {
         $attempt = 0;
         $attemptMax = 5;
@@ -122,8 +90,7 @@ class AdsProcessTx extends Command
                     break;
                 }
             } catch (CommandException $exc) {
-                if (CommandError::GET_SIGNATURE_UNAVAILABLE === $exc->getCode()
-                    && ++$attempt < $attemptMax) {
+                if (++$attempt < $attemptMax && CommandError::GET_SIGNATURE_UNAVAILABLE === $exc->getCode()) {
                     // try again after 3 seconds sleep
                     sleep(3);
                 } else {
@@ -133,11 +100,7 @@ class AdsProcessTx extends Command
         }
     }
 
-    /**
-     * @param AdsClient $adsClient
-     * @param AdsTxIn $dbTx
-     */
-    private function handleDbTx(AdsClient $adsClient, $dbTx)
+    private function handleDbTx(AdsClient $adsClient, $dbTx): void
     {
         try {
             $txid = $dbTx->txid;
@@ -172,10 +135,6 @@ class AdsProcessTx extends Command
         }
     }
 
-    /**
-     * @param AdsTxIn $dbTx
-     * @param SendManyTransaction $transaction
-     */
     private function handleSendManyTx($dbTx, $transaction): void
     {
         $isTxTargetValid = false;
@@ -198,10 +157,6 @@ class AdsProcessTx extends Command
         $dbTx->save();
     }
 
-    /**
-     * @param AdsTxIn $dbTx
-     * @param SendOneTransaction $transaction
-     */
     private function handleSendOneTx($dbTx, $transaction): void
     {
         $targetAddr = $transaction->getTargetAddress();
@@ -240,15 +195,22 @@ class AdsProcessTx extends Command
         }
     }
 
-    /**
-     * Extracts uuid from tx message.
-     *
-     * @param string $message tx message
-     *
-     * @return string uuid as hex string
-     */
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);
+    }
+
+    private function handleReservedTx(): void
+    {
+        $dbTxs = AdsTxIn::where('status', AdsTxIn::STATUS_RESERVED)->get();
+
+        foreach ($dbTxs as $dbTx) {
+            // TODO check if tx is payment for events
+//            $txid = $dbTx->txid
+//            $this->adServerAddress
+            // TODO if payment is for events update status
+//            $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
+//            $dbTx->save();
+        }
     }
 }
