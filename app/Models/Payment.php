@@ -86,7 +86,6 @@ class Payment extends Model
     {
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
-            ->get()
             ->first();
     }
 }
