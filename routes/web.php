@@ -34,6 +34,7 @@ Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-vi
 Route::get('/serve/{id}', [DemandController::class, 'serve'])->name('banner-serve');
 Route::get('/view/{id}', [DemandController::class, 'view'])->name('banner-view');
 Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
+Route::get('/payment-details/{transactionId}/{accountAddress}/{date}/{signature}', [DemandController::class, 'paymentDetails']);
 
 Route::get('/supply/find', [SupplyController::class, 'find'])->name('supply-find');
 Route::get('/supply/find/{data}', [SupplyController::class, 'find']);

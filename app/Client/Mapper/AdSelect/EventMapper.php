@@ -37,21 +37,20 @@ class EventMapper
             'user_id' => $event['user_id'],
             'event_id' => $event['event_id'],
             'event_type' => $event['event_type'],
-            'paid_amount' => 0,
         ];
 
         return $mappedEvent;
     }
 
-    private static function normalizeKeywords(?array $keywords = [])
+    private static function normalizeKeywords(?array $keywords = []): array
     {
         $mappedKeywords = [];
 
         foreach ($keywords as $keyword) {
-            $lastOccurence = strrpos($keyword, ':');
+            $lastOccurrence = strrpos($keyword, ':');
 
-            $key = substr($keyword, 0, $lastOccurence);
-            $value = substr($keyword, $lastOccurence + 1);
+            $key = substr($keyword, 0, $lastOccurrence);
+            $value = substr($keyword, $lastOccurrence + 1);
 
             $mappedKeywords[$key] = $value;
         }

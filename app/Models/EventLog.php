@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @property int event_id
@@ -95,4 +96,9 @@ class EventLog extends Model
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
     ];
+
+    public static function fetchEvents(int $paymentId): Collection
+    {
+        return self::where('payment_id', $paymentId)->get();
+    }
 }
