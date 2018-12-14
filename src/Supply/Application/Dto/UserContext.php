@@ -24,6 +24,10 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Http\Utils;
 use InvalidArgumentException;
+use function array_merge;
+use function config;
+use function str_replace;
+use function strpos;
 
 final class UserContext
 {
@@ -41,6 +45,7 @@ final class UserContext
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
         $this->userId = $userId;
+
         $this->failIfInvalid();
     }
 
@@ -53,15 +58,26 @@ final class UserContext
 
     public static function fromAdUserArray(array $context): self
     {
+        if (strpos($context['uid'], config('app.adserver_id')) === 0) {
+            $context['uid'] = str_replace(config('app.adserver_id').'_', '', $context['uid']);
+        }
+
+        foreach ($context['keywords'] as $key => $value) {
+            $context['keywords'][$key] = [$value];
+        }
+
         return new self(
             $context['keywords'],
-            (float) $context['human_score'],
+            (float)$context['human_score'],
             $context['uid']
         );
     }
 
     public function toAdSelectPartialArray(): array
     {
-        return ['uid' => $this->userId, 'keywords' => $this->keywords];
+        return [
+            'uid' => $this->userId,
+            'keywords' => array_merge($this->keywords, ['human_score' => [$this->humanScore]]),
+        ];
     }
 }
