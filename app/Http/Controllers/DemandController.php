@@ -34,6 +34,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function hex2bin;
 
@@ -273,13 +274,13 @@ class DemandController extends Controller
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
 
         if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
-
+            throw new BadRequestHttpException('Input data are invalid.');
         }
 
         $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
 
         if (!$payment) {
-
+            throw new NotFoundHttpException('Payment for given transactionId not found.');
         }
 
         $events = EventLog::where('payment_id', $payment->id)->get();
