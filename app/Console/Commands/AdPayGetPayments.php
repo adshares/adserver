@@ -20,9 +20,10 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Common\Exception\Exception;
+use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
+use function collect;
 use function now;
 
 class AdPayGetPayments extends Command
@@ -31,8 +32,22 @@ class AdPayGetPayments extends Command
 
     public function handle(AdPay $adPay): void
     {
-        $adPay->getPayments(now()->getTimestamp());
+        $calculations = collect($adPay->getPayments(now()->getTimestamp()));
 
-        throw new Exception('Not implemented');
+        $this->info('Found '.count($calculations).' calculations.');
+
+        $idList = $calculations->map(function (array $amount) {
+            return hex2bin($amount['event_id']);
+        });
+
+        $entries = EventLog::whereIn('event_id', $idList)
+            ->get()
+            ->each(function (EventLog $entry) use ($calculations) {
+                $calculation = $calculations->firstWhere('event_id', $entry->event_id);
+
+                $entry->update(['event_value' => $calculation['amount']]);
+            });
+
+        $this->info('Updated '.count($entries).' entries.');
     }
 }

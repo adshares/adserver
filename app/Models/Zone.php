@@ -32,7 +32,7 @@ use Illuminate\Support\Collection;
 class Zone extends Model
 {
     private const CODE_TEMPLATE = <<<HTML
-<div 
+<div class="{{selectorClass}}"
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
     style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto;background-color: #FAA"></div>
@@ -165,6 +165,7 @@ HTML;
             '{{zoneId}}' => $this->id,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,
+            '{{selectorClass}}' => config('app.website_banner_selector'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);

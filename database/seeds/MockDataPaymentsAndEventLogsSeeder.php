@@ -71,7 +71,7 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $event->event_value = $value;
         $event->paid_amount = $value;
         $event->payment_id = $paymentId;
-
+        $event->publisher_id = (string)Uuid::v4();
         $event->save();
     }
 }

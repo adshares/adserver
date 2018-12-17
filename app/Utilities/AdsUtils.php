@@ -108,7 +108,18 @@ final class AdsUtils
         );
     }
 
-    public static function decodeTxId($address)
+    public static function decodeTxId($txId): ?string
+    {
+        $txId = preg_replace('/[^0-9A-F]+/', '', strtoupper($txId));
+
+        if (!preg_match('/[0-9A-F]{16}/', $txId)) {
+            return null;
+        }
+
+        return $txId;
+    }
+
+    public static function decodeAddress($address): ?string
     {
         $address = preg_replace('/[^0-9A-F]+/', '', strtoupper($address));
 
@@ -116,7 +127,7 @@ final class AdsUtils
             return null;
         }
 
-        return $address;
+        return substr($address, 0, 12);
     }
 
     public static function normalizeAddress($address)

@@ -63,10 +63,11 @@ final class JsonRpcAdSelectClient implements AdSelect
             $zones
         );
 
+        $params = $context->adSelectRequestParams(Zone::findByIds($zoneIds));
         $result = $this->client->call(
             new Procedure(
                 self::METHOD_BANNER_SELECT,
-                $context->adSelectRequestParams(Zone::findByIds($zoneIds))
+                $params
             )
         );
 

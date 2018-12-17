@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,23 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Exceptions;
+use Adshares\Adserver\Models\EventLog;
+use Faker\Generator as Faker;
 
-use Exception;
-use Illuminate\Contracts\Support\Responsable;
-use Illuminate\Http\JsonResponse;
-
-class JsonResponseException extends Exception implements Responsable
-{
-    protected $response;
-
-    public function __construct(JsonResponse $response)
-    {
-        $this->response = $response;
+$factory->define(
+    EventLog::class,
+    function (Faker $faker) {
+        return [
+            'event_id' => $faker->uuid,
+            'user_id' => $faker->uuid,
+            'banner_id' => $faker->uuid,
+            'publisher_id' => $faker->uuid,
+            'event_type' => 'view',
+            'ip' => bin2hex(inet_pton($faker->ipv4)),
+        ];
     }
-
-    public function toResponse($request)
-    {
-        $this->response;
-    }
-}
+);
