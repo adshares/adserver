@@ -22,9 +22,8 @@ namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AdsTxIn extends Model
+class AdsPayment extends Model
 {
-
     public const STATUS_NEW = 0;
 
     public const STATUS_USER_DEPOSIT = 1;
@@ -33,16 +32,5 @@ class AdsTxIn extends Model
 
     public const STATUS_RESERVED = 64;
 
-    /**
-     * Invalid tx
-     */
     public const STATUS_INVALID = -1;
-
-    public $incrementing = false;
-
-    protected $table = 'ads_tx_in';
-
-    protected $primaryKey = 'txid';
-
-    protected $keyType = 'string';
 }

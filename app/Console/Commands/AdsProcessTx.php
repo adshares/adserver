@@ -26,13 +26,15 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Exception;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
@@ -47,15 +49,19 @@ class AdsProcessTx extends Command
 
     private $adServerAddress;
 
+    /** @var DemandClient $demandClient */
+    private $demandClient;
+
     public function __construct()
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    public function handle(AdsClient $adsClient): int
+    public function handle(AdsClient $adsClient, DemandClient $demandClient): int
     {
         $this->info('Start command ads:process-tx');
+        $this->demandClient = $demandClient;
 
         try {
             $this->updateBlockIds($adsClient);
@@ -69,7 +75,7 @@ class AdsProcessTx extends Command
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
-        $dbTxs = AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->get();
+        $dbTxs = AdsPayment::where('status', AdsPayment::STATUS_NEW)->get();
 
         foreach ($dbTxs as $dbTx) {
             $this->handleDbTx($adsClient, $dbTx);
@@ -130,13 +136,13 @@ class AdsProcessTx extends Command
                 break;
 
             default:
-                $dbTx->status = AdsTxIn::STATUS_INVALID;
+                $dbTx->status = AdsPayment::STATUS_INVALID;
                 $dbTx->save();
                 break;
         }
     }
 
-    private function handleSendManyTx(AdsTxIn $dbTx, $transaction): void
+    private function handleSendManyTx(AdsPayment $dbTx, SendManyTransaction $transaction): void
     {
         $isTxTargetValid = false;
         $wiresCount = $transaction->getWireCount();
@@ -157,20 +163,69 @@ class AdsProcessTx extends Command
         if ($isTxTargetValid) {
             $this->handleReservedTx($dbTx);
         } else {
-            $dbTx->status = AdsTxIn::STATUS_INVALID;
+            $dbTx->status = AdsPayment::STATUS_INVALID;
             $dbTx->save();
         }
     }
 
-    private function handleReservedTx(AdsTxIn $dbTx): void
+    private function handleReservedTx(AdsPayment $dbTx): void
     {
         if (!$this->handleIfEventPayment($dbTx)) {
-            $dbTx->status = AdsTxIn::STATUS_RESERVED;
+            $dbTx->status = AdsPayment::STATUS_RESERVED;
             $dbTx->save();
         }
     }
 
-    private function handleSendOneTx(AdsTxIn $dbTx, $transaction): void
+    private function handleIfEventPayment(AdsPayment $dbTx): bool
+    {
+        $senderAddress = $dbTx->address;
+        $networkHost = NetworkHost::fetchByAddress($senderAddress);
+
+        if ($networkHost === null) {
+            return false;
+        }
+
+        $host = $networkHost->host;
+        $txid = $dbTx->txid;
+        $paymentId = $dbTx->id;
+
+        try {
+            $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
+        } catch (EmptyInventoryException $exception) {
+            return false;
+        } catch (UnexpectedClientResponseException $exception) {
+            // transaction will be processed again later
+            return true;
+        }
+
+        $this->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+
+        $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
+        $dbTx->save();
+
+        return true;
+    }
+
+    private function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
+    {
+        foreach ($paymentDetails as $paymentDetail) {
+            $event = NetworkEventLog::where('event_id', hex2bin($paymentDetail['event_id']))->first();
+
+            if ($event === null) {
+                // TODO log null $event - it means that Demand Server sent event which cannt be found in Supply DB
+                continue;
+            }
+
+            $event->pay_from = $senderAddress;
+            $event->payment_id = $paymentId;
+            $event->event_value = $paymentDetail['event_value'];
+            $event->paid_amount = $paymentDetail['paid_amount'];
+
+            $event->save();
+        }
+    }
+
+    private function handleSendOneTx(AdsPayment $dbTx, SendOneTransaction $transaction): void
     {
         $targetAddr = $transaction->getTargetAddress();
 
@@ -192,7 +247,7 @@ class AdsProcessTx extends Command
                 $ul->txid = $dbTx->txid;
                 $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
 
-                $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
+                $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
                 // dbTx added to ledger will not be processed again
                 DB::transaction(
                     function () use ($ul, $dbTx) {
@@ -202,7 +257,7 @@ class AdsProcessTx extends Command
                 );
             }
         } else {
-            $dbTx->status = AdsTxIn::STATUS_INVALID;
+            $dbTx->status = AdsPayment::STATUS_INVALID;
             $dbTx->save();
         }
     }
@@ -210,30 +265,5 @@ class AdsProcessTx extends Command
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);
-    }
-
-    private function handleIfEventPayment(AdsTxIn $dbTx): bool
-    {
-        $networkHost = NetworkHost::fetchByAddress($dbTx->address);
-
-        if ($networkHost === null) {
-            return false;
-        }
-
-        $host = $networkHost->host;
-        $txid = $dbTx->txid;
-
-        try {
-            $paymentDetails = (new GuzzleDemandClient())->fetchPaymentDetails($host, $txid);
-        } catch (Exception $exception) {
-            return false;
-        }
-
-        // TODO process payment details
-
-        $dbTx->status = AdsTxIn::STATUS_EVENT_PAYMENT;
-        $dbTx->save();
-
-        return true;
     }
 }

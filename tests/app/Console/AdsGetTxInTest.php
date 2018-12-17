@@ -25,7 +25,7 @@ use Adshares\Ads\Command\GetLogCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetLogResponse;
 use Adshares\Adserver\Console\Commands\AdsGetTxIn;
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -71,16 +71,16 @@ class AdsGetTxInTest extends TestCase
         $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 12')->assertExitCode(0);
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $this->assertEquals('1539606265', $from->value);
-        $this->assertEquals(12, AdsTxIn::all()->count());
-        $this->assertEquals(12, AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->count());
+        $this->assertEquals(12, AdsPayment::all()->count());
+        $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
 
         $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 0')->assertExitCode(
             AdsGetTxIn::EXIT_CODE_SUCCESS
         );
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $this->assertEquals('1539606265', $from->value);
-        $this->assertEquals(12, AdsTxIn::all()->count());
-        $this->assertEquals(12, AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->count());
+        $this->assertEquals(12, AdsPayment::all()->count());
+        $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 
     private function getLog2(): string
@@ -503,8 +503,8 @@ class AdsGetTxInTest extends TestCase
 
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $this->assertEquals('0', $from->value);
-        $this->assertEquals(0, AdsTxIn::all()->count());
-        $this->assertEquals(0, AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->count());
+        $this->assertEquals(0, AdsPayment::all()->count());
+        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 
     private function getLogEmpty(): string
@@ -561,7 +561,7 @@ class AdsGetTxInTest extends TestCase
 
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $this->assertEquals('0', $from->value);
-        $this->assertEquals(0, AdsTxIn::all()->count());
-        $this->assertEquals(0, AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->count());
+        $this->assertEquals(0, AdsPayment::all()->count());
+        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 }

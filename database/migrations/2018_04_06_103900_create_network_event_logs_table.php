@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateNetworkEventLogsTable extends Migration
 {
-
     /**
      * Run the migrations.
      *
@@ -56,9 +55,9 @@ class CreateNetworkEventLogsTable extends Migration
             $table->integer('human_score')->nullable();
             $table->text('our_userdata')->nullable();
             $table->text('their_userdata')->nullable();
-            $table->decimal('event_value', 20, 9)->nullable();
-            $table->decimal('paid_amount', 20, 9)->nullable();
-            $table->integer('payment_id')->nullable();
+            $table->bigInteger('event_value')->nullable();
+            $table->bigInteger('paid_amount')->nullable();
+            $table->bigInteger('payment_id')->nullable();
         });
 
         if (DB::isMysql()) {
@@ -70,7 +69,6 @@ class CreateNetworkEventLogsTable extends Migration
             DB::statement("ALTER TABLE network_event_logs MODIFY ip varbinary(8)");
         }
     }
-
 
     /**
      * Reverse the migrations.
