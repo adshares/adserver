@@ -27,6 +27,8 @@ use Adshares\Supply\Application\Dto\UserContext;
 
 interface AdUser
 {
+    public const DEFAULT_HUMAN_SCORE = 0.5;
+
     public function fetchTargetingOptions(): Taxonomy;
 
     public function getUserContext(ImpressionContext $context): UserContext;
