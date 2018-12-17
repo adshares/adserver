@@ -86,7 +86,6 @@ class SupplyController extends Controller
         }
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
@@ -178,7 +177,8 @@ class SupplyController extends Controller
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $tid = $request->cookies->get('tid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
@@ -201,9 +201,9 @@ class SupplyController extends Controller
         $log->event_type = 'click';
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $trackingId]));
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
 
-        $log->context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
+        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         $log->save();
 
@@ -235,7 +235,8 @@ class SupplyController extends Controller
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $tid = $request->cookies->get('tid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
@@ -260,9 +261,9 @@ class SupplyController extends Controller
         $log->event_type = 'view';
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $trackingId]));
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
 
-        $log->context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
+        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         $log->save();
 
