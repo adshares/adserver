@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Console\Command;
@@ -34,7 +35,7 @@ class AdPayEventExportCommand extends Command
 
     protected $description = 'Exports event data to AdPay';
 
-    public function handle(AdPay $adPay): void
+    public function handle(AdPay $adPay, AdUser $adUser): void
     {
         $this->info('Start command '.$this->signature);
 
@@ -52,6 +53,13 @@ class AdPayEventExportCommand extends Command
 
         $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
         if (count($createdEvents) > 0) {
+            foreach ($createdEvents as $event) {
+                /** @var $event EventLog */
+                $userContext = $adUser->getUserContext($event->createImpressionContext())->toArray();
+                $event->human_score = $userContext['human_score'];
+                $event->our_userdata = $userContext['keywords'];
+            }
+
             $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
             $adPay->addEvents($events);
         }

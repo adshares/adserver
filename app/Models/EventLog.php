@@ -24,6 +24,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
@@ -96,6 +97,33 @@ class EventLog extends Model
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
     ];
+
+    public function createImpressionContext(): ImpressionContext
+    {
+        // TODO input data should be validated - currently ErrorException could be thrown
+        $ip = inet_ntop(hex2bin($this->ip));
+
+        $headersArray = get_object_vars($this->headers);
+
+        $domain = $headersArray['referer'][0];
+        $ua = $headersArray['user-agent'][0];
+
+        $cookieHeader = $headersArray['cookie'][0];
+        $cookies = explode(';', $cookieHeader);
+        foreach ($cookies as $cookie) {
+            $arr = explode('=', $cookie, 2);
+            if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
+                $tid = trim($arr[1]);
+                break;
+            }
+        }
+
+        $site = ['domain' => $domain];
+        $device = ['ip' => $ip, 'ua' => $ua];
+        $user = ['uid' => $tid];
+
+        return new ImpressionContext($site, $device, $user);
+    }
 
     public static function fetchEvents(int $paymentId): Collection
     {
