@@ -208,11 +208,12 @@ class AdsProcessTx extends Command
 
     private function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
     {
+        $splitPayments = [];
         foreach ($paymentDetails as $paymentDetail) {
-            $event = NetworkEventLog::where('event_id', hex2bin($paymentDetail['event_id']))->first();
+            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
 
             if ($event === null) {
-                // TODO log null $event - it means that Demand Server sent event which cannt be found in Supply DB
+                // TODO log null $event - it means that Demand Server sent event which cannot be found in Supply DB
                 continue;
             }
 
@@ -222,6 +223,29 @@ class AdsProcessTx extends Command
             $event->paid_amount = $paymentDetail['paid_amount'];
 
             $event->save();
+
+            $publisherId = $event->publisher_id;
+            $amount = $splitPayments[$publisherId] ?? 0;
+            $amount += $paymentDetail['paid_amount'];
+            $splitPayments[$publisherId] = $amount;
+        }
+
+        foreach ($splitPayments as $userUuid => $amount) {
+            $user = User::fetchByUuid($userUuid);
+
+            if ($user === null) {
+                // TODO log null $user - it means that in Supply DB is event with incorrect publisher_id
+                continue;
+            }
+
+            $ul = new UserLedgerEntry();
+            $ul->user_id = $user->id;
+            $ul->amount = $amount;
+            $ul->address_from = $senderAddress;
+            $ul->address_to = $this->adServerAddress;
+            $ul->status = UserLedgerEntry::STATUS_ACCEPTED;
+            $ul->type = UserLedgerEntry::TYPE_AD_INCOME;
+            $ul->save();
         }
     }
 
@@ -231,7 +255,7 @@ class AdsProcessTx extends Command
 
         if ($targetAddr === $this->adServerAddress) {
             $message = $transaction->getMessage();
-            $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
+            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
 
             if (null === $user) {
                 $this->handleReservedTx($dbTx);

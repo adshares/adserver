@@ -87,4 +87,9 @@ class NetworkEventLog extends Model
         'event_value' => 'Money',
         'paid_amount' => 'Money',
     ];
+
+    public static function fetchByEventId(string $eventId): ?NetworkEventLog
+    {
+        return self::where('event_id', hex2bin($eventId))->first();
+    }
 }
