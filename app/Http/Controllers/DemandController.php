@@ -288,7 +288,7 @@ class DemandController extends Controller
         }
 
         if (!$this->paymentDatailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
-            throw new BadRequestHttpException('Signature is invalid.');
+            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
         $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
