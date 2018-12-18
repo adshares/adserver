@@ -203,6 +203,7 @@ return [
         Adshares\Adserver\Providers\Common\ClientProvider::class,
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
         Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
+        Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
     ],
 
     /*
