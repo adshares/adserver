@@ -25,6 +25,7 @@ $factory->define(
     EventLog::class,
     function (Faker $faker) {
         return [
+            'case_id' => $faker->uuid,
             'event_id' => $faker->uuid,
             'user_id' => $faker->uuid,
             'banner_id' => $faker->uuid,
