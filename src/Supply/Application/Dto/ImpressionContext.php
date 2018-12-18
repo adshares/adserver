@@ -118,4 +118,13 @@ JSON;
     {
         return $this->user['uid'];
     }
+
+    public function eventContext(): array
+    {
+        return [
+            'site' => $this->site,
+            'device' => $this->device,
+            'user' => $this->user,
+        ];
+    }
 }

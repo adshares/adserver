@@ -62,7 +62,7 @@ final class GuzzleAdUserClient implements AdUser
             return UserContext::fromAdUserArray([
                 'uid' => $partialContext->userId(),
                 'keywords' => $partialContext->keywords(),
-                'human_score' => '0.5',
+                'human_score' => AdUser::DEFAULT_HUMAN_SCORE,
             ]);
         }
     }

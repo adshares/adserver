@@ -86,7 +86,6 @@ class SupplyController extends Controller
         }
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
@@ -142,8 +141,11 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
-    {
+    public function logNetworkClick(
+        Request $request,
+        AdUser $contextProvider,
+        string $bannerId
+    ): RedirectResponse {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
@@ -173,10 +175,10 @@ class SupplyController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $tid = $request->cookies->get('tid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
@@ -197,13 +199,18 @@ class SupplyController extends Controller
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
         $log->event_type = 'click';
-        $log->context = Utils::getImpressionContext($request);
+
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+
+        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+
         $log->save();
 
         return $response;
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
+    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -226,10 +233,10 @@ class SupplyController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $tid = $request->cookies->get('tid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
@@ -252,7 +259,12 @@ class SupplyController extends Controller
         $log->ip = $logIp;
         $log->headers = $requestHeaders;
         $log->event_type = 'view';
-        $log->context = Utils::getImpressionContext($request);
+
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+
+        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+
         $log->save();
 
         return $response;
