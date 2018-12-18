@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\TransactionId;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 
 /**
@@ -98,7 +99,7 @@ class Payment extends Model
             ->first();
     }
 
-    public function events(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function events(): HasMany
     {
         return $this->hasMany(EventLog::class);
     }

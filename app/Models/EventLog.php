@@ -29,6 +29,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int event_id
@@ -99,7 +100,7 @@ class EventLog extends Model
         'their_userdata' => 'JsonValue',
     ];
 
-    public static function fetchUnpaidEvents(): \Illuminate\Support\Collection
+    public static function fetchUnpaidEvents(): Collection
     {
         $query = self::whereNotNull('event_value')
             ->whereNull('payment_id')
@@ -114,7 +115,7 @@ class EventLog extends Model
             ->get();
     }
 
-    public function payment(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
     }
