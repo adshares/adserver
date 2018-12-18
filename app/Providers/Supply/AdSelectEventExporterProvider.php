@@ -32,14 +32,16 @@ class AdSelectEventExporterProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(AdSelectEventExporter::class,
+        $this->app->bind(
+            AdSelectEventExporter::class,
             function (Application $app) {
-            $eventRepository = new NetworkEventRepository();
+                $eventRepository = new NetworkEventRepository();
 
-            return new AdSelectEventExporter(
-                $app->make(AdSelect::class),
-                $eventRepository
-            );
-        });
+                return new AdSelectEventExporter(
+                    $app->make(AdSelect::class),
+                    $eventRepository
+                );
+            }
+        );
     }
 }

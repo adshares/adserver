@@ -40,12 +40,14 @@ class PaymentDetailsVerifyProvider extends ServiceProvider
             }
         );
 
-        $this->app->bind(PaymentDetailsVerify::class,
+        $this->app->bind(
+            PaymentDetailsVerify::class,
             function (Application $app) {
                 return new PaymentDetailsVerify(
                     $app->make(SignatureVerifier::class),
                     $app->make(Ads::class)
                 );
-            });
+            }
+        );
     }
 }
