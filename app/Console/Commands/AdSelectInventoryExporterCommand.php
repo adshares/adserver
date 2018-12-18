@@ -71,6 +71,5 @@ class AdSelectInventoryExporterCommand extends Command
         }
 
         $this->info('Finished exporting inventory to AdSelect.');
-
     }
 }
