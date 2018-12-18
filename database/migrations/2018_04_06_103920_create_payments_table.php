@@ -4,7 +4,7 @@
  *
  * This file is part of AdServer
  *
- * AdServer is free software: you can redistribute it and/or modify it
+ * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
@@ -15,15 +15,15 @@
  * See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\Payment;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
 class CreatePaymentsTable extends Migration
 {
-
     /**
      * Run the migrations.
      *
@@ -31,25 +31,33 @@ class CreatePaymentsTable extends Migration
      */
     public function up()
     {
-        Schema::create('payments', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create('payments',
+            function (Blueprint $table) {
+                $table->bigIncrements('id');
 
-            $table->timestamps();
-            $table->softDeletes();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->text('transfers')->nullable();
-            $table->text('subthreshold_transfers')->nullable();
-            $table->binary('account_address', 6)->nullable();
-            $table->binary('account_hashin', 32)->nullable();
-            $table->binary('account_hashout', 32)->nullable();
-            $table->integer('account_msid')->nullable();
-            $table->text('tx_data')->nullable();
-            $table->binary('tx_id', 8);
-            $table->integer('tx_time');
-            $table->bigInteger('fee')->unsigned()->nullable(false);
+                $table->text('transfers')->nullable();
+                $table->text('subthreshold_transfers')->nullable();
+                $table->binary('account_address', 6);
+                $table->binary('account_hashin', 32)->nullable();
+                $table->binary('account_hashout', 32)->nullable();
+                $table->integer('account_msid')->nullable();
+                $table->text('tx_data')->nullable();
+                $table->binary('tx_id', 8)->nullable();
+                $table->integer('tx_time')->nullable();
+                $table->bigInteger('fee')->unsigned()->nullable();
+                $table->enum('state',
+                    [
+                        Payment::STATE_NEW,
+                        Payment::STATE_SENT,
+                        Payment::STATE_SUCCESSFUL,
+                        Payment::STATE_FAILED,
+                    ]);
 
-            $table->boolean('completed');
-        });
+                $table->boolean('completed');
+            });
 
         if (DB::isMysql()) {
             DB::statement("ALTER TABLE payments MODIFY account_address varbinary(6)");
@@ -58,7 +66,6 @@ class CreatePaymentsTable extends Migration
             DB::statement("ALTER TABLE payments MODIFY tx_id varbinary(8)");
         }
     }
-
 
     /**
      * Reverse the migrations.

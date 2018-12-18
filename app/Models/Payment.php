@@ -42,6 +42,14 @@ class Payment extends Model
     use JsonValue;
     use TransactionId;
 
+    public const STATE_NEW = 'new';
+
+    public const STATE_SENT = 'sent';
+
+    public const STATE_SUCCESSFUL = 'ok';
+
+    public const STATE_FAILED = 'failed';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -59,6 +67,7 @@ class Payment extends Model
         'tx_time',
         'fee',
         'completed',
+        'state',
     ];
 
     /**
@@ -87,5 +96,10 @@ class Payment extends Model
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
             ->first();
+    }
+
+    public function events(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EventLog::class);
     }
 }
