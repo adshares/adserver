@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\TransactionId;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 
 /**
@@ -41,6 +42,14 @@ class Payment extends Model
     use BinHex;
     use JsonValue;
     use TransactionId;
+
+    public const STATE_NEW = 'new';
+
+    public const STATE_SENT = 'sent';
+
+    public const STATE_SUCCESSFUL = 'ok';
+
+    public const STATE_FAILED = 'failed';
 
     /**
      * The attributes that are mass assignable.
@@ -59,6 +68,7 @@ class Payment extends Model
         'tx_time',
         'fee',
         'completed',
+        'state',
     ];
 
     /**
@@ -87,5 +97,10 @@ class Payment extends Model
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
             ->first();
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(EventLog::class);
     }
 }

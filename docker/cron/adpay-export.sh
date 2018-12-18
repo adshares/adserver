@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 if [ ! -e adpay_export_in_progress ]; then
     touch adpay_export_in_progress
 
