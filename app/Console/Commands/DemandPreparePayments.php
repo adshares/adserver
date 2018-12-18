@@ -27,11 +27,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class AdPayMakePayments extends Command
+class DemandPreparePayments extends Command
 {
     private const EXIT_CODE_SUCCESS = 0;
 
-    protected $signature = 'ops:adpay:payments:make';
+    protected $signature = 'ops:demand:payments:prepare';
 
     public function handle(): int
     {

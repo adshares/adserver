@@ -29,7 +29,7 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdPayMakePaymentsTest extends TestCase
+class DemandPreparePaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -46,7 +46,7 @@ class AdPayMakePaymentsTest extends TestCase
             ->times(4)
             ->create(['pay_to' => AccountId::fromIncompleteString('0002-00000004')]);
 
-        $this->artisan('ops:adpay:payments:make')
+        $this->artisan('ops:demand:payments:prepare')
             ->expectsOutput('Found 9 payable events.')
             ->expectsOutput('In that, there are 3 recipients.')
             ->assertExitCode(0);
@@ -54,7 +54,19 @@ class AdPayMakePaymentsTest extends TestCase
         $events = EventLog::all();
         self::assertCount(9, $events);
 
+        $events->each(function (EventLog $entry) {
+            self::assertNotEmpty($entry->payment_id);
+        });
+
         $payments = Payment::all();
         self::assertCount(3, $payments);
+
+        $payments->each(function (Payment $payment) {
+            self::assertNotEmpty($payment->account_address);
+
+            $payment->events->each(function (EventLog $entry) use ($payment) {
+                self::assertEquals($entry->pay_to, $payment->account_address);
+            });
+        });
     }
 }
