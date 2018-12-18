@@ -30,6 +30,4 @@ phpunit.xml
 !*.dist
 
 # temporary files
-ads_broadcast_host_in_progress
-ads_fetch_hosts_in_progress
-ads_scanner_in_progress
+*_in_progress
