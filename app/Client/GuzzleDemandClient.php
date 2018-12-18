@@ -37,9 +37,11 @@ use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
 {
-    const VERSION = '0.1';
+    private const VERSION = '0.1';
 
-    const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+
+    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
@@ -76,7 +78,7 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         if (empty($body)) {
-            throw new EmptyInventoryException('Empty inventory list');
+            throw new EmptyInventoryException('Empty list');
         }
     }
 
@@ -84,15 +86,15 @@ final class GuzzleDemandClient implements DemandClient
     {
         $data['uuid'] = Uuid::fromString($data['uuid']);
         $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
-        $data['date_start'] = DateTime::createFromFormat(DateTime::ISO8601, $data['date_start']);
-        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ISO8601, $data['date_end']) : null;
+        $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
+        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
 
         $data['source_campaign'] = [
             'host' => $inventoryHost,
             'address' => $data['address'],
             'version' => self::VERSION,
-            'created_at' => DateTime::createFromFormat(DateTime::ISO8601, $data['created_at']),
-            'updated_at' => DateTime::createFromFormat(DateTime::ISO8601, $data['updated_at']),
+            'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
+            'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
         ];
 
         $data['created_at'] = new DateTime();
@@ -102,5 +104,47 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
 
         return $data;
+    }
+
+    public function fetchPaymentDetails(string $host, string $transactionId): array
+    {
+        $client = new Client([
+            'base_uri' => $host,
+            'timeout' => 5.0,
+        ]);
+
+        $accountAddress = config('app.adshares_address');
+        $date = (new DateTime())->format(DateTime::ATOM);
+        $signature = 'sg';//TODO create signature
+
+        $endpoint = str_replace(
+            [
+                '{transactionId}',
+                '{accountAddress}',
+                '{date}',
+                '{signature}',
+            ],
+            [
+                $transactionId,
+                $accountAddress,
+                $date,
+                $signature,
+            ],
+            self::PAYMENT_DETAILS_ENDPOINT
+        );
+
+        $response = $client->get($endpoint);
+        $statusCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        $this->validateResponse($statusCode, $body);
+
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
     }
 }

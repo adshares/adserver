@@ -25,26 +25,33 @@ use Adshares\Ads\Command\GetBlockIdsCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
+use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdsProcessTxTest extends TestCase
 {
     use RefreshDatabase;
 
-    const TX_ID_CONNECTION = '0001:00000608:0002';
-    const TX_ID_SEND_MANY = '0001:00000085:0001';
-    const TX_ID_SEND_ONE = '0001:00000083:0001';
+    private const TX_ID_CONNECTION = '0001:00000608:0002';
 
-    public function testAdsProcessValidUserDeposit()
+    private const TX_ID_SEND_MANY = '0001:00000085:0001';
+
+    private const TX_ID_SEND_ONE = '0001:00000083:0001';
+
+    public function testAdsProcessValidUserDeposit(): void
     {
         $depositAmount = 100000000000;
 
-        $adsTx = new AdsTxIn();
+        $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_ONE;
         $adsTx->amount = $depositAmount;
         $adsTx->address = '0001-00000000-9B6F';
@@ -54,63 +61,110 @@ class AdsProcessTxTest extends TestCase
         $user->uuid = '00000000000000000000000000000123';
         $user->save();
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsTxIn::STATUS_USER_DEPOSIT, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
         $amount = UserLedgerEntry::getBalanceByUserId($user->id);
         $this->assertEquals($depositAmount, $amount);
     }
 
-    public function testAdsProcessDepositWithoutUser()
+    public function testAdsProcessDepositWithoutUser(): void
     {
         $depositAmount = 100000000000;
 
-        $adsTx = new AdsTxIn();
+        $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_ONE;
         $adsTx->amount = $depositAmount;
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsTxIn::STATUS_RESERVED, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
     }
 
-    public function testAdsProcessValidSendMany()
+    public function testAdsProcessEventPayment(): void
     {
-        $adsTx = new AdsTxIn();
+        $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_MANY;
         $adsTx->amount = 300000000000;
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        NetworkHost::registerHost('0001-00000000-9B6F', '127.0.0.1');
+
+        $demandClient = new DummyDemandClient();
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '');
+        $totalEventValue = 0;
+        $totalPaidAmount = 0;
+
+        foreach ($paymentDetails as $paymentDetail) {
+            $log = new NetworkEventLog();
+            $log->event_id = $paymentDetail['event_id'];
+            $log->user_id = (string)UUID::v4();
+            $log->banner_id = $paymentDetail['banner_id'];
+            $log->zone_id = $paymentDetail['zone_id'];
+            $log->publisher_id = $paymentDetail['publisher_id'];
+            $log->pay_from = config('app.adshares_address');
+            $log->ip = bin2hex(inet_pton('127.0.0.1'));
+            $log->event_type = $paymentDetail['event_type'];
+            $log->save();
+
+            $totalEventValue += (int)$paymentDetail['event_value'];
+            $totalPaidAmount += (int)$paymentDetail['paid_amount'];
+        }
+
+        $this->app->bind(
+            DemandClient::class,
+            function () {
+                return new DummyDemandClient();
+            }
+        );
+
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsTxIn::STATUS_RESERVED, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
+        $this->assertEquals($totalEventValue, NetworkEventLog::sum('event_value'));
+        $this->assertEquals($totalPaidAmount, NetworkEventLog::sum('paid_amount'));
     }
 
-    public function testAdsProcessConnectionTx()
+    public function testAdsProcessValidSendMany(): void
     {
-        $adsTx = new AdsTxIn();
+        $adsTx = new AdsPayment();
+        $adsTx->txid = self::TX_ID_SEND_MANY;
+        $adsTx->amount = 300000000000;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
+
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
+
+        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+
+        $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
+    }
+
+    public function testAdsProcessConnectionTx(): void
+    {
+        $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_CONNECTION;
         $adsTx->amount = 300000000000;
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsTxIn::STATUS_INVALID, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_INVALID, AdsPayment::all()->first()->status);
     }
 
-    public function testAdsProcessGetBlockIdsError()
+    public function testAdsProcessGetBlockIdsError(): void
     {
         $this->app->bind(
             AdsClient::class,
@@ -125,20 +179,20 @@ class AdsProcessTxTest extends TestCase
             }
         );
 
-        $adsTx = new AdsTxIn();
+        $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_ONE;
         $adsTx->amount = 100000000000;
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_CANNOT_GET_BLOCK_IDS);
 
-        $this->assertEquals(AdsTxIn::STATUS_NEW, AdsTxIn::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->mockAdsClient();
@@ -255,7 +309,7 @@ class AdsProcessTxTest extends TestCase
             "tx": {
                 "data": "140100020000000568C85B0100080600000200",
                 "signature": "08463696728F197EE3CC93DDFC4EA8F91C8BE1EBC1E086A0C13336F3FAB19A7410E61'
-            .'1E8752FF79A4D8EC4F560F0EA7DD80579621C7411297C22D20155533D0E",
+                .'1E8752FF79A4D8EC4F560F0EA7DD80579621C7411297C22D20155533D0E",
                 "time": "1539860485",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
