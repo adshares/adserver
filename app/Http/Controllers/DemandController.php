@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -43,6 +44,14 @@ use function hex2bin;
  */
 class DemandController extends Controller
 {
+    /** @var PaymentDetailsVerify */
+    private $paymentDatailsVerify;
+
+    public function __construct(PaymentDetailsVerify $paymentDetailsVerify)
+    {
+        $this->paymentDatailsVerify = $paymentDetailsVerify;
+    }
+
     public function serve(Request $request, $id)
     {
         $banner = Banner::where('uuid', hex2bin($id))->first();
@@ -272,9 +281,14 @@ class DemandController extends Controller
     ): JsonResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
+        $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
 
         if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
             throw new BadRequestHttpException('Input data are invalid.');
+        }
+
+        if (!$this->paymentDatailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
+            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
         $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
