@@ -127,6 +127,8 @@ final class GuzzleDemandClient implements DemandClient
         $date = new DateTime();
         $signature = $this->signatureVerifier->create($privateKey, $transactionId, $accountAddress, $date);
 
+        $dateFormatted = $date->format(DateTime::ATOM);
+
         $endpoint = str_replace(
             [
                 '{transactionId}',
@@ -137,7 +139,7 @@ final class GuzzleDemandClient implements DemandClient
             [
                 $transactionId,
                 $accountAddress,
-                $date,
+                $dateFormatted,
                 $signature,
             ],
             self::PAYMENT_DETAILS_ENDPOINT
