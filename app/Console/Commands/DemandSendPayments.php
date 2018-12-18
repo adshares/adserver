@@ -31,15 +31,35 @@ class DemandSendPayments extends Command
 
     public function handle(Ads $ads): void
     {
-        $payments = Payment::fetchByStatus(Payment::STATE_NEW);
+        $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);
 
         $paymentCount = count($payments);
-        $this->info("Found $paymentCount payable payments.");
+        $this->info("Found $paymentCount sendable payments.");
 
         if (!$paymentCount) {
             return;
         }
 
+        $this->info("Sending $paymentCount payments from ".config('app.adshares_address').'.');
         $tx = $ads->sendPayments($payments);
+
+        $payments->each(function (Payment $payment) use ($tx) {
+            $payment->tx_id = $tx->getId();
+            $payment->tx_time = $tx->getTime()->getTimestamp();
+            $payment->tx_data = $tx->getData();
+            $payment->fee = $tx->getFee();//should be divided among addresses - or not?
+
+            $payment->state = Payment::STATE_SENT;
+
+            $payment->account_hashin = $tx->getAccountHashin();
+            $payment->account_hashout = $tx->getAccountHashout();
+            $payment->account_msid = $tx->getAccountMsid();
+
+            $payment->save();
+
+            $this->info("Payment #{$payment->id} sent.");
+        });
+
+        $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks fee.");
     }
 }

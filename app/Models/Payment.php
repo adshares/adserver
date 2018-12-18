@@ -101,9 +101,11 @@ class Payment extends Model
             ->first();
     }
 
-    public static function fetchByStatus(string $state): Collection
+    public static function fetchByStatus(string $state, bool $completed): Collection
     {
-        return self::where('state', $state)->get();
+        return self::where('state', $state)
+            ->where('completed', $completed)
+            ->get();
     }
 
     public function events(): HasMany

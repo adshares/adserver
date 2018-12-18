@@ -113,13 +113,13 @@ final class ClientProvider extends ServiceProvider
             Ads::class,
             function () {
                 $drv = new CliDriver(
-                    config('app.adshares_address'),
-                    config('app.adshares_secret'),
-                    config('app.adshares_node_host'),
-                    config('app.adshares_node_port')
+                    (string)config('app.adshares_address'),
+                    (string)config('app.adshares_secret'),
+                    (string)config('app.adshares_node_host'),
+                    (int)config('app.adshares_node_port')
                 );
-                $drv->setCommand(config('app.adshares_command'));
-                $drv->setWorkingDir(config('app.adshares_workingdir'));
+                $drv->setCommand((string)config('app.adshares_command'));
+                $drv->setWorkingDir((string)config('app.adshares_workingdir'));
 
                 return new PhpAdsClient(new AdsClient($drv));
             }

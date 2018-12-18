@@ -70,6 +70,7 @@ class DemandPreparePaymentsTest extends TestCase
 
         $payments->each(function (Payment $payment) {
             self::assertNotEmpty($payment->account_address);
+            self::assertEquals(Payment::STATE_NEW, $payment->state);
 
             $payment->events->each(function (EventLog $entry) use ($payment) {
                 self::assertEquals($entry->pay_to, $payment->account_address);

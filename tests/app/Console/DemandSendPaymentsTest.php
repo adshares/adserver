@@ -22,8 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Console;
 
+use Adshares\Ads\Entity\Tx;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\Ads;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -34,7 +36,7 @@ class DemandSendPaymentsTest extends TestCase
     public function testZero(): void
     {
         $this->artisan('ops:demand:payments:send')
-            ->expectsOutput('Found 0 payable payments.')
+            ->expectsOutput('Found 0 sendable payments.')
             ->assertExitCode(0);
     }
 
@@ -45,8 +47,18 @@ class DemandSendPaymentsTest extends TestCase
             ->times(9)
             ->create();
 
+        $this->app->bind(
+            Ads::class,
+            function () {
+                $ads = $this->createMock(Ads::class);
+                $ads->method('sendPayments')->willReturn(new Tx());
+
+                return $ads;
+            }
+        );
+
         $this->artisan('ops:demand:payments:send')
-            ->expectsOutput('Found 9 payable payments.')
+            ->expectsOutput('Found 9 sendable payments.')
             ->assertExitCode(0);
 
         $payments = Payment::all();
