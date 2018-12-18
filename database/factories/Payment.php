@@ -18,22 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Faker\Generator as Faker;
 
 $factory->define(
-    EventLog::class,
+    Payment::class,
     function (Faker $faker) {
         return [
-            'event_id' => $faker->uuid,
-            'user_id' => $faker->uuid,
-            'banner_id' => $faker->uuid,
-            'publisher_id' => $faker->uuid,
-            'event_type' => $faker->randomElement(['serve', 'view', 'click']),
-            'ip' => bin2hex(inet_pton($faker->ipv4)),
-            'event_value' => $faker->numberBetween(0, 10 ** 5),
-            'pay_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'account_address' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'state' => $faker->randomElement([
+                Payment::STATE_NEW,
+                Payment::STATE_SENT,
+                Payment::STATE_SUCCESSFUL,
+                Payment::STATE_FAILED,
+            ]),
         ];
     }
 );
