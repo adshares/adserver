@@ -45,11 +45,11 @@ use function hex2bin;
 class DemandController extends Controller
 {
     /** @var PaymentDetailsVerify */
-    private $paymentDatailsVerify;
+    private $paymentDetailsVerify;
 
     public function __construct(PaymentDetailsVerify $paymentDetailsVerify)
     {
-        $this->paymentDatailsVerify = $paymentDetailsVerify;
+        $this->paymentDetailsVerify = $paymentDetailsVerify;
     }
 
     public function serve(Request $request, $id)
@@ -287,7 +287,7 @@ class DemandController extends Controller
             throw new BadRequestHttpException('Input data are invalid.');
         }
 
-        if (!$this->paymentDatailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
+        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
             throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 

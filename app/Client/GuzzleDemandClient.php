@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -42,6 +43,14 @@ final class GuzzleDemandClient implements DemandClient
     private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
 
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
+
+    /** @var SignatureVerifier */
+    private $signatureVerifier;
+
+    public function __construct(SignatureVerifier $signatureVerifier)
+    {
+        $this->signatureVerifier = $signatureVerifier;
+    }
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
@@ -113,9 +122,10 @@ final class GuzzleDemandClient implements DemandClient
             'timeout' => 5.0,
         ]);
 
-        $accountAddress = config('app.adshares_address');
-        $date = (new DateTime())->format(DateTime::ATOM);
-        $signature = 'sg';//TODO create signature
+        $privateKey = (string)config('app.adshares_secret');
+        $accountAddress = (string)config('app.adshares_address');
+        $date = new DateTime();
+        $signature = $this->signatureVerifier->create($privateKey, $transactionId, $accountAddress, $date);
 
         $endpoint = str_replace(
             [
