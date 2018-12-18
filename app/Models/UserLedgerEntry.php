@@ -49,8 +49,6 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        $sum = self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
-
-        return $sum;
+        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
     }
 }
