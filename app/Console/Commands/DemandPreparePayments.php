@@ -29,11 +29,9 @@ use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends Command
 {
-    private const EXIT_CODE_SUCCESS = 0;
-
     protected $signature = 'ops:demand:payments:prepare';
 
-    public function handle(): int
+    public function handle()
     {
         $events = EventLog::fetchUnpaidEvents();
 
@@ -41,7 +39,7 @@ class DemandPreparePayments extends Command
         $this->info("Found $eventCount payable events.");
 
         if (!$eventCount) {
-            return self::EXIT_CODE_SUCCESS;
+            return;
         }
 
         $groupedEvents = $events->groupBy('pay_to');
@@ -68,7 +66,5 @@ class DemandPreparePayments extends Command
             });
 
         DB::commit();
-
-        return self::EXIT_CODE_SUCCESS;
     }
 }

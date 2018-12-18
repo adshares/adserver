@@ -56,7 +56,7 @@ class CreatePaymentsTable extends Migration
                         Payment::STATE_FAILED,
                     ]);
 
-                $table->boolean('completed');
+                $table->boolean('completed')->default(false);
             });
 
         if (DB::isMysql()) {

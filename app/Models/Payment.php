@@ -28,12 +28,14 @@ use Adshares\Adserver\Models\Traits\TransactionId;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use function hex2bin;
 
 /**
  * @mixin Builder
  * @property int event_value
  * @property int event_id
+ * @property Collection|EventLog[] events
  */
 class Payment extends Model
 {
@@ -97,6 +99,11 @@ class Payment extends Model
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
             ->first();
+    }
+
+    public static function fetchByStatus(string $state): Collection
+    {
+        return self::where('state', $state)->get();
     }
 
     public function events(): HasMany

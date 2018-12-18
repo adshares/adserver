@@ -22,14 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Ads\AdsClient;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Common\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 
 class PaymentDetailsVerifyProvider extends ServiceProvider
 {
@@ -42,19 +40,12 @@ class PaymentDetailsVerifyProvider extends ServiceProvider
             }
         );
 
-        $this->app->bind(
-            Ads::class,
+        $this->app->bind(PaymentDetailsVerify::class,
             function (Application $app) {
-                return new PhpAdsClient($app->make(AdsClient::class));
-            }
-        );
-
-
-        $this->app->bind(PaymentDetailsVerify::class, function (Application $app) {
-            return new PaymentDetailsVerify(
-                $app->make(SignatureVerifier::class),
-                $app->make(Ads::class)
-            );
-        });
+                return new PaymentDetailsVerify(
+                    $app->make(SignatureVerifier::class),
+                    $app->make(Ads::class)
+                );
+            });
     }
 }

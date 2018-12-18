@@ -22,10 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Console;
 
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -33,40 +31,40 @@ class DemandSendPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function testZero(): void
+    {
+        $this->artisan('ops:demand:payments:send')
+            ->expectsOutput('Found 0 payable payments.')
+            ->assertExitCode(0);
+    }
+
     public function testHandle(): void
     {
-        /** @var Collection|EventLog[] $events */
-        factory(EventLog::class)
-            ->times(3)
-            ->create(['pay_to' => AccountId::fromIncompleteString('0001-00000001')]);
-        factory(EventLog::class)
-            ->times(2)
-            ->create(['pay_to' => AccountId::fromIncompleteString('0002-00000002')]);
-        factory(EventLog::class)
-            ->times(4)
-            ->create(['pay_to' => AccountId::fromIncompleteString('0002-00000004')]);
+        /** @var Collection|Payment[] $payments */
+        $payments = factory(Payment::class)
+            ->times(9)
+            ->create();
 
         $this->artisan('ops:demand:payments:send')
-            ->expectsOutput('Found 9 payable events.')
-            ->expectsOutput('In that, there are 3 recipients.')
+            ->expectsOutput('Found 9 payable payments.')
             ->assertExitCode(0);
 
-        $events = EventLog::all();
-        self::assertCount(9, $events);
-
-        $events->each(function (EventLog $entry) {
-            self::assertNotEmpty($entry->payment_id);
-        });
-
         $payments = Payment::all();
-        self::assertCount(3, $payments);
+        self::assertCount(9, $payments);
 
         $payments->each(function (Payment $payment) {
-            self::assertNotEmpty($payment->account_address);
-
-            $payment->events->each(function (EventLog $entry) use ($payment) {
-                self::assertEquals($entry->pay_to, $payment->account_address);
-            });
+            self::assertEquals(Payment::STATE_NEW, $payment->state);
         });
+
+//        $payments = Payment::all();
+//        self::assertCount(3, $payments);
+//
+//        $payments->each(function (Payment $payment) {
+//            self::assertNotEmpty($payment->account_address);
+//
+//            $payment->events->each(function (EventLog $entry) use ($payment) {
+//                self::assertEquals($entry->pay_to, $payment->account_address);
+//            });
+//        });
     }
 }

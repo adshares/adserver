@@ -33,6 +33,13 @@ class DemandPreparePaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function testZero(): void
+    {
+        $this->artisan('ops:demand:payments:prepare')
+            ->expectsOutput('Found 0 payable events.')
+            ->assertExitCode(0);
+    }
+
     public function testHandle(): void
     {
         /** @var Collection|EventLog[] $events */
