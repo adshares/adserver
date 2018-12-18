@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
@@ -49,5 +50,11 @@ class AdPayMakePaymentsTest extends TestCase
             ->expectsOutput('Found 9 payable events.')
             ->expectsOutput('In that, there are 3 recipients.')
             ->assertExitCode(0);
+
+        $events = EventLog::all();
+        self::assertCount(9, $events);
+
+        $payments = Payment::all();
+        self::assertCount(3, $payments);
     }
 }
