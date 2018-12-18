@@ -55,7 +55,7 @@ class AdPayGetPaymentsTest extends TestCase
             return $adsClient;
         });
 
-        $this->artisan('ops:adpay:payments')
+        $this->artisan('ops:adpay:payments:get')
              ->assertExitCode(0)
              ->expectsOutput('Found 3 calculations.')
              ->expectsOutput('Updated 3 entries.');

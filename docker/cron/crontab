@@ -1,3 +1,4 @@
+#30 * * * * cd /adserver && bash docker/cron/adpay-payment.sh > /proc/1/fd/1 2>/proc/1/fd/2
 #* * * * * cd /adserver && bash docker/cron/ops-inventory.sh > /proc/1/fd/1 2>/proc/1/fd/2
 */8 * * * * cd /adserver && bash docker/cron/ads-scanner.sh > /proc/1/fd/1 2>/proc/1/fd/2
 0 */12 * * * cd /adserver && bash docker/cron/ads-broadcast-host.sh > /proc/1/fd/1 2>/proc/1/fd/2
