@@ -243,8 +243,7 @@ class AdsProcessTxTest extends TestCase
 
     private function getContext()
     {
-        return json_decode(
-<<<JSON
+        return json_decode(<<<JSON
 {
     "site": {
         "domain": "localhost",
@@ -318,7 +317,6 @@ class AdsProcessTxTest extends TestCase
 }
 JSON
         );
-
     }
 
     private function getBlockIds1(): GetBlockIdsResponse
