@@ -114,7 +114,7 @@ class PaymentDetailsProcessor
             $amountToPay += $paymentDetail['paid_amount'];
         }
 
-        if ($amountReceived !== $amountToPay) {
+        if ($amountReceived < $amountToPay) {
             throw new InvalidPaymentDetailsException(
                 sprintf(
                     'Received %d, but the ordered payment is %d clicks.',
