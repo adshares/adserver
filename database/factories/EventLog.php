@@ -46,7 +46,7 @@ $factory->define(
             'publisher_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['serve', 'view', 'click']),
             'ip' => bin2hex(inet_pton($faker->ipv4)),
-            'event_value' => $faker->numberBetween(0, 1000),
+            'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'pay_to' => $faker->randomElement($addresses),
             'headers' => <<<JSON
 {

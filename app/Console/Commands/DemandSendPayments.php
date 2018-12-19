@@ -47,7 +47,6 @@ class DemandSendPayments extends Command
             $payment->tx_id = $tx->getId();
             $payment->tx_time = $tx->getTime()->getTimestamp();
             $payment->tx_data = $tx->getData();
-            $payment->fee = $tx->getFee();//should be divided among addresses - or not?
 
             $payment->state = Payment::STATE_SENT;
 
@@ -57,7 +56,7 @@ class DemandSendPayments extends Command
 
             $payment->save();
 
-            $this->info("Payment #{$payment->id} sent.");
+            $this->info("#{$payment->id}: {$payment->totalEventValue()} clicks to {$payment->account_address};");
         });
 
         $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks fee.");

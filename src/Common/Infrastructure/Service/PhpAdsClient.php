@@ -26,7 +26,6 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendManyCommand;
 use Adshares\Ads\Entity\Tx;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
@@ -56,9 +55,7 @@ class PhpAdsClient implements Ads
     {
         $wires = $payments->mapWithKeys(function (Payment $payment) {
             return [
-                $payment->account_address => $payment->events->sum(function (EventLog $entry) {
-                    return $entry->event_value;
-                }),
+                $payment->account_address => $payment->totalEventValue(),
             ];
         });
 

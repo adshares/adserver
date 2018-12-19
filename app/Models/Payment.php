@@ -112,4 +112,11 @@ class Payment extends Model
     {
         return $this->hasMany(EventLog::class);
     }
+
+    public function totalEventValue(): int
+    {
+        return $this->events->sum(function (EventLog $entry) {
+            return $entry->event_value;
+        });
+    }
 }

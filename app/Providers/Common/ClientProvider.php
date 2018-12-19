@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
@@ -111,17 +110,8 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             Ads::class,
-            function () {
-                $drv = new CliDriver(
-                    (string)config('app.adshares_address'),
-                    (string)config('app.adshares_secret'),
-                    (string)config('app.adshares_node_host'),
-                    (int)config('app.adshares_node_port')
-                );
-                $drv->setCommand((string)config('app.adshares_command'));
-                $drv->setWorkingDir((string)config('app.adshares_workingdir'));
-
-                return new PhpAdsClient(new AdsClient($drv));
+            function (Application $app) {
+                return new PhpAdsClient($app->make(AdsClient::class));
             }
         );
     }
