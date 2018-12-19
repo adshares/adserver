@@ -8,6 +8,7 @@ then
 
     ./artisan ops:adpay:payments:get
     ./artisan ops:demand:payments:prepare
+    ./artisan ops:demand:payments:send
 
     rm -f ops_payments_in_progress
 fi

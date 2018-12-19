@@ -25,19 +25,23 @@ namespace Adshares\Adserver\Providers\Supply;
 use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class AdSelectEventExporterProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(AdSelectEventExporter::class, function ($app) {
-            $eventRepository = new NetworkEventRepository();
+        $this->app->bind(
+            AdSelectEventExporter::class,
+            function (Application $app) {
+                $eventRepository = new NetworkEventRepository();
 
-            return new AdSelectEventExporter(
-                $app->make(AdSelect::class),
-                $eventRepository
-            );
-        });
+                return new AdSelectEventExporter(
+                    $app->make(AdSelect::class),
+                    $eventRepository
+                );
+            }
+        );
     }
 }

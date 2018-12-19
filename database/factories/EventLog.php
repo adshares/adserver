@@ -25,6 +25,20 @@ use Faker\Generator as Faker;
 $factory->define(
     EventLog::class,
     function (Faker $faker) {
+        $addresses = array_filter([
+            AccountId::fromIncompleteString('0001-00000001'),
+            AccountId::fromIncompleteString('0001-00000002'),
+            AccountId::fromIncompleteString('0001-00000003'),
+            AccountId::fromIncompleteString('0001-00000004'),
+            AccountId::fromIncompleteString('0001-00000005'),
+            AccountId::fromIncompleteString('0001-00000006'),
+            AccountId::fromIncompleteString('0001-00000007'),
+            AccountId::fromIncompleteString('0001-00000008'),
+        ],
+            function (AccountId $accountId) {
+                return !$accountId->equals(new AccountId(config('app.adshares_address')));
+            });
+
         return [
             'case_id' => $faker->uuid,
             'event_id' => $faker->uuid,
@@ -33,8 +47,43 @@ $factory->define(
             'publisher_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['serve', 'view', 'click']),
             'ip' => bin2hex(inet_pton($faker->ipv4)),
-            'event_value' => $faker->numberBetween(0, 10 ** 5),
-            'pay_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
+            'pay_to' => $faker->randomElement($addresses),
+            'headers' => <<<JSON
+{
+    "host": [
+        "{$faker->ipv4}"
+    ],
+    "accept": [
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    ],
+    "cookie": [
+        "tid=UaBp3Jjxnc-A4vORitTMXBYZuF268Q; io=QzTM0GfPPsUvjM0SAAAH"
+    ],
+    "referer": [
+        "http://localhost:8000/Page2/"
+    ],
+    "connection": [
+        "keep-alive"
+    ],
+    "user-agent": [
+        "{$faker->chrome}"
+    ],
+    "content-type": [
+        ""
+    ],
+    "content-length": [
+        ""
+    ],
+    "accept-encoding": [
+        "gzip, deflate"
+    ],
+    "accept-language": [
+        "pl,en-US;q=0.7,en;q=0.3"
+    ],
+}
+JSON
+            ,
         ];
     }
 );

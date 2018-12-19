@@ -23,9 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Common\Infrastructure\Service;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendManyCommand;
+use Adshares\Ads\Entity\Tx;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
+use Illuminate\Support\Collection;
 
 class PhpAdsClient implements Ads
 {
@@ -45,5 +49,20 @@ class PhpAdsClient implements Ads
         }
 
         return $response->getAccount()->getPublicKey();
+    }
+
+    public function sendPayments(Collection $payments): Tx
+    {
+        $wires = $payments->mapWithKeys(function (Payment $payment) {
+            return [
+                $payment->account_address => $payment->totalEventValue(),
+            ];
+        });
+
+        $command = new SendManyCommand($wires->toArray());
+
+        $response = $this->adsClient->runTransaction($command);
+
+        return $response->getTx();
     }
 }

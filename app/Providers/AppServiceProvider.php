@@ -28,27 +28,18 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot()
-    {
-    }
-
-    /**
-     * Register any application services.
-     */
     public function register()
     {
         $this->app->bind(
             Adselect::class,
-            function ($app) {
+            function () {
                 return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
             }
         );
+
         $this->app->bind(
             AdsClient::class,
-            function ($app) {
+            function () {
                 $drv = new CliDriver(
                     config('app.adshares_address'),
                     config('app.adshares_secret'),
