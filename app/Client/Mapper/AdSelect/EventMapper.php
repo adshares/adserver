@@ -30,6 +30,9 @@ class EventMapper
     public static function map($event): array
     {
         $keywords = self::normalizeKeywords($event['context']->site->keywords) ?? new stdClass();
+        if (is_array($keywords) && count($keywords) === 0) {
+            $keywords = new stdClass();
+        }
         $mappedEvent = [
             'keywords' => $keywords,
             'publisher_id' => $event['publisher_id'],
