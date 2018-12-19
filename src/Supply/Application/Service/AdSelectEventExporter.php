@@ -55,7 +55,7 @@ class AdSelectEventExporter
 
     public function exportPayments(DateTime $from): void
     {
-        $events = $this->eventRepository->fetchEventsFromDate($from);
+        $events = $this->eventRepository->fetchEventsUpdatedFromDate($from);
 
         if (!$events) {
             throw new NoEventsForGivenTimePeriod(sprintf(
