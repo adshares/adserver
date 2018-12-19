@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
+use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
+use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -40,8 +42,17 @@ class PaymentDetailsProcessor
         $this->adServerAddress = config('app.adshares_address');
     }
 
+    /**
+     * @param string $senderAddress
+     * @param int $paymentId
+     * @param array $paymentDetails
+     *
+     * @throws InvalidPaymentDetailsException
+     */
     public function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
     {
+        $this->validatePayment($paymentId, $paymentDetails);
+
         $splitPayments = [];
         $dateFrom = null;
 
@@ -90,6 +101,27 @@ class PaymentDetailsProcessor
 
         if ($dateFrom !== null) {
             $this->adSelectEventExporter->exportPayments($dateFrom);
+        }
+    }
+
+    private function validatePayment(int $paymentId, array $paymentDetails): void
+    {
+        $adsPayment = AdsPayment::find($paymentId);
+        $amountReceived = (int)$adsPayment->amount;
+
+        $amountToPay = 0;
+        foreach ($paymentDetails as $paymentDetail) {
+            $amountToPay += $paymentDetail['paid_amount'];
+        }
+
+        if ($amountReceived !== $amountToPay) {
+            throw new InvalidPaymentDetailsException(
+                sprintf(
+                    'Received %d, but the ordered payment is %d clicks.',
+                    $amountReceived,
+                    $amountToPay
+                )
+            );
         }
     }
 }

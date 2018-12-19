@@ -26,6 +26,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkHost;
@@ -207,7 +208,12 @@ class AdsProcessTx extends Command
             return true;
         }
 
-        $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+        try {
+            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+        } catch (InvalidPaymentDetailsException $exception) {
+            // TODO log that demand send invalid payment
+            return false;
+        }
 
         $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $dbTx->save();

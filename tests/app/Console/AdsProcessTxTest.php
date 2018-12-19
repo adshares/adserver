@@ -91,12 +91,6 @@ class AdsProcessTxTest extends TestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        $adsTx = new AdsPayment();
-        $adsTx->txid = self::TX_ID_SEND_MANY;
-        $adsTx->amount = 300000000000;
-        $adsTx->address = '0001-00000000-9B6F';
-        $adsTx->save();
-
         NetworkHost::registerHost('0001-00000000-9B6F', '127.0.0.1');
 
         $demandClient = new DummyDemandClient();
@@ -122,6 +116,12 @@ class AdsProcessTxTest extends TestCase
             $totalEventValue += (int)$paymentDetail['event_value'];
             $totalPaidAmount += (int)$paymentDetail['paid_amount'];
         }
+
+        $adsTx = new AdsPayment();
+        $adsTx->txid = self::TX_ID_SEND_MANY;
+        $adsTx->amount = $totalPaidAmount;
+        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->save();
 
         $this->app->bind(
             DemandClient::class,
