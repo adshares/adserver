@@ -141,4 +141,9 @@ final class DummyAdSelectClient implements AdSelect
     {
         // TODO: Implement exportEvents() method.
     }
+
+    public function exportEventsPayments(array $events): void
+    {
+        // TODO: Implement exportEventPayments() method.
+    }
 }

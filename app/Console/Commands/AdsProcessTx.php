@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -52,16 +53,20 @@ class AdsProcessTx extends Command
     /** @var DemandClient $demandClient */
     private $demandClient;
 
+    /** @var AdSelectEventExporter $adSelectEventExporter */
+    private $adSelectEventExporter;
+
     public function __construct()
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    public function handle(AdsClient $adsClient, DemandClient $demandClient): int
+    public function handle(AdsClient $adsClient, AdSelectEventExporter $adSelectEventExporter, DemandClient $demandClient): int
     {
         $this->info('Start command ads:process-tx');
         $this->demandClient = $demandClient;
+        $this->adSelectEventExporter = $adSelectEventExporter;
 
         try {
             $this->updateBlockIds($adsClient);
@@ -209,6 +214,8 @@ class AdsProcessTx extends Command
     private function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
     {
         $splitPayments = [];
+        $dateFrom = null;
+
         foreach ($paymentDetails as $paymentDetail) {
             $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
 
@@ -223,6 +230,10 @@ class AdsProcessTx extends Command
             $event->paid_amount = $paymentDetail['paid_amount'];
 
             $event->save();
+
+            if ($dateFrom === null) {
+                $dateFrom = $event->updated_at;
+            }
 
             $publisherId = $event->publisher_id;
             $amount = $splitPayments[$publisherId] ?? 0;
@@ -246,6 +257,10 @@ class AdsProcessTx extends Command
             $ul->status = UserLedgerEntry::STATUS_ACCEPTED;
             $ul->type = UserLedgerEntry::TYPE_AD_INCOME;
             $ul->save();
+        }
+
+        if ($dateFrom !== null) {
+            $this->adSelectEventExporter->exportPayments($dateFrom);
         }
     }
 

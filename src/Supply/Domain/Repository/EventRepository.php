@@ -26,5 +26,7 @@ use DateTime;
 
 interface EventRepository
 {
+    public function fetchEventsCreatedFromDate(DateTime $dateTime): array;
+
     public function fetchEventsFromDate(DateTime $dateTime): array;
 }

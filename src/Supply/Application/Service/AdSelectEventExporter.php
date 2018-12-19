@@ -40,7 +40,7 @@ class AdSelectEventExporter
 
     public function export(DateTime $from): void
     {
-        $events = $this->eventRepository->fetchEventsFromDate($from);
+        $events = $this->eventRepository->fetchEventsCreatedFromDate($from);
 
         if (!$events) {
             throw new NoEventsForGivenTimePeriod(sprintf(
@@ -51,5 +51,20 @@ class AdSelectEventExporter
         }
 
         $this->client->exportEvents($events);
+    }
+
+    public function exportPayments(DateTime $from): void
+    {
+        $events = $this->eventRepository->fetchEventsFromDate($from);
+
+        if (!$events) {
+            throw new NoEventsForGivenTimePeriod(sprintf(
+                'Events from: %s not found. Current time: %s',
+                $from->format(DateTime::ATOM),
+                (new DateTime())->format(DateTime::ATOM)
+            ));
+        }
+
+        $this->client->exportEventsPayments($events);
     }
 }
