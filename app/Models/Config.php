@@ -27,6 +27,10 @@ class Config extends Model
 {
     public const ADS_LOG_START = 'ads-log-start';
 
+    public const PAYMENT_TX_FEE = 'payment-tx-fee';
+
+    public const PAYMENT_RX_FEE = 'payment-rx-fee';
+
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
     public const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
