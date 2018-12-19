@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -37,9 +38,19 @@ use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
 {
-    const VERSION = '0.1';
+    private const VERSION = '0.1';
 
-    const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
+
+    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
+
+    /** @var SignatureVerifier */
+    private $signatureVerifier;
+
+    public function __construct(SignatureVerifier $signatureVerifier)
+    {
+        $this->signatureVerifier = $signatureVerifier;
+    }
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
@@ -76,7 +87,7 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         if (empty($body)) {
-            throw new EmptyInventoryException('Empty inventory list');
+            throw new EmptyInventoryException('Empty list');
         }
     }
 
@@ -102,5 +113,50 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
 
         return $data;
+    }
+
+    public function fetchPaymentDetails(string $host, string $transactionId): array
+    {
+        $client = new Client([
+            'base_uri' => $host,
+            'timeout' => 5.0,
+        ]);
+
+        $privateKey = (string)config('app.adshares_secret');
+        $accountAddress = (string)config('app.adshares_address');
+        $date = new DateTime();
+        $signature = $this->signatureVerifier->create($privateKey, $transactionId, $accountAddress, $date);
+
+        $dateFormatted = $date->format(DateTime::ATOM);
+
+        $endpoint = str_replace(
+            [
+                '{transactionId}',
+                '{accountAddress}',
+                '{date}',
+                '{signature}',
+            ],
+            [
+                $transactionId,
+                $accountAddress,
+                $dateFormatted,
+                $signature,
+            ],
+            self::PAYMENT_DETAILS_ENDPOINT
+        );
+
+        $response = $client->get($endpoint);
+        $statusCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        $this->validateResponse($statusCode, $body);
+
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
     }
 }

@@ -18,22 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\EventLog;
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Faker\Generator as Faker;
+declare(strict_types = 1);
 
-$factory->define(
-    EventLog::class,
-    function (Faker $faker) {
-        return [
-            'event_id' => $faker->uuid,
-            'user_id' => $faker->uuid,
-            'banner_id' => $faker->uuid,
-            'publisher_id' => $faker->uuid,
-            'event_type' => $faker->randomElement(['serve', 'view', 'click']),
-            'ip' => bin2hex(inet_pton($faker->ipv4)),
-            'event_value' => $faker->numberBetween(0, 10 ** 5),
-            'pay_to' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
-        ];
-    }
-);
+namespace Adshares\Common\Application\Service\Exception;
+
+use RuntimeException;
+
+class AdsException extends RuntimeException
+{
+
+}

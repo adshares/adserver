@@ -24,14 +24,18 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\DemandClient;
 use GuzzleHttp\Client;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 final class ClientProvider extends ServiceProvider
@@ -91,6 +95,13 @@ final class ClientProvider extends ServiceProvider
             AdClassify::class,
             function () {
                 return new DummyAdClassifyClient();
+            }
+        );
+
+        $this->app->bind(
+            DemandClient::class,
+            function (Application $app) {
+                return new GuzzleDemandClient($app->make(SignatureVerifier::class));
             }
         );
     }

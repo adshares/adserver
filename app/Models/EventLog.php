@@ -26,8 +26,9 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int event_id
@@ -99,6 +100,26 @@ class EventLog extends Model
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
     ];
+
+    public static function fetchUnpaidEvents(): Collection
+    {
+        $query = self::whereNotNull('event_value')
+            ->whereNull('payment_id')
+            ->orderBy('pay_to');
+
+        return $query->get();
+    }
+
+    public static function fetchEvents(int $paymentId): Collection
+    {
+        return self::where('payment_id', $paymentId)
+            ->get();
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
 
     public function createImpressionContext(): ImpressionContext
     {

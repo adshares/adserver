@@ -20,8 +20,8 @@
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
@@ -141,5 +141,29 @@ final class DummyDemandClient implements DemandClient
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
         return new CampaignCollection(...$this->campaigns);
+    }
+
+    public function fetchPaymentDetails(string $host, string $transactionId): array
+    {
+        return [
+            [
+                'event_id' => 'a98e2611cce44e6fb6ca82d9b9cbe017',
+                'event_type' => 'view',
+                'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
+                'zone_id' => 1,
+                'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
+                'event_value' => 10,
+                'paid_amount' => 10,
+            ],
+            [
+                'event_id' => '95a1170d739546799b959a9d0ca9b7c8',
+                'event_type' => 'click',
+                'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
+                'zone_id' => 1,
+                'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
+                'event_value' => 100,
+                'paid_amount' => 100,
+            ],
+        ];
     }
 }

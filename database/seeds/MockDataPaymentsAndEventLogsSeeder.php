@@ -79,6 +79,44 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $event->paid_amount = $value;
         $event->payment_id = $paymentId;
         $event->publisher_id = (string)Uuid::v4();
+        $event->headers = <<<JSON
+{
+    "host": [
+        "localhost:8101"
+    ],
+    "accept": [
+        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    ],
+    "cookie": [
+        "tid=UaBp3Jjxnc-A4vORitTMXBYZuF268Q; io=QzTM0GfPPsUvjM0SAAAH"
+    ],
+    "referer": [
+        "http://localhost:8000/Page2/"
+    ],
+    "connection": [
+        "keep-alive"
+    ],
+    "user-agent": [
+        "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko/20100101 Firefox/64.0"
+    ],
+    "content-type": [
+        ""
+    ],
+    "content-length": [
+        ""
+    ],
+    "accept-encoding": [
+        "gzip, deflate"
+    ],
+    "accept-language": [
+        "pl,en-US;q=0.7,en;q=0.3"
+    ],
+    "upgrade-insecure-requests": [
+        "1"
+    ]
+}
+JSON;
+
         $event->save();
     }
 }

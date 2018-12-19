@@ -18,30 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Faker\Generator as Faker;
 
-use Illuminate\Database\Eloquent\Model;
-
-class AdsTxIn extends Model
-{
-    /**
-     * Tx was just added
-     */
-    const STATUS_NEW = 0;
-    /**
-     * Tx was recognized as user deposit
-     */
-    const STATUS_USER_DEPOSIT = 1;
-    /**
-     * Tx is valid, but cannot be recognized. Reserved for future use (eg. tx from other AdServer)
-     */
-    const STATUS_RESERVED = 64;
-    /**
-     * Invalid tx
-     */
-    const STATUS_INVALID = -1;
-    public $incrementing = false;
-    protected $table = 'ads_tx_in';
-    protected $primaryKey = 'txid';
-    protected $keyType = 'string';
-}
+$factory->define(
+    Payment::class,
+    function (Faker $faker) {
+        return [
+            'account_address' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'state' => $faker->randomElement([
+                Payment::STATE_NEW,
+                Payment::STATE_SENT,
+                Payment::STATE_SUCCESSFUL,
+                Payment::STATE_FAILED,
+            ]),
+        ];
+    }
+);
