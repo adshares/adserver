@@ -148,11 +148,6 @@ class EventLog extends Model
         return new ImpressionContext($site, $device, $user);
     }
 
-    public static function fetchEvents(int $paymentId): Collection
-    {
-        return self::where('payment_id', $paymentId)->get();
-    }
-
     public static function create(
         string $caseId,
         string $eventId,
