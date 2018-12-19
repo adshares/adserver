@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\EventMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
@@ -45,6 +46,8 @@ final class JsonRpcAdSelectClient implements AdSelect
     private const METHOD_BANNER_SELECT = 'banner_select';
 
     private const METHOD_EVENT_UPDATE = 'impression_add';
+
+    private const METHOD_EVENT_PAYMENT_ADD = 'impression_payment_add';
 
     /** @var JsonRpc */
     private $client;
@@ -99,6 +102,18 @@ final class JsonRpcAdSelectClient implements AdSelect
         }
 
         $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
+        $this->client->call($procedure);
+    }
+
+    public function exportEventsPayments(array $eventsInput): void
+    {
+        $events = [];
+
+        foreach ($eventsInput as $event) {
+            $events[] = EventPaymentMapper::map($event);
+        }
+
+        $procedure = new Procedure(self::METHOD_EVENT_PAYMENT_ADD, $events);
         $this->client->call($procedure);
     }
 

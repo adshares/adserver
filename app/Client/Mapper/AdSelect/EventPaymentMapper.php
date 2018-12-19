@@ -20,25 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository\Supply;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Supply\Domain\Repository\EventRepository;
-use DateTime;
-
-class NetworkEventRepository implements EventRepository
+class EventPaymentMapper
 {
-    public function fetchEventsCreatedFromDate(DateTime $dateTime): array
+    public static function map(array $event): array
     {
-        $events = NetworkEventLog::where('created_at', '>=', $dateTime)->get();
+        $mappedEvent = EventMapper::map($event);
+        $mappedEvent['paid_amount'] = $event['paid_amount'];
 
-        return $events->toArray();
-    }
-
-    public function fetchEventsUpdatedFromDate(DateTime $dateTime): array
-    {
-        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
-
-        return $events->toArray();
+        return $mappedEvent;
     }
 }
