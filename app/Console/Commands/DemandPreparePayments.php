@@ -63,7 +63,7 @@ class DemandPreparePayments extends Command
                 $payment->push();
 //recalculate paid_amount by fees
 //deduct from advertiser account
-                //if funds are insufficient - lower paid amount
+//if funds are insufficient - lower paid amount
                 $payment->events()->saveMany($paymentData['events']);
             });
 
