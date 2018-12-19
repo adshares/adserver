@@ -31,6 +31,12 @@ class Config extends Model
 
     public const PAYMENT_RX_FEE = 'payment-rx-fee';
 
+    public const LICENCE_TX_FEE = 'licence-tx-fee';
+
+    public const LICENCE_RX_FEE = 'licence-rx-fee';
+
+    public const LICENCE_ACCOUNT = 'licence-account';
+
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
     public const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
