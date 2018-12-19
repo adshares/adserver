@@ -177,6 +177,7 @@ class SupplyController extends Controller
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
+        $caseId = $request->query->get('cid');
         $tid = $request->cookies->get('tid');
         $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
@@ -185,27 +186,28 @@ class SupplyController extends Controller
         $publisherId = Zone::fetchPublisherId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
+        $url = Utils::addUrlParameter($url, 'eid', $eventId);
 
         $response = new RedirectResponse($url);
         $response->send();
 
-        $log = new NetworkEventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->publisher_id = $publisherId;
-        $log->pay_from = $payFrom;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->event_type = 'click';
-
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
-        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
-
-        $log->save();
+        NetworkEventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $zoneId,
+            $trackingId,
+            $publisherId,
+            $payFrom,
+            $logIp,
+            $requestHeaders,
+            $context,
+            NetworkEventLog::TYPE_CLICK
+        );
 
         return $response;
     }
@@ -236,36 +238,37 @@ class SupplyController extends Controller
         $context = Utils::decodeZones($request->query->get('ctx'));
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
         $tid = $request->cookies->get('tid');
+        $caseId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
         $publisherId = Zone::fetchPublisherId($zoneId);
 
-        $url = Utils::addUrlParameter($url, 'cid', $eventId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
+        $url = Utils::addUrlParameter($url, 'eid', $eventId);
 
         $response = new RedirectResponse($url);
         $response->send();
 
-        $log = new NetworkEventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $zoneId;
-        $log->publisher_id = $publisherId;
-        $log->pay_from = $payFrom;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->event_type = 'view';
-
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
-        $log->context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
-
-        $log->save();
+        NetworkEventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $zoneId,
+            $trackingId,
+            $publisherId,
+            $payFrom,
+            $logIp,
+            $requestHeaders,
+            $context,
+            NetworkEventLog::TYPE_VIEW
+        );
 
         return $response;
     }

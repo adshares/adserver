@@ -36,12 +36,18 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $payment4 = $this->createPayment('0001-00000005-0002', '0002:00000003:0002', 5);
 
         $this->command->info('[mock] seeding: event_logs');
-        $this->createEvent('0001-00000001-0001', 10, $payment1, 'view');
-        $this->createEvent('0001-00000001-0001', 100, $payment1, 'click');
-        $this->createEvent('0001-00000001-0001', 1, $payment2, 'view');
-        $this->createEvent('0001-00000001-0001', 1, $payment3, 'view');
-        $this->createEvent('0001-00000002-0001', 2, $payment4, 'view');
-        $this->createEvent('0001-00000002-0001', 3, $payment4, 'click');
+
+        $caseId1 = Uuid::v4();
+        $caseId2 = Uuid::v4();
+        $caseId3 = Uuid::v4();
+        $caseId4 = Uuid::v4();
+
+        $this->createEvent($caseId1, '0001-00000001-0001', 10, $payment1, 'view');
+        $this->createEvent($caseId1, '0001-00000001-0001', 100, $payment1, 'click');
+        $this->createEvent($caseId2, '0001-00000001-0001', 1, $payment2, 'view');
+        $this->createEvent($caseId3, '0001-00000001-0001', 1, $payment3, 'view');
+        $this->createEvent($caseId4, '0001-00000002-0001', 2, $payment4, 'view');
+        $this->createEvent($caseId4, '0001-00000002-0001', 3, $payment4, 'click');
 
         factory(EventLog::class)->times(100)->create();
     }
@@ -60,9 +66,10 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         return $payment->id;
     }
 
-    private function createEvent(string $payTo, int $value, int $paymentId, string $type): void
+    private function createEvent(Uuid $caseId, string $payTo, int $value, int $paymentId, string $type): void
     {
         $event = new EventLog();
+        $event->case_id = (string)$caseId;
         $event->event_id = (string)Uuid::v4();
         $event->user_id = (string)Uuid::v4();
         $event->banner_id = (string)Uuid::v4();

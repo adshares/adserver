@@ -46,7 +46,7 @@ class InventoryImporterCommand extends Command
 
     public function handle()
     {
-        $this->info('Starting import data from all inventories.');
+        $this->info('Started importing data from all inventories.');
 
         $networkHosts = $this->networkHost->find();
 
@@ -59,5 +59,7 @@ class InventoryImporterCommand extends Command
         foreach ($networkHosts as $networkHost) {
             $this->inventoryImporterService->import($networkHost->host);
         }
+
+        $this->info('Finished importing data from all inventories.');
     }
 }

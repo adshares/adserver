@@ -30,6 +30,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class NetworkEventLog extends Model
 {
+    public const TYPE_VIEW = 'view';
+
+    public const TYPE_CLICK = 'click';
+
     use AccountAddress;
     use AutomateMutators;
     use BinHex;
@@ -42,6 +46,7 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $fillable = [
+        'case_id',
         'event_id',
         'user_id',
         'banner_id',
@@ -74,6 +79,7 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
+        'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
@@ -87,4 +93,34 @@ class NetworkEventLog extends Model
         'event_value' => 'Money',
         'paid_amount' => 'Money',
     ];
+
+    public static function create(
+        string $caseId,
+        string $eventId,
+        string $bannerId,
+        string $zoneId,
+        string $trackingId,
+        string $publisherId,
+        string $payFrom,
+        $ip,
+        $headers,
+        array $context,
+        $type
+    ): self {
+        $log = new self();
+        $log->case_id = $caseId;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
+        $log->pay_from = $payFrom;
+        $log->ip = $ip;
+        $log->headers = $headers;
+        $log->event_type = $type;
+        $log->context = $context;
+        $log->save();
+
+        return $log;
+    }
 }

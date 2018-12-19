@@ -40,6 +40,7 @@ $factory->define(
             });
 
         return [
+            'case_id' => $faker->uuid,
             'event_id' => $faker->uuid,
             'user_id' => $faker->uuid,
             'banner_id' => $faker->uuid,
