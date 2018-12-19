@@ -43,25 +43,25 @@ class CreateConfigsTable extends Migration
         DB::table('configs')->insert(
             [
                 'key' => Config::PAYMENT_TX_FEE,
-                'value' => '0.05',
+                'value' => '0.01',
             ]
         );
         DB::table('configs')->insert(
             [
                 'key' => Config::PAYMENT_RX_FEE,
-                'value' => '0.05',
+                'value' => '0.01',
             ]
         );
         DB::table('configs')->insert(
             [
                 'key' => Config::LICENCE_TX_FEE,
-                'value' => '0.01',
+                'value' => '0.05',
             ]
         );
         DB::table('configs')->insert(
             [
                 'key' => Config::LICENCE_RX_FEE,
-                'value' => '0.01',
+                'value' => '0.05',
             ]
         );
         DB::table('configs')->insert(
