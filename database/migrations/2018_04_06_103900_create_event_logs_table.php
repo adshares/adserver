@@ -39,6 +39,7 @@ class CreateEventLogsTable extends Migration
 
                 $table->timestamps();
 
+                $table->binary('case_id', 16);
                 $table->binary('event_id', 16);
                 $table->binary('user_id', 16);
                 $table->binary('banner_id', 16);
@@ -65,6 +66,7 @@ class CreateEventLogsTable extends Migration
         );
 
         if (DB::isMysql()) {
+            DB::statement('ALTER TABLE event_logs MODIFY case_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY event_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY user_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY publisher_id varbinary(16)');

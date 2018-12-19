@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Copyright (c) 2018 Adshares sp. z o.o.
  *
@@ -54,6 +53,7 @@ class EventLog extends Model
      * @var array
      */
     protected $fillable = [
+        'case_id',
         'event_id',
         'user_id',
         'banner_id',
@@ -87,6 +87,7 @@ class EventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
+        'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
@@ -145,5 +146,37 @@ class EventLog extends Model
         $user = ['uid' => $tid];
 
         return new ImpressionContext($site, $device, $user);
+    }
+
+    public static function create(
+        string $caseId,
+        string $eventId,
+        string $bannerId,
+        string $zoneId,
+        string $trackingId,
+        string $publisherId,
+        string $payTo,
+        $ip,
+        $headers,
+        array $context,
+        string $userData,
+        $type
+    ): self {
+        $log = new self();
+        $log->case_id = $caseId;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
+        $log->pay_to = $payTo;
+        $log->ip = $ip;
+        $log->headers = $headers;
+        $log->their_context = $context;
+        $log->their_userdata = $userData;
+        $log->event_type = $type;
+        $log->save();
+
+        return $log;
     }
 }
