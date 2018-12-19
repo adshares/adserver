@@ -62,8 +62,11 @@ class AdsProcessTx extends Command
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    public function handle(AdsClient $adsClient, AdSelectEventExporter $adSelectEventExporter, DemandClient $demandClient): int
-    {
+    public function handle(
+        AdsClient $adsClient,
+        AdSelectEventExporter $adSelectEventExporter,
+        DemandClient $demandClient
+    ): int {
         $this->info('Start command ads:process-tx');
         $this->demandClient = $demandClient;
         $this->adSelectEventExporter = $adSelectEventExporter;
