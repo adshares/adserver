@@ -31,7 +31,7 @@ class DemandPreparePayments extends Command
 {
     protected $signature = 'ops:demand:payments:prepare';
 
-    public function handle()
+    public function handle(): void
     {
         $events = EventLog::fetchUnpaidEvents();
 
@@ -61,9 +61,6 @@ class DemandPreparePayments extends Command
                 $payment = new Payment();
                 $payment->fill($paymentData);
                 $payment->push();
-//recalculate paid_amount by fees
-//deduct from advertiser account
-                //if funds are insufficient - lower paid amount
                 $payment->events()->saveMany($paymentData['events']);
             });
 
