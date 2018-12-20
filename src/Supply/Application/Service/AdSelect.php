@@ -31,4 +31,6 @@ interface AdSelect
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 
     public function exportEvents(array $events): void;
+
+    public function exportEventsPayments(array $events): void;
 }

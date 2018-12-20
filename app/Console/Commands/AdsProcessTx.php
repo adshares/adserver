@@ -26,12 +26,13 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -52,16 +53,23 @@ class AdsProcessTx extends Command
     /** @var DemandClient $demandClient */
     private $demandClient;
 
+    /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
+    private $paymentDetailsProcessor;
+
     public function __construct()
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    public function handle(AdsClient $adsClient, DemandClient $demandClient): int
-    {
-        $this->info('Start command ads:process-tx');
+    public function handle(
+        AdsClient $adsClient,
+        PaymentDetailsProcessor $paymentDetailsProcessor,
+        DemandClient $demandClient
+    ): int {
+        $this->info('Start processing incoming txs');
         $this->demandClient = $demandClient;
+        $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 
         try {
             $this->updateBlockIds($adsClient);
@@ -72,6 +80,7 @@ class AdsProcessTx extends Command
                 "Cannot update blocks due to CommandException:\n"."Code:\n  ${code}\n"."Message:\n  ${message}\n"
             );
 
+            $this->info('Premature finish processing incoming txs.');
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
@@ -81,6 +90,7 @@ class AdsProcessTx extends Command
             $this->handleDbTx($adsClient, $dbTx);
         }
 
+        $this->info('Finish processing incoming txs');
         return self::EXIT_CODE_SUCCESS;
     }
 
@@ -198,31 +208,17 @@ class AdsProcessTx extends Command
             return true;
         }
 
-        $this->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+        try {
+            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+        } catch (InvalidPaymentDetailsException $exception) {
+            // TODO log that demand send invalid payment
+            return false;
+        }
 
         $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $dbTx->save();
 
         return true;
-    }
-
-    private function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
-    {
-        foreach ($paymentDetails as $paymentDetail) {
-            $event = NetworkEventLog::where('event_id', hex2bin($paymentDetail['event_id']))->first();
-
-            if ($event === null) {
-                // TODO log null $event - it means that Demand Server sent event which cannt be found in Supply DB
-                continue;
-            }
-
-            $event->pay_from = $senderAddress;
-            $event->payment_id = $paymentId;
-            $event->event_value = $paymentDetail['event_value'];
-            $event->paid_amount = $paymentDetail['paid_amount'];
-
-            $event->save();
-        }
     }
 
     private function handleSendOneTx(AdsPayment $dbTx, SendOneTransaction $transaction): void
@@ -231,7 +227,7 @@ class AdsProcessTx extends Command
 
         if ($targetAddr === $this->adServerAddress) {
             $message = $transaction->getMessage();
-            $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
+            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
 
             if (null === $user) {
                 $this->handleReservedTx($dbTx);
