@@ -19,12 +19,15 @@ mv routes ${INSTALLATION_PATH}/
 mv src ${INSTALLATION_PATH}/
 mv tests ${INSTALLATION_PATH}/
 mv vendor ${INSTALLATION_PATH}/
+mv storage ${INSTALLATION_PATH}/
 
 mv composer.json ${INSTALLATION_PATH}/
 
 # Move artisan binary
 mv artisan ${INSTALLATION_PATH}/
+mv .env ${INSTALLATION_PATH}/
 
 # Migrate
 cd ${INSTALLATION_PATH}
-./bin/init.sh --migrate --force --seed
+./artisan migrate:fresh
+./artisan db:seed

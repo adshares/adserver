@@ -23,8 +23,9 @@ envsubst < .env.dist | tee .env
 
 composer install --${APP_ENV}
 
-./artisan key:generate
 ./artisan package:discover
 
 yarn install
-yarn run ${APP_ENV}
+yarn run dev
+mkdir -p storage/app/public/banners
+chmod a+rwX -R chmod a+w -R storage
