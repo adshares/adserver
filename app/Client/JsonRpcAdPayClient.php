@@ -76,8 +76,14 @@ class JsonRpcAdPayClient implements AdPay
 
     public function getPayments(int $timestamp): array
     {
+//TODO: remove forced calculation
+        $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
+        $this->client->call($procedure);
+
         $procedure = new Procedure(self::METHOD_GET_PAYMENTS, [['timestamp' => $timestamp]]);
 
-        return $this->client->call($procedure)->toArray()['payments'];
+        $responseArray = $this->client->call($procedure)->toArray();
+
+        return $responseArray['payments'];
     }
 }

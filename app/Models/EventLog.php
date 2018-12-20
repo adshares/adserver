@@ -104,6 +104,7 @@ class EventLog extends Model
     public static function fetchUnpaidEvents(): Collection
     {
         $query = self::whereNotNull('event_value')
+            ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->orderBy('pay_to');
 
@@ -114,38 +115,6 @@ class EventLog extends Model
     {
         return self::where('payment_id', $paymentId)
             ->get();
-    }
-
-    public function payment(): BelongsTo
-    {
-        return $this->belongsTo(Payment::class);
-    }
-
-    public function createImpressionContext(): ImpressionContext
-    {
-        // TODO input data should be validated - currently ErrorException could be thrown
-        $ip = inet_ntop(hex2bin($this->ip));
-
-        $headersArray = get_object_vars($this->headers);
-
-        $domain = $headersArray['referer'][0];
-        $ua = $headersArray['user-agent'][0];
-
-        $cookieHeader = $headersArray['cookie'][0];
-        $cookies = explode(';', $cookieHeader);
-        foreach ($cookies as $cookie) {
-            $arr = explode('=', $cookie, 2);
-            if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
-                $tid = trim($arr[1]);
-                break;
-            }
-        }
-
-        $site = ['domain' => $domain];
-        $device = ['ip' => $ip, 'ua' => $ua];
-        $user = ['uid' => $tid];
-
-        return new ImpressionContext($site, $device, $user);
     }
 
     public static function create(
@@ -178,5 +147,37 @@ class EventLog extends Model
         $log->save();
 
         return $log;
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
+    public function createImpressionContext(): ImpressionContext
+    {
+        // TODO input data should be validated - currently ErrorException could be thrown
+        $ip = inet_ntop(hex2bin($this->ip));
+
+        $headersArray = get_object_vars($this->headers);
+
+        $domain = $headersArray['referer'][0];
+        $ua = $headersArray['user-agent'][0];
+
+        $cookieHeader = $headersArray['cookie'][0];
+        $cookies = explode(';', $cookieHeader);
+        foreach ($cookies as $cookie) {
+            $arr = explode('=', $cookie, 2);
+            if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
+                $tid = trim($arr[1]);
+                break;
+            }
+        }
+
+        $site = ['domain' => $domain];
+        $device = ['ip' => $ip, 'ua' => $ua];
+        $user = ['uid' => $tid];
+
+        return new ImpressionContext($site, $device, $user);
     }
 }

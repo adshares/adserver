@@ -318,8 +318,7 @@ class DemandController extends Controller
                 'banner_id' => $data['banner_id'],
                 'zone_id' => $data['zone_id'],
                 'publisher_id' => $data['publisher_id'],
-                'event_value' => $data['event_value'],
-                'paid_amount' => $data['paid_amount'],
+                'event_value' => $data['paid_amount'],
             ];
         }
 

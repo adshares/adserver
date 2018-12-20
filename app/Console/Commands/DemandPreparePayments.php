@@ -50,6 +50,10 @@ class DemandPreparePayments extends Command
 
         $groupedEvents
             ->map(function (Collection $paymentGroup, string $key) {
+                $paymentGroup->each(function (EventLog $entry) {
+                    $entry->paid_amount = $entry->event_value;
+                });
+
                 return [
                     'events' => $paymentGroup,
                     'account_address' => $key,
