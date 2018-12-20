@@ -23,6 +23,7 @@ envsubst < .env.dist | tee .env
 
 composer install --${APP_ENV}
 
+./artisan key:generate
 ./artisan package:discover
 
 yarn install
