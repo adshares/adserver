@@ -21,7 +21,7 @@ fi
 
 envsubst < .env-template.dist | tee .env
 
-composer install --${APP_ENV}
+composer install
 
 ./artisan key:generate
 ./artisan package:discover
