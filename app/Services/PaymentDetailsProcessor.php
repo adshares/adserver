@@ -67,7 +67,7 @@ class PaymentDetailsProcessor
             $event->pay_from = $senderAddress;
             $event->payment_id = $paymentId;
             $event->event_value = $paymentDetail['event_value'];
-            $event->paid_amount = $paymentDetail['paid_amount'];
+            $event->paid_amount = $paymentDetail['event_value'];
 
             $event->save();
 
@@ -77,7 +77,7 @@ class PaymentDetailsProcessor
 
             $publisherId = $event->publisher_id;
             $amount = $splitPayments[$publisherId] ?? 0;
-            $amount += $paymentDetail['paid_amount'];
+            $amount += $paymentDetail['event_value'];
             $splitPayments[$publisherId] = $amount;
         }
 
@@ -111,7 +111,7 @@ class PaymentDetailsProcessor
 
         $amountToPay = 0;
         foreach ($paymentDetails as $paymentDetail) {
-            $amountToPay += $paymentDetail['paid_amount'];
+            $amountToPay += $paymentDetail['event_value'];
         }
 
         if ($amountReceived < $amountToPay) {
