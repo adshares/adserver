@@ -19,7 +19,7 @@ if [ ! -v TRAVIS ]; then
   cd ${BUILD_PATH}/build
 fi
 
-envsubst < .env.dist | tee .env
+envsubst < .env-template.dist | tee .env
 
 composer install --${APP_ENV}
 
@@ -28,5 +28,6 @@ composer install --${APP_ENV}
 
 yarn install
 yarn run dev
+
 mkdir -p storage/app/public/banners
 chmod a+rwX -R storage
