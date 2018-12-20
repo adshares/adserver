@@ -54,8 +54,7 @@
             "@php artisan key:generate"
         ],
         "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover"
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
         ],
         "install-codestandards": [
             "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
