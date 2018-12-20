@@ -27,4 +27,4 @@ mv artisan ${INSTALLATION_PATH}/
 
 # Migrate
 cd ${INSTALLATION_PATH}
-./artisan migrate
+./bin/init.sh --migrate --force --seed
