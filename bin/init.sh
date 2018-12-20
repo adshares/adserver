@@ -12,7 +12,9 @@ OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
 OPT_STOP=0
 
-DOCKER_COMPOSE="docker-compose"
+PROJECT_NAME=${PROJECT_NAME:-adserver}
+
+DOCKER_COMPOSE="docker-compose --project-name ${PROJECT_NAME}"
 
 while [ "$1" != "" ]
 do
