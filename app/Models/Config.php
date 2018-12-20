@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
@@ -53,7 +54,7 @@ class Config extends Model
 
     public static function fetchAdSelectEventExportTime(): DateTime
     {
-        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             return new DateTime('@0');
@@ -64,7 +65,7 @@ class Config extends Model
 
     public static function updateAdSelectEventExportTime(\DateTime $date): void
     {
-        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             $config = new self();
@@ -73,5 +74,16 @@ class Config extends Model
 
         $config->value = $date->format(DateTime::ATOM);
         $config->save();
+    }
+
+    public static function getFee(string $feeType): float
+    {
+        $config = self::where('key', $feeType)->first();
+
+        if (!$config) {
+            throw new MissingInitialConfigurationException(sprintf('No config entry for key: %s.', $feeType));
+        }
+
+        return (float)$config->value;
     }
 }

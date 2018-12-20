@@ -63,6 +63,7 @@ class NetworkEventLog extends Model
         'timestamp',
         'event_value',
         'paid_amount',
+        'paid_amount_real',
         'payment_id',
     ];
 
@@ -92,6 +93,7 @@ class NetworkEventLog extends Model
         'their_userdata' => 'JsonValue',
         'event_value' => 'Money',
         'paid_amount' => 'Money',
+        'paid_amount_real' => 'Money',
     ];
 
     public static function fetchByEventId(string $eventId): ?NetworkEventLog

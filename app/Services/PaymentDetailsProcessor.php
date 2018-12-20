@@ -22,8 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
+use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -31,13 +35,17 @@ use Adshares\Supply\Application\Service\AdSelectEventExporter;
 
 class PaymentDetailsProcessor
 {
+    /** @var AdsClient $adsClient */
+    private $adsClient;
+
     /** @var AdSelectEventExporter $adSelectEventExporter */
     private $adSelectEventExporter;
 
     private $adServerAddress;
 
-    public function __construct(AdSelectEventExporter $adSelectEventExporter)
+    public function __construct(AdsClient $adsClient, AdSelectEventExporter $adSelectEventExporter)
     {
+        $this->adsClient = $adsClient;
         $this->adSelectEventExporter = $adSelectEventExporter;
         $this->adServerAddress = config('app.adshares_address');
     }
@@ -48,13 +56,28 @@ class PaymentDetailsProcessor
      * @param array $paymentDetails
      *
      * @throws InvalidPaymentDetailsException
+     * @throws MissingInitialConfigurationException
      */
     public function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
     {
         $this->validatePayment($paymentId, $paymentDetails);
 
+        $licenceFee = Config::getFee(Config::LICENCE_RX_FEE);
+        $operatorFee = Config::getFee(Config::PAYMENT_RX_FEE);
+
+        $transferAmountBeforeLicenseFee = $this->getPaymentAmount($paymentId);
+        $licenceFeeAmount = $licenceFee * $transferAmountBeforeLicenseFee;
+        $transferAmountBeforeOperatorFee = $transferAmountBeforeLicenseFee - $licenceFeeAmount;
+        $operatorFeeAmount = $operatorFee * $transferAmountBeforeOperatorFee;
+        $transferAmountAfterFee = $transferAmountBeforeOperatorFee - $operatorFeeAmount;
+
+        $amountToPay = $this->getAmountToPay($paymentDetails);
+
+        $feeFactor = $transferAmountAfterFee / $amountToPay;
+
         $splitPayments = [];
         $dateFrom = null;
+        $totalRealPaidAmount = 0;
 
         foreach ($paymentDetails as $paymentDetail) {
             $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
@@ -64,10 +87,15 @@ class PaymentDetailsProcessor
                 continue;
             }
 
+            $paidAmount = $paymentDetail['paid_amount'];
+            $realPaidAmount = (int)floor($paidAmount * $feeFactor);
+            $totalRealPaidAmount += $realPaidAmount;
+
             $event->pay_from = $senderAddress;
             $event->payment_id = $paymentId;
             $event->event_value = $paymentDetail['event_value'];
-            $event->paid_amount = $paymentDetail['paid_amount'];
+            $event->paid_amount = $paidAmount;
+            $event->paid_amount_real = $realPaidAmount;
 
             $event->save();
 
@@ -77,9 +105,24 @@ class PaymentDetailsProcessor
 
             $publisherId = $event->publisher_id;
             $amount = $splitPayments[$publisherId] ?? 0;
-            $amount += $paymentDetail['paid_amount'];
+            $amount += $realPaidAmount;
             $splitPayments[$publisherId] = $amount;
         }
+
+        $operatorFeeAmount = (int)floor($operatorFeeAmount);
+        // TODO log operator income $operatorFeeAmount
+        $licenceFeeAmount = $transferAmountBeforeLicenseFee - $operatorFeeAmount - $totalRealPaidAmount;
+        $licenceFeeAmount = (int)floor($licenceFeeAmount);
+
+        if ($licenceFeeAmount <= 0) {
+            throw new InvalidPaymentDetailsException(
+                sprintf(
+                    'Negative licence fee.'
+                )
+            );
+        }
+
+        $this->sendLicenceTransfer($licenceFeeAmount);
 
         foreach ($splitPayments as $userUuid => $amount) {
             $user = User::fetchByUuid($userUuid);
@@ -106,13 +149,8 @@ class PaymentDetailsProcessor
 
     private function validatePayment(int $paymentId, array $paymentDetails): void
     {
-        $adsPayment = AdsPayment::find($paymentId);
-        $amountReceived = (int)$adsPayment->amount;
-
-        $amountToPay = 0;
-        foreach ($paymentDetails as $paymentDetail) {
-            $amountToPay += $paymentDetail['paid_amount'];
-        }
+        $amountReceived = $this->getPaymentAmount($paymentId);
+        $amountToPay = $this->getAmountToPay($paymentDetails);
 
         if ($amountReceived < $amountToPay) {
             throw new InvalidPaymentDetailsException(
@@ -123,5 +161,39 @@ class PaymentDetailsProcessor
                 )
             );
         }
+    }
+
+    private function getPaymentAmount(int $adsPaymentId): int
+    {
+        $adsPayment = AdsPayment::find($adsPaymentId);
+
+        return (int)$adsPayment->amount;
+    }
+
+    private function getAmountToPay(array $paymentDetails): int
+    {
+        $amountToPay = 0;
+        foreach ($paymentDetails as $paymentDetail) {
+            $amountToPay += $paymentDetail['paid_amount'];
+        }
+
+        return $amountToPay;
+    }
+
+    private function sendLicenceTransfer(int $amount): void
+    {
+        $config = Config::where('key', Config::LICENCE_ACCOUNT)->first();
+        if (!$config) {
+            throw new MissingInitialConfigurationException(
+                sprintf('No config entry for key: %s.', Config::LICENCE_ACCOUNT)
+            );
+        }
+        $address = $config->value;
+
+        // TODO move to queue or Ads service
+        $command = new SendOneCommand($address, $amount);
+        $response = $this->adsClient->runTransaction($command);
+        // TODO log transaction
+//        $txid = $response->getTx()->getId();
     }
 }

@@ -58,10 +58,11 @@ class CreateNetworkEventLogsTable extends Migration
             $table->text('their_userdata')->nullable();
             $table->bigInteger('event_value')->nullable();
             $table->bigInteger('paid_amount')->nullable();
+            $table->bigInteger('paid_amount_real')->nullable();
             $table->bigInteger('payment_id')->nullable();
         });
 
-        if (DB::isMysql()) {
+        if (DB::isMySql()) {
             DB::statement("ALTER TABLE network_event_logs MODIFY case_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY event_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY user_id varbinary(16)");
