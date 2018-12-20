@@ -19,15 +19,3 @@ if [ ! -v TRAVIS ]; then
   cd ${BUILD_PATH}/build
 fi
 
-envsubst < .env-template.dist | tee .env
-
-composer install
-
-./artisan key:generate
-./artisan package:discover
-
-yarn install
-yarn run dev
-
-mkdir -p storage/app/public/banners
-chmod a+rwX -R storage
