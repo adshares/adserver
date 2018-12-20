@@ -29,4 +29,4 @@ composer install --${APP_ENV}
 yarn install
 yarn run dev
 mkdir -p storage/app/public/banners
-chmod a+rwX -R chmod a+w -R storage
+chmod a+rwX -R storage
