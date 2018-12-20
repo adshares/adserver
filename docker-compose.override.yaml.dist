@@ -43,9 +43,9 @@ services:
   #      PHP__xdebug.auto_trace: "1"
   #      PHP__xdebug.extended_info: "1"
 
-  database:
-    ports:
-      - "3306:3306"
+#  database:
+#    ports:
+#      - "3306:3306"
 
 #  ssh:
 #    extends:
