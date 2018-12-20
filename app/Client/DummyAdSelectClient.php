@@ -30,14 +30,14 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
 use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 use function array_map;
 use function str_replace;
 
-final class DummyAdSelectClient implements BannerFinder
+final class DummyAdSelectClient implements AdSelect
 {
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
@@ -130,5 +130,20 @@ final class DummyAdSelectClient implements BannerFinder
         )->where('network_banners.height', $zone->height)->whereIn('type', $typeDefault);
 
         return $queryBuilder;
+    }
+
+    public function exportInventory(Campaign $campaign): void
+    {
+        // TODO: Implement exportInventory() method.
+    }
+
+    public function exportEvents(array $events): void
+    {
+        // TODO: Implement exportEvents() method.
+    }
+
+    public function exportEventsPayments(array $events): void
+    {
+        // TODO: Implement exportEventPayments() method.
     }
 }

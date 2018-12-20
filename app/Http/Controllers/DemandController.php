@@ -25,13 +25,18 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function hex2bin;
 
 /**
@@ -39,6 +44,14 @@ use function hex2bin;
  */
 class DemandController extends Controller
 {
+    /** @var PaymentDetailsVerify */
+    private $paymentDetailsVerify;
+
+    public function __construct(PaymentDetailsVerify $paymentDetailsVerify)
+    {
+        $this->paymentDetailsVerify = $paymentDetailsVerify;
+    }
+
     public function serve(Request $request, $id)
     {
         $banner = Banner::where('uuid', hex2bin($id))->first();
@@ -47,7 +60,7 @@ class DemandController extends Controller
             abort(404);
         }
 
-        if ('OPTIONS' == $request->getRealMethod()) {
+        if ('OPTIONS' === $request->getRealMethod()) {
             $response = new Response('', 204);
         } else {
             $response = new GzippedStreamedResponse();
@@ -60,7 +73,7 @@ class DemandController extends Controller
             $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
         }
 
-        if ('OPTIONS' == $request->getRealMethod()) {
+        if ('OPTIONS' === $request->getRealMethod()) {
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
             return $response;
@@ -68,7 +81,7 @@ class DemandController extends Controller
 
         $isIECompat = $request->query->has('xdr');
 
-        if ('html' == $banner->creative_type) {
+        if ('html' === $banner->creative_type) {
             $mime = 'text/html';
         } else {
             $mime = 'image/png';
@@ -102,17 +115,19 @@ class DemandController extends Controller
         );
 
         $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
+        $caseId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
 
         $log = new EventLog();
         $log->banner_id = $banner->uuid;
+        $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->user_id = Utils::getRawTrackingId($tid);
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->headers = $request->headers->all();
-        $log->event_type = 'request';
+        $log->event_type = EventLog::TYPE_REQUEST;
         $log->save();
 
-        $response->headers->set('X-Adshares-Cid', $eventId);
+        $response->headers->set('X-Adshares-Cid', $caseId);
         $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
@@ -174,9 +189,11 @@ class DemandController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $eventId = $request->query->get('cid');
+        $eventId = $request->query->get('eid');
+        $caseId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -184,18 +201,20 @@ class DemandController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $log = new EventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->pay_to = $payTo;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->their_context = Utils::getImpressionContext($request);
-        $log->event_type = 'click';
-        $log->their_userdata = $keywords;
-        $log->save();
+        EventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $context['page']['zone'],
+            $trackingId,
+            $publisherId,
+            $payTo,
+            $logIp,
+            $requestHeaders,
+            Utils::getImpressionContext($request),
+            $keywords,
+            EventLog::TYPE_CLICK
+        );
 
         return $response;
     }
@@ -205,9 +224,11 @@ class DemandController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $eventId = $request->query->get('cid');
+        $eventId = $request->query->get('eid');
+        $caseId = $request->query->get('cid');
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
@@ -240,84 +261,67 @@ class DemandController extends Controller
 
         $response->send();
 
-        $log = new EventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->pay_to = $payTo;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->their_context = Utils::getImpressionContext($request);
-        $log->event_type = 'view';
-        $log->their_userdata = $keywords;
-        $log->save();
+        EventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $context['page']['zone'],
+            $trackingId,
+            $publisherId,
+            $payTo,
+            $logIp,
+            $requestHeaders,
+            Utils::getImpressionContext($request),
+            $keywords,
+            EventLog::TYPE_VIEW
+        );
 
         return $response;
     }
 
-    public function logKeywords(Request $request, $log_id)
-    {
-        $url = Utils::urlSafeBase64Decode($request->query->get('r'));
+    public function paymentDetails(
+        string $transactionId,
+        string $accountAddress,
+        string $date,
+        string $signature
+    ): JsonResponse {
+        $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
+        $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
+        $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
 
-        // GET kewords from aduser
-        $impressionId = $request->query->get('iid');
-        $aduser_endpoint = config('app.aduser_external_location');
-        $userdata = ($aduser_endpoint && $impressionId) ? json_decode(
-            file_get_contents("{$aduser_endpoint}/getData/{$impressionId}"),
-            true
-        ) : [];
-
-        $log = EventLog::find($log_id);
-        if (!empty($log)) {
-            $log->our_userdata = $userdata['keywords'];
-            $log->human_score = $userdata['human_score'];
-            $log->user_id = $userdata['user_id'];
-            $log->save();
+        if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
+            throw new BadRequestHttpException('Input data are invalid.');
         }
 
-        $url = Utils::addUrlParameter($url, 's', parse_url($aduser_endpoint, PHP_URL_HOST));
-        $url = Utils::addUrlParameter($url, 'k', Utils::urlSafeBase64Encode(json_encode($userdata['keywords'])));
-
-        $response = new RedirectResponse($url);
-
-        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        // $adpayService instanceof Adpay;
-        //
-        // if ($adpayService && $log->getOurContext() && $log->getUserId()) {
-        //     $adpayService->addEvents([
-        //       $log->getAdpayJson(),
-        //   ]);
-        // }
-
-        return $response;
-    }
-
-    public function logContext(Request $request, $log_id)
-    {
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
-
-        $context = Utils::getImpressionContext($request, $keywords);
-
-        $log = EventLog::find($log_id);
-
-        if (!empty($log)) {
-            $log->our_context = $context;
-            $log->save();
+        if (!$this->paymentDetailsVerify->verify($signature, $transactionId, $accountAddress, $datetime)) {
+            throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
-        $response = Response::make(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->header('Content-Type', 'image/gif');
+        $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
 
-        // $adpayService = $this->container->has('adpay') ? $this->container->get('adpay') : null;
-        // $adpayService instanceof Adpay;
-        //
-        // if ($adpayService && $log->getOurContext() && $log->getUserId()) {
-        //     $adpayService->addEvents([
-        //       $log->getAdpayJson(),
-        //     ]);
-        // }
+        if (!$payment) {
+            throw new NotFoundHttpException(sprintf(
+                'Payment for given transaction %s is not found.',
+                $transactionId
+            ));
+        }
 
-        return $response;
+        $events = EventLog::fetchEvents($payment->id);
+
+        $results = [];
+
+        foreach ($events as $event) {
+            $data = $event->toArray();
+            $results[] = [
+                'event_id' => $data['event_id'],
+                'event_type' => $data['event_type'],
+                'banner_id' => $data['banner_id'],
+                'zone_id' => $data['zone_id'],
+                'publisher_id' => $data['publisher_id'],
+                'event_value' => $data['paid_amount'],
+            ];
+        }
+
+        return new JsonResponse($results);
     }
 }

@@ -20,12 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Application\Service\Exception;
 
-use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\UserContext;
+use RuntimeException;
 
-interface UserContextProvider
+class SignatureVerifierException extends RuntimeException
 {
-    public function getUserContext(ImpressionContext $context): UserContext;
+
 }

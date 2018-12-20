@@ -18,12 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Models;
 
-namespace Adshares\Adserver\HttpClient;
+use Illuminate\Database\Eloquent\Model;
 
-use GuzzleHttp\ClientInterface;
-
-interface AdSelectHttpClient extends ClientInterface
+class AdsPayment extends Model
 {
+    public const STATUS_NEW = 0;
+
+    public const STATUS_USER_DEPOSIT = 1;
+
+    public const STATUS_EVENT_PAYMENT = 2;
+
+    public const STATUS_RESERVED = 64;
+
+    public const STATUS_INVALID = -1;
 }

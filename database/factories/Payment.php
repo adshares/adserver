@@ -18,11 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Faker\Generator as Faker;
 
-use Adshares\Supply\Domain\Model\Campaign;
-
-interface InventoryExporter
-{
-    public function exportInventory(Campaign $campaign): void;
-}
+$factory->define(
+    Payment::class,
+    function (Faker $faker) {
+        return [
+            'account_address' => AccountId::fromIncompleteString($faker->regexify('[0-9A-F]{4}-[0-9A-F]{8}')),
+            'state' => $faker->randomElement([
+                Payment::STATE_NEW,
+                Payment::STATE_SENT,
+                Payment::STATE_SUCCESSFUL,
+                Payment::STATE_FAILED,
+            ]),
+        ];
+    }
+);

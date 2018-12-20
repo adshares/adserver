@@ -18,9 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
+use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CreateConfigsTable extends Migration
 {
@@ -31,11 +33,43 @@ class CreateConfigsTable extends Migration
      */
     public function up()
     {
-        Schema::create('configs', function (Blueprint $table) {
-            $table->string('key')->unique();
-            $table->string('value');
-            $table->timestamps();
-        });
+        Schema::create('configs',
+            function (Blueprint $table) {
+                $table->string('key')->unique();
+                $table->string('value');
+                $table->timestamps();
+            });
+
+        DB::table('configs')->insert(
+            [
+                'key' => Config::PAYMENT_TX_FEE,
+                'value' => '0.01',
+            ]
+        );
+        DB::table('configs')->insert(
+            [
+                'key' => Config::PAYMENT_RX_FEE,
+                'value' => '0.01',
+            ]
+        );
+        DB::table('configs')->insert(
+            [
+                'key' => Config::LICENCE_TX_FEE,
+                'value' => '0.05',
+            ]
+        );
+        DB::table('configs')->insert(
+            [
+                'key' => Config::LICENCE_RX_FEE,
+                'value' => '0.05',
+            ]
+        );
+        DB::table('configs')->insert(
+            [
+                'key' => Config::LICENCE_ACCOUNT,
+                'value' => '0001-00000001-8B4E',
+            ]
+        );
     }
 
     /**

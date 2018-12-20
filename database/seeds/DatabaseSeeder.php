@@ -32,10 +32,11 @@ class DatabaseSeeder extends Seeder
         Auth::shouldReceive('user')->andReturn(new User(['id' => 0]));
         $this->call([
             MockDataUsersSeeder::class,
-            MockDataUserLedgerSeeder::class,
+//            MockDataUserLedgerSeeder::class,
             MockDataSitesSeeder::class,
             MockDataCampaignsSeeder::class,
-            MockDataNetworkHostsSeeder::class,
+//            MockDataNetworkHostsSeeder::class,
+//            MockDataPaymentsAndEventLogsSeeder::class,
         ]);
     }
 }

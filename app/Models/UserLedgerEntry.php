@@ -27,15 +27,21 @@ use Illuminate\Database\Eloquent\Model;
  */
 class UserLedgerEntry extends Model
 {
-    const STATUS_ACCEPTED = 0;
-    const STATUS_PENDING = 1;
-    const STATUS_REJECTED = 2;
+    public const STATUS_ACCEPTED = 0;
 
-    const TYPE_UNKNOWN = 0;
-    const TYPE_DEPOSIT = 1;
-    const TYPE_WITHDRAWAL = 2;
-    const TYPE_AD_INCOME = 3;
-    const TYPE_AD_EXPENDITURE = 4;
+    public const STATUS_PENDING = 1;
+
+    public const STATUS_REJECTED = 2;
+
+    public const TYPE_UNKNOWN = 0;
+
+    public const TYPE_DEPOSIT = 1;
+
+    public const TYPE_WITHDRAWAL = 2;
+
+    public const TYPE_AD_INCOME = 3;
+
+    public const TYPE_AD_EXPENDITURE = 4;
 
     protected $casts = [
         'amount' => 'int',
@@ -43,10 +49,6 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        $sum = self::where('user_id', $userId)
-            ->where('status', self::STATUS_ACCEPTED)
-            ->sum('amount');
-
-        return $sum;
+        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
     }
 }

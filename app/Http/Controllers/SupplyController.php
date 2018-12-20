@@ -24,11 +24,11 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Services\Adselect;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
-use Adshares\Supply\Application\Service\UserContextProvider;
+use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,8 +42,8 @@ class SupplyController extends Controller
 {
     public function find(
         Request $request,
-        UserContextProvider $contextProvider,
-        BannerFinder $bannerFinder,
+        AdUser $contextProvider,
+        AdSelect $bannerFinder,
         string $data = null
     ) {
         $response = new Response();
@@ -86,13 +86,8 @@ class SupplyController extends Controller
         }
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-
-        $context = new ImpressionContext(
-            $site,
-            $device,
-            $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]))
-                ->toAdSelectPartialArray()
-        );
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
         $zones = Utils::decodeZones($data)['zones'];
 
@@ -106,14 +101,14 @@ class SupplyController extends Controller
         $params = [
             json_encode($request->getSchemeAndHttpHost()),
             json_encode(config('app.aduser_external_location')),
-            json_encode('div.a-name-that-does-not-collide'),
+            json_encode(config('app.website_banner_selector')),
         ];
 
         $jsPath = public_path('-/find.js');
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $request, $params) {
+            function () use ($jsPath, $params) {
                 echo str_replace(
                     [
                         "'{{ ORIGIN }}'",
@@ -146,8 +141,11 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
-    {
+    public function logNetworkClick(
+        Request $request,
+        AdUser $contextProvider,
+        string $bannerId
+    ): RedirectResponse {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
@@ -177,34 +175,44 @@ class SupplyController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
+        $caseId = $request->query->get('cid');
+        $tid = $request->cookies->get('tid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-
+        $zoneId = $context['page']['zone'];
+        $publisherId = Zone::fetchPublisherId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
+        $url = Utils::addUrlParameter($url, 'eid', $eventId);
 
         $response = new RedirectResponse($url);
         $response->send();
 
-        $log = new NetworkEventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->pay_from = $payFrom;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->event_type = 'click';
-        $log->context = Utils::getImpressionContext($request);
-        $log->save();
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+
+        NetworkEventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $zoneId,
+            $trackingId,
+            $publisherId,
+            $payFrom,
+            $logIp,
+            $requestHeaders,
+            $context,
+            NetworkEventLog::TYPE_CLICK
+        );
 
         return $response;
     }
 
-    public function logNetworkView(Request $request, Adselect $adselect, string $bannerId): RedirectResponse
+    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -227,52 +235,40 @@ class SupplyController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $impressionId = $request->query->get('iid');
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret'), $impressionId));
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
+        $tid = $request->cookies->get('tid');
+        $caseId = $request->query->get('cid');
+        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
+        $zoneId = $context['page']['zone'];
+        $publisherId = Zone::fetchPublisherId($zoneId);
 
-        $url = Utils::addUrlParameter($url, 'cid', $eventId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
+        $url = Utils::addUrlParameter($url, 'pid', $publisherId);
+        $url = Utils::addUrlParameter($url, 'eid', $eventId);
 
         $response = new RedirectResponse($url);
         $response->send();
 
-        $log = new NetworkEventLog();
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
-        $log->zone_id = $context['page']['zone'];
-        $log->pay_from = $payFrom;
-        $log->ip = $logIp;
-        $log->headers = $requestHeaders;
-        $log->event_type = 'view';
-        $log->context = Utils::getImpressionContext($request);
-        $log->save();
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
-        return $response;
-    }
-
-    public function logNetworkKeywords(Request $request, $log_id): Response
-    {
-        $source = $request->query->get('s');
-        $keywords = json_decode(Utils::urlSafeBase64Decode($request->query->get('k')), true);
-
-        $log = NetworkEventLog::find($log_id);
-        if ($log) {
-            $log->their_userdata = $keywords;
-            $log->save();
-        }
-        //         $keywords = print_r($keywords, 1);
-        //         $response = new Response("nKeywords logId={$log_id} source={$source} keywords={$keywords}");
-        //         return $response;
-
-        $response = new Response();
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->headers->set('Content-Type', 'image/gif');
+        NetworkEventLog::create(
+            $caseId,
+            $eventId,
+            $bannerId,
+            $zoneId,
+            $trackingId,
+            $publisherId,
+            $payFrom,
+            $logIp,
+            $requestHeaders,
+            $context,
+            NetworkEventLog::TYPE_VIEW
+        );
 
         return $response;
     }

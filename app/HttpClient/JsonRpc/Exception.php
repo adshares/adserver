@@ -17,13 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Exception\Exception as AdsharesException;
 
-interface FilteringOptionsSource
+class Exception extends AdsharesException
 {
-    public function fetchFilteringOptions(): Taxonomy;
 }

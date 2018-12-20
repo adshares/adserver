@@ -44,12 +44,14 @@ class User extends Authenticatable
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
     ];
+
     public static $rules_add = [
         'email' => 'required|email|max:150|unique:users',
         'password' => 'required|min:8',
         'is_advertiser' => 'boolean',
         'is_publisher' => 'boolean',
     ];
+
     /**
      * The attributes that should be mutated to dates.
      *
@@ -59,6 +61,7 @@ class User extends Authenticatable
         'deleted_at',
         'email_confirmed_at',
     ];
+
     /**
      * The event map for the model.
      *
@@ -68,6 +71,7 @@ class User extends Authenticatable
         'creating' => GenerateUUID::class,
         'created' => UserCreated::class,
     ];
+
     /**
      * The attributes that are mass assignable.
      *
@@ -78,6 +82,7 @@ class User extends Authenticatable
         'is_advertiser',
         'is_publisher',
     ];
+
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -94,15 +99,17 @@ class User extends Authenticatable
         'is_email_confirmed',
         'adserver_wallet',
     ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
+
     protected $appends = [
         'adserver_wallet',
         'is_email_confirmed',
     ];
 
-    public static function register($data)
+    public static function register($data): User
     {
         $user = new User($data);
         $user->password = $data['password'];
@@ -138,12 +145,12 @@ class User extends Authenticatable
             ];
     }
 
-    public function setPasswordAttribute($value)
+    public function setPasswordAttribute($value): void
     {
         $this->attributes['password'] = null !== $value ? Hash::make($value) : null;
     }
 
-    public function validPassword($value)
+    public function validPassword($value): bool
     {
         return Hash::check($value, $this->attributes['password']);
     }
@@ -153,7 +160,7 @@ class User extends Authenticatable
         return;
     }
 
-    public function generateApiKey()
+    public function generateApiKey(): void
     {
         do {
             $this->api_token = str_random(60);
@@ -162,9 +169,14 @@ class User extends Authenticatable
         $this->save();
     }
 
-    public function clearApiKey()
+    public function clearApiKey(): void
     {
         $this->api_token = null;
         $this->save();
+    }
+
+    public static function fetchByUuid(string $uuid): ?User
+    {
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 }

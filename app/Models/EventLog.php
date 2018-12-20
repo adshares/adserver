@@ -24,8 +24,16 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int event_id
+ * @mixin Builder
+ */
 class EventLog extends Model
 {
     use AccountAddress;
@@ -33,16 +41,24 @@ class EventLog extends Model
     use BinHex;
     use JsonValue;
 
+    public const TYPE_REQUEST = 'request';
+
+    public const TYPE_VIEW = 'view';
+
+    public const TYPE_CLICK = 'click';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
     protected $fillable = [
+        'case_id',
         'event_id',
         'user_id',
         'banner_id',
         'zone_id',
+        'publisher_id',
         'event_type',
         'pay_to',
         'ip',
@@ -71,9 +87,11 @@ class EventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
+        'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
+        'publisher_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -81,46 +99,85 @@ class EventLog extends Model
         'their_context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
-        'event_value' => 'Money',
-        'paid_amount' => 'Money',
     ];
 
-    public function getAdpayJson()
+    public static function fetchUnpaidEvents(): Collection
     {
-        return [
-            'event_id' => (string)$this->event_id,
-            'event_type' => $this->event_type,
-            'event_value' => $this->event_value,
-            'banner_id' => (string)$this->banner_id,
-            'zone_id' => $this->zone_id,
-            'our_keywords' => Utils::flattenKeywords($this->getOurKeywords()),
-            'their_keywords' => Utils::flattenKeywords($this->getTheirKeywords()),
-            'timestamp' => $this->updated_at,
-            'user_id' => $this->user_id,
-            'advertiser_id' => 1, // TODO: chat with Jacek
-            'human_score' => $this->human_score,
-        ];
+        $query = self::whereNotNull('event_value')
+            ->whereNotNull('pay_to')
+            ->whereNull('payment_id')
+            ->orderBy('pay_to');
+
+        return $query->get();
     }
 
-    public function getOurKeywords()
+    public static function fetchEvents(int $paymentId): Collection
     {
-        return array_merge(
-            (array)$this->our_context,
-            [
-                'user' => $this->our_userdata,
-            ]
-        );
+        return self::where('payment_id', $paymentId)
+            ->get();
     }
 
-    public function getTheirKeywords()
-    {
-        return array_merge(
-            (array)$this->their_context,
-            [
-                'user' => $this->their_userdata,
-            ]
-        );
+    public static function create(
+        string $caseId,
+        string $eventId,
+        string $bannerId,
+        string $zoneId,
+        string $trackingId,
+        string $publisherId,
+        string $payTo,
+        $ip,
+        $headers,
+        array $context,
+        string $userData,
+        $type
+    ): self {
+        $log = new self();
+        $log->case_id = $caseId;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
+        $log->pay_to = $payTo;
+        $log->ip = $ip;
+        $log->headers = $headers;
+        $log->their_context = $context;
+        $log->their_userdata = $userData;
+        $log->event_type = $type;
+        $log->save();
 
-        return $data;
+        return $log;
+    }
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
+    public function createImpressionContext(): ImpressionContext
+    {
+        // TODO input data should be validated - currently ErrorException could be thrown
+        $ip = inet_ntop(hex2bin($this->ip));
+
+        $headersArray = get_object_vars($this->headers);
+
+        $domain = $headersArray['referer'][0];
+        $ua = $headersArray['user-agent'][0];
+
+        $cookieHeader = $headersArray['cookie'][0];
+        $cookies = explode(';', $cookieHeader);
+        foreach ($cookies as $cookie) {
+            $arr = explode('=', $cookie, 2);
+            if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
+                $tid = trim($arr[1]);
+                break;
+            }
+        }
+
+        $site = ['domain' => $domain];
+        $device = ['ip' => $ip, 'ua' => $ua];
+        $user = ['uid' => $tid];
+
+        return new ImpressionContext($site, $device, $user);
     }
 }

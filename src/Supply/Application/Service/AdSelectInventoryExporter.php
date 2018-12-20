@@ -27,7 +27,7 @@ class AdSelectInventoryExporter
 {
     private $client;
 
-    public function __construct(InventoryExporter $client)
+    public function __construct(AdSelect $client)
     {
         $this->client = $client;
     }

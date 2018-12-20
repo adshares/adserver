@@ -26,60 +26,50 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\PaymentDetailsProcessor;
+use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
 {
-    /**
-     * Command ended without error
-     */
-    const EXIT_CODE_SUCCESS = 0;
-    /**
-     * Command ended prematurely because block ids could not be updated
-     */
-    const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    public const EXIT_CODE_SUCCESS = 0;
+
+    public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
+
     protected $signature = 'ads:process-tx';
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+
     protected $description = 'Processes incoming txs';
-    /**
-     * @var string blockchain address of AdServer
-     */
+
     private $adServerAddress;
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
+    /** @var DemandClient $demandClient */
+    private $demandClient;
+
+    /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
+    private $paymentDetailsProcessor;
+
     public function __construct()
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @param AdsClient $adsClient
-     *
-     * @return int
-     */
-    public function handle(AdsClient $adsClient)
-    {
-        $this->info('Start command ads:process-tx');
+    public function handle(
+        AdsClient $adsClient,
+        PaymentDetailsProcessor $paymentDetailsProcessor,
+        DemandClient $demandClient
+    ): int {
+        $this->info('Start processing incoming txs');
+        $this->demandClient = $demandClient;
+        $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 
         try {
             $this->updateBlockIds($adsClient);
@@ -90,26 +80,21 @@ class AdsProcessTx extends Command
                 "Cannot update blocks due to CommandException:\n"."Code:\n  ${code}\n"."Message:\n  ${message}\n"
             );
 
+            $this->info('Premature finish processing incoming txs.');
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
-        $dbTxs = AdsTxIn::where('status', AdsTxIn::STATUS_NEW)->get();
+        $dbTxs = AdsPayment::where('status', AdsPayment::STATUS_NEW)->get();
 
         foreach ($dbTxs as $dbTx) {
             $this->handleDbTx($adsClient, $dbTx);
         }
 
+        $this->info('Finish processing incoming txs');
         return self::EXIT_CODE_SUCCESS;
     }
 
-    /**
-     * Updates block data.
-     *
-     * @param AdsClient $adsClient
-     *
-     * @throws CommandException
-     */
-    private function updateBlockIds(AdsClient $adsClient)
+    private function updateBlockIds(AdsClient $adsClient): void
     {
         $attempt = 0;
         $attemptMax = 5;
@@ -122,8 +107,7 @@ class AdsProcessTx extends Command
                     break;
                 }
             } catch (CommandException $exc) {
-                if (CommandError::GET_SIGNATURE_UNAVAILABLE === $exc->getCode()
-                    && ++$attempt < $attemptMax) {
+                if (++$attempt < $attemptMax && CommandError::GET_SIGNATURE_UNAVAILABLE === $exc->getCode()) {
                     // try again after 3 seconds sleep
                     sleep(3);
                 } else {
@@ -133,11 +117,7 @@ class AdsProcessTx extends Command
         }
     }
 
-    /**
-     * @param AdsClient $adsClient
-     * @param AdsTxIn $dbTx
-     */
-    private function handleDbTx(AdsClient $adsClient, $dbTx)
+    private function handleDbTx(AdsClient $adsClient, $dbTx): void
     {
         try {
             $txid = $dbTx->txid;
@@ -166,17 +146,13 @@ class AdsProcessTx extends Command
                 break;
 
             default:
-                $dbTx->status = AdsTxIn::STATUS_INVALID;
+                $dbTx->status = AdsPayment::STATUS_INVALID;
                 $dbTx->save();
                 break;
         }
     }
 
-    /**
-     * @param AdsTxIn $dbTx
-     * @param SendManyTransaction $transaction
-     */
-    private function handleSendManyTx($dbTx, $transaction): void
+    private function handleSendManyTx(AdsPayment $dbTx, SendManyTransaction $transaction): void
     {
         $isTxTargetValid = false;
         $wiresCount = $transaction->getWireCount();
@@ -194,25 +170,67 @@ class AdsProcessTx extends Command
             }
         }
 
-        $dbTx->status = $isTxTargetValid ? AdsTxIn::STATUS_RESERVED : AdsTxIn::STATUS_INVALID;
-        $dbTx->save();
+        if ($isTxTargetValid) {
+            $this->handleReservedTx($dbTx);
+        } else {
+            $dbTx->status = AdsPayment::STATUS_INVALID;
+            $dbTx->save();
+        }
     }
 
-    /**
-     * @param AdsTxIn $dbTx
-     * @param SendOneTransaction $transaction
-     */
-    private function handleSendOneTx($dbTx, $transaction): void
+    private function handleReservedTx(AdsPayment $dbTx): void
+    {
+        if (!$this->handleIfEventPayment($dbTx)) {
+            $dbTx->status = AdsPayment::STATUS_RESERVED;
+            $dbTx->save();
+        }
+    }
+
+    private function handleIfEventPayment(AdsPayment $dbTx): bool
+    {
+        $senderAddress = $dbTx->address;
+        $networkHost = NetworkHost::fetchByAddress($senderAddress);
+
+        if ($networkHost === null) {
+            return false;
+        }
+
+        $host = $networkHost->host;
+        $txid = $dbTx->txid;
+        $paymentId = $dbTx->id;
+
+        try {
+            $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
+        } catch (EmptyInventoryException $exception) {
+            return false;
+        } catch (UnexpectedClientResponseException $exception) {
+            // transaction will be processed again later
+            return true;
+        }
+
+        try {
+            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
+        } catch (InvalidPaymentDetailsException $exception) {
+            // TODO log that demand send invalid payment
+            return false;
+        }
+
+        $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
+        $dbTx->save();
+
+        return true;
+    }
+
+    private function handleSendOneTx(AdsPayment $dbTx, SendOneTransaction $transaction): void
     {
         $targetAddr = $transaction->getTargetAddress();
 
         if ($targetAddr === $this->adServerAddress) {
             $message = $transaction->getMessage();
-            $user = User::where('uuid', hex2bin($this->extractUuidFromMessage($message)))->first();
+            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
 
             if (null === $user) {
-                $dbTx->status = AdsTxIn::STATUS_RESERVED;
-                $dbTx->save();
+                $this->handleReservedTx($dbTx);
             } else {
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
@@ -225,7 +243,7 @@ class AdsProcessTx extends Command
                 $ul->txid = $dbTx->txid;
                 $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
 
-                $dbTx->status = AdsTxIn::STATUS_USER_DEPOSIT;
+                $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
                 // dbTx added to ledger will not be processed again
                 DB::transaction(
                     function () use ($ul, $dbTx) {
@@ -235,18 +253,11 @@ class AdsProcessTx extends Command
                 );
             }
         } else {
-            $dbTx->status = AdsTxIn::STATUS_INVALID;
+            $dbTx->status = AdsPayment::STATUS_INVALID;
             $dbTx->save();
         }
     }
 
-    /**
-     * Extracts uuid from tx message.
-     *
-     * @param string $message tx message
-     *
-     * @return string uuid as hex string
-     */
     private function extractUuidFromMessage(string $message): string
     {
         return substr($message, -32);

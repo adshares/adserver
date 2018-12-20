@@ -51,6 +51,10 @@ final class ImpressionContext
     /** @deprecated */
     private function accioFilter(array $site, array $user): array
     {
+        if (!isset($site['keywords'])) {
+            return [$user, $site];
+        }
+
         $userKeywords = array_filter(
             $site['keywords'],
             function (string $keyword) {
@@ -58,9 +62,12 @@ final class ImpressionContext
             }
         );
 
-        $user['keywords']['interest'] = [];
+        if (!isset($user['keywords']['interest'])) {
+            $user['keywords']['interest'] = [];
+        }
+
         foreach ($userKeywords as $keyword) {
-            $user['keywords']['interest'][] = str_replace('accio:', '', $keyword);
+            $user['keywords']['interest'][] = str_replace(self::ACCIO, '', $keyword);
         }
 
         $site['keywords'] = array_filter(
@@ -75,12 +82,14 @@ final class ImpressionContext
 
     public function adUserRequestBody(): string
     {
+        $uid = config('app.adserver_id').'_'.$this->user['uid'];
+
         return <<<"JSON"
 {
     "domain": "{$this->site['domain']}",
     "ip": "{$this->device['ip']}",
     "ua": "{$this->device['ua']}",
-    "uid": "{$this->user['uid']}"
+    "uid": "{$uid}"
 }
 JSON;
     }
@@ -92,7 +101,7 @@ JSON;
                 return [
                     'keywords' => $this->user['keywords'],
                     'banner_size' => "{$zone->width}x{$zone->height}",
-                    'publisher_id' => 'pid',
+                    'publisher_id' => Zone::fetchPublisherId($zone->id),
                     'request_id' => $zone->id,
                     'user_id' => $this->user['uid'],
                 ];
@@ -108,5 +117,14 @@ JSON;
     public function userId(): string
     {
         return $this->user['uid'];
+    }
+
+    public function eventContext(): array
+    {
+        return [
+            'site' => $this->site,
+            'device' => $this->device,
+            'user' => $this->user,
+        ];
     }
 }

@@ -30,7 +30,7 @@ use Illuminate\Console\Command;
 
 class AdSelectInventoryExporterCommand extends Command
 {
-    protected $signature = 'ops:inventory:export';
+    protected $signature = 'ops:adselect:inventory:export';
 
     protected $description = 'Export campaigns inventory to AdSelect';
 
@@ -51,7 +51,7 @@ class AdSelectInventoryExporterCommand extends Command
 
     public function handle()
     {
-        $this->info('Starting export inventory to AdSelect.');
+        $this->info('Started exporting inventory to AdSelect.');
 
         $campaigns = $this->campaignRepository->fetchActiveCampaigns();
 
@@ -69,5 +69,7 @@ class AdSelectInventoryExporterCommand extends Command
                 // skip campaign without banners
             }
         }
+
+        $this->info('Finished exporting inventory to AdSelect.');
     }
 }

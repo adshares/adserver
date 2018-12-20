@@ -18,30 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+declare(strict_types = 1);
 
-use Illuminate\Database\Eloquent\Model;
+namespace Adshares\Common\Exception;
 
-class AdsTxIn extends Model
+use Exception as PhpException;
+use Throwable;
+
+class Exception extends PhpException
 {
-    /**
-     * Tx was just added
-     */
-    const STATUS_NEW = 0;
-    /**
-     * Tx was recognized as user deposit
-     */
-    const STATUS_USER_DEPOSIT = 1;
-    /**
-     * Tx is valid, but cannot be recognized. Reserved for future use (eg. tx from other AdServer)
-     */
-    const STATUS_RESERVED = 64;
-    /**
-     * Invalid tx
-     */
-    const STATUS_INVALID = -1;
-    public $incrementing = false;
-    protected $table = 'ads_tx_in';
-    protected $primaryKey = 'txid';
-    protected $keyType = 'string';
+    public function __construct(string $message = '', int $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
+
+    public static function fromOther(PhpException $exception)
+    {
+        return new static($exception->getMessage(), $exception->getCode(), $exception);
+    }
 }

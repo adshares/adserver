@@ -20,10 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Adserver\Repository\Supply;
 
-use GuzzleHttp\ClientInterface;
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Supply\Domain\Repository\EventRepository;
+use DateTime;
 
-interface AdUserHttpClient extends ClientInterface
+class NetworkEventRepository implements EventRepository
 {
+    public function fetchEventsCreatedFromDate(DateTime $dateTime): array
+    {
+        $events = NetworkEventLog::where('created_at', '>=', $dateTime)->get();
+
+        return $events->toArray();
+    }
+
+    public function fetchEventsUpdatedFromDate(DateTime $dateTime): array
+    {
+        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
+
+        return $events->toArray();
+    }
 }

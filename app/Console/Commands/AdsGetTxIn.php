@@ -24,7 +24,7 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
@@ -116,7 +116,7 @@ class AdsGetTxIn extends Command
 
                 $amountInClicks = AdsConverter::adsToClicks($amount);
 
-                $adsTx = new AdsTxIn();
+                $adsTx = new AdsPayment();
                 $adsTx->txid = $txid;
                 $adsTx->amount = $amountInClicks;
                 $adsTx->address = $address;

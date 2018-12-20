@@ -30,6 +30,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class NetworkEventLog extends Model
 {
+    public const TYPE_VIEW = 'view';
+
+    public const TYPE_CLICK = 'click';
+
     use AccountAddress;
     use AutomateMutators;
     use BinHex;
@@ -42,10 +46,12 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $fillable = [
+        'case_id',
         'event_id',
         'user_id',
         'banner_id',
         'zone_id',
+        'publisher_id',
         'pay_from',
         'event_type',
         'ip',
@@ -73,9 +79,11 @@ class NetworkEventLog extends Model
      * @var array
      */
     protected $traitAutomate = [
+        'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
+        'publisher_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -86,28 +94,38 @@ class NetworkEventLog extends Model
         'paid_amount' => 'Money',
     ];
 
-    public function getAdselectJson()
+    public static function fetchByEventId(string $eventId): ?NetworkEventLog
     {
-        return [
-            'event_id' => (string)$this->id,
-            'banner_id' => (string)$this->banner_id,
-            'user_id' => $this->user_id,
-            'zone_id' => $this->zone_id,
-            'keywords' => Utils::flattenKeywords($this->getKeywords()),
-            'paid_amount' => $this->event_value,
-            'human_score' => $this->human_score,
-        ];
+        return self::where('event_id', hex2bin($eventId))->first();
     }
 
-    public function getKeywords()
-    {
-        $data = array_merge(
-            (array)$this->context,
-            [
-                'user' => $this->our_userdata,
-            ]
-        );
+    public static function create(
+        string $caseId,
+        string $eventId,
+        string $bannerId,
+        string $zoneId,
+        string $trackingId,
+        string $publisherId,
+        string $payFrom,
+        $ip,
+        $headers,
+        array $context,
+        $type
+    ): self {
+        $log = new self();
+        $log->case_id = $caseId;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->user_id = $trackingId;
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
+        $log->pay_from = $payFrom;
+        $log->ip = $ip;
+        $log->headers = $headers;
+        $log->event_type = $type;
+        $log->context = $context;
+        $log->save();
 
-        return $data;
+        return $log;
     }
 }

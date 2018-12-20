@@ -20,8 +20,14 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient;
+namespace Adshares\Common\Application\Service;
 
-interface AdClassifyHttpClient
+use Adshares\Ads\Entity\Tx;
+use Illuminate\Support\Collection;
+
+interface Ads
 {
+    public function getPublicKeyByAccountAddress(string $accountAddress): string;
+
+    public function sendPayments(Collection $payments): Tx;
 }

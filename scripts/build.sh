@@ -13,18 +13,21 @@ if [ ! -v TRAVIS ]; then
   git clone \
     --depth=1 \
     https://github.com/adshares/adserver.git \
-    --branch ${ADSERVER_BRANCH} \
+    --branch ${BUILD_BRANCH:-master} \
     ${BUILD_PATH}/build
 
   cd ${BUILD_PATH}/build
 fi
 
-envsubst < .env.dist | tee .env
+envsubst < .env-template.dist | tee .env
 
-composer install --${APP_ENV}
+composer install
 
 ./artisan key:generate
 ./artisan package:discover
 
 yarn install
-yarn run ${APP_ENV}
+yarn run dev
+
+mkdir -p storage/app/public/banners
+chmod a+rwX -R storage

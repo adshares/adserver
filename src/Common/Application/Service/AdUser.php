@@ -22,8 +22,14 @@ declare(strict_types = 1);
 namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 
-interface TargetingOptionsSource
+interface AdUser
 {
+    public const DEFAULT_HUMAN_SCORE = 0.5;
+
     public function fetchTargetingOptions(): Taxonomy;
+
+    public function getUserContext(ImpressionContext $context): UserContext;
 }

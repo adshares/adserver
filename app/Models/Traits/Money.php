@@ -27,7 +27,7 @@ trait Money
 {
     public function moneyMutator($key, $value)
     {
-        $this->attributes[$key] = $value !== null ? $value : null;
+        $this->attributes[$key] = $value;
     }
 
     public function moneyAccessor($value)

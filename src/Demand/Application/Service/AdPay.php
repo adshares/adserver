@@ -6,8 +6,8 @@
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,23 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Exceptions;
+declare(strict_types = 1);
 
-use Exception;
-use Illuminate\Contracts\Support\Responsable;
-use Illuminate\Http\JsonResponse;
+namespace Adshares\Demand\Application\Service;
 
-class JsonResponseException extends Exception implements Responsable
+interface AdPay
 {
-    protected $response;
+    public function updateCampaign(array $campaigns): void;
 
-    public function __construct(JsonResponse $response)
-    {
-        $this->response = $response;
-    }
+    public function deleteCampaign(array $campaignIds): void;
 
-    public function toResponse($request)
-    {
-        $this->response;
-    }
+    public function addEvents(array $events): void;
+
+    public function getPayments(int $timestamp): array;
 }

@@ -18,12 +18,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\AdsTxIn;
+use Adshares\Adserver\Models\AdsPayment;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateAdsTxInTable extends Migration
+class CreateAdsPaymentsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -32,11 +32,12 @@ class CreateAdsTxInTable extends Migration
      */
     public function up()
     {
-        Schema::create('ads_tx_in', function (Blueprint $table) {
+        Schema::create('ads_payments', function (Blueprint $table) {
+            $table->bigIncrements('id');
             $table->string('txid', 18)->unique();
             $table->string('address', 18);
             $table->bigInteger('amount');
-            $table->tinyInteger('status')->default(strval(AdsTxIn::STATUS_NEW));
+            $table->tinyInteger('status')->default((string)AdsPayment::STATUS_NEW);
             $table->timestamps();
         });
     }
@@ -48,6 +49,6 @@ class CreateAdsTxInTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('ads_tx_in');
+        Schema::dropIfExists('ads_payments');
     }
 }

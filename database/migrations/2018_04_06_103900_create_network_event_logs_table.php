@@ -25,7 +25,6 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateNetworkEventLogsTable extends Migration
 {
-
     /**
      * Run the migrations.
      *
@@ -38,9 +37,11 @@ class CreateNetworkEventLogsTable extends Migration
 
             $table->timestamps();
 
+            $table->binary('case_id', 16);
             $table->binary('event_id', 16);
             $table->binary('user_id', 16);
             $table->binary('banner_id', 16);
+            $table->binary('publisher_id', 16);
             $table->bigInteger('zone_id')->unsigned();
 
             $table->string('event_type', 16);
@@ -55,20 +56,21 @@ class CreateNetworkEventLogsTable extends Migration
             $table->integer('human_score')->nullable();
             $table->text('our_userdata')->nullable();
             $table->text('their_userdata')->nullable();
-            $table->decimal('event_value', 20, 9)->nullable();
-            $table->decimal('paid_amount', 20, 9)->nullable();
-            $table->integer('payment_id')->nullable();
+            $table->bigInteger('event_value')->nullable();
+            $table->bigInteger('paid_amount')->nullable();
+            $table->bigInteger('payment_id')->nullable();
         });
 
         if (DB::isMysql()) {
+            DB::statement("ALTER TABLE network_event_logs MODIFY case_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY event_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY user_id varbinary(16)");
+            DB::statement("ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)");
             DB::statement("ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)");
             DB::statement("ALTER TABLE network_event_logs MODIFY ip varbinary(8)");
         }
     }
-
 
     /**
      * Reverse the migrations.

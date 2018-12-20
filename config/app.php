@@ -147,6 +147,7 @@ return [
     'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
+    'website_banner_selector' => env('WEBSITE_BANNER_SELECTOR','div.a-name-that-does-not-collide'),
 
     /*
     |--------------------------------------------------------------------------
@@ -201,6 +202,8 @@ return [
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,
         Adshares\Adserver\Providers\Common\ClientProvider::class,
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
+        Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
+        Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
     ],
 
     /*

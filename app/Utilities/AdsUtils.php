@@ -96,14 +96,30 @@ final class AdsUtils
         return intval(max($fee, self::TXS_MIN_FEE));
     }
 
-    public static function encodeTxId($binAddress)
+    public static function encodeTxId($hexTxId)
     {
-        $binAddress = strtoupper($binAddress);
+        $hexTxId = strtoupper($hexTxId);
 
-        return sprintf('%s%s%s', substr($binAddress, 0, 4), substr($binAddress, 4, 8), substr($binAddress, 12, 4));
+        return sprintf(
+            '%s:%s:%s',
+            substr($hexTxId, 0, 4),
+            substr($hexTxId, 4, 8),
+            substr($hexTxId, 12, 4)
+        );
     }
 
-    public static function decodeTxId($address)
+    public static function decodeTxId($txId): ?string
+    {
+        $txId = preg_replace('/[^0-9A-F]+/', '', strtoupper($txId));
+
+        if (!preg_match('/[0-9A-F]{16}/', $txId)) {
+            return null;
+        }
+
+        return $txId;
+    }
+
+    public static function decodeAddress($address): ?string
     {
         $address = preg_replace('/[^0-9A-F]+/', '', strtoupper($address));
 
@@ -111,7 +127,7 @@ final class AdsUtils
             return null;
         }
 
-        return $address;
+        return substr($address, 0, 12);
     }
 
     public static function normalizeAddress($address)
