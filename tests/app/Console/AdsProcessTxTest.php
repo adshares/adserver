@@ -114,7 +114,7 @@ class AdsProcessTxTest extends TestCase
             $log->save();
 
             $totalEventValue += (int)$paymentDetail['event_value'];
-            $totalPaidAmount += (int)$paymentDetail['paid_amount'];
+            $totalPaidAmount += (int)$paymentDetail['event_value'];
         }
 
         $adsTx = new AdsPayment();
@@ -143,7 +143,7 @@ class AdsProcessTxTest extends TestCase
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalEventValue, NetworkEventLog::sum('event_value'));
-        $this->assertEquals($totalPaidAmount, NetworkEventLog::sum('paid_amount'));
+        $this->assertEquals($totalPaidAmount, NetworkEventLog::sum('event_value'));
     }
 
     public function testAdsProcessValidSendMany(): void

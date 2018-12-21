@@ -153,7 +153,6 @@ final class DummyDemandClient implements DemandClient
                 'zone_id' => 1,
                 'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
                 'event_value' => 10,
-                'paid_amount' => 10,
             ],
             [
                 'event_id' => '95a1170d739546799b959a9d0ca9b7c8',
@@ -162,7 +161,6 @@ final class DummyDemandClient implements DemandClient
                 'zone_id' => 1,
                 'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
                 'event_value' => 100,
-                'paid_amount' => 100,
             ],
         ];
     }
