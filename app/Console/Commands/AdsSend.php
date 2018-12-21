@@ -36,15 +36,10 @@ class AdsSend extends Command
     /** @var array */
     private $data;
 
-    public function __construct()
-    {
-        parent::__construct();
-
-        $this->data = include base_path('accounts.local.php');
-    }
-
     public function handle(): void
     {
+        $this->data = include base_path('accounts.local.php');
+
         $this->info($this->send('pub', 'here', random_int(10, 100))->getTx()->getId());
         $this->info($this->send('pub2', 'here', random_int(10, 100))->getTx()->getId());
         $this->info($this->send('adv', 'here', random_int(10, 100))->getTx()->getId());
