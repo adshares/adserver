@@ -27,6 +27,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkHost;
@@ -213,6 +214,10 @@ class AdsProcessTx extends Command
         } catch (InvalidPaymentDetailsException $exception) {
             // TODO log that demand send invalid payment
             return false;
+        } catch (MissingInitialConfigurationException $exception) {
+            // TODO log that initial configuration is missing
+            // transaction will be processed again later
+            return true;
         }
 
         $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;

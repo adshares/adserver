@@ -97,7 +97,6 @@ class AdsProcessTxTest extends TestCase
         $paymentDetails = $demandClient->fetchPaymentDetails('', '');
         $context = $this->getContext();
         $totalEventValue = 0;
-        $totalPaidAmount = 0;
 
         foreach ($paymentDetails as $paymentDetail) {
             $log = new NetworkEventLog();
@@ -114,12 +113,11 @@ class AdsProcessTxTest extends TestCase
             $log->save();
 
             $totalEventValue += (int)$paymentDetail['event_value'];
-            $totalPaidAmount += (int)$paymentDetail['event_value'];
         }
 
         $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_MANY;
-        $adsTx->amount = $totalPaidAmount;
+        $adsTx->amount = $totalEventValue;
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
@@ -143,7 +141,6 @@ class AdsProcessTxTest extends TestCase
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalEventValue, NetworkEventLog::sum('event_value'));
-        $this->assertEquals($totalPaidAmount, NetworkEventLog::sum('event_value'));
     }
 
     public function testAdsProcessValidSendMany(): void
