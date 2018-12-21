@@ -30,10 +30,6 @@ class NetworkCampaign extends Model
     use AutomateMutators;
     use BinHex;
 
-    const STATUS_ACTIVE = 1;
-
-    const STATUS_DELETED = 2;
-
     /**
      * The attributes that are mass assignable.
      *
@@ -73,6 +69,7 @@ class NetworkCampaign extends Model
         'date_end',
         'targeting_requires',
         'targeting_excludes',
+        'status',
     ];
 
     /**

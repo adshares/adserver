@@ -18,18 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Repository;
+namespace Adshares\Supply\Domain\Model\Exception;
 
-use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
+use RuntimeException;
 
-interface CampaignRepository
+class UnsupportedStatusTypeException extends RuntimeException
 {
-    public function markedAsDeletedByHost(string $host): void;
 
-    public function save(Campaign $campaignArray): void;
-
-    public function fetchActiveCampaigns(): CampaignCollection;
 }

@@ -49,6 +49,12 @@ class EventMapper
         foreach ($keywords as $keyword) {
             $lastOccurrence = strrpos($keyword, ':');
 
+            if ($lastOccurrence === false) {
+                $mappedKeywords[$keyword] = 1;
+
+                continue;
+            }
+
             $key = substr($keyword, 0, $lastOccurrence);
             $value = substr($keyword, $lastOccurrence + 1);
 
