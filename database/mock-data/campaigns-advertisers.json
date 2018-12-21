@@ -9,7 +9,9 @@
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
         "targeting_requires": {
-          "interest": ["100"]
+          "interest": [
+            "100"
+          ]
         },
         "classification_status": 2,
         "classification_tags": "open source",
@@ -22,7 +24,11 @@
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
         "name": "Internal campaign",
-        "targeting_requires": {"interest": ["100"]}
+        "targeting_requires": {
+          "interest": [
+            "100"
+          ]
+        }
       },
       {
         "code": "ads",
@@ -35,7 +41,12 @@
         "targeting_requires": null,
         "classification_status": 2,
         "classification_tags": "advertising, blockchain, technology"
-      },
+      }
+    ]
+  },
+  {
+    "email": "adv@dev.dev",
+    "campaigns": [
       {
         "code": "cats",
         "name": "Cat Campaign",
@@ -44,10 +55,19 @@
         "max_cpc": 166666667,
         "budget_per_hour": 100000000000,
         "targeting_excludes": null,
-        "targeting_requires": {"interest": ["200142"]},
+        "targeting_requires": {
+          "interest": [
+            "200142"
+          ]
+        },
         "classification_status": 2,
         "classification_tags": "cats"
-      },
+      }
+    ]
+  },
+  {
+    "email": "adv2@dev.dev",
+    "campaigns": [
       {
         "code": "tea",
         "name": "Tea Campaign",
@@ -56,7 +76,11 @@
         "max_cpc": 0,
         "budget_per_hour": 100000000000,
         "targeting_excludes": null,
-        "targeting_requires": {"interest": ["200079"]},
+        "targeting_requires": {
+          "interest": [
+            "200079"
+          ]
+        },
         "classification_status": 2,
         "classification_tags": "tea"
       },
@@ -68,7 +92,12 @@
         "max_cpc": 0,
         "budget_per_hour": 100000000000,
         "targeting_excludes": null,
-        "targeting_requires": {"interest": ["200205", "200417"]},
+        "targeting_requires": {
+          "interest": [
+            "200205",
+            "200417"
+          ]
+        },
         "classification_status": 2,
         "classification_tags": "travel"
       }

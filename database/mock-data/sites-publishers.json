@@ -93,7 +93,12 @@
             "key": "js_enabled"
           }
         ]
-      },
+      }
+    ]
+  },
+  {
+    "email": "pub@dev.dev",
+    "sites": [
       {
         "name": "tea site",
         "status": 2,
@@ -133,7 +138,12 @@
             "height": 50
           }
         }
-      },
+      }
+    ]
+  },
+  {
+    "email": "pub2@dev.dev",
+    "sites": [
       {
         "name": "veterinarian site",
         "status": 2,
