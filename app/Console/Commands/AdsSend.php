@@ -71,7 +71,6 @@ class AdsSend extends Command
                 $this->data[$to]['ADSHARES_ADDRESS'],
                 $amount * 10 ** 11,
                 str_pad($UID, 64, '0', STR_PAD_LEFT)
-
             )
         );
     }
