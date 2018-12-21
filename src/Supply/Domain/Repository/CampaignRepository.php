@@ -29,7 +29,7 @@ interface CampaignRepository
 {
     public function markedAsDeletedByHost(string $host): void;
 
-    public function save(Campaign $campaignArray): void;
+    public function save(Campaign $campaign): void;
 
     public function fetchActiveCampaigns(): CampaignCollection;
 }
