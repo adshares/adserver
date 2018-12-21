@@ -45,10 +45,10 @@ class AdsSend extends Command
 
     public function handle(): void
     {
-        $this->info($this->send('pub', 'here', 100)->getTx()->getId());
-        $this->info($this->send('pub2', 'here', 100)->getTx()->getId());
-        $this->info($this->send('adv', 'here', 100)->getTx()->getId());
-        $this->info($this->send('adv2', 'here', 100)->getTx()->getId());
+        $this->info($this->send('pub', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('pub2', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('adv', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('adv2', 'here', random_int(10, 100))->getTx()->getId());
     }
 
     private function send(string $from, string $to, int $amount): TransactionResponse
