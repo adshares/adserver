@@ -17,6 +17,7 @@ if [ ! -v TRAVIS ]; then
     ${BUILD_PATH}/build
 
   cd ${BUILD_PATH}/build
-  ./bin/init.sh --build-in-host
 fi
+
+./bin/init.sh --build-in-host
 

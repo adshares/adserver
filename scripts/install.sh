@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # Create installation directory
 mkdir -p ${INSTALLATION_PATH}

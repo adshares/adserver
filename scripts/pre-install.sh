@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 apt-get -qq -y  --no-install-recommends install \
         php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl \
