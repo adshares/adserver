@@ -28,13 +28,14 @@ use Adshares\Adserver\Console\Commands\AdsGetTxIn;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
+use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdsGetTxInTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testAdsTxInConsecutiveCalls()
+    public function testAdsTxInConsecutiveCalls(): void
     {
         $this->app->bind(
             AdsClient::class,
@@ -70,7 +71,8 @@ class AdsGetTxInTest extends TestCase
 
         $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 12')->assertExitCode(0);
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertEquals('1539606265', $from->value);
+        $expectedDate = (new DateTime())->setTimestamp(1539606265)->format(DateTime::ATOM);
+        $this->assertEquals($expectedDate, $from->value);
         $this->assertEquals(12, AdsPayment::all()->count());
         $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
 
@@ -78,7 +80,7 @@ class AdsGetTxInTest extends TestCase
             AdsGetTxIn::EXIT_CODE_SUCCESS
         );
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertEquals('1539606265', $from->value);
+        $this->assertEquals($expectedDate, $from->value);
         $this->assertEquals(12, AdsPayment::all()->count());
         $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
@@ -485,7 +487,7 @@ class AdsGetTxInTest extends TestCase
         }';
     }
 
-    public function testAdsTxInLogEmpty()
+    public function testAdsTxInLogEmpty(): void
     {
         $this->app->bind(
             AdsClient::class,
@@ -543,7 +545,7 @@ class AdsGetTxInTest extends TestCase
         }';
     }
 
-    public function testAdsTxInLogException()
+    public function testAdsTxInLogException(): void
     {
         $this->app->bind(
             AdsClient::class,
