@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 env | sort
 
@@ -16,8 +16,6 @@ if [ ! -v TRAVIS ]; then
     --branch ${BUILD_BRANCH:-master} \
     ${BUILD_PATH}/build
 
-  cd ${BUILD_PATH}/build
-
-  ./bin/init.sh --build
+  ${BUILD_PATH}/bin/init.sh --build
 fi
 
