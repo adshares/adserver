@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 env | sort
 
@@ -18,4 +18,6 @@ if [ ! -v TRAVIS ]; then
 
   cd ${BUILD_PATH}/build
 fi
+
+./bin/init.sh --build-in-host
 
