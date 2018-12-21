@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Ubuntu 18.04 only
-set -e
+set -ex
 
 # Install dependencies for composer operations
 apt-get -qq -y  --no-install-recommends install \

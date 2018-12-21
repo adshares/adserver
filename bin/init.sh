@@ -5,6 +5,7 @@ set -e
 OPT_CLEAN=0
 OPT_FORCE=0
 OPT_BUILD=0
+OPT_BUILD_IN_HOST=0
 OPT_START=0
 OPT_MIGRATE=0
 OPT_SEED=0
@@ -12,7 +13,9 @@ OPT_LOGS=0
 OPT_LOGS_FOLLOW=0
 OPT_STOP=0
 
-DOCKER_COMPOSE="docker-compose"
+PROJECT_NAME=${PROJECT_NAME:-adserver}
+
+DOCKER_COMPOSE="docker-compose --project-name ${PROJECT_NAME}"
 
 while [ "$1" != "" ]
 do
@@ -25,6 +28,10 @@ do
         ;;
         --build )
             OPT_BUILD=1
+        ;;
+        --build-in-host )
+            OPT_BUILD=1
+            OPT_BUILD_IN_HOST=1
         ;;
         --start )
             OPT_START=1
@@ -94,6 +101,8 @@ export MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-dev@adshares.net}
 export MAIL_FROM_NAME=${MAIL_FROM_NAME:-'[dev] AdShares'}
 
 export ADSERVER_URL=${ADSERVER_URL:-http://localhost:8101}
+export ADSERVER_ID=${ADSERVER_ID:-example.com}
+export ADSERVER_SECRET=${ADSERVER_SECRET:-secret}
 
 export ADPANEL_URL=${ADPANEL_URL:-http://localhost:8102}
 
@@ -105,6 +114,7 @@ export ADSHARES_SECRET=${ADSHARES_SECRET:-secret}
 export ADUSER_EXTERNAL_LOCATION=${ADUSER_EXTERNAL_LOCATION:-${ADSERVER_URL}}
 export ADUSER_INTERNAL_LOCATION=${ADUSER_INTERNAL_LOCATION:-${ADUSER_EXTERNAL_LOCATION}}
 
+export APP_NAME=${APP_NAME:-AdServer}
 export APP_ENV=${APP_ENV:-local}
 export APP_DEBUG=${APP_DEBUG:-true}
 
@@ -147,30 +157,44 @@ if [ ${OPT_BUILD} -eq 1 ]
 then
     echo " > Building..."
 
-    if [ ${OPT_CLEAN} -eq 1 ]
+    if [ ${OPT_BUILD_IN_HOST} -eq 1 ]
     then
-        ${DOCKER_COMPOSE} build application worker
+        composer install
+
+        ./artisan key:generate
+        ./artisan package:discover
+
+        yarn install
+        yarn run dev
+
+        mkdir -p storage/app/public/banners
+        chmod a+rwX -R storage
+    else
+        if [ ${OPT_CLEAN} -eq 1 ]
+        then
+            ${DOCKER_COMPOSE} build application worker
+        fi
+
+        ${DOCKER_COMPOSE} run --rm worker composer install
+        if [ ${OPT_FORCE} -eq 1 ]
+        then
+            echo " >> Generating secret"
+            ${DOCKER_COMPOSE} run --rm worker php artisan key:generate
+        fi
+
+        echo " >> Front-end stuff"
+        ${DOCKER_COMPOSE} run --rm worker php artisan package:discover
+
+        echo " >> Yarn"
+        ${DOCKER_COMPOSE} run --rm worker yarn install
+        ${DOCKER_COMPOSE} run --rm worker yarn run dev
+
+        echo " >> Setting upload directory"
+        ${DOCKER_COMPOSE} run --rm worker mkdir -p storage/app/public/banners
+        ${DOCKER_COMPOSE} run --rm worker php artisan storage:link -q
+        ${DOCKER_COMPOSE} run --rm --user root worker chown -R dev:www-data storage/app/public/banners
+
     fi
-
-    ${DOCKER_COMPOSE} run --rm worker composer install
-    if [ ${OPT_FORCE} -eq 1 ]
-    then
-        echo " >> Generating secret"
-        ${DOCKER_COMPOSE} run --rm worker php artisan key:generate
-    fi
-
-    echo " >> Front-end stuff"
-    ${DOCKER_COMPOSE} run --rm worker php artisan package:discover
-
-    echo " >> Yarn"
-    ${DOCKER_COMPOSE} run --rm worker yarn install
-    ${DOCKER_COMPOSE} run --rm worker yarn run dev
-
-    echo " >> Setting upload directory"
-    ${DOCKER_COMPOSE} run --rm worker mkdir -p storage/app/public/banners
-    ${DOCKER_COMPOSE} run --rm worker php artisan storage:link -q
-    ${DOCKER_COMPOSE} run --rm --user root worker chown -R dev:www-data storage/app/public/banners
-
 
     echo " < DONE"
 fi
