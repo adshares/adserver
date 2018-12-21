@@ -504,7 +504,7 @@ class AdsGetTxInTest extends TestCase
         );
 
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertEquals('0', $from->value);
+        $this->assertNull($from);
         $this->assertEquals(0, AdsPayment::all()->count());
         $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
@@ -562,7 +562,7 @@ class AdsGetTxInTest extends TestCase
         $this->artisan('ads:get-tx-in')->expectsOutput('Cannot get log')->assertExitCode(AdsGetTxIn::EXIT_CODE_ERROR);
 
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertEquals('0', $from->value);
+        $this->assertNull($from);
         $this->assertEquals(0, AdsPayment::all()->count());
         $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
