@@ -56,23 +56,20 @@ jobs:
     if: type = push
     script:
     # Run build script
-    - in_docker /bin/bash scripts/pre-build.sh"
-
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
+      - composer install"
 
     # Pre-task dependency
-    - in_docker composer run-script install-codestandards"
+      - composer run-script install-codestandards"
 
     ## Test tasks
     # PHP Lint: check syntax errors in all PHP files
-    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+      - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
     # PHP_CodeSniffer: check PHP compatibility
-    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
+      - ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
 
     # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+      - ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
     # SonarQube
     - time sonar-scanner
