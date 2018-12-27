@@ -28,6 +28,7 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 
@@ -47,7 +48,7 @@ class AdSelectInventoryExporterTest extends TestCase
             [],
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
-            Campaign::STATUS_PROCESSING,
+            Status::processing(),
             [],
             []
         );
