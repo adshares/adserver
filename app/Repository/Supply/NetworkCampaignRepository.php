@@ -93,13 +93,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private function fetchCampaignByDemandId(Campaign $campaign): ?NetworkCampaign
     {
-        $networkCampaign = NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getId()))->first();
-
-        if ($networkCampaign) {
-            return $networkCampaign;
-        }
-
-        return null;
+        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getId()))->first();
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
