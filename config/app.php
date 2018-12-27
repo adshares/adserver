@@ -165,7 +165,6 @@ return [
          * Laravel Framework Service Providers...
          */
         Illuminate\Auth\AuthServiceProvider::class,
-        Illuminate\Broadcasting\BroadcastServiceProvider::class,
         Illuminate\Bus\BusServiceProvider::class,
         Illuminate\Cache\CacheServiceProvider::class,
         Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
@@ -196,7 +195,6 @@ return [
          */
         Adshares\Adserver\Providers\AppServiceProvider::class,
         Adshares\Adserver\Providers\AuthServiceProvider::class,
-        // Adshares\Adserver\Providers\BroadcastServiceProvider::class,
         Adshares\Adserver\Providers\EventServiceProvider::class,
         Adshares\Adserver\Providers\RouteServiceProvider::class,
         Adshares\Adserver\Providers\Supply\InventoryImporterProvider::class,

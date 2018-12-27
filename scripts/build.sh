@@ -19,13 +19,13 @@ if [ ! -v TRAVIS ]; then
   cd ${BUILD_PATH}/build
 fi
 
-composer install
+yarn install
+yarn run dev
+
+composer install --no-dev
 
 ./artisan config:cache
 ./artisan package:discover
-
-yarn install
-yarn run dev
 
 mkdir -p storage/app/public/banners
 chmod a+rwX -R storage
