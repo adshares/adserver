@@ -21,7 +21,7 @@ fi
 
 composer install
 
-./artisan key:generate
+./artisan config:cache
 ./artisan package:discover
 
 yarn install
