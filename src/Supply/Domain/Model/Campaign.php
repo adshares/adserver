@@ -56,7 +56,7 @@ final class Campaign
     /** @var array */
     private $targetingRequires = [];
 
-    /** @var status */
+    /** @var Status */
     private $status;
 
     /** @var Id */
