@@ -1,8 +1,29 @@
+# Project language
+language: php
+
+# PHP version
+php:
+  - 7.2
+
+# Allows use container-based infrastructure
 sudo: required
 
-language: jvm
+# Start mysql service
+#ervices:
+#  - mysql
 
-jdk: openjdk9
+# Cache composer packages so "composer install" is faster
+cache:
+  directories:
+    - $HOME/.composer/cache/files
+
+
+
+#sudo: required
+#
+#language: jvm
+#
+#jdk: openjdk9
 
 services:
   - docker
