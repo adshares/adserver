@@ -22,21 +22,51 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Ads\Driver\CliDriver;
+use Adshares\Ads\Response\TransactionResponse;
+use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
+use function str_pad;
+use const STR_PAD_LEFT;
 
 class AdsSend extends Command
 {
     protected $signature = 'ads:send';
 
-    public function handle(AdsClient $adsClient)
+    /** @var array */
+    private $data;
+
+    public function handle(): void
     {
-        $response = $adsClient->runTransaction(
+        $this->data = include base_path('accounts.local.php');
+
+        $this->info($this->send('pub', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('pub2', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('adv', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('adv2', 'here', random_int(10, 100))->getTx()->getId());
+    }
+
+    private function send(string $from, string $to, int $amount): TransactionResponse
+    {
+        $drv = new CliDriver(
+            $this->data[$from]['ADSHARES_ADDRESS'],
+            $this->data[$from]['ADSHARES_SECRET'],
+            $this->data[$from]['ADSHARES_NODE_HOST'],
+            $this->data[$from]['ADSHARES_NODE_PORT']
+        );
+        $drv->setCommand(config('app.adshares_command'));
+        $drv->setWorkingDir(config('app.adshares_workingdir'));
+
+        $client = new AdsClient($drv);
+
+        $UID = User::where('email', $this->data[$from]['email'])->first()->uuid;
+
+        return $client->runTransaction(
             new SendOneCommand(
-                config('app.adshares_address'),
-                10 * (10 ** 11),
-                '0000000000000000000000000000000028a9dbfdb3244297b0e1bb66fc0dceb8'
+                $this->data[$to]['ADSHARES_ADDRESS'],
+                $amount * 10 ** 11,
+                str_pad($UID, 64, '0', STR_PAD_LEFT)
             )
         );
-        $this->info($response->getTx()->getId());
     }
 }

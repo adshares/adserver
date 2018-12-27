@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 # Create installation directory
 mkdir -p ${INSTALLATION_PATH}
@@ -12,4 +12,5 @@ mv .env* ${INSTALLATION_PATH}/
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
 
 cd ${INSTALLATION_PATH}
-./bin/init.sh --build --migrate --seed --start
+./artisan migrate:fresh
+./artisan db:seed
