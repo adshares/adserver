@@ -21,82 +21,80 @@ stages:
   - code test and quality
   - build and install
 
-before_script:
-  # Enable aliases for non-interactive shells
-  - shopt -s expand_aliases
-  # Set alias - please note the missing quote you need to append.
-  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
-  ## Setup test environment
-  # Run docker container
-  - time docker network create -d bridge test-network
-  - time docker pull $DOCKER_IMAGE
-  - >
-    time docker run -d
-    --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-    --network=test-network
-    -e TRAVIS=true
-    -e APP_ENV=${APP_ENV}
-    -e APP_DEBUG=${APP_DEBUG}
-    -e INSTALLATION_PATH=/var/www/adserver
-    -e DB_HOST=mysql.dock
-    -e DB_USERNAME=adserver
-    -e DB_DATABASE=adserver
-    -e DB_PASSWORD=adserver
-    --env-file=$HOST_PATH/.env.testing
-    --name $BUILD_NAME
-    $DOCKER_IMAGE
-    sleep infinity
-
-after_script:
-  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
-
 jobs:
   include:
-  - stage: code test and quality
-    if: type = push
-    script:
-    # Run build script
-      - composer install --no-ansi --no-scripts
+    - stage: code test and quality
+      if: type = push
+      script:
+        # Run build script
+        - composer install --no-ansi --no-scripts
 
-    # Pre-task dependency
-      - composer run-script install-codestandards
+        # Pre-task dependency
+        - composer run-script install-codestandards
 
-    ## Test tasks
-    # PHP Lint: check syntax errors in all PHP files
-      - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
+        ## Test tasks
+        # PHP Lint: check syntax errors in all PHP files
+        - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
 
-    # PHP_CodeSniffer: check PHP compatibility
-      - ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests
+        # PHP_CodeSniffer: check PHP compatibility
+        - ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests
 
-    # PHP unit tests
-      - ./vendor/bin/phpunit --testsuite Console,Http,Unit
+        # PHP unit tests
+        - ./vendor/bin/phpunit --testsuite Console,Http,Unit
 
-    # SonarQube
-    - time sonar-scanner
+        # SonarQube
+        - time sonar-scanner
 
-  - stage: build and install
-    if: type = pull_request AND branch = master
-    script:
-    # Backing services and tools
-    - >
-      time docker run
-      --name mysql.dock
-      --network=test-network
-      -e MYSQL_ALLOW_EMPTY_PASSWORD=true
-      -e MYSQL_USER=adserver
-      -e MYSQL_PASSWORD=adserver
-      -e MYSQL_DATABASE=adserver
-      -d
-      percona:5
+    - stage: build and install
+      if: type = pull_request AND branch = master
+      script:
+        # Enable aliases for non-interactive shells
+        - shopt -s expand_aliases
+        # Set alias - please note the missing quote you need to append.
+        - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
+        ## Setup test environment
+        # Run docker container
+        - time docker network create -d bridge test-network
+        - time docker pull $DOCKER_IMAGE
+        - >
+          time docker run -d
+          --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
+          --network=test-network
+          -e TRAVIS=true
+          -e APP_ENV=${APP_ENV}
+          -e APP_DEBUG=${APP_DEBUG}
+          -e INSTALLATION_PATH=/var/www/adserver
+          -e DB_HOST=mysql.dock
+          -e DB_USERNAME=adserver
+          -e DB_DATABASE=adserver
+          -e DB_PASSWORD=adserver
+          --env-file=$HOST_PATH/.env.testing
+          --name $BUILD_NAME
+          $DOCKER_IMAGE
+          sleep infinity
 
-    - in_docker /bin/bash scripts/pre-build.sh"
+        # Backing services and tools
+        - >
+          time docker run
+          --name mysql.dock
+          --network=test-network
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+          -e MYSQL_USER=adserver
+          -e MYSQL_PASSWORD=adserver
+          -e MYSQL_DATABASE=adserver
+          -d
+          percona:5
 
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
-    - in_docker /bin/bash scripts/pre-install.sh"
+        - in_docker /bin/bash scripts/pre-build.sh"
 
-    - docker ps -a
-    - in_docker /bin/bash scripts/install.sh"
+        # Run build script
+        - in_docker /bin/bash scripts/build.sh"
+        - in_docker /bin/bash scripts/pre-install.sh"
+
+        - docker ps -a
+        - in_docker /bin/bash scripts/install.sh"
+
+        - docker stop $BUILD_NAME && docker rm $BUILD_NAME
 
 # After a build, send email notification with the build results
 notifications:
