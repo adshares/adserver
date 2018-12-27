@@ -56,20 +56,20 @@ jobs:
     if: type = push
     script:
     # Run build script
-      - composer install"
+      - composer install --no-ansi --no-scripts
 
     # Pre-task dependency
-      - composer run-script install-codestandards"
+      - composer run-script install-codestandards
 
     ## Test tasks
     # PHP Lint: check syntax errors in all PHP files
-      - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+      - ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
 
     # PHP_CodeSniffer: check PHP compatibility
-      - ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
+      - ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests
 
     # PHP unit tests
-      - ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+      - ./vendor/bin/phpunit --testsuite Console,Http,Unit
 
     # SonarQube
     - time sonar-scanner
