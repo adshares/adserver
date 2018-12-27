@@ -28,6 +28,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use PHPUnit\Framework\TestCase;
 use DateTime;
 
@@ -52,16 +53,16 @@ final class CampaignTest extends TestCase
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
-            Campaign::STATUS_DELETED,
+            Status::deleted(),
             [],
             []
         );
 
-        $this->assertEquals(Campaign::STATUS_DELETED, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_DELETED, $campaign->getStatus());
 
         $campaign->activate();
 
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
     }
 
     public function testCampaignDeactivated(): void
@@ -83,16 +84,16 @@ final class CampaignTest extends TestCase
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
-            Campaign::STATUS_ACTIVE,
+            Status::active(),
             [],
             []
         );
 
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
 
-        $campaign->deactivate();
+        $campaign->delete();
 
-        $this->assertEquals(Campaign::STATUS_DELETED, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_DELETED, $campaign->getStatus());
     }
 
     public function testToArray(): void
@@ -125,7 +126,7 @@ final class CampaignTest extends TestCase
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
-            Campaign::STATUS_ACTIVE,
+            Status::active(),
             [],
             []
         );
@@ -149,6 +150,7 @@ final class CampaignTest extends TestCase
             'date_end' => $dateEnd,
             'targeting_requires' => [],
             'targeting_excludes' => [],
+            'status' => Status::STATUS_ACTIVE,
         ];
 
         $this->assertEquals($expected, $campaign->toArray());
@@ -159,7 +161,7 @@ final class CampaignTest extends TestCase
         $this->assertEquals($publisherId, $campaign->getPublisherId());
         $this->assertEquals($demandCampaignId, $campaign->getDemandCampaignId());
         $this->assertEquals($id, $campaign->getId());
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
         $this->assertEquals(new ArrayCollection(), $campaign->getBanners());
     }
 }

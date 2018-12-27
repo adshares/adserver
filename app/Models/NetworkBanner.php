@@ -50,6 +50,7 @@ class NetworkBanner extends Model
         'checksum',
         'width',
         'height',
+        'status',
     ];
 
     /**

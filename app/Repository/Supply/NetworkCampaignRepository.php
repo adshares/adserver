@@ -29,44 +29,46 @@ use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
+use Adshares\Supply\Domain\ValueObject\Status;
+use DateTime;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
     public function markedAsDeletedByHost(string $host): void
     {
-        $campaignIdsResult = DB::select(
-            sprintf('select id from %s where source_host = ?', NetworkCampaign::getTableName()),
-            [
-                $host,
-            ]
-        );
+        DB::table(NetworkCampaign::getTableName())
+            ->where('source_host', $host)
+            ->update(['status' => Status::STATUS_DELETED]);
 
-        if (!$campaignIdsResult) {
-            return;
-        }
 
-        $campaignIds = [];
-        foreach ($campaignIdsResult as $campaignId) {
-            $campaignIds[] = $campaignId->id;
-        }
-
-        DB::table(NetworkBanner::getTableName())->whereIn('network_campaign_id', $campaignIds)->delete();
-
-        DB::table(NetworkCampaign::getTableName())->whereIn('id', $campaignIds)->delete();
-
-//        DB::update(
-//            sprintf('update %s set status = ? where source_host = ?', NetworkCampaign::getTableName()),
-//            [
-//                Campaign::STATUS_DELETED,
-//                $host
-//            ]
-//        );
+        // mark all banners as DELETED for given $host
+        DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
+            ->join(
+                sprintf('%s as campaign', NetworkCampaign::getTableName()),
+                'banner.network_campaign_id',
+                '=',
+                'campaign.id'
+            )
+            ->where('campaign.source_host', $host)
+            ->update(['banner.status' => Status::STATUS_DELETED]);
     }
 
     public function save(Campaign $campaign): void
     {
-        $banners = $campaign->getBanners();
+        $campaignArray = $campaign->toArray();
+        $campaignArray['uuid'] = $campaignArray['id'];
+        unset($campaignArray['id']);
 
+        $networkCampaign = $this->fetchCampaignByDemandId($campaign);
+
+        if (!$networkCampaign) {
+            $networkCampaign = new NetworkCampaign();
+        }
+
+        $networkCampaign->fill($campaignArray);
+        $networkCampaign->save();
+
+        $banners = $campaign->getBanners();
         $networkBanners = [];
 
         /** @var Banner $domainBanner */
@@ -75,32 +77,23 @@ class NetworkCampaignRepository implements CampaignRepository
             $banner['uuid'] = $banner['id'];
             unset($banner['id']);
 
-            $networkBanners[] = new NetworkBanner($banner);
+            $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
+
+            if (!$networkBanner) {
+                $networkBanner = new NetworkBanner();
+            }
+
+            $networkBanner->fill($banner);
+
+            $networkBanners[] = $networkBanner;
         }
 
-        $campaign = $campaign->toArray();
-        $campaign['uuid'] = $campaign['id'];
-        unset($campaign['id']);
-
-        $networkCampaign = new NetworkCampaign($campaign);
-
-        $networkCampaign->save();
         $networkCampaign->banners()->saveMany($networkBanners);
+    }
 
-        if (config('app.env') === 'local') {
-            $networkCampaign->uuid = (string)Uuid::test($networkCampaign->id);
-
-            $banners = $networkCampaign->banners->map(
-                function (NetworkBanner $banner) {
-                    $banner->uuid = (string)Uuid::test($banner->id);
-
-                    return $banner;
-                }
-            );
-
-            $networkCampaign->save();
-            $networkCampaign->banners()->saveMany($banners);
-        }
+    private function fetchCampaignByDemandId(Campaign $campaign): ?NetworkCampaign
+    {
+        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getId()))->first();
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
@@ -129,6 +122,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'type' => $networkBanner->type,
                 'width' => $networkBanner->width,
                 'height' => $networkBanner->height,
+                'status' => $networkBanner->status,
             ];
         }
 
@@ -154,6 +148,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'budget' => (int)$networkCampaign->budget,
                 'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
                 'targeting_requires' => $networkCampaign->targeting_requires ?? [],
+                'status' => $networkCampaign->status,
             ]
         );
     }
