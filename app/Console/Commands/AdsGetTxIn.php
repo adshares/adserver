@@ -26,51 +26,34 @@ use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
+use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 
 class AdsGetTxIn extends Command
 {
-    /**
-     * Command ended without error
-     */
-    const EXIT_CODE_SUCCESS = 0;
+    public const EXIT_CODE_SUCCESS = 0;
 
-    /**
-     * Command ended with an error
-     */
-    const EXIT_CODE_ERROR = 1;
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    public const EXIT_CODE_ERROR = 1;
+
     protected $signature = 'ads:get-tx-in';
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+
     protected $description = 'Searches blockchain log of AdServer for incoming transfers';
 
-    /**
-     * Execute the console command.
-     *
-     * @param AdsClient $adsClient
-     *
-     * @return int
-     */
-    public function handle(AdsClient $adsClient)
+    public function handle(AdsClient $adsClient): int
     {
         $this->info('Start command ads:get-tx-in');
 
-        /** @var $from Config */
-        $from = Config::where('key', Config::ADS_LOG_START)->first();
-        if (null === $from) {
-            $from = Config::create(['key' => Config::ADS_LOG_START, 'value' => '0']);
+        $configDate = Config::where('key', Config::ADS_LOG_START)->first();
+        if (null === $configDate) {
+            $configDate = new Config();
+            $configDate->key = Config::ADS_LOG_START;
+
+            $dateFrom = new DateTime('@0');
+        } else {
+            $dateFrom = DateTime::createFromFormat(DATE_ATOM, $configDate->value);
         }
-        $timestamp = intval($from->value);
-        $dateFrom = (new \DateTime())->setTimestamp($timestamp);
+
         try {
             $response = $adsClient->getLog($dateFrom);
         } catch (CommandException $exc) {
@@ -84,8 +67,9 @@ class AdsGetTxIn extends Command
             $txsCount = $this->parse($log);
 
             try {
-                $from->value = $this->getLastEventTime($log);
-                $from->save();
+                $lastEventTimestamp = $this->getLastEventTime($log);
+                $configDate->value = (new DateTime())->setTimestamp($lastEventTimestamp)->format(DATE_ATOM);
+                $configDate->save();
             } catch (ConsoleCommandException $exc) {
                 $this->error('Cannot get time of last event');
             }
@@ -97,13 +81,6 @@ class AdsGetTxIn extends Command
         return self::EXIT_CODE_SUCCESS;
     }
 
-    /**
-     * Processes log and adds incoming transfers to db table.
-     *
-     * @param array $log log
-     *
-     * @return int number of added transfers
-     */
     private function parse(array $log): int
     {
         $count = 0;
