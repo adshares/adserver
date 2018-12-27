@@ -32,6 +32,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 use function array_map;
@@ -145,5 +146,10 @@ final class DummyAdSelectClient implements AdSelect
     public function exportEventsPayments(array $events): void
     {
         // TODO: Implement exportEventPayments() method.
+    }
+
+    public function deleteFromInventory(CampaignCollection $campaigns): void
+    {
+        // TODO: Implement deleteFromInventory() method.
     }
 }

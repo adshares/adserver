@@ -93,7 +93,7 @@ final class GuzzleDemandClient implements DemandClient
 
     private function processData(array $data, string $inventoryHost): array
     {
-        $data['uuid'] = Uuid::fromString($data['uuid']);
+        $data['demand_id'] =  Uuid::fromString($data['id']);
         $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
         $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
@@ -111,6 +111,8 @@ final class GuzzleDemandClient implements DemandClient
         $data['budget'] = (int)$data['budget'];
         $data['max_cpc'] = (int)$data['max_cpc'];
         $data['max_cpm'] = (int)$data['max_cpm'];
+
+        unset($data['id']);
 
         return $data;
     }

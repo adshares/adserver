@@ -35,6 +35,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
 use function array_map;
 use function iterator_to_array;
@@ -42,6 +43,8 @@ use function iterator_to_array;
 final class JsonRpcAdSelectClient implements AdSelect
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
+
+    private const METHOD_CAMPAIGN_DELETE = 'campaign_delete';
 
     private const METHOD_BANNER_SELECT = 'banner_select';
 
@@ -172,5 +175,22 @@ final class JsonRpcAdSelectClient implements AdSelect
                 ];
             }
         }
+    }
+
+    public function deleteFromInventory(CampaignCollection $campaigns): void
+    {
+        $mappedCampaigns = [];
+
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mappedCampaigns[] = $campaign->getId();
+        }
+
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_DELETE,
+            $mappedCampaigns
+        );
+
+        $this->client->call($procedure);
     }
 }
