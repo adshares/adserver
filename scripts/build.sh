@@ -19,6 +19,7 @@ if [ ! -v TRAVIS ]; then
   cd ${BUILD_PATH}/build
 
   composer install --no-dev
+  ./artisan config:cache
 else
     composer install
 fi
@@ -26,7 +27,6 @@ fi
 yarn install
 yarn run dev
 
-./artisan config:cache
 ./artisan package:discover
 
 mkdir -p storage/app/public/banners
