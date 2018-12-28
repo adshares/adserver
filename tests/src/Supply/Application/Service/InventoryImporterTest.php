@@ -31,6 +31,7 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
+use Adshares\Supply\Domain\ValueObject\Status;
 use PHPUnit\Framework\TestCase;
 
 final class InventoryImporterTest extends TestCase
@@ -155,8 +156,8 @@ final class InventoryImporterTest extends TestCase
             return $item->getStatus();
         }, $inMemoryDemandClient->campaigns);
 
-        $this->assertEquals(Campaign::STATUS_PROCESSING, $statuses[0]);
-        $this->assertEquals(Campaign::STATUS_PROCESSING, $statuses[1]);
+        $this->assertEquals(Status::STATUS_PROCESSING, $statuses[0]);
+        $this->assertEquals(Status::STATUS_PROCESSING, $statuses[1]);
     }
 
     public function testImportWhenActivateIsSuccessful()
@@ -190,7 +191,7 @@ final class InventoryImporterTest extends TestCase
             return $item->getStatus();
         }, $inMemoryDemandClient->campaigns);
 
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $statuses[0]);
-        $this->assertEquals(Campaign::STATUS_ACTIVE, $statuses[1]);
+        $this->assertEquals(Status::STATUS_ACTIVE, $statuses[0]);
+        $this->assertEquals(Status::STATUS_ACTIVE, $statuses[1]);
     }
 }

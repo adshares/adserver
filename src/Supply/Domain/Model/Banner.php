@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Model;
 
@@ -26,6 +26,7 @@ use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Supply\Domain\ValueObject\Status;
 
 final class Banner
 {
@@ -37,7 +38,7 @@ final class Banner
         self::IMAGE_TYPE,
     ];
 
-    /** @var Id  */
+    /** @var Id */
     private $id;
 
     /** @var Campaign */
@@ -52,6 +53,11 @@ final class Banner
     /** @var Size */
     private $size;
 
+    /**
+     * @var Status
+     */
+    private $status;
+
     /** @var string */
     private $checksum;
 
@@ -61,9 +67,10 @@ final class Banner
         BannerUrl $bannerUrl,
         string $type,
         Size $size,
-        string $checksum
+        string $checksum,
+        Status $status
     ) {
-        if (!in_array($type, self::SUPPORTED_TYPES)) {
+        if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerSizeException(sprintf(
                 'Unsupported banner `%s` type. Only %s are allowed.',
                 $type,
@@ -76,7 +83,18 @@ final class Banner
         $this->bannerUrl = $bannerUrl;
         $this->type = $type;
         $this->size = $size;
+        $this->status = $status;
         $this->checksum = $checksum;
+    }
+
+    public function activate(): void
+    {
+        $this->status = Status::active();
+    }
+
+    public function delete(): void
+    {
+        $this->status = Status::deleted();
     }
 
     public function toArray(): array
@@ -91,6 +109,7 @@ final class Banner
             'serve_url' => $this->bannerUrl->getServeUrl(),
             'click_url' => $this->bannerUrl->getClickUrl(),
             'view_url' => $this->bannerUrl->getViewUrl(),
+            'status' => $this->status->getStatus(),
         ];
     }
 
@@ -99,14 +118,14 @@ final class Banner
         return (string)$this->id;
     }
 
-    public function getCampaignId(): string
-    {
-        return (string)$this->campaign->getId();
-    }
-
     public function getType(): string
     {
         return $this->type;
+    }
+
+    public function getCampaignId(): string
+    {
+        return $this->campaign->getId();
     }
 
     public function getWidth(): int
@@ -122,5 +141,10 @@ final class Banner
     public function getSize(): string
     {
         return (string)$this->size;
+    }
+
+    public function getStatus(): int
+    {
+        return $this->status->getStatus();
     }
 }

@@ -29,6 +29,7 @@ use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 use function uniqid;
@@ -61,14 +62,14 @@ final class BannerTest extends TestCase
             [],
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
-            Campaign::STATUS_PROCESSING,
+            Status::processing(),
             [],
             []
         );
 
         $checksum = '';
         $bannerUrl = new BannerUrl('http://example.com', 'http://example.com', 'http://example.com');
-        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90), $checksum);
+        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90), $checksum, Status::active());
 
         $this->assertEquals($type, $banner->getType());
     }
@@ -85,7 +86,7 @@ final class BannerTest extends TestCase
             [],
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
-            Campaign::STATUS_PROCESSING,
+            Status::processing(),
             [],
             []
         );
@@ -100,7 +101,7 @@ final class BannerTest extends TestCase
         );
 
 
-        $banner = new Banner($campaign, $bannerId, $bannerUrl, $type, new Size(728, 90), $checksum);
+        $banner = new Banner($campaign, $bannerId, $bannerUrl, $type, new Size(728, 90), $checksum, Status::active());
 
         $expected = [
             'id' => $bannerId,
@@ -112,6 +113,7 @@ final class BannerTest extends TestCase
             'serve_url' => 'http://example.com/serve',
             'click_url' => 'http://example.com/click',
             'view_url' => 'http://example.com/view',
+            'status' => Status::STATUS_ACTIVE,
         ];
 
         $this->assertEquals($expected, $banner->toArray());
