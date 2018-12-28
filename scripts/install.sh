@@ -7,6 +7,7 @@ mkdir -p ${INSTALLATION_PATH}
 
 # Move directories
 mv * ${INSTALLATION_PATH}/
+mv .env* ${INSTALLATION_PATH}/
 
 cd ${INSTALLATION_PATH}
 ./artisan migrate:fresh
