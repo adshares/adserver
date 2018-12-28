@@ -17,12 +17,14 @@ if [ ! -v TRAVIS ]; then
     ${BUILD_PATH}/build
 
   cd ${BUILD_PATH}/build
+
+  composer install --no-dev
+else
+    composer install
 fi
 
 yarn install
 yarn run dev
-
-composer install --no-dev
 
 ./artisan config:cache
 ./artisan package:discover
