@@ -270,6 +270,6 @@ class AdsProcessTx extends Command
 
     private function extractUuidFromMessage(string $message): string
     {
-        return substr($message, -32);
+        return hex2bin(substr($message, -32));
     }
 }
