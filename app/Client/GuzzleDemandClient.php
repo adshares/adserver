@@ -80,41 +80,6 @@ final class GuzzleDemandClient implements DemandClient
         return $campaignsCollection;
     }
 
-    private function validateResponse(int $statusCode, string $body): void
-    {
-        if ($statusCode !== Response::HTTP_OK) {
-            throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`.', $statusCode));
-        }
-
-        if (empty($body)) {
-            throw new EmptyInventoryException('Empty list');
-        }
-    }
-
-    private function processData(array $data, string $inventoryHost): array
-    {
-        $data['uuid'] = Uuid::fromString($data['uuid']);
-        $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
-        $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
-        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
-
-        $data['source_campaign'] = [
-            'host' => $inventoryHost,
-            'address' => $data['address'],
-            'version' => self::VERSION,
-            'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
-            'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
-        ];
-
-        $data['created_at'] = new DateTime();
-        $data['updated_at'] = new DateTime();
-        $data['budget'] = (int)$data['budget'];
-        $data['max_cpc'] = (int)$data['max_cpc'];
-        $data['max_cpm'] = (int)$data['max_cpm'];
-
-        return $data;
-    }
-
     public function fetchPaymentDetails(string $host, string $transactionId): array
     {
         $client = new Client([
@@ -158,5 +123,42 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         return $decoded;
+    }
+
+    private function validateResponse(int $statusCode, string $body): void
+    {
+        if ($statusCode !== Response::HTTP_OK) {
+            throw new UnexpectedClientResponseException(sprintf('Unexpected response code `%s`.', $statusCode));
+        }
+
+        if (empty($body)) {
+            throw new EmptyInventoryException('Empty list');
+        }
+    }
+
+    private function processData(array $data, string $inventoryHost): array
+    {
+        $data['demand_id'] = Uuid::fromString($data['id']);
+        $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
+        $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
+        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
+
+        $data['source_campaign'] = [
+            'host' => $inventoryHost,
+            'address' => $data['address'],
+            'version' => self::VERSION,
+            'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
+            'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
+        ];
+
+        $data['created_at'] = new DateTime();
+        $data['updated_at'] = new DateTime();
+        $data['budget'] = (int)$data['budget'];
+        $data['max_cpc'] = (int)$data['max_cpc'];
+        $data['max_cpm'] = (int)$data['max_cpm'];
+
+        unset($data['id']);
+
+        return $data;
     }
 }

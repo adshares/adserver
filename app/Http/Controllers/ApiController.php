@@ -53,7 +53,7 @@ class ApiController extends Controller
                 }
 
                 $banners[] = [
-                    'uuid' => $bannerArray['uuid'],
+                    'id' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
@@ -64,7 +64,7 @@ class ApiController extends Controller
             }
 
             $campaigns[] = [
-                'uuid' => $campaign->uuid,
+                'id' => $campaign->uuid,
                 'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
