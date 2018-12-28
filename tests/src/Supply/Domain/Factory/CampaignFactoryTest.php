@@ -34,8 +34,8 @@ final class CampaignFactoryTest extends TestCase
     public function setUp()
     {
         $this->data = [
-            'id' => 1,
-            'uuid' => Uuid::v4(),
+            'id' => Uuid::v4(),
+            'demand_id' => Uuid::v4(),
             'publisher_id' => Uuid::v4(),
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),
@@ -84,7 +84,7 @@ final class CampaignFactoryTest extends TestCase
         ];
     }
 
-    public function testCreateFromArrayWhenInvalid()
+    public function testCreateFromArrayWhenInvalid(): void
     {
         $this->expectException(InvalidCampaignArgumentException::class);
 
@@ -94,13 +94,12 @@ final class CampaignFactoryTest extends TestCase
         CampaignFactory::createFromArray($data);
     }
 
-    public function testCreateFromArrayWhenNestedItemIsInvalid()
+    public function testCreateFromArrayWhenNestedItemIsInvalid(): void
     {
         $this->expectException(InvalidCampaignArgumentException::class);
 
         $data = $this->data;
-        unset($data['source_campaign']['host']);
-        unset($data['source_campaign']['version']);
+        unset($data['source_campaign']['host'], $data['source_campaign']['version']);
 
         CampaignFactory::createFromArray($data);
     }
@@ -109,6 +108,7 @@ final class CampaignFactoryTest extends TestCase
     {
         $instance = CampaignFactory::createFromArray($this->data);
 
-        $this->assertInstanceOf(Campaign::class, $instance);
+        $this->assertEquals($this->data['id'], $instance->getId());
+        $this->assertEquals($this->data['publisher_id'], $instance->getPublisherId());
     }
 }

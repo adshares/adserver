@@ -23,10 +23,13 @@ namespace Adshares\Supply\Application\Service;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
 interface AdSelect
 {
     public function exportInventory(Campaign $campaign): void;
+
+    public function deleteFromInventory(CampaignCollection $campaigns): void;
 
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 

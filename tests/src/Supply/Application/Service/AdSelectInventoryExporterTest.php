@@ -25,6 +25,7 @@ use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
@@ -36,8 +37,6 @@ class AdSelectInventoryExporterTest extends TestCase
 {
     public function testWhenNoBannersForGivenCampaign(): void
     {
-        $this->expectException(NoBannersForGivenCampaign::class);
-
         $campaignId = Uuid::v4();
         $campaign = new Campaign(
             $campaignId,
@@ -54,8 +53,11 @@ class AdSelectInventoryExporterTest extends TestCase
         );
 
         $client = $this->createMock(AdSelect::class);
+        $client
+            ->expects($this->never())
+            ->method('exportInventory');
 
         $service = new AdSelectInventoryExporter($client);
-        $service->export($campaign);
+        $service->export(new CampaignCollection($campaign), new CampaignCollection());
     }
 }

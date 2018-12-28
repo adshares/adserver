@@ -53,22 +53,16 @@ class AdSelectInventoryExporterCommand extends Command
     {
         $this->info('Started exporting inventory to AdSelect.');
 
-        $campaigns = $this->campaignRepository->fetchActiveCampaigns();
+        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
+        $deletedCampaigns = $this->campaignRepository->fetchDeletedCampaigns();
 
-        if (!$campaigns) {
-            $this->info('Stopped exporting. No campaigns found.');
+        $this->info(sprintf(
+            'Found %s campaign to add or update, %s campaign to delete.',
+            count($activeCampaigns),
+            count($deletedCampaigns)
+        ));
 
-            return;
-        }
-
-        /** @var Campaign $campaign */
-        foreach ($campaigns as $campaign) {
-            try {
-                $this->inventoryExporterService->export($campaign);
-            } catch (NoBannersForGivenCampaign $exception) {
-                // skip campaign without banners
-            }
-        }
+        $this->inventoryExporterService->export($activeCampaigns, $deletedCampaigns);
 
         $this->info('Finished exporting inventory to AdSelect.');
     }
