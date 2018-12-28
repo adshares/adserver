@@ -1,7 +1,13 @@
+#language: php
+#php:
+#  - 7.2
+#sudo: required
+#cache:
+#  directories:
+#    - $HOME/.composer/cache/files
+
 sudo: required
-
 language: jvm
-
 jdk: openjdk9
 
 services:
@@ -52,54 +58,54 @@ after_script:
 
 jobs:
   include:
-  - stage: code test and quality
-    if: type = push
-    script:
-    # Run build script
-    - in_docker /bin/bash scripts/pre-build.sh"
+    - stage: code test and quality
+      if: type = push
+      script:
+        # Run build script
+        - in_docker /bin/bash scripts/pre-build.sh"
 
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
+        # Run build script
+        - in_docker /bin/bash scripts/build.sh"
 
-    # Pre-task dependency
-    - in_docker composer run-script install-codestandards"
+        # Pre-task dependency
+        - in_docker composer run-script install-codestandards"
 
-    ## Test tasks
-    # PHP Lint: check syntax errors in all PHP files
-    - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
+        ## Test tasks
+        # PHP Lint: check syntax errors in all PHP files
+        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
 
-    # PHP_CodeSniffer: check PHP compatibility
-    - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
+        # PHP_CodeSniffer: check PHP compatibility
+        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
 
-    # PHP unit tests
-    - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+        # PHP unit tests
+        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
-    # SonarQube
-    - time sonar-scanner
+        # SonarQube
+        - time sonar-scanner
 
-  - stage: build and install
-    if: type = pull_request AND branch = master
-    script:
-    # Backing services and tools
-    - >
-      time docker run
-      --name mysql.dock
-      --network=test-network
-      -e MYSQL_ALLOW_EMPTY_PASSWORD=true
-      -e MYSQL_USER=adserver
-      -e MYSQL_PASSWORD=adserver
-      -e MYSQL_DATABASE=adserver
-      -d
-      percona:5
+    - stage: build and install
+      if: type = pull_request AND branch = master
+      script:
+        # Backing services and tools
+        - >
+          time docker run
+          --name mysql.dock
+          --network=test-network
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+          -e MYSQL_USER=adserver
+          -e MYSQL_PASSWORD=adserver
+          -e MYSQL_DATABASE=adserver
+          -d
+          percona:5
 
-    - in_docker /bin/bash scripts/pre-build.sh"
+        - in_docker /bin/bash scripts/pre-build.sh"
 
-    # Run build script
-    - in_docker /bin/bash scripts/build.sh"
-    - in_docker /bin/bash scripts/pre-install.sh"
+        # Run build script
+        - in_docker /bin/bash scripts/build.sh"
+        - in_docker /bin/bash scripts/pre-install.sh"
 
-    - docker ps -a
-    - in_docker /bin/bash scripts/install.sh"
+        - docker ps -a
+        - in_docker /bin/bash scripts/install.sh"
 
 # After a build, send email notification with the build results
 notifications:

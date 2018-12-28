@@ -17,7 +17,17 @@ if [ ! -v TRAVIS ]; then
     ${BUILD_PATH}/build
 
   cd ${BUILD_PATH}/build
+
+  composer install --no-dev
+  ./artisan config:cache
+else
+    composer install
 fi
 
-./bin/init.sh --build-in-host
+yarn install
+yarn run dev
 
+./artisan package:discover
+
+mkdir -p storage/app/public/banners
+chmod a+rwX -R storage
