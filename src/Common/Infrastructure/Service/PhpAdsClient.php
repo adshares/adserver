@@ -53,11 +53,12 @@ class PhpAdsClient implements Ads
 
     public function sendPayments(Collection $payments): Tx
     {
-        $wires = $payments->mapWithKeys(function (Payment $payment) {
-            return [
-                $payment->account_address => $payment->totalEventValue(),
-            ];
-        });
+        $wires = $payments->groupBy('account_address')
+            ->map(function (Collection $payments) {
+                return $payments->sum(function (Payment $payment) {
+                    return $payment->transferableAmount();
+                });
+            });
 
         $command = new SendManyCommand($wires->toArray());
 
