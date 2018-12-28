@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use DateTime;
 use Illuminate\Database\Eloquent\Model;
 
@@ -44,6 +43,8 @@ class Config extends Model
 
     private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
+    public const ADSELECT_PAYMENT_EXPORT_TIME = 'adselect-payment-export';
+
     public $incrementing = false;
 
     protected $primaryKey = 'key';
@@ -54,7 +55,12 @@ class Config extends Model
 
     public static function fetchAdSelectEventExportTime(): DateTime
     {
-        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        return self::fetchDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME);
+    }
+
+    public static function fetchDateTimeByKey(string $key): DateTime
+    {
+        $config = self::where('key', $key)->first();
 
         if (!$config) {
             return new DateTime('@0');
@@ -63,27 +69,43 @@ class Config extends Model
         return DateTime::createFromFormat(DateTime::ATOM, $config->value);
     }
 
-    public static function updateAdSelectEventExportTime(\DateTime $date): void
+    public static function updateAdSelectEventExportTime(DateTime $date): void
     {
-        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        self::updateDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME, $date);
+    }
+
+    public static function updateDateTimeByKey(string $key, DateTime $date): void
+    {
+        $config = self::where('key', $key)->first();
 
         if (!$config) {
             $config = new self();
-            $config->key = self::ADSELECT_EVENT_EXPORT_TIME;
+            $config->key = $key;
         }
 
         $config->value = $date->format(DateTime::ATOM);
         $config->save();
     }
 
-    public static function getFee(string $feeType): float
+    public static function getFee(string $feeType): ?float
     {
         $config = self::where('key', $feeType)->first();
 
-        if (!$config) {
-            throw new MissingInitialConfigurationException(sprintf('No config entry for key: %s.', $feeType));
+        if ($config === null) {
+            return null;
         }
 
         return (float)$config->value;
+    }
+
+    public static function getLicenceAccount(): ?string
+    {
+        $config = self::where('key', self::LICENCE_ACCOUNT)->first();
+
+        if ($config === null) {
+            return null;
+        }
+
+        return (string)$config->value;
     }
 }

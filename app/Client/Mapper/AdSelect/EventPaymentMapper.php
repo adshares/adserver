@@ -27,7 +27,7 @@ class EventPaymentMapper
     public static function map(array $event): array
     {
         $mappedEvent = EventMapper::map($event);
-        $mappedEvent['paid_amount'] = $event['paid_amount'];
+        $mappedEvent['paid_amount'] = $event['event_value']; // AdSelect should have value before fees subtraction
 
         return $mappedEvent;
     }

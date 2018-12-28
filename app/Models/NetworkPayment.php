@@ -24,7 +24,9 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Adserver\Models\Traits\TransactionId;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class NetworkPayment extends Model
 {
@@ -32,39 +34,53 @@ class NetworkPayment extends Model
     use AutomateMutators;
     use BinHex;
     use JsonValue;
+    use TransactionId;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'receiver_address',
         'sender_address',
         'sender_host',
         'amount',
-        'account_hashout',
-        'account_msid',
         'tx_id',
         'tx_time',
         'detailed_data_used',
         'processed',
+        'ads_payment_id',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
-    protected $hidden = [];
+    protected $visible = [
+        'receiver_address',
+        'sender_address',
+        'amount',
+        'tx_id',
+        'processed',
+        'ads_payment_id',
+    ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'receiver_address' => 'AccountAddress',
         'sender_address' => 'AccountAddress',
+        'tx_id' => 'TransactionId',
     ];
+
+    public static function fetchNotProcessed(): Collection
+    {
+        return self::where('processed', '0')->get();
+    }
+
+    public static function registerNetworkPayment(
+        string $receiverAddress,
+        string $senderAddress,
+        int $amount,
+        ?int $adsPaymentId = null
+    ): NetworkPayment {
+        return self::create(
+            [
+                'receiver_address' => $receiverAddress,
+                'sender_address' => $senderAddress,
+                'amount' => $amount,
+                'ads_payment_id' => $adsPaymentId,
+            ]
+        );
+    }
 }

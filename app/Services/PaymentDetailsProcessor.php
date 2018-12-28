@@ -22,119 +22,108 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
-use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\SendOneCommand;
-use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Adserver\Models\NetworkPayment;
+use Exception;
 
 class PaymentDetailsProcessor
 {
-    /** @var AdsClient $adsClient */
-    private $adsClient;
-
-    /** @var AdSelectEventExporter $adSelectEventExporter */
-    private $adSelectEventExporter;
-
+    /** @var string */
     private $adServerAddress;
 
-    public function __construct(AdsClient $adsClient, AdSelectEventExporter $adSelectEventExporter)
+    public function __construct()
     {
-        $this->adsClient = $adsClient;
-        $this->adSelectEventExporter = $adSelectEventExporter;
-        $this->adServerAddress = config('app.adshares_address');
+        $this->adServerAddress = (string)config('app.adshares_address');
     }
 
     /**
      * @param string $senderAddress
-     * @param int $paymentId
+     * @param int $adsPaymentId
      * @param array $paymentDetails
      *
-     * @throws InvalidPaymentDetailsException
      * @throws MissingInitialConfigurationException
      */
-    public function processPaymentDetails(string $senderAddress, int $paymentId, array $paymentDetails): void
+    public function processPaymentDetails(string $senderAddress, int $adsPaymentId, array $paymentDetails): void
     {
-        $this->validatePayment($paymentId, $paymentDetails);
+        $amountReceived = $this->getPaymentAmount($adsPaymentId);
+
+        $licenceAccount = Config::getLicenceAccount();
+        if ($licenceAccount === null) {
+            throw new MissingInitialConfigurationException('No config entry for licence account.');
+        }
 
         $licenceFee = Config::getFee(Config::LICENCE_RX_FEE);
+        if ($licenceFee === null) {
+            throw new MissingInitialConfigurationException('No config entry for licence fee.');
+        }
+
         $operatorFee = Config::getFee(Config::PAYMENT_RX_FEE);
+        if ($operatorFee === null) {
+            throw new MissingInitialConfigurationException('No config entry for operator fee.');
+        }
 
-        $transferAmountBeforeLicenseFee = $this->getPaymentAmount($paymentId);
-        $licenceFeeAmount = $licenceFee * $transferAmountBeforeLicenseFee;
-        $transferAmountBeforeOperatorFee = $transferAmountBeforeLicenseFee - $licenceFeeAmount;
-        $operatorFeeAmount = $operatorFee * $transferAmountBeforeOperatorFee;
-        $transferAmountAfterFee = $transferAmountBeforeOperatorFee - $operatorFeeAmount;
+        $paymentDetails = $this->getPaymentDetailsWhichExistInDb($paymentDetails);
+        if (count($paymentDetails) === 0) {
+            // TODO log that none of received events exist in DB
+            return;
+        }
 
-        $amountToPay = $this->getAmountToPay($paymentDetails);
+        $totalWeight = $this->getPaymentDetailsTotalWeight($paymentDetails);
+        $feeCalculator = new PaymentDetailsFeeCalculator($amountReceived, $totalWeight, $licenceFee, $operatorFee);
+        foreach ($paymentDetails as $key => $paymentDetail) {
+            $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
+            $paymentDetail['event_value'] = $calculatedFees['event_value'];
+            $paymentDetail['licence_fee_amount'] = $calculatedFees['licence_fee_amount'];
+            $paymentDetail['operator_fee_amount'] = $calculatedFees['operator_fee_amount'];
+            $paymentDetail['paid_amount'] = $calculatedFees['paid_amount'];
 
-        $feeFactor = $transferAmountAfterFee / $amountToPay;
+            $paymentDetails[$key] = $paymentDetail;
+        }
 
-        $splitPayments = [];
-        $dateFrom = null;
         $totalPaidAmount = 0;
+        $totalLicenceFee = 0;
 
-        foreach ($paymentDetails as $paymentDetail) {
-            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
+        try {
+            DB::beginTransaction();
 
-            if ($event === null) {
-                // TODO log null $event - it means that Demand Server sent event which cannot be found in Supply DB
-                continue;
+            foreach ($paymentDetails as $paymentDetail) {
+                $event = $this->getEventById($paymentDetail['event_id']);
+                if ($event === null) {
+                    continue;
+                }
+
+                $event->pay_from = $senderAddress;
+                $event->ads_payment_id = $adsPaymentId;
+                $event->event_value = $paymentDetail['event_value'];
+                $event->paid_amount = $paymentDetail['paid_amount'];
+                $event->licence_fee_amount = $paymentDetail['licence_fee_amount'];
+                $event->operator_fee_amount = $paymentDetail['operator_fee_amount'];
+
+                $event->save();
+
+                $totalPaidAmount += $paymentDetail['paid_amount'];
+                $totalLicenceFee += $paymentDetail['licence_fee_amount'];
             }
 
-            $eventValue = $paymentDetail['event_value'];
-            $paidAmount = (int)floor($eventValue * $feeFactor);
-
-            $event->pay_from = $senderAddress;
-            $event->payment_id = $paymentId;
-            $event->event_value = $eventValue;
-            $event->paid_amount = $paidAmount;
-
-            $event->save();
-
-            if ($dateFrom === null) {
-                $dateFrom = $event->updated_at;
-            }
-
-            $publisherId = $event->publisher_id;
-            $amount = $splitPayments[$publisherId] ?? 0;
-            $amount += $paidAmount;
-            $totalPaidAmount += $paidAmount;
-            $splitPayments[$publisherId] = $amount;
-        }
-
-        $licenceFeeAmount = (int)floor($licenceFeeAmount);
-        $this->sendLicenceTransfer($licenceFeeAmount);
-
-        // TODO log operator income $operatorFeeAmount
-        $operatorFeeAmount = $transferAmountBeforeLicenseFee - $licenceFeeAmount - $totalPaidAmount;
-
-        $this->updateUserLedgerWithAdIncome($senderAddress, $splitPayments);
-
-        if ($dateFrom !== null) {
-            $this->adSelectEventExporter->exportPayments($dateFrom);
-        }
-    }
-
-    private function validatePayment(int $paymentId, array $paymentDetails): void
-    {
-        $amountReceived = $this->getPaymentAmount($paymentId);
-        $amountToPay = $this->getAmountToPay($paymentDetails);
-
-        if ($amountReceived < $amountToPay) {
-            throw new InvalidPaymentDetailsException(
-                sprintf(
-                    'Received %d, but the ordered payment is %d clicks.',
-                    $amountReceived,
-                    $amountToPay
-                )
+            NetworkPayment::registerNetworkPayment(
+                $licenceAccount,
+                $this->adServerAddress,
+                $totalLicenceFee,
+                $adsPaymentId
             );
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            throw $e;
         }
+
+        // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
     }
 
     private function getPaymentAmount(int $adsPaymentId): int
@@ -144,51 +133,51 @@ class PaymentDetailsProcessor
         return (int)$adsPayment->amount;
     }
 
-    private function getAmountToPay(array $paymentDetails): int
+    private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
     {
-        $amountToPay = 0;
-        foreach ($paymentDetails as $paymentDetail) {
-            $amountToPay += $paymentDetail['event_value'];
-        }
+        foreach ($paymentDetails as $key => $paymentDetail) {
+            $eventId = $paymentDetail['event_id'];
 
-        return $amountToPay;
-    }
-
-    private function sendLicenceTransfer(int $amount): void
-    {
-        $config = Config::where('key', Config::LICENCE_ACCOUNT)->first();
-        if (!$config) {
-            throw new MissingInitialConfigurationException(
-                sprintf('No config entry for key: %s.', Config::LICENCE_ACCOUNT)
-            );
-        }
-        $address = $config->value;
-
-        // TODO move to queue or Ads service
-        $command = new SendOneCommand($address, $amount);
-        $response = $this->adsClient->runTransaction($command);
-        // TODO log transaction
-//        $txid = $response->getTx()->getId();
-    }
-
-    private function updateUserLedgerWithAdIncome(string $transferSenderAddress, array $splitPayments): void
-    {
-        foreach ($splitPayments as $userUuid => $amount) {
-            $user = User::fetchByUuid($userUuid);
-
-            if ($user === null) {
-                // TODO log null $user - it means that in Supply DB is event with incorrect publisher_id
+            if ($this->getEventById($eventId) !== null) {
                 continue;
             }
 
-            $ul = new UserLedgerEntry();
-            $ul->user_id = $user->id;
-            $ul->amount = $amount;
-            $ul->address_from = $transferSenderAddress;
-            $ul->address_to = $this->adServerAddress;
-            $ul->status = UserLedgerEntry::STATUS_ACCEPTED;
-            $ul->type = UserLedgerEntry::TYPE_AD_INCOME;
-            $ul->save();
+            // TODO log null $event - it means that Demand Server sent event which cannot be found in Supply DB
+
+            unset($paymentDetails[$key]);
         }
+
+        return $paymentDetails;
+    }
+
+    private function getEventById(string $eventId): ?NetworkEventLog
+    {
+        $event = NetworkEventLog::fetchByEventId($eventId);
+        if ($event !== null) {
+            return $event;
+        }
+
+        $lastOccurrence = strrpos($eventId, ':');
+        if ($lastOccurrence !== false) {
+            $caseId = substr($eventId, 0, $lastOccurrence);
+
+            $event = NetworkEventLog::fetchByCaseId($caseId)->first();
+
+            if ($event !== null) {
+                return $event;
+            }
+        }
+
+        return null;
+    }
+
+    private function getPaymentDetailsTotalWeight(array $paymentDetails): int
+    {
+        $weightSum = 0;
+        foreach ($paymentDetails as $paymentDetail) {
+            $weightSum += $paymentDetail['event_value'];
+        }
+
+        return $weightSum;
     }
 }
