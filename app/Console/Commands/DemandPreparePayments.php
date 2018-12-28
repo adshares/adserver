@@ -80,7 +80,8 @@ class DemandPreparePayments extends Command
 
         $licencePayment->save();
 
-        $this->info("and a licence fee of {$licencePayment->fee} clicks payable to {$licencePayment->account_address}.");
+        $this->info("and a licence fee of {$licencePayment->fee} clicks"
+            ." payable to {$licencePayment->account_address}.");
 
         DB::commit();
     }
