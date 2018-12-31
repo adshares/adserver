@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 if [ ! -e /tmp/adpay_export_in_progress ]; then
     touch /tmp/adpay_export_in_progress
 

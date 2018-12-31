@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 if [ ! -e /tmp/ops_payments_in_progress ]; then
     touch /tmp/ops_payments_in_progress
 

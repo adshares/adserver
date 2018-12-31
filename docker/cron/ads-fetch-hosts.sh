@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
 if [ ! -e /tmp/ads_fetch_hosts_in_progress ]; then
     touch /tmp/ads_fetch_hosts_in_progress
 
