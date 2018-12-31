@@ -24,6 +24,7 @@ use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use function mt_rand;
 use function sprintf;
+use function substr;
 
 final class Uuid implements Id
 {
@@ -71,6 +72,14 @@ final class Uuid implements Id
         );
 
         return new self($id);
+    }
+
+    public static function caseId(): self
+    {
+        $idV4 = (string)self::v4();
+        $caseId = substr($idV4, 0, -2) . '00';
+
+        return new self($caseId);
     }
 
     public static function test(int $value): self
