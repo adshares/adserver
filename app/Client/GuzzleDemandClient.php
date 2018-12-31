@@ -57,7 +57,7 @@ final class GuzzleDemandClient implements DemandClient
         $client = new Client([
             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
             'base_uri' => $inventoryHost,
-            'timeout' => 50,
+            'timeout' => 5,
         ]);
 
         $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
@@ -86,7 +86,7 @@ final class GuzzleDemandClient implements DemandClient
         $client = new Client([
             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
             'base_uri' => $host,
-            'timeout' => 50,
+            'timeout' => 5,
         ]);
 
         $privateKey = (string)config('app.adshares_secret');

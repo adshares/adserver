@@ -54,7 +54,7 @@ final class ClientProvider extends ServiceProvider
                             [
                                 'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adpay_endpoint'),
-                                'timeout' => 50,
+                                'timeout' => 5,
                             ]
                         )
                     )
@@ -71,7 +71,7 @@ final class ClientProvider extends ServiceProvider
                             [
                                 'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adselect_endpoint'),
-                                'timeout' => 50,
+                                'timeout' => 5,
                             ]
                         )
                     )
@@ -87,7 +87,7 @@ final class ClientProvider extends ServiceProvider
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                             'base_uri' => config('app.aduser_internal_location'),
-                            'timeout' => 50,
+                            'timeout' => 1,
                         ]
                     )
                 );
