@@ -29,7 +29,7 @@ class Config extends Model
 
     public const OPERATOR_TX_FEE = 'payment-tx-fee';
 
-    public const PAYMENT_RX_FEE = 'payment-rx-fee';
+    public const OPERATOR_RX_FEE = 'payment-rx-fee';
 
     public const LICENCE_TX_FEE = 'licence-tx-fee';
 
