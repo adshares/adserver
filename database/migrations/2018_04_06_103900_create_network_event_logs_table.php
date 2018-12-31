@@ -30,7 +30,7 @@ class CreateNetworkEventLogsTable extends Migration
      *
      * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('network_event_logs', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -58,17 +58,19 @@ class CreateNetworkEventLogsTable extends Migration
             $table->text('their_userdata')->nullable();
             $table->bigInteger('event_value')->nullable();
             $table->bigInteger('paid_amount')->nullable();
-            $table->bigInteger('payment_id')->nullable();
+            $table->bigInteger('licence_fee_amount')->nullable();
+            $table->bigInteger('operator_fee_amount')->nullable();
+            $table->bigInteger('ads_payment_id')->nullable();
         });
 
-        if (DB::isMysql()) {
-            DB::statement("ALTER TABLE network_event_logs MODIFY case_id varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY event_id varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY user_id varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)");
-            DB::statement("ALTER TABLE network_event_logs MODIFY ip varbinary(8)");
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE network_event_logs MODIFY case_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY event_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY user_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(8)');
         }
     }
 
@@ -77,7 +79,7 @@ class CreateNetworkEventLogsTable extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::drop('network_event_logs');
     }

@@ -43,11 +43,13 @@ class AdSelectEventExporter
         $events = $this->eventRepository->fetchEventsCreatedFromDate($from);
 
         if (!$events) {
-            throw new NoEventsForGivenTimePeriod(sprintf(
-                'Events from: %s not found. Current time: %s',
-                $from->format(DateTime::ATOM),
-                (new DateTime())->format(DateTime::ATOM)
-            ));
+            throw new NoEventsForGivenTimePeriod(
+                sprintf(
+                    'Events from: %s not found. Current time: %s',
+                    $from->format(DateTime::ATOM),
+                    (new DateTime())->format(DateTime::ATOM)
+                )
+            );
         }
 
         $this->client->exportEvents($events);
@@ -55,14 +57,16 @@ class AdSelectEventExporter
 
     public function exportPayments(DateTime $from): void
     {
-        $events = $this->eventRepository->fetchEventsUpdatedFromDate($from);
+        $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate($from);
 
         if (!$events) {
-            throw new NoEventsForGivenTimePeriod(sprintf(
-                'Events from: %s not found. Current time: %s',
-                $from->format(DateTime::ATOM),
-                (new DateTime())->format(DateTime::ATOM)
-            ));
+            throw new NoEventsForGivenTimePeriod(
+                sprintf(
+                    'Paid events from: %s not found. Current time: %s',
+                    $from->format(DateTime::ATOM),
+                    (new DateTime())->format(DateTime::ATOM)
+                )
+            );
         }
 
         $this->client->exportEventsPayments($events);

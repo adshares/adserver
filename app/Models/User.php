@@ -177,6 +177,6 @@ class User extends Authenticatable
 
     public static function fetchByUuid(string $uuid): ?User
     {
-        return self::where('uuid', hex2bin($uuid))->first();
+        return self::where('uuid', $uuid)->first();
     }
 }
