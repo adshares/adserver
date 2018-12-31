@@ -14,3 +14,5 @@ mkdir -pm 777 ${INSTALLATION_PATH}/storage
 cd ${INSTALLATION_PATH}
 ./artisan migrate:fresh
 ./artisan db:seed
+
+crontab -u ${INSTALLATION_USER} ./docker/cron/crontab

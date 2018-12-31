@@ -1,12 +1,12 @@
-#0 */12 * * * cd /adserver && bash docker/cron/ads-broadcast-host.sh > /proc/1/fd/1 2>/proc/1/fd/2
+0 */12 * * * cd /var/www/adserver && bash docker/cron/ads-broadcast-host.sh > /var/log/adshares/adserver-cron.log 2>&1
 
-#30 */6 * * * cd /adserver && bash docker/cron/ads-fetch-hosts.sh > /proc/1/fd/1 2>/proc/1/fd/2
+30 */6 * * * cd /var/www/adserver && bash docker/cron/ads-fetch-hosts.sh > /var/log/adshares/adserver-cron.log 2>&1
 
-#* * * * * cd /adserver && bash docker/cron/ops-inventory.sh > /proc/1/fd/1 2>/proc/1/fd/2
+* * * * * cd /var/www/adserver && bash docker/cron/ops-inventory.sh > /var/log/adshares/adserver-cron.log 2>&1
 
-#* * * * * cd /adserver && bash docker/cron/adpay-export.sh > /proc/1/fd/1 2>/proc/1/fd/2
+* * * * * cd /var/www/adserver && bash docker/cron/adpay-export.sh > /var/log/adshares/adserver-cron.log 2>&1
 
-#30 * * * * cd /adserver && bash docker/cron/ops-payments.sh > /proc/1/fd/1 2>/proc/1/fd/2
+30 * * * * cd /var/www/adserver && bash docker/cron/ops-payments.sh > /var/log/adshares/adserver-cron.log 2>&1
 
-#*/8 * * * * cd /adserver && bash docker/cron/ads-scanner.sh > /proc/1/fd/1 2>/proc/1/fd/2
+*/8 * * * * cd /var/www/adserver && bash docker/cron/ads-scanner.sh > /var/log/adshares/adserver-cron.log 2>&1
 

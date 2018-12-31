@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-if [ ! -e ads_fetch_hosts_in_progress ]; then
-    touch ads_fetch_hosts_in_progress
+set -e
+
+if [ ! -e /tmp/ads_fetch_hosts_in_progress ]; then
+    touch /tmp/ads_fetch_hosts_in_progress
 
     ./artisan ads:fetch-hosts
 
-    rm -f ads_fetch_hosts_in_progress
+    rm -f /tmp/ads_fetch_hosts_in_progress
 fi
