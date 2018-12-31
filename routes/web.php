@@ -41,6 +41,7 @@ Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
 
 Route::get('/supply/find.js', [SupplyController::class, 'findScript'])->name('supply-find.js');
+Route::get('/supply/find2.js', [SupplyController::class, 'findScript']);
 Route::get('/supply/register', [SupplyController::class, 'register'])->name('supply-register');
 
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])->name('log-network-view');
