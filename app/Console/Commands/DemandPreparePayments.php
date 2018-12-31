@@ -45,9 +45,12 @@ class DemandPreparePayments extends Command
 
         $groupedEvents = $events->each(function (EventLog $entry) {
             $entry->licence_fee = (int)floor($entry->event_value * Config::fetch(Config::LICENCE_TX_FEE));
-            $entry->operator_fee =
-                (int)floor(($entry->event_value - $entry->licenceFee) * Config::fetch(Config::OPERATOR_TX_FEE));
-            $entry->paid_amount = $entry->event_value - $entry->licenceFee - $entry->operatorFee;
+
+            $amountAfterFee = $entry->event_value - $entry->licenceFee;
+
+            $entry->operator_fee = (int)floor($amountAfterFee * Config::fetch(Config::OPERATOR_TX_FEE));
+
+            $entry->paid_amount = $amountAfterFee - $entry->operatorFee;
         })->groupBy('pay_to');
 
         $this->info('In that, there are '.count($groupedEvents).' recipients,');
