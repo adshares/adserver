@@ -22,6 +22,7 @@ namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
 class AdSelectInventoryExporter
 {
@@ -32,12 +33,21 @@ class AdSelectInventoryExporter
         $this->client = $client;
     }
 
-    public function export(Campaign $campaign): void
+    public function export(?CampaignCollection $campaignsToAdd, ?CampaignCollection $campaignsToDelete): void
     {
-        if ($campaign->getBanners()->count() === 0) {
-            throw new NoBannersForGivenCampaign(sprintf('No banners for campaign `%s`.', $campaign->getId()));
+        if ($campaignsToAdd) {
+            /** @var Campaign $campaign */
+            foreach ($campaignsToAdd as $campaign) {
+                // @todo Confirm that AdSelect does not need to know about campaigns with no banners
+                // @todo Now we cannot send empty banners list
+                if ($campaign->getBanners()->count() !== 0) {
+                    $this->client->exportInventory($campaign);
+                }
+            }
         }
 
-        $this->client->exportInventory($campaign);
+        if ($campaignsToDelete) {
+            $this->client->deleteFromInventory($campaignsToDelete);
+        }
     }
 }

@@ -32,4 +32,6 @@ interface CampaignRepository
     public function save(Campaign $campaign): void;
 
     public function fetchActiveCampaigns(): CampaignCollection;
+
+    public function fetchDeletedCampaigns(): CampaignCollection;
 }

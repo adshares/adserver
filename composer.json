@@ -8,6 +8,7 @@
         "barryvdh/laravel-cors": "^0.11",
         "doctrine/collections": " v1.5",
         "fideloper/proxy": "^4.0",
+        "guzzlehttp/guzzle": "^6.3",
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",

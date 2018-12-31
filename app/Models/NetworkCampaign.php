@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -100,5 +101,10 @@ class NetworkCampaign extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(NetworkBanner::class)->orderBy('uuid');
+    }
+
+    public function fetchActiveBanners()
+    {
+        return $this->banners()->where('status', Status::STATUS_ACTIVE)->get();
     }
 }

@@ -53,7 +53,7 @@ class CampaignMapper
         $dateEnd = self::processDateEnd($campaignArray['date_end']);
 
         $mapped = [
-            'campaign_id' => $campaignArray['demand_campaign_id'],
+            'campaign_id' => $campaignArray['id'],
             'time_start' => $dateStart,
             'time_end' => $dateEnd,
             'banners' => $banners,

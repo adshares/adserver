@@ -34,8 +34,7 @@ final class DummyDemandClient implements DemandClient
     {
         $this->campaigns = [
             CampaignFactory::createFromArray([
-                'id' => 1,
-                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
+                'demand_id' => Uuid::v4(),
                 'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
@@ -87,8 +86,7 @@ final class DummyDemandClient implements DemandClient
                 'targeting_requires' => [],
             ]),
             CampaignFactory::createFromArray([
-                'id' => 2,
-                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
+                'demand_id' => Uuid::v4(),
                 'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),

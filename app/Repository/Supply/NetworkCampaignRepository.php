@@ -56,13 +56,14 @@ class NetworkCampaignRepository implements CampaignRepository
     public function save(Campaign $campaign): void
     {
         $campaignArray = $campaign->toArray();
-        $campaignArray['uuid'] = $campaignArray['id'];
+        $uuid = $campaignArray['id'];
         unset($campaignArray['id']);
 
         $networkCampaign = $this->fetchCampaignByDemandId($campaign);
 
         if (!$networkCampaign) {
             $networkCampaign = new NetworkCampaign();
+            $networkCampaign->uuid = $uuid;
         }
 
         $networkCampaign->fill($campaignArray);
@@ -93,12 +94,25 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private function fetchCampaignByDemandId(Campaign $campaign): ?NetworkCampaign
     {
-        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getId()))->first();
+        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))->first();
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
     {
-        $networkCampaigns = (new NetworkCampaign())->get();
+        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_ACTIVE)->get();
+
+        $campaigns = [];
+
+        foreach ($networkCampaigns as $networkCampaign) {
+            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
+        }
+
+        return new CampaignCollection(...$campaigns);
+    }
+
+    public function fetchDeletedCampaigns(): CampaignCollection
+    {
+        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_DELETED)->get();
 
         $campaigns = [];
 
@@ -113,9 +127,9 @@ class NetworkCampaignRepository implements CampaignRepository
     {
         $banners = [];
 
-        foreach ($networkCampaign->banners as $networkBanner) {
+        foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
-                'uuid' => $networkBanner->uuid,
+                'id' => $networkBanner->uuid,
                 'serve_url' => $networkBanner->serve_url,
                 'click_url' => $networkBanner->click_url,
                 'view_url' => $networkBanner->view_url,
@@ -128,7 +142,8 @@ class NetworkCampaignRepository implements CampaignRepository
 
         return CampaignFactory::createFromArray(
             [
-                'uuid' => Uuid::fromString($networkCampaign->uuid),
+                'id' => Uuid::fromString($networkCampaign->uuid),
+                'demand_id' => Uuid::fromString($networkCampaign->demand_campaign_id),
                 'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
                 'landing_url' => $networkCampaign->landing_url,
                 'date_start' => $networkCampaign->date_start,

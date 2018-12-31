@@ -25,7 +25,7 @@ use Faker\Generator as Faker;
 $factory->define(
     EventLog::class,
     function (Faker $faker) {
-        $addresses = array_filter([
+        $addresses = [
             AccountId::fromIncompleteString('0001-00000001'),
             AccountId::fromIncompleteString('0001-00000002'),
             AccountId::fromIncompleteString('0001-00000003'),
@@ -34,10 +34,7 @@ $factory->define(
             AccountId::fromIncompleteString('0001-00000006'),
             AccountId::fromIncompleteString('0001-00000007'),
             AccountId::fromIncompleteString('0001-00000008'),
-        ],
-            function (AccountId $accountId) {
-                return !$accountId->equals(new AccountId(config('app.adshares_address')));
-            });
+        ];
 
         return [
             'case_id' => $faker->uuid,
