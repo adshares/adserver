@@ -443,15 +443,15 @@ class Utils
         $caseId = substr($baseCaseId, 0, -2);
 
         if ($eventType === 'request') {
-            return $caseId . '0a';
+            return $caseId . '01';
         }
 
         if ($eventType === 'view') {
-            return $caseId . '0b';
+            return $caseId . '02';
         }
 
         if ($eventType === 'click') {
-            return $caseId . '0c';
+            return $caseId . '03';
         }
 
         throw new \RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
