@@ -17,11 +17,12 @@ if [ ! -v TRAVIS ]; then
     ${BUILD_PATH}/build
 
   cd ${BUILD_PATH}/build
+fi
 
-  composer install --no-dev
+composer install
+
+if [ ! -v TRAVIS ]; then
   ./artisan config:cache
-else
-    composer install
 fi
 
 yarn install
