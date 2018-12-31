@@ -55,8 +55,9 @@ final class GuzzleDemandClient implements DemandClient
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
         $client = new Client([
+            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
             'base_uri' => $inventoryHost,
-            'timeout' => 5.0,
+            'timeout' => 5,
         ]);
 
         $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
@@ -83,8 +84,9 @@ final class GuzzleDemandClient implements DemandClient
     public function fetchPaymentDetails(string $host, string $transactionId): array
     {
         $client = new Client([
+            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
             'base_uri' => $host,
-            'timeout' => 5.0,
+            'timeout' => 5,
         ]);
 
         $privateKey = (string)config('app.adshares_secret');

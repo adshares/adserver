@@ -25,10 +25,10 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
-use DateTime;
 
 class ApiController extends Controller
 {
@@ -86,7 +86,7 @@ class ApiController extends Controller
 
     private function changeHost(string $url, Request $request): string
     {
-        $currentHost = $request->getHttpHost();
+        $currentHost = $request->getSchemeAndHttpHost();
         $bannerHost = config('app.adserver_banner_host');
 
         return str_replace($currentHost, $bannerHost, $url);
