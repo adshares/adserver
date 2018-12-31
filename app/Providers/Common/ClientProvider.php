@@ -52,9 +52,9 @@ final class ClientProvider extends ServiceProvider
                     new JsonRpc(
                         new Client(
                             [
-                                'headers' => ['Content-Type' => 'application/json'],
+                                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adpay_endpoint'),
-                                'timeout' => 5,
+                                'timeout' => 50,
                             ]
                         )
                     )
@@ -69,9 +69,9 @@ final class ClientProvider extends ServiceProvider
                     new JsonRpc(
                         new Client(
                             [
-                                'headers' => ['Content-Type' => 'application/json'],
+                                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adselect_endpoint'),
-                                'timeout' => 1,
+                                'timeout' => 50,
                             ]
                         )
                     )
@@ -85,9 +85,9 @@ final class ClientProvider extends ServiceProvider
                 return new GuzzleAdUserClient(
                     new Client(
                         [
-                            'headers' => ['Content-Type' => 'application/json'],
+                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                             'base_uri' => config('app.aduser_internal_location'),
-                            'timeout' => 1,
+                            'timeout' => 50,
                         ]
                     )
                 );
