@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Supply\Application\Service\AdSelect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdSelectInventoryExporterCommandTest extends TestCase
@@ -29,6 +30,12 @@ class AdSelectInventoryExporterCommandTest extends TestCase
 
     public function testExport(): void
     {
+        $this->app->bind(AdSelect::class, function () {
+            $adSelect = $this->createMock(AdSelect::class);
+
+            return $adSelect;
+        });
+
         $this->artisan('ops:adselect:inventory:export')
             ->assertExitCode(0);
     }
