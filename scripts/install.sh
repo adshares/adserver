@@ -12,6 +12,11 @@ mv .env* ${INSTALLATION_PATH}/
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
 
 cd ${INSTALLATION_PATH}
+
+if [ ! -v TRAVIS ]; then
+  ./artisan config:cache
+fi
+
 ./artisan migrate:fresh
 ./artisan db:seed
 

@@ -21,10 +21,6 @@ fi
 
 composer install
 
-if [ ! -v TRAVIS ]; then
-  ./artisan config:cache
-fi
-
 yarn install
 yarn run dev
 
