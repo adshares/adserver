@@ -216,12 +216,10 @@ class AdsProcessTx extends Command
         } catch (MissingInitialConfigurationException $exception) {
             $this->error('Missing initial configuration: '.$exception->getMessage());
 
-            // transaction will be processed again later
             return true;
         } catch (Exception $exception) {
             $this->error('Unexpected error: '.$exception->getMessage());
 
-            // transaction will be processed again later
             return true;
         }
 
