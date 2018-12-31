@@ -59,8 +59,10 @@ class CreateEventLogsTable extends Migration
                 $table->text('our_userdata')->nullable();
                 $table->text('their_userdata')->nullable();
 
-                $table->bigInteger('event_value', false, true)->nullable();
-                $table->bigInteger('paid_amount', false, true)->nullable();
+                $table->bigInteger('event_value')->unsigned()->nullable();
+                $table->bigInteger('licence_fee')->unsigned()->nullable();
+                $table->bigInteger('operator_fee')->unsigned()->nullable();
+                $table->bigInteger('paid_amount')->unsigned()->nullable();
                 $table->integer('payment_id')->nullable();
             }
         );

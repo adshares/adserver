@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use function array_key_exists;
 
 class CampaignFactory
@@ -56,15 +57,15 @@ class CampaignFactory
         $banners = [];
 
         $campaign = new Campaign(
-            $data['uuid'] ?? Uuid::v4(),
-            $data['uuid'],
+            $data['id'] ?? Uuid::v4(),
+            $data['demand_id'],
             $data['publisher_id'],
             $data['landing_url'],
             new CampaignDate($data['date_start'], $data['date_end'], $data['created_at'], $data['updated_at']),
             $banners,
             $budget,
             $sourceHost,
-            Campaign::STATUS_PROCESSING,
+            isset($data['status']) ? Status::fromStatus($data['status']) : Status::processing(),
             $data['targeting_requires'],
             $data['targeting_excludes']
         );
@@ -72,9 +73,10 @@ class CampaignFactory
         foreach ($arrayBanners as $banner) {
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
-            $id = isset($banner['uuid']) ? Uuid::fromString($banner['uuid']) : Uuid::v4();
+            $id = isset($banner['id']) ? Uuid::fromString($banner['id']) : Uuid::v4();
+            $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
 
-            $banners[] = new Banner($campaign, $id, $bannerUrl, $banner['type'], $size, '');
+            $banners[] = new Banner($campaign, $id, $bannerUrl, $banner['type'], $size, '', $status);
         }
 
         $campaign->setBanners(new ArrayCollection($banners));
@@ -91,7 +93,6 @@ class CampaignFactory
             'budget',
             'max_cpc',
             'max_cpm',
-            'uuid',
             'publisher_id',
             'landing_url',
             'date_start',
@@ -100,6 +101,7 @@ class CampaignFactory
             'updated_at',
             'targeting_requires',
             'targeting_excludes',
+            'demand_id',
         ];
 
         foreach ($pattern as $key => $value) {

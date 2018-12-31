@@ -27,16 +27,11 @@ use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
+use Adshares\Supply\Domain\ValueObject\Status;
 use Datetime;
-use const DATE_ATOM;
 
 final class Campaign
 {
-    const STATUS_PROCESSING = 0;
-    const STATUS_ACTIVE = 1;
-    const STATUS_DELETED = 2;
-
-    protected $dateFormat = DATE_ATOM;
     /** @var Id */
     private $id;
 
@@ -61,7 +56,7 @@ final class Campaign
     /** @var array */
     private $targetingRequires = [];
 
-    /** @var int */
+    /** @var Status */
     private $status;
 
     /** @var Id */
@@ -79,7 +74,7 @@ final class Campaign
         array $banners,
         Budget $budget,
         SourceCampaign $sourceCampaign,
-        int $status,
+        Status $status,
         array $targetingRequires = [],
         array $targetingExcludes = []
     ) {
@@ -96,14 +91,24 @@ final class Campaign
         $this->banners = new ArrayCollection($banners);
     }
 
-    public function deactivate(): void
+    public function delete(): void
     {
-        $this->status = self::STATUS_DELETED;
+        $this->status = Status::deleted();
+
+        /** @var Banner $banner */
+        foreach ($this->banners as $banner) {
+            $banner->delete();
+        }
     }
 
     public function activate(): void
     {
-        $this->status = self::STATUS_ACTIVE;
+        $this->status = Status::active();
+
+        /** @var Banner $banner */
+        foreach ($this->banners as $banner) {
+            $banner->activate();
+        }
     }
 
     public function toArray(): array
@@ -127,12 +132,13 @@ final class Campaign
             'date_end' => $this->campaignDate->getDateEnd(),
             'targeting_requires' => $this->targetingRequires,
             'targeting_excludes' => $this->targetingExcludes,
+            'status' => $this->status->getStatus(),
         ];
     }
 
     public function getStatus(): int
     {
-        return $this->status;
+        return $this->status->getStatus();
     }
 
     public function getBanners(): ArrayCollection

@@ -35,9 +35,9 @@ class NetworkEventRepository implements EventRepository
         return $events->toArray();
     }
 
-    public function fetchEventsUpdatedFromDate(DateTime $dateTime): array
+    public function fetchPaidEventsUpdatedFromDate(DateTime $dateTime): array
     {
-        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->get();
+        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->whereNotNull('event_value')->get();
 
         return $events->toArray();
     }

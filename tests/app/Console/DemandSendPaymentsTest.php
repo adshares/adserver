@@ -23,11 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Ads\Response\GetTransactionResponse;
+use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use function factory;
 
 class DemandSendPaymentsTest extends TestCase
 {
@@ -42,10 +44,17 @@ class DemandSendPaymentsTest extends TestCase
 
     public function testHandle(): void
     {
-        /** @var Collection|Payment[] $payments */
-        factory(Payment::class)
+        /** @var Collection|Payment[] $newPayments */
+        $newPayments = factory(Payment::class)
             ->times(9)
             ->create(['state' => Payment::STATE_NEW]);
+
+        $newPayments->each(function (Payment $payment) {
+            factory(EventLog::class)->times(5)->create([
+                'payment_id' => $payment->id,
+                'paid_amount' => 100,
+            ]);
+        });
 
         $this->app->bind(
             Ads::class,

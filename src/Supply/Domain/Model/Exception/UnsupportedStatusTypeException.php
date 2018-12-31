@@ -18,22 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Providers;
+declare(strict_types = 1);
 
-use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\ServiceProvider;
+namespace Adshares\Supply\Domain\Model\Exception;
 
-class BroadcastServiceProvider extends ServiceProvider
+use RuntimeException;
+
+class UnsupportedStatusTypeException extends RuntimeException
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        Broadcast::routes();
 
-        require base_path('routes/channels.php');
-    }
 }

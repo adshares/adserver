@@ -53,7 +53,7 @@ class ApiController extends Controller
                 }
 
                 $banners[] = [
-                    'uuid' => $bannerArray['uuid'],
+                    'id' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
@@ -64,13 +64,13 @@ class ApiController extends Controller
             }
 
             $campaigns[] = [
-                'uuid' => $campaign->uuid,
+                'id' => $campaign->uuid,
                 'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
                 'date_end' => $campaign->time_end,
-                'created_at' => $campaign->created_at->format(DateTime::ISO8601),
-                'updated_at' => $campaign->updated_at->format(DateTime::ISO8601),
+                'created_at' => $campaign->created_at->format(DateTime::ATOM),
+                'updated_at' => $campaign->updated_at->format(DateTime::ATOM),
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
                 'budget' => $campaign->budget,

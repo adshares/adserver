@@ -31,7 +31,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
-    private const ENV_DEV = 'dev';
+    private const ENV_DEV = 'local';
 
     public function render($request, Exception $exception)
     {

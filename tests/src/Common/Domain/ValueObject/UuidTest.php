@@ -63,6 +63,15 @@ final class UuidTest extends TestCase
         $this->assertNotEquals($first, $second);
     }
 
+    public function testCaseIdIfLastTwoCharactersAreAlwaysZero(): void
+    {
+        $this->assertEquals('00', substr(Uuid::caseId(), -2));
+        $this->assertEquals('00', substr(Uuid::caseId(), -2));
+        $this->assertEquals('00', substr(Uuid::caseId(), -2));
+        $this->assertEquals('00', substr(Uuid::caseId(), -2));
+        $this->assertEquals('00', substr(Uuid::caseId(), -2));
+    }
+
     public function dataProviderForCreateString()
     {
         return [

@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use function count;
 use function hex2bin;
 
 /**
@@ -113,10 +114,26 @@ class Payment extends Model
         return $this->hasMany(EventLog::class);
     }
 
-    public function totalEventValue(): int
+    public function totalLicenceFee(): int
     {
         return $this->events->sum(function (EventLog $entry) {
-            return $entry->event_value;
+            return $entry->licence_fee;
+        });
+    }
+
+    public function transferableAmount(): int
+    {
+        return $this->netAmount() ?? $this->fee;
+    }
+
+    public function netAmount(): ?int
+    {
+        if (!count($this->events)) {
+            return null;
+        }
+
+        return $this->events->sum(function (EventLog $entry) {
+            return $entry->paid_amount;
         });
     }
 }

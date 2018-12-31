@@ -18,50 +18,44 @@
  * along with AdServer.  If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateNetworkPaymentsTable extends Migration
 {
-
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
-        Schema::create('network_payments', function (Blueprint $table) {
-            $table->bigIncrements('id');
+        Schema::create(
+            'network_payments',
+            function (Blueprint $table) {
+                $table->bigIncrements('id');
 
-            $table->timestamps();
-            $table->softDeletes();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->binary('receiver_address', 6);
-            $table->binary('sender_address', 6);
-            $table->string('sender_host', 32);
-            $table->bigInteger('amount')->unsigned()->nullable();
+                $table->binary('receiver_address', 6);
+                $table->binary('sender_address', 6);
+                $table->string('sender_host', 32)->nullable();
+                $table->bigInteger('amount');
 
-            $table->binary('tx_id', 8);
-            $table->integer('tx_time');
-            $table->boolean('detailed_data_used');
-            $table->boolean('processed');
-        });
+                $table->binary('tx_id', 8)->nullable();
+                $table->integer('tx_time')->nullable();
+                $table->boolean('detailed_data_used')->default('0');
+                $table->boolean('processed')->default('0');
+                $table->bigInteger('ads_payment_id')->nullable();
+            }
+        );
 
-        if (DB::isMysql()) {
-            DB::statement("ALTER TABLE network_payments MODIFY receiver_address varbinary(6)");
-            DB::statement("ALTER TABLE network_payments MODIFY sender_address varbinary(6)");
-            DB::statement("ALTER TABLE network_payments MODIFY tx_id varbinary(8)");
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE network_payments MODIFY receiver_address varbinary(6)');
+            DB::statement('ALTER TABLE network_payments MODIFY sender_address varbinary(6)');
+            DB::statement('ALTER TABLE network_payments MODIFY tx_id varbinary(8)');
         }
     }
 
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::drop('network_payments');
     }

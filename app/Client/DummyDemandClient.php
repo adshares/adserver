@@ -34,8 +34,7 @@ final class DummyDemandClient implements DemandClient
     {
         $this->campaigns = [
             CampaignFactory::createFromArray([
-                'id' => 1,
-                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
+                'demand_id' => Uuid::v4(),
                 'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.pl',
                 'date_start' => (new DateTime())->modify('-1 day'),
@@ -87,8 +86,7 @@ final class DummyDemandClient implements DemandClient
                 'targeting_requires' => [],
             ]),
             CampaignFactory::createFromArray([
-                'id' => 2,
-                'uuid' => Uuid::fromString('4a27f6a938254573abe47810a0b03748'),
+                'demand_id' => Uuid::v4(),
                 'publisher_id' => Uuid::v4(),
                 'landing_url' => 'http://adshares.net',
                 'date_start' => (new DateTime())->modify('-10 day'),
@@ -153,7 +151,6 @@ final class DummyDemandClient implements DemandClient
                 'zone_id' => 1,
                 'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
                 'event_value' => 10,
-                'paid_amount' => 10,
             ],
             [
                 'event_id' => '95a1170d739546799b959a9d0ca9b7c8',
@@ -162,7 +159,6 @@ final class DummyDemandClient implements DemandClient
                 'zone_id' => 1,
                 'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
                 'event_value' => 100,
-                'paid_amount' => 100,
             ],
         ];
     }

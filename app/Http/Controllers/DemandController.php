@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
@@ -114,8 +115,8 @@ class DemandController extends Controller
             }
         );
 
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
-        $caseId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
+        $caseId = (string)Uuid::caseId();
+        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_REQUEST);
 
         $log = new EventLog();
         $log->banner_id = $banner->uuid;
@@ -189,8 +190,9 @@ class DemandController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $eventId = $request->query->get('eid');
         $caseId = $request->query->get('cid');
+        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
+
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -224,8 +226,9 @@ class DemandController extends Controller
         $logIp = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $eventId = $request->query->get('eid');
         $caseId = $request->query->get('cid');
+        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
+
         $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');

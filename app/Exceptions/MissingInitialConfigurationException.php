@@ -22,6 +22,6 @@ namespace Adshares\Adserver\Exceptions;
 
 use Exception;
 
-class InvalidPaymentDetailsException extends Exception
+class MissingInitialConfigurationException extends Exception
 {
 }

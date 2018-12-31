@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2018 Adshares sp. z o.o.
  *
@@ -42,13 +43,13 @@ class CreateConfigsTable extends Migration
 
         DB::table('configs')->insert(
             [
-                'key' => Config::PAYMENT_TX_FEE,
+                'key' => Config::OPERATOR_TX_FEE,
                 'value' => '0.01',
             ]
         );
         DB::table('configs')->insert(
             [
-                'key' => Config::PAYMENT_RX_FEE,
+                'key' => Config::OPERATOR_RX_FEE,
                 'value' => '0.01',
             ]
         );
