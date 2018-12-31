@@ -55,7 +55,7 @@ class DemandPreparePaymentsTest extends TestCase
 
         $this->artisan('ops:demand:payments:prepare')
             ->expectsOutput('Found 9 payable events.')
-            ->expectsOutput('In that, there are 3 recipients.')
+            ->expectsOutput('In that, there are 3 recipients,')
             ->assertExitCode(0);
 
         $events = EventLog::all();
@@ -66,7 +66,7 @@ class DemandPreparePaymentsTest extends TestCase
         });
 
         $payments = Payment::all();
-        self::assertCount(3, $payments);
+        self::assertCount(4, $payments);
 
         $payments->each(function (Payment $payment) {
             self::assertNotEmpty($payment->account_address);

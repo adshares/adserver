@@ -56,9 +56,10 @@ class DemandSendPayments extends Command
 
             $payment->save();
 
-            $this->info("#{$payment->id}: {$payment->totalEventValue()} clicks to {$payment->account_address};");
+            $this->info("#{$payment->id}: {$payment->transferableAmount()} clicks to {$payment->account_address};");
         });
 
-        $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks fee.");
+        $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks network fee.");
+        $this->info("TransactionId: {$tx->getId()}");
     }
 }

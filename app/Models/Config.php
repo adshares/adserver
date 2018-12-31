@@ -27,7 +27,7 @@ class Config extends Model
 {
     public const ADS_LOG_START = 'ads-log-start';
 
-    public const PAYMENT_TX_FEE = 'payment-tx-fee';
+    public const OPERATOR_TX_FEE = 'payment-tx-fee';
 
     public const PAYMENT_RX_FEE = 'payment-rx-fee';
 
@@ -51,9 +51,20 @@ class Config extends Model
 
     protected $guarded = [];
 
+    public static function fetch(string $key, string $default = ''): string
+    {
+        $config = self::where('key', $key)->first();
+
+        if ($config === null) {
+            return $default;
+        }
+
+        return $config->value;
+    }
+
     public static function fetchAdSelectEventExportTime(): DateTime
     {
-        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             return new DateTime('@0');
@@ -64,7 +75,7 @@ class Config extends Model
 
     public static function updateAdSelectEventExportTime(\DateTime $date): void
     {
-        $config = Config::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
+        $config = self::where('key', self::ADSELECT_EVENT_EXPORT_TIME)->first();
 
         if (!$config) {
             $config = new self();
