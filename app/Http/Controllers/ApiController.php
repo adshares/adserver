@@ -42,8 +42,8 @@ class ApiController extends Controller
 
     public function adsharesInventoryList(Request $request)
     {
-        $licenceTxFee =  Config::fetch(Config::LICENCE_TX_FEE);
-        $operatorTxFee = Config::fetch(Config::OPERATOR_TX_FEE);
+        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
         foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
@@ -88,7 +88,7 @@ class ApiController extends Controller
         return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
     }
 
-    private function calculateBudgetAfterFees(int $budget, int $licenceTxFee, int $operatorTxFee): int
+    private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
     {
         $licenceFee = (int)floor($budget * $licenceTxFee);
         $budgetAfterFee = $budget - $licenceFee;
