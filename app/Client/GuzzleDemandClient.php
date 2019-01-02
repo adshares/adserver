@@ -117,7 +117,8 @@ final class GuzzleDemandClient implements DemandClient
             $response = $client->get($endpoint);
         } catch (ClientException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Transaction not found: %s.', $exception->getMessage()), $exception->getCode()
+                sprintf('Transaction not found: %s.', $exception->getMessage()),
+                $exception->getCode()
             );
         }
 
