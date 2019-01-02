@@ -109,14 +109,14 @@ JSON;
         )->toArray();
     }
 
-    public function keywords()
+    public function keywords(): array
     {
-        return $this->site['keywords'];
+        return $this->site['keywords'] ?? [];
     }
 
     public function userId(): string
     {
-        return $this->user['uid'];
+        return $this->user['uid'] ?? '';
     }
 
     public function eventContext(): array
