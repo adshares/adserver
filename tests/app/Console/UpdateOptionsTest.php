@@ -35,8 +35,6 @@ class UpdateOptionsTest extends TestCase
             return new DummyAdUserClient();
         });
 
-        $this->expectExceptionMessage('Method storeTargetingOptions() not implemented');
-
         $this->artisan('ops:targeting-options:update')
             ->assertExitCode(0);
     }
@@ -46,8 +44,6 @@ class UpdateOptionsTest extends TestCase
         $this->app->bind(AdClassify::class, function () {
             return new DummyAdClassifyClient();
         });
-
-        $this->expectExceptionMessage('Method storeFilteringOptions() not implemented');
 
         $this->artisan('ops:filtering-options:update')
             ->assertExitCode(0);
