@@ -99,7 +99,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            json_encode($request->getSchemeAndHttpHost()),
+            json_encode(config('app.adserver_host')),
             json_encode(config('app.aduser_external_location')),
             json_encode(config('app.website_banner_selector')),
         ];
@@ -123,16 +123,16 @@ class SupplyController extends Controller
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        $response->setCache(
-            [
-                'etag' => md5(md5_file($jsPath).implode(':', $params)),
-                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
-                'max_age' => 3600 * 24 * 30,
-                's_maxage' => 3600 * 24 * 30,
-                'private' => false,
-                'public' => true,
-            ]
-        );
+//        $response->setCache(
+//            [
+//                'etag' => md5(md5_file($jsPath).implode(':', $params)),
+//                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+//                'max_age' => 3600 * 24 * 30,
+//                's_maxage' => 3600 * 24 * 30,
+//                'private' => false,
+//                'public' => true,
+//            ]
+//        );
 
         if (!$response->isNotModified($request)) {
             // TODO: ask Jacek
@@ -176,8 +176,8 @@ class SupplyController extends Controller
         $requestHeaders = $request->headers->all();
 
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
         $caseId = $request->query->get('cid');
+        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $tid = $request->cookies->get('tid');
         $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
@@ -236,9 +236,9 @@ class SupplyController extends Controller
         $requestHeaders = $request->headers->all();
 
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $eventId = Utils::getRawTrackingId(Utils::createTrackingId(config('app.adserver_secret')));
         $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
+        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));

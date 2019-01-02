@@ -20,13 +20,14 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class NetworkEventLog extends Model
 {
@@ -63,7 +64,9 @@ class NetworkEventLog extends Model
         'timestamp',
         'event_value',
         'paid_amount',
-        'payment_id',
+        'licence_fee_amount',
+        'operator_fee_amount',
+        'ads_payment_id',
     ];
 
     /**
@@ -92,11 +95,33 @@ class NetworkEventLog extends Model
         'their_userdata' => 'JsonValue',
         'event_value' => 'Money',
         'paid_amount' => 'Money',
+        'licence_fee_amount' => 'Money',
+        'operator_fee_amount' => 'Money',
     ];
+
+    public static function fetchByCaseId(string $caseId): Collection
+    {
+        return self::where('case_id', hex2bin($caseId))->get();
+    }
 
     public static function fetchByEventId(string $eventId): ?NetworkEventLog
     {
         return self::where('event_id', hex2bin($eventId))->first();
+    }
+
+    public static function fetchPaymentsForPublishersByAdsPaymentId(int $adsPaymentId): Collection
+    {
+        $collection = DB::table(self::getTableName())->select(
+            'publisher_id',
+            DB::raw('SUM(paid_amount) as paid_amount')
+        )->where('ads_payment_id', $adsPaymentId)->groupBy('publisher_id')->get();
+
+        return $collection;
+    }
+
+    public static function getTableName()
+    {
+        return with(new static())->getTable();
     }
 
     public static function create(

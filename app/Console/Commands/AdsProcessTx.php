@@ -26,7 +26,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Exceptions\InvalidPaymentDetailsException;
+use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkHost;
@@ -36,6 +36,7 @@ use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Exception;
 use Illuminate\Console\Command;
 
 class AdsProcessTx extends Command
@@ -81,6 +82,7 @@ class AdsProcessTx extends Command
             );
 
             $this->info('Premature finish processing incoming txs.');
+
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
@@ -91,6 +93,7 @@ class AdsProcessTx extends Command
         }
 
         $this->info('Finish processing incoming txs');
+
         return self::EXIT_CODE_SUCCESS;
     }
 
@@ -197,7 +200,7 @@ class AdsProcessTx extends Command
 
         $host = $networkHost->host;
         $txid = $dbTx->txid;
-        $paymentId = $dbTx->id;
+        $adsPaymentId = $dbTx->id;
 
         try {
             $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
@@ -209,10 +212,15 @@ class AdsProcessTx extends Command
         }
 
         try {
-            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $paymentId, $paymentDetails);
-        } catch (InvalidPaymentDetailsException $exception) {
-            // TODO log that demand send invalid payment
-            return false;
+            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $adsPaymentId, $paymentDetails);
+        } catch (MissingInitialConfigurationException $exception) {
+            $this->error('Missing initial configuration: '.$exception->getMessage());
+
+            return true;
+        } catch (Exception $exception) {
+            $this->error('Unexpected error: '.$exception->getMessage());
+
+            return true;
         }
 
         $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
@@ -260,6 +268,6 @@ class AdsProcessTx extends Command
 
     private function extractUuidFromMessage(string $message): string
     {
-        return substr($message, -32);
+        return hex2bin(substr($message, -32));
     }
 }
