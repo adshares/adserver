@@ -24,11 +24,11 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use const DIRECTORY_SEPARATOR;
 use function file_get_contents;
 use function file_put_contents;
 use function serialize;
 use function unserialize;
+use const DIRECTORY_SEPARATOR;
 
 final class FileConfigurationRepository implements ConfigurationRepository
 {
@@ -41,13 +41,13 @@ final class FileConfigurationRepository implements ConfigurationRepository
 
     public function __construct(string $cachePath)
     {
-        $this->targetingFilePath = $cachePath . DIRECTORY_SEPARATOR . self::TARGETING_CACHE_FILENAME;
-        $this->filteringFilePath = $cachePath . DIRECTORY_SEPARATOR . self::FILTERING_CACHE_FILENAME;
+        $this->targetingFilePath = $cachePath.DIRECTORY_SEPARATOR.self::TARGETING_CACHE_FILENAME;
+        $this->filteringFilePath = $cachePath.DIRECTORY_SEPARATOR.self::FILTERING_CACHE_FILENAME;
     }
 
     public function storeTargetingOptions(Selector $options): void
     {
-       file_put_contents($this->targetingFilePath, serialize($options));
+        file_put_contents($this->targetingFilePath, serialize($options));
     }
 
     public function fetchTargetingOptions(): Selector
