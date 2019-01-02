@@ -12,7 +12,8 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
-        "ramsey/uuid": "^3"
+        "ramsey/uuid": "^3",
+        "aws/aws-sdk-php": "~3.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
