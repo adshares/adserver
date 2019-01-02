@@ -10,6 +10,7 @@ mv * ${INSTALLATION_PATH}/
 mv .env* ${INSTALLATION_PATH}/
 
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
+mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/var/www/adserver-storage}
 
 cd ${INSTALLATION_PATH}
 
