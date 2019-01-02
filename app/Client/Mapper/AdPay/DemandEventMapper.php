@@ -66,21 +66,21 @@ class DemandEventMapper
         return $eventArray;
     }
 
-    private static function processOurKeywords(?stdClass $keywords): stdClass
-    {
-        if ($keywords === null) {
-            return new stdClass();
-        }
-
-        return $keywords;
-    }
-
     private static function processTheirKeywords($keywords)
     {
-        if ($keywords === null) {
+        if (!$keywords) {
             return new stdClass();
         }
 
         return array_fill_keys(explode(',', $keywords), 1);
+    }
+
+    private static function processOurKeywords($keywords)
+    {
+        if (!$keywords) {
+            return new stdClass();
+        }
+
+        return $keywords;
     }
 }
