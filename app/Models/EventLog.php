@@ -157,27 +157,37 @@ class EventLog extends Model
     public function createImpressionContext(): ImpressionContext
     {
         // TODO input data should be validated - currently ErrorException could be thrown
-        $ip = inet_ntop(hex2bin($this->ip));
 
         $headersArray = get_object_vars($this->headers);
 
-        $domain = $headersArray['referer'][0];
-        $ua = $headersArray['user-agent'][0];
+        $refererList = $headersArray['referer'] ?? [];
+        $domain = $refererList[0] ?? '';
 
-        $cookieHeader = $headersArray['cookie'][0];
+        $ip = inet_ntop(hex2bin($this->ip));
+
+        $userAgentList = $headersArray['user-agent'];
+        $ua = $userAgentList[0] ?? '';
+
+        $cookieList = $headersArray['cookie'] ?? [];
+        $cookieHeader = $cookieList[0] ?? '';
         $cookies = explode(';', $cookieHeader);
+
+        return new ImpressionContext(
+            ['domain' => $domain],
+            ['ip' => $ip, 'ua' => $ua],
+            ['uid' => $this->findTid($cookies)]
+        );
+    }
+
+    private function findTid(array $cookies): string
+    {
         foreach ($cookies as $cookie) {
             $arr = explode('=', $cookie, 2);
             if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
-                $tid = trim($arr[1]);
-                break;
+                return trim($arr[1]);
             }
         }
 
-        $site = ['domain' => $domain];
-        $device = ['ip' => $ip, 'ua' => $ua];
-        $user = ['uid' => $tid];
-
-        return new ImpressionContext($site, $device, $user);
+        return '';
     }
 }
