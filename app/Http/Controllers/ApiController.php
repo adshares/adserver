@@ -42,7 +42,7 @@ class ApiController extends Controller
 
     public function adsharesInventoryList(Request $request)
     {
-        $licenceTxFee =  Config::fetch(Config::LICENCE_TX_FEE);
+        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::fetch(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
