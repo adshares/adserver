@@ -75,7 +75,7 @@ class DemandEventMapper
         return array_fill_keys(explode(',', $keywords), 1);
     }
 
-    private static function processOurKeywords(?array $keywords)
+    private static function processOurKeywords($keywords)
     {
         if (!$keywords) {
             return new stdClass();
