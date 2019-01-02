@@ -22,11 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Common;
 
-use Adshares\Adserver\Repository\DummyConfigurationRepository;
-use Adshares\Common\Application\Service\AdClassify;
-use Adshares\Common\Application\Service\AdUser;
+use Adshares\Adserver\Repository\FileConfigurationRepository;
 use Adshares\Common\Application\Service\ConfigurationRepository;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 final class OptionsProvider extends ServiceProvider
@@ -35,11 +32,8 @@ final class OptionsProvider extends ServiceProvider
     {
         $this->app->bind(
             ConfigurationRepository::class,
-            function (Application $app) {
-                return new DummyConfigurationRepository(
-                    $app->make(AdUser::class),
-                    $app->make(AdClassify::class)
-                );
+            function () {
+                return new FileConfigurationRepository(storage_path('app'));
             }
         );
     }

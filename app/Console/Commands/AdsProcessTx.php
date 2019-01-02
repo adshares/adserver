@@ -38,6 +38,7 @@ use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Http\Response;
 
 class AdsProcessTx extends Command
 {
@@ -207,7 +208,10 @@ class AdsProcessTx extends Command
         } catch (EmptyInventoryException $exception) {
             return false;
         } catch (UnexpectedClientResponseException $exception) {
-            // transaction will be processed again later
+            if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
+                return false;
+            }
+
             return true;
         }
 
