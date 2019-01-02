@@ -69,8 +69,9 @@ return [
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
+            'username' => env('APP_NAME', 'AdServer'),
             'emoji' => ':boom:',
-            'level' => 'debug',
+            'level' => 'error',
         ],
 
         'syslog' => [
