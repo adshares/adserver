@@ -5,7 +5,7 @@
 
 Please confirm this is your new email that you want to link with your Adshares account
 
-@component('mail::button', ['url' => env('ADPANEL_URL').$uri.$token])
+@component('mail::button', ['url' => config('app.adpanel_base_url').$uri.$token])
 Confirm and save new email
 @endcomponent
 

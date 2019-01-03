@@ -132,6 +132,7 @@ return [
     */
 
     'adserver_host' => env('ADSERVER_HOST'),
+    'adpanel_base_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('ADSERVER_SECRET'),
     'adserver_id' => env('ADSERVER_ID'),
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),

@@ -40,10 +40,10 @@ class AdsSend extends Command
     {
         $this->data = include base_path('accounts.local.php');
 
-        $this->info($this->send('pub', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('pub2', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('adv', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('adv2', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('pub', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('pub2', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('adv', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('adv2', 'here', random_int(10, 1000))->getTx()->getId());
     }
 
     private function send(string $from, string $to, int $amount): TransactionResponse
