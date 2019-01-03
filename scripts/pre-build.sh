@@ -12,7 +12,7 @@ apt-get -qq -y  --no-install-recommends install \
 composer --version || export INSTALL_COMPOSER=true
 nodejs --version || export INSTALL_NODEJS=true
 npm --version || export INSTALL_NPM=true
-yarn --version || export INSTALL_YARN=true
+export INSTALL_YARN=true
 
 if [ -v INSTALL_COMPOSER ]; then
     # Get composer

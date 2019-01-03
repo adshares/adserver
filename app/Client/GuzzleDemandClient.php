@@ -31,6 +31,7 @@ use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -112,10 +113,17 @@ final class GuzzleDemandClient implements DemandClient
             self::PAYMENT_DETAILS_ENDPOINT
         );
 
-        $response = $client->get($endpoint);
+        try {
+            $response = $client->get($endpoint);
+        } catch (ClientException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Transaction not found: %s.', $exception->getMessage()),
+                $exception->getCode()
+            );
+        }
+
         $statusCode = $response->getStatusCode();
         $body = (string)$response->getBody();
-
         $this->validateResponse($statusCode, $body);
 
         try {

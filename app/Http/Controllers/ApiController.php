@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -41,6 +42,9 @@ class ApiController extends Controller
 
     public function adsharesInventoryList(Request $request)
     {
+        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
+
         $campaigns = [];
         foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
             $banners = [];
@@ -73,7 +77,7 @@ class ApiController extends Controller
                 'updated_at' => $campaign->updated_at->format(DateTime::ATOM),
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
-                'budget' => $campaign->budget,
+                'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
@@ -82,6 +86,15 @@ class ApiController extends Controller
         }
 
         return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
+    }
+
+    private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
+    {
+        $licenceFee = (int)floor($budget * $licenceTxFee);
+        $budgetAfterFee = $budget - $licenceFee;
+        $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
+
+        return $budgetAfterFee - $operatorFee;
     }
 
     private function changeHost(string $url, Request $request): string
