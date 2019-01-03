@@ -37,7 +37,7 @@ else
     ./artisan migrate
 fi
 
-#./artisan ops:targeting-options:update
+./artisan ops:targeting-options:update
 ./artisan ads:fetch-hosts
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab

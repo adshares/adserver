@@ -10,3 +10,6 @@
 
 */8 * * * * cd /var/www/adserver && bash docker/cron/ads-scanner.sh >> /var/log/adshares/adserver.log 2>&1
 
+* * * * * php /var/www/adserver/artisan queue:work --stop-when-empty >> /var/log/adshares/adserver.log 2>&1
+* * * * * php /var/www/adserver/artisan queue:work --stop-when-empty --queue=ads >> /var/log/adshares/adserver.log 2>&1
+
