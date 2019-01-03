@@ -40,10 +40,10 @@ class AdsSend extends Command
     {
         $this->data = include base_path('accounts.local.php');
 
-        $this->info($this->send('pub', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('pub2', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('adv', 'here', random_int(10, 100))->getTx()->getId());
-        $this->info($this->send('adv2', 'here', random_int(10, 100))->getTx()->getId());
+        $this->info($this->send('pub', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('pub2', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('adv', 'here', random_int(10, 1000))->getTx()->getId());
+        $this->info($this->send('adv2', 'here', random_int(10, 1000))->getTx()->getId());
     }
 
     private function send(string $from, string $to, int $amount): TransactionResponse
@@ -67,6 +67,11 @@ class AdsSend extends Command
                 $amount * 10 ** 11,
                 str_pad($UID, 64, '0', STR_PAD_LEFT)
             )
+//            new SendOneCommand(
+//                '0002-00000007-055A',
+//                $amount * 10 ** 11,
+//                str_pad('9b19e1ba71c244f99b69098e93accfca', 64, '0', STR_PAD_LEFT)
+//            )
         );
     }
 }
