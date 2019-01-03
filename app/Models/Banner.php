@@ -79,6 +79,8 @@ class Banner extends Model
         'creative_sha1' => 'BinHex',
     ];
 
+    protected $touches = ['campaign'];
+
     public static function isStatusAllowed(int $status): bool
     {
         return in_array($status, self::STATUSES);
