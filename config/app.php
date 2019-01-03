@@ -147,7 +147,7 @@ return [
     'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-    'website_banner_selector' => env('WEBSITE_BANNER_SELECTOR','div.a-name-that-does-not-collide'),
+    'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
 
     /*
     |--------------------------------------------------------------------------

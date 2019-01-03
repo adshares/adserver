@@ -101,7 +101,7 @@ class SupplyController extends Controller
         $params = [
             json_encode(config('app.adserver_host')),
             json_encode(config('app.aduser_external_location')),
-            json_encode(config('app.website_banner_selector')),
+            json_encode('.'.config('app.website_banner_class')),
         ];
 
         $jsPath = public_path('-/find.js');
