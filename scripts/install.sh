@@ -24,15 +24,18 @@ if [[ ${DO_RESET} -eq 1 ]]
 then
     supervisorctl stop adselect${DEPLOYMENT_SUFFIX}
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
+#    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
 
     ./artisan migrate:fresh
     ./artisan db:seed
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adpay${DEPLOYMENT_SUFFIX}
+#    mongo --eval 'db.dropDatabase()' aduser${DEPLOYMENT_SUFFIX}
 
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adpay${DEPLOYMENT_SUFFIX}
+#    supervisorctl start aduser${DEPLOYMENT_SUFFIX}
 else
     ./artisan migrate
 fi

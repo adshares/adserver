@@ -39,6 +39,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
 use function array_map;
 use function iterator_to_array;
+use function str_replace;
 
 final class JsonRpcAdSelectClient implements AdSelect
 {
@@ -152,26 +153,29 @@ final class JsonRpcAdSelectClient implements AdSelect
             if (null === $banner) {
                 yield null;
             } else {
+                $clickUrl = route(
+                    'log-network-click',
+                    [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                    ]
+                );
+                $viewUrl = route(
+                    'log-network-view',
+                    [
+                        'id' => $banner->uuid,
+                        'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                    ]
+                );
+
                 $campaign = $banner->campaign;
                 yield [
                     'pay_from' => $campaign->source_address,
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                     'serve_url' => str_replace('webserver', 'localhost:8101', $banner->serve_url),
                     'creative_sha1' => $banner->checksum,
-                    'click_url' => route(
-                        'log-network-click',
-                        [
-                            'id' => $banner->uuid,
-                            'r' => Utils::urlSafeBase64Encode($banner->click_url),
-                        ]
-                    ),
-                    'view_url' => route(
-                        'log-network-view',
-                        [
-                            'id' => $banner->uuid,
-                            'r' => Utils::urlSafeBase64Encode($banner->view_url),
-                        ]
-                    ),
+                    'click_url' => $clickUrl,
+                    'view_url' => $viewUrl,
                 ];
             }
         }
