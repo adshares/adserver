@@ -43,12 +43,16 @@ class Handler extends ExceptionHandler
 
         if ($exception instanceof QueryException) {
             if ($prev = $exception->getPrevious()) {
-                return $this->response($exception->getMessage(), $exception->getStatusCode(), $exception->getTrace());
+                return $this->response(
+                    $exception->getMessage(),
+                    Response::HTTP_INTERNAL_SERVER_ERROR,
+                    $exception->getTrace()
+                );
             }
 
             return $this->response(
                 $exception->getMessage(),
-                $exception->getStatusCode(),
+                Response::HTTP_INTERNAL_SERVER_ERROR,
                 $exception->getTrace(),
                 $exception->getSql()
             );

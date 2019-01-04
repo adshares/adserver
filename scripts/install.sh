@@ -39,7 +39,7 @@ fi
 
 ./artisan ops:targeting-options:update
 ./artisan ops:filtering-options:update
-./artisan ads:fetch-hosts
+./artisan ads:fetch-hosts --quiet
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab
 
