@@ -18,7 +18,7 @@ if [ ! -v TRAVIS ]; then
   ./artisan config:cache
 fi
 
-crontab -u ${INSTALLATION_USER} -r
+crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
 
 if [[ ${DO_RESET} -eq 1 ]]
 then
