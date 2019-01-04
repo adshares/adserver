@@ -271,6 +271,11 @@ var getPageKeywords = function () {
 
     var MAX_KEYWORDS = 10;
     var metaKeywords = document.querySelector("meta[name=keywords]");
+
+    if (metaKeywords === null) {
+        return '';
+    }
+
     if (metaKeywords.content) {
         var tmp = metaKeywords.content.split(',');
         var n = Math.min(MAX_KEYWORDS, tmp.length);
