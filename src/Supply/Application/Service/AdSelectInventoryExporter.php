@@ -33,16 +33,12 @@ class AdSelectInventoryExporter
         $this->client = $client;
     }
 
-    public function export(?CampaignCollection $campaignsToAdd, ?CampaignCollection $campaignsToDelete): void
+    public function export(?CampaignCollection $campaignsToAddOrUpdate, ?CampaignCollection $campaignsToDelete): void
     {
-        if ($campaignsToAdd) {
+        if ($campaignsToAddOrUpdate) {
             /** @var Campaign $campaign */
-            foreach ($campaignsToAdd as $campaign) {
-                // @todo Confirm that AdSelect does not need to know about campaigns with no banners
-                // @todo Now we cannot send empty banners list
-                if ($campaign->getBanners()->count() !== 0) {
-                    $this->client->exportInventory($campaign);
-                }
+            foreach ($campaignsToAddOrUpdate as $campaign) {
+                $this->client->exportInventory($campaign);
             }
         }
 

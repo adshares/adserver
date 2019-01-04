@@ -54,7 +54,7 @@ class AdSelectInventoryExporterTest extends TestCase
 
         $client = $this->createMock(AdSelect::class);
         $client
-            ->expects($this->never())
+            ->expects($this->once())
             ->method('exportInventory');
 
         $service = new AdSelectInventoryExporter($client);
