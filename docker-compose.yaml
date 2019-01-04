@@ -13,7 +13,7 @@ services:
         SYSTEM_USER_NAME: ${SYSTEM_USER_NAME}
     working_dir: /adserver
     volumes:
-    - .:/adserver
+      - .:/adserver
 
   #  worker:
   #    extends:
@@ -21,28 +21,28 @@ services:
   #    command: ['bash', '-c', '`php artisan queue:work > /proc/1/fd/1 2>/proc/1/fd/2 & php artisan queue:work --queue=ads > /proc/1/fd/1 2>/proc/1/fd/2`']
   #    user: ${SYSTEM_USER_ID}
 
-  cron:
-    extends:
-      service: application
-    command: ['bash','-c','crontab /etc/cron.d/adserver-crontab && cron -f']
-    volumes:
-      - ./docker/cron/crontab-docker:/etc/cron.d/adserver-crontab
+  #  cron:
+  #    extends:
+  #      service: application
+  #    command: ['bash','-c','crontab /etc/cron.d/adserver-crontab && cron -f']
+  #    volumes:
+  #      - ./docker/cron/crontab-docker:/etc/cron.d/adserver-crontab
 
   webserver:
     image: nginx:alpine
     working_dir: /adserver/public
     volumes:
-    - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
-    - ./public:/adserver/public
-    - ./storage/app:/adserver/storage/app
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./public:/adserver/public
+      - ./storage/app:/adserver/storage/app
 
   database:
     image: percona:5
     environment:
-    - MYSQL_ROOT_PASSWORD=adshares
-    - MYSQL_DATABASE=adserver
-    - MYSQL_USER=adserver
-    - MYSQL_PASSWORD=adserver
+      - MYSQL_ROOT_PASSWORD=adshares
+      - MYSQL_DATABASE=adserver
+      - MYSQL_USER=adserver
+      - MYSQL_PASSWORD=adserver
     volumes:
       - database:/var/lib/mysql
 
