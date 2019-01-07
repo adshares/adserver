@@ -100,7 +100,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            json_encode(config('app.adserver_host')),
+            json_encode(config('app.adserver_banner_host')),
             json_encode(config('app.aduser_external_location')),
             json_encode('.'.config('app.website_banner_class')),
         ];
