@@ -52,11 +52,6 @@ final class Response
     /** @var Procedure */
     private $procedure;
 
-    /**
-     * @throws ErrorResponseException
-     * @throws ResponseException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     public function __construct(ResponseInterface $response, Procedure $procedure)
     {
         $this->response = $response;
@@ -66,10 +61,6 @@ final class Response
         $this->failIfNoResult();
     }
 
-    /**
-     * @throws ResponseException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     private function failIfInvalidResponse(): void
     {
         $statusCode = $this->response->getStatusCode();

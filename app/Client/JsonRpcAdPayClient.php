@@ -26,7 +26,7 @@ use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Demand\Application\Service\AdPay;
 
-class JsonRpcAdPayClient implements AdPay
+final class JsonRpcAdPayClient implements AdPay
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 
