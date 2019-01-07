@@ -54,9 +54,11 @@ final class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (Exception|GuzzleException $e) {
-            throw Exception::onError($procedure,
+            throw Exception::onError(
+                $procedure,
                 (string)$this->client->getConfig('base_uri'),
-                $e->getMessage()." => $body");
+                $e->getMessage()." => $body"
+            );
         }
     }
 }
