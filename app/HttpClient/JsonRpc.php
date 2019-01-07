@@ -23,12 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient;
 
 use Adshares\Adserver\HttpClient\JsonRpc\Exception;
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ConnectionException;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 
 final class JsonRpc
@@ -62,10 +60,10 @@ final class JsonRpc
                     'body' => $body,
                 ]
             );
-        } catch (ConnectException $e) {
-            throw ConnectionException::create($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
+        } catch (Exception $e) {
+            throw Exception::onError($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
         } catch (GuzzleException $e) {
-            throw Exception::fromOther($e);
+            throw Exception::onClient($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
         }
 
         return (new Response($resp, $procedure))->result();
