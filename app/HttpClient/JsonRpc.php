@@ -44,13 +44,7 @@ final class JsonRpc
         $body = $procedure->toJson();
 
         try {
-            $response = $this->client->request(
-                'POST',
-                '/',
-                [
-                    'body' => $body,
-                ]
-            );
+            $response = $this->client->request('POST', '/', ['body' => $body]);
 
             return (new Response($response, $procedure))->result();
         } catch (Exception|GuzzleException $e) {
