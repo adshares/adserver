@@ -24,7 +24,7 @@ namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
 use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 
-final class ErrorResponse extends Exception
+final class ErrorResponseException extends Exception
 {
     private const FIELD_ERROR_MESSAGE = 'message';
 
