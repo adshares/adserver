@@ -27,6 +27,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 
 final class JsonRpc
@@ -43,7 +44,7 @@ final class JsonRpc
      * @param Procedure $procedure
      *
      * @return Result
-     * @throws Exception\ErrorResponse
+     * @throws Exception\ErrorResponseException
      * @throws Exception\ResponseException
      * @throws Exception\ResultException
      * @throws \Adshares\Common\Exception\Exception
@@ -60,6 +61,8 @@ final class JsonRpc
                     'body' => $body,
                 ]
             );
+        } catch (ConnectException $e) {
+            throw Exception\ConnectionException::create($e, $procedure, $this->client->getConfig('base_uri'));
         } catch (GuzzleException $e) {
             throw Exception::fromOther($e);
         }

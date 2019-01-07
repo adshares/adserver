@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponse;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
@@ -53,7 +53,7 @@ final class Response
     private $procedure;
 
     /**
-     * @throws ErrorResponse
+     * @throws ErrorResponseException
      * @throws ResponseException
      * @throws \Adshares\Common\Exception\Exception
      */
@@ -100,7 +100,7 @@ final class Response
     {
         $responseError = $this->content[self::FIELD_ERROR] ?? [];
         if ((bool)$responseError) {
-            throw ErrorResponse::fromResponseError($responseError);
+            throw ErrorResponseException::fromResponseError($responseError);
         }
     }
 
