@@ -26,8 +26,12 @@ use Adshares\Common\Exception\Exception as AdsharesException;
 
 class Exception extends AdsharesException
 {
-    public static function onError(Procedure $procedure, string $base_url, string $message)
+    public static function onError(Procedure $procedure, string $base_url, string $body, string $message)
     {
-        return new static(sprintf('[url: %s, method: %s] %s', $base_url, $procedure->method(), $message));
+        return new static(sprintf('{"url": "%s", "method": "%s", "body": %s,"message": "%s"}',
+            $base_url,
+            $procedure->method(),
+            $body,
+            $message));
     }
 }

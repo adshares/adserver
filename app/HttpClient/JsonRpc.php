@@ -57,7 +57,8 @@ final class JsonRpc
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
-                $e->getMessage()." => $body"
+                $body,
+                $e->getMessage()
             );
         }
     }
