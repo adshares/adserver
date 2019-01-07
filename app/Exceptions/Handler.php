@@ -35,8 +35,6 @@ class Handler extends ExceptionHandler
 
     public function render($request, Exception $exception)
     {
-        $env = config('app.env');
-
         if ($exception instanceof HttpException) {
             return $this->response($exception->getMessage(), $exception->getStatusCode(), $exception->getTrace());
         }
@@ -71,7 +69,7 @@ class Handler extends ExceptionHandler
         }
 
         return $this->response(
-            $env === self::ENV_DEV ? $exception->getMessage() : 'Internal error.',
+            $exception->getMessage(),
             Response::HTTP_INTERNAL_SERVER_ERROR,
             $exception->getTrace()
         );
@@ -81,16 +79,16 @@ class Handler extends ExceptionHandler
     {
         $data = [
             'code' => $code,
-            'message' => $message,
+            'message' => config('app.env') === self::ENV_DEV ? $message : 'Internal error.',
 
         ];
 
         if (config('app.env') === self::ENV_DEV) {
             $data['trace'] = $trace;
-        }
 
-        if ($detail) {
-            $data['detail'] = $detail;
+            if ($detail) {
+                $data['detail'] = $detail;
+            }
         }
 
         return new JsonResponse($data, $code);
