@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use function array_filter;
