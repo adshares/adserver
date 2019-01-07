@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient;
 
 use Adshares\Adserver\HttpClient\JsonRpc\Exception;
+use Adshares\Adserver\HttpClient\JsonRpc\Exception\ConnectionException;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
@@ -62,7 +63,7 @@ final class JsonRpc
                 ]
             );
         } catch (ConnectException $e) {
-            throw Exception\ConnectionException::create($e, $procedure, $this->client->getConfig('base_uri'));
+            throw ConnectionException::create($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
         } catch (GuzzleException $e) {
             throw Exception::fromOther($e);
         }
