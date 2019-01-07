@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use function array_filter;
@@ -41,15 +42,22 @@ final class ImpressionContext
 
     public function __construct(array $site, array $device, array $user)
     {
-        [$user, $site] = $this->accioFilter($site, $user);
+        if (config('app.env') === Utils::ENV_DEV) {
+            [$user, $site] = $this->accioFilter($user, $site);
+        }
 
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
     }
 
-    /** @deprecated */
-    private function accioFilter(array $site, array $user): array
+    /** @deprecated
+     * @param array $user
+     * @param array $site
+     *
+     * @return array
+     */
+    private function accioFilter(array $user, array $site): array
     {
         if (!isset($site['keywords'])) {
             return [$user, $site];

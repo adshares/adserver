@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Exceptions;
 
+use Adshares\Adserver\Http\Utils;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -31,12 +32,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
-    private const ENV_DEV = 'local';
-
     public function render($request, Exception $exception)
     {
-        $env = config('app.env');
-
         if ($exception instanceof HttpException) {
             return $this->response($exception->getMessage(), $exception->getStatusCode(), $exception->getTrace());
         }
@@ -71,7 +68,7 @@ class Handler extends ExceptionHandler
         }
 
         return $this->response(
-            $env === self::ENV_DEV ? $exception->getMessage() : 'Internal error.',
+            $exception->getMessage(),
             Response::HTTP_INTERNAL_SERVER_ERROR,
             $exception->getTrace()
         );
@@ -81,16 +78,16 @@ class Handler extends ExceptionHandler
     {
         $data = [
             'code' => $code,
-            'message' => $message,
+            'message' => config('app.env') === Utils::ENV_DEV ? $message : 'Internal error.',
 
         ];
 
-        if (config('app.env') === self::ENV_DEV) {
+        if (config('app.env') === Utils::ENV_DEV) {
             $data['trace'] = $trace;
-        }
 
-        if ($detail) {
-            $data['detail'] = $detail;
+            if ($detail) {
+                $data['detail'] = $detail;
+            }
         }
 
         return new JsonResponse($data, $code);
