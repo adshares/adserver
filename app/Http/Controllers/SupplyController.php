@@ -26,7 +26,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\UriProtocolRemover;
+use Adshares\Adserver\Utilities\UrlProtocolRemover;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -304,7 +304,7 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $response->headers->set('Location', UriProtocolRemover::remove($adUserUrl));
+        $response->headers->set('Location', UrlProtocolRemover::remove($adUserUrl));
 
         return $response;
     }

@@ -31,7 +31,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\UriProtocolRemover;
+use Adshares\Adserver\Utilities\UrlProtocolRemover;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -159,14 +159,14 @@ final class JsonRpcAdSelectClient implements AdSelect
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                     'serve_url' => $banner->serve_url,
                     'creative_sha1' => $banner->checksum,
-                    'click_url' => UriProtocolRemover::remove(route(
+                    'click_url' => UrlProtocolRemover::remove(route(
                         'log-network-click',
                         [
                             'id' => $banner->uuid,
                             'r' => Utils::urlSafeBase64Encode($banner->click_url),
                         ]
                     )),
-                    'view_url' => UriProtocolRemover::remove(route(
+                    'view_url' => UrlProtocolRemover::remove(route(
                         'log-network-view',
                         [
                             'id' => $banner->uuid,

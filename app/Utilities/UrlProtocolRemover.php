@@ -20,24 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Utilities;
+namespace Adshares\Adserver\Utilities;
 
-use Adshares\Adserver\Utilities\UriProtocolRemover;
-use PHPUnit\Framework\TestCase;
-
-final class UriProtocolRemoverTest extends TestCase
+class UrlProtocolRemover
 {
-    public function testRemoveWhenProtocolIsHTTP(): void
+    public static function remove(string $uri): string
     {
-        $uri = 'http://example.com/image.jpg';
-
-        $this->assertEquals('//example.com/image.jpg', UriProtocolRemover::remove($uri));
-    }
-
-    public function testRemoveWhenProtocolIsHTTPS(): void
-    {
-        $uri = 'https://example.com/image.jpg';
-
-        $this->assertEquals('//example.com/image.jpg', UriProtocolRemover::remove($uri));
+        return str_replace(['https:', 'http:'], '', $uri);
     }
 }
