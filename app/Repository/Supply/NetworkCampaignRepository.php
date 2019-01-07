@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Utilities\UriProtocolRemover;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
@@ -76,6 +77,9 @@ class NetworkCampaignRepository implements CampaignRepository
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
             $banner['uuid'] = $banner['id'];
+            $banner['serve_url'] = UriProtocolRemover::remove($banner['serve_url']);
+            $banner['click_url'] = UriProtocolRemover::remove($banner['click_url']);
+            $banner['view_url'] = UriProtocolRemover::remove($banner['view_url']);
             unset($banner['id']);
 
             $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
