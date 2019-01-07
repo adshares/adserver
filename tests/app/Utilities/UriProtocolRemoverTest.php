@@ -40,5 +40,4 @@ final class UriProtocolRemoverTest extends TestCase
 
         $this->assertEquals('//example.com/image.jpg', UriProtocolRemover::remove($uri));
     }
-
 }
