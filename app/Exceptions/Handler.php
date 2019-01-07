@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Exceptions;
 
+use Adshares\Adserver\Http\Utils;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
@@ -31,8 +32,6 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
-    private const ENV_DEV = 'local';
-
     public function render($request, Exception $exception)
     {
         if ($exception instanceof HttpException) {
@@ -79,11 +78,11 @@ class Handler extends ExceptionHandler
     {
         $data = [
             'code' => $code,
-            'message' => config('app.env') === self::ENV_DEV ? $message : 'Internal error.',
+            'message' => config('app.env') === Utils::ENV_DEV ? $message : 'Internal error.',
 
         ];
 
-        if (config('app.env') === self::ENV_DEV) {
+        if (config('app.env') === Utils::ENV_DEV) {
             $data['trace'] = $trace;
 
             if ($detail) {

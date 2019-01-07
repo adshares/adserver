@@ -20,10 +20,8 @@
 
 namespace Adshares\Adserver\Http;
 
-use BrowscapPHP\Helper\LoggerHelper;
 use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
-use Roave\DoctrineSimpleCache\SimpleCacheAdapter;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,6 +47,8 @@ class Utils
     const VALUE_MAX = "\xFF";
 
     const NUMERIC_PAD_FORMAT = "%'08.2f";
+
+    public const ENV_DEV = 'local';
 
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
@@ -443,15 +443,15 @@ class Utils
         $caseId = substr($baseCaseId, 0, -2);
 
         if ($eventType === 'request') {
-            return $caseId . '01';
+            return $caseId.'01';
         }
 
         if ($eventType === 'view') {
-            return $caseId . '02';
+            return $caseId.'02';
         }
 
         if ($eventType === 'click') {
-            return $caseId . '03';
+            return $caseId.'03';
         }
 
         throw new \RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
