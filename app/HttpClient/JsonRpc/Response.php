@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
@@ -91,14 +90,14 @@ final class Response
     {
         $responseError = $this->content[self::FIELD_ERROR] ?? [];
         if ((bool)$responseError) {
-            throw ErrorResponseException::fromResponseError($responseError);
+            throw ResponseException::error($responseError);
         }
     }
 
     private function failIfNoResult(): void
     {
         if (!isset($this->content[self::FIELD_RESULT])) {
-            throw  ResponseException::missingField(self::FIELD_RESULT);
+            throw ResponseException::missingField(self::FIELD_RESULT);
         }
     }
 

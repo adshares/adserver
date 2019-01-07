@@ -41,10 +41,10 @@ final class JsonRpc
 
     public function call(Procedure $procedure): Result
     {
-        try {
-            $body = $procedure->toJson();
+        $body = $procedure->toJson();
 
-            $resp = $this->client->request(
+        try {
+            $response = $this->client->request(
                 'POST',
                 '/',
                 [
@@ -52,11 +52,11 @@ final class JsonRpc
                 ]
             );
 
-            return (new Response($resp, $procedure))->result();
-        } catch (Exception $e) {
-            throw Exception::onError($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
-        } catch (GuzzleException $e) {
-            throw Exception::onClient($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
+            return (new Response($response, $procedure))->result();
+        } catch (Exception|GuzzleException $e) {
+            throw Exception::onError($procedure,
+                (string)$this->client->getConfig('base_uri'),
+                $e->getMessage()." => $body");
         }
     }
 }
