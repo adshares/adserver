@@ -39,15 +39,6 @@ final class JsonRpc
         $this->client = $client;
     }
 
-    /**
-     * @param Procedure $procedure
-     *
-     * @return Result
-     * @throws Exception\ErrorResponseException
-     * @throws Exception\ResponseException
-     * @throws Exception\ResultException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     public function call(Procedure $procedure): Result
     {
         try {
@@ -60,12 +51,12 @@ final class JsonRpc
                     'body' => $body,
                 ]
             );
+
+            return (new Response($resp, $procedure))->result();
         } catch (Exception $e) {
             throw Exception::onError($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
         } catch (GuzzleException $e) {
             throw Exception::onClient($procedure, $this->client->getConfig('base_uri'), $e->getMessage());
         }
-
-        return (new Response($resp, $procedure))->result();
     }
 }
