@@ -92,14 +92,22 @@ final class ImpressionContext
     {
         $uid = config('app.adserver_id').'_'.$this->user['uid'];
 
-        return <<<"JSON"
-{
-    "domain": "{$this->site['domain']}",
-    "ip": "{$this->device['ip']}",
-    "ua": "{$this->device['ua']}",
-    "uid": "{$uid}"
-}
-JSON;
+        return $this->toJson($uid);
+    }
+
+    private function toJson(string $uid): string
+    {
+        return \GuzzleHttp\json_encode($this->toArray($uid));
+    }
+
+    private function toArray(string $uid): array
+    {
+        return [
+            'domain' => $this->site['domain'],
+            'ip' => $this->device['ip'],
+            'ua' => $this->device['ua'],
+            'uid' => $uid,
+        ];
     }
 
     public function adSelectRequestParams(Collection $zones): array
