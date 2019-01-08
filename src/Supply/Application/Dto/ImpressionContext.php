@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use function array_filter;
+use function GuzzleHttp\json_encode;
 
 final class ImpressionContext
 {
@@ -97,7 +98,7 @@ final class ImpressionContext
 
     private function toJson(string $uid): string
     {
-        return \GuzzleHttp\json_encode($this->toArray($uid));
+        return json_encode($this->toArray($uid));
     }
 
     private function toArray(string $uid): array
