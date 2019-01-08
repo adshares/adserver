@@ -8,11 +8,6 @@
         "max_cpm": 100000000000,
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
-        "targeting_requires": {
-          "interest": [
-            "100"
-          ]
-        },
         "classification_status": 2,
         "classification_tags": "open source",
         "name": "Campaign for adults only"
@@ -24,11 +19,6 @@
         "max_cpc": 1000000000000,
         "budget_per_hour": 10000000000000,
         "name": "Internal campaign",
-        "targeting_requires": {
-          "interest": [
-            "100"
-          ]
-        }
       },
       {
         "code": "ads",
@@ -37,8 +27,6 @@
         "max_cpm": 10000000000,
         "max_cpc": 10000000000,
         "budget_per_hour": 100000000000,
-        "targeting_excludes": null,
-        "targeting_requires": null,
         "classification_status": 2,
         "classification_tags": "advertising, blockchain, technology"
       }
@@ -54,12 +42,6 @@
         "max_cpm": 0,
         "max_cpc": 166666667,
         "budget_per_hour": 100000000000,
-        "targeting_excludes": null,
-        "targeting_requires": {
-          "interest": [
-            "200142"
-          ]
-        },
         "classification_status": 2,
         "classification_tags": "cats"
       }
@@ -75,12 +57,6 @@
         "max_cpm": 0,
         "max_cpc": 0,
         "budget_per_hour": 100000000000,
-        "targeting_excludes": null,
-        "targeting_requires": {
-          "interest": [
-            "200079"
-          ]
-        },
         "classification_status": 2,
         "classification_tags": "tea"
       },
@@ -91,13 +67,6 @@
         "max_cpm": 0,
         "max_cpc": 0,
         "budget_per_hour": 100000000000,
-        "targeting_excludes": null,
-        "targeting_requires": {
-          "interest": [
-            "200205",
-            "200417"
-          ]
-        },
         "classification_status": 2,
         "classification_tags": "travel"
       }
