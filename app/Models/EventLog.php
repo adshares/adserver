@@ -29,9 +29,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use function hex2bin;
 
 /**
  * @property int event_id
+ * @property Banner banner
  * @mixin Builder
  */
 class EventLog extends Model
@@ -189,5 +191,13 @@ class EventLog extends Model
         }
 
         return '';
+    }
+
+    public function advertiser(): User
+    {
+        /** @var Banner $banner */
+        $banner = Banner::where('uuid', hex2bin($this->banner_id))->first();
+
+        return $banner->campaign->user;
     }
 }

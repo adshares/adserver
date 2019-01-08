@@ -22,9 +22,7 @@ fi
 composer install
 
 yarn install
-yarn run dev
-
-./artisan package:discover
+yarn run ${APP_ENV}
 
 mkdir -p storage/app/public/banners
 chmod a+rwX -R storage
