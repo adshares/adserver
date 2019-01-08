@@ -58,6 +58,14 @@ final class GuzzleAdUserClient implements AdUser
             $response = $this->client->post('/getData', ['body' => $body]);
             $context = json_decode((string)$response->getBody(), true);
 
+            Log::debug(sprintf(
+                '{"url": "%s", "method": "%s", "body": %s,"message": "%s"}',
+                ( string)$this->client->getConfig('base_url'),
+                '/getData',
+                $body,
+                (string)$response->getBody()
+            ));
+
             return UserContext::fromAdUserArray($context);
         } catch (GuzzleException $exception) {
             Log::warning(sprintf(
