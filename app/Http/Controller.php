@@ -37,14 +37,6 @@ abstract class Controller extends BaseController
     /**
      * @deprecated
      */
-    public function test(Request $request)
-    {
-        return Response::json($request->toArray(), 200, [], JSON_PRETTY_PRINT);
-    }
-
-    /**
-     * @deprecated
-     */
     public function mock(Request $request)
     {
         $pathInfo = str_replace(['/panel', '/app', '/api'], ['', '', ''], $request->getPathInfo());
