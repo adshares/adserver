@@ -100,7 +100,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_banner_host'),
+            config('app.adserver_host'),
             config('app.aduser_external_location'),
             '.'.config('app.website_banner_class'),
         ];
@@ -124,6 +124,11 @@ class SupplyController extends Controller
 
         $response->headers->set('Content-Type', 'text/javascript');
 
+        return $this->modifyCaching($request, $response);
+    }
+
+    private function modifyCaching(Request $request, StreamedResponse $response): StreamedResponse
+    {
 //        $response->setCache(
 //            [
 //                'etag' => md5(md5_file($jsPath).implode(':', $params)),

@@ -21,6 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\AdPay;
@@ -40,17 +41,19 @@ class AdPayGetPayments extends Command
 
         Log::info('Found '.count($calculations).' calculations.');
 
-        $idList = $calculations->map(function (array $amount) {
+        $eventIds = $calculations->map(function (array $amount) {
             return hex2bin($amount['event_id']);
         });
 
-        $entries = EventLog::whereIn('event_id', $idList)
+        $unpaidEvents = EventLog::whereIn('event_id', $eventIds)
             ->whereNull('event_value')
             ->get();
 
-        Log::info('Found '.count($entries).' entries that require values.');
+        Log::info('Found '.count($unpaidEvents).' entries that require values.');
 
-        $ledgerEntries = $entries->groupBy(function (EventLog $entry) {
+        DB::beginTransaction();
+
+        $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
             return $entry->advertiser()->id;
         })->map(function (Collection $collection, int $userId) use ($calculations) {
             $collection->each(function (EventLog $entry) use ($calculations) {
@@ -71,6 +74,8 @@ class AdPayGetPayments extends Command
             return $userLedgerEntry;
         });
 
-        Log::info('Created '.count($ledgerEntries).' Ledger Entries.');
+        DB::commit();
+
+        Log::info('Created '.count($ledgerUnpaidEvents).' Ledger Entries.');
     }
 }
