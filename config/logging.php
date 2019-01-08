@@ -55,12 +55,14 @@ return [
 
         'single' => [
             'driver' => 'single',
+            'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
             'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
             'level' => 'debug',
         ],
 
         'daily' => [
             'driver' => 'daily',
+            'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
             'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
             'level' => 'debug',
             'days' => 7,
