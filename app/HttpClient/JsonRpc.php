@@ -28,6 +28,8 @@ use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
+use function GuzzleHttp\json_encode;
 
 final class JsonRpc
 {
@@ -46,7 +48,7 @@ final class JsonRpc
         try {
             $response = $this->client->request('POST', '/', ['body' => $body]);
 
-            return (new Response($response, $procedure))->result();
+            $result = (new Response($response, $procedure))->result();
         } catch (Exception|GuzzleException $e) {
             throw Exception::onError(
                 $procedure,
@@ -55,5 +57,15 @@ final class JsonRpc
                 $e->getMessage()
             );
         }
+
+        Log::debug(sprintf(
+            '{"url": "%s", "method": "%s", "body": %s, "result": %s}',
+            (string)$this->client->getConfig('base_uri'),
+            $procedure->method(),
+            $body,
+            json_encode($result->toArray())
+        ));
+
+        return $result;
     }
 }
