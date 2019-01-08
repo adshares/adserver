@@ -100,9 +100,9 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            json_encode(config('app.adserver_banner_host')),
-            json_encode(config('app.aduser_external_location')),
-            json_encode('.'.config('app.website_banner_class')),
+            config('app.adserver_banner_host'),
+            config('app.aduser_external_location'),
+            '.'.config('app.website_banner_class'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -112,9 +112,9 @@ class SupplyController extends Controller
             function () use ($jsPath, $params) {
                 echo str_replace(
                     [
-                        "'{{ ORIGIN }}'",
-                        "'{{ ADUSER }}'",
-                        "'{{ SELECTOR }}'",
+                        '{{ ORIGIN }}',
+                        '{{ ADUSER }}',
+                        '{{ SELECTOR }}',
                     ],
                     $params,
                     file_get_contents($jsPath)
