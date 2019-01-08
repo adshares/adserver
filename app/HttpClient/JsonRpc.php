@@ -29,7 +29,6 @@ use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
-use function GuzzleHttp\json_encode;
 
 final class JsonRpc
 {
@@ -63,7 +62,7 @@ final class JsonRpc
             (string)$this->client->getConfig('base_uri'),
             $procedure->method(),
             $body,
-            json_encode($result->toArray())
+            (string)$response->getBody()
         ));
 
         return $result;
