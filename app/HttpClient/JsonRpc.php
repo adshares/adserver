@@ -47,7 +47,15 @@ final class JsonRpc
         try {
             $response = $this->client->request('POST', '/', ['body' => $body]);
 
-            $result = (new Response($response, $procedure))->result();
+            Log::debug(sprintf(
+                '{"url": "%s", "method": "%s", "body": %s, "result": %s}',
+                (string)$this->client->getConfig('base_uri'),
+                $procedure->method(),
+                $body,
+                (string)$response->getBody()
+            ));
+
+            return (new Response($response, $procedure))->result();
         } catch (Exception|GuzzleException $e) {
             throw Exception::onError(
                 $procedure,
@@ -56,15 +64,5 @@ final class JsonRpc
                 $e->getMessage()
             );
         }
-
-        Log::debug(sprintf(
-            '{"url": "%s", "method": "%s", "body": %s, "result": %s}',
-            (string)$this->client->getConfig('base_uri'),
-            $procedure->method(),
-            $body,
-            (string)$response->getBody()
-        ));
-
-        return $result;
     }
 }
