@@ -30,7 +30,6 @@ class CustomizeFormatter
     const FORMAT = "[%datetime%] adserver %level_name% %message% %context% %extra%\n";
     const DATE_FORMAT = DateTime::ATOM;
 
-
     /**
      * Customize the given logger instance.
      *
