@@ -87,7 +87,8 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
-        Log::debug(sprintf('{"zones":%s,"banners":%s}',
+        Log::debug(sprintf(
+            '{"zones":%s,"banners":%s}',
             json_encode($zoneIds),
             json_encode($bannerIds)
         ));
