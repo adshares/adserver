@@ -40,6 +40,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
 use Illuminate\Support\Facades\Log;
 use function array_map;
+use function GuzzleHttp\json_encode;
 use function iterator_to_array;
 use function sprintf;
 
@@ -85,6 +86,12 @@ final class JsonRpcAdSelectClient implements AdSelect
         $bannerIds = $this->fixBannerOrdering($zoneIds, $zoneToBannerMap);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
+
+        Log::debug(sprintf(
+            '{"zones":%s,"banners":%s}',
+            json_encode($zoneIds),
+            json_encode($bannerIds)
+        ));
 
         return new FoundBanners($banners);
     }
@@ -158,7 +165,13 @@ final class JsonRpcAdSelectClient implements AdSelect
         $bannerIds = [];
 
         foreach ($zoneIds as $id) {
-            $bannerIds[] = $zoneToBannerMap[$id] ?? null;
+            $bannerId = $zoneToBannerMap[$id] ?? null;
+
+            if ($bannerId === null) {
+                Log::warning(sprintf('Zone %s not found.', $id));
+            }
+
+            $bannerIds[] = $bannerId;
         }
 
         return $bannerIds;
