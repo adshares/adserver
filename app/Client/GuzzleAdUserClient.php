@@ -75,6 +75,7 @@ final class GuzzleAdUserClient implements AdUser
                 $body,
                 $exception->getMessage()
             ));
+
             return UserContext::fromAdUserArray([
                 'uid' => $partialContext->userId(),
                 'keywords' => $partialContext->keywords(),
