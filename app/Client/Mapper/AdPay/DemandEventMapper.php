@@ -42,6 +42,7 @@ class DemandEventMapper
 
                 $mapped = [
                     'banner_id' => $eventArray['banner_id'],
+                    'case_id' => $eventArray['case_id'],
                     'event_type' => $eventArray['event_type'],
                     'event_id' => $eventArray['event_id'],
                     'timestamp' => $timestamp,

@@ -28,6 +28,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property Campaign campaign
+ */
 class Banner extends Model
 {
     public const IMAGE_TYPE = 0;
