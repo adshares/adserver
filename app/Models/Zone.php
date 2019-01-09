@@ -149,9 +149,11 @@ HTML;
         $zones = self::whereIn('id', $zoneIdList)->get();
 
         if (count($zones) !== count($zoneIdList)) {
-            Log::warning(sprintf('Missing zones. {"ids":%s,"zones":%s}',
+            Log::warning(sprintf(
+                'Missing zones. {"ids":%s,"zones":%s}',
                 json_encode($zoneIdList),
-                json_encode($zones->pluck(['id', 'width', 'height'])->toArray())));
+                json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
+            ));
         }
 
         return $zones;
