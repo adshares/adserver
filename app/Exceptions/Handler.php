@@ -93,11 +93,15 @@ class Handler extends ExceptionHandler
         }
 
         $logger->error(
-            sprintf('{"message":"%s","context":%s}',
+            sprintf(
+                '{"message":"%s","context":%s}',
                 $e->getMessage(),
-                json_encode(array_merge($this->context(),
+                json_encode(array_merge(
+                    $this->context(),
                     ['exception' => $e]
-                ))));
+                ))
+            )
+        );
     }
 
     private function response(string $message, int $code, array $trace, ?string $detail = ''): JsonResponse
