@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
@@ -35,6 +36,8 @@ use Illuminate\Console\Command;
 
 class SupplySendPayments extends Command
 {
+    use LineFormatterTrait;
+    
     protected $signature = 'ops:supply:payments:send';
 
     public function handle(AdsClient $adsClient): void
