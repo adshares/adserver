@@ -94,12 +94,12 @@ class Handler extends ExceptionHandler
 
         $logger->error(
             sprintf(
-                '{"message":"%s","context":%s}',
+                '{"message":"%s","context":%s,"trace":%s,"file":"%s:%s"}',
                 $e->getMessage(),
-                json_encode(array_merge(
-                    $this->context(),
-                    ['exception' => $e]
-                ))
+                json_encode($this->context()),
+                json_encode($e->getTrace()),
+                $e->getFile(),
+                $e->getLine()
             )
         );
     }
