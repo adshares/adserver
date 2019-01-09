@@ -53,15 +53,16 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $body = $partialContext->adUserRequestBody();
+        $path = '/getData';
 
         try {
-            $response = $this->client->post('/getData', ['body' => $body]);
+            $response = $this->client->post($path, ['body' => $body]);
             $context = json_decode((string)$response->getBody(), true);
 
             Log::debug(sprintf(
                 '{"url": "%s", "method": "%s", "body": %s, "body": "%s"}',
                 ( string)$this->client->getConfig('base_url'),
-                '/getData',
+                $path,
                 $body,
                 (string)$response->getBody()
             ));
@@ -69,9 +70,9 @@ final class GuzzleAdUserClient implements AdUser
             return UserContext::fromAdUserArray($context);
         } catch (GuzzleException $exception) {
             Log::warning(sprintf(
-                '{"url": "%s", "method": "%s", "body": %s, "message": "%s"}',
-                ( string)$this->client->getConfig('base_url'),
-                '/getData',
+                '{"url": "%s", "method": "%s", "body": %s,"message": "%s"}',
+                (string)$this->client->getConfig('base_url'),
+                $path,
                 $body,
                 $exception->getMessage()
             ));

@@ -1,74 +1,11 @@
 [
   {
-    "email": "nofunds@dev.dev",
-    "password": "nofunds@dev.dev",
-    "isConfirmed": true,
-    "isAdmin": false,
-    "isPublisher": true,
-    "isAdvertiser": true
-  },
-  {
-    "email": "2@dev.dev",
-    "password": "2@dev.dev",
-    "isConfirmed": true,
-    "isAdmin": true,
-    "isPublisher": true,
-    "isAdvertiser": true
-  },
-  {
     "email": "dev@dev.dev",
     "password": "dev@dev.dev",
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": true,
-    "isAdvertiser": true,
-    "adserverWallet": {
-      "adshares_address": "0001-00000001-8B4E",
-      "total_funds": 500
-    }
-  },
-  {
-    "email": "admin@e11.click",
-    "password": "adminadmin",
-    "isConfirmed": true,
-    "isAdmin": true,
-    "isPublisher": false,
-    "isAdvertiser": false
-  },
-  {
-    "email": "user@e11.click",
-    "password": "useruser",
-    "isAdmin": false,
-    "isPublisher": false,
-    "isAdvertiser": false,
-    "adserverWallet": {
-      "adshares_address": "0001-00000001-8B4E",
-      "total_funds": 200
-    }
-  },
-  {
-    "email": "publisher@e11.click",
-    "password": "publisher",
-    "isConfirmed": true,
-    "isAdmin": false,
-    "isPublisher": true,
-    "isAdvertiser": false,
-    "adserverWallet": {
-      "adshares_address": "0001-00000002-BB2D",
-      "total_funds": 0
-    }
-  },
-  {
-    "email": "advertiser@e11.click",
-    "password": "advertiser",
-    "isConfirmed": true,
-    "isAdmin": false,
-    "isPublisher": false,
-    "isAdvertiser": true,
-    "adserverWallet": {
-      "adshares_address": "0001-00000003-AB0C",
-      "total_funds": 1000
-    }
+    "isAdvertiser": true
   },
   {
     "email": "postman@dev.dev",
@@ -76,11 +13,7 @@
     "isConfirmed": true,
     "isAdmin": true,
     "isPublisher": true,
-    "isAdvertiser": true,
-    "adserverWallet": {
-      "adshares_address": "0001-00000001-8B4E",
-      "total_funds": 324
-    }
+    "isAdvertiser": true
   },
   {
     "email": "pub@dev.dev",
@@ -88,23 +21,7 @@
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": true,
-    "isAdvertiser": false,
-    "adserverWallet": {
-      "adshares_address": "0004-00000007-C8DF",
-      "total_funds": 0
-    }
-  },
-  {
-    "email": "pub2@dev.dev",
-    "password": "pub2@dev.dev",
-    "isConfirmed": true,
-    "isAdmin": false,
-    "isPublisher": true,
-    "isAdvertiser": false,
-    "adserverWallet": {
-      "adshares_address": "0005-00000008-9361",
-      "total_funds": 0
-    }
+    "isAdvertiser": false
   },
   {
     "email": "adv@dev.dev",
@@ -112,11 +29,15 @@
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": false,
-    "isAdvertiser": true,
-    "adserverWallet": {
-      "adshares_address": "0005-00000007-628E",
-      "total_funds": 0
-    }
+    "isAdvertiser": true
+  },
+  {
+    "email": "pub2@dev.dev",
+    "password": "pub2@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": false,
+    "isPublisher": true,
+    "isAdvertiser": false
   },
   {
     "email": "adv2@dev.dev",
@@ -124,10 +45,6 @@
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": false,
-    "isAdvertiser": true,
-    "adserverWallet": {
-      "adshares_address": "0004-00000008-3930",
-      "total_funds": 0
-    }
+    "isAdvertiser": true
   }
 ]

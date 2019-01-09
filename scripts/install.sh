@@ -2,6 +2,9 @@
 
 set -ex
 
+crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
+supervisorctl stop ${SUPERVISOR_CONFIG_NAME}
+
 # Create installation directory
 mkdir -p ${INSTALLATION_PATH}
 
@@ -19,7 +22,6 @@ if [ ! -v TRAVIS ]; then
   ./artisan config:cache
 fi
 
-crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
 
 if [[ ${DO_RESET} == "yes" ]]
 then

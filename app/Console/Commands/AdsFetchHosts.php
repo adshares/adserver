@@ -59,7 +59,7 @@ class AdsFetchHosts extends Command
      *
      * @return int
      */
-    public function handle(AdsClient $adsClient): int
+    public function handle(AdsClient $adsClient): void
     {
         $this->info('Start command '.$this->signature);
 
@@ -77,7 +77,7 @@ class AdsFetchHosts extends Command
         }
         $progressBar->finish();
 
-        return 0;
+        $this->info('Finished command '.$this->signature);
     }
 
     /**
