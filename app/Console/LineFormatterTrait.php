@@ -22,22 +22,24 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console;
 
+use function array_key_exists;
 use Illuminate\Support\Facades\Log;
 
 trait LineFormatterTrait
 {
-    private $logLevelMapper = [
-        'info' => 'info',
-        'warn' => 'warning',
-        'error' => 'error',
-        'alert' => 'alert',
-        'comment' => 'info',
-    ];
-
     public function line($string, $style = null, $verbosity = null)
     {
-        if (in_array($style, $this->logLevelMapper, true)) {
-            Log::$style($string);
+        $logLevelMapper = [
+            'info' => 'info',
+            'warn' => 'warning',
+            'error' => 'error',
+            'alert' => 'alert',
+            'comment' => 'info',
+        ];
+
+        if (array_key_exists($style, $logLevelMapper)) {
+            $method = $logLevelMapper[$style];
+            Log::$method($string);
         }
 
         $styled = $style ? "<$style>$string</$style>" : $string;
