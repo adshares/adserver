@@ -21,12 +21,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Console\Command;
 
 class DemandSendPayments extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:demand:payments:send';
 
     public function handle(Ads $ads): void

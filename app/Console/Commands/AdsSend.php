@@ -24,6 +24,7 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CliDriver;
 use Adshares\Ads\Response\TransactionResponse;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
 use function str_pad;
@@ -31,6 +32,8 @@ use const STR_PAD_LEFT;
 
 class AdsSend extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ads:send';
 
     /** @var array */

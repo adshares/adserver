@@ -21,6 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
@@ -29,6 +30,8 @@ use function now;
 
 class AdPayGetPayments extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adpay:payments:get';
 
     public function handle(AdPay $adPay): void

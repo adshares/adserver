@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
@@ -31,6 +32,8 @@ use Illuminate\Console\Command;
 
 class AdPayEventExportCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adpay:event:export';
 
     protected $description = 'Exports event data to AdPay';
