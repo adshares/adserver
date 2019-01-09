@@ -27,8 +27,10 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use function GuzzleHttp\json_encode;
 
 class Handler extends ExceptionHandler
 {
@@ -72,6 +74,30 @@ class Handler extends ExceptionHandler
             Response::HTTP_INTERNAL_SERVER_ERROR,
             $exception->getTrace()
         );
+    }
+
+    public function report(Exception $e)
+    {
+        if ($this->shouldntReport($e)) {
+            return;
+        }
+
+        if (method_exists($e, 'report')) {
+            return $e->report();
+        }
+
+        try {
+            $logger = $this->container->make(LoggerInterface::class);
+        } catch (Exception $ex) {
+            throw $e;
+        }
+
+        $logger->error(
+            sprintf('{"message":"%s","context":%s}',
+                $e->getMessage(),
+                json_encode(array_merge($this->context(),
+                    ['exception' => $e]
+                ))));
     }
 
     private function response(string $message, int $code, array $trace, ?string $detail = ''): JsonResponse
