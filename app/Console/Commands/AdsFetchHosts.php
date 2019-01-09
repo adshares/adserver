@@ -26,11 +26,14 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
 use Illuminate\Console\Command;
 
 class AdsFetchHosts extends Command
 {
+    use LineFormatterTrait;
+
     /**
      * Length of block in seconds
      */

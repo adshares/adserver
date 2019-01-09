@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
@@ -30,6 +31,8 @@ use Illuminate\Console\Command;
 
 class AdPayCampaignExportCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adpay:campaign:export';
 
     protected $description = 'Exports campaign data to AdPay';
