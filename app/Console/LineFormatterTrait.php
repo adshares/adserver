@@ -22,21 +22,25 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console;
 
-use DateTime;
+use Illuminate\Support\Facades\Log;
 
 trait LineFormatterTrait
 {
+    private $logLevelMapper = [
+        'info' => 'info',
+        'warn' => 'warning',
+        'error' => 'error',
+        'alert' => 'alert',
+        'comment' => 'info',
+    ];
+
     public function line($string, $style = null, $verbosity = null)
     {
-        $date = (new DateTime())->format(DateTime::ATOM);
+        if (in_array($style, $this->logLevelMapper, true)) {
+            Log::$style($string);
+        }
 
-        $message = sprintf(
-            '[%s] adserver.console %s %s',
-            $date,
-            $style,
-            $string
-        );
-
-        $this->output->writeln($message, $this->parseVerbosity($verbosity));
+        $styled = $style ? "<$style>$string</$style>" : $string;
+        $this->output->writeln($styled, $this->parseVerbosity($verbosity));
     }
 }
