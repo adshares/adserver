@@ -26,6 +26,7 @@ use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
+use function file_exists;
 use function GuzzleHttp\json_encode;
 use function str_pad;
 use const STR_PAD_LEFT;
@@ -37,11 +38,14 @@ class AdsSend extends Command
     protected $signature = 'ads:send {--external}';
 
     /** @var array */
-    private $data;
+    private $data = [];
 
     public function handle(AdsClient $adsClient): void
     {
-        $this->data = include base_path('accounts.local.php');
+        $filePath = base_path('accounts.local.php');
+        if (file_exists($filePath)) {
+            $this->data = include $filePath;
+        }
 
         $msg = [];
         $sendFromSelf = false;
