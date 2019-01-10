@@ -102,13 +102,13 @@ final class ImpressionContext
         return json_encode($this->toArray($uid));
     }
 
-    private function toArray(string $uid): array
+    public function toArray(string $uid = null): array
     {
         return [
             'domain' => $this->site['domain'],
             'ip' => $this->device['ip'],
             'ua' => $this->device['ua'],
-            'uid' => $uid,
+            'uid' => $uid ?? $this->userId(),
         ];
     }
 
