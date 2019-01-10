@@ -27,19 +27,19 @@ use function in_array;
 
 final class ChartInput
 {
-    public const VIEW_TYPE = 'VIEW';
-    public const CLICK_TYPE = 'CLICK';
-    public const CPC_TYPE = 'CPC';
-    public const CPM_TYPE = 'CPM';
-    public const SUM_TYPE = 'SUM';
-    public const CTR_TYPE = 'CTR';
+    public const VIEW_TYPE = 'view';
+    public const CLICK_TYPE = 'click';
+    public const CPC_TYPE = 'cpc';
+    public const CPM_TYPE = 'cpm';
+    public const SUM_TYPE = 'sum';
+    public const CTR_TYPE = 'ctr';
 
-    public const HOUR_RESOLUTION = 'HOUR';
-    public const DAY_RESOLUTION = 'DAY';
-    public const WEEK_RESOLUTION = 'WEEK';
-    public const MONTH_RESOLUTION = 'MONTH';
-    public const QUARTER_RESOLUTION = 'QUARTER';
-    public const YEAR_RESOLUTION = 'YEAR';
+    public const HOUR_RESOLUTION = 'hour';
+    public const DAY_RESOLUTION = 'day';
+    public const WEEK_RESOLUTION = 'week';
+    public const MONTH_RESOLUTION = 'month';
+    public const QUARTER_RESOLUTION = 'quarter';
+    public const YEAR_RESOLUTION = 'year';
 
     private const ALLOWED_TYPES = [
         self::VIEW_TYPE,
@@ -89,15 +89,15 @@ final class ChartInput
         ?int $campaignId = null,
         ?int $bannerId = null
     ) {
-        if (in_array($type, self::ALLOWED_TYPES, true)) {
+        if (!in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidChartInputException(sprintf('Unsupported chart type `%s`.', $type));
         }
 
-        if (in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
+        if (!in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
             throw new InvalidChartInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
         }
 
-        if ($dateEnd > $dateStart) {
+        if ($dateEnd < $dateStart) {
             throw new InvalidChartInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
                 $dateStart->format(DateTime::ATOM),
