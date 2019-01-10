@@ -39,10 +39,6 @@ then
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl start aduser${DEPLOYMENT_SUFFIX}
-
-    ./artisan ops:targeting-options:update
-    ./artisan ops:filtering-options:update
-    ./artisan ads:fetch-hosts --quiet
 elif [[ ${DO_RESET} == "both" ]]
 then
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
@@ -55,6 +51,10 @@ then
 else
     ./artisan migrate
 fi
+
+./artisan ops:targeting-options:update
+./artisan ops:filtering-options:update
+./artisan ads:fetch-hosts --quiet
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab
 
