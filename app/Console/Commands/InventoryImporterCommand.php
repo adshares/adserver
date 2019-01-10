@@ -49,7 +49,7 @@ class InventoryImporterCommand extends Command
 
     public function handle()
     {
-        $this->info('Started importing data from all inventories.');
+        $this->info('Start command '.$this->signature);
 
         $networkHosts = $this->networkHost->find();
 

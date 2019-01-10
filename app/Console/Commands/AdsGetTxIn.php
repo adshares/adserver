@@ -45,7 +45,7 @@ class AdsGetTxIn extends Command
 
     public function handle(AdsClient $adsClient): int
     {
-        $this->info('Start command ads:get-tx-in');
+        $this->info('Start command '.$this->signature);
 
         $configDate = Config::where('key', Config::ADS_LOG_START)->first();
         if (null === $configDate) {

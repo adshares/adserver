@@ -60,6 +60,6 @@ class AdPayEventExportCommand extends Command
 
         Config::updateDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME, $dateNow);
 
-        $this->info('Finish command '.$this->signature);
+        $this->info('Finish command '.$this->signature.' with '.count($createdEvents).' sent events.');
     }
 }

@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Utils;
 use InvalidArgumentException;
 use function array_merge;
 use function config;
+use function sprintf;
 use function str_replace;
 use function strpos;
 
@@ -52,7 +53,7 @@ final class UserContext
     private function failIfInvalid(): void
     {
         if (!Utils::validTrackingId($this->userId, config('app.adserver_secret'))) {
-            throw new InvalidArgumentException('Invalid UID '.$this->userId);
+            throw new InvalidArgumentException(sprintf('Invalid trackingId (%s)', $this->userId));
         }
     }
 

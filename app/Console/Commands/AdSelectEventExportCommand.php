@@ -48,7 +48,7 @@ class AdSelectEventExportCommand extends Command
 
     public function handle()
     {
-        $this->info('Started exporting events to AdSelect');
+        $this->info('Start command '.$this->signature);
 
         $lastExportDate = Config::fetchAdSelectEventExportTime();
 

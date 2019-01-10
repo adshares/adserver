@@ -32,6 +32,8 @@ class UpdateFilteringOptions extends Command
 
     public function handle(FilteringOptionsImporter $service): void
     {
+        $this->info('Start command '.$this->signature);
+
         $service->import();
     }
 }

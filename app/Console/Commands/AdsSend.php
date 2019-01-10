@@ -27,6 +27,7 @@ use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
+use function GuzzleHttp\json_encode;
 use function str_pad;
 use const STR_PAD_LEFT;
 
@@ -43,13 +44,16 @@ class AdsSend extends Command
     {
         $this->data = include base_path('accounts.local.php');
 
-        $this->info($this->send('pub', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('pub2', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('adv', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('adv2', 'here', random_int(10, 1000))->getTx()->getId());
+        $msg = [];
+        $msg[] = $this->send('pub', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('adv', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('dev', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('postman', random_int(100, 1000))->getTx()->getId();
+
+        $this->info(json_encode($msg));
     }
 
-    private function send(string $from, string $to, int $amount): TransactionResponse
+    private function send(string $from, int $amount, $internalUid = null): TransactionResponse
     {
         $drv = new CliDriver(
             $this->data[$from]['ADSHARES_ADDRESS'],
@@ -62,11 +66,11 @@ class AdsSend extends Command
 
         $client = new AdsClient($drv);
 
-        $UID = User::where('email', $this->data[$from]['email'])->first()->uuid;
+        $UID = $internalUid ?? User::where('email', $this->data[$from]['email'])->first()->uuid;
 
         return $client->runTransaction(
             new SendOneCommand(
-                $this->data[$to]['ADSHARES_ADDRESS'],
+                config('app.adshares_address'),
                 $amount * 10 ** 11,
                 str_pad($UID, 64, '0', STR_PAD_LEFT)
             )

@@ -37,6 +37,8 @@ class DemandPreparePayments extends Command
 
     public function handle(): void
     {
+        $this->info('Start command '.$this->signature);
+
         $events = EventLog::fetchUnpaidEvents();
 
         $eventCount = count($events);

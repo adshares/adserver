@@ -22,10 +22,12 @@ namespace Adshares\Adserver\Exceptions;
 
 use Adshares\Adserver\Http\Utils;
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +39,11 @@ class Handler extends ExceptionHandler
     public function render($request, Exception $exception)
     {
         if ($exception instanceof HttpException) {
-            return $this->response($exception->getMessage(), $exception->getStatusCode(), $exception->getTrace());
+            return $this->response(
+                $exception->getMessage(),
+                $exception->getStatusCode(),
+                $exception->getTrace()
+            );
         }
 
         if ($exception instanceof QueryException) {
@@ -58,13 +64,25 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof ModelNotFoundException) {
-            return $this->response($exception->getMessage(), Response::HTTP_NOT_FOUND, $exception->getTrace());
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_NOT_FOUND,
+                $exception->getTrace()
+            );
         }
 
         if ($exception instanceof ValidationException) {
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_UNPROCESSABLE_ENTITY,
+                $exception->getTrace()
+            );
+        }
+
+        if ($exception instanceof AuthenticationException) {
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_UNAUTHORIZED,
                 $exception->getTrace()
             );
         }
@@ -108,7 +126,7 @@ class Handler extends ExceptionHandler
     {
         $data = [
             'code' => $code,
-            'message' => config('app.env') === Utils::ENV_DEV ? $message : 'Internal error.',
+            'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
 
         ];
 
@@ -119,6 +137,13 @@ class Handler extends ExceptionHandler
                 $data['detail'] = $detail;
             }
         }
+
+        Log::debug(json_encode([
+            'code' => $code,
+            'message' => $message,
+            'trace' => $trace,
+            'detail' => $detail,
+        ]));
 
         return new JsonResponse($data, $code);
     }

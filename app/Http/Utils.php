@@ -50,6 +50,8 @@ class Utils
 
     public const ENV_DEV = 'local';
 
+    public const ENV_DEMO = 'demo';
+
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
@@ -328,7 +330,7 @@ class Utils
         return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 
-    public static function urlSafeBase64Encode($string)
+    public static function urlSafeBase64Encode($string): string
     {
         return str_replace(
             [
@@ -345,7 +347,7 @@ class Utils
         );
     }
 
-    public static function createTrackingId(string $secret, ?string $impressionId = null)
+    public static function createTrackingId(string $secret, ?string $impressionId = null): string
     {
         $input = [];
 
@@ -366,7 +368,7 @@ class Utils
         return self::urlSafeBase64Encode($id.$checksum);
     }
 
-    private static function generateEtag($tid, $contentSha1)
+    private static function generateEtag($tid, $contentSha1): string
     {
         $sha1 = pack('H*', $contentSha1);
 

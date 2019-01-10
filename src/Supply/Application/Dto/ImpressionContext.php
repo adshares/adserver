@@ -101,13 +101,13 @@ final class ImpressionContext
         return json_encode($this->toArray($uid));
     }
 
-    private function toArray(string $uid): array
+    public function toArray(string $uid = null): array
     {
         return [
             'domain' => $this->site['domain'],
             'ip' => $this->device['ip'],
             'ua' => $this->device['ua'],
-            'uid' => $uid,
+            'uid' => $uid ?? $this->userId(),
         ];
     }
 
@@ -133,7 +133,7 @@ final class ImpressionContext
 
     public function userId(): string
     {
-        return $this->user['uid'] ?? '';
+        return ($this->user['uid'] ?? '') ?: Utils::createTrackingId((string)config('app.adserver_secret'));
     }
 
     public function eventContext(): array
