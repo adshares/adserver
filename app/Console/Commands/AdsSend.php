@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
@@ -45,15 +44,15 @@ class AdsSend extends Command
         $this->data = include base_path('accounts.local.php');
 
         $msg = [];
-        $msg[] = $this->send('pub', random_int(100, 1000))->getTx()->getId();
-        $msg[] = $this->send('adv', random_int(100, 1000))->getTx()->getId();
-        $msg[] = $this->send('dev', random_int(100, 1000))->getTx()->getId();
-        $msg[] = $this->send('postman', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('pub', random_int(1, 10));
+        $msg[] = $this->send('adv', random_int(1, 10));
+        $msg[] = $this->send('dev', random_int(100, 1000));
+        $msg[] = $this->send('postman', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
 
-    private function send(string $from, int $amount, $internalUid = null): TransactionResponse
+    private function send(string $from, int $amount, $internalUid = null): array
     {
         $drv = new CliDriver(
             $this->data[$from]['ADSHARES_ADDRESS'],
@@ -68,12 +67,15 @@ class AdsSend extends Command
 
         $UID = $internalUid ?? User::where('email', $this->data[$from]['email'])->first()->uuid;
 
-        return $client->runTransaction(
+        return [
+            $client->runTransaction(
             new SendOneCommand(
                 config('app.adshares_address'),
                 $amount * 10 ** 11,
                 str_pad($UID, 64, '0', STR_PAD_LEFT)
             )
-        );
+            )->getTx()->getId(),
+            $UID,
+        ];
     }
 }
