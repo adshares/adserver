@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -119,6 +120,13 @@ class Handler extends ExceptionHandler
                 $data['detail'] = $detail;
             }
         }
+
+        Log::error(json_encode([
+            'code' => $code,
+            'message' => $message,
+            'trace' => $trace,
+            'detail' => $detail,
+        ]));
 
         return new JsonResponse($data, $code);
     }
