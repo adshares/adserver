@@ -133,7 +133,7 @@ final class ImpressionContext
 
     public function userId(): string
     {
-        return $this->user['uid'] ?? Utils::createTrackingId((string)config('app.adserver_secret'));
+        return ($this->user['uid'] ?? '') ?: Utils::createTrackingId((string)config('app.adserver_secret'));
     }
 
     public function eventContext(): array

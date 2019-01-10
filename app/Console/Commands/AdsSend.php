@@ -45,10 +45,10 @@ class AdsSend extends Command
         $this->data = include base_path('accounts.local.php');
 
         $msg = [];
-        $msg[] = $this->send('pub', random_int(10, 1000))->getTx()->getId();
-        $msg[] = $this->send('adv', random_int(10, 1000))->getTx()->getId();
-        $msg[] = $this->send('dev', random_int(10, 1000))->getTx()->getId();
-        $msg[] = $this->send('postman', random_int(10, 1000))->getTx()->getId();
+        $msg[] = $this->send('pub', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('adv', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('dev', random_int(100, 1000))->getTx()->getId();
+        $msg[] = $this->send('postman', random_int(100, 1000))->getTx()->getId();
 
         $this->info(json_encode($msg));
     }
