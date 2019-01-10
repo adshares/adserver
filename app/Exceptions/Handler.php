@@ -67,7 +67,8 @@ class Handler extends ExceptionHandler
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_NOT_FOUND,
-                $exception->getTrace());
+                $exception->getTrace()
+            );
         }
 
         if ($exception instanceof ValidationException) {
