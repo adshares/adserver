@@ -88,8 +88,7 @@ final class ChartInput
         DateTime $dateEnd,
         ?int $campaignId = null,
         ?int $bannerId = null
-    )
-    {
+    ) {
         if (in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidChartInputException(sprintf('Unsupported chart type `%s`.', $type));
         }
