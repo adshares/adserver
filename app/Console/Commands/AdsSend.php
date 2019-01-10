@@ -83,4 +83,3 @@ class AdsSend extends Command
         ];
     }
 }
-
