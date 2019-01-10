@@ -44,15 +44,15 @@ class AdsSend extends Command
         $this->data = include base_path('accounts.local.php');
 
         $msg = [];
-        $msg[] = $this->send('pub', random_int(1, 10));
-        $msg[] = $this->send('adv', random_int(1, 10));
-        $msg[] = $this->send('dev', random_int(100, 1000));
-        $msg[] = $this->send('postman', random_int(10, 100));
+        $msg[] = $this->send('pub', 'pub', random_int(1, 10));
+        $msg[] = $this->send('adv', 'adv', random_int(1, 10));
+        $msg[] = $this->send('dev', 'dev', random_int(100, 1000));
+        $msg[] = $this->send('postman', 'postman', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
 
-    private function send(string $from, int $amount, $internalUid = null): array
+    private function send(string $from, string $to, int $amount): array
     {
         $drv = new CliDriver(
             $this->data[$from]['ADSHARES_ADDRESS'],
@@ -65,7 +65,11 @@ class AdsSend extends Command
 
         $client = new AdsClient($drv);
 
-        $UID = $internalUid ?? User::where('email', $this->data[$from]['email'])->first()->uuid;
+        $UID = $this->data[$to]['uid'] ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
+
+        if (!$UID) {
+            return ["Receiver ($to) not found."];
+        }
 
         return [
             $client->runTransaction(
@@ -79,3 +83,4 @@ class AdsSend extends Command
         ];
     }
 }
+
