@@ -84,6 +84,8 @@ class AdPayGetPayments extends Command
                 });
 
                 Log::debug("Disabled Campaigns for user $userId due to insufficient clicks. Needs $totalEventValue, but has $balance");
+
+                $totalEventValue = $collection->sum('event_value');
             }
 
             $userLedgerEntry = new UserLedgerEntry();
