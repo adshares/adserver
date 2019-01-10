@@ -79,14 +79,6 @@ class Handler extends ExceptionHandler
             );
         }
 
-        if ($exception instanceof ValidationException) {
-            return $this->response(
-                $exception->getMessage(),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-                $exception->getTrace()
-            );
-        }
-
         if ($exception instanceof AuthenticationException) {
             return $this->response(
                 $exception->getMessage(),
