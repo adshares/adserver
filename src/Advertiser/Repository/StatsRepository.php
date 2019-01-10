@@ -22,6 +22,63 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Repository;
 
-final class StatsRepository
+use Adshares\Advertiser\Service\ChartResult;
+use DateTime;
+
+interface StatsRepository
 {
+    public function fetchView(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
+
+
+    public function fetchClick(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
+
+    public function fetchCpc(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
+
+    public function fetchCpm(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
+
+    public function fetchSum(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
+
+    public function fetchCtr(
+        int $advertiser,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): ChartResult;
 }

@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Service;
 
 use function json_encode;
 
