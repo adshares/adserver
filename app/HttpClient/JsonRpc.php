@@ -48,9 +48,8 @@ final class JsonRpc
             $response = $this->client->request('POST', '/', ['body' => $body]);
 
             Log::debug(sprintf(
-                '{"url": "%s", "method": "%s", "body": %s, "result": %s}',
+                '{"url": "%s", "body": %s, "result": %s}',
                 (string)$this->client->getConfig('base_uri'),
-                $procedure->method(),
                 $body,
                 (string)$response->getBody()
             ));
