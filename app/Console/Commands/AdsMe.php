@@ -33,6 +33,7 @@ class AdsMe extends Command
 
     public function handle(AdsClient $adsClient)
     {
+        $this->info('Start command '.$this->signature);
         $me = $adsClient->getMe();
         $this->info(Ads\Util\AdsConverter::clicksToAds($me->getAccount()->getBalance()));
     }

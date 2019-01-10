@@ -32,6 +32,8 @@ class UpdateTargetingOptions extends Command
 
     public function handle(TargetingOptionsImporter $service): void
     {
+        $this->info('Start command '.$this->signature);
+
         $service->import();
     }
 }

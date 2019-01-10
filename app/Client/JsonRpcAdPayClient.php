@@ -77,7 +77,7 @@ final class JsonRpcAdPayClient implements AdPay
 
     public function getPayments(int $timestamp): array
     {
-        if (config('app.env') === Utils::ENV_DEV) {
+        if (config('app.env') === Utils::ENV_DEV || config('app.env') === Utils::ENV_DEMO) {
             $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
             $this->client->call($procedure);
         }

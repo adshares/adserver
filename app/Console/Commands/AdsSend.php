@@ -51,6 +51,8 @@ class AdsSend extends Command
 
     private function send(string $from, string $to, int $amount): TransactionResponse
     {
+        $this->info('Start command '.$this->signature);
+
         $drv = new CliDriver(
             $this->data[$from]['ADSHARES_ADDRESS'],
             $this->data[$from]['ADSHARES_SECRET'],

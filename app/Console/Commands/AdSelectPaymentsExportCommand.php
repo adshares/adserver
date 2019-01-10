@@ -48,7 +48,7 @@ class AdSelectPaymentsExportCommand extends Command
 
     public function handle(): void
     {
-        $this->info('Started exporting event payments to AdSelect');
+        $this->info('Start command '.$this->signature);
 
         $lastExportDate = Config::fetchDateTimeByKey(Config::ADSELECT_PAYMENT_EXPORT_TIME);
 

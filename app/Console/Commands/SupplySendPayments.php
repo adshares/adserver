@@ -42,7 +42,8 @@ class SupplySendPayments extends Command
 
     public function handle(AdsClient $adsClient): void
     {
-        $this->info('Start sending Supply payments');
+        $this->info('Start command '.$this->signature);
+
         $payments = NetworkPayment::fetchNotProcessed();
 
         $this->info('Payments to process: '.count($payments));

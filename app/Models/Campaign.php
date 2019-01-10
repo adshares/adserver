@@ -139,6 +139,11 @@ class Campaign extends Model
         return $campaign->user->uuid;
     }
 
+    public static function fetchByUserId(int $userId): Collection
+    {
+        return self::where('user_id', $userId)->get();
+    }
+
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);

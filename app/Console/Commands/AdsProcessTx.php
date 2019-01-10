@@ -72,7 +72,7 @@ class AdsProcessTx extends Command
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
-        $this->info('Start processing incoming txs');
+        $this->info('Start command '.$this->signature);
         $this->demandClient = $demandClient;
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 

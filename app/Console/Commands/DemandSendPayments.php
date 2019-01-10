@@ -34,6 +34,8 @@ class DemandSendPayments extends Command
 
     public function handle(Ads $ads): void
     {
+        $this->info('Start command '.$this->signature);
+
         $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);
 
         $paymentCount = count($payments);
