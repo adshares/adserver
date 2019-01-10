@@ -102,7 +102,7 @@ final class ChartInput
             throw new InvalidChartInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
                 $dateStart->format(DateTime::ATOM),
-                $dateEnd->format(DateTime::ATOM),
+                $dateEnd->format(DateTime::ATOM)
             ));
         }
 
