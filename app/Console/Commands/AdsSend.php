@@ -58,6 +58,8 @@ class AdsSend extends Command
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv@dev.dev', random_int(100, 1000));
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev@dev.dev', random_int(100, 1000));
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(10, 100));
+        $msg[] = $this->send($adsClient, 'adv2@dev.dev', random_int(10, 100));
+        $msg[] = $this->send($adsClient, 'hello@mail.com', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
