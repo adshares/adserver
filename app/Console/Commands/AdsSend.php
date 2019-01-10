@@ -34,36 +34,45 @@ class AdsSend extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ads:send';
+    protected $signature = 'ads:send {--external}';
 
     /** @var array */
     private $data;
 
-    public function handle(): void
+    public function handle(AdsClient $adsClient): void
     {
         $this->data = include base_path('accounts.local.php');
 
         $msg = [];
-        $msg[] = $this->send('pub', 'pub', random_int(1, 10));
-        $msg[] = $this->send('adv', 'adv', random_int(1, 10));
-        $msg[] = $this->send('dev', 'dev', random_int(100, 1000));
-        $msg[] = $this->send('postman', 'postman', random_int(10, 100));
+        $sendFromSelf = false;
+
+        if (!$this->option('external')) {
+            $sendFromSelf = true;
+        }
+
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'pub', 'pub', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
 
-    private function send(string $from, string $to, int $amount): array
+    private function send($from, string $to, int $amount): array
     {
-        $drv = new CliDriver(
-            $this->data[$from]['ADSHARES_ADDRESS'],
-            $this->data[$from]['ADSHARES_SECRET'],
-            $this->data[$from]['ADSHARES_NODE_HOST'],
-            $this->data[$from]['ADSHARES_NODE_PORT']
-        );
-        $drv->setCommand(config('app.adshares_command'));
-        $drv->setWorkingDir(config('app.adshares_workingdir'));
-
-        $client = new AdsClient($drv);
+        if ($from instanceof AdsClient) {
+            $client = $from;
+        } else {
+            $drv = new CliDriver(
+                $this->data[$from]['ADSHARES_ADDRESS'],
+                $this->data[$from]['ADSHARES_SECRET'],
+                $this->data[$from]['ADSHARES_NODE_HOST'],
+                $this->data[$from]['ADSHARES_NODE_PORT']
+            );
+            $drv->setCommand(config('app.adshares_command'));
+            $drv->setWorkingDir(config('app.adshares_workingdir'));
+            $client = new AdsClient($drv);
+        }
 
         $UID = $this->data[$to]['uid'] ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
 
