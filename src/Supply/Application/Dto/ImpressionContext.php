@@ -24,6 +24,7 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Illuminate\Support\Collection;
 use function array_filter;
 use function GuzzleHttp\json_encode;
@@ -133,7 +134,7 @@ final class ImpressionContext
 
     public function userId(): string
     {
-        return $this->user['uid'] ?? '';
+        return $this->user['uid'] ?? (string)Uuid::zero();
     }
 
     public function eventContext(): array

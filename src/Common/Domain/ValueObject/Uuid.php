@@ -77,9 +77,34 @@ final class Uuid implements Id
     public static function caseId(): self
     {
         $idV4 = (string)self::v4();
-        $caseId = substr($idV4, 0, -2) . '00';
+        $caseId = substr($idV4, 0, -2).'00';
 
         return new self($caseId);
+    }
+
+    public static function zero(): self
+    {
+        $id = sprintf(
+            '%04x%04x%04x%04x%04x%04x%04x%04x',
+            // 32 bits for "time_low"
+            0x0000,
+            0x0000,
+            // 16 bits for "time_mid"
+            0x0000,
+            // 16 bits for "time_hi_and_version",
+            // four most significant bits holds version number 4
+            0x4000,
+            // 16 bits, 8 bits for "clk_seq_hi_res",
+            // 8 bits for "clk_seq_low",
+            // two most significant bits holds zero and one for variant DCE1.1
+            0x8000,
+            // 48 bits for "node"
+            0x0000,
+            0x0000,
+            0x0000
+        );
+
+        return new self($id);
     }
 
     public static function test(int $value): self
