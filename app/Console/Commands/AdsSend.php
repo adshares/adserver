@@ -50,10 +50,10 @@ class AdsSend extends Command
             $sendFromSelf = true;
         }
 
-        $msg[] = $this->send($sendFromSelf ? $adsClient : 'pub', 'pub', random_int(100, 1000));
-        $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv', random_int(100, 1000));
-        $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev', random_int(100, 1000));
-        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman', random_int(10, 100));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'pub', 'pub@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
@@ -74,7 +74,9 @@ class AdsSend extends Command
             $client = new AdsClient($drv);
         }
 
-        $UID = $this->data[$to]['uid'] ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
+        $UID = User::where('email', $to)->first()->uuid
+            ?? $this->data[$to]['uid']
+            ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
 
         if (!$UID) {
             return ["Receiver ($to) not found."];
