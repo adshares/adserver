@@ -22,11 +22,10 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Adserver\Repository\Advertiser\DummyStatsRepository;
-use Adshares\Adserver\Services\Adpay;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Advertiser\Service\ChartProvider;
+use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
