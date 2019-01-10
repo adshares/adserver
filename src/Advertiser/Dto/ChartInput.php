@@ -22,6 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Dto;
 
-final class GraphInput
+final class ChartInput
 {
 }

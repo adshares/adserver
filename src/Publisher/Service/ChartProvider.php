@@ -22,6 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Service;
 
-final class GraphDataMaker
+final class ChartProvider
 {
 }

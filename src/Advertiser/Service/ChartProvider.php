@@ -20,8 +20,8 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Service;
 
-final class GraphInput
+final class ChartProvider
 {
 }
