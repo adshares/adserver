@@ -31,7 +31,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_decode;
-use function json_encode;
+use function GuzzleHttp\json_encode;
 
 final class GuzzleAdUserClient implements AdUser
 {
