@@ -65,7 +65,7 @@ class AdPayGetPayments extends Command
                 $entry->save();
             });
 
-                $totalEventValue = $collection->sum('event_value');
+            $totalEventValue = $collection->sum('event_value');
 
             $userLedgerEntry = new UserLedgerEntry();
             $userLedgerEntry->user_id = $userId;
