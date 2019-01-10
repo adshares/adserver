@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\AdPay;
@@ -41,8 +40,6 @@ class AdPayGetPayments extends Command
 
     public function handle(AdPay $adPay): void
     {
-        $this->info('Start command '.$this->signature);
-
         $calculations = collect($adPay->getPayments(now()->getTimestamp()));
 
         Log::info('Found '.count($calculations).' calculations.');
@@ -55,7 +52,7 @@ class AdPayGetPayments extends Command
             ->whereNull('event_value')
             ->get();
 
-        Log::info('Found '.count($unpaidEvents).' entries to update.');
+        Log::info('Found '.count($unpaidEvents).' entries that require values.');
 
         DB::beginTransaction();
 
@@ -68,25 +65,7 @@ class AdPayGetPayments extends Command
                 $entry->save();
             });
 
-            $balance = UserLedgerEntry::getBalanceByUserId($userId);
-
-            $totalEventValue = $collection->sum('event_value');
-
-            if ($balance < $totalEventValue) {
-                $collection->each(function (EventLog $entry) use ($balance, $totalEventValue) {
-                    $entry->event_value = $entry->event_value * $balance / $totalEventValue;
-                    $entry->save();
-                });
-
-                Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_INACTIVE;
-                    $campaign->save();
-                });
-
-                Log::debug("Disabled Campaigns for user $userId due to insufficient clicks. Needs $totalEventValue, but has $balance");
-
                 $totalEventValue = $collection->sum('event_value');
-            }
 
             $userLedgerEntry = new UserLedgerEntry();
             $userLedgerEntry->user_id = $userId;
