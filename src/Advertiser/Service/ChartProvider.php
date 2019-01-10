@@ -22,6 +22,40 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Service;
 
+use Adshares\Advertiser\Dto\ChartInput;
+use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Repository\StatsRepository;
+
 final class ChartProvider
 {
+    private const REPOSITORY_MAPPER = [
+        ChartInput::CLICK_TYPE => 'fetchClick',
+        ChartInput::VIEW_TYPE => 'fetchView',
+        ChartInput::CPC_TYPE => 'fetchCpc',
+        ChartInput::CPM_TYPE => 'fetchCpm',
+        ChartInput::SUM_TYPE => 'fetchSum',
+        ChartInput::CTR_TYPE => 'fetchCtr',
+    ];
+
+    /** @var StatsRepository */
+    private $repository;
+
+    public function __construct(StatsRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    public function fetch(ChartInput $input): ChartResult
+    {
+        $method = self::REPOSITORY_MAPPER[$input->getType()];
+
+        return $this->repository->$method(
+            $input->getAdvertiserId(),
+            $input->getResolution(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getCampaignId(),
+            $input->getBannerId()
+        );
+    }
 }
