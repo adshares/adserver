@@ -26,11 +26,14 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
 use Illuminate\Console\Command;
 
 class AdsFetchHosts extends Command
 {
+    use LineFormatterTrait;
+
     /**
      * Length of block in seconds
      */
@@ -56,7 +59,7 @@ class AdsFetchHosts extends Command
      *
      * @return int
      */
-    public function handle(AdsClient $adsClient): int
+    public function handle(AdsClient $adsClient): void
     {
         $this->info('Start command '.$this->signature);
 
@@ -74,7 +77,7 @@ class AdsFetchHosts extends Command
         }
         $progressBar->finish();
 
-        return 0;
+        $this->info('Finished command '.$this->signature);
     }
 
     /**

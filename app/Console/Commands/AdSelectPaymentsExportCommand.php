@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
@@ -30,6 +31,8 @@ use Illuminate\Console\Command;
 
 class AdSelectPaymentsExportCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adselect:payment:export';
 
     protected $description = 'Export event payments to AdSelect';

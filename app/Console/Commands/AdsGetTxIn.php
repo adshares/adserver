@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
@@ -32,6 +33,8 @@ use Illuminate\Database\QueryException;
 
 class AdsGetTxIn extends Command
 {
+    use LineFormatterTrait;
+
     public const EXIT_CODE_SUCCESS = 0;
 
     public const EXIT_CODE_ERROR = 1;

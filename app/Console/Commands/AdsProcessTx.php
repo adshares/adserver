@@ -26,6 +26,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
@@ -42,6 +43,8 @@ use Illuminate\Http\Response;
 
 class AdsProcessTx extends Command
 {
+    use LineFormatterTrait;
+
     public const EXIT_CODE_SUCCESS = 0;
 
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;

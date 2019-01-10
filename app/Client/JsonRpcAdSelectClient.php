@@ -38,9 +38,11 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
+use Illuminate\Support\Facades\Log;
 use function array_map;
+use function GuzzleHttp\json_encode;
 use function iterator_to_array;
-use function str_replace;
+use function sprintf;
 
 final class JsonRpcAdSelectClient implements AdSelect
 {
@@ -85,6 +87,12 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
+        Log::debug(sprintf(
+            '{"zones":%s,"banners":%s}',
+            json_encode($zoneIds),
+            json_encode($bannerIds)
+        ));
+
         return new FoundBanners($banners);
     }
 
@@ -122,6 +130,23 @@ final class JsonRpcAdSelectClient implements AdSelect
         $this->client->call($procedure);
     }
 
+    public function deleteFromInventory(CampaignCollection $campaigns): void
+    {
+        $mappedCampaigns = [];
+
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mappedCampaigns[] = $campaign->getId();
+        }
+
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_DELETE,
+            $mappedCampaigns
+        );
+
+        $this->client->call($procedure);
+    }
+
     private function createZoneToBannerMap(array $items): array
     {
         $idMap = [];
@@ -140,7 +165,13 @@ final class JsonRpcAdSelectClient implements AdSelect
         $bannerIds = [];
 
         foreach ($zoneIds as $id) {
-            $bannerIds[] = $zoneToBannerMap[$id] ?? null;
+            $bannerId = $zoneToBannerMap[$id] ?? null;
+
+            if ($bannerId === null) {
+                Log::warning(sprintf('Zone %s not found.', $id));
+            }
+
+            $bannerIds[] = $bannerId;
         }
 
         return $bannerIds;
@@ -152,6 +183,8 @@ final class JsonRpcAdSelectClient implements AdSelect
             $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
             if (null === $banner) {
+                Log::warning(sprintf('Banner %s not found.', $bannerId));
+
                 yield null;
             } else {
                 $campaign = $banner->campaign;
@@ -177,22 +210,5 @@ final class JsonRpcAdSelectClient implements AdSelect
                 ];
             }
         }
-    }
-
-    public function deleteFromInventory(CampaignCollection $campaigns): void
-    {
-        $mappedCampaigns = [];
-
-        /** @var Campaign $campaign */
-        foreach ($campaigns as $campaign) {
-            $mappedCampaigns[] = $campaign->getId();
-        }
-
-        $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_DELETE,
-            $mappedCampaigns
-        );
-
-        $this->client->call($procedure);
     }
 }
