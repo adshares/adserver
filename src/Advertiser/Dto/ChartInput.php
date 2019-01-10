@@ -50,7 +50,7 @@ final class ChartInput
         self::CTR_TYPE,
     ];
 
-    private const ALLOWED_RESOLUTION = [
+    private const ALLOWED_RESOLUTIONS = [
         self::HOUR_RESOLUTION,
         self::DAY_RESOLUTION,
         self::WEEK_RESOLUTION,
@@ -93,7 +93,7 @@ final class ChartInput
             throw new InvalidChartInputException(sprintf('Unsupported chart type `%s`.', $type));
         }
 
-        if (in_array($resolution, self::ALLOWED_RESOLUTION, true)) {
+        if (in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
             throw new InvalidChartInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
         }
 
