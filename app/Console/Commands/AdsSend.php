@@ -69,11 +69,11 @@ class AdsSend extends Command
 
         return [
             $client->runTransaction(
-            new SendOneCommand(
-                config('app.adshares_address'),
-                $amount * 10 ** 11,
-                str_pad($UID, 64, '0', STR_PAD_LEFT)
-            )
+                new SendOneCommand(
+                    config('app.adshares_address'),
+                    $amount * 10 ** 11,
+                    str_pad($UID, 64, '0', STR_PAD_LEFT)
+                )
             )->getTx()->getId(),
             $UID,
         ];
