@@ -50,6 +50,8 @@ class Utils
 
     public const ENV_DEV = 'local';
 
+    public const ENV_DEMO = 'demo';
+
     public static function getImpressionContext(Request $request, $contextStr = null)
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
