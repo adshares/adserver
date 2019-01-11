@@ -37,9 +37,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StatsController extends Controller
 {
-    private const ADVERTISER = 'advertiser';
-    private const PUBLISHER = 'publisher';
-
     /** @var AdvertiserChartDataProvider */
     private $advertiserChartDataProvider;
 
@@ -73,7 +70,7 @@ class StatsController extends Controller
         }
 
         try {
-            $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to, $campaignId, $bannerId);
+            $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to, (int)$campaignId, (int)$bannerId);
         } catch (InvalidChartInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
