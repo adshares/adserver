@@ -31,6 +31,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function collect;
+use function floor;
 use function now;
 
 class AdPayGetPayments extends Command
@@ -74,7 +75,7 @@ class AdPayGetPayments extends Command
 
             if ($balance < $totalEventValue) {
                 $collection->each(function (EventLog $entry) use ($balance, $totalEventValue) {
-                    $entry->event_value = round($entry->event_value * $balance / $totalEventValue);
+                    $entry->event_value = floor($entry->event_value * $balance / $totalEventValue);
                     $entry->save();
                 });
 
