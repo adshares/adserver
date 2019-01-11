@@ -70,12 +70,21 @@ class StatsController extends Controller
         }
 
         try {
-            $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to, (int)$campaignId, (int)$bannerId);
+            $input = new AdvertiserChartInput(
+                $user->id,
+                $type,
+                $resolution,
+                $from,
+                $to,
+                (int)$campaignId,
+                (int)$bannerId
+            );
         } catch (InvalidChartInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
         $result = $this->advertiserChartDataProvider->fetch($input);
+
         return new JsonResponse($result->getData());
     }
 
