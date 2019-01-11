@@ -24,8 +24,6 @@ namespace Adshares\Advertiser\Service;
 
 use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
-use RuntimeException;
-use function array_key_exists;
 
 final class ChartDataProvider
 {
