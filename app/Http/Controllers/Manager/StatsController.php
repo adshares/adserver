@@ -26,26 +26,25 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\InvalidChartInputException;
-use Adshares\Advertiser\Service\ChartProvider as AdvertiserChartProvider;
+use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class StatsController extends Controller
 {
     private const ADVERTISER = 'advertiser';
     private const PUBLISHER = 'publisher';
 
-    /** @var AdvertiserChartProvider */
-    private $advertiserChartProvider;
+    /** @var AdvertiserChartDataProvider */
+    private $advertiserChartDataProvider;
 
-    public function __construct(AdvertiserChartProvider $advertiserChartProvider)
+    public function __construct(AdvertiserChartDataProvider $advertiserChartDataProvider)
     {
-        $this->advertiserChartProvider = $advertiserChartProvider;
+        $this->advertiserChartDataProvider = $advertiserChartDataProvider;
     }
 
     public function chart(
@@ -70,7 +69,7 @@ class StatsController extends Controller
                 throw new BadRequestHttpException($exception->getMessage(), $exception);
             }
 
-            $result = $this->advertiserChartProvider->fetch($input);
+            $result = $this->advertiserChartDataProvider->fetch($input);
 
             return new JsonResponse($result->getData());
         }

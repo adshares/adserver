@@ -24,7 +24,7 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Advertiser\Repository\StatsRepository;
-use Adshares\Advertiser\Service\ChartProvider;
+use Adshares\Advertiser\Service\ChartDataProvider;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -65,9 +65,9 @@ class AppServiceProvider extends ServiceProvider
 
 
         $this->app->bind(
-            ChartProvider::class,
+            ChartDataProvider::class,
             function (Application $app) {
-                return new ChartProvider($app->make(StatsRepository::class));
+                return new ChartDataProvider($app->make(StatsRepository::class));
             }
         );
     }
