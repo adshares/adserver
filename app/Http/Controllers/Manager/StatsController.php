@@ -96,19 +96,17 @@ class StatsController extends Controller
         }
 
         if ($userType === self::ADVERTISER && !$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(
-                sprintf(
-                    'User %s is not authorized to access this resource.',
-                    $user->email
-                ));
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
         }
 
         if ($userType === self::PUBLISHER && !$user->isPublisher()) {
-            throw new AccessDeniedHttpException(
-                sprintf(
-                    'User %s is not authorized to access this resource.',
-                    $user->email
-                ));
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
         }
     }
 }
