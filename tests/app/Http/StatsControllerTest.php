@@ -108,7 +108,7 @@ final class StatsControllerTest extends TestCase
         }
     }
 
-    public function providerDataForAdvertiserChart()
+    public function providerDataForAdvertiserChart(): array
     {
         return [
             ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
