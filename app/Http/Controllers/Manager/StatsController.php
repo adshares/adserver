@@ -29,6 +29,7 @@ use Adshares\Advertiser\Dto\InvalidChartInputException;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use DateTime;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -47,8 +48,8 @@ class StatsController extends Controller
         $this->advertiserChartDataProvider = $advertiserChartDataProvider;
     }
 
-    public function chart(
-        string $userType,
+    public function advertiserChart(
+        Request $request,
         string $type,
         string $resolution,
         string $dateStart,
@@ -56,30 +57,33 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = DateTime::createFromFormat(DateTime::ATOM, $dateStart);
         $to = DateTime::createFromFormat(DateTime::ATOM, $dateEnd);
+        $campaignId = $request->input('campaign_id');
+        $bannerId = $request->input('banner_id');
 
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $userType, $dateStart, $dateEnd);
+        $this->validateChartInputParameters($user, $dateStart, $dateEnd);
 
-        if ($userType === self::ADVERTISER && $user->isAdvertiser()) {
-            try {
-                $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to);
-            } catch (InvalidChartInputException $exception) {
-                throw new BadRequestHttpException($exception->getMessage(), $exception);
-            }
-
-            $result = $this->advertiserChartDataProvider->fetch($input);
-
-            return new JsonResponse($result->getData());
+        if (!$user->isAdvertiser()) {
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
         }
 
-        throw new AccessDeniedHttpException('Access denied.');
+        try {
+            $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to, $campaignId, $bannerId);
+        } catch (InvalidChartInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->advertiserChartDataProvider->fetch($input);
+        return new JsonResponse($result->getData());
     }
 
     private function validateChartInputParameters(
         User $user,
-        string $userType,
         string $dateStart,
         string $dateEnd
     ): void {
@@ -93,20 +97,6 @@ class StatsController extends Controller
 
         if (!$user) {
             throw new NotFoundHttpException('User is not found');
-        }
-
-        if ($userType === self::ADVERTISER && !$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
-        }
-
-        if ($userType === self::PUBLISHER && !$user->isPublisher()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
         }
     }
 }

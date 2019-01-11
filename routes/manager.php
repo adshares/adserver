@@ -81,8 +81,7 @@ Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
 
 // statistics
-Route::get('{user_type}/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'chart'])
-    ->where('user_type', 'advertiser|publisher');
+Route::get('advertiser/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
 
 // tmp mocked solutions
 Route::post('chart', [ChartsController::class, 'chart']);

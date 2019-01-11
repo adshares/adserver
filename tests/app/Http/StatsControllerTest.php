@@ -50,19 +50,6 @@ final class StatsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_BAD_REQUEST);
     }
 
-    public function testAdvertiserChartWhenViewTypeAndHourResolutionAndNoPermission(): void
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-
-        $dateStart = (new DateTime())->format(DateTime::ATOM);
-        $dateEnd = (new DateTime())->format(DateTime::ATOM);
-        $url = sprintf('%s/view/hour/%s/%s', self::ADVERTISER_CHART_URI, $dateStart, $dateEnd);
-        $response = $this->getJson($url);
-
-        $response->assertStatus(Response::HTTP_FORBIDDEN);
-    }
-
     /**
      * @param string $type
      * @param array $resolutions
@@ -79,7 +66,6 @@ final class StatsControllerTest extends TestCase
 
         $dateStart = (new DateTime());
         $dateEnd = (new DateTime());
-
 
         foreach ($resolutions as $resolution) {
             $url = sprintf(
