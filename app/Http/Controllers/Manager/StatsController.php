@@ -25,19 +25,20 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
+use Adshares\Advertiser\Dto\InvalidChartInputException;
 use Adshares\Advertiser\Service\ChartProvider as AdvertiserChartProvider;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class StatsController extends Controller
 {
-    const ADVERTISER = 'advertiser';
-    const PUBLISHER = 'publisher';
+    private const ADVERTISER = 'advertiser';
+    private const PUBLISHER = 'publisher';
 
     /** @var AdvertiserChartProvider */
     private $advertiserChartProvider;
@@ -47,43 +48,56 @@ class StatsController extends Controller
         $this->advertiserChartProvider = $advertiserChartProvider;
     }
 
-    public function chart(string $userType, string $type, string $resolution, string $dateStart, string $dateEnd)
-    {
+    public function chart(
+        string $userType,
+        string $type,
+        string $resolution,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
         $from = DateTime::createFromFormat(DateTime::ATOM, $dateStart);
         $to = DateTime::createFromFormat(DateTime::ATOM, $dateEnd);
-
-        if (!$from) {
-            throw new BadRequestHttpException(sprintf('Bad format of start date `%s`.', $dateStart));
-        }
-
-        if (!$to) {
-            throw new BadRequestHttpException(sprintf('Bad format of end date `%s`.', $dateEnd));
-        }
 
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $userType, $from, $to);
+        $this->validateChartInputParameters($user, $userType, $dateStart, $dateEnd);
 
-        if ($user->isAdvertiser()) {
-            $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to);
+        if ($userType === self::ADVERTISER && $user->isAdvertiser()) {
+            try {
+                $input = new AdvertiserChartInput($user->id, $type, $resolution, $from, $to);
+            } catch (InvalidChartInputException $exception) {
+                throw new BadRequestHttpException($exception->getMessage(), $exception);
+            }
+
             $result = $this->advertiserChartProvider->fetch($input);
 
             return new JsonResponse($result->getData());
         }
 
-        return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        throw new AccessDeniedHttpException('Access denied.');
     }
 
-    private function validateChartInputParameters(User $user, string $userType, DateTime $dateStart, DateTime $dateEnd)
-    {
+    private function validateChartInputParameters(
+        User $user,
+        string $userType,
+        string $dateStart,
+        string $dateEnd
+    ): void {
+        if (!$dateStart) {
+            throw new BadRequestHttpException('Bad format of start date.');
+        }
+
+        if (!$dateEnd) {
+            throw new BadRequestHttpException('Bad format of end date.');
+        }
+
         if (!$user) {
             throw new NotFoundHttpException('User is not found');
         }
 
         if ($userType === self::ADVERTISER && !$user->isAdvertiser()) {
-            throw new UnauthorizedHttpException(
-                '',
+            throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
                     $user->email
@@ -91,8 +105,7 @@ class StatsController extends Controller
         }
 
         if ($userType === self::PUBLISHER && !$user->isPublisher()) {
-            throw new UnauthorizedHttpException(
-                '',
+            throw new AccessDeniedHttpException(
                 sprintf(
                     'User %s is not authorized to access this resource.',
                     $user->email
