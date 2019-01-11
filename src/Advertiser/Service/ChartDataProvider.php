@@ -48,10 +48,6 @@ final class ChartDataProvider
 
     public function fetch(ChartInput $input): ChartResult
     {
-        if (!array_key_exists($input->getType(), self::REPOSITORY_MAPPER)) {
-            throw new RuntimeException(sprintf('%s type is not supported.', $input->getType()));
-        }
-
         $method = self::REPOSITORY_MAPPER[$input->getType()];
 
         return $this->repository->$method(

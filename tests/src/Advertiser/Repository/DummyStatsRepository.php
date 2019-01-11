@@ -38,10 +38,10 @@ class DummyStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         $data = [
-            [1, 22, 32],
-            [2, 26, 1],
-            [3, 37, 1],
-            [4, 12, 2],
+            [1, 1, 1],
+            [2, 2, 2],
+            [3, 3, 3],
+            [4, 4, 4],
         ];
 
         return new ChartResult($data);
@@ -55,7 +55,14 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchClick() method.
+        $data = [
+            [11, 11, 11],
+            [21, 21, 21],
+            [31, 31, 31],
+            [41, 41, 41],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchCpc(
@@ -66,7 +73,14 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCpc() method.
+        $data = [
+            [12, 12, 12],
+            [22, 22, 22],
+            [32, 32, 32],
+            [42, 42, 42],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchCpm(
@@ -77,7 +91,14 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCpm() method.
+        $data = [
+            [13, 13, 13],
+            [23, 23, 23],
+            [33, 33, 33],
+            [43, 43, 43],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchSum(
@@ -88,7 +109,14 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchSum() method.
+        $data = [
+            [14, 14, 14],
+            [24, 24, 24],
+            [34, 34, 34],
+            [44, 44, 44],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchCtr(
@@ -99,6 +127,13 @@ class DummyStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCtr() method.
+        $data = [
+            [15, 15, 15],
+            [25, 25, 25],
+            [35, 35, 35],
+            [45, 45, 45],
+        ];
+
+        return new ChartResult($data);
     }
 }

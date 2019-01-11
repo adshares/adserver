@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -62,7 +63,14 @@ final class StatsControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function testAdvertiserChartWhenViewTypeAndHourResolution(): void
+    /**
+     * @param string $type
+     * @param array $resolutions
+     *
+     * @throws \Exception
+     * @dataProvider providerDataForAdvertiserChart
+     */
+    public function testAdvertiserChartWhenViewTypeAndHourResolution(string $type, array $resolutions): void
     {
         $repository = new DummyStatsRepository();
         $user = factory(User::class)->create();
@@ -71,15 +79,44 @@ final class StatsControllerTest extends TestCase
 
         $dateStart = (new DateTime());
         $dateEnd = (new DateTime());
-        $url = sprintf(
-            '%s/view/hour/%s/%s',
-            self::ADVERTISER_CHART_URI,
-            $dateStart->format(DateTime::ATOM),
-            $dateEnd->format(DateTime::ATOM)
-        );
 
-        $response = $this->getJson($url);
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson($repository->fetchView($user->id, 'hour', $dateStart, $dateEnd)->getData());
+
+        foreach ($resolutions as $resolution) {
+            $url = sprintf(
+                '%s/%s/%s/%s/%s',
+                self::ADVERTISER_CHART_URI,
+                $type,
+                $resolution,
+                $dateStart->format(DateTime::ATOM),
+                $dateEnd->format(DateTime::ATOM)
+            );
+
+            $methodNameMapper = [
+                ChartInput::CLICK_TYPE => 'fetchClick',
+                ChartInput::VIEW_TYPE => 'fetchView',
+                ChartInput::CPC_TYPE => 'fetchCpc',
+                ChartInput::CPM_TYPE => 'fetchCpm',
+                ChartInput::SUM_TYPE => 'fetchSum',
+                ChartInput::CTR_TYPE => 'fetchCtr',
+            ];
+
+            $method = $methodNameMapper[$type];
+
+            $response = $this->getJson($url);
+            $response->assertStatus(Response::HTTP_OK);
+            $response->assertJson($repository->$method($user->id, $resolution, $dateStart, $dateEnd)->getData());
+        }
+    }
+
+    public function providerDataForAdvertiserChart()
+    {
+        return [
+            ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['click', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['cpc', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['cpm', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['ctr', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+        ];
     }
 }
