@@ -54,8 +54,8 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = DateTime::createFromFormat(DateTime::ATOM, $dateStart);
         $to = DateTime::createFromFormat(DateTime::ATOM, $dateEnd);
-        $campaignId = $request->input('campaign_id');
-        $bannerId = $request->input('banner_id');
+        $campaignId = $request->input('campaign_id') ? (int)$request->input('campaign_id') : null;
+        $bannerId = $request->input('banner_id') ? (int)$request->input('banner_id') : null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -76,8 +76,8 @@ class StatsController extends Controller
                 $resolution,
                 $from,
                 $to,
-                (int)$campaignId,
-                (int)$bannerId
+                $campaignId,
+                $bannerId
             );
         } catch (InvalidChartInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
