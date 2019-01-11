@@ -28,6 +28,7 @@ use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
+use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
@@ -78,6 +79,9 @@ Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdraw
 Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
+
+// statistics
+Route::get('advertiser/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
 
 // tmp mocked solutions
 Route::post('chart', [ChartsController::class, 'chart']);

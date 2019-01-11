@@ -22,8 +22,11 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Adserver\Services\Adpay;
 use Adshares\Adserver\Services\Adselect;
+use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Advertiser\Service\ChartDataProvider;
+use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -50,6 +53,21 @@ class AppServiceProvider extends ServiceProvider
                 $drv->setWorkingDir(config('app.adshares_workingdir'));
 
                 return new AdsClient($drv);
+            }
+        );
+
+        $this->app->bind(
+            StatsRepository::class,
+            function () {
+                return new DummyStatsRepository();
+            }
+        );
+
+
+        $this->app->bind(
+            ChartDataProvider::class,
+            function (Application $app) {
+                return new ChartDataProvider($app->make(StatsRepository::class));
             }
         );
     }
