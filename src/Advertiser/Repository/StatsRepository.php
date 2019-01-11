@@ -28,7 +28,7 @@ use DateTime;
 interface StatsRepository
 {
     public function fetchView(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -36,9 +36,8 @@ interface StatsRepository
         ?int $bannerId = null
     ): ChartResult;
 
-
     public function fetchClick(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -47,7 +46,7 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchCpc(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -56,7 +55,7 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchCpm(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -65,7 +64,7 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchSum(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -74,7 +73,7 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchCtr(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
