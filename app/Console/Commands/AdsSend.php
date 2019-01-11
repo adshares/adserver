@@ -59,7 +59,6 @@ class AdsSend extends Command
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev@dev.dev', random_int(100, 1000));
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(10, 100));
         $msg[] = $this->send($adsClient, 'adv2@dev.dev', random_int(10, 100));
-        $msg[] = $this->send($adsClient, 'hello@mail.com', random_int(10, 100));
 
         $this->info(json_encode($msg));
     }
@@ -81,7 +80,9 @@ class AdsSend extends Command
         }
 
         $UID = User::where('email', $to)->first()->uuid
-            ?? $this->data[$to]['uid']
+            ?? (($this->data[$to] ?? false)
+                ? $this->data[$to]['uid']
+                : null)
             ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
 
         if (!$UID) {

@@ -106,6 +106,7 @@ class EventLog extends Model
     public static function fetchUnpaidEvents(): Collection
     {
         $query = self::whereNotNull('event_value')
+            ->where('event_value', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->orderBy('pay_to');
