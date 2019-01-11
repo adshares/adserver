@@ -74,7 +74,7 @@ class AdPayGetPayments extends Command
 
             if ($balance < $totalEventValue) {
                 $collection->each(function (EventLog $entry) use ($balance, $totalEventValue) {
-                    $entry->event_value = $entry->event_value * $balance / $totalEventValue;
+                    $entry->event_value = round($entry->event_value * $balance / $totalEventValue);
                     $entry->save();
                 });
 
