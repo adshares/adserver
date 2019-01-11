@@ -70,7 +70,6 @@ class AdPayGetPayments extends Command
             });
 
             $balance = UserLedgerEntry::getBalanceByUserId($userId);
-
             $totalEventValue = $collection->sum('event_value');
 
             if ($balance < $totalEventValue) {
@@ -89,7 +88,6 @@ class AdPayGetPayments extends Command
 
                 $totalEventValue = $collection->sum('event_value');
             }
-
             $userLedgerEntry = new UserLedgerEntry();
             $userLedgerEntry->user_id = $userId;
             $userLedgerEntry->amount = -$totalEventValue;
