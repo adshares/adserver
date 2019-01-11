@@ -20,15 +20,20 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Supply\Application\Service\FilteringOptionsImporter;
 use Illuminate\Console\Command;
 
 class UpdateFilteringOptions extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:filtering-options:update';
 
     public function handle(FilteringOptionsImporter $service): void
     {
+        $this->info('Start command '.$this->signature);
+
         $service->import();
     }
 }

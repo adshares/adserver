@@ -22,14 +22,18 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads;
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Illuminate\Console\Command;
 
 class AdsMe extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ads:me';
 
     public function handle(AdsClient $adsClient)
     {
+        $this->info('Start command '.$this->signature);
         $me = $adsClient->getMe();
         $this->info(Ads\Util\AdsConverter::clicksToAds($me->getAccount()->getBalance()));
     }

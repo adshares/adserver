@@ -22,14 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
-use Adshares\Supply\Domain\Model\Campaign;
 use Illuminate\Console\Command;
 
 class AdSelectInventoryExporterCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adselect:inventory:export';
 
     protected $description = 'Export campaigns inventory to AdSelect';

@@ -64,4 +64,9 @@ final class Procedure
     {
         return $this->id;
     }
+
+    public function method(): string
+    {
+        return $this->method;
+    }
 }

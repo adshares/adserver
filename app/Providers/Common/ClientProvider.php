@@ -71,7 +71,7 @@ final class ClientProvider extends ServiceProvider
                             [
                                 'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adselect_endpoint'),
-                                'timeout' => 5,
+                                'timeout' => 4,
                             ]
                         )
                     )

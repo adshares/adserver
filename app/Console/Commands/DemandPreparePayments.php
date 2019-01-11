@@ -21,6 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
@@ -30,10 +31,14 @@ use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:demand:payments:prepare';
 
     public function handle(): void
     {
+        $this->info('Start command '.$this->signature);
+
         $events = EventLog::fetchUnpaidEvents();
 
         $eventCount = count($events);

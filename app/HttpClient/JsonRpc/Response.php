@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ErrorResponse;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResponseException;
 use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result\ArrayResult;
@@ -52,11 +51,6 @@ final class Response
     /** @var Procedure */
     private $procedure;
 
-    /**
-     * @throws ErrorResponse
-     * @throws ResponseException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     public function __construct(ResponseInterface $response, Procedure $procedure)
     {
         $this->response = $response;
@@ -66,10 +60,6 @@ final class Response
         $this->failIfNoResult();
     }
 
-    /**
-     * @throws ResponseException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     private function failIfInvalidResponse(): void
     {
         $statusCode = $this->response->getStatusCode();
@@ -100,14 +90,14 @@ final class Response
     {
         $responseError = $this->content[self::FIELD_ERROR] ?? [];
         if ((bool)$responseError) {
-            throw ErrorResponse::fromResponseError($responseError);
+            throw ResponseException::error($responseError);
         }
     }
 
     private function failIfNoResult(): void
     {
         if (!isset($this->content[self::FIELD_RESULT])) {
-            throw  ResponseException::missingField(self::FIELD_RESULT);
+            throw ResponseException::missingField(self::FIELD_RESULT);
         }
     }
 

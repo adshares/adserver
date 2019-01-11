@@ -24,6 +24,9 @@ use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
+use function count;
+use function GuzzleHttp\json_encode;
 
 /**
  * @property Site site
@@ -142,7 +145,18 @@ HTML;
 
     public static function findByIds(array $zoneIdList): Collection
     {
-        return self::whereIn('id', $zoneIdList)->get();
+        /** @var Collection $zones */
+        $zones = self::whereIn('id', $zoneIdList)->get();
+
+        if (count($zones) !== count($zoneIdList)) {
+            Log::warning(sprintf(
+                'Missing zones. {"ids":%s,"zones":%s}',
+                json_encode($zoneIdList),
+                json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
+            ));
+        }
+
+        return $zones;
     }
 
     public static function fetchPublisherId(int $zoneId): string

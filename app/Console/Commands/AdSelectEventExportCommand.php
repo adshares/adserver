@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
@@ -30,6 +31,8 @@ use Illuminate\Console\Command;
 
 class AdSelectEventExportCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
@@ -45,7 +48,7 @@ class AdSelectEventExportCommand extends Command
 
     public function handle()
     {
-        $this->info('Started exporting events to AdSelect');
+        $this->info('Start command '.$this->signature);
 
         $lastExportDate = Config::fetchAdSelectEventExportTime();
 

@@ -24,10 +24,13 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\BroadcastCommand;
 use Adshares\Ads\Exception\CommandException;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Illuminate\Console\Command;
 
 class AdsBroadcastHost extends Command
 {
+    use LineFormatterTrait;
+
     const BROADCAST_PREFIX = 'AdServer.';
 
     const EXIT_CODE_SUCCESS = 0;

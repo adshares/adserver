@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
@@ -31,6 +32,8 @@ use Illuminate\Console\Command;
 
 class AdPayEventExportCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:adpay:event:export';
 
     protected $description = 'Exports event data to AdPay';
@@ -39,16 +42,7 @@ class AdPayEventExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $configDate = Config::where('key', Config::ADPAY_EVENT_EXPORT_TIME)->first();
-        if (null === $configDate) {
-            $configDate = new Config();
-            $configDate->key = Config::ADPAY_EVENT_EXPORT_TIME;
-
-            $dateFrom = new DateTime('@0');
-        } else {
-            $dateFrom = DateTime::createFromFormat(DATE_ATOM, $configDate->value);
-        }
-
+        $dateFrom = Config::fetchDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME);
         $dateNow = new DateTime();
 
         $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
@@ -64,9 +58,8 @@ class AdPayEventExportCommand extends Command
             $adPay->addEvents($events);
         }
 
-        $configDate->value = $dateNow->format(DATE_ATOM);
-        $configDate->save();
+        Config::updateDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME, $dateNow);
 
-        $this->info('Finish command '.$this->signature);
+        $this->info('Finish command '.$this->signature.' with '.count($createdEvents).' sent events.');
     }
 }

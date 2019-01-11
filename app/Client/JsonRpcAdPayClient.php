@@ -22,11 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Demand\Application\Service\AdPay;
 
-class JsonRpcAdPayClient implements AdPay
+final class JsonRpcAdPayClient implements AdPay
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 
@@ -76,12 +77,12 @@ class JsonRpcAdPayClient implements AdPay
 
     public function getPayments(int $timestamp): array
     {
-//TODO: remove forced calculation
-        $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
-        $this->client->call($procedure);
+        if (config('app.env') === Utils::ENV_DEV) {
+            $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
+            $this->client->call($procedure);
+        }
 
         $procedure = new Procedure(self::METHOD_GET_PAYMENTS, [['timestamp' => $timestamp]]);
-
         $responseArray = $this->client->call($procedure)->toArray();
 
         return $responseArray['payments'];

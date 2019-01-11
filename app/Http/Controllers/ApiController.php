@@ -85,7 +85,7 @@ class ApiController extends Controller
             ];
         }
 
-        return Response::json($campaigns, SymfonyResponse::HTTP_OK, [], JSON_PRETTY_PRINT);
+        return Response::json($campaigns, SymfonyResponse::HTTP_OK);
     }
 
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int

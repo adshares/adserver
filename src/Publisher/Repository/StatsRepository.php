@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,18 +20,8 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient\JsonRpc\Exception;
+namespace Adshares\Publisher\Repository;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception;
-
-final class ErrorResponse extends Exception
+final class StatsRepository
 {
-    private const FIELD_ERROR_MESSAGE = 'message';
-
-    private const FIELD_ERROR_CODE = 'code';
-
-    public static function fromResponseError(array $error)
-    {
-        return new static($error[self::FIELD_ERROR_MESSAGE], (int)$error[self::FIELD_ERROR_CODE]);
-    }
 }

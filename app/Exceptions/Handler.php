@@ -20,25 +20,30 @@
 
 namespace Adshares\Adserver\Exceptions;
 
+use Adshares\Adserver\Http\Utils;
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use function GuzzleHttp\json_encode;
 
 class Handler extends ExceptionHandler
 {
-    private const ENV_DEV = 'local';
-
     public function render($request, Exception $exception)
     {
-        $env = config('app.env');
-
         if ($exception instanceof HttpException) {
-            return $this->response($exception->getMessage(), $exception->getStatusCode(), $exception->getTrace());
+            return $this->response(
+                $exception->getMessage(),
+                $exception->getStatusCode(),
+                $exception->getTrace()
+            );
         }
 
         if ($exception instanceof QueryException) {
@@ -59,7 +64,11 @@ class Handler extends ExceptionHandler
         }
 
         if ($exception instanceof ModelNotFoundException) {
-            return $this->response($exception->getMessage(), Response::HTTP_NOT_FOUND, $exception->getTrace());
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_NOT_FOUND,
+                $exception->getTrace()
+            );
         }
 
         if ($exception instanceof ValidationException) {
@@ -70,10 +79,46 @@ class Handler extends ExceptionHandler
             );
         }
 
+        if ($exception instanceof AuthenticationException) {
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_UNAUTHORIZED,
+                $exception->getTrace()
+            );
+        }
+
         return $this->response(
-            $env === self::ENV_DEV ? $exception->getMessage() : 'Internal error.',
+            $exception->getMessage(),
             Response::HTTP_INTERNAL_SERVER_ERROR,
             $exception->getTrace()
+        );
+    }
+
+    public function report(Exception $e)
+    {
+        if ($this->shouldntReport($e)) {
+            return;
+        }
+
+        if (method_exists($e, 'report')) {
+            return $e->report();
+        }
+
+        try {
+            $logger = $this->container->make(LoggerInterface::class);
+        } catch (Exception $ex) {
+            throw $e;
+        }
+
+        $logger->error(
+            sprintf(
+                '{"message":"%s","context":%s,"trace":%s,"file":"%s:%s"}',
+                $e->getMessage(),
+                json_encode($this->context()),
+                json_encode($e->getTrace()),
+                $e->getFile(),
+                $e->getLine()
+            )
         );
     }
 
@@ -81,17 +126,24 @@ class Handler extends ExceptionHandler
     {
         $data = [
             'code' => $code,
-            'message' => $message,
+            'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
 
         ];
 
-        if (config('app.env') === self::ENV_DEV) {
+        if (config('app.env') === Utils::ENV_DEV) {
             $data['trace'] = $trace;
+
+            if ($detail) {
+                $data['detail'] = $detail;
+            }
         }
 
-        if ($detail) {
-            $data['detail'] = $detail;
-        }
+        Log::debug(json_encode([
+            'code' => $code,
+            'message' => $message,
+            'trace' => $trace,
+            'detail' => $detail,
+        ]));
 
         return new JsonResponse($data, $code);
     }

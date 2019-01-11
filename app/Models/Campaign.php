@@ -48,6 +48,7 @@ use Illuminate\Support\Collection;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
+ * @property User user
  * @method static where(string $string, int $campaignId)
  */
 class Campaign extends Model
@@ -136,6 +137,11 @@ class Campaign extends Model
         $campaign = self::find($campaignId);
 
         return $campaign->user->uuid;
+    }
+
+    public static function fetchByUserId(int $userId): Collection
+    {
+        return self::where('user_id', $userId)->get();
     }
 
     public function banners(): HasMany

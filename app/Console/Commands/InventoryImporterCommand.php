@@ -22,12 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Repository\Supply\NetworkHostRepository;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
 
 class InventoryImporterCommand extends Command
 {
+    use LineFormatterTrait;
+
     protected $signature = 'ops:demand:inventory:import';
 
     protected $description = 'Import data from all defined inventories';
@@ -46,7 +49,7 @@ class InventoryImporterCommand extends Command
 
     public function handle()
     {
-        $this->info('Started importing data from all inventories.');
+        $this->info('Start command '.$this->signature);
 
         $networkHosts = $this->networkHost->find();
 

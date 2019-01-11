@@ -50,18 +50,20 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['daily', 'slack'],
+            'channels' => ['single', 'slack'],
         ],
 
         'single' => [
             'driver' => 'single',
-            'path' => env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log',
+            'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
+            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
             'level' => 'debug',
         ],
 
         'daily' => [
             'driver' => 'daily',
-            'path' => env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log',
+            'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
+            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
             'level' => 'debug',
             'days' => 7,
         ],

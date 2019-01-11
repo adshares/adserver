@@ -23,50 +23,80 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Ads\Response\TransactionResponse;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
+use function file_exists;
+use function GuzzleHttp\json_encode;
 use function str_pad;
 use const STR_PAD_LEFT;
 
 class AdsSend extends Command
 {
-    protected $signature = 'ads:send';
+    use LineFormatterTrait;
+
+    protected $signature = 'ads:send {--external}';
 
     /** @var array */
-    private $data;
+    private $data = [];
 
-    public function handle(): void
+    public function handle(AdsClient $adsClient): void
     {
-        $this->data = include base_path('accounts.local.php');
+        $filePath = base_path('accounts.local.php');
+        if (file_exists($filePath)) {
+            $this->data = include $filePath;
+        }
 
-        $this->info($this->send('pub', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('pub2', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('adv', 'here', random_int(10, 1000))->getTx()->getId());
-        $this->info($this->send('adv2', 'here', random_int(10, 1000))->getTx()->getId());
+        $msg = [];
+        $sendFromSelf = false;
+
+        if (!$this->option('external')) {
+            $sendFromSelf = true;
+        }
+
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'pub', 'pub@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(10, 100));
+        $msg[] = $this->send($adsClient, 'adv2@dev.dev', random_int(10, 100));
+        $msg[] = $this->send($adsClient, 'hello@mail.com', random_int(10, 100));
+
+        $this->info(json_encode($msg));
     }
 
-    private function send(string $from, string $to, int $amount): TransactionResponse
+    private function send($from, string $to, int $amount): array
     {
-        $drv = new CliDriver(
-            $this->data[$from]['ADSHARES_ADDRESS'],
-            $this->data[$from]['ADSHARES_SECRET'],
-            $this->data[$from]['ADSHARES_NODE_HOST'],
-            $this->data[$from]['ADSHARES_NODE_PORT']
-        );
-        $drv->setCommand(config('app.adshares_command'));
-        $drv->setWorkingDir(config('app.adshares_workingdir'));
+        if ($from instanceof AdsClient) {
+            $client = $from;
+        } else {
+            $drv = new CliDriver(
+                $this->data[$from]['ADSHARES_ADDRESS'],
+                $this->data[$from]['ADSHARES_SECRET'],
+                $this->data[$from]['ADSHARES_NODE_HOST'],
+                $this->data[$from]['ADSHARES_NODE_PORT']
+            );
+            $drv->setCommand(config('app.adshares_command'));
+            $drv->setWorkingDir(config('app.adshares_workingdir'));
+            $client = new AdsClient($drv);
+        }
 
-        $client = new AdsClient($drv);
+        $UID = User::where('email', $to)->first()->uuid
+            ?? $this->data[$to]['uid']
+            ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
 
-        $UID = User::where('email', $this->data[$from]['email'])->first()->uuid;
+        if (!$UID) {
+            return ["Receiver ($to) not found."];
+        }
 
-        return $client->runTransaction(
-            new SendOneCommand(
-                $this->data[$to]['ADSHARES_ADDRESS'],
-                $amount * 10 ** 11,
-                str_pad($UID, 64, '0', STR_PAD_LEFT)
-            )
-        );
+        return [
+            $client->runTransaction(
+                new SendOneCommand(
+                    config('app.adshares_address'),
+                    $amount * 10 ** 11,
+                    str_pad($UID, 64, '0', STR_PAD_LEFT)
+                )
+            )->getTx()->getId(),
+            $UID,
+        ];
     }
 }

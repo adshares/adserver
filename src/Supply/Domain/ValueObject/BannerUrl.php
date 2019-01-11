@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Adshares\Supply\Domain\ValueObject;
 
 use Adshares\Supply\Domain\ValueObject\Exception\InvalidUrlException;
+use const FILTER_VALIDATE_URL;
 use function filter_var;
 
 final class BannerUrl
@@ -38,21 +39,21 @@ final class BannerUrl
 
     public function __construct(string $serveUrl, string $clickUrl, string $viewUrl)
     {
-        if (!filter_var($serveUrl, FILTER_VALIDATE_URL)) {
+        if (!$this->validate($serveUrl)) {
             throw new InvalidUrlException(sprintf(
                 'Serve url value `%s` is invalid. It must be a valid URL.',
                 $serveUrl
             ));
         }
 
-        if (!filter_var($clickUrl, FILTER_VALIDATE_URL)) {
+        if (!$this->validate($clickUrl)) {
             throw new InvalidUrlException(sprintf(
                 'Click url value `%s` is invalid. It must be a valid URL.',
                 $clickUrl
             ));
         }
 
-        if (!filter_var($viewUrl, FILTER_VALIDATE_URL)) {
+        if (!$this->validate($viewUrl)) {
             throw new InvalidUrlException(sprintf(
                 'View url value `%s` is invalid. It must be a valid URL.',
                 $viewUrl
@@ -62,6 +63,21 @@ final class BannerUrl
         $this->serveUrl = $serveUrl;
         $this->clickUrl = $clickUrl;
         $this->viewUrl = $viewUrl;
+    }
+
+    private function validate(string $value): bool
+    {
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return true;
+        }
+
+        $value = 'http:' . $value; // regarding to the fact that we also support addresses without schema
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getServeUrl(): string

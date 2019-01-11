@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\UrlProtocolRemover;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -99,9 +100,9 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            json_encode(config('app.adserver_host')),
-            json_encode(config('app.aduser_external_location')),
-            json_encode('.'.config('app.website_banner_class')),
+            config('app.adserver_host'),
+            config('app.aduser_external_location'),
+            '.'.config('app.website_banner_class'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -111,9 +112,9 @@ class SupplyController extends Controller
             function () use ($jsPath, $params) {
                 echo str_replace(
                     [
-                        "'{{ ORIGIN }}'",
-                        "'{{ ADUSER }}'",
-                        "'{{ SELECTOR }}'",
+                        '{{ ORIGIN }}',
+                        '{{ ADUSER }}',
+                        '{{ SELECTOR }}',
                     ],
                     $params,
                     file_get_contents($jsPath)
@@ -123,6 +124,11 @@ class SupplyController extends Controller
 
         $response->headers->set('Content-Type', 'text/javascript');
 
+        return $this->modifyCaching($request, $response);
+    }
+
+    private function modifyCaching(Request $request, StreamedResponse $response): StreamedResponse
+    {
 //        $response->setCache(
 //            [
 //                'etag' => md5(md5_file($jsPath).implode(':', $params)),
@@ -303,7 +309,7 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $response->headers->set('Location', $adUserUrl);
+        $response->headers->set('Location', UrlProtocolRemover::remove($adUserUrl));
 
         return $response;
     }

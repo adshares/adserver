@@ -28,6 +28,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 
 final class JsonRpc
 {
@@ -39,31 +40,28 @@ final class JsonRpc
         $this->client = $client;
     }
 
-    /**
-     * @param Procedure $procedure
-     *
-     * @return Result
-     * @throws Exception\ErrorResponse
-     * @throws Exception\ResponseException
-     * @throws Exception\ResultException
-     * @throws \Adshares\Common\Exception\Exception
-     */
     public function call(Procedure $procedure): Result
     {
+        $body = $procedure->toJson();
+
         try {
-            $body = $procedure->toJson();
+            $response = $this->client->request('POST', '/', ['body' => $body]);
 
-            $resp = $this->client->request(
-                'POST',
-                '/',
-                [
-                    'body' => $body,
-                ]
+            Log::debug(sprintf(
+                '{"url": "%s", "body": %s, "result": %s}',
+                (string)$this->client->getConfig('base_uri'),
+                $body,
+                (string)$response->getBody()
+            ));
+
+            return (new Response($response, $procedure))->result();
+        } catch (Exception|GuzzleException $e) {
+            throw Exception::onError(
+                $procedure,
+                (string)$this->client->getConfig('base_uri'),
+                $body,
+                $e->getMessage()
             );
-        } catch (GuzzleException $e) {
-            throw Exception::fromOther($e);
         }
-
-        return (new Response($resp, $procedure))->result();
     }
 }

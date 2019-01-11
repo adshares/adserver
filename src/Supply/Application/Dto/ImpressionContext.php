@@ -22,9 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use function array_filter;
+use function GuzzleHttp\json_encode;
 
 final class ImpressionContext
 {
@@ -41,15 +43,22 @@ final class ImpressionContext
 
     public function __construct(array $site, array $device, array $user)
     {
-        [$user, $site] = $this->accioFilter($site, $user);
+        if (config('app.env') === Utils::ENV_DEV) {
+            [$user, $site] = $this->accioFilter($user, $site);
+        }
 
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
     }
 
-    /** @deprecated */
-    private function accioFilter(array $site, array $user): array
+    /** @deprecated
+     * @param array $user
+     * @param array $site
+     *
+     * @return array
+     */
+    private function accioFilter(array $user, array $site): array
     {
         if (!isset($site['keywords'])) {
             return [$user, $site];
@@ -84,14 +93,22 @@ final class ImpressionContext
     {
         $uid = config('app.adserver_id').'_'.$this->user['uid'];
 
-        return <<<"JSON"
-{
-    "domain": "{$this->site['domain']}",
-    "ip": "{$this->device['ip']}",
-    "ua": "{$this->device['ua']}",
-    "uid": "{$uid}"
-}
-JSON;
+        return $this->toJson($uid);
+    }
+
+    private function toJson(string $uid): string
+    {
+        return json_encode($this->toArray($uid));
+    }
+
+    public function toArray(string $uid = null): array
+    {
+        return [
+            'domain' => $this->site['domain'],
+            'ip' => $this->device['ip'],
+            'ua' => $this->device['ua'],
+            'uid' => $uid ?? $this->userId(),
+        ];
     }
 
     public function adSelectRequestParams(Collection $zones): array
@@ -116,7 +133,7 @@ JSON;
 
     public function userId(): string
     {
-        return $this->user['uid'] ?? '';
+        return ($this->user['uid'] ?? '') ?: Utils::createTrackingId((string)config('app.adserver_secret'));
     }
 
     public function eventContext(): array
