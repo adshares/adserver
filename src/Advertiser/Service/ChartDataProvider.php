@@ -25,7 +25,7 @@ namespace Adshares\Advertiser\Service;
 use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
 
-final class ChartProvider
+final class ChartDataProvider
 {
     private const REPOSITORY_MAPPER = [
         ChartInput::CLICK_TYPE => 'fetchClick',

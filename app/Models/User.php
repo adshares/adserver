@@ -179,4 +179,14 @@ class User extends Authenticatable
     {
         return self::where('uuid', $uuid)->first();
     }
+
+    public function isAdvertiser(): bool
+    {
+        return (bool)$this->is_advertiser;
+    }
+
+    public function isPublisher(): bool
+    {
+        return (bool)$this->is_publisher;
+    }
 }
