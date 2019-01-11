@@ -81,7 +81,9 @@ class AdsSend extends Command
         }
 
         $UID = User::where('email', $to)->first()->uuid
-            ?? $this->data[$to]['uid']
+            ?? (($this->data[$to] ?? false)
+                ? $this->data[$to]['uid']
+                : null)
             ?? User::where('email', $this->data[$to]['email'])->first()->uuid;
 
         if (!$UID) {
