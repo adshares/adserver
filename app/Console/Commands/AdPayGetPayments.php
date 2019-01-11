@@ -84,7 +84,8 @@ class AdPayGetPayments extends Command
                     $campaign->save();
                 });
 
-                Log::debug("Disabled Campaigns for user [$userId] due to insufficient amount of clicks. Needs $totalEventValue, but has $balance");
+                Log::debug("Disabled Campaigns for user [$userId] due to insufficient amount of clicks."
+                    ." Needs $totalEventValue, but has $balance");
 
                 $totalEventValue = $collection->sum('event_value');
             }
