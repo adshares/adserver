@@ -36,6 +36,8 @@ final class StatsControllerTest extends TestCase
 
     private const ADVERTISER_CHART_URI = '/api/advertiser/stats/chart';
 
+    private const ADVERTISER_STATS_URI = '/api/advertiser/stats/table';
+
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
         $user = factory(User::class)->create();
@@ -90,8 +92,30 @@ final class StatsControllerTest extends TestCase
 
             $response = $this->getJson($url);
             $response->assertStatus(Response::HTTP_OK);
-            $response->assertJson($repository->$method($user->id, $resolution, $dateStart, $dateEnd)->getData());
+            $response->assertJson($repository->$method($user->id, $resolution, $dateStart, $dateEnd)->toArray());
         }
+    }
+
+    public function testAdvertiserStats(): void
+    {
+        $repository = new DummyStatsRepository();
+        $user = factory(User::class)->create();
+        $user->is_advertiser = 1;
+        $this->actingAs($user, 'api');
+
+        $dateStart = (new DateTime());
+        $dateEnd = (new DateTime());
+
+        $url = sprintf(
+            '%s/%s/%s',
+            self::ADVERTISER_STATS_URI,
+            $dateStart->format(DateTime::ATOM),
+            $dateEnd->format(DateTime::ATOM)
+        );
+
+        $response = $this->getJson($url);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson($repository->fetchStats($user->id, $dateStart, $dateEnd)->toArray());
     }
 
     public function providerDataForAdvertiserChart(): array

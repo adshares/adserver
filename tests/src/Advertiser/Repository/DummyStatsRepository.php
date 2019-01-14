@@ -22,15 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Advertiser\Repository;
 
+use Adshares\Advertiser\Dto\StatsResult;
+use Adshares\Advertiser\Dto\ChartResult;
 use Adshares\Advertiser\Repository\StatsRepository;
-use Adshares\Advertiser\Service\ChartResult;
 use DateTime;
 
 class DummyStatsRepository implements StatsRepository
 {
 
     public function fetchView(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -48,7 +49,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchClick(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -66,7 +67,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCpc(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -84,7 +85,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCpm(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -102,7 +103,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchSum(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -120,7 +121,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCtr(
-        int $advertiser,
+        int $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
@@ -135,5 +136,22 @@ class DummyStatsRepository implements StatsRepository
         ];
 
         return new ChartResult($data);
+    }
+
+    public function fetchStats(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): StatsResult {
+        $campaignId = 1;
+        $data = [
+            [$campaignId, 1, 1, 1, 1, 1],
+            [$campaignId, 2, 2, 2, 2, 2],
+            [$campaignId, 3, 3, 3, 3, 3],
+        ];
+
+        return new StatsResult($data);
     }
 }

@@ -20,11 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Service;
 
-use RuntimeException;
+use Adshares\Advertiser\Dto\StatsInput;
+use Adshares\Advertiser\Dto\StatsResult;
+use Adshares\Advertiser\Repository\StatsRepository;
 
-class InvalidChartInputException extends RuntimeException
+class StatsDataProvider
 {
+    /** @var StatsRepository */
+    private $repository;
 
+    public function __construct(StatsRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    public function fetch(StatsInput $input): StatsResult
+    {
+        return $this->repository->fetchStats(
+            $input->getAdvertiserId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getCampaignId()
+        );
+    }
 }

@@ -23,50 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Advertiser\Dto;
 
 use DateTime;
-use function in_array;
 
-final class ChartInput
+class StatsInput
 {
-    public const VIEW_TYPE = 'view';
-    public const CLICK_TYPE = 'click';
-    public const CPC_TYPE = 'cpc';
-    public const CPM_TYPE = 'cpm';
-    public const SUM_TYPE = 'sum';
-    public const CTR_TYPE = 'ctr';
-
-    public const HOUR_RESOLUTION = 'hour';
-    public const DAY_RESOLUTION = 'day';
-    public const WEEK_RESOLUTION = 'week';
-    public const MONTH_RESOLUTION = 'month';
-    public const QUARTER_RESOLUTION = 'quarter';
-    public const YEAR_RESOLUTION = 'year';
-
-    private const ALLOWED_TYPES = [
-        self::VIEW_TYPE,
-        self::CLICK_TYPE,
-        self::CPC_TYPE,
-        self::CPM_TYPE,
-        self::SUM_TYPE,
-        self::CTR_TYPE,
-    ];
-
-    private const ALLOWED_RESOLUTIONS = [
-        self::HOUR_RESOLUTION,
-        self::DAY_RESOLUTION,
-        self::WEEK_RESOLUTION,
-        self::MONTH_RESOLUTION,
-        self::QUARTER_RESOLUTION,
-        self::YEAR_RESOLUTION,
-    ];
-
     /** @var int */
     private $advertiserId;
-
-    /** @var string  */
-    private $type;
-
-    /** @var string  */
-    private $resolution;
 
     /** @var DateTime */
     private $dateStart;
@@ -77,26 +38,12 @@ final class ChartInput
     /** @var int|null */
     private $campaignId;
 
-    /** @var int|null */
-    private $bannerId;
-
     public function __construct(
         int $advertiserId,
-        string $type,
-        string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?int $campaignId = null
     ) {
-        if (!in_array($type, self::ALLOWED_TYPES, true)) {
-            throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
-        }
-
-        if (!in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
-            throw new InvalidInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
-        }
-
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
@@ -105,11 +52,8 @@ final class ChartInput
             ));
         }
 
-        $this->type = $type;
-        $this->resolution = $resolution;
         $this->advertiserId = $advertiserId;
         $this->campaignId = $campaignId;
-        $this->bannerId = $bannerId;
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
     }
@@ -117,16 +61,6 @@ final class ChartInput
     public function getAdvertiserId(): int
     {
         return $this->advertiserId;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    public function getResolution(): string
-    {
-        return $this->resolution;
     }
 
     public function getDateStart(): DateTime
@@ -142,10 +76,5 @@ final class ChartInput
     public function getCampaignId(): ?int
     {
         return $this->campaignId;
-    }
-
-    public function getBannerId(): ?int
-    {
-        return $this->bannerId;
     }
 }
