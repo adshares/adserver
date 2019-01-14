@@ -204,7 +204,7 @@ SQL;
 
     private static function convertDateTimeToMySqlDate(DateTime $dateTime): string
     {
-        return $dateTime->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d H:i:s');
+        return $dateTime->format('Y-m-d H:i:s');
     }
 
     private function unsetDbSessionTimeZone(): void
