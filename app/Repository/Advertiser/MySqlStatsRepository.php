@@ -40,13 +40,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         $result =
-            $this->fetch(ChartInput::VIEW_TYPE,
+            $this->fetch(
+                ChartInput::VIEW_TYPE,
                 $advertiserId,
                 $resolution,
                 $dateStart,
                 $dateEnd,
                 $campaignId,
-                $bannerId);
+                $bannerId
+            );
 
         return new ChartResult($result);
     }
@@ -60,13 +62,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         $result =
-            $this->fetch(ChartInput::CLICK_TYPE,
+            $this->fetch(
+                ChartInput::CLICK_TYPE,
                 $advertiserId,
                 $resolution,
                 $dateStart,
                 $dateEnd,
                 $campaignId,
-                $bannerId);
+                $bannerId
+            );
 
         return new ChartResult($result);
     }
@@ -80,13 +84,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         $result =
-            $this->fetch(ChartInput::CPC_TYPE,
+            $this->fetch(
+                ChartInput::CPC_TYPE,
                 $advertiserId,
                 $resolution,
                 $dateStart,
                 $dateEnd,
                 $campaignId,
-                $bannerId);
+                $bannerId
+            );
 
         return new ChartResult($result);
     }
@@ -100,13 +106,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         $result =
-            $this->fetch(ChartInput::CPM_TYPE,
+            $this->fetch(
+                ChartInput::CPM_TYPE,
                 $advertiserId,
                 $resolution,
                 $dateStart,
                 $dateEnd,
                 $campaignId,
-                $bannerId);
+                $bannerId
+            );
 
         return new ChartResult($result);
     }
