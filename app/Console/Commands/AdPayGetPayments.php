@@ -38,16 +38,16 @@ class AdPayGetPayments extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:adpay:payments:get {--ts=} {--sub=1}';
+    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
 
-        $ts = $this->option('ts');
+        $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
 
-        $calculations = collect($adPay->getPayments($timestamp));
+        $calculations = collect($adPay->getPayments($timestamp, (bool)$this->option('force')));
 
         Log::info('Found '.count($calculations).' calculations.');
 

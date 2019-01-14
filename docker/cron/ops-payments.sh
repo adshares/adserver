@@ -1,9 +1,24 @@
 #!/usr/bin/env bash
 
-if ! [[ "$1" == "" ]]
-then
-    ADPAY_PAYMENTS_GET_PARAM="--sub=$1"
-fi
+ADPAY_PAYMENTS_GET_PARAM=""
+
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+        --sub | -s )
+            ADPAY_PAYMENTS_GET_PARAM="--sub=$2"
+            shift
+        ;;
+        --timestamp | -t )
+            ADPAY_PAYMENTS_GET_PARAM="--ts=$2"
+            shift
+        ;;
+        --force | -f )
+            ADPAY_PAYMENTS_GET_PARAM_FORCE="--force"
+        ;;
+    esac
+    shift
+done
 
 if [ ! -e /tmp/ops_payments_in_progress ]; then
     touch /tmp/ops_payments_in_progress
