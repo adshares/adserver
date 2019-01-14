@@ -13,9 +13,6 @@ do
             ADPAY_PAYMENTS_GET_PARAM="--ts=$2"
             shift
         ;;
-        --force | -f )
-            ADPAY_PAYMENTS_GET_PARAM_FORCE="--force"
-        ;;
     esac
     shift
 done
