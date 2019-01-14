@@ -21,14 +21,14 @@
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": true,
-    "isAdvertiser": true
+    "isAdvertiser": false
   },
   {
     "email": "adv@dev.dev",
     "password": "adv@dev.dev",
     "isConfirmed": true,
     "isAdmin": false,
-    "isPublisher": true,
+    "isPublisher": false,
     "isAdvertiser": true
   },
   {
@@ -37,14 +37,14 @@
     "isConfirmed": true,
     "isAdmin": false,
     "isPublisher": true,
-    "isAdvertiser": true
+    "isAdvertiser": false
   },
   {
     "email": "adv2@dev.dev",
     "password": "adv2@dev.dev",
     "isConfirmed": true,
     "isAdmin": false,
-    "isPublisher": true,
+    "isPublisher": false,
     "isAdvertiser": true
   }
 ]
