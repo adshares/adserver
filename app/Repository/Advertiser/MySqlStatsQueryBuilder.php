@@ -29,7 +29,7 @@ use DateTime;
 class MySqlStatsQueryBuilder
 {
     private const BASE_QUERY = <<<SQL
-SELECT #selectedCols#resolutionCols
+SELECT #selectedCols #resolutionCols
 FROM event_logs e
        INNER JOIN
        (SELECT b.*
