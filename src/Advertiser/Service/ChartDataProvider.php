@@ -24,6 +24,7 @@ namespace Adshares\Advertiser\Service;
 
 use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Advertiser\Dto\ChartResult;
 
 final class ChartDataProvider
 {

@@ -20,9 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Service;
-
-use function json_encode;
+namespace Adshares\Advertiser\Dto;
 
 class ChartResult
 {
@@ -39,13 +37,8 @@ class ChartResult
         }
     }
 
-    public function getData(): array
+    public function toArray(): array
     {
         return $this->data;
-    }
-
-    public function toJSon(): string
-    {
-        return json_encode($this->data);
     }
 }

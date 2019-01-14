@@ -22,7 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Repository;
 
-use Adshares\Advertiser\Service\ChartResult;
+use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\StatsResult;
 use DateTime;
 
 interface StatsRepository
@@ -80,4 +81,12 @@ interface StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult;
+
+    public function fetchStats(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): StatsResult;
 }

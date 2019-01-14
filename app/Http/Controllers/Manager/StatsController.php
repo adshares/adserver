@@ -25,8 +25,10 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
-use Adshares\Advertiser\Dto\InvalidChartInputException;
+use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
+use Adshares\Advertiser\Dto\InvalidInputException;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
+use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,9 +42,15 @@ class StatsController extends Controller
     /** @var AdvertiserChartDataProvider */
     private $advertiserChartDataProvider;
 
-    public function __construct(AdvertiserChartDataProvider $advertiserChartDataProvider)
-    {
+    /** @var AdvertiserStatsDataProvider */
+    private $advertiserStatsDataProvider;
+
+    public function __construct(
+        AdvertiserChartDataProvider $advertiserChartDataProvider,
+        AdvertiserStatsDataProvider $advertiserStatsDataProvider
+    ) {
         $this->advertiserChartDataProvider = $advertiserChartDataProvider;
+        $this->advertiserStatsDataProvider = $advertiserStatsDataProvider;
     }
 
     public function advertiserChart(
@@ -52,15 +60,15 @@ class StatsController extends Controller
         string $dateStart,
         string $dateEnd
     ): JsonResponse {
-        $from = DateTime::createFromFormat(DateTime::ATOM, $dateStart);
-        $to = DateTime::createFromFormat(DateTime::ATOM, $dateEnd);
-        $campaignId = $request->input('campaign_id') ? (int)$request->input('campaign_id') : null;
-        $bannerId = $request->input('banner_id') ? (int)$request->input('banner_id') : null;
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignId = $this->getCampaignIdFromRequest($request);
+        $bannerId = $this->getBannerIdFromRequest($request);
 
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $dateStart, $dateEnd);
+        $this->validateChartInputParameters($user, $from, $to);
 
         if (!$user->isAdvertiser()) {
             throw new AccessDeniedHttpException(sprintf(
@@ -79,19 +87,89 @@ class StatsController extends Controller
                 $campaignId,
                 $bannerId
             );
-        } catch (InvalidChartInputException $exception) {
+        } catch (InvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
         $result = $this->advertiserChartDataProvider->fetch($input);
 
-        return new JsonResponse($result->getData());
+        return new JsonResponse($result->toArray());
+    }
+
+    public function advertiserStats(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignId = $this->getCampaignIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($user, $from, $to);
+
+        if (!$user->isAdvertiser()) {
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
+        }
+
+        try {
+            $input = new AdvertiserStatsInput(
+                $user->id,
+                $from,
+                $to,
+                $campaignId
+            );
+        } catch (InvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->advertiserStatsDataProvider->fetch($input);
+
+        return new JsonResponse($result->toArray());
+    }
+
+    private function createDateTime(string $dateInISO8601Format): ?DateTime
+    {
+        $date = DateTime::createFromFormat(DateTime::ATOM, $dateInISO8601Format);
+
+        if (!$date) {
+            return null;
+        }
+
+        return $date;
+    }
+
+    private function getCampaignIdFromRequest(Request $request): ?int
+    {
+        $campaignId = $request->input('campaign_id');
+
+        if (!$campaignId) {
+            return null;
+        }
+
+        return (int)$campaignId;
+    }
+
+    private function getBannerIdFromRequest(Request $request): ?int
+    {
+        $bannerId = $request->input('banner_id');
+
+        if (!$bannerId) {
+            return null;
+        }
+
+        return (int)$bannerId;
     }
 
     private function validateChartInputParameters(
         User $user,
-        string $dateStart,
-        string $dateEnd
+        ?DateTime $dateStart,
+        ?DateTime $dateEnd
     ): void {
         if (!$dateStart) {
             throw new BadRequestHttpException('Bad format of start date.');
