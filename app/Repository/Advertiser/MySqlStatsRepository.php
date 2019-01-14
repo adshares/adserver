@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Advertiser\Service\ChartResult;
@@ -32,23 +31,6 @@ use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
-    private const BASE_QUERY = <<<SQL
-SELECT count(e.created_at) AS c#resolutionCols
-FROM event_logs e
-       INNER JOIN
-       (SELECT b.*
-        FROM banners b
-               INNER JOIN campaigns c 
-                          ON b.campaign_id = c.id 
-                            AND c.user_id = :advertiserId#campaignIdWhereClause#bannerIdWhereClause
-       ) b
-       ON
-         e.banner_id = b.uuid
-WHERE e.event_type = :eventType
-  AND e.created_at BETWEEN :dateStart AND :dateEnd
-#resolutionGroupBy
-SQL;
-
     public function fetchView(
         int $advertiserId,
         string $resolution,
@@ -57,29 +39,16 @@ SQL;
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $query = self::appendResolutionToQuery(self::BASE_QUERY, $resolution);
-        $query = self::appendCampaignIdWhereClauseToQuery($query, $campaignId);
-        $query = self::appendBannerIdWhereClauseToQuery($query, $bannerId);
+        $query = (new MySqlStatsQueryBuilder(ChartInput::VIEW_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
+            $bannerId
+        )->build();
 
-        $dateTimeZone = $dateStart->getTimezone();
-        $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select(
-            $query,
-            [
-                'advertiserId' => $advertiserId,
-                'eventType' => EventLog::TYPE_VIEW,
-                'dateStart' => self::convertDateTimeToMySqlDate($dateStart),
-                'dateEnd' => self::convertDateTimeToMySqlDate($dateEnd),
-            ]
-        );
-        $this->unsetDbSessionTimeZone();
+        $queryResult = $this->executeQuery($query, $dateStart);
 
-        $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
-        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
-        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
-
-        $result = $this->mapResult($joinedResult);
-        $this->overwriteStartDate($dateStart, $result);
+        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
 
         return new ChartResult($result);
     }
@@ -92,7 +61,18 @@ SQL;
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchClick() method.
+        $query = (new MySqlStatsQueryBuilder(ChartInput::CLICK_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
+            $bannerId
+        )->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+
+        return new ChartResult($result);
     }
 
     public function fetchCpc(
@@ -139,77 +119,42 @@ SQL;
         // TODO: Implement fetchCtr() method.
     }
 
-    private static function appendResolutionToQuery(string $query, string $resolution): string
+    private function executeQuery(string $query, DateTime $dateStart): array
     {
-        switch ($resolution) {
-            case ChartInput::HOUR_RESOLUTION:
-                $cols =
-                    ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, '
-                    .'DAY(e.created_at) AS d, HOUR(e.created_at) AS h';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at), HOUR(e.created_at)';
-                break;
-            case ChartInput::DAY_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, DAY(e.created_at) AS d';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)';
-                break;
-            case ChartInput::WEEK_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, WEEK(e.created_at) as w';
-                $groupBy = 'GROUP BY YEAR(e.created_at), WEEK(e.created_at)';
-                break;
-            case ChartInput::MONTH_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at)';
-                break;
-            case ChartInput::QUARTER_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, QUARTER(e.created_at) as q';
-                $groupBy = 'GROUP BY YEAR(e.created_at), QUARTER(e.created_at)';
-                break;
-            case ChartInput::YEAR_RESOLUTION:
-            default:
-                $cols = ', YEAR(e.created_at) AS y';
-                $groupBy = 'GROUP BY YEAR(e.created_at)';
-                break;
-        }
+        $dateTimeZone = $dateStart->getTimezone();
+        $this->setDbSessionTimezone($dateTimeZone);
+        $queryResult = DB::select($query);
+        $this->unsetDbSessionTimeZone();
 
-        return str_replace(['#resolutionCols', '#resolutionGroupBy'], [$cols, $groupBy], $query);
-    }
-
-    private static function appendCampaignIdWhereClauseToQuery(string $query, ?int $campaignId): string
-    {
-        if ($campaignId === null) {
-            $campaignIdWhereClause = '';
-        } else {
-            $campaignIdWhereClause = sprintf(' AND c.id = %d', $campaignId);
-        }
-
-        return str_replace(['#campaignIdWhereClause'], [$campaignIdWhereClause], $query);
-    }
-
-    private static function appendBannerIdWhereClauseToQuery(string $query, ?int $bannerId): string
-    {
-        if ($bannerId === null) {
-            $bannerIdWhereClause = '';
-        } else {
-            $bannerIdWhereClause = sprintf(' AND b.id = %d', $bannerId);
-        }
-
-        return str_replace(['#bannerIdWhereClause'], [$bannerIdWhereClause], $query);
+        return $queryResult;
     }
 
     private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
     {
-        DB::select('SET @tmp_time_zone = (SELECT @@session.time_zone)');
-        DB::select(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
-    }
-
-    private static function convertDateTimeToMySqlDate(DateTime $dateTime): string
-    {
-        return $dateTime->format('Y-m-d H:i:s');
+        DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
     }
 
     private function unsetDbSessionTimeZone(): void
     {
-        DB::select('SET time_zone = (SELECT @tmp_time_zone)');
+        DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+    }
+
+    private function processQueryResult(
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        array $queryResult
+    ): array {
+        $dateTimeZone = $dateStart->getTimezone();
+        $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
+        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
+        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
+
+        $result = $this->mapResult($joinedResult);
+        $this->overwriteStartDate($dateStart, $result);
+
+        return $result;
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
