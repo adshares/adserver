@@ -30,5 +30,5 @@ interface AdPay
 
     public function addEvents(array $events): void;
 
-    public function getPayments(int $timestamp, $force = false): array;
+    public function getPayments(int $timestamp, bool $force = false): array;
 }
