@@ -114,6 +114,8 @@ class User extends Authenticatable
         $user = new User($data);
         $user->password = $data['password'];
         $user->email = $data['email'];
+        $user->is_advertiser = true;
+        $user->is_publisher = true;
         $user->save();
 
         return $user;
