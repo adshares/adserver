@@ -33,7 +33,7 @@ class StatsResult
         }
     }
 
-    public function  toArray(): array
+    public function toArray(): array
     {
         $result = [];
 

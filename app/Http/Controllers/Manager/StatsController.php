@@ -153,7 +153,6 @@ class StatsController extends Controller
         }
 
         return (int)$campaignId;
-
     }
 
     private function getBannerIdFromRequest(Request $request): ?int
