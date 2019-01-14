@@ -29,7 +29,7 @@ use DateTime;
 class MySqlStatsQueryBuilder
 {
     private const BASE_QUERY = <<<SQL
-SELECT count(e.created_at) AS c#resolutionCols
+SELECT #selectedCols#resolutionCols
 FROM event_logs e
        INNER JOIN
        (SELECT b.*
@@ -52,17 +52,36 @@ SQL;
 
     public function __construct(string $type)
     {
+        $this->query = '';
+
         switch ($type) {
             case ChartInput::VIEW_TYPE:
-                $str = "'".EventLog::TYPE_VIEW."'";
-                $this->query = str_replace([':eventType'], [$str], self::BASE_QUERY);
-                break;
             case ChartInput::CLICK_TYPE:
-                $str = "'".EventLog::TYPE_CLICK."'";
-                $this->query = str_replace([':eventType'], [$str], self::BASE_QUERY);
+                $this->query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', self::BASE_QUERY);
+                break;
+            case ChartInput::CPC_TYPE:
+                $this->query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0) AS c', self::BASE_QUERY);
+                break;
+            case ChartInput::CPM_TYPE:
+                $this->query =
+                    str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', self::BASE_QUERY);
                 break;
             default:
-                $this->query = '';
+                break;
+        }
+
+        switch ($type) {
+            case ChartInput::VIEW_TYPE:
+            case ChartInput::CPM_TYPE:
+                $str = "'".EventLog::TYPE_VIEW."'";
+                $this->query = str_replace(':eventType', $str, $this->query);
+                break;
+            case ChartInput::CLICK_TYPE:
+            case ChartInput::CPC_TYPE:
+                $str = "'".EventLog::TYPE_CLICK."'";
+                $this->query = str_replace(':eventType', $str, $this->query);
+                break;
+            default:
                 break;
         }
     }

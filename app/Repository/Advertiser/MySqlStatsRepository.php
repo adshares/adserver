@@ -83,7 +83,18 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCpc() method.
+        $query = (new MySqlStatsQueryBuilder(ChartInput::CPC_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
+            $bannerId
+        )->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+
+        return new ChartResult($result);
     }
 
     public function fetchCpm(
@@ -94,7 +105,18 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCpm() method.
+        $query = (new MySqlStatsQueryBuilder(ChartInput::CPM_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
+            $bannerId
+        )->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+
+        return new ChartResult($result);
     }
 
     public function fetchSum(
