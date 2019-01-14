@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Demand\Application\Service\AdPay;
@@ -75,9 +74,9 @@ final class JsonRpcAdPayClient implements AdPay
         $this->client->call($procedure);
     }
 
-    public function getPayments(int $timestamp): array
+    public function getPayments(int $timestamp, bool $force = false): array
     {
-        if (config('app.env') === Utils::ENV_DEV) {
+        if ($force) {
             $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
             $this->client->call($procedure);
         }
