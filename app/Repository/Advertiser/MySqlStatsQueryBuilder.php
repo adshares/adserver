@@ -36,7 +36,7 @@ FROM event_logs e
         FROM banners b
                INNER JOIN campaigns c 
                           ON b.campaign_id = c.id 
-                            AND c.user_id = :advertiserId#campaignIdWhereClause#bannerIdWhereClause
+                            AND c.user_id = :advertiserId #campaignIdWhereClause #bannerIdWhereClause
        ) b
        ON
          e.banner_id = b.uuid
