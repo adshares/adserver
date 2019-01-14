@@ -44,7 +44,7 @@ class AdPayGetPayments extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $calculations = collect($adPay->getPayments(now()->getTimestamp()));
+        $calculations = collect($adPay->getPayments(now()->subHour()->getTimestamp()));
 
         Log::info('Found '.count($calculations).' calculations.');
 
