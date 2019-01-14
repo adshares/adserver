@@ -24,8 +24,9 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Advertiser\Dto\ChartInput;
+use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\StatsResult;
 use Adshares\Advertiser\Repository\StatsRepository;
-use Adshares\Advertiser\Service\ChartResult;
 use DateTime;
 use DateTimeZone;
 
@@ -139,6 +140,16 @@ class MySqlStatsRepository implements StatsRepository
         ?int $bannerId = null
     ): ChartResult {
         // TODO: Implement fetchCtr() method.
+    }
+
+    public function fetchStats(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null,
+        ?int $bannerId = null
+    ): StatsResult {
+        // TODO: Implement fetchStats() method.
     }
 
     private function executeQuery(string $query, DateTime $dateStart): array
