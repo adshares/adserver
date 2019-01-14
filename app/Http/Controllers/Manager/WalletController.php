@@ -218,7 +218,7 @@ class WalletController extends Controller
      *
      * @return string
      */
-    private function getUserLedgerEntryAddress($ledgerItem): string
+    private function getUserLedgerEntryAddress($ledgerItem): ?string
     {
         if ((int)$ledgerItem->amount > 0) {
             $address = $ledgerItem->address_to;
