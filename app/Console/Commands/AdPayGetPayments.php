@@ -82,7 +82,7 @@ class AdPayGetPayments extends Command
                 });
 
                 Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_INACTIVE;
+                    $campaign->status = Campaign::STATUS_SUSPENDED;
                     $campaign->save();
                 });
 
