@@ -28,6 +28,8 @@ use DateTime;
 
 class MySqlStatsQueryBuilder
 {
+    public const STATS_TYPE = 'stats';
+
     private const BASE_QUERY = <<<SQL
 SELECT #selectedCols #resolutionCols
 FROM event_logs e
@@ -42,6 +44,29 @@ FROM event_logs e
          e.banner_id = b.uuid
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd #eventTypeWhereClause
 #resolutionGroupBy
+SQL;
+
+    private const STATS_QUERY = <<<SQL
+SELECT
+  SUM(IF(e.event_type = 'click', 1, 0))                           AS clicks,
+  SUM(IF(e.event_type = 'view', 1, 0))                            AS views,
+  0                                                               AS ctr,
+  IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0) AS cpc,
+  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))    AS cost,
+  b.campaign_id                                                   as cid
+  #bannerIdCol
+FROM event_logs e
+       INNER JOIN
+       (SELECT b.*
+        FROM banners b
+               INNER JOIN campaigns c
+                          ON b.campaign_id = c.id
+                            AND c.user_id = :advertiserId #campaignIdWhereClause
+       ) b
+       ON
+         e.banner_id = b.uuid
+WHERE e.created_at BETWEEN :dateStart AND :dateEnd
+GROUP BY b.campaign_id #bannerIdGroupBy
 SQL;
 
     /**
@@ -67,6 +92,9 @@ SQL;
                 break;
             case ChartInput::SUM_TYPE:
                 $this->query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', self::BASE_QUERY);
+                break;
+            case self::STATS_TYPE:
+                $this->query = self::STATS_QUERY;
                 break;
             default:
                 break;
@@ -178,6 +206,20 @@ SQL;
         }
 
         $this->query = str_replace(['#bannerIdWhereClause'], [$bannerIdWhereClause], $this->query);
+
+        return $this;
+    }
+
+    public function appendBannerIdGroupBy(?int $campaignId = null): self
+    {
+        if ($campaignId === null) {
+            $bannerIdCol = '';
+            $bannerIdGroupBy = '';
+        } else {
+            $bannerIdCol = ', b.id as bid';
+            $bannerIdGroupBy = ', b.id';
+        }
+        $this->query = str_replace(['#bannerIdCol', '#bannerIdGroupBy'], [$bannerIdCol, $bannerIdGroupBy], $this->query);
 
         return $this;
     }

@@ -40,16 +40,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::VIEW_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
+        $result = $this->fetch(
+            ChartInput::VIEW_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
 
         return new ChartResult($result);
     }
@@ -62,16 +61,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CLICK_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
+        $result = $this->fetch(
+            ChartInput::CLICK_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
 
         return new ChartResult($result);
     }
@@ -84,16 +82,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CPC_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
+        $result = $this->fetch(
+            ChartInput::CPC_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
 
         return new ChartResult($result);
     }
@@ -106,16 +103,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CPM_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
+        $result = $this->fetch(
+            ChartInput::CPM_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
 
         return new ChartResult($result);
     }
@@ -128,16 +124,15 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::SUM_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
+        $result = $this->fetch(
+            ChartInput::SUM_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
 
         return new ChartResult($result);
     }
@@ -160,7 +155,62 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): StatsResult {
-        // TODO: Implement fetchStats() method.
+        $query =
+            (new MySqlStatsQueryBuilder(MySqlStatsQueryBuilder::STATS_TYPE))->setAdvertiserId($advertiserId)
+                ->setDateRange(
+                    $dateStart,
+                    $dateEnd
+                )
+                ->appendCampaignIdWhereClause($campaignId)
+                ->appendBannerIdGroupBy($campaignId)
+                ->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = [];
+        foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+
+            if ($clicks > $views) {
+                $ctr = 100.0;
+            } elseif ($views === 0) {
+                $ctr = 0.0;
+            } else {
+                $ctr = $clicks / $views;
+            }
+
+            $rowArray = [$clicks, $views, $ctr, (int)$row->cpc, (int)$row->cost, $row->cid];
+            if ($campaignId !== null) {
+                $rowArray[] = $row->bid;
+            }
+            $result[] = $rowArray;
+        }
+
+        return new StatsResult($result);
+    }
+
+    private function fetch(
+        string $type,
+        int $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId,
+        ?int $bannerId
+    ): array {
+        $query = (new MySqlStatsQueryBuilder($type))->setAdvertiserId($advertiserId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
+            $bannerId
+        )->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+
+        return $result;
     }
 
     private function executeQuery(string $query, DateTime $dateStart): array
@@ -359,28 +409,5 @@ class MySqlStatsRepository implements StatsRepository
         if (count($result) > 0) {
             $result[0][0] = $dateStart->format(DateTime::ATOM);
         }
-    }
-
-    private function fetch(
-        string $type,
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId,
-        ?int $bannerId
-    ): array {
-        $query = (new MySqlStatsQueryBuilder($type))->setAdvertiserId($advertiserId)->setDateRange(
-            $dateStart,
-            $dateEnd
-        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
-            $bannerId
-        )->build();
-
-        $queryResult = $this->executeQuery($query, $dateStart);
-
-        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
-
-        return $result;
     }
 }
