@@ -128,7 +128,18 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchSum() method.
+        $result =
+            $this->fetch(
+                ChartInput::SUM_TYPE,
+                $advertiserId,
+                $resolution,
+                $dateStart,
+                $dateEnd,
+                $campaignId,
+                $bannerId
+            );
+
+        return new ChartResult($result);
     }
 
     public function fetchCtr(

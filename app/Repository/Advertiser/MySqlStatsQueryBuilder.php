@@ -40,8 +40,7 @@ FROM event_logs e
        ) b
        ON
          e.banner_id = b.uuid
-WHERE e.event_type = :eventType
-  AND e.created_at BETWEEN :dateStart AND :dateEnd
+WHERE e.created_at BETWEEN :dateStart AND :dateEnd #eventTypeWhereClause
 #resolutionGroupBy
 SQL;
 
@@ -66,6 +65,9 @@ SQL;
                 $this->query =
                     str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', self::BASE_QUERY);
                 break;
+            case ChartInput::SUM_TYPE:
+                $this->query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', self::BASE_QUERY);
+                break;
             default:
                 break;
         }
@@ -73,13 +75,16 @@ SQL;
         switch ($type) {
             case ChartInput::VIEW_TYPE:
             case ChartInput::CPM_TYPE:
-                $str = "'".EventLog::TYPE_VIEW."'";
-                $this->query = str_replace(':eventType', $str, $this->query);
+                $str = sprintf(" AND e.event_type = '%s'", EventLog::TYPE_VIEW);
+                $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
                 break;
             case ChartInput::CLICK_TYPE:
             case ChartInput::CPC_TYPE:
-                $str = "'".EventLog::TYPE_CLICK."'";
-                $this->query = str_replace(':eventType', $str, $this->query);
+                $str = sprintf(" AND e.event_type = '%s'", EventLog::TYPE_CLICK);
+                $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
+                break;
+            case ChartInput::SUM_TYPE:
+                $this->query = str_replace('#eventTypeWhereClause', '', $this->query);
                 break;
             default:
                 break;
