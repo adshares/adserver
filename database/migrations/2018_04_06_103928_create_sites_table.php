@@ -31,6 +31,7 @@ class CreateSitesTable extends Migration
     {
         Schema::create('sites', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->binary('uuid', 16);
 
             $table->timestamps();
             $table->softDeletes();
@@ -46,6 +47,15 @@ class CreateSitesTable extends Migration
 
             $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('RESTRICT');
         });
+
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE sites MODIFY uuid varbinary(16)');
+        }
+
+        Schema::table('sites', function (Blueprint $table) {
+            $table->unique('uuid');
+        });
+
     }
 
     /**

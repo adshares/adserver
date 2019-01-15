@@ -26,9 +26,36 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @property int created_at
+ * @property int updated_at
+ * @property string case_id
+ * @property string event_id
+ * @property string user_id
+ * @property string banner_id
+ * @property string publisher_id
+ * @property string site_id
+ * @property string zone_id
+ * @property string event_type
+ * @property string pay_from
+ * @property string ip
+ * @property string headers
+ * @property string context
+ * @property int human_score
+ * @property string our_userdata
+ * @property string their_userdata
+ * @property int event_value
+ * @property int licence_fee_amount
+ * @property int operator_fee_amount
+ * @property int paid_amount
+ * @property int ads_payment_id
+ * @mixin Builder
+ */
 class NetworkEventLog extends Model
 {
     public const TYPE_VIEW = 'view';
@@ -53,6 +80,7 @@ class NetworkEventLog extends Model
         'banner_id',
         'zone_id',
         'publisher_id',
+        'site_id',
         'pay_from',
         'event_type',
         'ip',
@@ -67,6 +95,7 @@ class NetworkEventLog extends Model
         'licence_fee_amount',
         'operator_fee_amount',
         'ads_payment_id',
+        'is_view_clicked',
     ];
 
     /**
@@ -87,6 +116,7 @@ class NetworkEventLog extends Model
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
+        'site_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -131,6 +161,7 @@ class NetworkEventLog extends Model
         string $zoneId,
         string $trackingId,
         string $publisherId,
+        string $siteId,
         string $payFrom,
         $ip,
         $headers,
@@ -144,6 +175,7 @@ class NetworkEventLog extends Model
         $log->user_id = $trackingId;
         $log->zone_id = $zoneId;
         $log->publisher_id = $publisherId;
+        $log->site_id = $siteId;
         $log->pay_from = $payFrom;
         $log->ip = $ip;
         $log->headers = $headers;
@@ -152,5 +184,12 @@ class NetworkEventLog extends Model
         $log->save();
 
         return $log;
+    }
+
+    public static function eventClicked(string $caseId): void
+    {
+        $a= self::where('case_id', hex2bin($caseId))
+            ->where('event_type', self::TYPE_VIEW)
+            ->update(['is_view_clicked' => 1]);
     }
 }

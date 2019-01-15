@@ -32,8 +32,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use function hex2bin;
 
 /**
- * @property int event_id
- * @property Banner banner
+ * @property int created_at
+ * @property int updated_at
+ * @property string case_id
+ * @property string event_id
+ * @property string user_id
+ * @property string banner_id
+ * @property string publisher_id
+ * @property string advertiser_id
+ * @property string campaign_id
+ * @property string zone_id
+ * @property string event_type
+ * @property string pay_to
+ * @property string ip
+ * @property string headers
+ * @property string our_context
+ * @property string their_context
+ * @property int human_score
+ * @property string our_userdata
+ * @property string their_userdata
+ * @property int event_value
+ * @property int licence_fee
+ * @property int operator_fee
+ * @property int paid_amount
+ * @property int payment_id
+ * @property int reason
  * @mixin Builder
  */
 class EventLog extends Model
@@ -61,6 +84,8 @@ class EventLog extends Model
         'banner_id',
         'zone_id',
         'publisher_id',
+        'advertiser_id',
+        'campaign_id',
         'event_type',
         'pay_to',
         'ip',
@@ -74,6 +99,8 @@ class EventLog extends Model
         'event_value',
         'paid_amount',
         'payment_id',
+        'reason',
+        'is_view_clicked',
     ];
 
     /**
@@ -94,6 +121,8 @@ class EventLog extends Model
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
+        'advertiser_id' => 'BinHex',
+        'campaign_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -127,6 +156,8 @@ class EventLog extends Model
         string $zoneId,
         string $trackingId,
         string $publisherId,
+        string $campaignId,
+        string $advertiserId,
         string $payTo,
         $ip,
         $headers,
@@ -141,6 +172,8 @@ class EventLog extends Model
         $log->user_id = $trackingId;
         $log->zone_id = $zoneId;
         $log->publisher_id = $publisherId;
+        $log->campaign_id = $campaignId;
+        $log->advertiser_id = $advertiserId;
         $log->pay_to = $payTo;
         $log->ip = $ip;
         $log->headers = $headers;
@@ -200,5 +233,12 @@ class EventLog extends Model
         $banner = Banner::where('uuid', hex2bin($this->banner_id))->first();
 
         return $banner->campaign->user;
+    }
+
+    public static function eventClicked(string $caseId): void
+    {
+        self::where('case_id', hex2bin($caseId))
+            ->where('event_type', self::TYPE_VIEW)
+            ->update(['is_view_clicked' => 1]);
     }
 }
