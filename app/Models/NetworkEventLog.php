@@ -54,6 +54,7 @@ use Illuminate\Database\Eloquent\Builder;
  * @property int operator_fee_amount
  * @property int paid_amount
  * @property int ads_payment_id
+ * @property int is_view_clicked
  * @mixin Builder
  */
 class NetworkEventLog extends Model

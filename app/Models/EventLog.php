@@ -57,6 +57,7 @@ use function hex2bin;
  * @property int paid_amount
  * @property int payment_id
  * @property int reason
+ * @property int is_view_clicked
  * @mixin Builder
  */
 class EventLog extends Model
