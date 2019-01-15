@@ -63,9 +63,11 @@ class Campaign extends Model
 
     public const STATUS_INACTIVE = 1;
 
+    public const STATUS_SUSPENDED = 3;
+
     public const STATUS_ACTIVE = 2;
 
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
     public static $rules = [
 //        'name' => 'required|max:255',

@@ -83,7 +83,7 @@ class AdPayGetPayments extends Command
                 });
 
                 Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_INACTIVE;
+                    $campaign->status = Campaign::STATUS_SUSPENDED;
                     $campaign->save();
                 });
 
@@ -92,15 +92,20 @@ class AdPayGetPayments extends Command
 
                 $totalEventValue = $collection->sum('event_value');
             }
-            $userLedgerEntry = new UserLedgerEntry();
-            $userLedgerEntry->user_id = $userId;
-            $userLedgerEntry->amount = -$totalEventValue;
-            $userLedgerEntry->status = UserLedgerEntry::STATUS_ACCEPTED;
-            $userLedgerEntry->type = UserLedgerEntry::TYPE_AD_EXPENDITURE;
-            $userLedgerEntry->save();
 
-            return $userLedgerEntry;
-        });
+            if ($totalEventValue > 0) {
+                $userLedgerEntry = new UserLedgerEntry();
+                $userLedgerEntry->user_id = $userId;
+                $userLedgerEntry->amount = -$totalEventValue;
+                $userLedgerEntry->status = UserLedgerEntry::STATUS_ACCEPTED;
+                $userLedgerEntry->type = UserLedgerEntry::TYPE_AD_EXPENDITURE;
+                $userLedgerEntry->save();
+
+                return $userLedgerEntry;
+            }
+
+            return false;
+        })->filter();
 
         DB::commit();
 

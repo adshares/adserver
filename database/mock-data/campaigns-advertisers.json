@@ -33,5 +33,20 @@
         "classification_tags": "travel"
       }
     ]
+  },
+  {
+    "email": "dev@dev.dev",
+    "campaigns": [
+      {
+        "code": "ads",
+        "name": "Adshares Campaign",
+        "url": "https://adshares.net/",
+        "max_cpm": 100000000000,
+        "max_cpc": 100000000000,
+        "budget_per_hour": 100000000000,
+        "classification_status": 2,
+        "classification_tags": "advertising, blockchain, technology"
+      }
+    ]
   }
 ]
