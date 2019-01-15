@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -27,7 +28,7 @@ class CreateUsersTable extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -41,8 +42,8 @@ class CreateUsersTable extends Migration
             $table->string('name')->nullable();
             $table->string('password');
 
-            $table->boolean('is_advertiser')->nullable();
-            $table->boolean('is_publisher')->nullable();
+            $table->boolean('is_advertiser')->default(true);
+            $table->boolean('is_publisher')->default(true);
             $table->boolean('is_admin')->default(false);
 
             $table->string('api_token', 60)
@@ -52,7 +53,7 @@ class CreateUsersTable extends Migration
             ;
         });
 
-        if (DB::isMysql()) {
+        if (DB::isMySql()) {
             DB::statement('ALTER TABLE users MODIFY uuid varbinary(16) NOT NULL');
         }
 
@@ -64,7 +65,7 @@ class CreateUsersTable extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('users');
     }

@@ -23,8 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Tests\CreatesApplication;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Dto\ChartInput;
+use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,6 +34,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class StatsControllerTest extends TestCase
 {
+    use CreatesApplication;
     use RefreshDatabase;
 
     private const ADVERTISER_CHART_URI = '/api/advertiser/stats/chart';
@@ -66,8 +69,8 @@ final class StatsControllerTest extends TestCase
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
-        $dateStart = (new DateTime());
-        $dateEnd = (new DateTime());
+        $dateStart = new DateTime();
+        $dateEnd = new DateTime();
 
         foreach ($resolutions as $resolution) {
             $url = sprintf(
@@ -103,8 +106,8 @@ final class StatsControllerTest extends TestCase
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
-        $dateStart = (new DateTime());
-        $dateEnd = (new DateTime());
+        $dateStart = new DateTime();
+        $dateEnd = new DateTime();
 
         $url = sprintf(
             '%s/%s/%s',
@@ -128,5 +131,17 @@ final class StatsControllerTest extends TestCase
             ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['ctr', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
         ];
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()->bind(
+            StatsRepository::class,
+            function () {
+                return new DummyStatsRepository();
+            }
+        );
     }
 }

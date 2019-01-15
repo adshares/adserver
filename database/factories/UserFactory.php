@@ -26,7 +26,7 @@ $factory->define(User::class, function (Faker $faker) {
         'email' => $faker->unique()->safeEmail,
         'password' => $faker->password(8),
         'uuid' => $faker->md5,
-        'is_advertiser' => $faker->boolean,
-        'is_publisher' => $faker->boolean,
+        'is_advertiser' => true,
+        'is_publisher' => true,
     ];
 });
