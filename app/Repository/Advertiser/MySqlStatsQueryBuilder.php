@@ -75,12 +75,12 @@ SQL;
         switch ($type) {
             case ChartInput::VIEW_TYPE:
             case ChartInput::CPM_TYPE:
-                $str = sprintf(" AND e.event_type = '%s'", EventLog::TYPE_VIEW);
+                $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
                 $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
                 break;
             case ChartInput::CLICK_TYPE:
             case ChartInput::CPC_TYPE:
-                $str = sprintf(" AND e.event_type = '%s'", EventLog::TYPE_CLICK);
+                $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_CLICK);
                 $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
                 break;
             case ChartInput::SUM_TYPE:
