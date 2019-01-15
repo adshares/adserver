@@ -69,6 +69,7 @@ class AdPayGetPayments extends Command
             $collection->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
                 $entry->event_value = $calculation['amount'];
+                $entry->reason = $calculation['reason'];
                 $entry->save();
             });
 
