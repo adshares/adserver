@@ -38,7 +38,7 @@
     "email": "dev@dev.dev",
     "campaigns": [
       {
-        "code": "ads",
+        "code": "ads2",
         "name": "Adshares Campaign",
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
@@ -53,7 +53,7 @@
     "email": "postman@dev.dev",
     "campaigns": [
       {
-        "code": "test",
+        "code": "ads",
         "name": "Adshares Campaign",
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,

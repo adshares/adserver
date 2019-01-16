@@ -115,11 +115,6 @@ class User extends Authenticatable
         'is_email_confirmed',
     ];
 
-    public function campaigns()
-    {
-        return $this->hasMany(Campaign::class);
-    }
-
     public static function register($data): User
     {
         $user = new User($data);
