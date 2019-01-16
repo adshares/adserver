@@ -28,7 +28,7 @@ then
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
 
-    if [[ "${BUILD_BRANCH:-master}" === "master" ]]
+    if [[ "${BUILD_BRANCH:-master}" == "master" ]]
     then
         ./artisan migrate
     else
