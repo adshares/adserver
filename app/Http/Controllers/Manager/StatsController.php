@@ -69,7 +69,7 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $from, $to);
+        $this->validateChartInputParameters($from, $to);
 
         if (!$user->isAdvertiser()) {
             throw new AccessDeniedHttpException(sprintf(
@@ -125,7 +125,6 @@ class StatsController extends Controller
     }
 
     private function validateChartInputParameters(
-        User $user,
         ?DateTime $dateStart,
         ?DateTime $dateEnd
     ): void {
@@ -135,10 +134,6 @@ class StatsController extends Controller
 
         if (!$dateEnd) {
             throw new BadRequestHttpException('Bad format of end date.');
-        }
-
-        if (!$user) {
-            throw new NotFoundHttpException('User is not found');
         }
     }
 
@@ -154,7 +149,7 @@ class StatsController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $from, $to);
+        $this->validateChartInputParameters($from, $to);
 
         if (!$user->isAdvertiser()) {
             throw new AccessDeniedHttpException(sprintf(

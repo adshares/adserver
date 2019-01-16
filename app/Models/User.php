@@ -184,13 +184,7 @@ class User extends Authenticatable
 
     public static function fetchByEmail(string $email): ?self
     {
-        $user = self::where('email', $email)->first();
-
-        if (!$user) {
-            return null;
-        }
-
-        return $user;
+        return self::where('email', $email)->first();
     }
 
     public function isAdvertiser(): bool

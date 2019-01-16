@@ -149,13 +149,7 @@ class Campaign extends Model
 
     public static function fetchByUuid(string $uuid): ?self
     {
-        $campaign = self::where('uuid', hex2bin($uuid))->first();
-
-        if (!$campaign) {
-            return null;
-        }
-
-        return $campaign;
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 
     public function banners(): HasMany
