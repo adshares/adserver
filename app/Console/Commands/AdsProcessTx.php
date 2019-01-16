@@ -270,7 +270,7 @@ class AdsProcessTx extends Command
 
                 try {
                     $this->reactivateSuspendedCampaigns($user);
-                    Log::debug("Notify user [{$user->id}] that we cannot restart all suspended campaigns.");
+                    Log::debug("Notify user [{$user->id}] that we restarted all suspended campaigns.");
                 } catch (InvalidArgumentException $exception) {
                     Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
                 }
