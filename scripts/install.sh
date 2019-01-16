@@ -31,6 +31,7 @@ then
 
     ./artisan migrate:fresh
     ./artisan db:seed
+    ./artisan ads:send
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adpay${DEPLOYMENT_SUFFIX}
