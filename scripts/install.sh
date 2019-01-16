@@ -31,7 +31,7 @@ then
 
     if [[ "${BUILD_BRANCH:-master}" == "master" ]]
     then
-        ./artisan migrate
+        ./artisan migrate --no-interaction
     else
         ./artisan migrate:fresh --force --no-interaction
         ./artisan db:seed
@@ -55,9 +55,9 @@ then
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
 
-    ./artisan migrate
+    ./artisan migrate --no-interaction
 else
-    ./artisan migrate
+    ./artisan migrate --no-interaction
 fi
 
 ./artisan ops:targeting-options:update
