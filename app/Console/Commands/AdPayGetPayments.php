@@ -69,6 +69,7 @@ class AdPayGetPayments extends Command
             $collection->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
                 $entry->event_value = $calculation['amount'];
+                $entry->reason = $calculation['reason'];
                 $entry->save();
             });
 
@@ -82,7 +83,7 @@ class AdPayGetPayments extends Command
                 });
 
                 Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_INACTIVE;
+                    $campaign->status = Campaign::STATUS_SUSPENDED;
                     $campaign->save();
                 });
 

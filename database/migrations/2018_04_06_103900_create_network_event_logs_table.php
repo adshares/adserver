@@ -42,6 +42,7 @@ class CreateNetworkEventLogsTable extends Migration
             $table->binary('user_id', 16);
             $table->binary('banner_id', 16);
             $table->binary('publisher_id', 16);
+            $table->binary('site_id', 16);
             $table->bigInteger('zone_id')->unsigned();
 
             $table->string('event_type', 16);
@@ -61,6 +62,8 @@ class CreateNetworkEventLogsTable extends Migration
             $table->bigInteger('licence_fee_amount')->nullable();
             $table->bigInteger('operator_fee_amount')->nullable();
             $table->bigInteger('ads_payment_id')->nullable();
+
+            $table->tinyInteger('is_view_clicked')->unsigned()->default(0);
         });
 
         if (DB::isMySql()) {
@@ -68,6 +71,7 @@ class CreateNetworkEventLogsTable extends Migration
             DB::statement('ALTER TABLE network_event_logs MODIFY event_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY user_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY site_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)');
             DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(8)');

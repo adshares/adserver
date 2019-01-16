@@ -167,6 +167,13 @@ HTML;
         return $user->uuid;
     }
 
+    public static function fetchSiteId(int $zoneId): string
+    {
+        $zone = self::find($zoneId);
+        return $zone->site->uuid;
+    }
+
+
     public function site()
     {
         return $this->belongsTo(Site::class);
