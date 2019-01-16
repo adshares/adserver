@@ -24,11 +24,17 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @property Collection|Campaign[] campaigns
+ * @property int id
+ */
 class User extends Authenticatable
 {
     use Notifiable;
@@ -190,5 +196,10 @@ class User extends Authenticatable
     public function isPublisher(): bool
     {
         return (bool)$this->is_publisher;
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
     }
 }
