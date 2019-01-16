@@ -24,11 +24,17 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @property Collection|Campaign[] campaigns
+ * @property int id
+ */
 class User extends Authenticatable
 {
     use Notifiable;
@@ -109,6 +115,11 @@ class User extends Authenticatable
         'is_email_confirmed',
     ];
 
+    public function campaigns()
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
     public static function register($data): User
     {
         $user = new User($data);
@@ -157,11 +168,6 @@ class User extends Authenticatable
         return Hash::check($value, $this->attributes['password']);
     }
 
-    public function setRememberToken($token)
-    {
-        return;
-    }
-
     public function generateApiKey(): void
     {
         do {
@@ -177,9 +183,14 @@ class User extends Authenticatable
         $this->save();
     }
 
-    public static function fetchByUuid(string $uuid): ?User
+    public static function fetchByUuid(string $uuid): ?self
     {
         return self::where('uuid', $uuid)->first();
+    }
+
+    public static function fetchByEmail(string $email): ?self
+    {
+        return self::where('email', $email)->first();
     }
 
     public function isAdvertiser(): bool
@@ -190,5 +201,10 @@ class User extends Authenticatable
     public function isPublisher(): bool
     {
         return (bool)$this->is_publisher;
+    }
+
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
     }
 }

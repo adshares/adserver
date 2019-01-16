@@ -50,24 +50,29 @@ final class CampaignsTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
-    public function testCreateCampaignWithoutBannersAndTargeting(): void
+    /** @dataProvider budgetVsResponseWhenCreatingCampaign */
+    public function testCreateCampaignWithoutBannersAndTargeting(int $budget, int $returnValue): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
-        $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
-        $response->assertStatus(Response::HTTP_CREATED);
+        $campaignInputData = $this->campaignInputData();
+        $campaignInputData['basicInformation']['budget'] = $budget;
+        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response->assertStatus($returnValue);
 
-        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        if ($returnValue === Response::HTTP_CREATED) {
+            $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-        $response = $this->getJson(self::URI.'/'.$id);
-        $response->assertStatus(Response::HTTP_OK);
+            $response = $this->getJson(self::URI.'/'.$id);
+            $response->assertStatus(Response::HTTP_OK);
+        }
     }
 
     private function campaignInputData(): array
     {
         return [
             'basicInformation' => [
-                'status' => 0,
+                'status' => Campaign::STATUS_ACTIVE,
                 'name' => 'Adshares test campaign',
                 'targetUrl' => 'http://adshares.net',
                 'max_cpc' => 200000000000,
@@ -119,6 +124,21 @@ final class CampaignsTest extends TestCase
         $response->assertStatus(Response::HTTP_NOT_FOUND);
     }
 
+    /** @dataProvider budgetVsResponseWhenStatusChange */
+    public function testCampaignStatusChange(int $budget, int $responseCode): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'budget' => $budget]);
+
+        $this->assertCount(1, Campaign::where('id', $campaign->id)->get());
+
+        $response =
+            $this->putJson(self::URI."/{$campaign->id}/status", ['campaign' => ['status' => Campaign::STATUS_ACTIVE]]);
+        $response->assertStatus($responseCode);
+    }
+
     private function createCampaignForUser(User $user): int
     {
         $campaign = factory(Campaign::class)->create(['user_id' => $user->id]);
@@ -145,5 +165,22 @@ final class CampaignsTest extends TestCase
 
         $response = $this->deleteJson(self::URI."/{$campaignId}");
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function budgetVsResponseWhenCreatingCampaign(): array
+    {
+        return [
+            [100, Response::HTTP_CREATED],
+            [0, Response::HTTP_CREATED],
+            [-11, Response::HTTP_BAD_REQUEST],
+        ];
+    }
+
+    public function budgetVsResponseWhenStatusChange(): array
+    {
+        return [
+            [100, Response::HTTP_BAD_REQUEST],
+            [0, Response::HTTP_NO_CONTENT],
+        ];
     }
 }

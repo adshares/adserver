@@ -26,7 +26,7 @@ use DateTime;
 
 class StatsInput
 {
-    /** @var int */
+    /** @var string */
     private $advertiserId;
 
     /** @var DateTime */
@@ -35,14 +35,14 @@ class StatsInput
     /** @var DateTime */
     private $dateEnd;
 
-    /** @var int|null */
+    /** @var string|null */
     private $campaignId;
 
     public function __construct(
-        int $advertiserId,
+        string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null
+        ?string $campaignId = null
     ) {
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
@@ -58,7 +58,7 @@ class StatsInput
         $this->dateEnd = $dateEnd;
     }
 
-    public function getAdvertiserId(): int
+    public function getAdvertiserId(): string
     {
         return $this->advertiserId;
     }
@@ -73,7 +73,7 @@ class StatsInput
         return $this->dateEnd;
     }
 
-    public function getCampaignId(): ?int
+    public function getCampaignId(): ?string
     {
         return $this->campaignId;
     }

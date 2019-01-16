@@ -22,10 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
-use Adshares\Adserver\Models\Banner;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput;
 use DateTime;
 
@@ -151,13 +148,9 @@ SQL;
         return $this->query;
     }
 
-    public function setAdvertiserId(int $advertiserId): self
+    public function setAdvertiserId(string $advertiserId): self
     {
-        // TODO remove these two lines when $advertiserId will be string
-        $user = User::find($advertiserId);
-        $advertiserUuid = $user->uuid;
-
-        $this->query = str_replace([':advertiserId'], ['0x'.$advertiserUuid], $this->query);
+        $this->query = str_replace([':advertiserId'], ['0x'.$advertiserId], $this->query);
 
         return $this;
     }
@@ -215,16 +208,12 @@ SQL;
         return $this;
     }
 
-    public function appendCampaignIdWhereClause(?int $campaignId = null): self
+    public function appendCampaignIdWhereClause(?string $campaignId = null): self
     {
         if ($campaignId === null) {
             $campaignIdWhereClause = '';
         } else {
-            // TODO remove these two lines when $campaignId will be string
-            $campaign = Campaign::find($campaignId);
-            $campaignUuid = $campaign->uuid;
-
-            $campaignIdWhereClause = sprintf('AND e.campaign_id = 0x%s', $campaignUuid);
+            $campaignIdWhereClause = sprintf('AND e.campaign_id = 0x%s', $campaignId);
         }
 
         $this->query = str_replace(['#campaignIdWhereClause'], [$campaignIdWhereClause], $this->query);
@@ -237,11 +226,7 @@ SQL;
         if ($bannerId === null) {
             $bannerIdWhereClause = '';
         } else {
-            // TODO remove these two lines when $bannerId will be string
-            $banner = Banner::find($bannerId);
-            $bannerUuid = $banner->uuid;
-
-            $bannerIdWhereClause = sprintf('AND e.banner_id = 0x%s', $bannerUuid);
+            $bannerIdWhereClause = sprintf('AND e.banner_id = 0x%s', $bannerId);
         }
 
         $this->query = str_replace(['#bannerIdWhereClause'], [$bannerIdWhereClause], $this->query);
