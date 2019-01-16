@@ -248,9 +248,11 @@ class AdsProcessTx extends Command
             if (null === $user) {
                 $this->handleReservedTx($dbTx);
             } else {
+                DB::beginTransaction();
+
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
-                // add to ledger
+
                 $ledgerEntry = new UserLedgerEntry();
                 $ledgerEntry->user_id = $user->id;
                 $ledgerEntry->amount = $amount;
@@ -260,7 +262,6 @@ class AdsProcessTx extends Command
                 $ledgerEntry->type = UserLedgerEntry::TYPE_DEPOSIT;
 
                 $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
-                DB::beginTransaction();
 
                 $ledgerEntry->save();
                 $dbTx->save();
