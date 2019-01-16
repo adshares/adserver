@@ -181,9 +181,9 @@ class MySqlStatsRepository implements StatsRepository
                 $ctr = $clicks / $views;
             }
 
-            $rowArray = [$clicks, $views, $ctr, (int)$row->cpc, (int)$row->cost, $row->cid];
+            $rowArray = [$clicks, $views, $ctr, (int)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
             if ($campaignId !== null) {
-                $rowArray[] = $row->bid;
+                $rowArray[] = bin2hex($row->bid);
             }
             $result[] = $rowArray;
         }

@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput;
 use DateTime;
 
@@ -33,16 +36,11 @@ class MySqlStatsQueryBuilder
     private const BASE_QUERY = <<<SQL
 SELECT #selectedCols #resolutionCols
 FROM event_logs e
-       INNER JOIN
-       (SELECT b.*
-        FROM banners b
-               INNER JOIN campaigns c 
-                          ON b.campaign_id = c.id 
-                            AND c.user_id = :advertiserId #campaignIdWhereClause #bannerIdWhereClause
-       ) b
-       ON
-         e.banner_id = b.uuid
-WHERE e.created_at BETWEEN :dateStart AND :dateEnd #eventTypeWhereClause
+WHERE e.created_at BETWEEN :dateStart AND :dateEnd
+  AND e.advertiser_id = :advertiserId
+  #bannerIdWhereClause
+  #campaignIdWhereClause 
+  #eventTypeWhereClause
 #resolutionGroupBy
 SQL;
 
@@ -53,20 +51,13 @@ SELECT
   0                                                               AS ctr,
   IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0) AS cpc,
   SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))    AS cost,
-  b.campaign_id                                                   as cid
+  e.campaign_id                                                   AS cid
   #bannerIdCol
 FROM event_logs e
-       INNER JOIN
-       (SELECT b.*
-        FROM banners b
-               INNER JOIN campaigns c
-                          ON b.campaign_id = c.id
-                            AND c.user_id = :advertiserId #campaignIdWhereClause
-       ) b
-       ON
-         e.banner_id = b.uuid
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
-GROUP BY b.campaign_id #bannerIdGroupBy
+  AND e.advertiser_id = :advertiserId
+  #campaignIdWhereClause
+GROUP BY e.campaign_id #bannerIdGroupBy
 SQL;
 
     /**
@@ -157,7 +148,11 @@ SQL;
 
     public function setAdvertiserId(int $advertiserId): self
     {
-        $this->query = str_replace([':advertiserId'], [$advertiserId], $this->query);
+        // TODO remove these two lines when $advertiserId will be string
+        $user = User::find($advertiserId);
+        $advertiserUuid = $user->uuid;
+
+        $this->query = str_replace([':advertiserId'], ['0x'.$advertiserUuid], $this->query);
 
         return $this;
     }
@@ -220,7 +215,11 @@ SQL;
         if ($campaignId === null) {
             $campaignIdWhereClause = '';
         } else {
-            $campaignIdWhereClause = sprintf(' AND c.id = %d', $campaignId);
+            // TODO remove these two lines when $campaignId will be string
+            $campaign = Campaign::find($campaignId);
+            $campaignUuid = $campaign->uuid;
+
+            $campaignIdWhereClause = sprintf('AND e.campaign_id = 0x%s', $campaignUuid);
         }
 
         $this->query = str_replace(['#campaignIdWhereClause'], [$campaignIdWhereClause], $this->query);
@@ -233,7 +232,11 @@ SQL;
         if ($bannerId === null) {
             $bannerIdWhereClause = '';
         } else {
-            $bannerIdWhereClause = sprintf(' AND b.id = %d', $bannerId);
+            // TODO remove these two lines when $bannerId will be string
+            $banner = Banner::find($bannerId);
+            $bannerUuid = $banner->uuid;
+
+            $bannerIdWhereClause = sprintf('AND e.banner_id = 0x%s', $bannerUuid);
         }
 
         $this->query = str_replace(['#bannerIdWhereClause'], [$bannerIdWhereClause], $this->query);
@@ -247,8 +250,8 @@ SQL;
             $bannerIdCol = '';
             $bannerIdGroupBy = '';
         } else {
-            $bannerIdCol = ', b.id as bid';
-            $bannerIdGroupBy = ', b.id';
+            $bannerIdCol = ', e.banner_id AS bid';
+            $bannerIdGroupBy = ', e.banner_id';
         }
         $this->query =
             str_replace(['#bannerIdCol', '#bannerIdGroupBy'], [$bannerIdCol, $bannerIdGroupBy], $this->query);
