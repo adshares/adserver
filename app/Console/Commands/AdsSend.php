@@ -48,17 +48,17 @@ class AdsSend extends Command
         }
 
         $msg = [];
-        $sendFromSelf = false;
+        $sendFromSelf = true;
 
         if (!$this->option('external')) {
-            $sendFromSelf = true;
+            $sendFromSelf = false;
         }
 
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'pub', 'pub@dev.dev', random_int(100, 1000));
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'adv', 'adv@dev.dev', random_int(100, 1000));
         $msg[] = $this->send($sendFromSelf ? $adsClient : 'dev', 'dev@dev.dev', random_int(100, 1000));
-        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(10, 100));
-        $msg[] = $this->send($adsClient, 'adv2@dev.dev', random_int(10, 100));
+        $msg[] = $this->send($sendFromSelf ? $adsClient : 'postman', 'postman@dev.dev', random_int(100, 1000));
+        $msg[] = $this->send($adsClient, 'test@dev.dev', random_int(100, 500));
 
         $this->info(json_encode($msg));
     }
