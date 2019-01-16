@@ -26,6 +26,7 @@ use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Advertiser\Service\ChartDataProvider;
+use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -59,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             StatsRepository::class,
             function () {
-                return new MySqlStatsRepository();
+                return new DummyStatsRepository();
             }
         );
 

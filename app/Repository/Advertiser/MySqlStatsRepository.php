@@ -32,137 +32,6 @@ use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
-    public function fetchView(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::VIEW_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
-
-        return new ChartResult($result);
-    }
-
-    public function fetchClick(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CLICK_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
-
-        return new ChartResult($result);
-    }
-
-    public function fetchCpc(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CPC_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
-
-        return new ChartResult($result);
-    }
-
-    public function fetchCpm(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::CPM_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
-
-        return new ChartResult($result);
-    }
-
-    public function fetchSum(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        $result =
-            $this->fetch(
-                ChartInput::SUM_TYPE,
-                $advertiserId,
-                $resolution,
-                $dateStart,
-                $dateEnd,
-                $campaignId,
-                $bannerId
-            );
-
-        return new ChartResult($result);
-    }
-
-    public function fetchCtr(
-        int $advertiserId,
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): ChartResult {
-        // TODO: Implement fetchCtr() method.
-    }
-
-    public function fetchStats(
-        int $advertiserId,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
-    ): StatsResult {
-        // TODO: Implement fetchStats() method.
-    }
-
     private function executeQuery(string $query, DateTime $dateStart): array
     {
         $dateTimeZone = $dateStart->getTimezone();
@@ -382,5 +251,74 @@ class MySqlStatsRepository implements StatsRepository
         $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
 
         return $result;
+    }
+
+    public function fetchView(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchView() method.
+    }
+
+    public function fetchClick(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchClick() method.
+    }
+
+    public function fetchCpc(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchCpc() method.
+    }
+
+    public function fetchCpm(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchCpm() method.
+    }
+
+    public function fetchSum(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchSum() method.
+    }
+
+    public function fetchCtr(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchCtr() method.
+    }
+
+    public function fetchStats(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsResult {
+        // TODO: Implement fetchStats() method.
     }
 }

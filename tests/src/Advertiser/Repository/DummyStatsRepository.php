@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Advertiser\Repository;
 
+use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\StatsResult;
 use Adshares\Advertiser\Dto\ChartResult;
 use Adshares\Advertiser\Repository\StatsRepository;
@@ -29,14 +31,14 @@ use DateTime;
 
 class DummyStatsRepository implements StatsRepository
 {
+    const USER_EMAIL = 'postman@dev.dev';
 
     public function fetchView(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [1, 1, 1],
@@ -45,16 +47,30 @@ class DummyStatsRepository implements StatsRepository
             [4, 4, 4],
         ];
 
+        if ($campaignId) {
+            $data = $this->setDataForCampaign($data);
+        }
+
         return new ChartResult($data);
     }
 
+    private function setDataForCampaign(array $data): array
+    {
+        foreach ($data as &$entry) {
+            foreach ($entry as &$value) {
+                $value = 100 + $value;
+            }
+        }
+
+        return $data;
+    }
+
     public function fetchClick(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [11, 11, 11],
@@ -67,12 +83,11 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCpc(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [12, 12, 12],
@@ -85,12 +100,11 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCpm(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [13, 13, 13],
@@ -103,12 +117,11 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchSum(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [14, 14, 14],
@@ -121,12 +134,11 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchCtr(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult {
         $data = [
             [15, 15, 15],
@@ -139,17 +151,32 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStats(
-        int $advertiserId,
+        string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): StatsResult {
-        $campaignId = 1;
+        $user = User::fetchByEmail(self::USER_EMAIL);
+
+        if ($campaignId) {
+            $campaign = Campaign::fetchByUuid($campaignId);
+            $banners = $campaign->banners;
+
+            $bannerId1 = $banners[0]->uuid;
+            $bannerId2 = $banners[1]->uuid;
+            $bannerId3 = $banners[2]->uuid;
+            $bannerId4 = $banners[3]->uuid;
+        }
+
+        $campaigns = $user->campaigns;
+
+        $campaignUuid = $campaigns[0]->uuid;
+
         $data = [
-            [$campaignId, 1, 1, 1, 1, 1],
-            [$campaignId, 2, 2, 2, 2, 2],
-            [$campaignId, 3, 3, 3, 3, 3],
+            [1, 1, 1, 1, 1, $campaignUuid, $bannerId1 ?? null],
+            [2, 2, 2, 2, 2, $campaignUuid, $bannerId2 ?? null],
+            [3, 3, 3, 3, 3, $campaignUuid, $bannerId3 ?? null],
+            [4, 4, 4, 4, 4, $campaignUuid, $bannerId4 ?? null],
         ];
 
         return new StatsResult($data);

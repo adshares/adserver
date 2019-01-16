@@ -29,64 +29,57 @@ use DateTime;
 interface StatsRepository
 {
     public function fetchView(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchClick(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCpc(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCpm(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchSum(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCtr(
-        int $advertiserId,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchStats(
-        int $advertiserId,
+        string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): StatsResult;
 }
