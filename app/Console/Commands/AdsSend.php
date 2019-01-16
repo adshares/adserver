@@ -50,7 +50,7 @@ class AdsSend extends Command
         $msg = [];
         $sendFromSelf = true;
 
-        if (!$this->option('external')) {
+        if ($this->option('external')) {
             $sendFromSelf = false;
         }
 
