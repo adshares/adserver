@@ -24,6 +24,8 @@ fi
 
 if [[ ${DO_RESET} == "yes" ]]
 then
+    servce nginx stop
+
     supervisorctl stop adselect${DEPLOYMENT_SUFFIX}
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
@@ -43,6 +45,8 @@ then
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl start aduser${DEPLOYMENT_SUFFIX}
+
+    servce nginx start
 elif [[ ${DO_RESET} == "both" ]]
 then
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
