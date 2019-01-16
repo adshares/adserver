@@ -29,6 +29,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -83,6 +84,13 @@ class Handler extends ExceptionHandler
             return $this->response(
                 $exception->getMessage(),
                 Response::HTTP_UNAUTHORIZED,
+                $exception->getTrace()
+            );
+        }
+        if ($exception instanceof InvalidArgumentException) {
+            return $this->response(
+                $exception->getMessage(),
+                Response::HTTP_BAD_REQUEST,
                 $exception->getTrace()
             );
         }

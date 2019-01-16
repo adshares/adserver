@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 
 /**
  * @property int id
@@ -63,16 +64,16 @@ class Campaign extends Model
 
     public const STATUS_INACTIVE = 1;
 
-    public const STATUS_SUSPENDED = 3;
-
     public const STATUS_ACTIVE = 2;
+
+    public const STATUS_SUSPENDED = 3;
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
-//        'budget' => 'required:numeric',
+//        'basic_information.budget' => 'required:numeric|min:1',
     ];
 
     protected $dates = [
@@ -84,6 +85,7 @@ class Campaign extends Model
     protected $casts = [
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
+        'status' => 'int',
     ];
 
     protected $dispatchesEvents = [
@@ -182,6 +184,9 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
+        if ($value["budget"] < 0) {
+            throw new InvalidArgumentException('Budget needs to be non-negative');
+        }
         $this->budget = $value["budget"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;
@@ -210,5 +215,41 @@ class Campaign extends Model
         }
 
         return $urls;
+    }
+
+    public function changeStatus(int $status): void
+    {
+        if ($status === $this->status) {
+            return;
+        }
+
+        self::failIfInvalidStatus($status);
+        $this->failIfTransitionNotAllowed($status);
+
+        $this->status = $status;
+    }
+
+    private function failIfTransitionNotAllowed(int $status): void
+    {
+        if ($status === self::STATUS_ACTIVE) {
+            $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
+            $totalCampaignBudget = self::fetchByUserId($this->user_id)
+                ->sum(function (self $campaign) {
+                    return $campaign->budget;
+                });
+
+            if ($balance < $totalCampaignBudget) {
+                throw new InvalidArgumentException('Campaign budgets exceed account balance');
+            }
+        }
+    }
+
+    private static function failIfInvalidStatus(int $value): void
+    {
+        if (!self::isStatusAllowed($value)) {
+            throw new InvalidArgumentException(
+                sprintf('Status must be one of [%s]', implode(',', self::STATUSES))
+            );
+        }
     }
 }
