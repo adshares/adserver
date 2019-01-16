@@ -32,6 +32,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
@@ -103,7 +104,7 @@ class CampaignsController extends Controller
 
             $this->campaignRepository->save($campaign);
         } catch (InvalidArgumentException $e) {
-            //TODO: Notify user of the invalid status
+            Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->is}] cannot be started.");
         }
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
@@ -264,9 +265,13 @@ class CampaignsController extends Controller
         }
 
         if ($status !== null) {
-            $campaign->changeStatus($status);
+            try {
+                $campaign->changeStatus($status);
 
-            $this->campaignRepository->update($campaign);
+                $this->campaignRepository->save($campaign);
+            } catch (InvalidArgumentException $e) {
+                Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->is}] cannot be edited and started.");
+            }
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
