@@ -2,6 +2,7 @@
 
 set -ex
 
+servce nginx stop
 crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
 supervisorctl stop ${SUPERVISOR_CONFIG_NAME}
 
@@ -28,8 +29,13 @@ then
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
 
-    ./artisan migrate:fresh
-    ./artisan db:seed
+    if [[ "${BUILD_BRANCH:-master}" == "master" ]]
+    then
+        ./artisan migrate
+    else
+        ./artisan migrate:fresh --force --no-interaction
+        ./artisan db:seed
+    fi
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adpay${DEPLOYMENT_SUFFIX}
@@ -61,3 +67,4 @@ fi
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab
 
 service php7.2-fpm restart
+servce nginx start
