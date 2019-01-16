@@ -37,9 +37,9 @@ final class StatsControllerTest extends TestCase
     use CreatesApplication;
     use RefreshDatabase;
 
-    private const ADVERTISER_CHART_URI = '/api/advertiser/stats/chart';
+    private const ADVERTISER_CHART_URI = '/api/campaigns/stats/chart';
 
-    private const ADVERTISER_STATS_URI = '/api/advertiser/stats/table';
+    private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table';
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
