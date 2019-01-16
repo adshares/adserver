@@ -270,7 +270,8 @@ class CampaignsController extends Controller
 
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
-                Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->is}] cannot be edited and started.");
+                Log::debug("Notify user [{$campaign->user_id}]"
+                    ." that the campaign [{$campaign->is}] cannot be edited and started.");
             }
         }
 
