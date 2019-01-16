@@ -33,6 +33,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 class CampaignsController extends Controller
 {
@@ -75,6 +76,9 @@ class CampaignsController extends Controller
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
+        $status = $input['basic_information']['status'] ?? null;
+
+        $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
@@ -92,6 +96,14 @@ class CampaignsController extends Controller
 
         if ($temporaryFileToRemove) {
             $this->removeLocalBannerImages($temporaryFileToRemove);
+        }
+
+        try {
+            $campaign->changeStatus($status);
+
+            $this->campaignRepository->save($campaign);
+        } catch (InvalidArgumentException $e) {
+            //TODO: Notify user of the invalid status
         }
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
@@ -198,6 +210,8 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
+
+        $status = $input['basicInformation']['status'] ?? null;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
 
@@ -206,6 +220,10 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->fill($input);
+
+        if ($status !== null) {
+            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
+        }
 
         $bannersToUpdate = [];
         $bannersToDelete = [];
@@ -245,6 +263,12 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
+        if ($status !== null) {
+            $campaign->changeStatus($status);
+
+            $this->campaignRepository->update($campaign);
+        }
+
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
@@ -261,12 +285,9 @@ class CampaignsController extends Controller
 
         $status = (int)$request->input('campaign.status');
 
-        if (!Campaign::isStatusAllowed($status)) {
-            $status = Campaign::STATUS_INACTIVE;
-        }
-
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        $campaign->status = $status;
+
+        $campaign->changeStatus($status);
 
         $this->campaignRepository->update($campaign);
 
@@ -296,9 +317,10 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         if ($campaign->status !== Campaign::STATUS_INACTIVE) {
-            $campaign->status = Campaign::STATUS_INACTIVE;
+            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
             $this->campaignRepository->save($campaign);
         }
+
         $this->campaignRepository->delete($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
