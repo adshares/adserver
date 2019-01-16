@@ -73,7 +73,7 @@ class Campaign extends Model
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
-//        'budget' => 'required:numeric',
+//        'basic_information.budget' => 'required:numeric|min:1',
     ];
 
     protected $dates = [
@@ -184,6 +184,9 @@ class Campaign extends Model
         $this->landing_url = $value["target_url"];
         $this->max_cpc = $value["max_cpc"];
         $this->max_cpm = $value["max_cpm"];
+        if ($value["budget"] < 0) {
+            throw new InvalidArgumentException('Budget needs to be non-negative');
+        }
         $this->budget = $value["budget"];
         $this->time_start = $value["date_start"];
         $this->time_end = $value["date_end"] ?? null;

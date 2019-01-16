@@ -76,7 +76,7 @@ class CampaignsController extends Controller
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
-        $status = $input['basic_information']['status'] ?? null;
+        $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;

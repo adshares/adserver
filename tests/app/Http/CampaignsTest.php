@@ -60,10 +60,12 @@ final class CampaignsTest extends TestCase
         $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
         $response->assertStatus($returnValue);
 
-        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        if ($returnValue === Response::HTTP_CREATED) {
+            $id = $this->getIdFromLocation($response->headers->get('Location'));
 
-        $response = $this->getJson(self::URI.'/'.$id);
-        $response->assertStatus(Response::HTTP_OK);
+            $response = $this->getJson(self::URI.'/'.$id);
+            $response->assertStatus(Response::HTTP_OK);
+        }
     }
 
     private function campaignInputData(): array
