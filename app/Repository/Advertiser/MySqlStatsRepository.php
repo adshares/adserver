@@ -143,9 +143,8 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
-        foreach ($result as $key => $r) {
-            $r[1] = (float)$r[1];
-            $result[$key] = $r;
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
         }
 
         return new ChartResult($result);
@@ -174,7 +173,7 @@ class MySqlStatsRepository implements StatsRepository
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
 
-            $rowArray = [$clicks, $views, (float)$row->ctr, (int)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
+            $rowArray = [$clicks, $views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
             if ($campaignId !== null) {
                 $rowArray[] = bin2hex($row->bid);
             }

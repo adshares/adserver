@@ -221,7 +221,7 @@ SQL;
         return $this;
     }
 
-    public function appendBannerIdWhereClause(?int $bannerId = null): self
+    public function appendBannerIdWhereClause(?string $bannerId = null): self
     {
         if ($bannerId === null) {
             $bannerIdWhereClause = '';
@@ -234,7 +234,7 @@ SQL;
         return $this;
     }
 
-    public function appendBannerIdGroupBy(?int $campaignId = null): self
+    public function appendBannerIdGroupBy(?string $campaignId = null): self
     {
         if ($campaignId === null) {
             $bannerIdCol = '';
