@@ -22,16 +22,19 @@ if [ ! -v TRAVIS ]; then
   ./artisan config:cache
 fi
 
-
 if [[ ${DO_RESET} == "yes" ]]
 then
     supervisorctl stop adselect${DEPLOYMENT_SUFFIX}
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
 #    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
 
-    ./artisan migrate:fresh
-    ./artisan db:seed
-    ./artisan ads:send
+    if [[ "${BUILD_BRANCH:-master}" === "master" ]]
+    then
+        ./artisan migrate
+    else
+        ./artisan migrate:fresh
+        ./artisan db:seed
+    fi
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adpay${DEPLOYMENT_SUFFIX}
@@ -49,6 +52,8 @@ then
     supervisorctl stop adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
+
+    ./artisan migrate
 else
     ./artisan migrate
 fi

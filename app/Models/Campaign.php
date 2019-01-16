@@ -233,12 +233,13 @@ class Campaign extends Model
     {
         if ($status === self::STATUS_ACTIVE) {
             $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
-            $totalCampaignBudget = self::fetchByUserId($this->user_id)
-                ->sum(function (self $campaign) {
-                    return $campaign->budget;
-                });
 
-            if ($balance < $totalCampaignBudget) {
+            $requiredBalance = self::fetchByUserId($this->user_id)
+                ->filter(function (Campaign $campaign) {
+                    return $campaign->status === Campaign::STATUS_ACTIVE || $campaign->id === $this->id;
+                })->sum('budget');
+
+            if ($balance < $requiredBalance) {
                 throw new InvalidArgumentException('Campaign budgets exceed account balance');
             }
         }
