@@ -76,47 +76,78 @@ SQL;
 
     public function __construct(string $type)
     {
-        $this->query = '';
+        $query = $this->chooseQuery($type);
+        $query = $this->conditionallyReplaceSelectedColumns($type, $query);
+        $query = $this->conditionallyReplaceEventType($type, $query);
 
+        $this->query = $query;
+    }
+
+    private function chooseQuery(string $type): string
+    {
         switch ($type) {
             case ChartInput::VIEW_TYPE:
             case ChartInput::CLICK_TYPE:
-                $this->query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', self::BASE_QUERY);
-                break;
             case ChartInput::CPC_TYPE:
-                $this->query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0) AS c', self::BASE_QUERY);
-                break;
             case ChartInput::CPM_TYPE:
-                $this->query =
-                    str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', self::BASE_QUERY);
-                break;
             case ChartInput::SUM_TYPE:
-                $this->query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', self::BASE_QUERY);
+                $query = self::BASE_QUERY;
                 break;
             case self::STATS_TYPE:
-                $this->query = self::STATS_QUERY;
+                $query = self::STATS_QUERY;
+                break;
+            default:
+                $query = '';
+                break;
+        }
+
+        return $query;
+    }
+
+    private function conditionallyReplaceSelectedColumns(string $type, string $query)
+    {
+        switch ($type) {
+            case ChartInput::VIEW_TYPE:
+            case ChartInput::CLICK_TYPE:
+                $query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', $query);
+                break;
+            case ChartInput::CPC_TYPE:
+                $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0) AS c', $query);
+                break;
+            case ChartInput::CPM_TYPE:
+                $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', $query);
+                break;
+            case ChartInput::SUM_TYPE:
+                $query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', $query);
                 break;
             default:
                 break;
         }
 
+        return $query;
+    }
+
+    private function conditionallyReplaceEventType(string $type, string $query)
+    {
         switch ($type) {
             case ChartInput::VIEW_TYPE:
             case ChartInput::CPM_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
-                $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
+                $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
             case ChartInput::CLICK_TYPE:
             case ChartInput::CPC_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_CLICK);
-                $this->query = str_replace('#eventTypeWhereClause', $str, $this->query);
+                $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
             case ChartInput::SUM_TYPE:
-                $this->query = str_replace('#eventTypeWhereClause', '', $this->query);
+                $query = str_replace('#eventTypeWhereClause', '', $query);
                 break;
             default:
                 break;
         }
+
+        return $query;
     }
 
     public function build(): string
@@ -219,7 +250,8 @@ SQL;
             $bannerIdCol = ', b.id as bid';
             $bannerIdGroupBy = ', b.id';
         }
-        $this->query = str_replace(['#bannerIdCol', '#bannerIdGroupBy'], [$bannerIdCol, $bannerIdGroupBy], $this->query);
+        $this->query =
+            str_replace(['#bannerIdCol', '#bannerIdGroupBy'], [$bannerIdCol, $bannerIdGroupBy], $this->query);
 
         return $this;
     }

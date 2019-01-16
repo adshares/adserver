@@ -172,6 +172,7 @@ class MySqlStatsRepository implements StatsRepository
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
 
+            // TODO ctr should be computed during SQL SELECT - DB needs to be changed (add is_clicked column)
             if ($clicks > $views) {
                 $ctr = 100.0;
             } elseif ($views === 0) {
