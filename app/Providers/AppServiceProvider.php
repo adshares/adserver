@@ -60,7 +60,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             StatsRepository::class,
             function () {
-                return new DummyStatsRepository();
+                return new MySqlStatsRepository();
             }
         );
 
