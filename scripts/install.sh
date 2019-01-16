@@ -36,7 +36,7 @@ then
         ${ARTISAN_COMMAND} migrate 
     else
         ${ARTISAN_COMMAND} migrate:fresh --force 
-        ${ARTISAN_COMMAND} db:seed
+        ${ARTISAN_COMMAND} db:seed --force
     fi
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
