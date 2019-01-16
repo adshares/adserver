@@ -54,8 +54,7 @@ final class ChartDataProvider
             $input->getResolution(),
             $input->getDateStart(),
             $input->getDateEnd(),
-            $input->getCampaignId(),
-            $input->getBannerId()
+            $input->getCampaignId()
         );
     }
 }

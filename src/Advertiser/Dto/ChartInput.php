@@ -59,7 +59,7 @@ final class ChartInput
         self::YEAR_RESOLUTION,
     ];
 
-    /** @var int */
+    /** @var string */
     private $advertiserId;
 
     /** @var string  */
@@ -74,20 +74,16 @@ final class ChartInput
     /** @var DateTime */
     private $dateEnd;
 
-    /** @var int|null */
+    /** @var string|null */
     private $campaignId;
 
-    /** @var int|null */
-    private $bannerId;
-
     public function __construct(
-        int $advertiserId,
+        string $advertiserId,
         string $type,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ) {
         if (!in_array($type, self::ALLOWED_TYPES, true)) {
             throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
@@ -109,12 +105,11 @@ final class ChartInput
         $this->resolution = $resolution;
         $this->advertiserId = $advertiserId;
         $this->campaignId = $campaignId;
-        $this->bannerId = $bannerId;
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
     }
 
-    public function getAdvertiserId(): int
+    public function getAdvertiserId(): string
     {
         return $this->advertiserId;
     }
@@ -139,13 +134,8 @@ final class ChartInput
         return $this->dateEnd;
     }
 
-    public function getCampaignId(): ?int
+    public function getCampaignId(): ?string
     {
         return $this->campaignId;
-    }
-
-    public function getBannerId(): ?int
-    {
-        return $this->bannerId;
     }
 }

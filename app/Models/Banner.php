@@ -129,14 +129,8 @@ class Banner extends Model
         return $array;
     }
 
-    public static function fetchBanner(string $bannerUuid): ?Banner
+    public static function fetchBanner(string $bannerUuid): ?self
     {
-        $banner = self::where('uuid', hex2bin($bannerUuid))->first();
-
-        if (!$banner) {
-            return null;
-        }
-
-        return $banner;
+        return self::where('uuid', hex2bin($bannerUuid))->first();
     }
 }

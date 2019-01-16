@@ -23,10 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
-use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Dto\InvalidInputException;
+use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
 use DateTime;
@@ -63,12 +65,11 @@ class StatsController extends Controller
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
         $campaignId = $this->getCampaignIdFromRequest($request);
-        $bannerId = $this->getBannerIdFromRequest($request);
 
         /** @var User $user */
         $user = Auth::user();
 
-        $this->validateChartInputParameters($user, $from, $to);
+        $this->validateChartInputParameters($from, $to);
 
         if (!$user->isAdvertiser()) {
             throw new AccessDeniedHttpException(sprintf(
@@ -79,47 +80,9 @@ class StatsController extends Controller
 
         try {
             $input = new AdvertiserChartInput(
-                $user->id,
+                $user->uuid,
                 $type,
                 $resolution,
-                $from,
-                $to,
-                $campaignId,
-                $bannerId
-            );
-        } catch (InvalidInputException $exception) {
-            throw new BadRequestHttpException($exception->getMessage(), $exception);
-        }
-
-        $result = $this->advertiserChartDataProvider->fetch($input);
-
-        return new JsonResponse($result->toArray());
-    }
-
-    public function advertiserStats(
-        Request $request,
-        string $dateStart,
-        string $dateEnd
-    ): JsonResponse {
-        $from = $this->createDateTime($dateStart);
-        $to = $this->createDateTime($dateEnd);
-        $campaignId = $this->getCampaignIdFromRequest($request);
-
-        /** @var User $user */
-        $user = Auth::user();
-
-        $this->validateChartInputParameters($user, $from, $to);
-
-        if (!$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
-        }
-
-        try {
-            $input = new AdvertiserStatsInput(
-                $user->id,
                 $from,
                 $to,
                 $campaignId
@@ -128,7 +91,7 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->advertiserStatsDataProvider->fetch($input);
+        $result = $this->advertiserChartDataProvider->fetch($input);
 
         return new JsonResponse($result->toArray());
     }
@@ -144,7 +107,7 @@ class StatsController extends Controller
         return $date;
     }
 
-    private function getCampaignIdFromRequest(Request $request): ?int
+    private function getCampaignIdFromRequest(Request $request): ?string
     {
         $campaignId = $request->input('campaign_id');
 
@@ -152,22 +115,16 @@ class StatsController extends Controller
             return null;
         }
 
-        return (int)$campaignId;
-    }
+        $campaign = Campaign::find($campaignId);
 
-    private function getBannerIdFromRequest(Request $request): ?int
-    {
-        $bannerId = $request->input('banner_id');
-
-        if (!$bannerId) {
-            return null;
+        if (!$campaign) {
+            throw new NotFoundHttpException('Campaign does not exists.');
         }
 
-        return (int)$bannerId;
+        return $campaign->uuid;
     }
 
     private function validateChartInputParameters(
-        User $user,
         ?DateTime $dateStart,
         ?DateTime $dateEnd
     ): void {
@@ -178,9 +135,61 @@ class StatsController extends Controller
         if (!$dateEnd) {
             throw new BadRequestHttpException('Bad format of end date.');
         }
+    }
 
-        if (!$user) {
-            throw new NotFoundHttpException('User is not found');
+    public function advertiserStats(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignId = $this->getCampaignIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+
+        if (!$user->isAdvertiser()) {
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
         }
+
+        try {
+            $input = new AdvertiserStatsInput(
+                $user->uuid,
+                $from,
+                $to,
+                $campaignId
+            );
+        } catch (InvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
+
+        foreach ($result as &$item) {
+            $item = $this->transformUuidIntoInt($item);
+        }
+
+        return new JsonResponse($result);
+    }
+
+    private function transformUuidIntoInt(array $item): array
+    {
+        if (isset($item['bannerId'])) {
+            $banner = Banner::fetchBanner($item['bannerId']);
+            $item['bannerId'] = $banner->id;
+        }
+
+        if (isset($item['campaignId'])) {
+            $campaign = Campaign::fetchByUuid($item['campaignId']);
+            $item['campaignId'] = $campaign->id;
+        }
+
+        return $item;
     }
 }

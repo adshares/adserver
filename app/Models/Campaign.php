@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -146,6 +147,11 @@ class Campaign extends Model
     public static function fetchByUserId(int $userId): Collection
     {
         return self::where('user_id', $userId)->get();
+    }
+
+    public static function fetchByUuid(string $uuid): ?self
+    {
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 
     public function banners(): HasMany
