@@ -145,7 +145,22 @@ class MySqlStatsRepository implements StatsRepository
         ?int $campaignId = null,
         ?int $bannerId = null
     ): ChartResult {
-        // TODO: Implement fetchCtr() method.
+        $result = $this->fetch(
+            ChartInput::CTR_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId,
+            $bannerId
+        );
+
+        foreach ($result as $key => $r) {
+            $r[1] = (float)$r[1];
+            $result[$key] = $r;
+        }
+
+        return new ChartResult($result);
     }
 
     public function fetchStats(
@@ -172,16 +187,7 @@ class MySqlStatsRepository implements StatsRepository
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
 
-            // TODO ctr should be computed during SQL SELECT - DB needs to be changed (add is_clicked column)
-            if ($clicks > $views) {
-                $ctr = 100.0;
-            } elseif ($views === 0) {
-                $ctr = 0.0;
-            } else {
-                $ctr = $clicks / $views;
-            }
-
-            $rowArray = [$clicks, $views, $ctr, (int)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
+            $rowArray = [$clicks, $views, (float)$row->ctr, (int)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
             if ($campaignId !== null) {
                 $rowArray[] = bin2hex($row->bid);
             }

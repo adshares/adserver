@@ -46,12 +46,12 @@ SQL;
 
     private const STATS_QUERY = <<<SQL
 SELECT
-  SUM(IF(e.event_type = 'click', 1, 0))                           AS clicks,
-  SUM(IF(e.event_type = 'view', 1, 0))                            AS views,
-  0                                                               AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0) AS cpc,
-  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))    AS cost,
-  e.campaign_id                                                   AS cid
+  SUM(IF(e.event_type = 'click', 1, 0))                                                                   AS clicks,
+  SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
+  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
+  IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                         AS cpc,
+  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost,
+  e.campaign_id                                                                                           AS cid
   #bannerIdCol
 FROM event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
@@ -82,6 +82,7 @@ SQL;
             case ChartInput::CPC_TYPE:
             case ChartInput::CPM_TYPE:
             case ChartInput::SUM_TYPE:
+            case ChartInput::CTR_TYPE:
                 $query = self::BASE_QUERY;
                 break;
             case self::STATS_TYPE:
@@ -95,7 +96,7 @@ SQL;
         return $query;
     }
 
-    private function conditionallyReplaceSelectedColumns(string $type, string $query)
+    private function conditionallyReplaceSelectedColumns(string $type, string $query): string
     {
         switch ($type) {
             case ChartInput::VIEW_TYPE:
@@ -111,6 +112,9 @@ SQL;
             case ChartInput::SUM_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', $query);
                 break;
+            case ChartInput::CTR_TYPE:
+                $query = str_replace('#selectedCols', 'COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c', $query);
+                break;
             default:
                 break;
         }
@@ -118,11 +122,12 @@ SQL;
         return $query;
     }
 
-    private function conditionallyReplaceEventType(string $type, string $query)
+    private function conditionallyReplaceEventType(string $type, string $query): string
     {
         switch ($type) {
             case ChartInput::VIEW_TYPE:
             case ChartInput::CPM_TYPE:
+            case ChartInput::CTR_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
                 $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
