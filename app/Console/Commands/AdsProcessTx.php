@@ -268,7 +268,7 @@ class AdsProcessTx extends Command
 
                 $this->reactivateSuspendedCampaigns($user);
 
-                DB::beginTransaction();
+                DB::commit();
             }
         } else {
             $dbTx->status = AdsPayment::STATUS_INVALID;
