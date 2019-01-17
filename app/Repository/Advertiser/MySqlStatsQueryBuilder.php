@@ -23,14 +23,48 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Advertiser\Dto\ChartInput;
 use DateTime;
+use RuntimeException;
 
 class MySqlStatsQueryBuilder
 {
+    public const VIEW_TYPE = 'view';
+
+    public const CLICK_TYPE = 'click';
+
+    public const CPC_TYPE = 'cpc';
+
+    public const CPM_TYPE = 'cpm';
+
+    public const SUM_TYPE = 'sum';
+
+    public const CTR_TYPE = 'ctr';
+
     public const STATS_TYPE = 'stats';
 
-    private const BASE_QUERY = <<<SQL
+    public const HOUR_RESOLUTION = 'hour';
+
+    public const DAY_RESOLUTION = 'day';
+
+    public const WEEK_RESOLUTION = 'week';
+
+    public const MONTH_RESOLUTION = 'month';
+
+    public const QUARTER_RESOLUTION = 'quarter';
+
+    public const YEAR_RESOLUTION = 'year';
+
+    private const ALLOWED_TYPES = [
+        self::VIEW_TYPE,
+        self::CLICK_TYPE,
+        self::CPC_TYPE,
+        self::CPM_TYPE,
+        self::SUM_TYPE,
+        self::CTR_TYPE,
+        self::STATS_TYPE,
+    ];
+
+    private const CHART_QUERY = <<<SQL
 SELECT #selectedCols #resolutionCols
 FROM event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
@@ -73,43 +107,39 @@ SQL;
 
     private function chooseQuery(string $type): string
     {
-        switch ($type) {
-            case ChartInput::VIEW_TYPE:
-            case ChartInput::CLICK_TYPE:
-            case ChartInput::CPC_TYPE:
-            case ChartInput::CPM_TYPE:
-            case ChartInput::SUM_TYPE:
-            case ChartInput::CTR_TYPE:
-                $query = self::BASE_QUERY;
-                break;
-            case self::STATS_TYPE:
-                $query = self::STATS_QUERY;
-                break;
-            default:
-                $query = '';
-                break;
+        if (!self::isTypeAllowed($type)) {
+            throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
-        return $query;
+        if ($type === self::STATS_TYPE) {
+            return self::STATS_QUERY;
+        }
+
+        return self::CHART_QUERY;
+    }
+
+    private static function isTypeAllowed(string $type): bool
+    {
+        return in_array($type, self::ALLOWED_TYPES, true);
     }
 
     private function conditionallyReplaceSelectedColumns(string $type, string $query): string
     {
         switch ($type) {
-            case ChartInput::VIEW_TYPE:
-            case ChartInput::CLICK_TYPE:
+            case self::VIEW_TYPE:
+            case self::CLICK_TYPE:
                 $query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', $query);
                 break;
-            case ChartInput::CPC_TYPE:
+            case self::CPC_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0) AS c', $query);
                 break;
-            case ChartInput::CPM_TYPE:
+            case self::CPM_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', $query);
                 break;
-            case ChartInput::SUM_TYPE:
+            case self::SUM_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', $query);
                 break;
-            case ChartInput::CTR_TYPE:
+            case self::CTR_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c', $query);
                 break;
             default:
@@ -122,18 +152,18 @@ SQL;
     private function conditionallyReplaceEventType(string $type, string $query): string
     {
         switch ($type) {
-            case ChartInput::VIEW_TYPE:
-            case ChartInput::CPM_TYPE:
-            case ChartInput::CTR_TYPE:
+            case self::VIEW_TYPE:
+            case self::CPM_TYPE:
+            case self::CTR_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
                 $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
-            case ChartInput::CLICK_TYPE:
-            case ChartInput::CPC_TYPE:
+            case self::CLICK_TYPE:
+            case self::CPC_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_CLICK);
                 $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
-            case ChartInput::SUM_TYPE:
+            case self::SUM_TYPE:
                 $query = str_replace('#eventTypeWhereClause', '', $query);
                 break;
             default:
@@ -174,29 +204,29 @@ SQL;
     public function appendResolution(string $resolution): self
     {
         switch ($resolution) {
-            case ChartInput::HOUR_RESOLUTION:
+            case self::HOUR_RESOLUTION:
                 $cols =
                     ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, '
                     .'DAY(e.created_at) AS d, HOUR(e.created_at) AS h';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at), HOUR(e.created_at)';
                 break;
-            case ChartInput::DAY_RESOLUTION:
+            case self::DAY_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, DAY(e.created_at) AS d';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)';
                 break;
-            case ChartInput::WEEK_RESOLUTION:
+            case self::WEEK_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, WEEK(e.created_at) as w';
                 $groupBy = 'GROUP BY YEAR(e.created_at), WEEK(e.created_at)';
                 break;
-            case ChartInput::MONTH_RESOLUTION:
+            case self::MONTH_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at)';
                 break;
-            case ChartInput::QUARTER_RESOLUTION:
+            case self::QUARTER_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, QUARTER(e.created_at) as q';
                 $groupBy = 'GROUP BY YEAR(e.created_at), QUARTER(e.created_at)';
                 break;
-            case ChartInput::YEAR_RESOLUTION:
+            case self::YEAR_RESOLUTION:
             default:
                 $cols = ', YEAR(e.created_at) AS y';
                 $groupBy = 'GROUP BY YEAR(e.created_at)';
