@@ -148,7 +148,7 @@ final class DummyDemandClient implements DemandClient
                 'event_id' => 'a98e2611cce44e6fb6ca82d9b9cbe017',
                 'event_type' => 'view',
                 'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
-                'zone_id' => 'z22e19a3874847f4a6287d26deacd208',
+                'zone_id' => 'a22e19a3874847f4a6287d26deacd208',
                 'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
                 'event_value' => 10,
             ],
