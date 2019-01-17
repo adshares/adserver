@@ -22,6 +22,64 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Repository;
 
-final class StatsRepository
+use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Dto\StatsResult;
+use DateTime;
+
+interface StatsRepository
 {
+    public function fetchView(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchClick(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchRpc(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchRpm(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchSum(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchCtr(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchStats(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): StatsResult;
 }
