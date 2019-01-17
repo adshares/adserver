@@ -113,7 +113,7 @@ class StatsController extends Controller
         return new JsonResponse($result->toArray());
     }
 
-    public function publisherhart(
+    public function publisherChart(
         Request $request,
         string $type,
         string $resolution,
