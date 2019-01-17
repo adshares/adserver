@@ -271,7 +271,7 @@ class CampaignsController extends Controller
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
                 Log::debug("Notify user [{$campaign->user_id}]"
-                    ." that the campaign [{$campaign->is}] cannot be edited and started.");
+                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]. {$e->getMessage()}");
             }
         }
 
@@ -293,7 +293,14 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
-        $campaign->changeStatus($status);
+        try {
+            $campaign->changeStatus($status);
+        } catch (InvalidArgumentException $e) {
+            Log::debug("Notify user [{$campaign->user_id}]"
+                ." that the campaign [{$campaign->is}] status cannot be set to [{$status}].");
+
+            return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
+        }
 
         $this->campaignRepository->update($campaign);
 
