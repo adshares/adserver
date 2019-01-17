@@ -271,7 +271,8 @@ class CampaignsController extends Controller
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
                 Log::debug("Notify user [{$campaign->user_id}]"
-                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]. {$e->getMessage()}");
+                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
+                    ." {$e->getMessage()}");
             }
         }
 

@@ -127,7 +127,7 @@ class Handler extends ExceptionHandler
                 json_encode(array_filter(
                     $e->getTrace(),
                     function (array $row) {
-                        return stripos($row['file'], 'vendor') === false;
+                        return stripos($row['file'] ?? '', 'vendor') === false;
                     }
                 )),
                 $e->getFile(),
