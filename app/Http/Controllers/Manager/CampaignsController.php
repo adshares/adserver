@@ -342,8 +342,7 @@ class CampaignsController extends Controller
 
     public function read(Request $request, $campaignId)
     {
-        // TODO check privileges
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignById((int)$campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
     }

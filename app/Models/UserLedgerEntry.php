@@ -49,6 +49,19 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
+        return self::where('user_id', $userId)
+            ->whereIn('status', [self::STATUS_ACCEPTED, self::STATUS_PENDING])
+            ->sum('amount');
+    }
+
+    public static function construct(int $userId, int $amount, int $status, int $type): self
+    {
+        $userLedgerEntry = new self();
+        $userLedgerEntry->user_id = $userId;
+        $userLedgerEntry->amount = $amount;
+        $userLedgerEntry->status = $status;
+        $userLedgerEntry->type = $type;
+
+        return $userLedgerEntry;
     }
 }
