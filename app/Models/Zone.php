@@ -159,6 +159,11 @@ HTML;
         'creating' => GenerateUUID::class,
     ];
 
+    public static function fetchByUuid(string $uuid): ?Zone
+    {
+        return self::where('uuid', $uuid)->first();
+    }
+
     public static function findByIds(array $zoneIdList): Collection
     {
         /** @var Collection $zones */
