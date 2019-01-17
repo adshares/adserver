@@ -43,7 +43,7 @@ class CreateNetworkEventLogsTable extends Migration
             $table->binary('banner_id', 16);
             $table->binary('publisher_id', 16);
             $table->binary('site_id', 16);
-            $table->bigInteger('zone_id')->unsigned();
+            $table->binary('zone_id', 16);
 
             $table->string('event_type', 16);
 
@@ -72,6 +72,7 @@ class CreateNetworkEventLogsTable extends Migration
             DB::statement('ALTER TABLE network_event_logs MODIFY user_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY site_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY zone_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)');
             DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(8)');

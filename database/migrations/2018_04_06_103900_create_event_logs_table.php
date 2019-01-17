@@ -47,7 +47,7 @@ class CreateEventLogsTable extends Migration
                 $table->binary('advertiser_id', 16);
                 $table->binary('campaign_id', 16);
 
-                $table->bigInteger('zone_id')->unsigned()->nullable(true);
+                $table->binary('zone_id', 16)->nullable(true);
 
                 $table->string('event_type', 16);
 
@@ -80,6 +80,7 @@ class CreateEventLogsTable extends Migration
             DB::statement('ALTER TABLE event_logs MODIFY publisher_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY advertiser_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY campaign_id varbinary(16)');
+            DB::statement('ALTER TABLE event_logs MODIFY zone_id varbinary(16)');
             DB::statement('ALTER TABLE event_logs MODIFY pay_to varbinary(6)');
             DB::statement('ALTER TABLE event_logs MODIFY ip varbinary(8)');
             DB::statement('ALTER TABLE event_logs MODIFY banner_id varbinary(16) NOT NULL');

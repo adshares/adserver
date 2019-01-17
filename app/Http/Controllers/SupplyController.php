@@ -189,6 +189,7 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
+
         $publisherId = Zone::fetchPublisherId($zoneId);
         $siteId = Zone::fetchSiteId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
