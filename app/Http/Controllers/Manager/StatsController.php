@@ -25,12 +25,19 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
-use Adshares\Advertiser\Dto\InvalidInputException;
 use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
+use Adshares\Advertiser\Dto\InvalidInputException as AdvertiserInvalidException;
+use Adshares\Publisher\Dto\ChartInput as PublisherChartInput;
+use Adshares\Publisher\Dto\StatsInput as PublisherStatsInput;
+use Adshares\Publisher\Dto\InvalidInputException as PublisherInvalidInputException;
+use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
+use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,12 +54,22 @@ class StatsController extends Controller
     /** @var AdvertiserStatsDataProvider */
     private $advertiserStatsDataProvider;
 
+    /** @var PublisherChartDataProvider */
+    private $publisherChartDataProvider;
+
+    /** @var PublisherStatsDataProvider */
+    private $publisherStatsDataProvider;
+
     public function __construct(
         AdvertiserChartDataProvider $advertiserChartDataProvider,
-        AdvertiserStatsDataProvider $advertiserStatsDataProvider
+        AdvertiserStatsDataProvider $advertiserStatsDataProvider,
+        PublisherChartDataProvider $publisherChartDataProvider,
+        PublisherStatsDataProvider $publisherStatsDataProvider
     ) {
         $this->advertiserChartDataProvider = $advertiserChartDataProvider;
         $this->advertiserStatsDataProvider = $advertiserStatsDataProvider;
+        $this->publisherChartDataProvider = $publisherChartDataProvider;
+        $this->publisherStatsDataProvider = $publisherStatsDataProvider;
     }
 
     public function advertiserChart(
@@ -87,11 +104,52 @@ class StatsController extends Controller
                 $to,
                 $campaignId
             );
-        } catch (InvalidInputException $exception) {
+        } catch (AdvertiserInvalidException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
         $result = $this->advertiserChartDataProvider->fetch($input);
+
+        return new JsonResponse($result->toArray());
+    }
+
+    public function publisherhart(
+        Request $request,
+        string $type,
+        string $resolution,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $siteId = $this->getSiteIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+
+        if (!$user->isPublisher()) {
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
+        }
+
+        try {
+            $input = new PublisherChartInput(
+                $user->uuid,
+                $type,
+                $resolution,
+                $from,
+                $to,
+                $siteId
+            );
+        } catch (PublisherInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->publisherChartDataProvider->fetch($input);
 
         return new JsonResponse($result->toArray());
     }
@@ -165,7 +223,7 @@ class StatsController extends Controller
                 $to,
                 $campaignId
             );
-        } catch (InvalidInputException $exception) {
+        } catch (AdvertiserInvalidException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
@@ -178,18 +236,86 @@ class StatsController extends Controller
         return new JsonResponse($result);
     }
 
-    private function transformUuidIntoInt(array $item): array
-    {
-        if (isset($item['bannerId'])) {
-            $banner = Banner::fetchBanner($item['bannerId']);
-            $item['bannerId'] = $banner->id;
+    public function publisherStats(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $siteId = $this->getSiteIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+
+        if (!$user->isPublisher()) {
+            throw new AccessDeniedHttpException(sprintf(
+                'User %s is not authorized to access this resource.',
+                $user->email
+            ));
         }
 
+        try {
+            $input = new PublisherStatsInput(
+                $user->uuid,
+                $from,
+                $to,
+                $siteId
+            );
+        } catch (PublisherInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
+
+        foreach ($result as &$item) {
+            $item = $this->transformUuidIntoInt($item);
+        }
+
+        return new JsonResponse($result);
+    }
+
+    private function transformUuidIntoInt(array $item): array
+    {
         if (isset($item['campaignId'])) {
             $campaign = Campaign::fetchByUuid($item['campaignId']);
-            $item['campaignId'] = $campaign->id;
+            $item['campaignId'] = $campaign->id ?? null;
+        }
+
+        if (isset($item['bannerId'])) {
+            $banner = Banner::fetchBanner($item['bannerId']);
+            $item['bannerId'] = $banner->id ?? null;
+        }
+
+        if (isset($item['siteId'])) {
+            $site = Site::fetchByUuid($item['siteId']);
+            $item['siteId'] = $site->id ?? null;
+        }
+
+        if (isset($item['zoneId'])) {
+            $zone = Zone::fetchByUuid($item['zoneId']);
+            $item['zoneId'] = $zone->id ?? null;
         }
 
         return $item;
+    }
+
+    private function getSiteIdFromRequest(Request $request): ?string
+    {
+        $siteId = $request->input('site_id');
+
+        if (!$siteId) {
+            return null;
+        }
+
+        $site = Site::find($siteId);
+
+        if (!$site) {
+            throw new NotFoundHttpException('Site does not exists.');
+        }
+
+        return $site->uuid;
     }
 }

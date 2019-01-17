@@ -149,4 +149,9 @@ class Site extends Model
             }
         );
     }
+
+    public static function fetchByUuid(string $uuid): ?self
+    {
+        return self::where('uuid', hex2bin($uuid))->first();
+    }
 }

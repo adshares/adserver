@@ -83,10 +83,10 @@ Route::get('wallet/history', [WalletController::class, 'history']);
 // statistics
 Route::get('campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
 Route::get('campaigns/stats/table/{date_start}/{date_end}', [StatsController::class, 'advertiserStats']);
+Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
+Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 
 // tmp mocked solutions
-Route::post('chart', [ChartsController::class, 'chart']);
-Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
 Route::get('admin/settings', [Simulator::class, 'mock']);
 Route::get('account/history', [Simulator::class, 'mock']);
 
