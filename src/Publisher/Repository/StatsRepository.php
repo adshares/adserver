@@ -28,6 +28,21 @@ use DateTime;
 
 interface StatsRepository
 {
+    public const VIEW_TYPE = 'view';
+    public const CLICK_TYPE = 'click';
+    public const RPC_TYPE = 'rpc';
+    public const RPM_TYPE = 'rpm';
+    public const SUM_TYPE = 'sum';
+    public const CTR_TYPE = 'ctr';
+    public const STATS_TYPE = 'stats';
+
+    public const HOUR_RESOLUTION = 'hour';
+    public const DAY_RESOLUTION = 'day';
+    public const WEEK_RESOLUTION = 'week';
+    public const MONTH_RESOLUTION = 'month';
+    public const QUARTER_RESOLUTION = 'quarter';
+    public const YEAR_RESOLUTION = 'year';
+
     public function fetchView(
         string $publisherId,
         string $resolution,

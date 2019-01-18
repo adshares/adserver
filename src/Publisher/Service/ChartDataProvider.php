@@ -29,12 +29,12 @@ use Adshares\Publisher\Repository\StatsRepository;
 final class ChartDataProvider
 {
     private const REPOSITORY_MAPPER = [
-        ChartInput::CLICK_TYPE => 'fetchClick',
-        ChartInput::VIEW_TYPE => 'fetchView',
-        ChartInput::RPC_TYPE => 'fetchRpc',
-        ChartInput::RPM_TYPE => 'fetchRpm',
-        ChartInput::SUM_TYPE => 'fetchSum',
-        ChartInput::CTR_TYPE => 'fetchCtr',
+        StatsRepository::CLICK_TYPE => 'fetchClick',
+        StatsRepository::VIEW_TYPE => 'fetchView',
+        StatsRepository::RPC_TYPE => 'fetchRpc',
+        StatsRepository::RPM_TYPE => 'fetchRpm',
+        StatsRepository::SUM_TYPE => 'fetchSum',
+        StatsRepository::CTR_TYPE => 'fetchCtr',
     ];
 
     /** @var StatsRepository */
