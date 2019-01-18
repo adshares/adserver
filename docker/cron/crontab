@@ -6,6 +6,6 @@
 
 * * * * * cd /var/www/adserver && bash docker/cron/adpay-export.sh >> /dev/null 2>&1
 
-30 * * * * cd /var/www/adserver && bash docker/cron/ops-payments.sh >> /dev/null 2>&1
+15 * * * * cd /var/www/adserver && bash docker/cron/ops-payments.sh >> /dev/null 2>&1
 
 */8 * * * * cd /var/www/adserver && bash docker/cron/ads-scanner.sh >> /dev/null 2>&1
