@@ -23,7 +23,10 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use DateTime;
 use Illuminate\Console\Command;
+use function sprintf;
+use const PHP_EOL;
 
 class AdsMe extends Command
 {
@@ -36,5 +39,14 @@ class AdsMe extends Command
         $this->info('Start command '.$this->signature);
         $me = $adsClient->getMe();
         $this->info(Ads\Util\AdsConverter::clicksToAds($me->getAccount()->getBalance()));
+
+        $log = $adsClient->getLog(new DateTime('@0'));
+
+        foreach ($log->getLog() as $entry) {
+            echo sprintf(
+                '%s'.PHP_EOL,
+                $entry['type']
+            );
+        }
     }
 }

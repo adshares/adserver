@@ -22,11 +22,14 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository;
+use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepositoiry;
+use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepositoiry;
+use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
+use Adshares\Tests\Publisher\Repository\DummyStatsRepository as DummyPublisherStatsRepository;
+use Adshares\Tests\Advertiser\Repository\DummyStatsRepository as DummyAdvertiserStatsRepository;
 use Adshares\Adserver\Services\Adselect;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Advertiser\Service\ChartDataProvider;
-use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -58,9 +61,16 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            StatsRepository::class,
+            AdvertiserStatsRepositoiry::class,
             function () {
-                return new DummyStatsRepository();
+                return new DummyAdvertiserStatsRepository();
+            }
+        );
+
+        $this->app->bind(
+            PublisherStatsRepositoiry::class,
+            function () {
+                return new DummyPublisherStatsRepository();
             }
         );
 

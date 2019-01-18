@@ -117,6 +117,7 @@ class NetworkEventLog extends Model
         'user_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
+        'zone_id' => 'BinHex',
         'site_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',

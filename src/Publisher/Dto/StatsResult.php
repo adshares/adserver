@@ -24,7 +24,7 @@ namespace Adshares\Publisher\Dto;
 
 class StatsResult
 {
-    private $data;
+    private $data = [];
 
     public function __construct(array $inputData)
     {

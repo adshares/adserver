@@ -22,41 +22,28 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Dto;
 
+use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use function in_array;
 
 final class ChartInput
 {
-    public const VIEW_TYPE = 'view';
-    public const CLICK_TYPE = 'click';
-    public const RPC_TYPE = 'rpc';
-    public const RPM_TYPE = 'rpm';
-    public const SUM_TYPE = 'sum';
-    public const CTR_TYPE = 'ctr';
-
-    public const HOUR_RESOLUTION = 'hour';
-    public const DAY_RESOLUTION = 'day';
-    public const WEEK_RESOLUTION = 'week';
-    public const MONTH_RESOLUTION = 'month';
-    public const QUARTER_RESOLUTION = 'quarter';
-    public const YEAR_RESOLUTION = 'year';
-
     private const ALLOWED_TYPES = [
-        self::VIEW_TYPE,
-        self::CLICK_TYPE,
-        self::RPC_TYPE,
-        self::RPM_TYPE,
-        self::SUM_TYPE,
-        self::CTR_TYPE,
+        StatsRepository::VIEW_TYPE,
+        StatsRepository::CLICK_TYPE,
+        StatsRepository::RPC_TYPE,
+        StatsRepository::RPM_TYPE,
+        StatsRepository::SUM_TYPE,
+        StatsRepository::CTR_TYPE,
     ];
 
     private const ALLOWED_RESOLUTIONS = [
-        self::HOUR_RESOLUTION,
-        self::DAY_RESOLUTION,
-        self::WEEK_RESOLUTION,
-        self::MONTH_RESOLUTION,
-        self::QUARTER_RESOLUTION,
-        self::YEAR_RESOLUTION,
+        StatsRepository::HOUR_RESOLUTION,
+        StatsRepository::DAY_RESOLUTION,
+        StatsRepository::WEEK_RESOLUTION,
+        StatsRepository::MONTH_RESOLUTION,
+        StatsRepository::QUARTER_RESOLUTION,
+        StatsRepository::YEAR_RESOLUTION,
     ];
 
     /** @var string */

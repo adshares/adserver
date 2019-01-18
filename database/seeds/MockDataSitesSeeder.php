@@ -91,6 +91,7 @@ class MockDataSitesSeeder extends Seeder
 
                 foreach ($zones as $zoneNames => $zone) {
                     factory(Zone::class)->create([
+                        'uuid' => $zone['uuid'],
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,
                         'width' => $zone['width'],
