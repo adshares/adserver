@@ -23,45 +23,20 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use RuntimeException;
 
 class MySqlStatsQueryBuilder
 {
-    public const VIEW_TYPE = 'view';
-
-    public const CLICK_TYPE = 'click';
-
-    public const CPC_TYPE = 'cpc';
-
-    public const CPM_TYPE = 'cpm';
-
-    public const SUM_TYPE = 'sum';
-
-    public const CTR_TYPE = 'ctr';
-
-    public const STATS_TYPE = 'stats';
-
-    public const HOUR_RESOLUTION = 'hour';
-
-    public const DAY_RESOLUTION = 'day';
-
-    public const WEEK_RESOLUTION = 'week';
-
-    public const MONTH_RESOLUTION = 'month';
-
-    public const QUARTER_RESOLUTION = 'quarter';
-
-    public const YEAR_RESOLUTION = 'year';
-
     private const ALLOWED_TYPES = [
-        self::VIEW_TYPE,
-        self::CLICK_TYPE,
-        self::CPC_TYPE,
-        self::CPM_TYPE,
-        self::SUM_TYPE,
-        self::CTR_TYPE,
-        self::STATS_TYPE,
+        StatsRepository::VIEW_TYPE,
+        StatsRepository::CLICK_TYPE,
+        StatsRepository::CPC_TYPE,
+        StatsRepository::CPM_TYPE,
+        StatsRepository::SUM_TYPE,
+        StatsRepository::CTR_TYPE,
+        StatsRepository::STATS_TYPE,
     ];
 
     private const CHART_QUERY = <<<SQL
@@ -111,7 +86,7 @@ SQL;
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
-        if ($type === self::STATS_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE) {
             return self::STATS_QUERY;
         }
 
@@ -126,20 +101,20 @@ SQL;
     private function conditionallyReplaceSelectedColumns(string $type, string $query): string
     {
         switch ($type) {
-            case self::VIEW_TYPE:
-            case self::CLICK_TYPE:
+            case StatsRepository::VIEW_TYPE:
+            case StatsRepository::CLICK_TYPE:
                 $query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', $query);
                 break;
-            case self::CPC_TYPE:
+            case StatsRepository::CPC_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0) AS c', $query);
                 break;
-            case self::CPM_TYPE:
+            case StatsRepository::CPM_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(e.event_value), 0)*1000 AS c', $query);
                 break;
-            case self::SUM_TYPE:
+            case StatsRepository::SUM_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(SUM(e.event_value), 0) AS c', $query);
                 break;
-            case self::CTR_TYPE:
+            case StatsRepository::CTR_TYPE:
                 $query = str_replace('#selectedCols', 'COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c', $query);
                 break;
             default:
@@ -152,18 +127,18 @@ SQL;
     private function conditionallyReplaceEventType(string $type, string $query): string
     {
         switch ($type) {
-            case self::VIEW_TYPE:
-            case self::CPM_TYPE:
-            case self::CTR_TYPE:
+            case StatsRepository::VIEW_TYPE:
+            case StatsRepository::CPM_TYPE:
+            case StatsRepository::CTR_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
                 $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
-            case self::CLICK_TYPE:
-            case self::CPC_TYPE:
+            case StatsRepository::CLICK_TYPE:
+            case StatsRepository::CPC_TYPE:
                 $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_CLICK);
                 $query = str_replace('#eventTypeWhereClause', $str, $query);
                 break;
-            case self::SUM_TYPE:
+            case StatsRepository::SUM_TYPE:
                 $query = str_replace('#eventTypeWhereClause', '', $query);
                 break;
             default:
@@ -204,29 +179,29 @@ SQL;
     public function appendResolution(string $resolution): self
     {
         switch ($resolution) {
-            case self::HOUR_RESOLUTION:
+            case StatsRepository::HOUR_RESOLUTION:
                 $cols =
                     ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, '
                     .'DAY(e.created_at) AS d, HOUR(e.created_at) AS h';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at), HOUR(e.created_at)';
                 break;
-            case self::DAY_RESOLUTION:
+            case StatsRepository::DAY_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, DAY(e.created_at) AS d';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)';
                 break;
-            case self::WEEK_RESOLUTION:
+            case StatsRepository::WEEK_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, WEEK(e.created_at) as w';
                 $groupBy = 'GROUP BY YEAR(e.created_at), WEEK(e.created_at)';
                 break;
-            case self::MONTH_RESOLUTION:
+            case StatsRepository::MONTH_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m';
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at)';
                 break;
-            case self::QUARTER_RESOLUTION:
+            case StatsRepository::QUARTER_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, QUARTER(e.created_at) as q';
                 $groupBy = 'GROUP BY YEAR(e.created_at), QUARTER(e.created_at)';
                 break;
-            case self::YEAR_RESOLUTION:
+            case StatsRepository::YEAR_RESOLUTION:
             default:
                 $cols = ', YEAR(e.created_at) AS y';
                 $groupBy = 'GROUP BY YEAR(e.created_at)';

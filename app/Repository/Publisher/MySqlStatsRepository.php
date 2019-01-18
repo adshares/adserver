@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Publisher\Dto\ChartInput;
 use Adshares\Publisher\Dto\ChartResult;
 use Adshares\Publisher\Dto\StatsResult;
 use Adshares\Publisher\Repository\StatsRepository;
@@ -40,7 +39,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::VIEW_TYPE,
+            StatsRepository::VIEW_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -59,7 +58,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::CLICK_TYPE,
+            StatsRepository::CLICK_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -78,7 +77,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::RPC_TYPE,
+            StatsRepository::RPC_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -97,7 +96,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::RPM_TYPE,
+            StatsRepository::RPM_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -116,7 +115,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::SUM_TYPE,
+            StatsRepository::SUM_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -135,7 +134,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            ChartInput::CTR_TYPE,
+            StatsRepository::CTR_TYPE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -156,15 +155,10 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): StatsResult {
-        $query =
-            (new MySqlStatsQueryBuilder(MySqlStatsQueryBuilder::STATS_TYPE))->setPublisherId($publisherId)
-                ->setDateRange(
-                    $dateStart,
-                    $dateEnd
-                )
-                ->appendSiteIdWhereClause($siteId)
-                ->appendZoneIdGroupBy($siteId)
-                ->build();
+        $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
+                $dateStart,
+                $dateEnd
+            )->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy($siteId)->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
@@ -253,31 +247,31 @@ class MySqlStatsRepository implements StatsRepository
         $formattedResult = [];
 
         $date = (new DateTime())->setTimezone($dateTimeZone);
-        if ($resolution !== ChartInput::HOUR_RESOLUTION) {
+        if ($resolution !== StatsRepository::HOUR_RESOLUTION) {
             $date->setTime(0, 0, 0, 0);
         }
 
         foreach ($result as $row) {
-            if ($resolution === ChartInput::HOUR_RESOLUTION) {
+            if ($resolution === StatsRepository::HOUR_RESOLUTION) {
                 $date->setTime($row->h, 0, 0, 0);
             }
 
             switch ($resolution) {
-                case ChartInput::HOUR_RESOLUTION:
-                case ChartInput::DAY_RESOLUTION:
+                case StatsRepository::HOUR_RESOLUTION:
+                case StatsRepository::DAY_RESOLUTION:
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
-                case ChartInput::WEEK_RESOLUTION:
+                case StatsRepository::WEEK_RESOLUTION:
                     $date->setISODate($row->y, $row->w, 1);
                     break;
-                case ChartInput::MONTH_RESOLUTION:
+                case StatsRepository::MONTH_RESOLUTION:
                     $date->setDate($row->y, $row->m, 1);
                     break;
-                case ChartInput::QUARTER_RESOLUTION:
+                case StatsRepository::QUARTER_RESOLUTION:
                     $month = $row->q * 3 - 2;
                     $date->setDate($row->y, $month, 1);
                     break;
-                case ChartInput::YEAR_RESOLUTION:
+                case StatsRepository::YEAR_RESOLUTION:
                 default:
                     $date->setDate($row->y, 1, 1);
                     break;
@@ -319,28 +313,28 @@ class MySqlStatsRepository implements StatsRepository
     ): DateTime {
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
-        if ($resolution === ChartInput::HOUR_RESOLUTION) {
+        if ($resolution === StatsRepository::HOUR_RESOLUTION) {
             $date->setTime((int)$date->format('H'), 0, 0, 0);
         } else {
             $date->setTime(0, 0, 0, 0);
         }
 
         switch ($resolution) {
-            case ChartInput::HOUR_RESOLUTION:
-            case ChartInput::DAY_RESOLUTION:
+            case StatsRepository::HOUR_RESOLUTION:
+            case StatsRepository::DAY_RESOLUTION:
                 break;
-            case ChartInput::WEEK_RESOLUTION:
+            case StatsRepository::WEEK_RESOLUTION:
                 $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
                 break;
-            case ChartInput::MONTH_RESOLUTION:
+            case StatsRepository::MONTH_RESOLUTION:
                 $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
                 break;
-            case ChartInput::QUARTER_RESOLUTION:
+            case StatsRepository::QUARTER_RESOLUTION:
                 $quarter = (int)floor((int)$date->format('m') - 1 / 3);
                 $month = $quarter * 3 + 1;
                 $date->setDate((int)$date->format('Y'), $month, 1);
                 break;
-            case ChartInput::YEAR_RESOLUTION:
+            case StatsRepository::YEAR_RESOLUTION:
             default:
                 $date->setDate((int)$date->format('Y'), 1, 1);
                 break;
@@ -352,24 +346,24 @@ class MySqlStatsRepository implements StatsRepository
     private static function advanceDateTime(string $resolution, DateTime $date): void
     {
         switch ($resolution) {
-            case ChartInput::HOUR_RESOLUTION:
+            case StatsRepository::HOUR_RESOLUTION:
                 $date->modify('+1 hour');
                 break;
-            case ChartInput::DAY_RESOLUTION:
+            case StatsRepository::DAY_RESOLUTION:
                 $date->modify('tomorrow');
                 break;
-            case ChartInput::WEEK_RESOLUTION:
+            case StatsRepository::WEEK_RESOLUTION:
                 $date->modify('+7 days');
                 break;
-            case ChartInput::MONTH_RESOLUTION:
+            case StatsRepository::MONTH_RESOLUTION:
                 $date->modify('first day of next month');
                 break;
-            case ChartInput::QUARTER_RESOLUTION:
+            case StatsRepository::QUARTER_RESOLUTION:
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 break;
-            case ChartInput::YEAR_RESOLUTION:
+            case StatsRepository::YEAR_RESOLUTION:
             default:
                 $date->modify('first day of next year');
                 break;
