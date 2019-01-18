@@ -21,9 +21,10 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 
 /**
- * @method static where(string $string, $userId): \Illuminate\Database\Query\Builder;
+ * @method static Builder where(string $string, int $userId)
  */
 class UserLedgerEntry extends Model
 {
@@ -49,8 +50,7 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)
-            ->whereIn('status', [self::STATUS_ACCEPTED, self::STATUS_PENDING])
+        return self::balanceRelevantEntriesByUserId($userId)
             ->sum('amount');
     }
 
@@ -63,5 +63,11 @@ class UserLedgerEntry extends Model
         $userLedgerEntry->type = $type;
 
         return $userLedgerEntry;
+    }
+
+    public static function balanceRelevantEntriesByUserId(int $userId): Builder
+    {
+        return self::where('user_id', $userId)
+            ->whereIn('status', [self::STATUS_ACCEPTED, self::STATUS_PENDING]);
     }
 }

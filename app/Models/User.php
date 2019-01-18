@@ -134,8 +134,7 @@ class User extends Authenticatable
 
     public function getAdserverWalletAttribute(): array
     {
-        return UserLedgerEntry::where('user_id', $this->id)
-            ->where('status', UserLedgerEntry::STATUS_ACCEPTED)
+        return UserLedgerEntry::balanceRelevantEntriesByUserId($this->id)
             ->get()
             ->reduce(function (?array $previous, UserLedgerEntry $current) {
                 return [
