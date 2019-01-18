@@ -48,6 +48,12 @@ class UserLedgerEntry extends Model
 
     public const TYPE_AD_EXPENDITURE = 4;
 
+    protected $dates = [
+        'deleted_at',
+        'created_at',
+        'updated_at',
+    ];
+
     protected $casts = [
         'amount' => 'int',
     ];
