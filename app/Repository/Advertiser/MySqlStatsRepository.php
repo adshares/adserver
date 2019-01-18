@@ -320,7 +320,7 @@ class MySqlStatsRepository implements StatsRepository
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
         if ($resolution === ChartInput::HOUR_RESOLUTION) {
-            $date->setTime($date->format('H'), 0, 0, 0);
+            $date->setTime((int)$date->format('H'), 0, 0, 0);
         } else {
             $date->setTime(0, 0, 0, 0);
         }
