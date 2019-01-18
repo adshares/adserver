@@ -38,7 +38,6 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use PhpParser\Node\Stmt\UseUse;
 
 class AdsProcessTxTest extends TestCase
 {
