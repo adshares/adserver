@@ -41,6 +41,8 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class AdsProcessTx extends Command
 {
@@ -266,7 +268,12 @@ class AdsProcessTx extends Command
                 $ledgerEntry->save();
                 $dbTx->save();
 
-                $this->reactivateSuspendedCampaigns($user);
+                try {
+                    $this->reactivateSuspendedCampaigns($user);
+                    Log::debug("Notify user [{$user->id}] that we restarted all suspended campaigns.");
+                } catch (InvalidArgumentException $exception) {
+                    Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
+                }
 
                 DB::commit();
             }
