@@ -25,7 +25,9 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class DemandBlockRequiredAmount extends Command
 {
@@ -37,26 +39,38 @@ class DemandBlockRequiredAmount extends Command
     {
         $this->info('Start command '.$this->signature);
 
+        DB::beginTransaction();
+
+        UserLedgerEntry::pushBlockedToProcessing();
+
+        $blockade = $this->fetchRequiredBudgetsPerUser();
+        $this->blockAmountOrSuspendCampaigns($blockade);
+
+        DB::commit();
+
+        Log::info('Created '.count($blockade).' new blocking Ledger entries.');
+    }
+
+    private function fetchRequiredBudgetsPerUser(): Collection
+    {
         $blockade = Campaign::where('status', Campaign::STATUS_ACTIVE)
             ->groupBy('user_id')
             ->selectRaw('sum(budget) as sum, user_id')
             ->pluck('sum', 'user_id');
 
-        DB::beginTransaction();
+        return $blockade;
+    }
 
-        UserLedgerEntry::pushBlockade();
-
+    private function blockAmountOrSuspendCampaigns(Collection $blockade): void
+    {
         $blockade->each(function ($sum, $userId) {
-            UserLedgerEntry::construct(
-                $userId,
-                -$sum,
-                UserLedgerEntry::STATUS_BLOCKED,
-                UserLedgerEntry::TYPE_AD_EXPENDITURE
-            )->save();
+            try {
+                UserLedgerEntry::block(UserLedgerEntry::TYPE_AD_EXPENDITURE, $userId, $sum);
+            } catch (InvalidArgumentException $e) {
+                Log::warning($e->getMessage());
+
+                Campaign::suspendAllForUserId($userId);
+            }
         });
-
-        DB::commit();
-
-        Log::info('Created '.count($blockade).' new blocking Ledger entries.');
     }
 }

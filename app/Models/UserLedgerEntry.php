@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder;
+use InvalidArgumentException;
+use function sprintf;
 
 /**
  * @method static Builder where(string $string, int $userId)
@@ -67,6 +69,8 @@ class UserLedgerEntry extends Model
         self::TYPE_AD_EXPENDITURE,
     ];
 
+    public const DEBIT_TYPES = [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL];
+
     protected $dates = [
         'deleted_at',
         'created_at',
@@ -101,7 +105,7 @@ class UserLedgerEntry extends Model
                 $query->where('status', self::STATUS_ACCEPTED)
                     ->orWhere(function (EloquentBuilder $query) {
                         $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED, self::STATUS_PROCESSING])
-                            ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
+                            ->whereIn('type', self::DEBIT_TYPES);
                     });
             });
     }
@@ -112,7 +116,7 @@ class UserLedgerEntry extends Model
             ->delete();
     }
 
-    public static function pushBlockade(): void
+    public static function pushBlockedToProcessing(): void
     {
         self::blockedEntries()
             ->update(['status' => self::STATUS_PROCESSING]);
@@ -129,6 +133,33 @@ class UserLedgerEntry extends Model
     {
         return self::where('status', self::STATUS_BLOCKED)
             ->where('type', self::TYPE_AD_EXPENDITURE);
+    }
+
+    public static function block(int $type, int $userId, int $nonNegativeAmount): self
+    {
+        if ($nonNegativeAmount < 0) {
+            throw new InvalidArgumentException(
+                sprintf('Amount needs to be non-negative - User [%s] - Type [%s].', $userId, $type)
+            );
+        }
+
+        $isDebit = in_array($type, self::DEBIT_TYPES, true);
+        if ($isDebit && self::getBalanceByUserId($userId) < $nonNegativeAmount) {
+            throw new InvalidArgumentException(
+                sprintf('Insufficient funds for User [%s] when blocking Type [%s].', $userId, $type)
+            );
+        }
+
+        $obj = self::construct(
+            $userId,
+            $isDebit ? -$nonNegativeAmount : $nonNegativeAmount,
+            self::STATUS_BLOCKED,
+            $type
+        );
+
+        $obj->save();
+
+        return $obj;
     }
 
     public function addressed(string $addressFrom, string $addressTo): self

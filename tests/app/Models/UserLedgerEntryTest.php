@@ -47,7 +47,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        UserLedgerEntry::pushBlockade();
+        UserLedgerEntry::pushBlockedToProcessing();
 
         self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
     }

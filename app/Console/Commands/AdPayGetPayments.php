@@ -84,12 +84,7 @@ class AdPayGetPayments extends Command
                     $entry->save();
                 });
 
-                Campaign::fetchByUserId($userId)->filter(function (Campaign $campaign) {
-                    return $campaign->status === Campaign::STATUS_ACTIVE;
-                })->each(function (Campaign $campaign) {
-                    $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
-                    $campaign->save();
-                });
+                Campaign::suspendAllForUserId($userId);
 
                 Log::debug("Suspended Campaigns for user [$userId] due to insufficient amount of clicks."
                     ." Needs $totalEventValue, but has $balance");
