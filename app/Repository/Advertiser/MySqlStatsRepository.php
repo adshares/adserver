@@ -157,9 +157,9 @@ class MySqlStatsRepository implements StatsRepository
     ): StatsResult {
         $query =
             (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
-                    $dateStart,
-                    $dateEnd
-                )->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy($campaignId)->build();
+                $dateStart,
+                $dateEnd
+            )->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy($campaignId)->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 

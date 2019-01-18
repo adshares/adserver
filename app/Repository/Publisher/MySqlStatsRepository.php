@@ -156,9 +156,9 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): StatsResult {
         $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
-                $dateStart,
-                $dateEnd
-            )->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy($siteId)->build();
+            $dateStart,
+            $dateEnd
+        )->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy($siteId)->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
