@@ -40,6 +40,8 @@ class UserLedgerEntry extends Model
 
     public const STATUS_BLOCKED = 3;
 
+    public const STATUS_PROCESSING = 4;
+
     public const TYPE_UNKNOWN = 0;
 
     public const TYPE_DEPOSIT = 1;
@@ -55,6 +57,7 @@ class UserLedgerEntry extends Model
         self::STATUS_PENDING,
         self::STATUS_REJECTED,
         self::STATUS_BLOCKED,
+        self::STATUS_PROCESSING,
     ];
 
     public const ALLOWED_TYPE_LIST = [
@@ -97,7 +100,7 @@ class UserLedgerEntry extends Model
             ->where(function (EloquentBuilder $query) {
                 $query->where('status', self::STATUS_ACCEPTED)
                     ->orWhere(function (EloquentBuilder $query) {
-                        $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED])
+                        $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED, self::STATUS_PROCESSING])
                             ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
                     });
             });
@@ -105,23 +108,27 @@ class UserLedgerEntry extends Model
 
     public static function removeBlockedExpenditures(): void
     {
-        self::where('status', self::STATUS_BLOCKED)
-            ->where('type', self::TYPE_AD_EXPENDITURE)
-            ->delete();
-    }
-
-    public static function removePendingExpenditures(): void
-    {
-        self::where('status', self::STATUS_PENDING)
-            ->where('type', self::TYPE_AD_EXPENDITURE)
+        self::blockedEntries()
             ->delete();
     }
 
     public static function pushBlockade(): void
     {
-        self::where('status', self::STATUS_BLOCKED)
+        self::blockedEntries()
+            ->update(['status' => self::STATUS_PROCESSING]);
+    }
+
+    public static function removeProcessingExpenditures(): void
+    {
+        self::where('status', self::STATUS_PROCESSING)
             ->where('type', self::TYPE_AD_EXPENDITURE)
-            ->update(['status' => self::STATUS_PENDING]);
+            ->delete();
+    }
+
+    private static function blockedEntries()
+    {
+        return self::where('status', self::STATUS_BLOCKED)
+            ->where('type', self::TYPE_AD_EXPENDITURE);
     }
 
     public function addressed(string $addressFrom, string $addressTo): self

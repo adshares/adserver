@@ -46,7 +46,7 @@ class AdPayGetPayments extends Command
 
         DB::beginTransaction();
 
-        UserLedgerEntry::removePendingExpenditures();
+        UserLedgerEntry::removeProcessingExpenditures();
 
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;

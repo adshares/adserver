@@ -32,21 +32,39 @@ final class UserLedgerEntryTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function testBalance(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->createAllEntries($user);
+
+        self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
+    }
+
     public function testBalancePushing(): void
     {
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(100, UserLedgerEntry::getBalanceByUserId($user->id));
-
         UserLedgerEntry::pushBlockade();
 
-        self::assertEquals(100, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
+    }
 
-        UserLedgerEntry::removePendingExpenditures();
+    public function testBalanceRemoval(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->createAllEntries($user);
 
-        self::assertEquals(200, UserLedgerEntry::getBalanceByUserId($user->id));
+        UserLedgerEntry::removeBlockedExpenditures();
+
+        self::assertEquals(25, UserLedgerEntry::getBalanceByUserId($user->id));
+
+        UserLedgerEntry::removeProcessingExpenditures();
+
+        self::assertEquals(50, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     private function createAllEntries(User $user): void
@@ -67,7 +85,7 @@ final class UserLedgerEntryTest extends TestCase
                     $object = factory(UserLedgerEntry::class)->create([
                         'status' => $status,
                         'type' => $type,
-                        'amount' => $debit ? -50 : 200,
+                        'amount' => $debit ? -25 : 100,
                         'user_id' => $user->id,
                     ]);
 
@@ -77,18 +95,5 @@ final class UserLedgerEntryTest extends TestCase
                 }
             }
         }
-    }
-
-    public function testBalanceRemoval(): void
-    {
-        /** @var User $user */
-        $user = factory(User::class)->create();
-        $this->createAllEntries($user);
-
-        self::assertEquals(100, UserLedgerEntry::getBalanceByUserId($user->id));
-
-        UserLedgerEntry::removeBlockedExpenditures();
-
-        self::assertEquals(150, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 }
