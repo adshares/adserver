@@ -120,6 +120,7 @@ class EventLog extends Model
         'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
+        'zone_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
         'advertiser_id' => 'BinHex',

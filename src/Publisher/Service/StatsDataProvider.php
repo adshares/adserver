@@ -22,6 +22,27 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Service;
 
-final class ChartProvider
+use Adshares\Publisher\Dto\StatsInput;
+use Adshares\Publisher\Dto\StatsResult;
+use Adshares\Publisher\Repository\StatsRepository;
+
+class StatsDataProvider
 {
+    /** @var StatsRepository */
+    private $repository;
+
+    public function __construct(StatsRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+
+    public function fetch(StatsInput $input): StatsResult
+    {
+        return $this->repository->fetchStats(
+            $input->getPublisherId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getSiteId()
+        );
+    }
 }

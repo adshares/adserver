@@ -20,19 +20,19 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Service;
+namespace Adshares\Publisher\Service;
 
-use Adshares\Advertiser\Dto\ChartInput;
-use Adshares\Advertiser\Repository\StatsRepository;
-use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Publisher\Dto\ChartInput;
+use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Repository\StatsRepository;
 
 final class ChartDataProvider
 {
     private const REPOSITORY_MAPPER = [
         StatsRepository::CLICK_TYPE => 'fetchClick',
         StatsRepository::VIEW_TYPE => 'fetchView',
-        StatsRepository::CPC_TYPE => 'fetchCpc',
-        StatsRepository::CPM_TYPE => 'fetchCpm',
+        StatsRepository::RPC_TYPE => 'fetchRpc',
+        StatsRepository::RPM_TYPE => 'fetchRpm',
         StatsRepository::SUM_TYPE => 'fetchSum',
         StatsRepository::CTR_TYPE => 'fetchCtr',
     ];
@@ -50,11 +50,11 @@ final class ChartDataProvider
         $method = self::REPOSITORY_MAPPER[$input->getType()];
 
         return $this->repository->$method(
-            $input->getAdvertiserId(),
+            $input->getPublisherId(),
             $input->getResolution(),
             $input->getDateStart(),
             $input->getDateEnd(),
-            $input->getCampaignId()
+            $input->getSiteId()
         );
     }
 }

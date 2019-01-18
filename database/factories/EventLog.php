@@ -44,6 +44,7 @@ $factory->define(
             'publisher_id' => $faker->uuid,
             'advertiser_id' => $faker->uuid,
             'campaign_id' => $faker->uuid,
+            'zone_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['serve', 'view', 'click']),
             'ip' => bin2hex(inet_pton($faker->ipv4)),
             'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
