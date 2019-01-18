@@ -68,6 +68,12 @@ class UserLedgerEntry extends Model
     public static function balanceRelevantEntriesByUserId(int $userId): Builder
     {
         return self::where('user_id', $userId)
-            ->whereIn('status', [self::STATUS_ACCEPTED, self::STATUS_PENDING]);
+            ->where(function (Builder $query) {
+                $query->where('status', self::STATUS_ACCEPTED)
+                    ->orWhere(function (Builder $query) {
+                        $query->where('status', self::STATUS_PENDING)
+                            ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
+                    });
+            });
     }
 }
