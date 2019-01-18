@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder;
@@ -68,19 +69,19 @@ class UserLedgerEntry extends Model
         return $userLedgerEntry;
     }
 
-    public static function balanceRelevantEntriesByUserId(int $userId): Builder
+    public static function balanceRelevantEntriesByUserId(int $userId)
     {
         return self::where('user_id', $userId)
-            ->where(function (Builder $query) {
+            ->where(function (EloquentBuilder $query) {
                 $query->where('status', self::STATUS_ACCEPTED)
-                    ->orWhere(function (Builder $query) {
+                    ->orWhere(function (EloquentBuilder $query) {
                         $query->where('status', self::STATUS_PENDING)
                             ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
                     });
             });
     }
 
-    public static function removeBockade(): void
+    public static function removeBlockade(): void
     {
         self::where('status', self::STATUS_PENDING)
             ->where('type', self::TYPE_AD_EXPENDITURE)

@@ -44,7 +44,7 @@ class DemandBlockRequiredAmount extends Command
 
         DB::beginTransaction();
 
-        UserLedgerEntry::removeBockade();
+        UserLedgerEntry::removeBlockade();
 
         $blockade->each(function ($sum, $userId) {
             UserLedgerEntry::construct(

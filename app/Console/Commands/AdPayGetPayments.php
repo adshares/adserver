@@ -45,7 +45,7 @@ class AdPayGetPayments extends Command
         $this->info('Start command '.$this->signature);
         DB::beginTransaction();
 
-        UserLedgerEntry::removeBockade();
+        UserLedgerEntry::removeBlockade();
 
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
