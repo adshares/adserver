@@ -159,25 +159,25 @@ HTML;
         'creating' => GenerateUUID::class,
     ];
 
-    public static function fetchByUuid(string $uuid): ?Zone
+    public static function fetchByPublicId(string $uuid): ?Zone
     {
         return self::where('uuid', $uuid)->first();
     }
 
-    public static function findByIds(array $zoneIdList): Collection
+    public static function findByPublicIds(array $publicIds): Collection
     {
         /** @var Collection $zones */
 
-        foreach ($zoneIdList as &$item) {
+        foreach ($publicIds as &$item) {
             $item = hex2bin($item);
         }
 
-        $zones = self::whereIn('uuid', $zoneIdList)->get();
+        $zones = self::whereIn('uuid', $publicIds)->get();
 
-        if (count($zones) !== count($zoneIdList)) {
+        if (count($zones) !== count($publicIds)) {
             Log::warning(sprintf(
                 'Missing zones. {"ids":%s,"zones":%s}',
-                json_encode($zoneIdList),
+                json_encode($publicIds),
                 json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
             ));
         }
@@ -185,17 +185,17 @@ HTML;
         return $zones;
     }
 
-    public static function fetchPublisherId(string $zoneId): string
+    public static function fetchPublisherByPublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($zoneId))->first();
+        $zone = self::where('uuid', hex2bin($publicId))->first();
         $user = $zone->site->user;
 
         return $user->uuid;
     }
 
-    public static function fetchSiteId(string $zoneId): string
+    public static function fetchSitePublicIdByZonePublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($zoneId))->first();
+        $zone = self::where('uuid', hex2bin($publicId))->first();
         return $zone->site->uuid;
     }
 

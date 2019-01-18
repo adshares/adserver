@@ -295,7 +295,7 @@ class StatsController extends Controller
         }
 
         if (isset($item['zoneId'])) {
-            $zone = Zone::fetchByUuid($item['zoneId']);
+            $zone = Zone::fetchByPublicId($item['zoneId']);
             $item['zoneId'] = $zone->id ?? null;
         }
 
