@@ -20,13 +20,18 @@
 
 namespace Adshares\Adserver\Models;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder;
 
 /**
- * @method static where(string $string, $userId): \Illuminate\Database\Query\Builder;
+ * @method static Builder where(string $string, int $userId)
  */
 class UserLedgerEntry extends Model
 {
+    use SoftDeletes;
+
     public const STATUS_ACCEPTED = 0;
 
     public const STATUS_PENDING = 1;
@@ -49,6 +54,37 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::where('user_id', $userId)->where('status', self::STATUS_ACCEPTED)->sum('amount');
+        return self::balanceRelevantEntriesByUserId($userId)
+            ->sum('amount');
+    }
+
+    public static function construct(int $userId, int $amount, int $status, int $type): self
+    {
+        $userLedgerEntry = new self();
+        $userLedgerEntry->user_id = $userId;
+        $userLedgerEntry->amount = $amount;
+        $userLedgerEntry->status = $status;
+        $userLedgerEntry->type = $type;
+
+        return $userLedgerEntry;
+    }
+
+    public static function balanceRelevantEntriesByUserId(int $userId)
+    {
+        return self::where('user_id', $userId)
+            ->where(function (EloquentBuilder $query) {
+                $query->where('status', self::STATUS_ACCEPTED)
+                    ->orWhere(function (EloquentBuilder $query) {
+                        $query->where('status', self::STATUS_PENDING)
+                            ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
+                    });
+            });
+    }
+
+    public static function removeBlockade(): void
+    {
+        self::where('status', self::STATUS_PENDING)
+            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->delete();
     }
 }

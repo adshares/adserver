@@ -33,6 +33,7 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use function array_filter;
 use function GuzzleHttp\json_encode;
 
 class Handler extends ExceptionHandler
@@ -120,10 +121,15 @@ class Handler extends ExceptionHandler
 
         $logger->error(
             sprintf(
-                '{"message":"%s","context":%s,"trace":%s,"file":"%s:%s"}',
-                $e->getMessage(),
+                '{"message":%s,"context":%s,"trace":%s,"file":"%s:%s"}',
+                json_encode($e->getMessage()),
                 json_encode($this->context()),
-                json_encode($e->getTrace()),
+                json_encode(array_filter(
+                    $e->getTrace(),
+                    function (array $row) {
+                        return stripos($row['file'] ?? '', 'vendor') === false;
+                    }
+                )),
                 $e->getFile(),
                 $e->getLine()
             )

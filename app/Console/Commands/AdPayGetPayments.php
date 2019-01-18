@@ -43,6 +43,9 @@ class AdPayGetPayments extends Command
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
+        DB::beginTransaction();
+
+        UserLedgerEntry::removeBlockade();
 
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
@@ -61,7 +64,6 @@ class AdPayGetPayments extends Command
 
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
-        DB::beginTransaction();
 
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
             return $entry->advertiser()->id;
@@ -82,8 +84,10 @@ class AdPayGetPayments extends Command
                     $entry->save();
                 });
 
-                Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_SUSPENDED;
+                Campaign::fetchByUserId($userId)->filter(function (Campaign $campaign) {
+                    return $campaign->status === Campaign::STATUS_ACTIVE;
+                })->each(function (Campaign $campaign) {
+                    $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
                     $campaign->save();
                 });
 
@@ -94,11 +98,13 @@ class AdPayGetPayments extends Command
             }
 
             if ($totalEventValue > 0) {
-                $userLedgerEntry = new UserLedgerEntry();
-                $userLedgerEntry->user_id = $userId;
-                $userLedgerEntry->amount = -$totalEventValue;
-                $userLedgerEntry->status = UserLedgerEntry::STATUS_ACCEPTED;
-                $userLedgerEntry->type = UserLedgerEntry::TYPE_AD_EXPENDITURE;
+                $userLedgerEntry = UserLedgerEntry::construct(
+                    $userId,
+                    -$totalEventValue,
+                    UserLedgerEntry::STATUS_ACCEPTED,
+                    UserLedgerEntry::TYPE_AD_EXPENDITURE
+                );
+
                 $userLedgerEntry->save();
 
                 return $userLedgerEntry;
