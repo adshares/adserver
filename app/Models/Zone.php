@@ -185,7 +185,7 @@ HTML;
         return $zones;
     }
 
-    public static function fetchPublisherByPublicId(string $publicId): string
+    public static function fetchPublisherPublicIdByPublicId(string $publicId): string
     {
         $zone = self::where('uuid', hex2bin($publicId))->first();
         $user = $zone->site->user;

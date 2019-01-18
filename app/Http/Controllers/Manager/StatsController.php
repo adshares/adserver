@@ -32,7 +32,7 @@ use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
-use Adshares\Advertiser\Dto\InvalidInputException as AdvertiserInvalidException;
+use Adshares\Advertiser\Dto\InvalidInputException as AdvertiserInvalidInputException;
 use Adshares\Publisher\Dto\ChartInput as PublisherChartInput;
 use Adshares\Publisher\Dto\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Dto\InvalidInputException as PublisherInvalidInputException;
@@ -104,7 +104,7 @@ class StatsController extends Controller
                 $to,
                 $campaignId
             );
-        } catch (AdvertiserInvalidException $exception) {
+        } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
@@ -223,7 +223,7 @@ class StatsController extends Controller
                 $to,
                 $campaignId
             );
-        } catch (AdvertiserInvalidException $exception) {
+        } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
