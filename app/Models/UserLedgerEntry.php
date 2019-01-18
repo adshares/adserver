@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder;
 
 /**
@@ -28,6 +29,8 @@ use Illuminate\Database\Query\Builder;
  */
 class UserLedgerEntry extends Model
 {
+    use SoftDeletes;
+
     public const STATUS_ACCEPTED = 0;
 
     public const STATUS_PENDING = 1;
@@ -75,5 +78,12 @@ class UserLedgerEntry extends Model
                             ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
                     });
             });
+    }
+
+    public static function removeBockade(): void
+    {
+        self::where('status', self::STATUS_PENDING)
+            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->delete();
     }
 }

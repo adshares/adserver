@@ -25,12 +25,13 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
-use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
+use function hex2bin;
 
 /**
  * @property int id
@@ -51,7 +52,8 @@ use InvalidArgumentException;
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
  * @property User user
- * @method static where(string $string, int $campaignId)
+ * @method static Builder where(string $string, int $campaignId)
+ * @method static Builder groupBy(string...$groups)
  */
 class Campaign extends Model
 {
