@@ -290,7 +290,7 @@ class StatsController extends Controller
         }
 
         if (isset($item['siteId'])) {
-            $site = Site::fetchByUuid($item['siteId']);
+            $site = Site::fetchByPublicId($item['siteId']);
             $item['siteId'] = $site->id ?? null;
         }
 
