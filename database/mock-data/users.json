@@ -38,5 +38,13 @@
     "isAdmin": false,
     "isPublisher": true,
     "isAdvertiser": true
+  },
+  {
+    "email": "test2@dev.dev",
+    "password": "test@dev.dev",
+    "isConfirmed": true,
+    "isAdmin": false,
+    "isPublisher": true,
+    "isAdvertiser": true
   }
 ]

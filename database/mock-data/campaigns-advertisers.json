@@ -39,7 +39,7 @@
     "campaigns": [
       {
         "code": "ads2",
-        "name": "Adshares Campaign",
+        "name": "Adshares 2",
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
@@ -54,7 +54,7 @@
     "campaigns": [
       {
         "code": "ads",
-        "name": "Adshares Campaign",
+        "name": "Postman",
         "url": "https://adshares.net/",
         "max_cpm": 100000000000,
         "max_cpc": 100000000000,
