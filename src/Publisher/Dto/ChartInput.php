@@ -28,8 +28,6 @@ use function in_array;
 
 final class ChartInput
 {
-
-
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
         StatsRepository::CLICK_TYPE,

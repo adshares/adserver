@@ -193,7 +193,7 @@ HTML;
         return $user->uuid;
     }
 
-    public static function fetchSitePublicIdByZonePublicId(string $publicId): string
+    public static function fetchSitePublicIdByPublicId(string $publicId): string
     {
         $zone = self::where('uuid', hex2bin($publicId))->first();
         return $zone->site->uuid;
