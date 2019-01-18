@@ -230,7 +230,7 @@ class StatsController extends Controller
         $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
 
         foreach ($result as &$item) {
-            $item = $this->transformUuidIntoInt($item);
+            $item = $this->transformPublicIdToPrivateId($item);
         }
 
         return new JsonResponse($result);
@@ -271,13 +271,13 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
 
         foreach ($result as &$item) {
-            $item = $this->transformUuidIntoInt($item);
+            $item = $this->transformPublicIdToPrivateId($item);
         }
 
         return new JsonResponse($result);
     }
 
-    private function transformUuidIntoInt(array $item): array
+    private function transformPublicIdToPrivateId(array $item): array
     {
         if (isset($item['campaignId'])) {
             $campaign = Campaign::fetchByUuid($item['campaignId']);
