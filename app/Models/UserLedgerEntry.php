@@ -38,6 +38,8 @@ class UserLedgerEntry extends Model
 
     public const STATUS_REJECTED = 2;
 
+    public const STATUS_BLOCKED = 3;
+
     public const TYPE_UNKNOWN = 0;
 
     public const TYPE_DEPOSIT = 1;
@@ -47,6 +49,20 @@ class UserLedgerEntry extends Model
     public const TYPE_AD_INCOME = 3;
 
     public const TYPE_AD_EXPENDITURE = 4;
+
+    public const ALLOWED_STATUS_LIST = [
+        self::STATUS_ACCEPTED,
+        self::STATUS_PENDING,
+        self::STATUS_REJECTED,
+        self::STATUS_BLOCKED,
+    ];
+
+    public const ALLOWED_TYPE_LIST = [
+        self::TYPE_DEPOSIT,
+        self::TYPE_WITHDRAWAL,
+        self::TYPE_AD_INCOME,
+        self::TYPE_AD_EXPENDITURE,
+    ];
 
     protected $dates = [
         'deleted_at',
@@ -81,16 +97,38 @@ class UserLedgerEntry extends Model
             ->where(function (EloquentBuilder $query) {
                 $query->where('status', self::STATUS_ACCEPTED)
                     ->orWhere(function (EloquentBuilder $query) {
-                        $query->where('status', self::STATUS_PENDING)
+                        $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED])
                             ->whereIn('type', [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL]);
                     });
             });
     }
 
-    public static function removeBlockade(): void
+    public static function removeBlockedExpenditures(): void
+    {
+        self::where('status', self::STATUS_BLOCKED)
+            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->delete();
+    }
+
+    public static function removePendingExpenditures(): void
     {
         self::where('status', self::STATUS_PENDING)
             ->where('type', self::TYPE_AD_EXPENDITURE)
             ->delete();
+    }
+
+    public static function pushBlockade(): void
+    {
+        self::where('status', self::STATUS_BLOCKED)
+            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->update(['status' => self::STATUS_PENDING]);
+    }
+
+    public function addressed(string $addressFrom, string $addressTo): self
+    {
+        $this->address_from = $addressFrom;
+        $this->address_to = $addressTo;
+
+        return $this;
     }
 }

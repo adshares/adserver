@@ -44,19 +44,19 @@ class DemandBlockRequiredAmount extends Command
 
         DB::beginTransaction();
 
-        UserLedgerEntry::removeBlockade();
+        UserLedgerEntry::pushBlockade();
 
         $blockade->each(function ($sum, $userId) {
             UserLedgerEntry::construct(
                 $userId,
                 -$sum,
-                UserLedgerEntry::STATUS_PENDING,
+                UserLedgerEntry::STATUS_BLOCKED,
                 UserLedgerEntry::TYPE_AD_EXPENDITURE
             )->save();
         });
 
         DB::commit();
 
-        Log::info('Created '.count($blockade).' blocking Ledger Entries.');
+        Log::info('Created '.count($blockade).' new blocking Ledger entries.');
     }
 }

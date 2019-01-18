@@ -36,15 +36,25 @@ use Illuminate\Support\Facades\Validator;
 class WalletController extends Controller
 {
     const FIELD_ADDRESS = 'address';
+
     const FIELD_AMOUNT = 'amount';
+
     const FIELD_ERROR = 'error';
+
     const FIELD_FEE = 'fee';
+
     const FIELD_LIMIT = 'limit';
+
     const FIELD_MEMO = 'memo';
+
     const FIELD_MESSAGE = 'message';
+
     const FIELD_OFFSET = 'offset';
+
     const FIELD_TO = 'to';
+
     const FIELD_TOTAL = 'total';
+
     const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request): JsonResponse
@@ -128,19 +138,18 @@ class WalletController extends Controller
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
         $total = $amount + $fee;
 
-        $userId = Auth::user()->id;
-        $ul = new UserLedgerEntry();
-        $ul->user_id = $userId;
-        $ul->amount = -$total;
-        $ul->address_from = $addressFrom;
-        $ul->address_to = $addressTo;
-        $ul->status = UserLedgerEntry::STATUS_PENDING;
-        $ul->type = UserLedgerEntry::TYPE_WITHDRAWAL;
-        $result = $ul->save();
+        $ledgerEntry = UserLedgerEntry::construct(
+            Auth::user()->id,
+            -$total,
+            UserLedgerEntry::STATUS_PENDING,
+            UserLedgerEntry::TYPE_WITHDRAWAL
+        )->addressed($addressFrom, $addressTo);
+
+        $result = $ledgerEntry->save();
 
         if ($result) {
             // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
-            AdsSendOne::dispatch($ul, $addressTo, $amount, $memo);
+            AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
         }
 
         return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);

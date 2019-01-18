@@ -43,9 +43,10 @@ class AdPayGetPayments extends Command
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
+
         DB::beginTransaction();
 
-        UserLedgerEntry::removeBlockade();
+        UserLedgerEntry::removePendingExpenditures();
 
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
@@ -63,7 +64,6 @@ class AdPayGetPayments extends Command
             ->get();
 
         Log::info('Found '.count($unpaidEvents).' entries to update.');
-
 
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
             return $entry->advertiser()->id;
