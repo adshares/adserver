@@ -298,6 +298,10 @@ class MySqlStatsRepository implements StatsRepository
             self::advanceDateTime($resolution, $date);
         }
 
+        if (empty($dates)) {
+            $dates[] = $date->format(DateTime::ATOM);
+        }
+
         $result = [];
         foreach ($dates as $dateEntry) {
             $result[$dateEntry] = 0;
