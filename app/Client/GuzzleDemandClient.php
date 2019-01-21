@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -61,7 +62,12 @@ final class GuzzleDemandClient implements DemandClient
             'timeout' => 5,
         ]);
 
-        $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+        try {
+            $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+        } catch (ConnectException $exception) {
+            throw new UnexpectedClientResponseException(sprintf('Could not connect to %s host.', $inventoryHost));
+        }
+
         $statusCode = $response->getStatusCode();
         $body = (string)$response->getBody();
 

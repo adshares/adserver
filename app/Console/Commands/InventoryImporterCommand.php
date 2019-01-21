@@ -23,7 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Repository\Supply\NetworkHostRepository;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
 
@@ -51,7 +53,7 @@ class InventoryImporterCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $networkHosts = $this->networkHost->find();
+        $networkHosts = NetworkHost::fetchHosts();
 
         if (!$networkHosts) {
             $this->info('Stopped importing. No hosts found.');
@@ -59,8 +61,15 @@ class InventoryImporterCommand extends Command
             return;
         }
 
-        foreach ($networkHosts as $networkHost) {
-            $this->inventoryImporterService->import($networkHost->host);
+        try {
+            /** @var NetworkHost $networkHost */
+            foreach ($networkHosts as $networkHost) {
+                $this->inventoryImporterService->import($networkHost->host);
+
+                $networkHost->connectionSuccessful();
+            }
+        } catch (UnexpectedClientResponseException $exception) {
+            $networkHost->connectionFailed();
         }
 
         $this->info('Finished importing data from all inventories.');
