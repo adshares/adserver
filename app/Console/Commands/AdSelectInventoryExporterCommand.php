@@ -23,8 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
+use DateTime;
 use Illuminate\Console\Command;
 
 class AdSelectInventoryExporterCommand extends Command
@@ -54,6 +56,9 @@ class AdSelectInventoryExporterCommand extends Command
     {
         $this->info('Started exporting inventory to AdSelect.');
 
+        // @todo use it when $from, $to functionality will be implemented
+        // $from = Config::fetchAdSelectInventoryExportTime();
+
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
         $deletedCampaigns = $this->campaignRepository->fetchDeletedCampaigns();
 
@@ -64,6 +69,8 @@ class AdSelectInventoryExporterCommand extends Command
         ));
 
         $this->inventoryExporterService->export($activeCampaigns, $deletedCampaigns);
+
+        Config::updateAdSelectInventoryExportTime(new DateTime());
 
         $this->info('Finished exporting inventory to AdSelect.');
     }
