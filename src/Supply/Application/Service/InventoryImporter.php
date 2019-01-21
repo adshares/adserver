@@ -23,12 +23,10 @@ declare(strict_types=1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Common\Application\TransactionManager;
-use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
-use GuzzleHttp\Exception\ConnectException;
 
 class InventoryImporter
 {
@@ -62,8 +60,6 @@ class InventoryImporter
             $campaigns = $this->client->fetchAllInventory($host);
         } catch (EmptyInventoryException $exception) {
             return;
-        } catch (ConnectException $exception) {
-            throw new UnexpectedClientResponseException(sprintf('Could not connect to %s host.', $host));
         }
 
         $this->transactionManager->begin();
