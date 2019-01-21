@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 use function hex2bin;
 
 /**
@@ -229,12 +230,14 @@ class EventLog extends Model
         return '';
     }
 
-    public function advertiser(): User
+    public function advertiser(): ?User
     {
-        /** @var Banner $banner */
-        $banner = Banner::where('uuid', hex2bin($this->banner_id))->first();
+        $user = User::where('uuid', hex2bin($this->advertiser_id))->first();
+        if ($user === null) {
+            Log::error(sprintf('Cannot find advertiser for event_log id=%d.', $this->id));
+        }
 
-        return $banner->campaign->user;
+        return $user;
     }
 
     public static function eventClicked(string $caseId): void
