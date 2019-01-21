@@ -38,6 +38,7 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function array_map;
 use function GuzzleHttp\json_encode;
@@ -73,7 +74,9 @@ final class JsonRpcAdSelectClient implements AdSelect
             $zones
         );
 
-        $params = $context->adSelectRequestParams(Zone::findByIds($zoneIds));
+        $zones = Zone::findByPublicIds($zoneIds);
+
+        $params = $context->adSelectRequestParams($zones);
         $result = $this->client->call(
             new Procedure(
                 self::METHOD_BANNER_SELECT,
@@ -83,7 +86,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $zoneToBannerMap = $this->createZoneToBannerMap($result->toArray());
 
-        $bannerIds = $this->fixBannerOrdering($zoneIds, $zoneToBannerMap);
+        $bannerIds = $this->fixBannerOrdering($zones, $zoneToBannerMap);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
@@ -160,15 +163,15 @@ final class JsonRpcAdSelectClient implements AdSelect
         return $idMap;
     }
 
-    private function fixBannerOrdering(array $zoneIds, array $zoneToBannerMap): array
+    private function fixBannerOrdering(Collection $zones, array $zoneToBannerMap): array
     {
         $bannerIds = [];
 
-        foreach ($zoneIds as $id) {
-            $bannerId = $zoneToBannerMap[$id] ?? null;
+        foreach ($zones as $zone) {
+            $bannerId = $zoneToBannerMap[$zone->id] ?? null;
 
             if ($bannerId === null) {
-                Log::warning(sprintf('Zone %s not found.', $id));
+                Log::warning(sprintf('Zone %s not found.', $zone->id));
             }
 
             $bannerIds[] = $bannerId;

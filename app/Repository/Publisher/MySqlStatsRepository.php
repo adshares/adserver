@@ -20,126 +20,126 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository\Advertiser;
+namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Advertiser\Dto\ChartResult;
-use Adshares\Advertiser\Dto\StatsResult;
-use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Dto\StatsResult;
+use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
     public function fetchView(
-        string $advertiserId,
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::VIEW_TYPE,
-            $advertiserId,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         return new ChartResult($result);
     }
 
     public function fetchClick(
-        string $advertiserId,
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::CLICK_TYPE,
-            $advertiserId,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         return new ChartResult($result);
     }
 
-    public function fetchCpc(
-        string $advertiserId,
+    public function fetchRpc(
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CPC_TYPE,
-            $advertiserId,
+            StatsRepository::RPC_TYPE,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         return new ChartResult($result);
     }
 
-    public function fetchCpm(
-        string $advertiserId,
+    public function fetchRpm(
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CPM_TYPE,
-            $advertiserId,
+            StatsRepository::RPM_TYPE,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         return new ChartResult($result);
     }
 
     public function fetchSum(
-        string $advertiserId,
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::SUM_TYPE,
-            $advertiserId,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         return new ChartResult($result);
     }
 
     public function fetchCtr(
-        string $advertiserId,
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::CTR_TYPE,
-            $advertiserId,
+            $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
-            $campaignId
+            $siteId
         );
 
         foreach ($result as &$row) {
@@ -150,16 +150,15 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStats(
-        string $advertiserId,
+        string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId = null
+        ?string $siteId = null
     ): StatsResult {
-        $query =
-            (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
-                $dateStart,
-                $dateEnd
-            )->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy($campaignId)->build();
+        $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
+            $dateStart,
+            $dateEnd
+        )->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy($siteId)->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
@@ -168,9 +167,9 @@ class MySqlStatsRepository implements StatsRepository
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
 
-            $rowArray = [$clicks, $views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
-            if ($campaignId !== null) {
-                $rowArray[] = bin2hex($row->bid);
+            $rowArray = [$clicks, $views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost, bin2hex($row->site_id)];
+            if ($siteId !== null) {
+                $rowArray[] = bin2hex($row->zone_id);
             }
             $result[] = $rowArray;
         }
@@ -180,18 +179,18 @@ class MySqlStatsRepository implements StatsRepository
 
     private function fetch(
         string $type,
-        string $advertiserId,
+        string $publisherId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $campaignId,
-        ?string $bannerId = null
+        ?string $siteId,
+        ?string $zoneId = null
     ): array {
-        $query = (new MySqlStatsQueryBuilder($type))->setAdvertiserId($advertiserId)->setDateRange(
+        $query = (new MySqlStatsQueryBuilder($type))->setPublisherId($publisherId)->setDateRange(
             $dateStart,
             $dateEnd
-        )->appendResolution($resolution)->appendCampaignIdWhereClause($campaignId)->appendBannerIdWhereClause(
-            $bannerId
+        )->appendResolution($resolution)->appendSiteIdWhereClause($siteId)->appendZoneIdWhereClause(
+            $zoneId
         )->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);

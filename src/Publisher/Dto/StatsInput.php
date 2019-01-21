@@ -22,38 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Dto;
 
-use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
-use function in_array;
 
-final class ChartInput
+class StatsInput
 {
-    private const ALLOWED_TYPES = [
-        StatsRepository::VIEW_TYPE,
-        StatsRepository::CLICK_TYPE,
-        StatsRepository::RPC_TYPE,
-        StatsRepository::RPM_TYPE,
-        StatsRepository::SUM_TYPE,
-        StatsRepository::CTR_TYPE,
-    ];
-
-    private const ALLOWED_RESOLUTIONS = [
-        StatsRepository::HOUR_RESOLUTION,
-        StatsRepository::DAY_RESOLUTION,
-        StatsRepository::WEEK_RESOLUTION,
-        StatsRepository::MONTH_RESOLUTION,
-        StatsRepository::QUARTER_RESOLUTION,
-        StatsRepository::YEAR_RESOLUTION,
-    ];
-
     /** @var string */
     private $publisherId;
-
-    /** @var string  */
-    private $type;
-
-    /** @var string  */
-    private $resolution;
 
     /** @var DateTime */
     private $dateStart;
@@ -66,20 +40,10 @@ final class ChartInput
 
     public function __construct(
         string $publisherId,
-        string $type,
-        string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ) {
-        if (!in_array($type, self::ALLOWED_TYPES, true)) {
-            throw new InvalidInputException(sprintf('Unsupported chart type `%s`.', $type));
-        }
-
-        if (!in_array($resolution, self::ALLOWED_RESOLUTIONS, true)) {
-            throw new InvalidInputException(sprintf('Unsupported chart resolution `%s`.', $resolution));
-        }
-
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
@@ -88,8 +52,6 @@ final class ChartInput
             ));
         }
 
-        $this->type = $type;
-        $this->resolution = $resolution;
         $this->publisherId = $publisherId;
         $this->siteId = $siteId;
         $this->dateStart = $dateStart;
@@ -99,16 +61,6 @@ final class ChartInput
     public function getPublisherId(): string
     {
         return $this->publisherId;
-    }
-
-    public function getType(): string
-    {
-        return $this->type;
-    }
-
-    public function getResolution(): string
-    {
-        return $this->resolution;
     }
 
     public function getDateStart(): DateTime

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,26 +18,31 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Events;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+namespace Adshares\Publisher\Service;
 
-class GenerateUUID
+use Adshares\Publisher\Dto\StatsInput;
+use Adshares\Publisher\Dto\StatsResult;
+use Adshares\Publisher\Repository\StatsRepository;
+
+class StatsDataProvider
 {
-    use Dispatchable, SerializesModels;
+    /** @var StatsRepository */
+    private $repository;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(Model $model)
+    public function __construct(StatsRepository $repository)
     {
-        if (!$model->uuid) {
-            $model->uuid = UuidStringGenerator::v4();
-        }
+        $this->repository = $repository;
+    }
+
+    public function fetch(StatsInput $input): StatsResult
+    {
+        return $this->repository->fetchStats(
+            $input->getPublisherId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getSiteId()
+        );
     }
 }
