@@ -245,7 +245,8 @@ class AdsProcessTx extends Command
 
         if ($targetAddr === $this->adServerAddress) {
             $message = $transaction->getMessage();
-            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
+            $uuid = $this->extractUuidFromMessage($message);
+            $user = User::fetchByUuid($uuid);
 
             if (null === $user) {
                 $this->handleReservedTx($dbTx);
@@ -285,7 +286,7 @@ class AdsProcessTx extends Command
 
     private function extractUuidFromMessage(string $message): string
     {
-        return hex2bin(substr($message, -32));
+        return substr($message, -32);
     }
 
     private function reactivateSuspendedCampaigns(User $user): void
