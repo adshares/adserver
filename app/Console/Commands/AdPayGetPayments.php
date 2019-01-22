@@ -25,6 +25,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
@@ -66,7 +67,7 @@ class AdPayGetPayments extends Command
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
-            return $entry->advertiser_id;
+            return User::fetchByUuid($entry->advertiser_id)->id;
         })->map(function (Collection $collection, int $userId) use ($calculations) {
             $collection->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
