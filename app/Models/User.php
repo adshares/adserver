@@ -179,7 +179,7 @@ class User extends Authenticatable
 
     public static function fetchByUuid(string $uuid): ?self
     {
-        return self::where('uuid', $uuid)->first();
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 
     public static function fetchByEmail(string $email): ?self
