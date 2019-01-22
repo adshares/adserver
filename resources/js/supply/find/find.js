@@ -384,7 +384,6 @@ var fetchBanner = function (banner, context) {
         binary: true
     }).then(function (data, xhr) {
         context.cid = xhr.getResponseHeader('X-Adshares-Cid');
-        context.lid = xhr.getResponseHeader('X-Adshares-Lid');
 
         context.page.zone = context.zone.zone;
         var contextParam = encodeZones([context.page]);
@@ -398,7 +397,6 @@ var fetchBanner = function (banner, context) {
             });
         context.view_url = addUrlParam(banner.view_url,
             {
-                'lid': context.lid,
                 'cid': context.cid,
                 'pto': banner.pay_to,
                 'pfr': banner.pay_from,

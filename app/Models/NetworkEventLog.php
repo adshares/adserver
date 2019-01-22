@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
 use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -169,7 +170,7 @@ class NetworkEventLog extends Model
         $headers,
         array $context,
         $type
-    ): self {
+    ): void {
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -183,9 +184,12 @@ class NetworkEventLog extends Model
         $log->headers = $headers;
         $log->event_type = $type;
         $log->context = $context;
-        $log->save();
 
-        return $log;
+        try {
+            $log->save();
+        } catch(QueryException $exception) {
+            return;
+        }
     }
 
     public static function eventClicked(string $caseId): void

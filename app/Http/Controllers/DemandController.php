@@ -66,7 +66,7 @@ class DemandController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ('OPTIONS' === $request->getRealMethod()) {
@@ -128,7 +128,6 @@ class DemandController extends Controller
         $log->save();
 
         $response->headers->set('X-Adshares-Cid', $caseId);
-        $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
             $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
