@@ -65,7 +65,7 @@ class DemandBlockRequiredAmount extends Command
     {
         $blockade->each(function ($sum, $userId) {
             try {
-                UserLedgerEntry::block(UserLedgerEntry::TYPE_AD_EXPENDITURE, $userId, $sum);
+                UserLedgerEntry::block(UserLedgerEntry::TYPE_AD_EXPENDITURE, (int)$userId, (int)$sum);
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 
