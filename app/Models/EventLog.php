@@ -229,14 +229,6 @@ class EventLog extends Model
         return '';
     }
 
-    public function advertiser(): User
-    {
-        /** @var Banner $banner */
-        $banner = Banner::where('uuid', hex2bin($this->banner_id))->first();
-
-        return $banner->campaign->user;
-    }
-
     public static function eventClicked(string $caseId): void
     {
         self::where('case_id', hex2bin($caseId))
