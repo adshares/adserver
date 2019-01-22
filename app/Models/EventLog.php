@@ -30,7 +30,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use function hex2bin;
-use Illuminate\Database\QueryException;
 
 /**
  * @property int created_at
@@ -168,6 +167,12 @@ class EventLog extends Model
         string $userData,
         $type
     ): void {
+        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
+
+        if ($existedEventLog) {
+            return;
+        }
+
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -183,12 +188,7 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
-
-        try {
-            $log->save();
-        } catch(QueryException $exception) {
-            return;
-        }
+        $log->save();
     }
 
     public function payment(): BelongsTo
