@@ -199,7 +199,7 @@ class CampaignsController extends Controller
         return self::json($siteCount);
     }
 
-    public function edit(Request $request, $campaignId)
+    public function edit(Request $request, int $campaignId)
     {
         $this->validateRequestObject(
             $request,

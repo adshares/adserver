@@ -18,12 +18,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Faker\Generator as Faker;
 
 $factory->define(
-    EventLog::class,
+    NetworkEventLog::class,
     function (Faker $faker) {
         $addresses = [
             AccountId::fromIncompleteString('0001-00000001'),
@@ -41,14 +41,13 @@ $factory->define(
             'event_id' => $faker->uuid,
             'user_id' => $faker->uuid,
             'banner_id' => $faker->uuid,
-            'publisher_id' => $faker->uuid,
-            'advertiser_id' => $faker->uuid,
-            'campaign_id' => $faker->uuid,
             'zone_id' => $faker->uuid,
+            'publisher_id' => $faker->uuid,
+            'site_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['serve', 'view', 'click']),
             'ip' => bin2hex(inet_pton($faker->ipv4)),
             'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
-            'pay_to' => $faker->randomElement($addresses),
+            'pay_from' => $faker->randomElement($addresses),
             'headers' => <<<JSON
 {
     "host": [
@@ -80,7 +79,7 @@ $factory->define(
     ],
     "accept-language": [
         "pl,en-US;q=0.7,en;q=0.3"
-    ],
+    ]
 }
 JSON
             ,

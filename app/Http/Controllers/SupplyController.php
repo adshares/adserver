@@ -189,8 +189,9 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
-        $publisherId = Zone::fetchPublisherId($zoneId);
-        $siteId = Zone::fetchSiteId($zoneId);
+
+        $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
+        $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
         $url = Utils::addUrlParameter($url, 'eid', $eventId);
@@ -253,8 +254,8 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
-        $publisherId = Zone::fetchPublisherId($zoneId);
-        $siteId = Zone::fetchSiteId($zoneId);
+        $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
+        $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);

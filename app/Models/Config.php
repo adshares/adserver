@@ -43,6 +43,8 @@ class Config extends Model
 
     private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
+    private const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
+
     public const ADSELECT_PAYMENT_EXPORT_TIME = 'adselect-payment-export';
 
     public $incrementing = false;
@@ -69,6 +71,11 @@ class Config extends Model
         return self::fetchDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME);
     }
 
+    public static function fetchAdSelectInventoryExportTime(): DateTime
+    {
+        return self::fetchDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME);
+    }
+
     public static function fetchDateTimeByKey(string $key): DateTime
     {
         $config = self::where('key', $key)->first();
@@ -83,6 +90,11 @@ class Config extends Model
     public static function updateAdSelectEventExportTime(DateTime $date): void
     {
         self::updateDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME, $date);
+    }
+
+    public static function updateAdSelectInventoryExportTime(DateTime $date): void
+    {
+        self::updateDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME, $date);
     }
 
     public static function updateDateTimeByKey(string $key, DateTime $date): void

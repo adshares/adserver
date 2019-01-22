@@ -22,6 +22,79 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Repository;
 
-final class StatsRepository
+use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Dto\StatsResult;
+use DateTime;
+
+interface StatsRepository
 {
+    public const VIEW_TYPE = 'view';
+    public const CLICK_TYPE = 'click';
+    public const RPC_TYPE = 'rpc';
+    public const RPM_TYPE = 'rpm';
+    public const SUM_TYPE = 'sum';
+    public const CTR_TYPE = 'ctr';
+    public const STATS_TYPE = 'stats';
+
+    public const HOUR_RESOLUTION = 'hour';
+    public const DAY_RESOLUTION = 'day';
+    public const WEEK_RESOLUTION = 'week';
+    public const MONTH_RESOLUTION = 'month';
+    public const QUARTER_RESOLUTION = 'quarter';
+    public const YEAR_RESOLUTION = 'year';
+
+    public function fetchView(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchClick(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchRpc(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchRpm(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchSum(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchCtr(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchStats(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): StatsResult;
 }

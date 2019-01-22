@@ -118,7 +118,7 @@ final class ImpressionContext
                 return [
                     'keywords' => $this->user['keywords'],
                     'banner_size' => "{$zone->width}x{$zone->height}",
-                    'publisher_id' => Zone::fetchPublisherId($zone->id),
+                    'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                     'request_id' => $zone->id,
                     'user_id' => $this->user['uid'],
                 ];

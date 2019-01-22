@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,26 +18,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Events;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+namespace Adshares\Publisher\Dto;
 
-class GenerateUUID
+class ChartResult
 {
-    use Dispatchable, SerializesModels;
+    /** @var array */
+    private $data;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(Model $model)
+    public function __construct(array $data)
     {
-        if (!$model->uuid) {
-            $model->uuid = UuidStringGenerator::v4();
+        foreach ($data as $item) {
+            $this->data[] = [
+                $item[0],
+                $item[1],
+            ];
         }
+    }
+
+    public function toArray(): array
+    {
+        return $this->data;
     }
 }

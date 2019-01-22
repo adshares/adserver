@@ -20,7 +20,11 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -31,6 +35,7 @@ use function GuzzleHttp\json_encode;
 /**
  * @property Site site
  * @property int id
+ * @property string uuid
  */
 class Zone extends Model
 {
@@ -42,6 +47,8 @@ class Zone extends Model
 HTML;
 
     use SoftDeletes;
+    use AutomateMutators;
+    use BinHex;
 
     public const STATUS_DRAFT = 0;
 
@@ -123,6 +130,7 @@ HTML;
         'size',
         'type',
         'status',
+        'uuid',
     ];
 
     protected $visible = [
@@ -143,15 +151,33 @@ HTML;
 
     protected $touches = ['site'];
 
-    public static function findByIds(array $zoneIdList): Collection
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
+
+    public static function fetchByPublicId(string $uuid): ?Zone
+    {
+        return self::where('uuid', $uuid)->first();
+    }
+
+    public static function findByPublicIds(array $publicIds): Collection
     {
         /** @var Collection $zones */
-        $zones = self::whereIn('id', $zoneIdList)->get();
 
-        if (count($zones) !== count($zoneIdList)) {
+        foreach ($publicIds as &$item) {
+            $item = hex2bin($item);
+        }
+
+        $zones = self::whereIn('uuid', $publicIds)->get();
+
+        if (count($zones) !== count($publicIds)) {
             Log::warning(sprintf(
                 'Missing zones. {"ids":%s,"zones":%s}',
-                json_encode($zoneIdList),
+                json_encode($publicIds),
                 json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
             ));
         }
@@ -159,17 +185,17 @@ HTML;
         return $zones;
     }
 
-    public static function fetchPublisherId(int $zoneId): string
+    public static function fetchPublisherPublicIdByPublicId(string $publicId): string
     {
-        $zone = self::find($zoneId);
+        $zone = self::where('uuid', hex2bin($publicId))->first();
         $user = $zone->site->user;
 
         return $user->uuid;
     }
 
-    public static function fetchSiteId(int $zoneId): string
+    public static function fetchSitePublicIdByPublicId(string $publicId): string
     {
-        $zone = self::find($zoneId);
+        $zone = self::where('uuid', hex2bin($publicId))->first();
         return $zone->site->uuid;
     }
 
@@ -183,7 +209,7 @@ HTML;
     {
         $replaceArr = [
             '{{publisherId}}' => $this->publisher_id ?? 0,
-            '{{zoneId}}' => $this->id,
+            '{{zoneId}}' => $this->uuid,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,
             '{{selectorClass}}' => config('app.website_banner_class'),
