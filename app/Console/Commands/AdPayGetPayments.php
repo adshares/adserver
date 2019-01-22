@@ -67,6 +67,7 @@ class AdPayGetPayments extends Command
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
+            Log::debug(sprintf('%s', $entry->advertiser_id));
             return User::fetchByUuid($entry->advertiser_id)->id;
         })->map(function (Collection $collection, int $userId) use ($calculations) {
             $collection->each(function (EventLog $entry) use ($calculations) {
