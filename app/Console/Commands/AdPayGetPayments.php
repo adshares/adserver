@@ -43,9 +43,10 @@ class AdPayGetPayments extends Command
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
+
         DB::beginTransaction();
 
-        UserLedgerEntry::removeBlockade();
+        UserLedgerEntry::removeProcessingExpenditures();
 
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
@@ -64,9 +65,8 @@ class AdPayGetPayments extends Command
 
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
-
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
-            return $entry->advertiser()->id;
+            return $entry->advertiser_id;
         })->map(function (Collection $collection, int $userId) use ($calculations) {
             $collection->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
@@ -84,12 +84,7 @@ class AdPayGetPayments extends Command
                     $entry->save();
                 });
 
-                Campaign::fetchByUserId($userId)->filter(function (Campaign $campaign) {
-                    return $campaign->status === Campaign::STATUS_ACTIVE;
-                })->each(function (Campaign $campaign) {
-                    $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
-                    $campaign->save();
-                });
+                Campaign::suspendAllForUserId($userId);
 
                 Log::debug("Suspended Campaigns for user [$userId] due to insufficient amount of clicks."
                     ." Needs $totalEventValue, but has $balance");

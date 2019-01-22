@@ -134,6 +134,16 @@ class Campaign extends Model
 
     protected $appends = ['basic_information', 'targeting', 'ads'];
 
+    public static function suspendAllForUserId(int $userId): void
+    {
+        self::fetchByUserId($userId)->filter(function (self $campaign) {
+            return $campaign->status === Campaign::STATUS_ACTIVE;
+        })->each(function (Campaign $campaign) {
+            $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
+            $campaign->save();
+        });
+    }
+
     public static function isStatusAllowed(int $status): bool
     {
         return in_array($status, self::STATUSES);
