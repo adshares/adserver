@@ -70,7 +70,7 @@ class AdPayGetPayments extends Command
             $user = User::fetchByUuid($entry->advertiser_id);
 
             if (!$user) {
-                Log::debug(sprintf('{"advertiser_id":"%s"}', $entry->advertiser_id));
+                Log::debug(sprintf('{"command":"ops:adpay:payments:get","advertiser_id":"%s"}', $entry->advertiser_id));
             }
 
             return $user->id;
