@@ -37,6 +37,7 @@ class MySqlStatsQueryBuilder
         StatsRepository::SUM_TYPE,
         StatsRepository::CTR_TYPE,
         StatsRepository::STATS_TYPE,
+        StatsRepository::STATS_SUM_TYPE,
     ];
 
     private const CHART_QUERY = <<<SQL
@@ -56,14 +57,14 @@ SELECT
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
   IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS cpc,
-  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS cost,
-  e.site_id                                                                                               AS site_id
+  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS cost
+  #siteIdCol
   #zoneIdCol
 FROM network_event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.publisher_id = :publisherId
   #siteIdWhereClause
-GROUP BY e.site_id #zoneIdGroupBy
+#siteIdGroupBy #zoneIdGroupBy
 SQL;
 
     /**
@@ -86,7 +87,7 @@ SQL;
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
-        if ($type === StatsRepository::STATS_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             return self::STATS_QUERY;
         }
 
@@ -249,6 +250,20 @@ SQL;
             $zoneIdGroupBy = ', e.zone_id';
         }
         $this->query = str_replace(['#zoneIdCol', '#zoneIdGroupBy'], [$zoneIdCol, $zoneIdGroupBy], $this->query);
+
+        return $this;
+    }
+
+    public function appendSiteIdGroupBy(bool $appendSiteIdGroupBy): self
+    {
+        if ($appendSiteIdGroupBy) {
+            $siteIdCol = ', e.site_id AS site_id';
+            $siteIdGroupBy = 'GROUP BY e.site_id';
+        } else {
+            $siteIdCol = '';
+            $siteIdGroupBy = '';
+        }
+        $this->query = str_replace(['#siteIdCol', '#siteIdGroupBy'], [$siteIdCol, $siteIdGroupBy], $this->query);
 
         return $this;
     }

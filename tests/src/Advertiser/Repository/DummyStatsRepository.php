@@ -24,6 +24,7 @@ namespace Adshares\Tests\Advertiser\Repository;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Advertiser\Dto\StatsEntryValues;
 use Adshares\Advertiser\Dto\StatsResult;
 use Adshares\Advertiser\Dto\ChartResult;
 use Adshares\Advertiser\Repository\StatsRepository;
@@ -180,5 +181,14 @@ class DummyStatsRepository implements StatsRepository
         ];
 
         return new StatsResult($data);
+    }
+
+    public function fetchStatsSum(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsEntryValues {
+        return new StatsEntryValues(1, 2, 3, 4, 5);
     }
 }

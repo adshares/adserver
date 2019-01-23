@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\StatsEntryValues;
 use Adshares\Advertiser\Dto\StatsResult;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
@@ -159,16 +160,23 @@ class MySqlStatsRepository implements StatsRepository
             (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setAdvertiserId($advertiserId)->setDateRange(
                 $dateStart,
                 $dateEnd
-            )->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy($campaignId)->build();
+            )->appendCampaignIdWhereClause($campaignId)->appendCampaignIdGroupBy(true)->appendBannerIdGroupBy(
+                $campaignId
+            )->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
         $result = [];
         foreach ($queryResult as $row) {
-            $clicks = (int)$row->clicks;
-            $views = (int)$row->views;
-
-            $rowArray = [$clicks, $views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost, bin2hex($row->cid)];
+            $rowArray =
+                [
+                    (int)$row->clicks,
+                    (int)$row->views,
+                    (float)$row->ctr,
+                    (float)$row->cpc,
+                    (int)$row->cost,
+                    bin2hex($row->cid),
+                ];
             if ($campaignId !== null) {
                 $rowArray[] = bin2hex($row->bid);
             }
@@ -176,6 +184,33 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return new StatsResult($result);
+    }
+
+    public function fetchStatsSum(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsEntryValues {
+        $query =
+            (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setAdvertiserId($advertiserId)
+                ->setDateRange(
+                    $dateStart,
+                    $dateEnd
+                )
+                ->appendCampaignIdWhereClause($campaignId)
+                ->appendCampaignIdGroupBy($campaignId !== null)
+                ->appendBannerIdGroupBy(
+                    null
+                )
+                ->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+        $row = $queryResult[0];
+
+        return new StatsEntryValues(
+            (int)$row->clicks, (int)$row->views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost
+        );
     }
 
     private function fetch(

@@ -32,13 +32,9 @@ class StatsResult
             $bannerId = $entry[6] ?? null;
 
             $this->data[] = new StatsEntry(
-                $entry[0],
-                $entry[1],
-                $entry[2],
-                $entry[3],
-                $entry[4],
-                $entry[5],
-                $bannerId
+                new StatsEntryValues(
+                    $entry[0], $entry[1], $entry[2], $entry[3], $entry[4]
+                ), $entry[5], $bannerId
             );
         }
     }

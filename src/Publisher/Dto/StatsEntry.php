@@ -24,57 +24,29 @@ namespace Adshares\Publisher\Dto;
 
 class StatsEntry
 {
-    /** @var int */
-    private $clicks;
+    /** @var StatsEntryValues */
+    private $statsEntryValues;
 
-    /** @var int */
-    private $impressions;
-
-    /** @var float */
-    private $ctr;
-
-    /** @var float */
-    private $averageRpc;
-
-    /** @var int */
-    private $cost;
-
-    /**
-     * @var string
-     */
+    /** @var string */
     private $siteId;
 
     /** @var string|null */
     private $zoneId;
 
     public function __construct(
-        int $clicks,
-        int $impressions,
-        float $ctr,
-        float $averageRpc,
-        int $cost,
+        StatsEntryValues $statsEntryValues,
         string $siteId,
         ?string $zoneId = null
     ) {
+        $this->statsEntryValues = $statsEntryValues;
         $this->siteId = $siteId;
-        $this->clicks = $clicks;
-        $this->impressions = $impressions;
-        $this->ctr = $ctr;
-        $this->averageRpc = $averageRpc;
-        $this->cost = $cost;
         $this->zoneId = $zoneId;
     }
 
     public function toArray(): array
     {
-        $data = [
-            'siteId' => $this->siteId,
-            'clicks' => $this->clicks,
-            'impressions' => $this->impressions,
-            'ctr' => $this->ctr,
-            'averageRpc' => $this->averageRpc,
-            'cost' => $this->cost,
-        ];
+        $data = $this->statsEntryValues->toArray();
+        $data['siteId'] = $this->siteId;
 
         if ($this->zoneId) {
             $data['zoneId'] = $this->zoneId;

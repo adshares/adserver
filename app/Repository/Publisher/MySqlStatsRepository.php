@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Dto\StatsEntryValues;
 use Adshares\Publisher\Dto\StatsResult;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
@@ -158,16 +159,20 @@ class MySqlStatsRepository implements StatsRepository
         $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
             $dateStart,
             $dateEnd
-        )->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy($siteId)->build();
+        )->appendSiteIdWhereClause($siteId)->appendSiteIdGroupBy(true)->appendZoneIdGroupBy($siteId)->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
         $result = [];
         foreach ($queryResult as $row) {
-            $clicks = (int)$row->clicks;
-            $views = (int)$row->views;
-
-            $rowArray = [$clicks, $views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost, bin2hex($row->site_id)];
+            $rowArray = [
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->cpc,
+                (int)$row->cost,
+                bin2hex($row->site_id),
+            ];
             if ($siteId !== null) {
                 $rowArray[] = bin2hex($row->zone_id);
             }
@@ -175,6 +180,35 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return new StatsResult($result);
+    }
+
+    public function fetchStatsSum(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): StatsEntryValues {
+        $query =
+            (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))->setPublisherId($publisherId)
+                ->setDateRange(
+                    $dateStart,
+                    $dateEnd
+                )
+                ->appendSiteIdWhereClause($siteId)
+                ->appendSiteIdGroupBy($siteId !== null)
+                ->appendZoneIdGroupBy(null)
+                ->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+        $row = $queryResult[0];
+
+        return new StatsEntryValues(
+            (int)$row->clicks,
+            (int)$row->views,
+            (float)$row->ctr,
+            (float)$row->cpc,
+            (int)$row->cost
+        );
     }
 
     private function fetch(

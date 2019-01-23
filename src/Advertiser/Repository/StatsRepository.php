@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Advertiser\Repository;
 
 use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\StatsEntryValues;
 use Adshares\Advertiser\Dto\StatsResult;
 use DateTime;
 
@@ -35,6 +36,7 @@ interface StatsRepository
     public const SUM_TYPE = 'sum';
     public const CTR_TYPE = 'ctr';
     public const STATS_TYPE = 'stats';
+    public const STATS_SUM_TYPE = 'statsSum';
 
     public const HOUR_RESOLUTION = 'hour';
     public const DAY_RESOLUTION = 'day';
@@ -97,4 +99,11 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): StatsResult;
+
+    public function fetchStatsSum(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsEntryValues;
 }

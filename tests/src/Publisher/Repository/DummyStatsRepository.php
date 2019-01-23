@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Publisher\Repository;
 
+use Adshares\Publisher\Dto\StatsEntryValues;
 use Adshares\Publisher\Dto\StatsResult;
 use Adshares\Publisher\Dto\ChartResult;
 use Adshares\Publisher\Repository\StatsRepository;
@@ -162,5 +163,14 @@ class DummyStatsRepository implements StatsRepository
         ];
 
         return new StatsResult($data);
+    }
+
+    public function fetchStatsSum(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsEntryValues {
+        return new StatsEntryValues(1, 2, 3, 4, 5);
     }
 }

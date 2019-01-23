@@ -22,35 +22,46 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Dto;
 
-class StatsEntry
+class StatsEntryValues
 {
-    /** @var StatsEntryValues */
-    private $statsEntryValues;
+    /** @var int */
+    private $clicks;
 
-    /** @var string */
-    private $campaignId;
+    /** @var int */
+    private $impressions;
 
-    /** @var string|null */
-    private $bannerId;
+    /** @var float */
+    private $ctr;
+
+    /** @var float */
+    private $averageCpc;
+
+    /** @var int */
+    private $cost;
 
     public function __construct(
-        StatsEntryValues $statsEntryValues,
-        string $campaignId,
-        ?string $bannerId = null
+        int $clicks,
+        int $impressions,
+        float $ctr,
+        float $averageCpc,
+        int $cost
     ) {
-        $this->statsEntryValues = $statsEntryValues;
-        $this->campaignId = $campaignId;
-        $this->bannerId = $bannerId;
+        $this->clicks = $clicks;
+        $this->impressions = $impressions;
+        $this->ctr = $ctr;
+        $this->averageCpc = $averageCpc;
+        $this->cost = $cost;
     }
 
     public function toArray(): array
     {
-        $data = $this->statsEntryValues->toArray();
-        $data['campaignId'] = $this->campaignId;
-
-        if ($this->bannerId) {
-            $data['bannerId'] = $this->bannerId;
-        }
+        $data = [
+            'clicks' => $this->clicks,
+            'impressions' => $this->impressions,
+            'ctr' => $this->ctr,
+            'averageCpc' => $this->averageCpc,
+            'cost' => $this->cost,
+        ];
 
         return $data;
     }
