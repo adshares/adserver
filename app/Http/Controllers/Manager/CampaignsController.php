@@ -340,14 +340,14 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function read(Request $request, $campaignId)
+    public function read(int $campaignId): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignById((int)$campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
-    public function classify($campaignId)
+    public function classify(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
@@ -370,7 +370,7 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function disableClassify($campaignId)
+    public function disableClassify(int $campaignId)
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->classification_status = 0;
