@@ -169,7 +169,13 @@ class NetworkEventLog extends Model
         $headers,
         array $context,
         $type
-    ): self {
+    ): void {
+        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
+
+        if ($existedEventLog) {
+            return;
+        }
+
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -184,8 +190,6 @@ class NetworkEventLog extends Model
         $log->event_type = $type;
         $log->context = $context;
         $log->save();
-
-        return $log;
     }
 
     public static function eventClicked(string $caseId): void

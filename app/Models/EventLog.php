@@ -166,7 +166,13 @@ class EventLog extends Model
         array $context,
         string $userData,
         $type
-    ): self {
+    ): void {
+        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
+
+        if ($existedEventLog) {
+            return;
+        }
+
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -183,8 +189,6 @@ class EventLog extends Model
         $log->their_userdata = $userData;
         $log->event_type = $type;
         $log->save();
-
-        return $log;
     }
 
     public function payment(): BelongsTo
