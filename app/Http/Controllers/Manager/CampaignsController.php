@@ -298,7 +298,7 @@ class CampaignsController extends Controller
             $campaign->changeStatus($status);
         } catch (InvalidArgumentException $e) {
             Log::debug("Notify user [{$campaign->user_id}]"
-                ." that the campaign [{$campaign->is}] status cannot be set to [{$status}].");
+                ." that the campaign [{$campaign->id}] status cannot be set to [{$status}].");
 
             return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
         }
