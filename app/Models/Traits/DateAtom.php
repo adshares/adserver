@@ -39,7 +39,6 @@ trait DateAtom
         $date->setTimezone(new DateTimeZone(config('app.timezone')));
 
         $this->attributes[$key] = $date;
-
     }
 
     public function dateAtomAccessor(?DateTime $value): ?string
