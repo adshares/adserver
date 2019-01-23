@@ -37,13 +37,13 @@ class CreateNetworkEventLogsTable extends Migration
 
             $table->timestamps();
 
-            $table->binary('case_id', 16);
-            $table->binary('event_id', 16);
-            $table->binary('user_id', 16);
-            $table->binary('banner_id', 16);
-            $table->binary('publisher_id', 16);
-            $table->binary('site_id', 16);
-            $table->binary('zone_id', 16);
+            $table->binary('case_id', 16)->nullable(false);
+            $table->binary('event_id', 16)->nullable(false);
+            $table->binary('user_id', 16)->nullable(false);
+            $table->binary('banner_id', 16)->nullable(false);
+            $table->binary('publisher_id', 16)->nullable(false);
+            $table->binary('site_id', 16)->nullable(false);
+            $table->binary('zone_id', 16)->nullable(false);
 
             $table->string('event_type', 16);
 
@@ -77,6 +77,10 @@ class CreateNetworkEventLogsTable extends Migration
             DB::statement('ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)');
             DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(8)');
         }
+
+        Schema::table('network_event_logs', function (Blueprint $table) {
+            $table->unique('event_id');
+        });
     }
 
     /**

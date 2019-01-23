@@ -39,16 +39,14 @@ class CreateEventLogsTable extends Migration
 
                 $table->timestamps();
 
-                $table->binary('case_id', 16);
-                $table->binary('event_id', 16);
-                $table->binary('user_id', 16);
-                $table->binary('banner_id', 16);
-                $table->binary('publisher_id', 16)->nullable(true);
-                $table->binary('advertiser_id', 16);
-                $table->binary('campaign_id', 16);
-
-                $table->binary('zone_id', 16)->nullable(true);
-
+                $table->binary('case_id', 16)->nullable(false);
+                $table->binary('event_id', 16)->nullable(false);
+                $table->binary('user_id', 16)->nullable(false);
+                $table->binary('banner_id', 16)->nullable(false);
+                $table->binary('publisher_id', 16)->nullable();
+                $table->binary('advertiser_id', 16)->nullable(false);
+                $table->binary('campaign_id', 16)->nullable(false);
+                $table->binary('zone_id', 16)->nullable();
                 $table->string('event_type', 16);
 
                 $table->binary('pay_to', 6)->nullable();
@@ -68,7 +66,7 @@ class CreateEventLogsTable extends Migration
                 $table->bigInteger('paid_amount')->unsigned()->nullable();
                 $table->integer('payment_id')->nullable();
 
-                $table->tinyInteger('reason')->unsigned()->nullable(true);
+                $table->tinyInteger('reason')->unsigned()->nullable();
                 $table->tinyInteger('is_view_clicked')->unsigned()->default(0);
             }
         );
@@ -85,6 +83,10 @@ class CreateEventLogsTable extends Migration
             DB::statement('ALTER TABLE event_logs MODIFY ip varbinary(8)');
             DB::statement('ALTER TABLE event_logs MODIFY banner_id varbinary(16) NOT NULL');
         }
+
+        Schema::table('event_logs', function (Blueprint $table) {
+            $table->unique('event_id');
+        });
     }
 
     /**
