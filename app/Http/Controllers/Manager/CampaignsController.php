@@ -50,7 +50,7 @@ class CampaignsController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function upload(Request $request)
+    public function upload(Request $request): JsonResponse
     {
         $file = $request->file('file');
         $path = $file->store('banners', self::FILESYSTEM_DISK);
@@ -59,7 +59,7 @@ class CampaignsController extends Controller
         $imageSize = getimagesize($file->getRealPath());
         $size = '';
 
-        if (isset($imageSize[0]) && isset($imageSize[1])) {
+        if (isset($imageSize[0], $imageSize[1])) {
             $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
         }
 
@@ -140,7 +140,7 @@ class CampaignsController extends Controller
         foreach ($input as $banner) {
             $size = explode('x', Banner::size($banner['size']));
 
-            if (!isset($size[0]) || !isset($size[1])) {
+            if (!isset($size[0], $size[1])) {
                 throw new \RuntimeException('Banner size is required.');
             }
 
@@ -177,14 +177,14 @@ class CampaignsController extends Controller
         }
     }
 
-    public function browse()
+    public function browse(): JsonResponse
     {
         $campaigns = $this->campaignRepository->find();
 
         return self::json($campaigns);
     }
 
-    public function count()
+    public function count(): JsonResponse
     {
         //@TODO: create function data
         $siteCount = [
@@ -199,7 +199,7 @@ class CampaignsController extends Controller
         return self::json($siteCount);
     }
 
-    public function edit(Request $request, int $campaignId)
+    public function edit(Request $request, int $campaignId): JsonResponse
     {
         $this->validateRequestObject(
             $request,
@@ -370,7 +370,7 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function disableClassify(int $campaignId)
+    public function disableClassify(int $campaignId): void
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->classification_status = 0;

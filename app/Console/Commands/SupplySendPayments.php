@@ -67,7 +67,8 @@ class SupplySendPayments extends Command
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
-                $this->error($exception->getMessage());
+
+                throw $exception;
             }
         }
 
