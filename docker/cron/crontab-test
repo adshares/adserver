@@ -1,0 +1,13 @@
+0 */12 * * * cd /opt/adshares/adserver && bash docker/cron/ads-broadcast-host.sh >> /dev/null 2>&1
+
+30 */6 * * * cd /opt/adshares/adserver && bash docker/cron/ads-fetch-hosts.sh >> /dev/null 2>&1
+
+* * * * * cd /opt/adshares/adserver && bash docker/cron/ops-inventory.sh >> /dev/null 2>&1
+
+* * * * * cd /opt/adshares/adserver && bash docker/cron/adpay-export.sh >> /dev/null 2>&1
+
+59 * * * * /opt/adshares/adserver/artisan ops:demand:payments:block >> /dev/null 2>&1
+
+15 * * * * cd /opt/adshares/adserver && bash docker/cron/ops-payments.sh >> /dev/null 2>&1
+
+*/8 * * * * cd /opt/adshares/adserver && bash docker/cron/ads-scanner.sh >> /dev/null 2>&1

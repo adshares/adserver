@@ -66,7 +66,7 @@ ${ARTISAN_COMMAND} ops:targeting-options:update
 ${ARTISAN_COMMAND} ops:filtering-options:update
 ${ARTISAN_COMMAND} ads:fetch-hosts --quiet
 
-crontab -u ${INSTALLATION_USER} ./docker/cron/crontab
+crontab -u ${INSTALLATION_USER} ./docker/cron/crontab-${VARIABLE_HOST}
 
 service php7.2-fpm restart
 service nginx start
