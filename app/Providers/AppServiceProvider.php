@@ -22,13 +22,16 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Adserver\Services\Adpay;
+use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
+use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
+use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
+use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
 use Adshares\Adserver\Services\Adselect;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
         $this->app->bind(
             Adselect::class,
@@ -50,6 +53,20 @@ class AppServiceProvider extends ServiceProvider
                 $drv->setWorkingDir(config('app.adshares_workingdir'));
 
                 return new AdsClient($drv);
+            }
+        );
+
+        $this->app->bind(
+            AdvertiserStatsRepository::class,
+            function () {
+                return new MysqlAdvertiserStatsRepository();
+            }
+        );
+
+        $this->app->bind(
+            PublisherStatsRepository::class,
+            function () {
+                return new MysqlPublisherStatsRepository();
             }
         );
     }

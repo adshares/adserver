@@ -22,63 +22,79 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Repository;
 
-use Adshares\Advertiser\Service\ChartResult;
+use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\StatsResult;
 use DateTime;
 
 interface StatsRepository
 {
+    public const VIEW_TYPE = 'view';
+    public const CLICK_TYPE = 'click';
+    public const CPC_TYPE = 'cpc';
+    public const CPM_TYPE = 'cpm';
+    public const SUM_TYPE = 'sum';
+    public const CTR_TYPE = 'ctr';
+    public const STATS_TYPE = 'stats';
+
+    public const HOUR_RESOLUTION = 'hour';
+    public const DAY_RESOLUTION = 'day';
+    public const WEEK_RESOLUTION = 'week';
+    public const MONTH_RESOLUTION = 'month';
+    public const QUARTER_RESOLUTION = 'quarter';
+    public const YEAR_RESOLUTION = 'year';
+
     public function fetchView(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
-
     public function fetchClick(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCpc(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCpm(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchSum(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
 
     public function fetchCtr(
-        int $advertiser,
+        string $advertiserId,
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?int $campaignId = null,
-        ?int $bannerId = null
+        ?string $campaignId = null
     ): ChartResult;
+
+    public function fetchStats(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): StatsResult;
 }

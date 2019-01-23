@@ -7,14 +7,17 @@
         "status": 2,
         "zones": {
           "left": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD1",
             "width": 160,
             "height": 600
           },
           "right": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD2",
             "width": 160,
             "height": 600
           },
           "center": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD3",
             "width": 970,
             "height": 90
           }
@@ -25,18 +28,22 @@
         "status": 2,
         "zones": {
           "left": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD4",
             "width": 160,
             "height": 600
           },
           "right": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD5",
             "width": 160,
             "height": 600
           },
           "center": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD6",
             "width": 970,
             "height": 90
           },
           "center-mobile": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD7",
             "width": 320,
             "height": 50
           }
@@ -47,18 +54,22 @@
         "status": 2,
         "zones": {
           "left": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD8",
             "width": 160,
             "height": 600
           },
           "right": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD9",
             "width": 160,
             "height": 600
           },
           "center": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACDA",
             "width": 970,
             "height": 90
           },
           "center-mobile": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACDB",
             "width": 320,
             "height": 50
           }

@@ -24,8 +24,8 @@ use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
+use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -79,10 +79,8 @@ Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
 
-// tmp mocked solutions
-Route::post('chart', [ChartsController::class, 'chart']);
-Route::post('publisher_chart', [ChartsController::class, 'publisherChart']);
-Route::get('admin/settings', [Simulator::class, 'mock']);
-Route::get('account/history', [Simulator::class, 'mock']);
-
-
+// statistics
+Route::get('campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
+Route::get('campaigns/stats/table/{date_start}/{date_end}', [StatsController::class, 'advertiserStats']);
+Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
+Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);

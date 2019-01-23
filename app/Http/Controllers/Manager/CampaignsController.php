@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types = 1);
 /**
  * Copyright (c) 2018 Adshares sp. z o.o.
  *
@@ -32,7 +32,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 class CampaignsController extends Controller
 {
@@ -48,7 +50,7 @@ class CampaignsController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function upload(Request $request)
+    public function upload(Request $request): JsonResponse
     {
         $file = $request->file('file');
         $path = $file->store('banners', self::FILESYSTEM_DISK);
@@ -57,7 +59,7 @@ class CampaignsController extends Controller
         $imageSize = getimagesize($file->getRealPath());
         $size = '';
 
-        if (isset($imageSize[0]) && isset($imageSize[1])) {
+        if (isset($imageSize[0], $imageSize[1])) {
             $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
         }
 
@@ -75,6 +77,9 @@ class CampaignsController extends Controller
     {
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
+        $status = $input['basic_information']['status'];
+
+        $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
@@ -92,6 +97,14 @@ class CampaignsController extends Controller
 
         if ($temporaryFileToRemove) {
             $this->removeLocalBannerImages($temporaryFileToRemove);
+        }
+
+        try {
+            $campaign->changeStatus($status);
+
+            $this->campaignRepository->save($campaign);
+        } catch (InvalidArgumentException $e) {
+            Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->id}] cannot be started.");
         }
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
@@ -127,7 +140,7 @@ class CampaignsController extends Controller
         foreach ($input as $banner) {
             $size = explode('x', Banner::size($banner['size']));
 
-            if (!isset($size[0]) || !isset($size[1])) {
+            if (!isset($size[0], $size[1])) {
                 throw new \RuntimeException('Banner size is required.');
             }
 
@@ -164,14 +177,14 @@ class CampaignsController extends Controller
         }
     }
 
-    public function browse()
+    public function browse(): JsonResponse
     {
         $campaigns = $this->campaignRepository->find();
 
         return self::json($campaigns);
     }
 
-    public function count()
+    public function count(): JsonResponse
     {
         //@TODO: create function data
         $siteCount = [
@@ -186,7 +199,7 @@ class CampaignsController extends Controller
         return self::json($siteCount);
     }
 
-    public function edit(Request $request, $campaignId)
+    public function edit(Request $request, int $campaignId): JsonResponse
     {
         $this->validateRequestObject(
             $request,
@@ -198,6 +211,8 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
+
+        $status = $input['basicInformation']['status'] ?? null;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
 
@@ -206,6 +221,10 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->fill($input);
+
+        if ($status !== null) {
+            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
+        }
 
         $bannersToUpdate = [];
         $bannersToDelete = [];
@@ -245,6 +264,18 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
+        if ($status !== null) {
+            try {
+                $campaign->changeStatus($status);
+
+                $this->campaignRepository->save($campaign);
+            } catch (InvalidArgumentException $e) {
+                Log::debug("Notify user [{$campaign->user_id}]"
+                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
+                    ." {$e->getMessage()}");
+            }
+        }
+
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
@@ -261,12 +292,16 @@ class CampaignsController extends Controller
 
         $status = (int)$request->input('campaign.status');
 
-        if (!Campaign::isStatusAllowed($status)) {
-            $status = Campaign::STATUS_INACTIVE;
-        }
-
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-        $campaign->status = $status;
+
+        try {
+            $campaign->changeStatus($status);
+        } catch (InvalidArgumentException $e) {
+            Log::debug("Notify user [{$campaign->user_id}]"
+                ." that the campaign [{$campaign->id}] status cannot be set to [{$status}].");
+
+            return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
+        }
 
         $this->campaignRepository->update($campaign);
 
@@ -296,23 +331,23 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         if ($campaign->status !== Campaign::STATUS_INACTIVE) {
-            $campaign->status = Campaign::STATUS_INACTIVE;
+            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
             $this->campaignRepository->save($campaign);
         }
+
         $this->campaignRepository->delete($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function read(Request $request, $campaignId)
+    public function read(int $campaignId): JsonResponse
     {
-        // TODO check privileges
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
-    public function classify($campaignId)
+    public function classify(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
@@ -335,7 +370,7 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function disableClassify($campaignId)
+    public function disableClassify(int $campaignId): void
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $campaign->classification_status = 0;

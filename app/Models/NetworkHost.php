@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use DateTime;
 
@@ -34,10 +35,13 @@ use DateTime;
  * @property int updated_at
  * @property int deleted_at
  * @property int last_broadcast
+ * @property int failed_connection
  */
 class NetworkHost extends Model
 {
     use AutomateMutators;
+
+    private const MAX_FAILED_CONNECTION = 3;
 
     /**
      * @var array
@@ -46,6 +50,7 @@ class NetworkHost extends Model
         'address',
         'host',
         'last_broadcast',
+        'failed_connection',
     ];
 
     public static function fetchByAddress(string $address): ?NetworkHost
@@ -64,8 +69,28 @@ class NetworkHost extends Model
 
         $networkHost->host = $host;
         $networkHost->last_broadcast = $lastBroadcast ?? new DateTime();
+        $networkHost->failed_connection = 0;
         $networkHost->save();
 
         return $networkHost;
+    }
+
+    public static function fetchHosts(): Collection
+    {
+        return self::where('failed_connection', '<', self::MAX_FAILED_CONNECTION)->get();
+    }
+
+    public function connectionSuccessful(): void
+    {
+        if ($this->failed_connection > 0) {
+            $this->failed_connection = 0;
+            $this->update();
+        }
+    }
+
+    public function connectionFailed(): void
+    {
+        ++$this->failed_connection;
+        $this->update();
     }
 }

@@ -25,6 +25,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
@@ -38,13 +39,20 @@ class AdPayGetPayments extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:adpay:payments:get';
+    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
     public function handle(AdPay $adPay): void
     {
         $this->info('Start command '.$this->signature);
 
-        $calculations = collect($adPay->getPayments(now()->getTimestamp()));
+        DB::beginTransaction();
+
+        UserLedgerEntry::removeProcessingExpenditures();
+
+        $ts = $this->option('timestamp');
+        $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
+
+        $calculations = collect($adPay->getPayments($timestamp, (bool)$this->option('force')));
 
         Log::info('Found '.count($calculations).' calculations.');
 
@@ -58,19 +66,23 @@ class AdPayGetPayments extends Command
 
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
-        DB::beginTransaction();
-
         $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
-            return $entry->advertiser()->id;
+            $user = User::fetchByUuid($entry->advertiser_id);
+
+            if (!$user) {
+                Log::debug(sprintf('{"command":"ops:adpay:payments:get","advertiser_id":"%s"}', $entry->advertiser_id));
+            }
+
+            return $user->id;
         })->map(function (Collection $collection, int $userId) use ($calculations) {
             $collection->each(function (EventLog $entry) use ($calculations) {
                 $calculation = $calculations->firstWhere('event_id', $entry->event_id);
                 $entry->event_value = $calculation['amount'];
+                $entry->reason = $calculation['reason'];
                 $entry->save();
             });
 
             $balance = UserLedgerEntry::getBalanceByUserId($userId);
-
             $totalEventValue = $collection->sum('event_value');
 
             if ($balance < $totalEventValue) {
@@ -79,26 +91,29 @@ class AdPayGetPayments extends Command
                     $entry->save();
                 });
 
-                Campaign::fetchByUserId($userId)->each(function (Campaign $campaign) {
-                    $campaign->status = Campaign::STATUS_INACTIVE;
-                    $campaign->save();
-                });
+                Campaign::suspendAllForUserId($userId);
 
-                Log::debug("Disabled Campaigns for user [$userId] due to insufficient amount of clicks."
+                Log::debug("Suspended Campaigns for user [$userId] due to insufficient amount of clicks."
                     ." Needs $totalEventValue, but has $balance");
 
                 $totalEventValue = $collection->sum('event_value');
             }
 
-            $userLedgerEntry = new UserLedgerEntry();
-            $userLedgerEntry->user_id = $userId;
-            $userLedgerEntry->amount = -$totalEventValue;
-            $userLedgerEntry->status = UserLedgerEntry::STATUS_ACCEPTED;
-            $userLedgerEntry->type = UserLedgerEntry::TYPE_AD_EXPENDITURE;
-            $userLedgerEntry->save();
+            if ($totalEventValue > 0) {
+                $userLedgerEntry = UserLedgerEntry::construct(
+                    $userId,
+                    -$totalEventValue,
+                    UserLedgerEntry::STATUS_ACCEPTED,
+                    UserLedgerEntry::TYPE_AD_EXPENDITURE
+                );
 
-            return $userLedgerEntry;
-        });
+                $userLedgerEntry->save();
+
+                return $userLedgerEntry;
+            }
+
+            return false;
+        })->filter();
 
         DB::commit();
 

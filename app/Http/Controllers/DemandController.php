@@ -38,7 +38,6 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use function hex2bin;
 
 /**
  * API commands used to serve banners and log relevant events.
@@ -55,11 +54,7 @@ class DemandController extends Controller
 
     public function serve(Request $request, $id)
     {
-        $banner = Banner::where('uuid', hex2bin($id))->first();
-
-        if (empty($banner)) {
-            abort(404);
-        }
+        $banner = $this->getBanner($id);
 
         if ('OPTIONS' === $request->getRealMethod()) {
             $response = new Response('', 204);
@@ -71,7 +66,7 @@ class DemandController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ('OPTIONS' === $request->getRealMethod()) {
@@ -117,25 +112,39 @@ class DemandController extends Controller
 
         $caseId = (string)Uuid::caseId();
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_REQUEST);
+        $campaign = $banner->campaign;
+        $user = $campaign->user;
 
         $log = new EventLog();
         $log->banner_id = $banner->uuid;
         $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->user_id = Utils::getRawTrackingId($tid);
+        $log->advertiser_id = $user->uuid;
+        $log->campaign_id = $campaign->uuid;
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
         $log->headers = $request->headers->all();
         $log->event_type = EventLog::TYPE_REQUEST;
         $log->save();
 
         $response->headers->set('X-Adshares-Cid', $caseId);
-        $response->headers->set('X-Adshares-Lid', $log->id);
 
         if (!$response->isNotModified($request)) {
             $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
         }
 
         return $response;
+    }
+
+    private function getBanner(string $id): Banner
+    {
+        $banner = Banner::fetchBanner($id);
+
+        if ($banner === null) {
+            abort(404);
+        }
+
+        return $banner;
     }
 
     public function viewScript(Request $request)
@@ -179,12 +188,10 @@ class DemandController extends Controller
 
     public function click(Request $request, string $bannerId): RedirectResponse
     {
-        $banner = Banner::with('Campaign')->where('uuid', hex2bin($bannerId))->first();
-        if (!$banner) {
-            throw new NotFoundHttpException();
-        }
+        $banner = $this->getBanner($bannerId);
 
         $campaign = $banner->campaign;
+        $user = $campaign->user;
 
         $url = $campaign->landing_url;
         $logIp = bin2hex(inet_pton($request->getClientIp()));
@@ -210,6 +217,8 @@ class DemandController extends Controller
             $context['page']['zone'],
             $trackingId,
             $publisherId,
+            $campaign->uuid,
+            $user->uuid,
             $payTo,
             $logIp,
             $requestHeaders,
@@ -217,6 +226,8 @@ class DemandController extends Controller
             $keywords,
             EventLog::TYPE_CLICK
         );
+
+        EventLog::eventClicked($caseId);
 
         return $response;
     }
@@ -264,6 +275,10 @@ class DemandController extends Controller
 
         $response->send();
 
+        $banner = $this->getBanner($bannerId);
+        $campaign = $banner->campaign;
+        $user = $campaign->user;
+
         EventLog::create(
             $caseId,
             $eventId,
@@ -271,6 +286,8 @@ class DemandController extends Controller
             $context['page']['zone'],
             $trackingId,
             $publisherId,
+            $campaign->uuid,
+            $user->uuid,
             $payTo,
             $logIp,
             $requestHeaders,

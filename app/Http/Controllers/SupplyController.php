@@ -53,7 +53,7 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid, X-Adshares-Lid');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ($data) {
@@ -189,7 +189,9 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
-        $publisherId = Zone::fetchPublisherId($zoneId);
+
+        $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
+        $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
         $url = Utils::addUrlParameter($url, 'eid', $eventId);
@@ -208,12 +210,15 @@ class SupplyController extends Controller
             $zoneId,
             $trackingId,
             $publisherId,
+            $siteId,
             $payFrom,
             $logIp,
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_CLICK
         );
+
+        NetworkEventLog::eventClicked($caseId);
 
         return $response;
     }
@@ -249,7 +254,8 @@ class SupplyController extends Controller
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = $context['page']['zone'];
-        $publisherId = Zone::fetchPublisherId($zoneId);
+        $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
+        $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
@@ -269,6 +275,7 @@ class SupplyController extends Controller
             $zoneId,
             $trackingId,
             $publisherId,
+            $siteId,
             $payFrom,
             $logIp,
             $requestHeaders,

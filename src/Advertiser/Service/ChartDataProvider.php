@@ -24,16 +24,17 @@ namespace Adshares\Advertiser\Service;
 
 use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
+use Adshares\Advertiser\Dto\ChartResult;
 
-final class ChartProvider
+final class ChartDataProvider
 {
     private const REPOSITORY_MAPPER = [
-        ChartInput::CLICK_TYPE => 'fetchClick',
-        ChartInput::VIEW_TYPE => 'fetchView',
-        ChartInput::CPC_TYPE => 'fetchCpc',
-        ChartInput::CPM_TYPE => 'fetchCpm',
-        ChartInput::SUM_TYPE => 'fetchSum',
-        ChartInput::CTR_TYPE => 'fetchCtr',
+        StatsRepository::CLICK_TYPE => 'fetchClick',
+        StatsRepository::VIEW_TYPE => 'fetchView',
+        StatsRepository::CPC_TYPE => 'fetchCpc',
+        StatsRepository::CPM_TYPE => 'fetchCpm',
+        StatsRepository::SUM_TYPE => 'fetchSum',
+        StatsRepository::CTR_TYPE => 'fetchCtr',
     ];
 
     /** @var StatsRepository */
@@ -53,8 +54,7 @@ final class ChartProvider
             $input->getResolution(),
             $input->getDateStart(),
             $input->getDateEnd(),
-            $input->getCampaignId(),
-            $input->getBannerId()
+            $input->getCampaignId()
         );
     }
 }

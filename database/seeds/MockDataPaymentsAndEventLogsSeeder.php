@@ -73,7 +73,7 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $event->event_id = (string)Uuid::v4();
         $event->user_id = (string)Uuid::v4();
         $event->banner_id = (string)Uuid::v4();
-        $event->zone_id = 1;
+        $event->zone_id = (string)Uuid::v4();
         $event->event_type = $type;
         $event->pay_to = $payTo;
         $event->ip = bin2hex(inet_pton('127.0.0.1'));

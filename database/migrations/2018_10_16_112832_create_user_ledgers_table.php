@@ -41,6 +41,7 @@ class CreateUserLedgersTable extends Migration
             $table->char('address_from', 18)->nullable();
             $table->char('address_to', 18)->nullable();
             $table->char('txid', 18)->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

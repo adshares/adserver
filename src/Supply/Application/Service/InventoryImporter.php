@@ -27,7 +27,6 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
-use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 
 class InventoryImporter
 {
@@ -60,9 +59,6 @@ class InventoryImporter
         try {
             $campaigns = $this->client->fetchAllInventory($host);
         } catch (EmptyInventoryException $exception) {
-            return;
-        } catch (UnexpectedClientResponseException $exception) {
-            // we can add to a log file this information, not now
             return;
         }
 

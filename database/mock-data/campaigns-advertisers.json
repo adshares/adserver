@@ -33,5 +33,35 @@
         "classification_tags": "travel"
       }
     ]
+  },
+  {
+    "email": "dev@dev.dev",
+    "campaigns": [
+      {
+        "code": "ads2",
+        "name": "Adshares 2",
+        "url": "https://adshares.net/",
+        "max_cpm": 100000000000,
+        "max_cpc": 100000000000,
+        "budget_per_hour": 100000000000,
+        "classification_status": 2,
+        "classification_tags": "advertising, blockchain, technology"
+      }
+    ]
+  },
+  {
+    "email": "postman@dev.dev",
+    "campaigns": [
+      {
+        "code": "ads",
+        "name": "Postman",
+        "url": "https://adshares.net/",
+        "max_cpm": 100000000000,
+        "max_cpc": 100000000000,
+        "budget_per_hour": 100000000000,
+        "classification_status": 2,
+        "classification_tags": "advertising, blockchain, technology"
+      }
+    ]
   }
 ]

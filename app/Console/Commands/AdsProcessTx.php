@@ -30,6 +30,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -40,6 +41,8 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class AdsProcessTx extends Command
 {
@@ -242,30 +245,38 @@ class AdsProcessTx extends Command
 
         if ($targetAddr === $this->adServerAddress) {
             $message = $transaction->getMessage();
-            $user = User::fetchByUuid($this->extractUuidFromMessage($message));
+            $uuid = $this->extractUuidFromMessage($message);
+            $user = User::fetchByUuid($uuid);
 
             if (null === $user) {
                 $this->handleReservedTx($dbTx);
             } else {
+                DB::beginTransaction();
+
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
-                // add to ledger
-                $ul = new UserLedgerEntry();
-                $ul->user_id = $user->id;
-                $ul->amount = $amount;
-                $ul->address_from = $senderAddress;
-                $ul->address_to = $targetAddr;
-                $ul->txid = $dbTx->txid;
-                $ul->type = UserLedgerEntry::TYPE_DEPOSIT;
+
+                $ledgerEntry = new UserLedgerEntry();
+                $ledgerEntry->user_id = $user->id;
+                $ledgerEntry->amount = $amount;
+                $ledgerEntry->address_from = $senderAddress;
+                $ledgerEntry->address_to = $targetAddr;
+                $ledgerEntry->txid = $dbTx->txid;
+                $ledgerEntry->type = UserLedgerEntry::TYPE_DEPOSIT;
 
                 $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
-                // dbTx added to ledger will not be processed again
-                DB::transaction(
-                    function () use ($ul, $dbTx) {
-                        $ul->save();
-                        $dbTx->save();
-                    }
-                );
+
+                $ledgerEntry->save();
+                $dbTx->save();
+
+                try {
+                    $this->reactivateSuspendedCampaigns($user);
+                    Log::debug("Notify user [{$user->id}] that we restarted all suspended campaigns.");
+                } catch (InvalidArgumentException $exception) {
+                    Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
+                }
+
+                DB::commit();
             }
         } else {
             $dbTx->status = AdsPayment::STATUS_INVALID;
@@ -275,6 +286,25 @@ class AdsProcessTx extends Command
 
     private function extractUuidFromMessage(string $message): string
     {
-        return hex2bin(substr($message, -32));
+        return substr($message, -32);
+    }
+
+    private function reactivateSuspendedCampaigns(User $user): void
+    {
+        $balance = UserLedgerEntry::getBalanceByUserId($user->id);
+        $campaigns = $user->campaigns;
+
+        $requiredAmount = $campaigns->filter(function (Campaign $campaign) {
+            return $campaign->status === Campaign::STATUS_ACTIVE || $campaign->status === Campaign::STATUS_SUSPENDED;
+        })->sum('budget');
+
+        if ($balance >= $requiredAmount) {
+            $campaigns->filter(function (Campaign $campaign) {
+                return $campaign->status === Campaign::STATUS_SUSPENDED;
+            })->each(function (Campaign $campaign) {
+                $campaign->changeStatus(Campaign::STATUS_ACTIVE);
+                $campaign->save();
+            });
+        }
     }
 }

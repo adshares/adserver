@@ -37,12 +37,13 @@ class CreateNetworkEventLogsTable extends Migration
 
             $table->timestamps();
 
-            $table->binary('case_id', 16);
-            $table->binary('event_id', 16);
-            $table->binary('user_id', 16);
-            $table->binary('banner_id', 16);
-            $table->binary('publisher_id', 16);
-            $table->bigInteger('zone_id')->unsigned();
+            $table->binary('case_id', 16)->nullable(false);
+            $table->binary('event_id', 16)->nullable(false);
+            $table->binary('user_id', 16)->nullable(false);
+            $table->binary('banner_id', 16)->nullable(false);
+            $table->binary('publisher_id', 16)->nullable(false);
+            $table->binary('site_id', 16)->nullable(false);
+            $table->binary('zone_id', 16)->nullable(false);
 
             $table->string('event_type', 16);
 
@@ -61,6 +62,8 @@ class CreateNetworkEventLogsTable extends Migration
             $table->bigInteger('licence_fee_amount')->nullable();
             $table->bigInteger('operator_fee_amount')->nullable();
             $table->bigInteger('ads_payment_id')->nullable();
+
+            $table->tinyInteger('is_view_clicked')->unsigned()->default(0);
         });
 
         if (DB::isMySql()) {
@@ -68,10 +71,16 @@ class CreateNetworkEventLogsTable extends Migration
             DB::statement('ALTER TABLE network_event_logs MODIFY event_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY user_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY publisher_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY site_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY zone_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY banner_id varbinary(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY pay_from varbinary(6)');
             DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(8)');
         }
+
+        Schema::table('network_event_logs', function (Blueprint $table) {
+            $table->unique('event_id');
+        });
     }
 
     /**

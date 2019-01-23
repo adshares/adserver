@@ -33,6 +33,7 @@ class CreateZonesTable extends Migration
     {
         Schema::create('zones', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->binary('uuid', 16);
 
             $table->timestamps();
             $table->softDeletes();
@@ -46,6 +47,14 @@ class CreateZonesTable extends Migration
             $table->string('label');
 
             $table->foreign('site_id')->references('id')->on('sites')->onUpdate('RESTRICT')->onDelete('RESTRICT');
+        });
+
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE zones MODIFY uuid varbinary(16)');
+        }
+
+        Schema::table('zones', function (Blueprint $table) {
+            $table->unique('uuid');
         });
     }
 

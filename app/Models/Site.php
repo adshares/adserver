@@ -20,12 +20,16 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 /**
+ * @property string uuid
  * @property int user_id
  * @property string name
  * @property array|null|string site_requires
@@ -38,40 +42,60 @@ class Site extends Model
 {
     use Ownership;
     use SoftDeletes;
+    use AutomateMutators;
+    use BinHex;
+
     public const STATUS_DRAFT = 0;
+
     public const STATUS_INACTIVE = 1;
+
     public const STATUS_ACTIVE = 2;
+
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+
     private const ZONE_STATUS = [
         Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
         Site::STATUS_INACTIVE => Zone::STATUS_ARCHIVED,
         Site::STATUS_ACTIVE => Zone::STATUS_ACTIVE,
     ];
+
     public static $rules = [
         'name' => 'required|max:64',
         'primary_language' => 'required|max:2',
         'status' => 'required|numeric',
     ];
+
     protected $casts = [
         'site_requires' => 'json',
         'site_excludes' => 'json',
     ];
+
     protected $fillable = [
         'name',
         'status',
         'primary_language',
         'filtering',
     ];
+
     protected $hidden = [
         'deleted_at',
         'site_requires',
         'site_excludes',
         'zones',
     ];
+
     protected $appends = [
         'ad_units',
         'filtering',
         'code',
+    ];
+
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
     ];
 
     public function zones()
@@ -124,5 +148,10 @@ class Site extends Model
                 $zone->status = Site::ZONE_STATUS[$value];
             }
         );
+    }
+
+    public static function fetchByPublicId(string $publicId): ?self
+    {
+        return self::where('uuid', hex2bin($publicId))->first();
     }
 }

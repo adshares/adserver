@@ -20,32 +20,38 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Service;
+namespace Adshares\Publisher\Dto;
 
-use function json_encode;
-
-class ChartResult
+class StatsResult
 {
-    /** @var array */
-    private $data;
+    private $data = [];
 
-    public function __construct(array $data)
+    public function __construct(array $inputData)
     {
-        foreach ($data as $item) {
-            $this->data[] = [
-                $item[0],
-                $item[1],
-            ];
+        foreach ($inputData as $entry) {
+            $zoneId = $entry[6] ?? null;
+
+            $this->data[] = new StatsEntry(
+                $entry[0],
+                $entry[1],
+                $entry[2],
+                $entry[3],
+                $entry[4],
+                $entry[5],
+                $zoneId
+            );
         }
     }
 
-    public function getData(): array
+    public function toArray(): array
     {
-        return $this->data;
-    }
+        $result = [];
 
-    public function toJSon(): string
-    {
-        return json_encode($this->data);
+        /** @var StatsEntry $entry */
+        foreach ($this->data as $entry) {
+            $result[] = $entry->toArray();
+        }
+
+        return $result;
     }
 }

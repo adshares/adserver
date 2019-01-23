@@ -100,9 +100,10 @@ class AdsProcessTxTest extends TestCase
 
         foreach ($paymentDetails as $paymentDetail) {
             $log = new NetworkEventLog();
-            $log->case_id = (string)Uuid::v4();
+            $log->case_id = Uuid::caseId();
             $log->event_id = $paymentDetail['event_id'];
             $log->user_id = (string)UUID::v4();
+            $log->site_id = (string)Uuid::v4();
             $log->banner_id = $paymentDetail['banner_id'];
             $log->zone_id = $paymentDetail['zone_id'];
             $log->publisher_id = $paymentDetail['publisher_id'];

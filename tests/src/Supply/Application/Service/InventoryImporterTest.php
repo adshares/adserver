@@ -61,6 +61,8 @@ final class InventoryImporterTest extends TestCase
 
     public function testImportWhenDemandClientReturnsUnexpectedResponse(): void
     {
+        $this->expectException(UnexpectedClientResponseException::class);
+
         $repository = $this->repositoryMock();
         $demandClient = $this->clientMock(null, true);
         $transactionManager = $this->transactionManagerMock();
