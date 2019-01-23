@@ -179,7 +179,7 @@ HTML;
         if (count($zones) !== count($binPublicIds)) {
             Log::warning(sprintf(
                 'Missing zones. {"ids":%s,"zones":%s}',
-                json_encode($binPublicIds),
+                json_encode($publicIds),
                 json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
             ));
         }
