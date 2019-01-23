@@ -17,7 +17,7 @@ mv .env* ${INSTALLATION_PATH}/
 rm -rf ${INSTALLATION_PATH}/node_modules
 
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
-mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/var/www/adserver-storage}
+mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 
 cd ${INSTALLATION_PATH}
 
@@ -33,7 +33,7 @@ then
 
     if [[ "${BUILD_BRANCH:-master}" == "master" ]]
     then
-        ${ARTISAN_COMMAND} migrate 
+        ${ARTISAN_COMMAND} migrate --force
     else
         ${ARTISAN_COMMAND} migrate:fresh --force 
         ${ARTISAN_COMMAND} db:seed --force
@@ -59,7 +59,7 @@ then
 
     ${ARTISAN_COMMAND} migrate 
 else
-    ${ARTISAN_COMMAND} migrate 
+    ${ARTISAN_COMMAND} migrate --force
 fi
 
 ${ARTISAN_COMMAND} ops:targeting-options:update
