@@ -24,13 +24,14 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use function array_map;
 use function count;
 use function GuzzleHttp\json_encode;
+use function hex2bin;
 
 /**
  * @property Site site
@@ -166,18 +167,19 @@ HTML;
 
     public static function findByPublicIds(array $publicIds): Collection
     {
-        /** @var Collection $zones */
+        $binPublicIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $publicIds
+        );
 
-        foreach ($publicIds as &$item) {
-            $item = hex2bin($item);
-        }
+        $zones = self::whereIn('uuid', $binPublicIds)->get();
 
-        $zones = self::whereIn('uuid', $publicIds)->get();
-
-        if (count($zones) !== count($publicIds)) {
+        if (count($zones) !== count($binPublicIds)) {
             Log::warning(sprintf(
                 'Missing zones. {"ids":%s,"zones":%s}',
-                json_encode($publicIds),
+                json_encode($binPublicIds),
                 json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
             ));
         }
@@ -196,9 +198,9 @@ HTML;
     public static function fetchSitePublicIdByPublicId(string $publicId): string
     {
         $zone = self::where('uuid', hex2bin($publicId))->first();
+
         return $zone->site->uuid;
     }
-
 
     public function site()
     {

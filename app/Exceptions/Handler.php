@@ -123,6 +123,8 @@ class Handler extends ExceptionHandler
         $logger->error(
             sprintf(
                 '{"file":"%s:%s","message":%s,"context":%s,"trace":%s}',
+                $e->getFile(),
+                $e->getLine(),
                 json_encode($e->getMessage()),
                 json_encode($this->context()),
                 json_encode(array_filter(
@@ -130,9 +132,7 @@ class Handler extends ExceptionHandler
                     function (array $row) {
                         return stripos($row['file'] ?? '', 'vendor') === false;
                     }
-                )),
-                $e->getFile(),
-                $e->getLine()
+                ))
             )
         );
     }
