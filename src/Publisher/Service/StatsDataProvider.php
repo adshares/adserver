@@ -45,7 +45,7 @@ class StatsDataProvider
             $input->getSiteId()
         );
 
-        $statsTotalResult = $this->repository->fetchStatsSum(
+        $statsTotalResult = $this->repository->fetchStatsTotal(
             $input->getPublisherId(),
             $input->getDateStart(),
             $input->getDateEnd(),

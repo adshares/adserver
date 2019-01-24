@@ -186,7 +186,7 @@ class MySqlStatsRepository implements StatsRepository
         return new StatsResult($result);
     }
 
-    public function fetchStatsSum(
+    public function fetchStatsTotal(
         string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,

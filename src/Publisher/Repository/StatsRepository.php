@@ -100,7 +100,7 @@ interface StatsRepository
         ?string $siteId = null
     ): StatsResult;
 
-    public function fetchStatsSum(
+    public function fetchStatsTotal(
         string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,

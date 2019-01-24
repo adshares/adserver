@@ -165,7 +165,7 @@ class DummyStatsRepository implements StatsRepository
         return new StatsResult($data);
     }
 
-    public function fetchStatsSum(
+    public function fetchStatsTotal(
         string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,

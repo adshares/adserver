@@ -45,7 +45,7 @@ class StatsDataProvider
             $input->getCampaignId()
         );
 
-        $statsTotalResult = $this->repository->fetchStatsSum(
+        $statsTotalResult = $this->repository->fetchStatsTotal(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),

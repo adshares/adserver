@@ -100,7 +100,7 @@ interface StatsRepository
         ?string $campaignId = null
     ): StatsResult;
 
-    public function fetchStatsSum(
+    public function fetchStatsTotal(
         string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
