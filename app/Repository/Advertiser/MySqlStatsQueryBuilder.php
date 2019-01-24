@@ -66,6 +66,7 @@ WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.advertiser_id = :advertiserId
   #campaignIdWhereClause
 #campaignIdGroupBy #bannerIdGroupBy
+#having
 SQL;
 
     /**
@@ -261,12 +262,18 @@ SQL;
         if ($appendCampaignIdGroupBy) {
             $campaignIdCol = ', e.campaign_id AS cid';
             $campaignIdGroupBy = 'GROUP BY e.campaign_id';
+            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0';
         } else {
             $campaignIdCol = '';
             $campaignIdGroupBy = '';
+            $having = '';
         }
         $this->query =
-            str_replace(['#campaignIdCol', '#campaignIdGroupBy'], [$campaignIdCol, $campaignIdGroupBy], $this->query);
+            str_replace(
+                ['#campaignIdCol', '#campaignIdGroupBy', '#having'],
+                [$campaignIdCol, $campaignIdGroupBy, $having],
+                $this->query
+            );
 
         return $this;
     }
