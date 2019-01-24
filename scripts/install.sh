@@ -2,7 +2,15 @@
 
 set -ex
 
-ARTISAN_COMMAND="${INSTALLATION_PATH}/artisan --no-interaction"
+function sudoBash {
+    sudo -u ${INSTALLATION_USER} -- bash -c $@
+}
+
+function artisanCommand {
+    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $@
+}
+
+ARTISAN_COMMAND=artisanCommand
 
 service nginx stop
 crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
