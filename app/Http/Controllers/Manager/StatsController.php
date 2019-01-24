@@ -229,7 +229,8 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
 
-        foreach ($result as &$item) {
+        $resultData = &$result['data'];
+        foreach ($resultData as &$item) {
             $item = $this->transformPublicIdToPrivateId($item);
         }
 
@@ -270,7 +271,8 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
 
-        foreach ($result as &$item) {
+        $resultData = &$result['data'];
+        foreach ($resultData as &$item) {
             $item = $this->transformPublicIdToPrivateId($item);
         }
 
