@@ -28,7 +28,7 @@ mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 cd ${INSTALLATION_PATH}
 
 if [ ! -v TRAVIS ]; then
-  artisanCommand config:cache
+    artisanCommand config:cache
 fi
 
 if [[ ${DO_RESET} == "yes" ]]
