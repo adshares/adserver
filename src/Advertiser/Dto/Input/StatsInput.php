@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Dto\Input;
 
 use DateTime;
 

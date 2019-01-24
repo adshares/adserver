@@ -28,11 +28,11 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
-use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
+use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
+use Adshares\Advertiser\Dto\Input\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
-use Adshares\Advertiser\Dto\InvalidInputException as AdvertiserInvalidInputException;
+use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
 use Adshares\Publisher\Dto\ChartInput as PublisherChartInput;
 use Adshares\Publisher\Dto\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Dto\InvalidInputException as PublisherInvalidInputException;
@@ -227,14 +227,15 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
+        $result = $this->advertiserStatsDataProvider->fetch($input);
+        $total = $result->getTotal();
+        $data = $result->getData();
 
-        $resultData = &$result['data'];
-        foreach ($resultData as &$item) {
+        foreach ($data as &$item) {
             $item = $this->transformPublicIdToPrivateId($item);
         }
 
-        return new JsonResponse($result);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     public function publisherStats(

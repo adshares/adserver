@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Service;
 
-use Adshares\Advertiser\Dto\StatsComplexResult;
-use Adshares\Advertiser\Dto\StatsInput;
+use Adshares\Advertiser\Dto\Input\StatsInput;
+use Adshares\Advertiser\Dto\Result\StatsResult;
 use Adshares\Advertiser\Repository\StatsRepository;
 
 class StatsDataProvider
@@ -36,22 +36,22 @@ class StatsDataProvider
         $this->repository = $repository;
     }
 
-    public function fetch(StatsInput $input): StatsComplexResult
+    public function fetch(StatsInput $input): StatsResult
     {
-        $statsResult = $this->repository->fetchStats(
+        $data = $this->repository->fetchStats(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getCampaignId()
         );
 
-        $statsTotalResult = $this->repository->fetchStatsTotal(
+        $total = $this->repository->fetchStatsTotal(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getCampaignId()
         );
 
-        return new StatsComplexResult($statsResult, $statsTotalResult);
+        return new StatsResult($total, $data);
     }
 }
