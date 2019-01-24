@@ -57,7 +57,7 @@ SELECT
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
   IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                         AS cpc,
-  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                     AS cpm,
+  IFNULL(AVG(IF(e.event_type = 'view', e.event_value, NULL)), 0)*1000                                     AS cpm,
   SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost
   #campaignIdCol
   #bannerIdCol
