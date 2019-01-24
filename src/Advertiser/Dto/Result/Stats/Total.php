@@ -20,35 +20,27 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto\Result;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-class DataEntry
+class Total
 {
-    /** @var Calculation */
     private $calculation;
-
-    /** @var string */
     private $campaignId;
 
-    /** @var string|null */
-    private $bannerId;
-
-    public function __construct(Calculation $calculation, string $campaignId, ?string $bannerId = null)
+    public function __construct(Calculation $calculation, ?string $campaignId = null)
     {
         $this->calculation = $calculation;
         $this->campaignId = $campaignId;
-        $this->bannerId = $bannerId;
     }
 
     public function toArray(): array
     {
         $data = $this->calculation->toArray();
-        $data['campaignId'] = $this->campaignId;
 
-        if ($this->bannerId) {
-            $data['bannerId'] = $this->bannerId;
+        if ($this->campaignId !== null) {
+            $data['campaignId'] = $this->campaignId;
         }
 
-        return array_merge($this->calculation->toArray(), $data);
+        return $data;
     }
 }

@@ -22,6 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Dto\Result;
 
+use Adshares\Advertiser\Dto\Result\Stats\Total;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+
 class StatsResult
 {
     private $total;
@@ -41,13 +44,5 @@ class StatsResult
     public function getData(): array
     {
         return $this->data->toArray();
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'total' => $this->total->toArray(),
-            'data' => $this->data->toArray(),
-        ];
     }
 }

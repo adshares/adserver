@@ -24,12 +24,11 @@ namespace Adshares\Tests\Advertiser\Repository;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Advertiser\Dto\Result\Calculation;
-use Adshares\Advertiser\Dto\Result\DataCollection;
-use Adshares\Advertiser\Dto\Result\DataEntry;
-use Adshares\Advertiser\Dto\Result\StatsResult;
+use Adshares\Advertiser\Dto\Result\Stats\Calculation;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\ChartResult;
-use Adshares\Advertiser\Dto\Result\Total;
+use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 

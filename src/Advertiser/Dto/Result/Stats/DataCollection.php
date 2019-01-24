@@ -20,25 +20,37 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto\Result;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-class Total
+use RuntimeException;
+
+class DataCollection
 {
-    private $calculation;
-    private $campaignId;
+    private $data = [];
 
-    public function __construct(Calculation $calculation, ?string $campaignId = null)
+    public function __construct(array $data)
     {
-        $this->calculation = $calculation;
-        $this->campaignId = $campaignId;
+        $this->validate($data);
+
+        $this->data = $data;
+    }
+
+    private function validate(array $data): void
+    {
+        foreach ($data as $entry) {
+            if (!$entry instanceof DataEntry) {
+                throw new RuntimeException('Invalid object in the collection.');
+            }
+        }
     }
 
     public function toArray(): array
     {
-        $data = $this->calculation->toArray();
+        $data = [];
 
-        if ($this->campaignId !== null) {
-            $data['campaignId'] = $this->campaignId;
+        /** @var DataEntry $entry */
+        foreach ($this->data as $entry) {
+            $data[] = $entry->toArray();
         }
 
         return $data;

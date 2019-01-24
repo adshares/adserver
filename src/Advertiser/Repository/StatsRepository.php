@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Advertiser\Repository;
 
 use Adshares\Advertiser\Dto\Result\ChartResult;
-use Adshares\Advertiser\Dto\Result\DataCollection;
-use Adshares\Advertiser\Dto\Result\Total;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\Total;
 use DateTime;
 
 interface StatsRepository

@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto\Result;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
 class Calculation
 {

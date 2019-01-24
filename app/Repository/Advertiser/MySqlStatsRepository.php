@@ -24,10 +24,10 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Advertiser\Dto\Result\ChartResult;
-use Adshares\Advertiser\Dto\Result\Calculation;
-use Adshares\Advertiser\Dto\Result\DataCollection;
-use Adshares\Advertiser\Dto\Result\DataEntry;
-use Adshares\Advertiser\Dto\Result\Total;
+use Adshares\Advertiser\Dto\Result\Stats\Calculation;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
+use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use function bin2hex;
 use DateTime;
@@ -205,16 +205,20 @@ class MySqlStatsRepository implements StatsRepository
             ->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
-        $row = $queryResult[0];
 
-        $calculation = new Calculation(
-            (int)$row->clicks,
-            (int)$row->views,
-            (float)$row->ctr,
-            (float)$row->cpc,
-            (float)$row->cpm,
-            (int)$row->cost
-        );
+        if (!empty($queryResult)) {
+            $row = $queryResult[0];
+            $calculation = new Calculation(
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->cpc,
+                (float)$row->cpm,
+                (int)$row->cost
+            );
+        } else {
+            $calculation = new Calculation(0, 0, 0, 0, 0, 0);
+        }
 
         return new Total($calculation, $campaignId);
     }
