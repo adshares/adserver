@@ -24,9 +24,12 @@ namespace Adshares\Tests\Advertiser\Repository;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Advertiser\Dto\StatsEntryValues;
-use Adshares\Advertiser\Dto\StatsResult;
-use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\Result\Calculation;
+use Adshares\Advertiser\Dto\Result\DataCollection;
+use Adshares\Advertiser\Dto\Result\DataEntry;
+use Adshares\Advertiser\Dto\Result\StatsResult;
+use Adshares\Advertiser\Dto\Result\ChartResult;
+use Adshares\Advertiser\Dto\Result\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 
@@ -156,7 +159,7 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
-    ): StatsResult {
+    ): DataCollection {
         $user = User::fetchByEmail(self::USER_EMAIL);
 
         if ($campaignId) {
@@ -174,13 +177,13 @@ class DummyStatsRepository implements StatsRepository
         $campaignUuid = $campaigns[0]->uuid;
 
         $data = [
-            [1, 1, 1, 1, 1, $campaignUuid, $bannerId1 ?? null],
-            [2, 2, 2, 2, 2, $campaignUuid, $bannerId2 ?? null],
-            [3, 3, 3, 3, 3, $campaignUuid, $bannerId3 ?? null],
-            [4, 4, 4, 4, 4, $campaignUuid, $bannerId4 ?? null],
+            new DataEntry(new Calculation(1, 1, 1, 1, 1, 1), $campaignUuid, $bannerId1 ?? null),
+            new DataEntry(new Calculation(2, 2, 2, 2, 2, 2), $campaignUuid, $bannerId2 ?? null),
+            new DataEntry(new Calculation(3, 3, 3, 3, 3, 3), $campaignUuid, $bannerId3 ?? null),
+            new DataEntry(new Calculation(4, 4, 4, 4, 4, 4), $campaignUuid, $bannerId4 ?? null),
         ];
 
-        return new StatsResult($data);
+        return new DataCollection($data);
     }
 
     public function fetchStatsTotal(
@@ -188,7 +191,10 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
-    ): StatsEntryValues {
-        return new StatsEntryValues(1, 2, 3, 4, 5);
+    ): Total {
+
+        $calculation = new Calculation(1, 1, 1, 1, 1, 1);
+
+        return new Total($calculation);
     }
 }
