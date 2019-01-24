@@ -56,14 +56,14 @@ return [
         'single' => [
             'driver' => 'single',
             'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
-            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
+            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/adserver.log'),
             'level' => 'debug',
         ],
 
         'daily' => [
             'driver' => 'daily',
             'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
-            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/laravel.log'),
+            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/adserver.log'),
             'level' => 'debug',
             'days' => 7,
         ],
@@ -72,7 +72,7 @@ return [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('APP_NAME', 'AdServer'),
-            'emoji' => ':boom:',
+            'emoji' => env('LOG_SLACK_EMOJI', ':-1:'),
             'level' => 'error',
         ],
 
