@@ -66,6 +66,7 @@ WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.publisher_id = :publisherId
   #siteIdWhereClause
 #siteIdGroupBy #zoneIdGroupBy
+#having
 SQL;
 
     /**
@@ -260,11 +261,18 @@ SQL;
         if ($appendSiteIdGroupBy) {
             $siteIdCol = ', e.site_id AS site_id';
             $siteIdGroupBy = 'GROUP BY e.site_id';
+            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0';
         } else {
             $siteIdCol = '';
             $siteIdGroupBy = '';
+            $having = '';
         }
-        $this->query = str_replace(['#siteIdCol', '#siteIdGroupBy'], [$siteIdCol, $siteIdGroupBy], $this->query);
+        $this->query =
+            str_replace(
+                ['#siteIdCol', '#siteIdGroupBy', '#having'],
+                [$siteIdCol, $siteIdGroupBy, $having],
+                $this->query
+            );
 
         return $this;
     }

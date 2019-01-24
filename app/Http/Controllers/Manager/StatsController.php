@@ -231,10 +231,11 @@ class StatsController extends Controller
         $total = $result->getTotal();
         $data = $result->getData();
 
-        foreach ($data as &$item) {
-            $item = $this->transformPublicIdToPrivateId($item);
-        }
-
+        $callbackTransformingId = function ($item) {
+            return $this->transformPublicIdToPrivateId($item);
+        };
+      
+        $result['data'] = array_map($callbackTransformingId, $result['data']);
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
@@ -274,10 +275,11 @@ class StatsController extends Controller
         $total = $result->getTotal();
         $data = $result->getData();
 
-        foreach ($data as &$item) {
-            $item = $this->transformPublicIdToPrivateId($item);
-        }
+        $callbackTransformingId = function ($item) {
+            return $this->transformPublicIdToPrivateId($item);
+        };
 
+        $result['data'] = array_map($callbackTransformingId, $result['data']);
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 

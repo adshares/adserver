@@ -57,7 +57,7 @@ SELECT
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
   IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                         AS cpc,
-  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                     AS cpm,
+  IFNULL(AVG(IF(e.event_type = 'view', e.event_value, NULL)), 0)*1000                                     AS cpm,
   SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost
   #campaignIdCol
   #bannerIdCol
@@ -66,6 +66,7 @@ WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.advertiser_id = :advertiserId
   #campaignIdWhereClause
 #campaignIdGroupBy #bannerIdGroupBy
+#having
 SQL;
 
     /**
@@ -261,12 +262,18 @@ SQL;
         if ($appendCampaignIdGroupBy) {
             $campaignIdCol = ', e.campaign_id AS cid';
             $campaignIdGroupBy = 'GROUP BY e.campaign_id';
+            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0';
         } else {
             $campaignIdCol = '';
             $campaignIdGroupBy = '';
+            $having = '';
         }
         $this->query =
-            str_replace(['#campaignIdCol', '#campaignIdGroupBy'], [$campaignIdCol, $campaignIdGroupBy], $this->query);
+            str_replace(
+                ['#campaignIdCol', '#campaignIdGroupBy', '#having'],
+                [$campaignIdCol, $campaignIdGroupBy, $having],
+                $this->query
+            );
 
         return $this;
     }
