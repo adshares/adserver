@@ -3,7 +3,7 @@
 set -ex
 
 function sudoBash {
-    sudo -u ${INSTALLATION_USER} -- bash -c "$*"
+    sudo -E -u ${INSTALLATION_USER} -- bash -c "$*"
 }
 
 function artisanCommand {
