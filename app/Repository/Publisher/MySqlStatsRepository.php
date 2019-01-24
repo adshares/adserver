@@ -169,8 +169,9 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->cpc,
-                (int)$row->cost,
+                (float)$row->rpc,
+                (float)$row->rpm,
+                (int)$row->revenue,
                 bin2hex($row->site_id),
             ];
             if ($siteId !== null) {
@@ -206,8 +207,9 @@ class MySqlStatsRepository implements StatsRepository
             (int)$row->clicks,
             (int)$row->views,
             (float)$row->ctr,
-            (float)$row->cpc,
-            (int)$row->cost
+            (float)$row->rpc,
+            (float)$row->rpm,
+            (int)$row->revenue
         );
     }
 

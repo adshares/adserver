@@ -56,8 +56,9 @@ SELECT
   SUM(IF(e.event_type = 'click', 1, 0))                                                                   AS clicks,
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS cpc,
-  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS cost
+  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS rpc,
+  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                     AS rpm,
+  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS revenue
   #siteIdCol
   #zoneIdCol
 FROM network_event_logs e

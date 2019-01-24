@@ -173,6 +173,7 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->views,
                 (float)$row->ctr,
                 (float)$row->cpc,
+                (float)$row->cpm,
                 (int)$row->cost,
                 bin2hex($row->cid),
             ];
@@ -212,6 +213,7 @@ class MySqlStatsRepository implements StatsRepository
             (int)$row->views,
             (float)$row->ctr,
             (float)$row->cpc,
+            (float)$row->cpm,
             (int)$row->cost
         );
     }

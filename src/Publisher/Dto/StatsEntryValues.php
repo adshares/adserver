@@ -34,23 +34,29 @@ class StatsEntryValues
     private $ctr;
 
     /** @var float */
-    private $averageCpc;
+    private $averageRpc;
+
+
+    /** @var float */
+    private $averageRpm;
 
     /** @var int */
-    private $cost;
+    private $revenue;
 
     public function __construct(
         int $clicks,
         int $impressions,
         float $ctr,
-        float $averageCpc,
-        int $cost
+        float $averageRpc,
+        float $averageRpm,
+        int $revenue
     ) {
         $this->clicks = $clicks;
         $this->impressions = $impressions;
         $this->ctr = $ctr;
-        $this->averageCpc = $averageCpc;
-        $this->cost = $cost;
+        $this->averageRpc = $averageRpc;
+        $this->averageRpm = $averageRpm;
+        $this->revenue = $revenue;
     }
 
     public function toArray(): array
@@ -59,8 +65,9 @@ class StatsEntryValues
             'clicks' => $this->clicks,
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
-            'averageCpc' => $this->averageCpc,
-            'cost' => $this->cost,
+            'averageRpc' => $this->averageRpc,
+            'averageRpm' => $this->averageRpm,
+            'revenue' => $this->revenue,
         ];
 
         return $data;

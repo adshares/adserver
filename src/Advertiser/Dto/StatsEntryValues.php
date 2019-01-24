@@ -36,6 +36,9 @@ class StatsEntryValues
     /** @var float */
     private $averageCpc;
 
+    /** @var float */
+    private $averageCpm;
+
     /** @var int */
     private $cost;
 
@@ -44,12 +47,14 @@ class StatsEntryValues
         int $impressions,
         float $ctr,
         float $averageCpc,
+        float $averageCpm,
         int $cost
     ) {
         $this->clicks = $clicks;
         $this->impressions = $impressions;
         $this->ctr = $ctr;
         $this->averageCpc = $averageCpc;
+        $this->averageCpm = $averageCpm;
         $this->cost = $cost;
     }
 
@@ -60,6 +65,7 @@ class StatsEntryValues
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
             'averageCpc' => $this->averageCpc,
+            'averageCpm' => $this->averageCpm,
             'cost' => $this->cost,
         ];
 
