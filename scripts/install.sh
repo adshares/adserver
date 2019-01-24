@@ -3,11 +3,11 @@
 set -ex
 
 function sudoBash {
-    sudo -u ${INSTALLATION_USER} -- bash -c $@
+    sudo -u ${INSTALLATION_USER} -- bash -c "$*"
 }
 
 function artisanCommand {
-    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $*
+    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $@
 }
 
 service nginx stop
