@@ -31,11 +31,12 @@ class StatsResult
         foreach ($inputData as $entry) {
             $zoneId = $entry[6] ?? null;
 
-            $this->data[] = new StatsEntry(
-                new StatsEntryValues(
-                    $entry[0], $entry[1], $entry[2], $entry[3], $entry[4]
-                ), $entry[5], $zoneId
-            );
+            $this->data[] =
+                new StatsEntry(
+                    new StatsEntryValues($entry[0], $entry[1], $entry[2], $entry[3], $entry[4]),
+                    $entry[5],
+                    $zoneId
+                );
         }
     }
 

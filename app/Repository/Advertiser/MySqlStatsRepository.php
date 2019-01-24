@@ -168,15 +168,14 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
-            $rowArray =
-                [
-                    (int)$row->clicks,
-                    (int)$row->views,
-                    (float)$row->ctr,
-                    (float)$row->cpc,
-                    (int)$row->cost,
-                    bin2hex($row->cid),
-                ];
+            $rowArray = [
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->cpc,
+                (int)$row->cost,
+                bin2hex($row->cid),
+            ];
             if ($campaignId !== null) {
                 $rowArray[] = bin2hex($row->bid);
             }
@@ -209,7 +208,11 @@ class MySqlStatsRepository implements StatsRepository
         $row = $queryResult[0];
 
         return new StatsEntryValues(
-            (int)$row->clicks, (int)$row->views, (float)$row->ctr, (float)$row->cpc, (int)$row->cost
+            (int)$row->clicks,
+            (int)$row->views,
+            (float)$row->ctr,
+            (float)$row->cpc,
+            (int)$row->cost
         );
     }
 
