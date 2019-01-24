@@ -38,7 +38,7 @@ class DataCollection
     private function validate(array $data): void
     {
         foreach ($data as $entry) {
-            if (!$entry instanceOf DataEntry) {
+            if (!$entry instanceof DataEntry) {
                 throw new RuntimeException('Invalid object in the collection.');
             }
         }
@@ -53,6 +53,6 @@ class DataCollection
             $data[] = $entry->toArray();
         }
 
-         return $data;
+        return $data;
     }
 }

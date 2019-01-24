@@ -42,8 +42,14 @@ class Calculation
     /** @var int */
     private $cost;
 
-    public function __construct(int $clicks, int $impressions, float $ctr, float $averageCpc, float $averageCpm, int $cost)
-    {
+    public function __construct(
+        int $clicks,
+        int $impressions,
+        float $ctr,
+        float $averageCpc,
+        float $averageCpm,
+        int $cost
+    ) {
         $this->clicks = $clicks;
         $this->impressions = $impressions;
         $this->ctr = $ctr;
