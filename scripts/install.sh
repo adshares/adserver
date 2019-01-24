@@ -25,6 +25,7 @@ rm -rf ${INSTALLATION_PATH}/node_modules
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
 mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 
+chown -R ${INSTALLATION_USER} ${INSTALLATION_PATH}
 cd ${INSTALLATION_PATH}
 
 if [ ! -v TRAVIS ]; then
