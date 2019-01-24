@@ -7,7 +7,7 @@ function sudoBash {
 }
 
 function artisanCommand {
-    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $@
+    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $*
 }
 
 service nginx stop
