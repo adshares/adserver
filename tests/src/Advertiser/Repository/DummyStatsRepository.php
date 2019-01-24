@@ -24,10 +24,10 @@ namespace Adshares\Tests\Advertiser\Repository;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
-use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
@@ -44,10 +44,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [1, 1, 1],
-            [2, 2, 2],
-            [3, 3, 3],
-            [4, 4, 4],
+            ['2019-01-01T15:00:00+00:00', 1, 1],
+            ['2019-01-01T16:00:00+00:00', 2, 2],
+            ['2019-01-01T17:00:00+00:00', 3, 3],
+            ['2019-01-01T18:00:00+00:00', 4, 4],
         ];
 
         if ($campaignId) {
@@ -55,17 +55,6 @@ class DummyStatsRepository implements StatsRepository
         }
 
         return new ChartResult($data);
-    }
-
-    private function setDataForCampaign(array $data): array
-    {
-        foreach ($data as &$entry) {
-            foreach ($entry as &$value) {
-                $value = 100 + $value;
-            }
-        }
-
-        return $data;
     }
 
     public function fetchClick(
@@ -76,10 +65,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [11, 11, 11],
-            [21, 21, 21],
-            [31, 31, 31],
-            [41, 41, 41],
+            ['2019-01-01T15:00:00+00:00', 11, 11],
+            ['2019-01-01T16:00:00+00:00', 21, 21],
+            ['2019-01-01T17:00:00+00:00', 31, 31],
+            ['2019-01-01T18:00:00+00:00', 41, 41],
         ];
 
         return new ChartResult($data);
@@ -93,10 +82,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [12, 12, 12],
-            [22, 22, 22],
-            [32, 32, 32],
-            [42, 42, 42],
+            ['2019-01-01T15:00:00+00:00', 12, 12],
+            ['2019-01-01T16:00:00+00:00', 22, 22],
+            ['2019-01-01T17:00:00+00:00', 32, 32],
+            ['2019-01-01T18:00:00+00:00', 42, 42],
         ];
 
         return new ChartResult($data);
@@ -110,10 +99,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [13, 13, 13],
-            [23, 23, 23],
-            [33, 33, 33],
-            [43, 43, 43],
+            ['2019-01-01T15:00:00+00:00', 13, 13],
+            ['2019-01-01T16:00:00+00:00', 23, 23],
+            ['2019-01-01T17:00:00+00:00', 33, 33],
+            ['2019-01-01T18:00:00+00:00', 43, 43],
         ];
 
         return new ChartResult($data);
@@ -127,10 +116,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [14, 14, 14],
-            [24, 24, 24],
-            [34, 34, 34],
-            [44, 44, 44],
+            ['2019-01-01T15:00:00+00:00', 14, 14],
+            ['2019-01-01T16:00:00+00:00', 24, 24],
+            ['2019-01-01T17:00:00+00:00', 34, 34],
+            ['2019-01-01T18:00:00+00:00', 44, 44],
         ];
 
         return new ChartResult($data);
@@ -144,10 +133,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $data = [
-            [15, 15, 15],
-            [25, 25, 25],
-            [35, 35, 35],
-            [45, 45, 45],
+            ['2019-01-01T15:00:00+00:00', 15, 15],
+            ['2019-01-01T16:00:00+00:00', 25, 25],
+            ['2019-01-01T17:00:00+00:00', 35, 35],
+            ['2019-01-01T18:00:00+00:00', 45, 45],
         ];
 
         return new ChartResult($data);
@@ -191,9 +180,19 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
-
         $calculation = new Calculation(1, 1, 1, 1, 1, 1);
 
         return new Total($calculation);
+    }
+
+    private function setDataForCampaign(array $data): array
+    {
+        foreach ($data as &$entry) {
+            foreach ($entry as &$value) {
+                $value = 100 + $value;
+            }
+        }
+
+        return $data;
     }
 }

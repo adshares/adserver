@@ -20,25 +20,35 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result\Stats;
 
-class ChartResult
+class DataEntry
 {
-    /** @var array */
-    private $data;
+    /** @var Calculation */
+    private $calculation;
 
-    public function __construct(array $data)
+    /** @var string */
+    private $siteId;
+
+    /** @var string|null */
+    private $zoneId;
+
+    public function __construct(Calculation $calculation, string $siteId, ?string $zoneId = null)
     {
-        foreach ($data as $item) {
-            $this->data[] = [
-                $item[0],
-                $item[1],
-            ];
-        }
+        $this->calculation = $calculation;
+        $this->siteId = $siteId;
+        $this->zoneId = $zoneId;
     }
 
     public function toArray(): array
     {
-        return $this->data;
+        $data = $this->calculation->toArray();
+        $data['siteId'] = $this->siteId;
+
+        if ($this->zoneId) {
+            $data['zoneId'] = $this->zoneId;
+        }
+
+        return array_merge($this->calculation->toArray(), $data);
     }
 }

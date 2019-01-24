@@ -33,9 +33,9 @@ use Adshares\Advertiser\Dto\Input\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
 use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
-use Adshares\Publisher\Dto\ChartInput as PublisherChartInput;
-use Adshares\Publisher\Dto\StatsInput as PublisherStatsInput;
-use Adshares\Publisher\Dto\InvalidInputException as PublisherInvalidInputException;
+use Adshares\Publisher\Dto\Input\ChartInput as PublisherChartInput;
+use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
+use Adshares\Publisher\Dto\Input\InvalidInputException as PublisherInvalidInputException;
 use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use DateTime;
@@ -270,14 +270,15 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
+        $result = $this->publisherStatsDataProvider->fetch($input);
+        $total = $result->getTotal();
+        $data = $result->getData();
 
-        $resultData = &$result['data'];
-        foreach ($resultData as &$item) {
+        foreach ($data as &$item) {
             $item = $this->transformPublicIdToPrivateId($item);
         }
 
-        return new JsonResponse($result);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     private function transformPublicIdToPrivateId(array $item): array

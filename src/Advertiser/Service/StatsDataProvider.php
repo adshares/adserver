@@ -38,14 +38,14 @@ class StatsDataProvider
 
     public function fetch(StatsInput $input): StatsResult
     {
-        $data = $this->repository->fetchStats(
+        $total = $this->repository->fetchStatsTotal(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getCampaignId()
         );
 
-        $total = $this->repository->fetchStatsTotal(
+        $data = $this->repository->fetchStats(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),

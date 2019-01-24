@@ -20,38 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result;
 
-class StatsEntry
+class ChartResult
 {
-    /** @var StatsEntryValues */
-    private $statsEntryValues;
+    /** @var array */
+    private $data;
 
-    /** @var string */
-    private $siteId;
-
-    /** @var string|null */
-    private $zoneId;
-
-    public function __construct(
-        StatsEntryValues $statsEntryValues,
-        string $siteId,
-        ?string $zoneId = null
-    ) {
-        $this->statsEntryValues = $statsEntryValues;
-        $this->siteId = $siteId;
-        $this->zoneId = $zoneId;
+    public function __construct(array $data)
+    {
+        foreach ($data as $item) {
+            $this->data[] = [
+                $item[0],
+                $item[1],
+            ];
+        }
     }
 
     public function toArray(): array
     {
-        $data = $this->statsEntryValues->toArray();
-        $data['siteId'] = $this->siteId;
-
-        if ($this->zoneId) {
-            $data['zoneId'] = $this->zoneId;
-        }
-
-        return $data;
+        return $this->data;
     }
 }

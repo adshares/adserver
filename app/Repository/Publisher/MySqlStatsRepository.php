@@ -23,9 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Publisher\Dto\ChartResult;
-use Adshares\Publisher\Dto\StatsEntryValues;
-use Adshares\Publisher\Dto\StatsResult;
+use Adshares\Publisher\Dto\Result\ChartResult;
+use Adshares\Publisher\Dto\Result\Stats\Calculation;
+use Adshares\Publisher\Dto\Result\Stats\DataCollection;
+use Adshares\Publisher\Dto\Result\Stats\DataEntry;
+use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use DateTimeZone;
@@ -155,7 +157,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
-    ): StatsResult {
+    ): DataCollection {
         $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
             $dateStart,
             $dateEnd
@@ -165,22 +167,20 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
-            $rowArray = [
+            $calculation = new Calculation(
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->rpc,
-                (float)$row->rpm,
-                (int)$row->revenue,
-                bin2hex($row->site_id),
-            ];
-            if ($siteId !== null) {
-                $rowArray[] = bin2hex($row->zone_id);
-            }
-            $result[] = $rowArray;
+                (float)$row->cpc,
+                (float)$row->cpm,
+                (int)$row->revenue
+            );
+
+            $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
         }
 
-        return new StatsResult($result);
+        return new DataCollection($result);
     }
 
     public function fetchStatsTotal(
@@ -188,7 +188,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
-    ): StatsEntryValues {
+    ): Total {
         $query =
             (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))->setPublisherId($publisherId)
                 ->setDateRange(
@@ -201,16 +201,22 @@ class MySqlStatsRepository implements StatsRepository
                 ->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
-        $row = $queryResult[0];
 
-        return new StatsEntryValues(
-            (int)$row->clicks,
-            (int)$row->views,
-            (float)$row->ctr,
-            (float)$row->rpc,
-            (float)$row->rpm,
-            (int)$row->revenue
-        );
+        if (!empty($queryResult)) {
+            $row = $queryResult[0];
+            $calculation = new Calculation(
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->rpc,
+                (float)$row->rpm,
+                (int)$row->revenue
+            );
+        } else {
+            $calculation = new Calculation(0, 0, 0, 0, 0, 0);
+        }
+
+        return new Total($calculation, $siteId);
     }
 
     private function fetch(

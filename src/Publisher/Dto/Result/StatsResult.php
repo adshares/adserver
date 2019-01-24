@@ -20,34 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result;
+
+use Adshares\Publisher\Dto\Result\Stats\Total;
+use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 
 class StatsResult
 {
-    private $data = [];
+    private $total;
+    private $data;
 
-    public function __construct(array $inputData)
+    public function __construct(Total $total, DataCollection $data)
     {
-        foreach ($inputData as $entry) {
-            $zoneId = $entry[7] ?? null;
-
-            $this->data[] = new StatsEntry(
-                new StatsEntryValues($entry[0], $entry[1], $entry[2], $entry[3], $entry[4], $entry[5]),
-                $entry[6],
-                $zoneId
-            );
-        }
+        $this->total = $total;
+        $this->data = $data;
     }
 
-    public function toArray(): array
+    public function getTotal(): array
     {
-        $result = [];
+        return $this->total->toArray();
+    }
 
-        /** @var StatsEntry $entry */
-        foreach ($this->data as $entry) {
-            $result[] = $entry->toArray();
-        }
-
-        return $result;
+    public function getData(): array
+    {
+        return $this->data->toArray();
     }
 }

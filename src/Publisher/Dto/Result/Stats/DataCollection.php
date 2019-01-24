@@ -20,28 +20,39 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result\Stats;
 
-class StatsComplexResult
+use RuntimeException;
+
+class DataCollection
 {
-    /** @var StatsResult */
-    private $statsResult;
+    private $data = [];
 
-    /** @var StatsEntryValues */
-    private $statsEntryValues;
-
-    public function __construct(StatsResult $statsResult, StatsEntryValues $statsEntryValues)
+    public function __construct(array $data)
     {
-        $this->statsResult = $statsResult;
-        $this->statsEntryValues = $statsEntryValues;
+        $this->validate($data);
+
+        $this->data = $data;
+    }
+
+    private function validate(array $data): void
+    {
+        foreach ($data as $entry) {
+            if (!$entry instanceof DataEntry) {
+                throw new RuntimeException('Invalid object in the collection.');
+            }
+        }
     }
 
     public function toArray(): array
     {
-        $result = [];
-        $result['data'] = $this->statsResult->toArray();
-        $result['total'] = $this->statsEntryValues->toArray();
+        $data = [];
 
-        return $result;
+        /** @var DataEntry $entry */
+        foreach ($this->data as $entry) {
+            $data[] = $entry->toArray();
+        }
+
+        return $data;
     }
 }
