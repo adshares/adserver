@@ -229,10 +229,10 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
 
-        $resultData = &$result['data'];
-        foreach ($resultData as &$item) {
-            $item = $this->transformPublicIdToPrivateId($item);
-        }
+        $callbackTransformingId = function ($item) {
+            return $this->transformPublicIdToPrivateId($item);
+        };
+        $result['data'] = array_map($callbackTransformingId, $result['data']);
 
         return new JsonResponse($result);
     }
@@ -271,10 +271,10 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
 
-        $resultData = &$result['data'];
-        foreach ($resultData as &$item) {
-            $item = $this->transformPublicIdToPrivateId($item);
-        }
+        $callbackTransformingId = function ($item) {
+            return $this->transformPublicIdToPrivateId($item);
+        };
+        $result['data'] = array_map($callbackTransformingId, $result['data']);
 
         return new JsonResponse($result);
     }
