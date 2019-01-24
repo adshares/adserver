@@ -158,10 +158,26 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): DataCollection {
         $data = [
-            new DataEntry(new Calculation(1, 1, 1, 1, 1, 1), '0F852769BC3E42E1A1D0DF420F9E794B', '6B30304F390A40A6B51CC2015250A7E1'),
-            new DataEntry(new Calculation(2, 2, 2, 2, 2, 2), '0F852769BC3E42E1A1D0DF420F9E794B', '6B30304F390A40A6B51CC2015250A7E2'),
-            new DataEntry(new Calculation(3, 3, 3, 3, 3, 3), '0F852769BC3E42E1A1D0DF420F9E794B', '6B30304F390A40A6B51CC2015250A7E3'),
-            new DataEntry(new Calculation(4, 4, 4, 4, 4, 4), '0F852769BC3E42E1A1D0DF420F9E794B', '6B30304F390A40A6B51CC2015250A7E4'),
+            new DataEntry(
+                new Calculation(1, 1, 1, 1, 1, 1),
+                '0F852769BC3E42E1A1D0DF420F9E794B',
+                '6B30304F390A40A6B51CC2015250A7E1'
+            ),
+            new DataEntry(
+                new Calculation(2, 2, 2, 2, 2, 2),
+                '0F852769BC3E42E1A1D0DF420F9E794B',
+                '6B30304F390A40A6B51CC2015250A7E2'
+            ),
+            new DataEntry(
+                new Calculation(3, 3, 3, 3, 3, 3),
+                '0F852769BC3E42E1A1D0DF420F9E794B',
+                '6B30304F390A40A6B51CC2015250A7E3'
+            ),
+            new DataEntry(
+                new Calculation(4, 4, 4, 4, 4, 4),
+                '0F852769BC3E42E1A1D0DF420F9E794B',
+                '6B30304F390A40A6B51CC2015250A7E4'
+            ),
         ];
 
         return new DataCollection($data);
