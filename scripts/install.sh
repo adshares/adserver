@@ -2,7 +2,13 @@
 
 set -ex
 
-ARTISAN_COMMAND="${INSTALLATION_PATH}/artisan --no-interaction"
+function sudoBash {
+    sudo -E -u ${INSTALLATION_USER} -- bash -c "$*"
+}
+
+function artisanCommand {
+    sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $@
+}
 
 service nginx stop
 crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
@@ -19,10 +25,11 @@ rm -rf ${INSTALLATION_PATH}/node_modules
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
 mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 
+chown -R ${INSTALLATION_USER} ${INSTALLATION_PATH}
 cd ${INSTALLATION_PATH}
 
 if [ ! -v TRAVIS ]; then
-  ${ARTISAN_COMMAND} config:cache
+    artisanCommand config:cache
 fi
 
 if [[ ${DO_RESET} == "yes" ]]
@@ -33,10 +40,10 @@ then
 
     if [[ "${BUILD_BRANCH:-master}" == "master" ]]
     then
-        ${ARTISAN_COMMAND} migrate --force
+        artisanCommand migrate --force
     else
-        ${ARTISAN_COMMAND} migrate:fresh --force 
-        ${ARTISAN_COMMAND} db:seed --force
+        artisanCommand migrate:fresh --force 
+        artisanCommand db:seed --force
     fi
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
@@ -57,14 +64,14 @@ then
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
 
-    ${ARTISAN_COMMAND} migrate 
+    artisanCommand migrate 
 else
-    ${ARTISAN_COMMAND} migrate --force
+    artisanCommand migrate --force
 fi
 
-${ARTISAN_COMMAND} ops:targeting-options:update
-${ARTISAN_COMMAND} ops:filtering-options:update
-${ARTISAN_COMMAND} ads:fetch-hosts --quiet
+artisanCommand ops:targeting-options:update
+artisanCommand ops:filtering-options:update
+artisanCommand ads:fetch-hosts --quiet
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab-${VARIABLE_HOST}
 
