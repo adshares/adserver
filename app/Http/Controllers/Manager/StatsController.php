@@ -228,14 +228,14 @@ class StatsController extends Controller
         }
 
         $result = $this->advertiserStatsDataProvider->fetch($input);
-        $total = $result->getTotal();
-        $data = $result->getData();
 
         $callbackTransformingId = function ($item) {
             return $this->transformPublicIdToPrivateId($item);
         };
-      
-        $result['data'] = array_map($callbackTransformingId, $result['data']);
+
+        $total = $result->getTotal();
+        $data = array_map($callbackTransformingId, $result->getData());
+
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
@@ -272,14 +272,14 @@ class StatsController extends Controller
         }
 
         $result = $this->publisherStatsDataProvider->fetch($input);
-        $total = $result->getTotal();
-        $data = $result->getData();
 
         $callbackTransformingId = function ($item) {
             return $this->transformPublicIdToPrivateId($item);
         };
 
-        $result['data'] = array_map($callbackTransformingId, $result['data']);
+        $total = $result->getTotal();
+        $data = array_map($callbackTransformingId, $result->getData());
+
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
