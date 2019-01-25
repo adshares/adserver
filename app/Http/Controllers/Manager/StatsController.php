@@ -28,14 +28,14 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Advertiser\Dto\ChartInput as AdvertiserChartInput;
-use Adshares\Advertiser\Dto\StatsInput as AdvertiserStatsInput;
+use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
+use Adshares\Advertiser\Dto\Input\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
-use Adshares\Advertiser\Dto\InvalidInputException as AdvertiserInvalidInputException;
-use Adshares\Publisher\Dto\ChartInput as PublisherChartInput;
-use Adshares\Publisher\Dto\StatsInput as PublisherStatsInput;
-use Adshares\Publisher\Dto\InvalidInputException as PublisherInvalidInputException;
+use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
+use Adshares\Publisher\Dto\Input\ChartInput as PublisherChartInput;
+use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
+use Adshares\Publisher\Dto\Input\InvalidInputException as PublisherInvalidInputException;
 use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use DateTime;
@@ -227,14 +227,16 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->advertiserStatsDataProvider->fetch($input)->toArray();
+        $result = $this->advertiserStatsDataProvider->fetch($input);
 
         $callbackTransformingId = function ($item) {
             return $this->transformPublicIdToPrivateId($item);
         };
-        $result['data'] = array_map($callbackTransformingId, $result['data']);
 
-        return new JsonResponse($result);
+        $total = $result->getTotal();
+        $data = array_map($callbackTransformingId, $result->getData());
+
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     public function publisherStats(
@@ -269,14 +271,16 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->publisherStatsDataProvider->fetch($input)->toArray();
+        $result = $this->publisherStatsDataProvider->fetch($input);
 
         $callbackTransformingId = function ($item) {
             return $this->transformPublicIdToPrivateId($item);
         };
-        $result['data'] = array_map($callbackTransformingId, $result['data']);
 
-        return new JsonResponse($result);
+        $total = $result->getTotal();
+        $data = array_map($callbackTransformingId, $result->getData());
+
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     private function transformPublicIdToPrivateId(array $item): array

@@ -20,25 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Input;
 
-class ChartResult
+use RuntimeException;
+
+class InvalidInputException extends RuntimeException
 {
-    /** @var array */
-    private $data;
 
-    public function __construct(array $data)
-    {
-        foreach ($data as $item) {
-            $this->data[] = [
-                $item[0],
-                $item[1],
-            ];
-        }
-    }
-
-    public function toArray(): array
-    {
-        return $this->data;
-    }
 }

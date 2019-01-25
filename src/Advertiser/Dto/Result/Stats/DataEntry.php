@@ -20,34 +20,35 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-class StatsResult
+class DataEntry
 {
-    private $data = [];
+    /** @var Calculation */
+    private $calculation;
 
-    public function __construct(array $inputData)
+    /** @var string */
+    private $campaignId;
+
+    /** @var string|null */
+    private $bannerId;
+
+    public function __construct(Calculation $calculation, string $campaignId, ?string $bannerId = null)
     {
-        foreach ($inputData as $entry) {
-            $zoneId = $entry[7] ?? null;
-
-            $this->data[] = new StatsEntry(
-                new StatsEntryValues($entry[0], $entry[1], $entry[2], $entry[3], $entry[4], $entry[5]),
-                $entry[6],
-                $zoneId
-            );
-        }
+        $this->calculation = $calculation;
+        $this->campaignId = $campaignId;
+        $this->bannerId = $bannerId;
     }
 
     public function toArray(): array
     {
-        $result = [];
+        $data = $this->calculation->toArray();
+        $data['campaignId'] = $this->campaignId;
 
-        /** @var StatsEntry $entry */
-        foreach ($this->data as $entry) {
-            $result[] = $entry->toArray();
+        if ($this->bannerId) {
+            $data['bannerId'] = $this->bannerId;
         }
 
-        return $result;
+        return $data;
     }
 }

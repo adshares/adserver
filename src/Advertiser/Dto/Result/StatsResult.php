@@ -20,38 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Result;
 
-class StatsEntry
+use Adshares\Advertiser\Dto\Result\Stats\Total;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+
+class StatsResult
 {
-    /** @var StatsEntryValues */
-    private $statsEntryValues;
+    private $total;
+    private $data;
 
-    /** @var string */
-    private $siteId;
-
-    /** @var string|null */
-    private $zoneId;
-
-    public function __construct(
-        StatsEntryValues $statsEntryValues,
-        string $siteId,
-        ?string $zoneId = null
-    ) {
-        $this->statsEntryValues = $statsEntryValues;
-        $this->siteId = $siteId;
-        $this->zoneId = $zoneId;
+    public function __construct(Total $total, DataCollection $data)
+    {
+        $this->total = $total;
+        $this->data = $data;
     }
 
-    public function toArray(): array
+    public function getTotal(): array
     {
-        $data = $this->statsEntryValues->toArray();
-        $data['siteId'] = $this->siteId;
+        return $this->total->toArray();
+    }
 
-        if ($this->zoneId) {
-            $data['zoneId'] = $this->zoneId;
-        }
-
-        return $data;
+    public function getData(): array
+    {
+        return $this->data->toArray();
     }
 }

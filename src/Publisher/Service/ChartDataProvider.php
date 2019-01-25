@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Service;
 
-use Adshares\Publisher\Dto\ChartInput;
-use Adshares\Publisher\Dto\ChartResult;
+use Adshares\Publisher\Dto\Input\ChartInput;
+use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Repository\StatsRepository;
 
 final class ChartDataProvider

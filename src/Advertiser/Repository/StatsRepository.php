@@ -22,9 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Repository;
 
-use Adshares\Advertiser\Dto\ChartResult;
-use Adshares\Advertiser\Dto\StatsEntryValues;
-use Adshares\Advertiser\Dto\StatsResult;
+use Adshares\Advertiser\Dto\Result\ChartResult;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\Total;
 use DateTime;
 
 interface StatsRepository
@@ -98,12 +98,12 @@ interface StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
-    ): StatsResult;
+    ): DataCollection;
 
     public function fetchStatsTotal(
         string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
-    ): StatsEntryValues;
+    ): Total;
 }

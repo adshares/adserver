@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result\Stats;
 
-class StatsEntryValues
+class Calculation
 {
     /** @var int */
     private $clicks;
@@ -35,7 +35,6 @@ class StatsEntryValues
 
     /** @var float */
     private $averageRpc;
-
 
     /** @var float */
     private $averageRpm;
@@ -61,7 +60,7 @@ class StatsEntryValues
 
     public function toArray(): array
     {
-        $data = [
+        return [
             'clicks' => $this->clicks,
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
@@ -69,7 +68,5 @@ class StatsEntryValues
             'averageRpm' => $this->averageRpm,
             'revenue' => $this->revenue,
         ];
-
-        return $data;
     }
 }

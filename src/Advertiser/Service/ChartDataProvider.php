@@ -22,9 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Service;
 
-use Adshares\Advertiser\Dto\ChartInput;
+use Adshares\Advertiser\Dto\Input\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
-use Adshares\Advertiser\Dto\ChartResult;
+use Adshares\Advertiser\Dto\Result\ChartResult;
 
 final class ChartDataProvider
 {

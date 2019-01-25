@@ -20,11 +20,27 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-use RuntimeException;
-
-class InvalidInputException extends RuntimeException
+class Total
 {
+    private $calculation;
+    private $campaignId;
 
+    public function __construct(Calculation $calculation, ?string $campaignId = null)
+    {
+        $this->calculation = $calculation;
+        $this->campaignId = $campaignId;
+    }
+
+    public function toArray(): array
+    {
+        $data = $this->calculation->toArray();
+
+        if ($this->campaignId !== null) {
+            $data['campaignId'] = $this->campaignId;
+        }
+
+        return $data;
+    }
 }

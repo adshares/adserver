@@ -20,28 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Input;
 
-class StatsComplexResult
+use RuntimeException;
+
+class InvalidInputException extends RuntimeException
 {
-    /** @var StatsResult */
-    private $statsResult;
 
-    /** @var StatsEntryValues */
-    private $statsEntryValues;
-
-    public function __construct(StatsResult $statsResult, StatsEntryValues $statsEntryValues)
-    {
-        $this->statsResult = $statsResult;
-        $this->statsEntryValues = $statsEntryValues;
-    }
-
-    public function toArray(): array
-    {
-        $result = [];
-        $result['data'] = $this->statsResult->toArray();
-        $result['total'] = $this->statsEntryValues->toArray();
-
-        return $result;
-    }
 }

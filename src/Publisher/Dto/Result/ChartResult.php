@@ -20,34 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Publisher\Dto\Result;
 
-class StatsResult
+class ChartResult
 {
-    private $data = [];
+    /** @var array */
+    private $data;
 
-    public function __construct(array $inputData)
+    public function __construct(array $data)
     {
-        foreach ($inputData as $entry) {
-            $bannerId = $entry[7] ?? null;
-
-            $this->data[] = new StatsEntry(
-                new StatsEntryValues($entry[0], $entry[1], $entry[2], $entry[3], $entry[4], $entry[5]),
-                $entry[6],
-                $bannerId
-            );
+        foreach ($data as $item) {
+            $this->data[] = [
+                $item[0],
+                $item[1],
+            ];
         }
     }
 
     public function toArray(): array
     {
-        $result = [];
-
-        /** @var StatsEntry $entry */
-        foreach ($this->data as $entry) {
-            $result[] = $entry->toArray();
-        }
-
-        return $result;
+        return $this->data;
     }
 }
