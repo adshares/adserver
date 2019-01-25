@@ -49,6 +49,6 @@ class DataEntry
             $data['zoneId'] = $this->zoneId;
         }
 
-        return array_merge($this->calculation->toArray(), $data);
+        return $data;
     }
 }

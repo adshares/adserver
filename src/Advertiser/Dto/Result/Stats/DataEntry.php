@@ -49,6 +49,6 @@ class DataEntry
             $data['bannerId'] = $this->bannerId;
         }
 
-        return array_merge($this->calculation->toArray(), $data);
+        return $data;
     }
 }
