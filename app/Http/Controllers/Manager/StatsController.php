@@ -233,7 +233,7 @@ class StatsController extends Controller
             return $this->transformPublicIdToPrivateId($item);
         };
 
-        $total = $result->getTotal();
+        $total = $this->transformPublicIdToPrivateId($result->getTotal());
         $data = array_map($callbackTransformingId, $result->getData());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
@@ -277,7 +277,7 @@ class StatsController extends Controller
             return $this->transformPublicIdToPrivateId($item);
         };
 
-        $total = $result->getTotal();
+        $total = $this->transformPublicIdToPrivateId($result->getTotal());
         $data = array_map($callbackTransformingId, $result->getData());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
