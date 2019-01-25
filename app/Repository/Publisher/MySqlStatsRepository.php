@@ -171,8 +171,8 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->cpc,
-                (float)$row->cpm,
+                (float)$row->rpc,
+                (float)$row->rpm,
                 (int)$row->revenue
             );
 
