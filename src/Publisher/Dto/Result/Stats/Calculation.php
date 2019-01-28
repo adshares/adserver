@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result\Stats;
 
-class StatsEntry
+class Calculation
 {
     /** @var int */
     private $clicks;
@@ -36,50 +36,37 @@ class StatsEntry
     /** @var float */
     private $averageRpc;
 
+    /** @var float */
+    private $averageRpm;
+
     /** @var int */
-    private $cost;
-
-    /**
-     * @var string
-     */
-    private $siteId;
-
-    /** @var string|null */
-    private $zoneId;
+    private $revenue;
 
     public function __construct(
         int $clicks,
         int $impressions,
         float $ctr,
         float $averageRpc,
-        int $cost,
-        string $siteId,
-        ?string $zoneId = null
+        float $averageRpm,
+        int $revenue
     ) {
-        $this->siteId = $siteId;
         $this->clicks = $clicks;
         $this->impressions = $impressions;
         $this->ctr = $ctr;
         $this->averageRpc = $averageRpc;
-        $this->cost = $cost;
-        $this->zoneId = $zoneId;
+        $this->averageRpm = $averageRpm;
+        $this->revenue = $revenue;
     }
 
     public function toArray(): array
     {
-        $data = [
-            'siteId' => $this->siteId,
+        return [
             'clicks' => $this->clicks,
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
             'averageRpc' => $this->averageRpc,
-            'cost' => $this->cost,
+            'averageRpm' => $this->averageRpm,
+            'revenue' => $this->revenue,
         ];
-
-        if ($this->zoneId) {
-            $data['zoneId'] = $this->zoneId;
-        }
-
-        return $data;
     }
 }

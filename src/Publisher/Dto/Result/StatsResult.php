@@ -20,11 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Result;
 
-use RuntimeException;
+use Adshares\Publisher\Dto\Result\Stats\Total;
+use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 
-class InvalidInputException extends RuntimeException
+class StatsResult
 {
+    private $total;
+    private $data;
 
+    public function __construct(Total $total, DataCollection $data)
+    {
+        $this->total = $total;
+        $this->data = $data;
+    }
+
+    public function getTotal(): array
+    {
+        return $this->total->toArray();
+    }
+
+    public function getData(): array
+    {
+        return $this->data->toArray();
+    }
 }

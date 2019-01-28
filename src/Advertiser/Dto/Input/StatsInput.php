@@ -20,14 +20,14 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Input;
 
 use DateTime;
 
 class StatsInput
 {
     /** @var string */
-    private $publisherId;
+    private $advertiserId;
 
     /** @var DateTime */
     private $dateStart;
@@ -36,13 +36,13 @@ class StatsInput
     private $dateEnd;
 
     /** @var string|null */
-    private $siteId;
+    private $campaignId;
 
     public function __construct(
-        string $publisherId,
+        string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId = null
+        ?string $campaignId = null
     ) {
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
@@ -52,15 +52,15 @@ class StatsInput
             ));
         }
 
-        $this->publisherId = $publisherId;
-        $this->siteId = $siteId;
+        $this->advertiserId = $advertiserId;
+        $this->campaignId = $campaignId;
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
     }
 
-    public function getPublisherId(): string
+    public function getAdvertiserId(): string
     {
-        return $this->publisherId;
+        return $this->advertiserId;
     }
 
     public function getDateStart(): DateTime
@@ -73,8 +73,8 @@ class StatsInput
         return $this->dateEnd;
     }
 
-    public function getSiteId(): ?string
+    public function getCampaignId(): ?string
     {
-        return $this->siteId;
+        return $this->campaignId;
     }
 }

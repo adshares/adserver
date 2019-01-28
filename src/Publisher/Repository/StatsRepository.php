@@ -22,8 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Publisher\Repository;
 
-use Adshares\Publisher\Dto\ChartResult;
-use Adshares\Publisher\Dto\StatsResult;
+use Adshares\Publisher\Dto\Result\ChartResult;
+use Adshares\Publisher\Dto\Result\Stats\Total;
+use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 use DateTime;
 
 interface StatsRepository
@@ -35,6 +36,7 @@ interface StatsRepository
     public const SUM_TYPE = 'sum';
     public const CTR_TYPE = 'ctr';
     public const STATS_TYPE = 'stats';
+    public const STATS_SUM_TYPE = 'statsSum';
 
     public const HOUR_RESOLUTION = 'hour';
     public const DAY_RESOLUTION = 'day';
@@ -96,5 +98,12 @@ interface StatsRepository
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
-    ): StatsResult;
+    ): DataCollection;
+
+    public function fetchStatsTotal(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): Total;
 }

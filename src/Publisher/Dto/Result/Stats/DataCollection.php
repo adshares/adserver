@@ -20,11 +20,39 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Publisher\Dto\Result\Stats;
 
 use RuntimeException;
 
-class InvalidInputException extends RuntimeException
+class DataCollection
 {
+    private $data = [];
 
+    public function __construct(array $data)
+    {
+        $this->validate($data);
+
+        $this->data = $data;
+    }
+
+    private function validate(array $data): void
+    {
+        foreach ($data as $entry) {
+            if (!$entry instanceof DataEntry) {
+                throw new RuntimeException('Invalid object in the collection.');
+            }
+        }
+    }
+
+    public function toArray(): array
+    {
+        $data = [];
+
+        /** @var DataEntry $entry */
+        foreach ($this->data as $entry) {
+            $data[] = $entry->toArray();
+        }
+
+        return $data;
+    }
 }
