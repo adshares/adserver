@@ -20,25 +20,39 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-class ChartResult
+use RuntimeException;
+
+class DataCollection
 {
-    /** @var array */
-    private $data;
+    private $data = [];
 
     public function __construct(array $data)
     {
-        foreach ($data as $item) {
-            $this->data[] = [
-                $item[0],
-                $item[1],
-            ];
+        $this->validate($data);
+
+        $this->data = $data;
+    }
+
+    private function validate(array $data): void
+    {
+        foreach ($data as $entry) {
+            if (!$entry instanceof DataEntry) {
+                throw new RuntimeException('Invalid object in the collection.');
+            }
         }
     }
 
     public function toArray(): array
     {
-        return $this->data;
+        $data = [];
+
+        /** @var DataEntry $entry */
+        foreach ($this->data as $entry) {
+            $data[] = $entry->toArray();
+        }
+
+        return $data;
     }
 }

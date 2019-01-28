@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Service;
 
-use Adshares\Advertiser\Dto\StatsInput;
-use Adshares\Advertiser\Dto\StatsResult;
+use Adshares\Advertiser\Dto\Input\StatsInput;
+use Adshares\Advertiser\Dto\Result\StatsResult;
 use Adshares\Advertiser\Repository\StatsRepository;
 
 class StatsDataProvider
@@ -38,11 +38,20 @@ class StatsDataProvider
 
     public function fetch(StatsInput $input): StatsResult
     {
-        return $this->repository->fetchStats(
+        $total = $this->repository->fetchStatsTotal(
             $input->getAdvertiserId(),
             $input->getDateStart(),
             $input->getDateEnd(),
             $input->getCampaignId()
         );
+
+        $data = $this->repository->fetchStats(
+            $input->getAdvertiserId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getCampaignId()
+        );
+
+        return new StatsResult($total, $data);
     }
 }

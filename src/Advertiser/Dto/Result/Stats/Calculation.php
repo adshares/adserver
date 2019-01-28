@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Dto\Result\Stats;
 
-class StatsEntry
+class Calculation
 {
     /** @var int */
     private $clicks;
@@ -36,50 +36,37 @@ class StatsEntry
     /** @var float */
     private $averageCpc;
 
+    /** @var float */
+    private $averageCpm;
+
     /** @var int */
     private $cost;
-
-    /**
-     * @var string
-     */
-    private $campaignId;
-
-    /** @var string|null */
-    private $bannerId;
 
     public function __construct(
         int $clicks,
         int $impressions,
         float $ctr,
         float $averageCpc,
-        int $cost,
-        string $campaignId,
-        ?string $bannerId = null
+        float $averageCpm,
+        int $cost
     ) {
-        $this->campaignId = $campaignId;
         $this->clicks = $clicks;
         $this->impressions = $impressions;
         $this->ctr = $ctr;
         $this->averageCpc = $averageCpc;
+        $this->averageCpm = $averageCpm;
         $this->cost = $cost;
-        $this->bannerId = $bannerId;
     }
 
     public function toArray(): array
     {
-        $data = [
-            'campaignId' => $this->campaignId,
+        return [
             'clicks' => $this->clicks,
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
             'averageCpc' => $this->averageCpc,
+            'averageCpm' => $this->averageCpm,
             'cost' => $this->cost,
         ];
-
-        if ($this->bannerId) {
-            $data['bannerId'] = $this->bannerId;
-        }
-
-        return $data;
     }
 }
