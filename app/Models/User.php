@@ -201,4 +201,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Campaign::class);
     }
+
+    public function getBalance(): int
+    {
+        return UserLedgerEntry::getBalanceByUserId($this->id);
+    }
 }

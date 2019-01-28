@@ -22,7 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Console;
 
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Database\Eloquent\Collection;
@@ -36,31 +40,45 @@ class AdPayGetPaymentsTest extends TestCase
 
     public function testHandle(): void
     {
-        $this->markTestSkipped('Needs Campaign, Banner and User instantiation');
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+        $userUuid = $user->uuid;
+
+        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 1000000000000000000]);
+        $campaignId = $campaign->id;
+        $campaignUuid = $campaign->uuid;
+
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
+        $bannerUuid = $banner->uuid;
 
         /** @var Collection|EventLog[] $events */
         $events = factory(EventLog::class)->times(3)->create([
             'event_value' => null,
+            'advertiser_id' => $userUuid,
+            'campaign_id' => $campaignUuid,
+            'banner_id' => $bannerUuid,
         ]);
 
         $calculatedEvents = $events->map(function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => mt_rand(),
+                'amount' => mt_rand(0, 1000*10**11),
+                'reason' => 0
             ];
         });
 
-        $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
-            $adsClient = $this->createMock(AdPay::class);
-            $adsClient->method('getPayments')->willReturn($calculatedEvents->toArray());
+        $total = $calculatedEvents->sum('amount');
+        factory(UserLedgerEntry::class)->create(['amount' => $total, 'user_id' => $userId]);
 
-            return $adsClient;
+        $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
+            $adPay = $this->createMock(AdPay::class);
+            $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+
+            return $adPay;
         });
 
         $this->artisan('ops:adpay:payments:get')
-             ->assertExitCode(0)
-             ->expectsOutput('Found 3 calculations.')
-             ->expectsOutput('Updated 3 entries.');
+             ->assertExitCode(0);
 
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
