@@ -18,8 +18,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-$app->useStoragePath(env('EXTERNAL_STORAGE_PATH', base_path().'/storage'));
-
 return [
     /*
     |--------------------------------------------------------------------------
