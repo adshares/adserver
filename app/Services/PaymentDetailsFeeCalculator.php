@@ -46,7 +46,8 @@ class PaymentDetailsFeeCalculator
 
     public function calculateFee(int $weight): array
     {
-        $amountBeforeFees = (int)floor($this->totalAmount * (float)$weight / $this->totalWeight);
+        $normalizationFactor = (float)$weight / $this->totalWeight;
+        $amountBeforeFees = (int)floor($this->totalAmount * $normalizationFactor);
 
         $licenceFeeAmount = (int)floor($this->licenceFee * $amountBeforeFees);
         $transferAmountBeforeOperatorFee = $amountBeforeFees - $licenceFeeAmount;

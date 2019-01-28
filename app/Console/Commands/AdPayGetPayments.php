@@ -92,8 +92,9 @@ class AdPayGetPayments extends Command
             $totalEventValue = $singleCampaignEvents->sum('event_value');
 
             if ($maxSpendableAmount < $totalEventValue) {
-                $singleCampaignEvents->each(function (EventLog $entry) use ($maxSpendableAmount, $totalEventValue) {
-                    $entry->event_value = (int)floor($entry->event_value * $maxSpendableAmount / $totalEventValue);
+                $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
+                $singleCampaignEvents->each(function (EventLog $entry) use ($normalizationFactor) {
+                    $entry->event_value = (int)floor($entry->event_value * $normalizationFactor);
                 });
             }
         })->flatten(1);
@@ -116,8 +117,9 @@ class AdPayGetPayments extends Command
             $totalEventValue = $singleUserEvents->sum('event_value');
 
             if ($maxSpendableAmount < $totalEventValue) {
-                $singleUserEvents->each(function (EventLog $entry) use ($maxSpendableAmount, $totalEventValue) {
-                    $entry->event_value = (int)floor($entry->event_value * $maxSpendableAmount / $totalEventValue);
+                $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
+                $singleUserEvents->each(function (EventLog $entry) use ($normalizationFactor) {
+                    $entry->event_value = (int)floor($entry->event_value * $normalizationFactor);
                 });
 
                 Campaign::suspendAllForUserId($user->id);
