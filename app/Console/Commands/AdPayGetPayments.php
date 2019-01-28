@@ -79,12 +79,13 @@ class AdPayGetPayments extends Command
             $campaign = Campaign::fetchByUuid($campaignPublicId);
 
             if (!$campaign) {
-                throw new Exception(
+                Log::warning(
                     sprintf(
                         '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
                         $campaignPublicId
                     )
                 );
+                return true;
             }
 
             $maxSpendableAmount = $campaign->budget;
