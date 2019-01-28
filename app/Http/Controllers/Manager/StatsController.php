@@ -234,7 +234,7 @@ class StatsController extends Controller
         $data = array_map($this->callbackTransformingId(), $result->getData());
         $data = array_filter($data, $this->callbackFilteringNullFromAdvertiserStats());
 
-        return new JsonResponse($data);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     public function publisherStats(
@@ -275,7 +275,7 @@ class StatsController extends Controller
         $data = array_map($this->callbackTransformingId(), $result->getData());
         $data = array_filter($data, $this->callbackFilteringNullFromPublisherStats());
 
-        return new JsonResponse($data);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     private function transformPublicIdToPrivateId(array $item): array
