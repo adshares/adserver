@@ -69,6 +69,7 @@ else
     artisanCommand migrate --force
 fi
 
+artisanCommand artisan storage:link
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts --quiet
