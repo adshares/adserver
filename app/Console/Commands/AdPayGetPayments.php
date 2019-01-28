@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
@@ -66,42 +67,76 @@ class AdPayGetPayments extends Command
 
         Log::info('Found '.count($unpaidEvents).' entries to update.');
 
-        $ledgerUnpaidEvents = $unpaidEvents->groupBy(function (EventLog $entry) {
-            $user = User::fetchByUuid($entry->advertiser_id);
+        $unpaidEvents->each(function (EventLog $entry) use ($calculations) {
+            $calculation = $calculations->firstWhere('event_id', $entry->event_id);
+            $entry->event_value = $calculation['amount'];
+            $entry->reason = $calculation['reason'];
+        });
 
-            if (!$user) {
-                Log::debug(sprintf('{"command":"ops:adpay:payments:get","advertiser_id":"%s"}', $entry->advertiser_id));
+        $unpaidEvents->groupBy(function (EventLog $entry) {
+            return $entry->campaign_id;
+        })->each(function (Collection $singleCampaignEvents, string $campaignPublicId) {
+            $campaign = Campaign::fetchByUuid($campaignPublicId);
+
+            if (!$campaign) {
+                Log::warning(
+                    sprintf(
+                        '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
+                        $campaignPublicId
+                    )
+                );
+                return true;
             }
 
-            return $user->id;
-        })->map(function (Collection $collection, int $userId) use ($calculations) {
-            $collection->each(function (EventLog $entry) use ($calculations) {
-                $calculation = $calculations->firstWhere('event_id', $entry->event_id);
-                $entry->event_value = $calculation['amount'];
-                $entry->reason = $calculation['reason'];
+            $maxSpendableAmount = (int)$campaign->budget;
+            $totalEventValue = $singleCampaignEvents->sum('event_value');
+
+            if ($maxSpendableAmount < $totalEventValue) {
+                $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
+                $singleCampaignEvents->each(function (EventLog $entry) use ($normalizationFactor) {
+                    $entry->event_value = (int)floor($entry->event_value * $normalizationFactor);
+                });
+            }
+        })->flatten(1);
+
+        $unpaidLedgerEntries = $unpaidEvents->groupBy(function (EventLog $entry) {
+            return $entry->advertiser_id;
+        })->map(function (Collection $singleUserEvents, string $userPublicId) {
+            $user = User::fetchByUuid($userPublicId);
+
+            if (!$user) {
+                throw new Exception(
+                    sprintf(
+                        '{"error":"no-user","command":"ops:adpay:payments:get","advertiser_id":"%s"}',
+                        $userPublicId
+                    )
+                );
+            }
+
+            $maxSpendableAmount = $user->getBalance();
+            $totalEventValue = $singleUserEvents->sum('event_value');
+
+            if ($maxSpendableAmount < $totalEventValue) {
+                $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
+                $singleUserEvents->each(function (EventLog $entry) use ($normalizationFactor) {
+                    $entry->event_value = (int)floor($entry->event_value * $normalizationFactor);
+                });
+
+                Campaign::suspendAllForUserId($user->id);
+
+                Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks."
+                    ." Needs $totalEventValue, but has $maxSpendableAmount");
+
+                $totalEventValue = $singleUserEvents->sum('event_value');
+            }
+
+            $singleUserEvents->each(function (EventLog $entry) {
                 $entry->save();
             });
 
-            $balance = UserLedgerEntry::getBalanceByUserId($userId);
-            $totalEventValue = $collection->sum('event_value');
-
-            if ($balance < $totalEventValue) {
-                $collection->each(function (EventLog $entry) use ($balance, $totalEventValue) {
-                    $entry->event_value = floor($entry->event_value * $balance / $totalEventValue);
-                    $entry->save();
-                });
-
-                Campaign::suspendAllForUserId($userId);
-
-                Log::debug("Suspended Campaigns for user [$userId] due to insufficient amount of clicks."
-                    ." Needs $totalEventValue, but has $balance");
-
-                $totalEventValue = $collection->sum('event_value');
-            }
-
             if ($totalEventValue > 0) {
                 $userLedgerEntry = UserLedgerEntry::construct(
-                    $userId,
+                    $user->id,
                     -$totalEventValue,
                     UserLedgerEntry::STATUS_ACCEPTED,
                     UserLedgerEntry::TYPE_AD_EXPENDITURE
@@ -117,6 +152,6 @@ class AdPayGetPayments extends Command
 
         DB::commit();
 
-        Log::info('Created '.count($ledgerUnpaidEvents).' Ledger Entries.');
+        Log::info('Created '.count($unpaidLedgerEntries).' Ledger Entries.');
     }
 }

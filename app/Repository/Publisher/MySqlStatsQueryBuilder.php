@@ -37,6 +37,7 @@ class MySqlStatsQueryBuilder
         StatsRepository::SUM_TYPE,
         StatsRepository::CTR_TYPE,
         StatsRepository::STATS_TYPE,
+        StatsRepository::STATS_SUM_TYPE,
     ];
 
     private const CHART_QUERY = <<<SQL
@@ -55,15 +56,17 @@ SELECT
   SUM(IF(e.event_type = 'click', 1, 0))                                                                   AS clicks,
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS cpc,
-  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS cost,
-  e.site_id                                                                                               AS site_id
+  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS rpc,
+  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                     AS rpm,
+  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS revenue
+  #siteIdCol
   #zoneIdCol
 FROM network_event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.publisher_id = :publisherId
   #siteIdWhereClause
-GROUP BY e.site_id #zoneIdGroupBy
+#siteIdGroupBy #zoneIdGroupBy
+#having
 SQL;
 
     /**
@@ -86,7 +89,7 @@ SQL;
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
-        if ($type === StatsRepository::STATS_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             return self::STATS_QUERY;
         }
 
@@ -249,6 +252,27 @@ SQL;
             $zoneIdGroupBy = ', e.zone_id';
         }
         $this->query = str_replace(['#zoneIdCol', '#zoneIdGroupBy'], [$zoneIdCol, $zoneIdGroupBy], $this->query);
+
+        return $this;
+    }
+
+    public function appendSiteIdGroupBy(bool $appendSiteIdGroupBy): self
+    {
+        if ($appendSiteIdGroupBy) {
+            $siteIdCol = ', e.site_id AS site_id';
+            $siteIdGroupBy = 'GROUP BY e.site_id';
+            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0';
+        } else {
+            $siteIdCol = '';
+            $siteIdGroupBy = '';
+            $having = '';
+        }
+        $this->query =
+            str_replace(
+                ['#siteIdCol', '#siteIdGroupBy', '#having'],
+                [$siteIdCol, $siteIdGroupBy, $having],
+                $this->query
+            );
 
         return $this;
     }

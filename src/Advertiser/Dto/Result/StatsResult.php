@@ -20,25 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Advertiser\Dto\Result;
 
-class ChartResult
+use Adshares\Advertiser\Dto\Result\Stats\Total;
+use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
+
+class StatsResult
 {
-    /** @var array */
+    private $total;
     private $data;
 
-    public function __construct(array $data)
+    public function __construct(Total $total, DataCollection $data)
     {
-        foreach ($data as $item) {
-            $this->data[] = [
-                $item[0],
-                $item[1],
-            ];
-        }
+        $this->total = $total;
+        $this->data = $data;
     }
 
-    public function toArray(): array
+    public function getTotal(): array
     {
-        return $this->data;
+        return $this->total->toArray();
+    }
+
+    public function getData(): array
+    {
+        return $this->data->toArray();
     }
 }

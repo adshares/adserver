@@ -37,6 +37,7 @@ class MySqlStatsQueryBuilder
         StatsRepository::SUM_TYPE,
         StatsRepository::CTR_TYPE,
         StatsRepository::STATS_TYPE,
+        StatsRepository::STATS_SUM_TYPE,
     ];
 
     private const CHART_QUERY = <<<SQL
@@ -56,14 +57,16 @@ SELECT
   SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
   IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
   IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                         AS cpc,
-  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost,
-  e.campaign_id                                                                                           AS cid
+  IFNULL(AVG(IF(e.event_type = 'view', e.event_value, NULL)), 0)*1000                                     AS cpm,
+  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost
+  #campaignIdCol
   #bannerIdCol
 FROM event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.advertiser_id = :advertiserId
   #campaignIdWhereClause
-GROUP BY e.campaign_id #bannerIdGroupBy
+#campaignIdGroupBy #bannerIdGroupBy
+#having
 SQL;
 
     /**
@@ -86,7 +89,7 @@ SQL;
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
-        if ($type === StatsRepository::STATS_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             return self::STATS_QUERY;
         }
 
@@ -250,6 +253,27 @@ SQL;
         }
         $this->query =
             str_replace(['#bannerIdCol', '#bannerIdGroupBy'], [$bannerIdCol, $bannerIdGroupBy], $this->query);
+
+        return $this;
+    }
+
+    public function appendCampaignIdGroupBy(bool $appendCampaignIdGroupBy): self
+    {
+        if ($appendCampaignIdGroupBy) {
+            $campaignIdCol = ', e.campaign_id AS cid';
+            $campaignIdGroupBy = 'GROUP BY e.campaign_id';
+            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0';
+        } else {
+            $campaignIdCol = '';
+            $campaignIdGroupBy = '';
+            $having = '';
+        }
+        $this->query =
+            str_replace(
+                ['#campaignIdCol', '#campaignIdGroupBy', '#having'],
+                [$campaignIdCol, $campaignIdGroupBy, $having],
+                $this->query
+            );
 
         return $this;
     }

@@ -20,38 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto;
+namespace Adshares\Advertiser\Dto\Input;
 
-class StatsResult
+use RuntimeException;
+
+class InvalidInputException extends RuntimeException
 {
-    private $data = [];
 
-    public function __construct(array $inputData)
-    {
-        foreach ($inputData as $entry) {
-            $bannerId = $entry[6] ?? null;
-
-            $this->data[] = new StatsEntry(
-                $entry[0],
-                $entry[1],
-                $entry[2],
-                $entry[3],
-                $entry[4],
-                $entry[5],
-                $bannerId
-            );
-        }
-    }
-
-    public function toArray(): array
-    {
-        $result = [];
-
-        /** @var StatsEntry $entry */
-        foreach ($this->data as $entry) {
-            $result[] = $entry->toArray();
-        }
-
-        return $result;
-    }
 }
