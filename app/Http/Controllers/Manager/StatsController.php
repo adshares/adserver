@@ -38,6 +38,7 @@ use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Dto\Input\InvalidInputException as PublisherInvalidInputException;
 use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
+use Closure;
 use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -229,12 +230,9 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetch($input);
 
-        $callbackTransformingId = function ($item) {
-            return $this->transformPublicIdToPrivateId($item);
-        };
-
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($callbackTransformingId, $result->getData());
+        $data = array_map($this->callbackTransformingId(), $result->getData());
+        $data = array_filter($data, $this->callbackFilteringNullFromAdvertiserStats());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
@@ -273,12 +271,9 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetch($input);
 
-        $callbackTransformingId = function ($item) {
-            return $this->transformPublicIdToPrivateId($item);
-        };
-
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($callbackTransformingId, $result->getData());
+        $data = array_map($this->callbackTransformingId(), $result->getData());
+        $data = array_filter($data, $this->callbackFilteringNullFromPublisherStats());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
@@ -323,5 +318,36 @@ class StatsController extends Controller
         }
 
         return $site->uuid;
+    }
+
+    private function callbackTransformingId(): Closure
+    {
+        return function ($item) {
+            return $this->transformPublicIdToPrivateId($item);
+        };
+    }
+
+    private function callbackFilteringNullFromAdvertiserStats(): Closure
+    {
+        return function (array $item) {
+            if ((array_key_exists('campaignId', $item) && is_null($item['campaignId']))
+                || (array_key_exists('bannerId', $item) && is_null($item['bannerId']))) {
+                return false;
+            }
+
+            return true;
+        };
+    }
+
+    private function callbackFilteringNullFromPublisherStats(): Closure
+    {
+        return function (array $item) {
+            if ((array_key_exists('siteId', $item) && is_null($item['siteId']))
+                || (array_key_exists('zoneId', $item) && is_null($item['zoneId']))) {
+                return false;
+            }
+
+            return true;
+        };
     }
 }
