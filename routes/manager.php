@@ -82,5 +82,7 @@ Route::get('wallet/history', [WalletController::class, 'history']);
 // statistics
 Route::get('campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
 Route::get('campaigns/stats/table/{date_start}/{date_end}', [StatsController::class, 'advertiserStats']);
+Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::class, 'advertiserStatsWithTotal']);
 Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
+Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
