@@ -212,8 +212,7 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetch($input);
 
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromAdvertiserStats());
+        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
 
         return new JsonResponse($data);
     }
@@ -247,8 +246,7 @@ class StatsController extends Controller
         $result = $this->advertiserStatsDataProvider->fetch($input);
 
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromAdvertiserStats());
+        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
@@ -281,8 +279,7 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetch($input);
 
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromPublisherStats());
+        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
 
         return new JsonResponse($data);
     }
@@ -316,8 +313,7 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetch($input);
 
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromPublisherStats());
+        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
     }
@@ -417,5 +413,21 @@ class StatsController extends Controller
                 )
             );
         }
+    }
+
+    private function transformIdAndFilterNullFromAdvertiserData(array $resultData): array
+    {
+        $data = array_map($this->callbackTransformingId(), $resultData);
+        $data = array_values(array_filter($data, $this->callbackFilteringNullFromAdvertiserStats()));
+
+        return $data;
+    }
+
+    private function transformIdAndFilterNullFromPublisherData(array $resultData): array
+    {
+        $data = array_map($this->callbackTransformingId(), $resultData);
+        $data = array_values(array_filter($data, $this->callbackFilteringNullFromPublisherStats()));
+
+        return $data;
     }
 }
