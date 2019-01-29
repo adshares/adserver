@@ -24,10 +24,13 @@ use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use function collect;
+use function hex2bin;
+use function in_array;
+use function str_replace;
 
 /**
  * @property Campaign campaign
@@ -126,11 +129,22 @@ class Banner extends Model
             $array['image_url'] = $array['serve_url'];
         }
 
-        return $array;
+        return $this->removeScheme($array);
     }
 
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    private function removeScheme(array $array): array
+    {
+        return collect($array)->mapWithKeys(function ($value, string $key) {
+            if (in_array($key, ['serve_url', 'view_url', 'click_url', 'html', 'image_url'])) {
+                return str_replace(['http:', 'https:'], '', $value);
+            }
+
+            return $value;
+        })->toArray();
     }
 }
