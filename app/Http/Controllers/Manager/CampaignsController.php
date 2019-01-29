@@ -211,20 +211,19 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-
-        $status = $input['basicInformation']['status'] ?? null;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
+
+        unset($input['status']); // Client cannot change status in EDIT action
 
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $status = $campaign->status;
         $campaign->fill($input);
 
-        if ($status !== null) {
-            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
-        }
+        $campaign->changeStatus(Campaign::STATUS_INACTIVE);
 
         $bannersToUpdate = [];
         $bannersToDelete = [];
@@ -264,7 +263,7 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        if ($status !== null) {
+        if ($status !== $campaign->status) {
             try {
                 $campaign->changeStatus($status);
 
