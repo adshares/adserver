@@ -88,13 +88,7 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-
-        if (!$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
-        }
+        $this->validateUserAsAdvertiser($user);
 
         try {
             $input = new AdvertiserChartInput(
@@ -129,13 +123,7 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-
-        if (!$user->isPublisher()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
-        }
+        $this->validateUserAsPublisher($user);
 
         try {
             $input = new PublisherChartInput(
@@ -209,13 +197,40 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsAdvertiser($user);
 
-        if (!$user->isAdvertiser()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
+        try {
+            $input = new AdvertiserStatsInput(
+                $user->uuid,
+                $from,
+                $to,
+                $campaignId
+            );
+        } catch (AdvertiserInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
+
+        $result = $this->advertiserStatsDataProvider->fetch($input);
+
+        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
+
+        return new JsonResponse($data);
+    }
+
+    public function advertiserStatsWithTotal(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignId = $this->getCampaignIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsAdvertiser($user);
 
         try {
             $input = new AdvertiserStatsInput(
@@ -231,10 +246,9 @@ class StatsController extends Controller
         $result = $this->advertiserStatsDataProvider->fetch($input);
 
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromAdvertiserStats());
+        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
 
-        return new JsonResponse($data);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     public function publisherStats(
@@ -250,13 +264,40 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsPublisher($user);
 
-        if (!$user->isPublisher()) {
-            throw new AccessDeniedHttpException(sprintf(
-                'User %s is not authorized to access this resource.',
-                $user->email
-            ));
+        try {
+            $input = new PublisherStatsInput(
+                $user->uuid,
+                $from,
+                $to,
+                $siteId
+            );
+        } catch (PublisherInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
+
+        $result = $this->publisherStatsDataProvider->fetch($input);
+
+        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
+
+        return new JsonResponse($data);
+    }
+
+    public function publisherStatsWithTotal(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $siteId = $this->getSiteIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsPublisher($user);
 
         try {
             $input = new PublisherStatsInput(
@@ -272,10 +313,9 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetch($input);
 
         $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = array_map($this->callbackTransformingId(), $result->getData());
-        $data = array_filter($data, $this->callbackFilteringNullFromPublisherStats());
+        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
 
-        return new JsonResponse($data);
+        return new JsonResponse(['total' => $total, 'data' => $data]);
     }
 
     private function transformPublicIdToPrivateId(array $item): array
@@ -349,5 +389,45 @@ class StatsController extends Controller
 
             return true;
         };
+    }
+
+    private function validateUserAsPublisher(User $user): void
+    {
+        if (!$user->isPublisher()) {
+            throw new AccessDeniedHttpException(
+                sprintf(
+                    'User %s is not authorized to access this resource.',
+                    $user->email
+                )
+            );
+        }
+    }
+
+    private function validateUserAsAdvertiser(User $user): void
+    {
+        if (!$user->isAdvertiser()) {
+            throw new AccessDeniedHttpException(
+                sprintf(
+                    'User %s is not authorized to access this resource.',
+                    $user->email
+                )
+            );
+        }
+    }
+
+    private function transformIdAndFilterNullFromAdvertiserData(array $resultData): array
+    {
+        $data = array_map($this->callbackTransformingId(), $resultData);
+        $data = array_values(array_filter($data, $this->callbackFilteringNullFromAdvertiserStats()));
+
+        return $data;
+    }
+
+    private function transformIdAndFilterNullFromPublisherData(array $resultData): array
+    {
+        $data = array_map($this->callbackTransformingId(), $resultData);
+        $data = array_values(array_filter($data, $this->callbackFilteringNullFromPublisherStats()));
+
+        return $data;
     }
 }
