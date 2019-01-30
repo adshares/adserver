@@ -275,7 +275,7 @@ class MySqlStatsRepository implements StatsRepository
         $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
 
         $result = $this->mapResult($joinedResult);
-        $this->overwriteStartDate($dateStart, $result);
+        $result = $this->overwriteStartDate($dateStart, $result);
 
         return $result;
     }
@@ -437,10 +437,12 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function overwriteStartDate(DateTime $dateStart, array $result): void
+    private function overwriteStartDate(DateTime $dateStart, array $result): array
     {
         if (count($result) > 0) {
             $result[0][0] = $dateStart->format(DateTime::ATOM);
         }
+
+        return $result;
     }
 }
