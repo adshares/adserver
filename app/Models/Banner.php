@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Utilities\UrlProtocolRemover;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -121,7 +122,7 @@ class Banner extends Model
         }
 
         if ($this->type === self::IMAGE_TYPE) {
-            $array['image_url'] = route('banner-preview', ['id' => $this->uuid]); # used only by Client (Frontend)
+            $array['image_url'] = UrlProtocolRemover::remove(route('banner-preview', ['id' => $this->uuid]));
         }
 
         return $array;

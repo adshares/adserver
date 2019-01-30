@@ -75,7 +75,7 @@ class CampaignsController extends Controller
         );
     }
 
-    public function preview($bannerPublicId): void
+    public function preview($bannerPublicId): Response
     {
         $banner = Banner::fetchBanner((string)$bannerPublicId);
 

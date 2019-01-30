@@ -50,4 +50,5 @@ Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->nam
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
+# should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])->name('banner-preview');
