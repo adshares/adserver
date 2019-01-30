@@ -193,8 +193,8 @@ SQL;
                 $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)';
                 break;
             case StatsRepository::WEEK_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, WEEK(e.created_at) as w';
-                $groupBy = 'GROUP BY YEAR(e.created_at), WEEK(e.created_at)';
+                $cols = ', YEAR(e.created_at) AS y, WEEK(e.created_at, 3) as w';
+                $groupBy = 'GROUP BY YEAR(e.created_at), WEEK(e.created_at, 3)';
                 break;
             case StatsRepository::MONTH_RESOLUTION:
                 $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m';
