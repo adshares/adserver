@@ -224,17 +224,6 @@ class Campaign extends Model
         ];
     }
 
-    public function getBannersUrls(): array
-    {
-        $urls = [];
-
-        foreach ($this->banners as $banner) {
-            $urls[] = $banner->toArray()['serve_url'];
-        }
-
-        return $urls;
-    }
-
     public function changeStatus(int $status): void
     {
         if ($status === $this->status) {

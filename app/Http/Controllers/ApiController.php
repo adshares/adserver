@@ -56,14 +56,15 @@ class ApiController extends Controller
                     continue;
                 }
 
+                $bannerPublicId = $bannerArray['uuid'];
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
-                    'serve_url' => $this->changeHost($bannerArray['serve_url'], $request),
-                    'click_url' => $this->changeHost($bannerArray['click_url'], $request),
-                    'view_url' => $this->changeHost($bannerArray['view_url'], $request),
+                    'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
+                    'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
+                    'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
                 ];
             }
 
