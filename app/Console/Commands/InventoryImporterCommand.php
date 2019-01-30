@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Adserver\Repository\Supply\NetworkHostRepository;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
@@ -41,21 +40,20 @@ class InventoryImporterCommand extends Command
 
     private $networkHost;
 
-    public function __construct(InventoryImporter $inventoryImporterService, NetworkHostRepository $networkHost)
+    public function __construct(InventoryImporter $inventoryImporterService)
     {
         $this->inventoryImporterService = $inventoryImporterService;
-        $this->networkHost = $networkHost;
 
         parent::__construct();
     }
 
-    public function handle()
+    public function handle(): void
     {
         $this->info('Start command '.$this->signature);
 
         $networkHosts = NetworkHost::fetchHosts();
 
-        if (!$networkHosts) {
+        if ($networkHosts->count() === 0) {
             $this->info('Stopped importing. No hosts found.');
 
             return;
