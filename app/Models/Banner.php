@@ -116,16 +116,12 @@ class Banner extends Model
 
     protected function toArrayExtras($array)
     {
-        $array['serve_url'] = $this->removeScheme(route('banner-serve', ['id' => $this->uuid]));
-        $array['view_url'] = $this->removeScheme(route('banner-view', ['id' => $this->uuid]));
-        $array['click_url'] = $this->removeScheme(route('banner-click', ['id' => $this->uuid]));
-
         if ($this->type === self::HTML_TYPE) {
             $array['html'] = $this->creative_contents;
         }
 
         if ($this->type === self::IMAGE_TYPE) {
-            $array['image_url'] = $this->removeScheme($array['serve_url']);
+            $array['image_url'] = route('banner-preview', ['id' => $this->uuid]); # used only by Client (Frontend)
         }
 
         return $array;
@@ -134,10 +130,5 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
-    }
-
-    private function removeScheme(string $url): string
-    {
-        return str_replace(['http:', 'https:'], '', $url);
     }
 }

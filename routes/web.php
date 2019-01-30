@@ -22,6 +22,7 @@ use Adshares\Adserver\Http\Controllers\ApiController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
+use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () { return ''; })->name('login');
@@ -48,3 +49,5 @@ Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->nam
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
+
+Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])->name('banner-preview');
