@@ -24,10 +24,13 @@ use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use function hex2bin;
+use Adshares\Adserver\Utilities\UrlProtocolRemover;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use function hex2bin;
+use function in_array;
+use function str_replace;
 
 /**
  * @property Campaign campaign
@@ -114,16 +117,12 @@ class Banner extends Model
 
     protected function toArrayExtras($array)
     {
-        $array['serve_url'] = route('banner-serve', ['id' => $this->uuid]);
-        $array['view_url'] = route('banner-view', ['id' => $this->uuid]);
-        $array['click_url'] = route('banner-click', ['id' => $this->uuid]);
-
         if ($this->type === self::HTML_TYPE) {
             $array['html'] = $this->creative_contents;
         }
 
         if ($this->type === self::IMAGE_TYPE) {
-            $array['image_url'] = $array['serve_url'];
+            $array['image_url'] = UrlProtocolRemover::remove(route('banner-preview', ['id' => $this->uuid]));
         }
 
         return $array;

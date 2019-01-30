@@ -30,11 +30,13 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class CampaignsController extends Controller
 {
@@ -71,6 +73,20 @@ class CampaignsController extends Controller
             ],
             Response::HTTP_OK
         );
+    }
+
+    public function preview($bannerPublicId): Response
+    {
+        $banner = Banner::fetchBanner((string)$bannerPublicId);
+
+        if (!$banner || empty($banner->creative_contents)) {
+            throw new NotFoundHttpException(sprintf('Banner %s does not exist.', $banner));
+        }
+
+        $response = ResponseFacade::make($banner->creative_contents, 200);
+        $response->header('Content-Type', 'image/png');
+
+        return $response;
     }
 
     public function add(Request $request): JsonResponse
@@ -146,7 +162,7 @@ class CampaignsController extends Controller
 
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
-            $bannerModel->status = $banner['status'];
+            $bannerModel->status = Banner::STATUS_ACTIVE;
             $bannerModel->creative_width = $size[0];
             $bannerModel->creative_height = $size[1];
             $bannerModel->creative_type = Banner::type($banner['type']);
@@ -211,20 +227,19 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-
-        $status = $input['basicInformation']['status'] ?? null;
         $input['targeting_requires'] = $request->input('campaign.targeting.requires');
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
+
+        unset($input['status']); // Client cannot change status in EDIT action
 
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $status = $campaign->status;
         $campaign->fill($input);
 
-        if ($status !== null) {
-            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
-        }
+        $campaign->changeStatus(Campaign::STATUS_INACTIVE);
 
         $bannersToUpdate = [];
         $bannersToDelete = [];
@@ -264,7 +279,7 @@ class CampaignsController extends Controller
             $this->removeLocalBannerImages($temporaryFileToRemove);
         }
 
-        if ($status !== null) {
+        if ($status !== $campaign->status) {
             try {
                 $campaign->changeStatus($status);
 
@@ -353,9 +368,8 @@ class CampaignsController extends Controller
 
         $targetingRequires = ($campaign->targeting_requires) ? json_decode($campaign->targeting_requires, true) : null;
         $targetingExcludes = ($campaign->targeting_excludes) ? json_decode($campaign->targeting_excludes, true) : null;
-        $banners = $campaign->getBannersUrls();
 
-        ClassifyCampaign::dispatch($campaignId, $targetingRequires, $targetingExcludes, $banners);
+        ClassifyCampaign::dispatch($campaignId, $targetingRequires, $targetingExcludes, []);
 
         $campaign->classification_status = 1;
         $campaign->update();

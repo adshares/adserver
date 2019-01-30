@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Publisher\Dto;
+namespace Adshares\Publisher\Dto\Input;
 
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;

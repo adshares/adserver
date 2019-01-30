@@ -22,6 +22,7 @@ mv * ${INSTALLATION_PATH}/
 mv .env* ${INSTALLATION_PATH}/
 rm -rf ${INSTALLATION_PATH}/node_modules
 
+mkdir -pm 777 ${ADSHARES_WORKINGDIR}
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
 mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 
@@ -69,6 +70,7 @@ else
     artisanCommand migrate --force
 fi
 
+artisanCommand storage:link
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts --quiet
