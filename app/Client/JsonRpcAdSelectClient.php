@@ -174,7 +174,7 @@ final class JsonRpcAdSelectClient implements AdSelect
                 Log::warning(sprintf('Zone %s not found.', $zone->id));
             }
 
-            $bannerIds[] = $bannerId;
+            $bannerIds[$zone->uuid] = $bannerId;
         }
 
         return $bannerIds;
@@ -182,7 +182,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     private function fetchInOrderOfAppearance(array $bannerIds): Generator
     {
-        foreach ($bannerIds as $bannerId) {
+        foreach ($bannerIds as $zoneId => $bannerId) {
             $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
             if (null === $banner) {
@@ -192,6 +192,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             } else {
                 $campaign = $banner->campaign;
                 yield [
+                    'zone_id' => $zoneId,
                     'pay_from' => $campaign->source_address,
                     'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                     'serve_url' => $banner->serve_url,
