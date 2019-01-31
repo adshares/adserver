@@ -297,7 +297,7 @@ FILTERING_JSON;
                 if (strpos($key, '-billboard') !== false) {
                     $tags[] = 'PL';
                 }
-                if ($sizeId < 5) {
+                if ($sizeId < 6) {
                     $tags[] = 'best';
                 }
 
