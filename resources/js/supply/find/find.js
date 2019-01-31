@@ -317,8 +317,8 @@ domReady(function () {
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
         param = {};
-        param.width = parseInt(tag.style.width);
-        param.height = parseInt(tag.style.height);
+        param.width = parseInt(tag.offsetWidth) || parseInt(tag.style.width);
+        param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height);
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
             var isData = (parts.shift() == "data");
@@ -349,7 +349,9 @@ domReady(function () {
         banners.forEach(function (banner, i) {
             if (!banner)
                 return;
-            banner.destElement = tags[i];
+
+            banner.destElement = findDestination(banner.zone_id, tags);
+
             if (!banner.destElement) {
                 console.log('no element to replace', banner);
                 return;
@@ -368,6 +370,24 @@ domReady(function () {
         })
     });
 });
+
+var findDestination = function(zoneId, tags) {
+    if (!zoneId) {
+        return;
+    }
+
+    for (var i = 0; i < tags.length; i++) {
+        var dataZone = tags[i].getAttribute('data-zone');
+
+        if (!dataZone) {
+            return;
+        }
+
+        if (dataZone.toLowerCase() === zoneId) {
+            return tags[i];
+        }
+    }
+};
 
 var addTrackingPixel = function (context, banner, element) {
     if (!context.view_url) return;
