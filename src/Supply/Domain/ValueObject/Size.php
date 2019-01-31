@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
@@ -27,28 +27,41 @@ use function in_array;
 
 final class Size
 {
-    const SUPPORTED_SIZES = [
-        '120x240',
-        '120x600',
-        '125x125',
-        '160x600',
-        '180x150',
-        '200x200',
-        '234x60',
-        '250x250',
-        '300x1050',
+    public const SUPPORTED_SIZES = [
         '300x250',
+        '336x280',
+        '728x90',
         '300x600',
         '320x100',
+        #other
         '320x50',
-        '336x280',
         '468x60',
-        '728x90',
-        '750x100',
-        '750x200',
-        '750x300',
-        '970x250',
+        '234x60',
+        '120x600',
+        '120x240',
+        '160x600',
+        '300x1050',
         '970x90',
+        '970x250',
+        '250x250',
+        '200x200',
+        '180x150',
+        '125x125',
+        #regional
+        '240x400',# Most popular size in Russia.
+        '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
+        '250x360', # Second most popular size in Sweden.
+        '930x180', # Very popular size in Denmark.
+        '580x400', # Very popular size in Norway.
+        #polish
+        '750x100', # Very popular size in Poland.
+        '750x200', # Most popular size in Poland.
+        '750x300', # Third most popular size in Poland.
+        # https://en.wikipedia.org/wiki/Web_banner
+        '300x100',
+        '120x90',
+        '120x60',
+        '88x31',
     ];
 
     /** @var int */
@@ -69,7 +82,7 @@ final class Size
 
     private function isValid(int $width, int $height): bool
     {
-        return in_array($width . 'x' . $height, self::SUPPORTED_SIZES);
+        return in_array($width.'x'.$height, self::SUPPORTED_SIZES);
     }
 
     public function getWidth(): int

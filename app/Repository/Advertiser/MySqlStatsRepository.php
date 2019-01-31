@@ -308,7 +308,10 @@ class MySqlStatsRepository implements StatsRepository
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
                 case StatsRepository::WEEK_RESOLUTION:
-                    $date->setISODate($row->y, $row->w, 1);
+                    $yearweek = (string)$row->yw;
+                    $year = (int)substr($yearweek, 0, 4);
+                    $week = (int)substr($yearweek, 4);
+                    $date->setISODate($year, $week, 1);
                     break;
                 case StatsRepository::MONTH_RESOLUTION:
                     $date->setDate($row->y, $row->m, 1);
