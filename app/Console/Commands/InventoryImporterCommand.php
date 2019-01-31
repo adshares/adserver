@@ -54,7 +54,7 @@ class InventoryImporterCommand extends Command
         $networkHosts = NetworkHost::fetchHosts();
 
         if ($networkHosts->count() === 0) {
-            $this->info('Stopped importing. No hosts found.');
+            $this->info('[Inventory Importer] Stopped importing. No hosts found.');
 
             return;
         }
@@ -68,8 +68,10 @@ class InventoryImporterCommand extends Command
             }
         } catch (UnexpectedClientResponseException $exception) {
             $networkHost->connectionFailed();
+            $this->error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+            return;
         }
 
-        $this->info('Finished importing data from all inventories.');
+        $this->info('[Inventory Importer] Finished importing data from all inventories.');
     }
 }
