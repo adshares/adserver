@@ -25,12 +25,12 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\UrlProtocolRemover;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function hex2bin;
 use function in_array;
-use function str_replace;
 
 /**
  * @property Campaign campaign
@@ -103,11 +103,11 @@ class Banner extends Model
 
     public static function size($size)
     {
-        if (!isset(Zone::ZONE_SIZES[$size])) {
+        if (!isset(Size::SUPPORTED_SIZES[$size])) {
             throw new \RuntimeException(sprintf('Wrong image size.'));
         }
 
-        return Zone::ZONE_SIZES[$size];
+        return Size::SUPPORTED_SIZES[$size];
     }
 
     public function campaign(): BelongsTo
