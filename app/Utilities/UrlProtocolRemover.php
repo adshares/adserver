@@ -26,6 +26,6 @@ class UrlProtocolRemover
 {
     public static function remove(string $uri): string
     {
-        return str_replace(['https:', 'http:'], '', $uri);
+        return str_replace(['https:', 'http:'], 'https:', $uri);
     }
 }
