@@ -65,7 +65,11 @@ final class GuzzleDemandClient implements DemandClient
         try {
             $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
         } catch (RequestException $exception) {
-            throw new UnexpectedClientResponseException(sprintf('Could not connect to %s host.', $inventoryHost));
+            throw new UnexpectedClientResponseException(
+                sprintf('Could not connect to %s host (%s).', $inventoryHost, $exception->getMessage()),
+                $exception->getCode(),
+                $exception
+            );
         }
 
         $statusCode = $response->getStatusCode();

@@ -187,13 +187,11 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
 
-        /*
-         * Package Service Providers...
-         */
 
         /*
          * Application Service Providers...
          */
+        Adshares\Adserver\Providers\CloudflareIpServiceProvider::class,
         Adshares\Adserver\Providers\AppServiceProvider::class,
         Adshares\Adserver\Providers\AuthServiceProvider::class,
         Adshares\Adserver\Providers\EventServiceProvider::class,
