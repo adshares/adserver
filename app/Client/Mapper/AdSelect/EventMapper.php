@@ -29,10 +29,11 @@ class EventMapper
 {
     public static function map($event): array
     {
-        $keywords = self::normalizeKeywords((array)$event['context']->site->keywords);
+        $keywords = self::getNormalizedKeywordsFromEvent($event);
         if (!$keywords) {
             $keywords = new stdClass();
         }
+
         $mappedEvent = [
             'keywords' => $keywords,
             'publisher_id' => $event['publisher_id'],
@@ -65,5 +66,16 @@ class EventMapper
         }
 
         return $mappedKeywords;
+    }
+
+    private static function getNormalizedKeywordsFromEvent($event): ?array
+    {
+        $keywords = null;
+        $eventContext = $event['context'];
+        if (is_object($eventContext) && property_exists($eventContext, 'site')) {
+            $keywords = self::normalizeKeywords((array)$eventContext->site->keywords);
+        }
+
+        return $keywords;
     }
 }
