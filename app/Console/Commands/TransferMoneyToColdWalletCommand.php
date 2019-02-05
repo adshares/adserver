@@ -35,7 +35,7 @@ class TransferMoneyToColdWalletCommand extends Command
 
     protected $signature = 'ops:wallet:transfer:cold';
 
-    protected $description = 'Transfer money from Hot Wallet to Cold Wallet when amount is greater than `max` definition';
+    protected $description = 'Transfer money from Hot to Cold Wallet when amount is greater than `max` definition';
 
     private $adsClient;
 

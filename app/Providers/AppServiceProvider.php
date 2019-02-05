@@ -74,7 +74,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             TransferMoneyToColdWallet::class,
-            function(Application $app) {
+            function (Application $app) {
                 $coldWalletAddress = (string)config('app.adshares_wallet_cold_address');
                 $minAmount = (int)config('app.adshares_wallet_min_amount');
                 $maxAmount = (int)config('app.adshares_wallet_max_amount');
