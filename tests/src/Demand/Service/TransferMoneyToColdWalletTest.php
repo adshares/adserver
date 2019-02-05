@@ -80,7 +80,6 @@ final class TransferMoneyToColdWalletTest extends TestCase
     {
         $min = 10;
         $max = 100;
-        // limit = ($max + $min) / 2 = 55
         $hotWalletValue = 90;
         $coldWalletAddress = '0003-00000002-1234';
         $waitingPayments = 0;
