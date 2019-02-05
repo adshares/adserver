@@ -10,9 +10,7 @@ function artisanCommand {
     sudoBash ${INSTALLATION_PATH}/artisan --no-interaction $@
 }
 
-service nginx stop
 crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
-supervisorctl stop ${SUPERVISOR_CONFIG_NAME}
 
 # Create installation directory
 mkdir -p ${INSTALLATION_PATH}
@@ -76,6 +74,3 @@ artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts --quiet
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab-${VARIABLE_HOST}
-
-service php7.2-fpm restart
-service nginx start
