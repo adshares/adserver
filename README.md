@@ -47,6 +47,7 @@ With the default you should have two working locations:
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
 - [Changelog](CHANGELOG.md)
+- [Authors](https://github.com/adshares/adserver/contributors)
 
 ## Contributing
 
@@ -56,14 +57,6 @@ With the default you should have two working locations:
 
 - We use [Semantic Versioning](http://semver.org/).
 - See available [versions](https://github.com/adshares/adserver/tags). 
-
-## Authors
-
-- **[Tomek Grzechowski](https://github.com/yodahack)**
-- **[Maciej Pilarczyk](https://github.com/m-pilarczyk)**
-- **[Paweł Zaremba](https://github.com/pawzar)**
-
-...and other [contributors](https://github.com/adshares/adserver/contributors).
 
 ## Related projects
 
