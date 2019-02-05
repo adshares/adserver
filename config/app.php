@@ -138,6 +138,9 @@ return [
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
 
     'adshares_address' => env('ADSHARES_ADDRESS'),
+    'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
+    'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),
+    'adshares_wallet_max_amount' => env('ADSHARES_WALLET_MAX_AMOUNT'),
     'adshares_node_host' => env('ADSHARES_NODE_HOST'),
     'adshares_node_port' => env('ADSHARES_NODE_PORT'),
     'adshares_secret' => env('ADSHARES_SECRET'),

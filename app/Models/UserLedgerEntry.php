@@ -81,6 +81,12 @@ class UserLedgerEntry extends Model
         'amount' => 'int',
     ];
 
+    public static function waitingPayments(): int
+    {
+        return (int) self::whereIn('status', [self::STATUS_PROCESSING, self::STATUS_PENDING, self::STATUS_BLOCKED])
+            ->sum('amount');
+    }
+
     public static function getBalanceByUserId(int $userId): int
     {
         return self::balanceRelevantEntriesByUserId($userId)
