@@ -10,4 +10,4 @@
 
 #*/8 * * * * cd /adserver && bash docker/cron/ads-scanner.sh > /proc/1/fd/1 2>/proc/1/fd/2
 
-#*/9 * * * * cd /opt/adshares/adserver && bash docker/cron/ops-wallet.sh >> /dev/null 2>&1
+#*/30 * * * * cd /opt/adshares/adserver && bash docker/cron/ops-wallet.sh >> /dev/null 2>&1
