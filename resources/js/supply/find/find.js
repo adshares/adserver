@@ -21,6 +21,11 @@ var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
+if(window['serverOrigin:' + serverOrigin]) {
+    return;
+}
+window['serverOrigin:' + serverOrigin] = 1;
+
 var UrlSafeBase64Encode = function (data) {
     return btoa(data).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
