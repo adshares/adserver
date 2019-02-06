@@ -83,7 +83,7 @@ class UserLedgerEntry extends Model
 
     public static function waitingPayments(): int
     {
-        return (int) self::whereIn('status', [self::STATUS_PROCESSING, self::STATUS_PENDING, self::STATUS_BLOCKED])
+        return (int)self::whereIn('status', [self::STATUS_PROCESSING, self::STATUS_PENDING, self::STATUS_BLOCKED])
             ->sum('amount');
     }
 
