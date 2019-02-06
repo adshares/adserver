@@ -152,7 +152,7 @@ var prepareElement = function (context, banner, element) {
 function isRendered(domObj) {
     if (domObj.nodeType != 1)
         return true;
-    do {
+    while (domObj != document.body) {
         if (window.getComputedStyle) {
             var cs = document.defaultView.getComputedStyle(domObj, null);
             if (cs.getPropertyValue("display") == "none" || cs.getPropertyValue("visibility") == "hidden") {
@@ -165,7 +165,7 @@ function isRendered(domObj) {
             return true;
         }
         domObj = domObj.parentNode;
-    } while (domObj != document.body);
+    };
     return true;
 }
 
@@ -199,7 +199,7 @@ var isVisible = function (el) {
         left = rect.left,
         width = rect.width,
         el = el.parentNode;
-    do {
+    while (el != document.body) {
         rect = getBoundRect(el);
         if (top <= rect.bottom === false)
             return false;
@@ -211,7 +211,7 @@ var isVisible = function (el) {
         if ((left + width) < rect.left)
             return false;
         el = el.parentNode;
-    } while (el != document.body);
+    };
     // Check its within the document viewport
     return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
         && top > -height
