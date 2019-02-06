@@ -22,12 +22,14 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
+use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
 use Adshares\Adserver\Services\Adselect;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Contracts\Foundation\Application;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -67,6 +69,18 @@ class AppServiceProvider extends ServiceProvider
             PublisherStatsRepository::class,
             function () {
                 return new MysqlPublisherStatsRepository();
+            }
+        );
+
+        $this->app->bind(
+            TransferMoneyToColdWallet::class,
+            function (Application $app) {
+                $coldWalletAddress = (string)config('app.adshares_wallet_cold_address');
+                $minAmount = (int)config('app.adshares_wallet_min_amount');
+                $maxAmount = (int)config('app.adshares_wallet_max_amount');
+                $adsClient = $app->make(AdsClient::class);
+
+                return new TransferMoneyToColdWallet($minAmount, $maxAmount, $coldWalletAddress, $adsClient);
             }
         );
     }

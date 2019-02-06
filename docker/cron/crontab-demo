@@ -11,3 +11,5 @@
 15 * * * * cd /opt/adshares/adserver && bash docker/cron/ops-payments.sh >> /dev/null 2>&1
 
 */8 * * * * cd /opt/adshares/adserver && bash docker/cron/ads-scanner.sh >> /dev/null 2>&1
+
+*/30 * * * * cd /opt/adshares/adserver && bash docker/cron/ops-wallet.sh >> /dev/null 2>&1
