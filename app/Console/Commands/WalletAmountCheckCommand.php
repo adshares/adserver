@@ -87,7 +87,6 @@ class WalletAmountCheckCommand extends Command
         }
 
         $this->info('[Wallet] Email does not need to be sent because we sent it a few minutes before.');
-
     }
 
     private function shouldEmailBeSent(): bool
