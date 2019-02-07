@@ -37,10 +37,6 @@ class TransferMoneyToColdWalletCommand extends Command
 
     protected $description = 'Transfer money from Hot to Cold Wallet when amount is greater than `max` definition';
 
-    private $adsClient;
-
-    private $networkHost;
-
     /** @var TransferMoneyToColdWallet */
     private $transferMoneyToColdWalletService;
 
