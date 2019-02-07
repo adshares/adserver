@@ -36,7 +36,7 @@ class WalletAmountCheckCommand extends Command
 {
     use LineFormatterTrait;
 
-    private const SEND_EMAIL_SEQUENCE = 60;
+    private const SEND_EMAIL_SEQUENCE = 600;
 
     protected $signature = 'ops:wallet:transfer:check';
 
