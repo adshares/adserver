@@ -26,12 +26,12 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class WalletFoundsEmail extends Mailable
+class WalletFundsEmail extends Mailable
 {
     use Queueable;
     use SerializesModels;
 
-    private const SUBJECT = 'Not enough founds on your account';
+    private const SUBJECT = 'Not enough funds on your account';
 
     private $transferValue;
 
@@ -48,7 +48,7 @@ class WalletFoundsEmail extends Mailable
 
     public function build()
     {
-        return $this->markdown('emails.wallet-founds-email')->with(
+        return $this->markdown('emails.wallet-funds-email')->with(
             [
                 'transferValue' => $this->transferValue,
                 'address' => $this->hotWalletAddress,

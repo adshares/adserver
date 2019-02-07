@@ -24,7 +24,7 @@ namespace Adshares\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
 
-class WalletFoundsChecker
+class WalletFundsChecker
 {
     /** @var int */
     private $minAmount;

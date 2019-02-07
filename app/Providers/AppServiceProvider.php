@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Providers;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
-use Adshares\Demand\Application\Service\WalletFoundsChecker;
+use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
@@ -86,13 +86,13 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            WalletFoundsChecker::class,
+            WalletFundsChecker::class,
             function (Application $app) {
                 $minAmount = (int)config('app.adshares_wallet_min_amount');
                 $maxAmount = (int)config('app.adshares_wallet_max_amount');
                 $adsClient = $app->make(AdsClient::class);
 
-                return new WalletFoundsChecker($minAmount, $maxAmount, $adsClient);
+                return new WalletFundsChecker($minAmount, $maxAmount, $adsClient);
             }
         );
     }

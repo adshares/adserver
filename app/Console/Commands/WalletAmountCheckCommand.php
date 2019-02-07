@@ -22,10 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Mail\WalletFoundsEmail;
+use Adshares\Adserver\Mail\WalletFundsEmail;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Demand\Application\Service\WalletFoundsChecker;
+use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -42,10 +42,10 @@ class WalletAmountCheckCommand extends Command
 
     protected $description = 'Check and inform operator about insufficient found on the account.';
 
-    /** @var WalletFoundsChecker */
+    /** @var WalletFundsChecker */
     private $hotWalletCheckerService;
 
-    public function __construct(WalletFoundsChecker $hotWalletCheckerService)
+    public function __construct(WalletFundsChecker $hotWalletCheckerService)
     {
         $this->hotWalletCheckerService = $hotWalletCheckerService;
 
@@ -69,7 +69,7 @@ class WalletAmountCheckCommand extends Command
             $email = config('app.adshares_operator_email');
 
             Mail::to($email)->queue(
-                new WalletFoundsEmail($transferValue, (string)config('app.adshares_address'))
+                new WalletFundsEmail($transferValue, (string)config('app.adshares_address'))
             );
 
             $message = sprintf(

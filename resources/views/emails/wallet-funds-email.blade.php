@@ -1,5 +1,5 @@
 @component('mail::message')
-    ## Not enough founds on your account.
+    ## Not enough funds on your account.
 
     Please transfer {{ $transferValue }} clicks from Cold Wallet to Hot Wallet - {{ $address }}.
 

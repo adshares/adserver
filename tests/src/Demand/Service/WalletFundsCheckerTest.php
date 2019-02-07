@@ -25,10 +25,10 @@ namespace Adshares\Tests\Demand\Service;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Entity\Account;
 use Adshares\Ads\Response\GetAccountResponse;
-use Adshares\Demand\Application\Service\WalletFoundsChecker;
+use Adshares\Demand\Application\Service\WalletFundsChecker;
 use PHPUnit\Framework\TestCase;
 
-class WalletFoundsCheckerTest extends TestCase
+class WalletFundsCheckerTest extends TestCase
 {
     public function testTransferWhenHotWalletIncludingPaymentsWaitingIsLowerThanMin():void
     {
@@ -38,7 +38,7 @@ class WalletFoundsCheckerTest extends TestCase
         $hotWalletValue = 5;
         $waitingPayments = 8;
 
-        $service = new WalletFoundsChecker(
+        $service = new WalletFundsChecker(
             $min,
             $max,
             $this->createAdsClientMock($hotWalletValue)
@@ -57,7 +57,7 @@ class WalletFoundsCheckerTest extends TestCase
         $hotWalletValue = 20;
         $waitingPayments = 15;
 
-        $service = new WalletFoundsChecker(
+        $service = new WalletFundsChecker(
             $min,
             $max,
             $this->createAdsClientMock($hotWalletValue)
