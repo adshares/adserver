@@ -26,11 +26,11 @@ use Adshares\Adserver\Mail\WalletFoundsEmail;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\WalletFoundsChecker;
-use const DATE_ATOM;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use const DATE_ATOM;
 
 class WalletAmountCheckCommand extends Command
 {
