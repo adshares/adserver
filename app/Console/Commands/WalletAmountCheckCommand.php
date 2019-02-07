@@ -40,7 +40,7 @@ class WalletAmountCheckCommand extends Command
 
     protected $signature = 'ops:wallet:transfer:check';
 
-    protected $description = 'Check and inform operator about insufficient found on the account.';
+    protected $description = 'Check and inform operator about insufficient funds on the account.';
 
     /** @var WalletFundsChecker */
     private $hotWalletCheckerService;
