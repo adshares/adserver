@@ -23,12 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\SendOneCommand;
-use Adshares\Ads\Util\AdsValidator;
-use Adshares\Demand\Application\Dto\TransferMoneyResponse;
-use Adshares\Demand\Application\Exception\TransferMoneyException;
 
-class TransferMoneyToColdWallet
+class WalletFundsChecker
 {
     /** @var int */
     private $minAmount;
@@ -36,41 +32,23 @@ class TransferMoneyToColdWallet
     /** @var int */
     private $maxAmount;
 
-    /** @var string */
-    private $coldWalletAddress;
-
     /** @var AdsClient */
     private $adsClient;
 
-    public function __construct(int $minAmount, int $maxAmount, string $coldWalletAddress, AdsClient $adsClient)
+    public function __construct(int $minAmount, int $maxAmount, AdsClient $adsClient)
     {
         $this->minAmount = $minAmount;
         $this->maxAmount = $maxAmount;
-        $this->coldWalletAddress = $coldWalletAddress;
         $this->adsClient = $adsClient;
     }
 
-    public function transfer(int $waitingPaymentsAmount): ?TransferMoneyResponse
+    public function check(int $waitingPaymentsAmount)
     {
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();
 
-        if ($operatorBalance - $waitingPaymentsAmount > $this->maxAmount) {
-            $transferValue = $operatorBalance - $waitingPaymentsAmount - $limit;
-            $transactionId = $this->sendOneCommand($transferValue);
-
-            if (!AdsValidator::isTransactionIdValid($transactionId)) {
-                $message = sprintf(
-                    '[Wallet] There were some problems with transfer %s clicks to Cold Wallet (%s) (txid: %s).',
-                    $transferValue,
-                    $this->coldWalletAddress,
-                    $transactionId
-                );
-
-                throw new TransferMoneyException($message);
-            }
-
-            return new TransferMoneyResponse($transferValue, $transactionId);
+        if ($operatorBalance + $waitingPaymentsAmount < $this->minAmount) {
+            return $limit - $operatorBalance + $waitingPaymentsAmount;
         }
 
         return null;
@@ -85,13 +63,5 @@ class TransferMoneyToColdWallet
     {
         $me = $this->adsClient->getMe();
         return $me->getAccount()->getBalance();
-    }
-
-    private function sendOneCommand($transferValue): string
-    {
-        $command = new SendOneCommand($this->coldWalletAddress, $transferValue);
-        $response = $this->adsClient->runTransaction($command);
-
-        return $response->getTx()->getId();
     }
 }

@@ -47,6 +47,8 @@ class Config extends Model
 
     public const ADSELECT_PAYMENT_EXPORT_TIME = 'adselect-payment-export';
 
+    public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
+
     public $incrementing = false;
 
     protected $primaryKey = 'key';
