@@ -54,9 +54,9 @@ class WalletFundsChecker
         return null;
     }
 
-    private function calculateLimitValue()
+    private function calculateLimitValue(): int
     {
-        return ($this->minAmount + $this->maxAmount) / 2;
+        return (int)floor(($this->minAmount + $this->maxAmount) / 2);
     }
 
     private function fetchOperatorBalance(): int

@@ -53,7 +53,6 @@ class WalletFundsCheckerTest extends TestCase
     {
         $min = 20;
         $max = 100;
-        // limit = ($max + $min) / 2 = 55
         $hotWalletValue = 20;
         $waitingPayments = 15;
 

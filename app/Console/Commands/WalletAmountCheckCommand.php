@@ -36,7 +36,7 @@ class WalletAmountCheckCommand extends Command
 {
     use LineFormatterTrait;
 
-    private const SEND_EMAIL_SEQUENCE = 600;
+    private const SEND_EMAIL_MIN_INTERVAL = 600;
 
     protected $signature = 'ops:wallet:transfer:check';
 
@@ -99,7 +99,7 @@ class WalletAmountCheckCommand extends Command
         }
 
         $lastEmailTime = DateTime::createFromFormat(DATE_ATOM, $date);
-        $dateUntilEmailIsSent = $lastEmailTime->modify(sprintf('%d second', self::SEND_EMAIL_SEQUENCE));
+        $dateUntilEmailIsSent = $lastEmailTime->modify(sprintf('%d second', self::SEND_EMAIL_MIN_INTERVAL));
 
         return $dateUntilEmailIsSent < $now;
     }
