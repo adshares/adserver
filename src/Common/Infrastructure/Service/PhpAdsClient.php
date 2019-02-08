@@ -65,7 +65,7 @@ class PhpAdsClient implements Ads
         try {
             $response = $this->adsClient->runTransaction($command);
         } catch (CommandException $exception) {
-            throw new AdsException($exception->getMessage(),AdsException::LOW_LEVEL_BALANCE);
+            throw new AdsException($exception->getMessage(), AdsException::LOW_LEVEL_BALANCE);
         }
 
         return $response->getTx();

@@ -193,7 +193,7 @@ class AdsProcessTx extends Command
         if ($this->checkIfColdWalletTransaction($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
             $dbTx->save();
-        } else if (!$this->handleIfEventPayment($dbTx)) {
+        } elseif (!$this->handleIfEventPayment($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_RESERVED;
             $dbTx->save();
         }
