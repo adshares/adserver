@@ -24,13 +24,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class AdsPayment extends Model
 {
+    public const STATUS_INVALID = -1;
+
     public const STATUS_NEW = 0;
 
     public const STATUS_USER_DEPOSIT = 1;
 
     public const STATUS_EVENT_PAYMENT = 2;
 
-    public const STATUS_RESERVED = 64;
+    public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
 
-    public const STATUS_INVALID = -1;
+    public const STATUS_RESERVED = 64;
 }

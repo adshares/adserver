@@ -23,8 +23,9 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Ads\Driver\CommandError;
+use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkEventLog;
@@ -33,11 +34,12 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Exception;
 use Illuminate\Console\Command;
+use RuntimeException;
 
 class SupplySendPayments extends Command
 {
     use LineFormatterTrait;
-    
+
     protected $signature = 'ops:supply:payments:send';
 
     public function handle(AdsClient $adsClient): void
@@ -52,38 +54,63 @@ class SupplySendPayments extends Command
             try {
                 $receiverAddress = $payment->receiver_address;
                 $amount = $payment->amount;
+
                 DB::beginTransaction();
-                if ($payment->ads_payment_id !== null) {
-                    $this->updateUserLedgerWithAdIncome($payment->ads_payment_id);
+                if ($amount > 0) {
+                    $command = new SendOneCommand($receiverAddress, $amount);
+                    $response = $adsClient->runTransaction($command);
+
+                    $payment->tx_id = $response->getTx()->getId();
+                    $payment->tx_time = $response->getTx()->getTime()->getTimestamp();
+                    $payment->processed = '1';
+                    $payment->save();
                 }
 
-                $command = new SendOneCommand($receiverAddress, $amount);
-                $response = $adsClient->runTransaction($command);
-                $payment->tx_id = $response->getTx()->getId();
-                $payment->tx_time = $response->getTx()->getTime()->getTimestamp();
-                $payment->processed = '1';
-                $payment->save();
+                if ($payment->ads_payment_id !== null) {
+                    $this->addEntryToUserLedgerWithAdIncome($payment->ads_payment_id, $payment->id);
+                }
 
                 DB::commit();
+            } catch (CommandException $exception) {
+                if ($exception->getCode() === CommandError::LOW_BALANCE) {
+                    DB::rollBack();
+
+                    $message = '[Supply] (SupplySendPayments) Insufficient funds on Operator Account. ';
+                    $message.= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
+
+                    $this->info(sprintf($message, $payment->receiver_address, $payment->id, $payment->amunt));
+
+                    continue;
+                }
+
+                throw new $exception;
             } catch (Exception $exception) {
                 DB::rollBack();
 
-                throw $exception;
+                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
+                $message.= 'Payment (Network) id %s. Amount %s.';
+
+                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amunt));
+
+                continue;
             }
         }
 
         $this->info('Finished sending Supply payments');
     }
 
-    private function updateUserLedgerWithAdIncome(int $adsPaymentId): void
+    private function addEntryToUserLedgerWithAdIncome(int $adsPaymentId, int $networkPaymentId): void
     {
         $adServerAddress = config('app.adshares_address');
 
         $adsPayment = AdsPayment::find($adsPaymentId);
         if ($adsPayment === null) {
-            // TODO log null $adsPayment - it means that in Supply DB is NetworkPayment with incorrect ads_payment_id
-            throw new ConsoleCommandException(sprintf('Missing ads_payment with id=%d.', $adsPaymentId));
+            $message = '[Supply] (SupplySendPayments) Problem in SupplySendPayments command. ';
+            $message .= 'Invalid ADS_PAYMENT_ID %s for payment %s.';
+
+            throw new RuntimeException(sprintf($message, $adsPaymentId, $networkPaymentId));
         }
+
         $adsPaymentSenderAddress = $adsPayment->address;
         $adsPaymentTxId = $adsPayment->txid;
 
@@ -95,19 +122,21 @@ class SupplySendPayments extends Command
             $user = User::fetchByUuid($userUuid);
 
             if ($user === null) {
-                // TODO log null $user - it means that in Supply DB is event with incorrect publisher_id
-                continue;
+                $message = '[Supply] (SupplySendPayments) User %s does not exist.';
+                throw new RuntimeException(sprintf($message, $userUuid));
             }
 
-            $ul = new UserLedgerEntry();
-            $ul->user_id = $user->id;
-            $ul->amount = $amount;
-            $ul->address_from = $adsPaymentSenderAddress;
-            $ul->address_to = $adServerAddress;
-            $ul->status = UserLedgerEntry::STATUS_ACCEPTED;
-            $ul->type = UserLedgerEntry::TYPE_AD_INCOME;
-            $ul->txid = $adsPaymentTxId;
-            $ul->save();
+            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+                $user->id,
+                $amount,
+                UserLedgerEntry::STATUS_ACCEPTED,
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $adsPaymentSenderAddress,
+                (string)$adServerAddress,
+                $adsPaymentTxId
+            );
+
+            $userLedgerEntry->save();
         }
     }
 }
