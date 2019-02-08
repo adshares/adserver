@@ -126,16 +126,15 @@ class SupplySendPayments extends Command
                 throw new RuntimeException(sprintf($message, $userUuid));
             }
 
-            $userLedgerEntry = UserLedgerEntry::construct(
+            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
                 $amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
-                UserLedgerEntry::TYPE_AD_INCOME
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $adsPaymentSenderAddress,
+                (string)$adServerAddress,
+                $adsPaymentTxId
             );
-
-            $userLedgerEntry->address_from = $adsPaymentSenderAddress;
-            $userLedgerEntry->address_to = $adServerAddress;
-            $userLedgerEntry->txid = $adsPaymentTxId;
 
             $userLedgerEntry->save();
         }

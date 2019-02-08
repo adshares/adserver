@@ -104,6 +104,28 @@ class UserLedgerEntry extends Model
         return $userLedgerEntry;
     }
 
+    public static function constructWithAddressAndTransaction(
+        int $userId,
+        int $amount,
+        int $status,
+        int $type,
+        string $addressFrom,
+        string $addressTo,
+        string $transactionId
+    ): self {
+        $userLedgerEntry = new self();
+        $userLedgerEntry->user_id = $userId;
+        $userLedgerEntry->amount = $amount;
+        $userLedgerEntry->status = $status;
+        $userLedgerEntry->type = $type;
+        $userLedgerEntry->address_from = $addressFrom;
+        $userLedgerEntry->address_to = $addressTo;
+        $userLedgerEntry->txid = $transactionId;
+
+        return $userLedgerEntry;
+    }
+
+
     public static function balanceRelevantEntriesByUserId(int $userId)
     {
         return self::where('user_id', $userId)
