@@ -62,7 +62,11 @@ class PhpAdsClient implements Ads
 
         $command = new SendManyCommand($wires->toArray());
 
-        $response = $this->adsClient->runTransaction($command);
+        try {
+            $response = $this->adsClient->runTransaction($command);
+        } catch (CommandException $exception) {
+            throw new AdsException($exception->getMessage(), AdsException::LOW_LEVEL_BALANCE);
+        }
 
         return $response->getTx();
     }

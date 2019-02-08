@@ -22,9 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Service\Exception;
 
+use Adshares\Ads\Driver\CommandError;
 use RuntimeException;
 
 class AdsException extends RuntimeException
 {
-
+    public const LOW_LEVEL_BALANCE = CommandError::LOW_BALANCE;
 }

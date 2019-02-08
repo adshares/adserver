@@ -190,10 +190,24 @@ class AdsProcessTx extends Command
 
     private function handleReservedTx(AdsPayment $dbTx): void
     {
-        if (!$this->handleIfEventPayment($dbTx)) {
+        if ($this->checkIfColdWalletTransaction($dbTx)) {
+            $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
+            $dbTx->save();
+        } elseif (!$this->handleIfEventPayment($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_RESERVED;
             $dbTx->save();
         }
+    }
+
+    private function checkIfColdWalletTransaction(AdsPayment $dbTx): bool
+    {
+        $coldWalletAddress = config('app.adshares_wallet_cold_address');
+
+        if ($dbTx->address === $coldWalletAddress) {
+            return true;
+        }
+
+        return false;
     }
 
     private function handleIfEventPayment(AdsPayment $dbTx): bool
@@ -256,13 +270,15 @@ class AdsProcessTx extends Command
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
 
-                $ledgerEntry = new UserLedgerEntry();
-                $ledgerEntry->user_id = $user->id;
-                $ledgerEntry->amount = $amount;
-                $ledgerEntry->address_from = $senderAddress;
-                $ledgerEntry->address_to = $targetAddr;
-                $ledgerEntry->txid = $dbTx->txid;
-                $ledgerEntry->type = UserLedgerEntry::TYPE_DEPOSIT;
+                $ledgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+                    $user->id,
+                    $amount,
+                    UserLedgerEntry::STATUS_ACCEPTED,
+                    UserLedgerEntry::TYPE_DEPOSIT,
+                    $senderAddress,
+                    $targetAddr,
+                    $dbTx->txid
+                );
 
                 $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
 
