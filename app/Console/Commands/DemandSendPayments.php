@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Console\Command;
 
 class DemandSendPayments extends Command
@@ -46,7 +47,17 @@ class DemandSendPayments extends Command
         }
 
         $this->info("Sending $paymentCount payments from ".config('app.adshares_address').'.');
-        $tx = $ads->sendPayments($payments);
+
+        try {
+            $tx = $ads->sendPayments($payments);
+        } catch (AdsException $exception) {
+            if ($exception->getCode() === AdsException::LOW_LEVEL_BALANCE) {
+                $message = '[Demand] (DemandSendPayments) Insufficient funds on Operator Account.';
+                $this->error($message);
+
+                return;
+            }
+        }
 
         $payments->each(function (Payment $payment) use ($tx) {
             $payment->tx_id = $tx->getId();

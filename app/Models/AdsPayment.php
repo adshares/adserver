@@ -33,4 +33,6 @@ class AdsPayment extends Model
     public const STATUS_RESERVED = 64;
 
     public const STATUS_INVALID = -1;
+
+    public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
 }
