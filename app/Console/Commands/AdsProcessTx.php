@@ -270,13 +270,15 @@ class AdsProcessTx extends Command
                 $senderAddress = $transaction->getSenderAddress();
                 $amount = $transaction->getAmount();
 
-                $ledgerEntry = new UserLedgerEntry();
-                $ledgerEntry->user_id = $user->id;
-                $ledgerEntry->amount = $amount;
-                $ledgerEntry->address_from = $senderAddress;
-                $ledgerEntry->address_to = $targetAddr;
-                $ledgerEntry->txid = $dbTx->txid;
-                $ledgerEntry->type = UserLedgerEntry::TYPE_DEPOSIT;
+                $ledgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+                    $user->id,
+                    $amount,
+                    UserLedgerEntry::STATUS_ACCEPTED,
+                    UserLedgerEntry::TYPE_DEPOSIT,
+                    $senderAddress,
+                    $targetAddr,
+                    $dbTx->txid
+                );
 
                 $dbTx->status = AdsPayment::STATUS_USER_DEPOSIT;
 
