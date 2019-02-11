@@ -324,9 +324,9 @@ class DemandController extends Controller
             throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
-        $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
+        $payments = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
 
-        if (!$payment) {
+        if (!$payments) {
             throw new NotFoundHttpException(
                 sprintf(
                     'Payment for given transaction %s is not found.',
@@ -335,7 +335,7 @@ class DemandController extends Controller
             );
         }
 
-        $ids = $payment->map(
+        $ids = $payments->map(
             function ($payment) {
                 return $payment->id;
             }

@@ -37,7 +37,7 @@ final class DemandControllerTest extends TestCase
 
     private const PAYMENT_DETAIL_URL = '/payment-details';
 
-    public function testPaymentOne(): void
+    public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGIvenTransactionIdAndAddres(): void
     {
         $this->app->bind(
             PaymentDetailsVerify::class,
@@ -60,33 +60,33 @@ final class DemandControllerTest extends TestCase
         $accountAddress = '0001-00000001-0001';
         $accountAddressDifferentUser = '0001-00000002-0001';
 
-        $transactionid = '0001:00000001:0001';
+        $transactionId = '0001:00000001:0001';
         $date = '2018-01-01T10:10:00+00:00';
 
-        $payment1 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionid]);
-        $payment2 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionid]);
-        $payment3 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionid]);
+        $payment1 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
+        $payment2 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
+        $payment3 = factory(Payment::class)->create(['account_address' => $accountAddress, 'tx_id' => $transactionId]);
         $payment4 =
             factory(Payment::class)->create(
-                ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionid]
+                ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionId]
             );
         $payment5 =
             factory(Payment::class)->create(
-                ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionid]
+                ['account_address' => $accountAddressDifferentUser, 'tx_id' => $transactionId]
             );
 
-        $event1 = factory(EventLog::class)->create(['payment_id' => $payment1]);
-        $event2 = factory(EventLog::class)->create(['payment_id' => $payment1]);
-        $event3 = factory(EventLog::class)->create(['payment_id' => $payment2]);
-        $event4 = factory(EventLog::class)->create(['payment_id' => $payment2]);
-        $event5 = factory(EventLog::class)->create(['payment_id' => $payment3]);
-        $event6 = factory(EventLog::class)->create(['payment_id' => $payment4]);
-        $event7 = factory(EventLog::class)->create(['payment_id' => $payment5]);
+        factory(EventLog::class)->create(['payment_id' => $payment1]);
+        factory(EventLog::class)->create(['payment_id' => $payment1]);
+        factory(EventLog::class)->create(['payment_id' => $payment2]);
+        factory(EventLog::class)->create(['payment_id' => $payment2]);
+        factory(EventLog::class)->create(['payment_id' => $payment3]);
+        factory(EventLog::class)->create(['payment_id' => $payment4]);
+        factory(EventLog::class)->create(['payment_id' => $payment5]);
 
         $url = sprintf(
             '%s/%s/%s/%s/%s',
             self::PAYMENT_DETAIL_URL,
-            $transactionid,
+            $transactionId,
             $accountAddress,
             $date,
             sha1(uniqid())
