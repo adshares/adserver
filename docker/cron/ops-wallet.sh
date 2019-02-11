@@ -6,6 +6,7 @@ then
     touch $PIDFILE
 
     ./artisan ops:wallet:transfer:cold
+    ./artisan ops:wallet:transfer:check
 
     rm -f $PIDFILE
 fi
