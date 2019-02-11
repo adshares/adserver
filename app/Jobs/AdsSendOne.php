@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Jobs;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Exceptions\JobException;
@@ -38,6 +39,7 @@ class AdsSendOne implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     const QUEUE_NAME = 'ads';
+    const QUEUE_TRY_AGAIN_INTERVAL = 600;
     /**
      * @var string recipent address
      */
@@ -94,8 +96,26 @@ class AdsSendOne implements ShouldQueue
         }
 
         $command = new SendOneCommand($this->addressTo, $this->amount, $this->message);
-        // runTransaction throws CommandException, which can be treated as job fail
-        $response = $adsClient->runTransaction($command);
+
+        try {
+            $response = $adsClient->runTransaction($command);
+        } catch (CommandException $exception) {
+            if ($exception->getCode() === CommandError::LOW_BALANCE) {
+                $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s). ';
+                $message.= 'Operator does not have enough money. Will be tried again later.';
+                Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? '\'\''));
+
+                self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
+                    ->delay(self::QUEUE_TRY_AGAIN_INTERVAL);
+
+                return;
+            }
+
+            $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
+
+            Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message));
+            return;
+        }
 
         $txid = $response->getTx()->getId();
 

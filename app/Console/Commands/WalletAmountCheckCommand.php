@@ -73,7 +73,8 @@ class WalletAmountCheckCommand extends Command
             );
 
             $message = sprintf(
-                '[Wallet] Please send %s clicks from Cold Wallet (%s) to Hot Wallet (%s).',
+                '[Wallet] Email has been sent to %s to transfer %s clicks from Cold (%s) to Hot Wallet (%s).',
+                $email,
                 $transferValue,
                 config('app.adshares_wallet_cold_address'),
                 config('app.adshares_address')
