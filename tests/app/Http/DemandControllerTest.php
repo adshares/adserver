@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
@@ -36,6 +38,8 @@ final class DemandControllerTest extends TestCase
     use RefreshDatabase;
 
     private const PAYMENT_DETAIL_URL = '/payment-details';
+
+    private const INVENTORY_LIST_URL = '/adshares/inventory/list';
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
@@ -97,5 +101,37 @@ final class DemandControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
         $this->assertCount(5, $content);
+    }
+
+    public function testInventoryList(): void
+    {
+        $user = factory(User::class)->create();
+        $user->is_advertiser = 1;
+        $this->actingAs($user, 'api');
+
+        $campaignDraft = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_DRAFT]);
+        $campaignInactive =
+            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
+        $campaignActive =
+            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        $campaignSuspended =
+            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_SUSPENDED]);
+        $activeCampaignsCount = 1;
+
+        $bannerActive =
+            factory(Banner::class)->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_ACTIVE]);
+        factory(Banner::class)->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
+        factory(Banner::class)->create(['campaign_id' => $campaignDraft->id]);
+        factory(Banner::class)->create(['campaign_id' => $campaignInactive->id]);
+        factory(Banner::class)->create(['campaign_id' => $campaignSuspended->id]);
+        $activeBannersCount = 1;
+
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $content = json_decode($response->getContent(), true);
+
+        $this->assertCount($activeCampaignsCount, $content);
+        $this->assertEquals($campaignActive->uuid, $content[0]['id']);
+        $this->assertCount($activeBannersCount, $content[0]['banners']);
+        $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
     }
 }
