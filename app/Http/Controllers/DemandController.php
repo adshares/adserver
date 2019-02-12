@@ -24,8 +24,11 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
@@ -47,9 +50,13 @@ class DemandController extends Controller
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
-    public function __construct(PaymentDetailsVerify $paymentDetailsVerify)
+    /** @var CampaignRepository */
+    private $campaignRepository;
+
+    public function __construct(PaymentDetailsVerify $paymentDetailsVerify, CampaignRepository $campaignRepository)
     {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
+        $this->campaignRepository = $campaignRepository;
     }
 
     public function serve(Request $request, $id)
@@ -317,16 +324,24 @@ class DemandController extends Controller
             throw new BadRequestHttpException(sprintf('Signature %s is invalid.', $signature));
         }
 
-        $payment = Payment::fetchPayment($transactionIdDecoded, $accountAddressDecoded);
+        $payments = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded);
 
-        if (!$payment) {
-            throw new NotFoundHttpException(sprintf(
-                'Payment for given transaction %s is not found.',
-                $transactionId
-            ));
+        if (!$payments) {
+            throw new NotFoundHttpException(
+                sprintf(
+                    'Payment for given transaction %s is not found.',
+                    $transactionId
+                )
+            );
         }
 
-        $events = EventLog::fetchEvents($payment->id);
+        $ids = $payments->map(
+            function ($payment) {
+                return $payment->id;
+            }
+        )->toArray();
+
+        $events = EventLog::fetchEvents($ids);
 
         $results = [];
 
@@ -343,5 +358,71 @@ class DemandController extends Controller
         }
 
         return new JsonResponse($results);
+    }
+
+    public function inventoryList(Request $request): JsonResponse
+    {
+        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
+
+        $campaigns = [];
+        foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
+            $banners = [];
+
+            foreach ($campaign->ads as $banner) {
+                $bannerArray = $banner->toArray();
+
+                if (Banner::STATUS_ACTIVE !== $bannerArray['status']) {
+                    continue;
+                }
+
+                $bannerPublicId = $bannerArray['uuid'];
+                $banners[] = [
+                    'id' => $bannerArray['uuid'],
+                    'width' => $bannerArray['creative_width'],
+                    'height' => $bannerArray['creative_height'],
+                    'type' => $bannerArray['creative_type'],
+                    'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
+                    'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
+                    'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                ];
+            }
+
+            $campaigns[] = [
+                'id' => $campaign->uuid,
+                'publisher_id' => User::find($campaign->user_id)->uuid,
+                'landing_url' => $campaign->landing_url,
+                'date_start' => $campaign->time_start,
+                'date_end' => $campaign->time_end,
+                'created_at' => $campaign->created_at->format(DateTime::ATOM),
+                'updated_at' => $campaign->updated_at->format(DateTime::ATOM),
+                'max_cpc' => $campaign->max_cpc,
+                'max_cpm' => $campaign->max_cpm,
+                'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),
+                'banners' => $banners,
+                'targeting_requires' => (array)$campaign->targeting_requires,
+                'targeting_excludes' => (array)$campaign->targeting_excludes,
+                'address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+            ];
+        }
+
+        return Response::json($campaigns, SymfonyResponse::HTTP_OK);
+    }
+
+    private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
+    {
+        $licenceFee = (int)floor($budget * $licenceTxFee);
+        $budgetAfterFee = $budget - $licenceFee;
+        $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
+
+        return $budgetAfterFee - $operatorFee;
+    }
+
+    private function changeHost(string $url, Request $request): string
+    {
+        $currentHost = $request->getSchemeAndHttpHost();
+        $bannerHost = config('app.adserver_banner_host');
+
+        return str_replace($currentHost, $bannerHost, $url);
     }
 }

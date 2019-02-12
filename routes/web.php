@@ -18,7 +18,6 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\ApiController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
@@ -27,8 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () { return ''; })->name('login');
 
-Route::get('/adshares/inventory/list', [ApiController::class, 'adsharesInventoryList']);
-Route::get('/adshares/report/{tx_id}/{pay_to}', [ApiController::class, 'adsharesTransactionReport']);
+Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList']);
 
 Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-view.js');
 

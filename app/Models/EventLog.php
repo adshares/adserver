@@ -145,9 +145,9 @@ class EventLog extends Model
         return $query->get();
     }
 
-    public static function fetchEvents(int $paymentId): Collection
+    public static function fetchEvents(array $paymentIds): Collection
     {
-        return self::where('payment_id', $paymentId)
+        return self::whereIn('payment_id', $paymentIds)
             ->get();
     }
 
