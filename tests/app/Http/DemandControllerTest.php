@@ -37,7 +37,7 @@ final class DemandControllerTest extends TestCase
 
     private const PAYMENT_DETAIL_URL = '/payment-details';
 
-    public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGIvenTransactionIdAndAddres(): void
+    public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
         $this->app->bind(
             PaymentDetailsVerify::class,
