@@ -372,7 +372,7 @@ class DemandController extends Controller
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
 
-                if (Banner::STATUS_ACTIVE !== $bannerArray['status']) {
+                if (Banner::STATUS_ACTIVE !== (int)$bannerArray['status']) {
                     continue;
                 }
 
