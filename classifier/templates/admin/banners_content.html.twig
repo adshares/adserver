@@ -1,0 +1,13 @@
+{%  if item.type == 'html' %}
+
+    <iframe src="{{ value }}" class="preview-html" data-toggle="lightbox"></iframe>
+
+    <a href="#" class="easyadmin-thumbnail" data-featherlight="#easyadmin-lightbox-{{ item.uuid }}" data-featherlight-close-on-click="anywhere">
+        Display
+    </a>
+
+    <div id="easyadmin-lightbox-{{ item.uuid }}" class="easyadmin-lightbox">
+        <iframe src="{{ value }}" class="preview-html" data-toggle="lightbox" width="{{ item.width }}" height="{{ item.height }}"></iframe>
+    </div>
+
+{%  endif %}

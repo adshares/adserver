@@ -1,0 +1,30 @@
+easy_admin:
+    site_name: 'Classifier - Classify Publisher campaigns'
+    list:
+        max_results: 50
+    entities:
+        NetworkCampaigns:
+            class: App\Entity\NetworkCampaigns
+            label: 'Campaigns'
+            list:
+                title: "List of campaigns"
+        NetworkBanners:
+            class: App\Entity\NetworkBanners
+            label: 'Banners'
+            list:
+                title: "List of banners"
+                fields:
+                    - 'uuid'
+                    - { property: 'content', type: 'image', label: 'Image' }
+                    - { property: 'html', template: '/admin/banners_content.html.twig'}
+                    - 'type'
+                    - 'width'
+                    - 'height'
+                    - 'status'
+
+    design:
+        assets:
+            css:
+                - '/bundles/app/css/admin.css'
+            js:
+                - '/bundles/app/js/admin.js'
