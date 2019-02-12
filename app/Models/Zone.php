@@ -44,7 +44,7 @@ class Zone extends Model
 <div class="{{selectorClass}}"
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
-    style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto;background-color: #FAA"></div>
+    style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto"></div>
 HTML;
 
     use SoftDeletes;
