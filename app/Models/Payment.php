@@ -95,11 +95,11 @@ class Payment extends Model
         'tx_id' => 'TransactionId',
     ];
 
-    public static function fetchPayment(string $transactionId, string $accountAddress)
+    public static function fetchPayments(string $transactionId, string $accountAddress)
     {
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
-            ->first();
+            ->get();
     }
 
     public static function fetchByStatus(string $state, bool $completed): Collection
