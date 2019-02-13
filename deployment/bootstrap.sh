@@ -10,7 +10,7 @@ if [[ $EUID -eq 0 ]]
 then
     export DEBIAN_FRONTEND=noninteractive
 
-    apt-get --yes install software-properties-common git curl gettext-base unzip screen
+    apt-get --yes install software-properties-common git curl gettext-base unzip screen supervisor vim htop
 
 # ===
 
@@ -29,6 +29,8 @@ then
 # ===
 
     TEMP_DIR=$(mktemp --directory)
+
+# ===
 
     PERCONA_FILENAME="percona-release_latest.$(lsb_release -sc)_all.deb"
     curl https://repo.percona.com/apt/${PERCONA_FILENAME} -sS -o ${TEMP_DIR}/${PERCONA_FILENAME}
@@ -53,6 +55,8 @@ then
     test $(sha384sum ${TEMP_DIR}/${COMPOSER_INSTALLER_FILENAME} | head -c 96) == "48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5"
     php ${TEMP_DIR}/${COMPOSER_INSTALLER_FILENAME} --install-dir=/usr/local/bin --filename=composer
 
+# ===
+
     rm -rf ${TEMP_DIR}
 
 # ===
@@ -62,10 +66,45 @@ then
     id --user ${INSTALLATION_USER} || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
     mkdir -p ${INSTALLATION_DIR}
 
-    chown -R ${INSTALLATION_USER} ${HERE} ${INSTALLATION_DIR}
+    chown -R ${INSTALLATION_USER}:`id --group --name ${INSTALLATION_USER}` ${HERE} ${INSTALLATION_DIR}
+
+# ===
+
+    mv -f ${HERE}/supervisor/conf.d/* /etc/supervisor/conf.d
+    service supervisor restart
+
+# ===
+
+    mkdir -p /var/log/adshares
+
+# ===
+
+    DB_DATABASE=adshares
+    DB_USERNAME=adshares
+    DB_PASSWORD=adshares
+
+    mysql=( mysql --user=root )
+
+    if [[ "$DB_DATABASE" ]]
+    then
+        echo "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` ;" | "${mysql[@]}"
+        mysql+=( "$DB_DATABASE" )
+    fi
+
+    if [[ "$DB_USERNAME" && "$DB_PASSWORD" ]]
+    then
+        echo "CREATE USER IF NOT EXISTS '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD' ;" | "${mysql[@]}"
+
+        if [[ "$DB_DATABASE" ]]
+        then
+            echo "GRANT ALL ON \`$DB_DATABASE\`.* TO '$DB_USERNAME'@'%' ;" | "${mysql[@]}"
+        fi
+
+        echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
+    fi
 else
     for SCRIPT in $(ls ${HERE}/?0-*.sh)
     do
-        echo "$SCRIPT"
+        "$SCRIPT"
     done
 fi

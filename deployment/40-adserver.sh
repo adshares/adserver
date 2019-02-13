@@ -5,10 +5,10 @@ set -ex
 VENDOR_NAME=adshares
 PROJECT_NAME=adserver
 
-INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/adshares}
+INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
 
 GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-master}
-GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/adshares}
+GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/${VENDOR_NAME}}
 
 cd ${INSTALLATION_DIR}
 
@@ -85,48 +85,12 @@ function artisanCommand {
 artisanCommand config:cache
 artisanCommand storage:link
 
-mysql=( sudo mysql --user=root )
-
-#if [[ "$DB_DATABASE" ]]
-#then
-#    echo "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` ;" | "${mysql[@]}"
-#    mysql+=( "$DB_DATABASE" )
-#fi
-#
-#if [[ "$DB_USERNAME" && "$DB_PASSWORD" ]]
-#then
-#    echo "CREATE USER IF NOT EXISTS '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD' ;" | "${mysql[@]}"
-#
-#    if [[ "$DB_DATABASE" ]]
-#    then
-#        echo "GRANT ALL ON \`$DB_DATABASE\`.* TO '$DB_USERNAME'@'%' ;" | "${mysql[@]}"
-#    fi
-#
-#    echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
-#fi
-
 artisanCommand migrate:fresh --force --seed
 
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts
 
-{
-echo "0    */12 * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ads-broadcast-host.sh &> /dev/null"
-echo "30   */6  * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ads-fetch-hosts.sh    &> /dev/null"
-echo "*    *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ops-inventory.sh      &> /dev/null"
-echo "*    *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/adpay-export.sh       &> /dev/null"
-echo "59   *    * * * $INSTALLATION_DIR/${PROJECT_NAME}/artisan ops:demand:payments:block            &> /dev/null"
-echo "15   *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ops-payments.sh       &> /dev/null"
-echo "*/8  *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ads-scanner.sh        &> /dev/null"
-echo "*/30 *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/ops-wallet.sh         &> /dev/null"
-} | tee crontab.txt
-
-crontab crontab.txt
-
-screen -S ${PROJECT_NAME}_worker -X quit || true
-screen -S ${PROJECT_NAME}_worker -dm bash -c "./artisan queue:work --queue=ads,default"
-
-screen -S ${PROJECT_NAME} -X quit || true
-screen -S ${PROJECT_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
+#screen -S ${PROJECT_NAME} -X quit || true
+#screen -S ${PROJECT_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
 
