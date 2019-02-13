@@ -10,7 +10,7 @@ if [[ $EUID -eq 0 ]]
 then
     export DEBIAN_FRONTEND=noninteractive
 
-    apt-get --yes install software-properties-common git curl gettext-base unzip screen supervisor vim htop
+    apt-get --yes install software-properties-common git curl gettext-base unzip supervisor vim htop screen
 
 # ===
 
