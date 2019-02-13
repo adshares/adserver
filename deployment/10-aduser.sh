@@ -40,6 +40,8 @@ fi
 export PYTHONUNBUFFERED=1
 
 # ===
+screen -S ${PROJECT_NAME}_geolite -X quit || true
+screen -S ${PROJECT_NAME}_browscap -X quit || true
 
 cd ${INSTALLATION_DIR}/${PROJECT_NAME}/${PROJECT_NAME}_data_services
 pipenv install
@@ -47,16 +49,15 @@ pipenv install
 export ADUSER_DATA_BROWSCAP_SOCK_FILE=/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-browscap.sock
 export ADUSER_DATA_BROWSCAP_CSV_PATH=${PROJECT_DATA_DIR}/browscap.csv
 
-screen -S ${PROJECT_NAME}_browscap -X quit || true
 screen -S ${PROJECT_NAME}_browscap -dm bash -c "pipenv run python ${PROJECT_NAME}_data_services/browscap/daemon.py"
 
 export ADUSER_DATA_GEOLITE_SOCK_FILE=/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-geolite.sock
 export ADUSER_DATA_GEOLITE_PATH=${PROJECT_DATA_DIR}/GeoLite2-City.mmdb
 
-screen -S ${PROJECT_NAME}_geolite -X quit || true
 screen -S ${PROJECT_NAME}_geolite -dm bash -c "pipenv run python ${PROJECT_NAME}_data_services/geolite/daemon.py"
 
 # ===
+screen -S ${PROJECT_NAME} -X quit || true
 
 cd ${INSTALLATION_DIR}/${PROJECT_NAME}
 pipenv install
@@ -81,5 +82,4 @@ export ADUSER_COOKIE_EXPIRY_PERIOD=4w
 export ADUSER_LOG_CONFIG_JSON_FILE=
 export ADUSER_LOG_LEVEL=DEBUG
 
-screen -S ${PROJECT_NAME} -X quit || true
 screen -S ${PROJECT_NAME} -dm bash -c "pipenv run python daemon.py"
