@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace App\Verifier;
 
 use App\Verifier\Dto\VerifierResponse;
-use BannerNotVerifiedException;
+use App\Verifier\Exception\BannerNotVerifiedException;
 
 interface BannerVerifierInterface
 {
