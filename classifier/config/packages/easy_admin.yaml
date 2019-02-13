@@ -1,13 +1,9 @@
 easy_admin:
     site_name: 'Classifier - Classify Publisher campaigns'
+    disabled_actions: ['delete', 'edit', 'new']
     list:
         max_results: 50
     entities:
-        NetworkCampaigns:
-            class: App\Entity\NetworkCampaigns
-            label: 'Campaigns'
-            list:
-                title: "List of campaigns"
         NetworkBanners:
             class: App\Entity\NetworkBanners
             label: 'Banners'
@@ -15,12 +11,10 @@ easy_admin:
                 title: "List of banners"
                 fields:
                     - 'uuid'
-                    - { property: 'content', type: 'image', label: 'Image' }
-                    - { property: 'html', template: '/admin/banners_content.html.twig'}
+                    - { property: 'content', template: '/admin/banners_content.html.twig'}
                     - 'type'
                     - 'width'
                     - 'height'
-                    - 'status'
 
     design:
         assets:

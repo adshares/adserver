@@ -305,10 +305,6 @@ class NetworkBanners
 
     public function getContent(): string
     {
-        if ($this->type === self::HTML_TYPE) {
-            return '';
-        }
-
         return $this->getServeUrl();
     }
 
