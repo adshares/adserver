@@ -22,22 +22,31 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Utilities;
 
-use Adshares\Adserver\Utilities\UrlProtocolRemover;
-use PHPUnit\Framework\TestCase;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Illuminate\Support\Facades\Config;
 
-final class UrlProtocolRemoverTest extends TestCase
+final class ForceUrlProtocolTest extends TestCase
 {
     public function testRemoveWhenProtocolIsHTTP(): void
     {
         $uri = 'http://example.com/image.jpg';
 
-        $this->assertEquals('//example.com/image.jpg', UrlProtocolRemover::remove($uri));
+        $this->assertEquals('https://example.com/image.jpg', ForceUrlProtocol::change($uri));
     }
 
     public function testRemoveWhenProtocolIsHTTPS(): void
     {
         $uri = 'https://example.com/image.jpg';
 
-        $this->assertEquals('//example.com/image.jpg', UrlProtocolRemover::remove($uri));
+        $this->assertEquals('https://example.com/image.jpg', ForceUrlProtocol::change($uri));
+    }
+
+    public function testRemoveWHenForceIsDisabledAndProtocolIsHTTP(): void
+    {
+        Config::set('app.banner_force_https', false);
+        $uri = 'http://example.com/image.jpg';
+
+        $this->assertEquals('http://example.com/image.jpg', ForceUrlProtocol::change($uri));
     }
 }
