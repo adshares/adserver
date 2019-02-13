@@ -37,11 +37,11 @@ class DummyBannerVerifier implements BannerVerifierInterface
     }
 
     private $banners = [
-        'C1310C68A2104460BCD18DFD960650F1' => 'T',
-        'C1310C68A2104460BCD18DFD960650F2' => 'T',
-        'C1310C68A2104460BCD18DFD960650F3' => 'F',
-        'C1310C68A2104460BCD18DFD960650F4' => 'F',
-        'C1310C68A2104460BCD18DFD960650F5' => 'F',
+        'C1310C68A2104460BCD18DFD960650F1' => self::KEYWORD_ACCEPTED,
+        'C1310C68A2104460BCD18DFD960650F2' => self::KEYWORD_ACCEPTED,
+        'C1310C68A2104460BCD18DFD960650F3' => self::KEYWORD_DECLINED,
+        'C1310C68A2104460BCD18DFD960650F4' => self::KEYWORD_DECLINED,
+        'C1310C68A2104460BCD18DFD960650F5' => self::KEYWORD_DECLINED,
     ];
 
     public function verify(string $bannerId, bool $trusted = false): void
@@ -55,7 +55,7 @@ class DummyBannerVerifier implements BannerVerifierInterface
             throw new BannerNotVerifiedException(sprintf('Banner %s does not exist.', $bannerId));
         }
 
-        $keywords = (array) $this->createKeyword($bannerId);
+        $keywords = (array)$this->createKeyword($bannerId);
         $signature = $this->createSignature($bannerId, $keywords);
 
         return new VerifierResponse($keywords, $signature);

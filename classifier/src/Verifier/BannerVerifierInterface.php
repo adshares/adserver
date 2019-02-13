@@ -27,6 +27,9 @@ use App\Verifier\Exception\BannerNotVerifiedException;
 
 interface BannerVerifierInterface
 {
+    public const KEYWORD_ACCEPTED = 1;
+    public const KEYWORD_DECLINED = 0;
+
     public function verify(string $bannerId, bool $trusted = false): void;
 
     /**
