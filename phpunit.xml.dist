@@ -57,5 +57,6 @@
         <env name="QUEUE_DRIVER" value="sync"/>
         <env name="MAIL_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite_testing" />
+        <env name="BANNER_FORCE_HTTPS" value="true"/>
     </php>
 </phpunit>
