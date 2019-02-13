@@ -128,8 +128,6 @@ class NetworkBanners
 
     private $content;
 
-    private $html;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -306,15 +304,5 @@ class NetworkBanners
     public function getContent(): string
     {
         return $this->getServeUrl();
-    }
-
-    public function getHtml(): string
-    {
-        return $this->getServeUrl();
-    }
-
-    public function isImage(): bool
-    {
-        return $this->type === self::IMAGE_TYPE;
     }
 }
