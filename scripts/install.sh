@@ -41,7 +41,7 @@ then
     then
         artisanCommand migrate --force
     else
-        artisanCommand migrate:fresh --force 
+        artisanCommand migrate:fresh --force --seed
         artisanCommand db:seed --force
     fi
 

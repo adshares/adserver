@@ -3,7 +3,7 @@
         <img src="https://adshares.net/logos/ads.svg" alt="Adshares" width="100" height="100">
     </a>
 </p>
-<h3 align="center"><small>Adshares - AdServer</small></h3>
+<h3 align="center"><small>Adshares / AdServer</small></h3>
 <p align="center">
     <a href="https://github.com/adshares/adserver/issues/new?template=bug_report.md&labels=Bug">Report bug</a>
     ·
@@ -12,56 +12,120 @@
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
 <p align="center">
-    <a href="https://travis-ci.org/adshares/adserver" title="master" target="_blank">
+    <a href="https://travis-ci.org/adshares/adserver" title="Build Status" target="_blank">
         <img src="https://travis-ci.org/adshares/adserver.svg?branch=master" alt="Build Status">
+    </a>
+    <a href="https://sonarcloud.io/dashboard?id=adshares-adserver" title="Code Quality" target="_blank">
+        <img src="https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status" alt="Code Quality">
     </a>
 </p>
 
-## Quick Start
+AdServer is the core software behind the ecosystem.
 
+## Quick Start (on Ubuntu 18.04)
+
+> Requirements:
+> - [Nodejs](https://nodejs.org/en/) 
+> - [yarn](https://yarnpkg.com/en/) (or at least npm)
+> - [Composer](https://getcomposer.org/) - Dependency Manager for PHP
+> - A HTTP Server of your choice (eg. Nginx, see: [nginx.conf](docker/nginx.conf))
+> - Mysql (or similar) database
+
+### Install dependencies
 ```bash
-bin/init.sh --build --start --migrate
+curl https://dl.yarnpkg.com/debian/pubkey.gpg -sS | sudo apt-key add - && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+sudo add-apt-repository --yes ppa:adshares/releases
+sudo apt-get --yes --no-install-recommends install php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-curl php7.2-gd php7.2-intl php7.2-mbstring php7.2-sqlite3 php7.2-zip php7.2-simplexml gettext-base screen ads nginx mysql-server nodejs yarn unzip
+
+#### Composer
+test $(curl https://getcomposer.org/installer -sS | sha384sum | head -c 96) == "48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5" && \
+curl https://getcomposer.org/installer -sS | sudo php -- --install-dir=/usr/local/bin --filename=composer
 ```
 
-Usage:
-```
-bin/init.sh         Initialize environment
-  --clean           Remove containers
-                     + remove dependencied and environment files when used with --force
-  --build           Download dependencies
-                     + regenerate secret when used with --force
-  --start           Start docker containers
-  --migrate         Update database schema (creating it if neccesary)
-                      and regenerate secret when used with --force
-  --migrate-fresh   Remove database before migration 
-  --logs            Show logs after everything else is done
-  --logs-follow     ...and follow them
-  --stop            Stop all containers (overrides all other options above)
-``` 
+Clone and ...
+```bash
+git clone https://github.com/adshares/adserver.git && cd adserver
+composer install
 
-With the default you should have two working locations:
-- [http://localhost:8101/](http://localhost:8101/) for the server
-- [http://localhost:8025/](http://localhost:8025/) for an e-mail interceptor  
+yarn install
+yarn run prod
+
+mkdir -pm 777 storage/app/public/banners
+```
+
+### Configure Environment
+```bash
+export APP_NAME=AdServer
+export APP_ENV=production
+export APP_DEBUG=false
+export APP_URL=http://localhost:8101 # publicly visible AdServer URL 
+export APP_KEY=base64:`date | sha256sum | head -c 32 | base64`
+
+export LOG_CHANNEL=single
+
+export DB_HOST=database
+export DB_PORT=3306
+export DB_DATABASE=adserver
+export DB_USERNAME=adserver
+export DB_PASSWORD=adserver
+
+export BROADCAST_DRIVER=log
+export CACHE_DRIVER=file
+export SESSION_DRIVER=file
+
+export SESSION_LIFETIME=120
+
+export QUEUE_DRIVER=database
+
+export MAIL_DRIVER=smtp # for testing purposes 'log` can be used
+export MAIL_HOST=mailer
+export MAIL_PORT=1025
+export MAIL_USERNAME=1025
+export MAIL_PASSWORD=
+export MAIL_ENCRYPTION=null
+export MAIL_FROM_ADDRESS=dev@adshares.net
+export MAIL_FROM_NAME="[dev] AdShares"
+
+export ADSERVER_SECRET=5LM0pJKnAlXDwSwSSqyJt
+export ADSERVER_ID=AdShrek
+export ADSERVER_HOST=http://localhost:8101
+export ADSERVER_BANNER_HOST=http://localhost:8101
+
+export ADSHARES_ADDRESS=0000-00000000-XXXX # account number (hot wallet) to be used by the server 
+export ADSHARES_NODE_HOST=t01.e11.click # account's node hostname
+export ADSHARES_NODE_PORT=6511
+export ADSHARES_SECRET= # account's secret key
+export ADSHARES_COMMAND=`which ads`
+export ADSHARES_WORKINGDIR=/tmp/adshares/ads-cache
+
+export ADUSER_EXTERNAL_LOCATION=http://localhost:8010 # publicly visible AdServer URL
+export ADUSER_INTERNAL_LOCATION=http://localhost:8010 # locally visible AdServer URL
+
+export ADSELECT_ENDPOINT=http://localhost:8011 # locally visible AdSelect URL
+
+export ADPAY_ENDPOINT=http://localhost:8012 # locally visible AdPay URL
+
+export ADPANEL_URL=http://localhost # publicly visible AdPanel URL
+```
 
 ## Documentation
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
 - [Changelog](CHANGELOG.md)
+- [Contributing Guidelines](docs/CONTRIBUTING.md)
 - [Authors](https://github.com/adshares/adserver/contributors)
+- Available [Versions](https://github.com/adshares/adserver/tags) (we use [Semantic Versioning](http://semver.org/))
 
-## Contributing
+### Related projects
 
-- Please follow our [Contributing Guidelines](docs/CONTRIBUTING.md)
-
-## Versioning
-
-- We use [Semantic Versioning](http://semver.org/).
-- See available [versions](https://github.com/adshares/adserver/tags). 
 
 ## Related projects
 
+- [AdUser](https://github.com/adshares/aduser)
+- [AdSelect](https://github.com/adshares/adselect)
+- [AdPay](https://github.com/adshares/adpay)
 - [AdPanel](https://github.com/adshares/adpanel)
-- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
+- [ADS](https://github.com/adshares/ads)
 
 ## License
 
