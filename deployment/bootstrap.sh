@@ -61,7 +61,7 @@ then
 
 # ===
 
-    INSTALLATION_USER=${INSTALLATION_USER:-adshares}
+    INSTALLATION_USER=${INSTALLATION_USER:-${1:-adshares}}
 
     id --user ${INSTALLATION_USER} || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
     mkdir -p ${INSTALLATION_DIR}
