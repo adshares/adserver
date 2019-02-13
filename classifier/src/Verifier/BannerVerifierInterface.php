@@ -31,9 +31,9 @@ interface BannerVerifierInterface
 
     /**
      * @param string $bannerId
-
+     *
      * @throws BannerNotVerifiedException
-
+     *
      * @return VerifierResponse
      */
     public function fetchVerifiedBanner(string $bannerId): VerifierResponse;
