@@ -2,6 +2,7 @@
 
 set -ex
 
+VENDOR_NAME=adshares
 PROJECT_NAME=adserver
 
 INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/adshares}
@@ -12,7 +13,7 @@ GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/adshares}
 cd ${INSTALLATION_DIR}
 
 git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${PROJECT_NAME}.git \
-    || ( git fetch && git reset --hard && git checkout ${GIT_BRANCH_NAME} )
+    || ( cd ${INSTALLATION_DIR}/${PROJECT_NAME} && git fetch && git reset --hard && git checkout ${GIT_BRANCH_NAME} )
 
 cd ${INSTALLATION_DIR}/${PROJECT_NAME}
 
@@ -21,8 +22,9 @@ mkdir -pm 777 storage/app/public/banners
 
 export APP_NAME=AdServer
 export APP_ENV=production
+export APP_PORT=8001
 export APP_DEBUG=false
-export APP_URL=http://localhost:8101 # publicly visible AdServer URL
+export APP_URL=http://localhost:${APP_PORT} # publicly visible AdServer URL
 export APP_KEY=base64:`date | sha256sum | head -c 32 | base64`
 
 export LOG_CHANNEL=single
@@ -52,8 +54,8 @@ export MAIL_FROM_NAME="[dev] AdShares"
 
 export ADSERVER_SECRET=5LM0pJKnAlXDwSwSSqyJt
 export ADSERVER_ID=AdShrek
-export ADSERVER_HOST=http://localhost:8101
-export ADSERVER_BANNER_HOST=http://localhost:8101
+export ADSERVER_HOST=http://localhost:${APP_PORT}
+export ADSERVER_BANNER_HOST=http://localhost:${APP_PORT}
 
 export ADSHARES_ADDRESS=0000-00000000-XXXX # account number (hot wallet) to be used by the server
 export ADSHARES_NODE_HOST=t01.e11.click # account's node hostname
@@ -85,23 +87,23 @@ artisanCommand storage:link
 
 mysql=( sudo mysql --user=root )
 
-if [[ "$DB_DATABASE" ]]
-then
-    echo "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` ;" | "${mysql[@]}"
-    mysql+=( "$DB_DATABASE" )
-fi
-
-if [[ "$DB_USERNAME" && "$DB_PASSWORD" ]]
-then
-    echo "CREATE USER '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD' ;" | "${mysql[@]}"
-
-    if [[ "$DB_DATABASE" ]]
-    then
-        echo "GRANT ALL ON \`$DB_DATABASE\`.* TO '$DB_USERNAME'@'%' ;" | "${mysql[@]}"
-    fi
-
-    echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
-fi
+#if [[ "$DB_DATABASE" ]]
+#then
+#    echo "CREATE DATABASE IF NOT EXISTS \`$DB_DATABASE\` ;" | "${mysql[@]}"
+#    mysql+=( "$DB_DATABASE" )
+#fi
+#
+#if [[ "$DB_USERNAME" && "$DB_PASSWORD" ]]
+#then
+#    echo "CREATE USER IF NOT EXISTS '$DB_USERNAME'@'%' IDENTIFIED BY '$DB_PASSWORD' ;" | "${mysql[@]}"
+#
+#    if [[ "$DB_DATABASE" ]]
+#    then
+#        echo "GRANT ALL ON \`$DB_DATABASE\`.* TO '$DB_USERNAME'@'%' ;" | "${mysql[@]}"
+#    fi
+#
+#    echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
+#fi
 
 artisanCommand migrate:fresh --force --seed
 
@@ -122,6 +124,9 @@ echo "*/30 *    * * * cd $INSTALLATION_DIR/${PROJECT_NAME} && bash docker/cron/o
 
 crontab crontab.txt
 
+screen -S ${PROJECT_NAME}_worker -X quit || true
 screen -S ${PROJECT_NAME}_worker -dm bash -c "./artisan queue:work --queue=ads,default"
-screen -S ${PROJECT_NAME} -dm bash -c "php -S localhost:8101 public/index.php"
+
+screen -S ${PROJECT_NAME} -X quit || true
+screen -S ${PROJECT_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
 

@@ -2,6 +2,7 @@
 
 set -ex
 
+VENDOR_NAME=adshares
 PROJECT_NAME=aduser
 
 INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/adshares}
@@ -43,13 +44,13 @@ export PYTHONUNBUFFERED=1
 cd ${INSTALLATION_DIR}/${PROJECT_NAME}/${PROJECT_NAME}_data_services
 pipenv install
 
-export ADUSER_DATA_BROWSCAP_SOCK_FILE=/tmp/apshares/${PROJECT_NAME}-data-browscap.sock
+export ADUSER_DATA_BROWSCAP_SOCK_FILE=/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-browscap.sock
 export ADUSER_DATA_BROWSCAP_CSV_PATH=${PROJECT_DATA_DIR}/browscap.csv
 
 screen -S ${PROJECT_NAME}_browscap -X quit || true
 screen -S ${PROJECT_NAME}_browscap -dm bash -c "pipenv run python ${PROJECT_NAME}_data_services/browscap/daemon.py"
 
-export ADUSER_DATA_GEOLITE_SOCK_FILE=/tmp/adshares/${PROJECT_NAME}-data-geolite.sock
+export ADUSER_DATA_GEOLITE_SOCK_FILE=/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-geolite.sock
 export ADUSER_DATA_GEOLITE_PATH=${PROJECT_DATA_DIR}/GeoLite2-City.mmdb
 
 screen -S ${PROJECT_NAME}_geolite -X quit || true
@@ -63,8 +64,8 @@ pipenv install
 export ADUSER_DATA_PROVIDER=${PROJECT_NAME}.data.examples.example
 export ADUSER_MOCK_DATA_PATH=${PROJECT_DATA_DIR}/mock.json
 
-#export ADUSER_DATA_BROWSCAP_SOCK_FILE=${ADUSER_DATA_BROWSCAP_SOCK_FILE:-"/tmp/adshares/${PROJECT_NAME}-data-browscap.sock"}
-#export ADUSER_DATA_GEOLITE_SOCK_FILE=${ADUSER_DATA_GEOLITE_SOCK_FILE:-"/tmp/adshares/${PROJECT_NAME}-data-geolite.sock"}
+#export ADUSER_DATA_BROWSCAP_SOCK_FILE=${ADUSER_DATA_BROWSCAP_SOCK_FILE:-"/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-browscap.sock"}
+#export ADUSER_DATA_GEOLITE_SOCK_FILE=${ADUSER_DATA_GEOLITE_SOCK_FILE:-"/tmp/${VENDOR_NAME}/${PROJECT_NAME}-data-geolite.sock"}
 
 export ADUSER_MONGO_DB_PORT=27017
 export ADUSER_MONGO_DB_NAME=${PROJECT_NAME}
