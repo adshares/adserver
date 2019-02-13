@@ -22,10 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Utilities;
 
-class UrlProtocolRemover
+use Illuminate\Support\Facades\Config;
+
+class ForceUrlProtocol
 {
-    public static function remove(string $uri): string
+    public static function change(string $uri): string
     {
-        return str_replace(['https:', 'http:'], 'https:', $uri);
+        if (Config::get('app.banner_force_https') === false) {
+            return $uri;
+        }
+
+        return str_replace('http:', 'https:', $uri);
     }
 }

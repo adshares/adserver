@@ -153,6 +153,7 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
+    'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
 
     /*
     |--------------------------------------------------------------------------
