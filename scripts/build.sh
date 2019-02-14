@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
-env | sort
-
-if [ ! -v TRAVIS ]; then
+if [[ -v GIT_CLONE ]]
+then
   # Checkout repo and change directory
 
   # Install git

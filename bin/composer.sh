@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-exec docker-compose exec worker composer "$@"
+exec docker-compose run --rm worker composer "$@"
