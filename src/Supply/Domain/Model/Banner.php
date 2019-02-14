@@ -171,4 +171,9 @@ final class Banner
     {
         return $this->status->getStatus();
     }
+
+    public function getChecksum(): string
+    {
+        return $this->checksum;
+    }
 }
