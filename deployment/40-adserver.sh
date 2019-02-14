@@ -99,3 +99,7 @@ fi
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts
+
+//TODO: remove when nginx configured
+screen -S ${SERVICE_NAME} -X quit || true
+screen -S ${SERVICE_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
