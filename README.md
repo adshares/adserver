@@ -22,6 +22,10 @@
 
 AdServer is the core software behind the ecosystem.
 
+## Prerequisites
+ - Use a clean Ubuntu/Bionic install
+ - Run all commands as a user with `sudo` privileges 
+ 
 ## Quick Start (on Ubuntu 18.04)
 
 Get source code
@@ -38,9 +42,42 @@ sudo adserver/deployment/bootstrap.sh
 > Should you wish to create a user with a different name, add an argument to the above command specifying it. 
 > Use ``` `id --user --name` ``` as the argument to pass the current user's name.
 
-Install services (without `sudo`)
+Install & run helper services
 ```bash
-adserver/deployment/install-all.sh
+sudo --login --user adshares /opt/adshares/bin/10-aduser.sh
+sudo --login --user adshares INSTALL_BROWSCAP_DATA=1 /opt/adshares/bin/11-aduser_browscap.sh
+sudo --login --user adshares INSTALL_GEOLITE_DATA=1 /opt/adshares/bin/12-aduser_geolite.sh
+
+sudo cp -rf /opt/adshares/bin/supervisor/conf.d/1?-*.conf /etc/supervisor/conf.d
+
+sudo --login --user adshares /opt/adshares/bin/20-adselect.sh
+
+sudo cp -rf /opt/adshares/bin/supervisor/conf.d/2?-*.conf /etc/supervisor/conf.d
+
+sudo --login --user adshares /opt/adshares/bin/30-adpay.sh
+
+sudo cp -rf /opt/adshares/bin/supervisor/conf.d/3?-*.conf /etc/supervisor/conf.d
+
+sudo service supervisor restart
+```
+
+Install & run AdServer
+```bash
+sudo --login --user adshares DB_MIGRATE=1 DB_SEED=1 /opt/adshares/bin/40-adserver.sh
+# Alternatively you can force migration and seeding if you use DB_MIGRATE_FRESH_FORCE=1
+sudo --login --user adshares /opt/adshares/bin/41-adserver_worker.sh
+
+sudo cp -rf /opt/adshares/bin/supervisor/conf.d/4?-*.conf /etc/supervisor/conf.d
+
+```
+
+Install & run AdServer
+```bash
+sudo --login --user adshares /opt/adshares/bin/50-adpanel.sh
+
+sudo cp -rf /opt/adshares/bin/supervisor/conf.d/5?-*.conf /etc/supervisor/conf.d
+
+sudo service supervisor restart
 ```
 
 ## Documentation
