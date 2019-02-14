@@ -1,21 +1,13 @@
 #!/usr/bin/env bash
 
-set -ex
+HERE=$(dirname $(readlink -f "$0"))
+source ${HERE}/_functions.sh
 
-VENDOR_NAME=adshares
-PROJECT_NAME=adserver
+SERVICE_NAME=adserver
 
-INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
+${HERE}/clone-service.sh
 
-GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-master}
-GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/${VENDOR_NAME}}
-
-cd ${INSTALLATION_DIR}
-
-git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${PROJECT_NAME}.git \
-    || ( cd ${INSTALLATION_DIR}/${PROJECT_NAME} && git fetch && git reset --hard && git checkout ${GIT_BRANCH_NAME} )
-
-cd ${INSTALLATION_DIR}/${PROJECT_NAME}
+cd ${INSTALLATION_DIR}/${SERVICE_NAME}
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
@@ -31,9 +23,9 @@ export LOG_CHANNEL=single
 
 export DB_HOST=localhost
 export DB_PORT=3306
-export DB_DATABASE=${PROJECT_NAME}
-export DB_USERNAME=${PROJECT_NAME}
-export DB_PASSWORD=${PROJECT_NAME}
+export DB_DATABASE=${SERVICE_NAME}
+export DB_USERNAME=${SERVICE_NAME}
+export DB_PASSWORD=${SERVICE_NAME}
 
 export BROADCAST_DRIVER=log
 export CACHE_DRIVER=file
@@ -90,7 +82,3 @@ artisanCommand migrate:fresh --force --seed
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts
-
-#screen -S ${PROJECT_NAME} -X quit || true
-#screen -S ${PROJECT_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
-
