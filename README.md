@@ -48,9 +48,6 @@ adserver/deployment/bootstrap.sh
 - [Authors](https://github.com/adshares/adserver/contributors)
 - Available [Versions](https://github.com/adshares/adserver/tags) (we use [Semantic Versioning](http://semver.org/))
 
-### Related projects
-
-
 ## Related projects
 
 - [AdUser](https://github.com/adshares/aduser)
