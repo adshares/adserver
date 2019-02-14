@@ -28,16 +28,19 @@ Get source code
 ```bash
 git clone https://github.com/adshares/adserver.git
 ```
+We recommend creating a separate user (without sudo privileges) to be the owner of all the installed services.
+> The script below creates such a user (called `adshares` by default).
 
-Install dependencies
+Just run the command: 
 ```bash
-sudo adserver/deployment/bootstrap.sh `id --user --name`
+sudo adserver/deployment/bootstrap.sh
 ```
+> Should you wish to create a user with a different name, add an argument to the above command specifying it. 
+> Use ``` `id --user --name` ``` as the argument to pass the current user's name.
 
-Install services (NO `sudo`)
+Install services (without `sudo`)
 ```bash
-# This will loop through all services
-adserver/deployment/bootstrap.sh
+adserver/deployment/install-all.sh
 ```
 
 ## Documentation
