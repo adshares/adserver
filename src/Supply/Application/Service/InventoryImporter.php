@@ -116,9 +116,4 @@ class InventoryImporter
 
         return $ids;
     }
-
-    private function getClassificationByBannerId(ClassifiedBanners $classifiedBanners, string $bannerId)
-    {
-
-    }
 }
