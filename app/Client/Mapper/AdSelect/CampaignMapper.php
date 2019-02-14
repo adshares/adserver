@@ -40,6 +40,7 @@ class CampaignMapper
                 'banner_size' => $banner->getSize(),
                 'keywords' => [
                     'type' => $banner->getType(),
+//                    'keywords' => $banner->
                 ],
             ];
         }

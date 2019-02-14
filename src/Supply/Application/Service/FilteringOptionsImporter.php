@@ -27,7 +27,7 @@ use Adshares\Common\Application\Service\ConfigurationRepository;
 
 class FilteringOptionsImporter
 {
-    /** @var AdClassify */
+    /** @var ClassifierClient */
     private $client;
     /** @var ConfigurationRepository */
     private $repository;
