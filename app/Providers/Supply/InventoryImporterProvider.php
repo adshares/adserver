@@ -26,6 +26,7 @@ use Adshares\Supply\Application\Service\ClassifierClient;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
+use Adshares\Supply\Infrastructure\Service\SodiumCompatClassifyVerifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,12 +39,14 @@ class InventoryImporterProvider extends ServiceProvider
             function (Application $app) {
                 $campaignRepository = new NetworkCampaignRepository();
                 $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
+                $classifyPublicKey = config('app.classyfiy_publisher_public_key');
 
                 return new InventoryImporter(
                     $markedCampaignsAsDeactivatedService,
                     $campaignRepository,
                     $app->make(DemandClient::class),
                     $app->make(ClassifierClient::class),
+                    new SodiumCompatClassifyVerifier($classifyPublicKey),
                     new EloquentTransactionManager()
                 );
             }

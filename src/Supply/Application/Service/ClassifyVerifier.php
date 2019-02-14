@@ -18,11 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application;
+namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Domain\ValueObject\Classification;
 
 interface ClassifyVerifier
 {
-    public function verify(Classification $classification);
+    public function isVerified(Classification $classification, string $bannerId): bool;
 }

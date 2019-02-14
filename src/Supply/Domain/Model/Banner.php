@@ -106,6 +106,11 @@ final class Banner
         $this->classification = $classification;
     }
 
+    public function detachClassification(): void
+    {
+        $this->classification = null;
+    }
+
     public function toArray(): array
     {
         if ($this->classification) {

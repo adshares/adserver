@@ -31,9 +31,13 @@ class DummyBannerVerifier implements BannerVerifierInterface
     /** @var string */
     private $keyword;
 
-    public function __construct(string $keyword)
+    /** @var SignatureVerifierInterface */
+    private $signatureVerifier;
+
+    public function __construct(string $keyword, SignatureVerifierInterface $signatureVerifier)
     {
         $this->keyword = $keyword;
+        $this->signatureVerifier = $signatureVerifier;
     }
 
     private $banners = [
@@ -58,7 +62,7 @@ class DummyBannerVerifier implements BannerVerifierInterface
         }
 
         $keywords = (array)$this->createKeyword($bannerId);
-        $signature = $this->createSignature($bannerId, $keywords);
+        $signature = $this->signatureVerifier->create($keywords, $bannerId);
 
         return new VerifierResponse($keywords, $signature);
     }

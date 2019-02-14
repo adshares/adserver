@@ -155,6 +155,7 @@ return [
     'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
     'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
     'classyfiy_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
+    'classyfiy_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
 
     /*
     |--------------------------------------------------------------------------

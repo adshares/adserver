@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Supply\Domain\ValueObject\Classification;
+use RuntimeException;
 use function array_key_exists;
 
 class ClassifiedBanners
@@ -39,11 +40,11 @@ class ClassifiedBanners
             }
 
             if (array_key_exists('keywords', $classifiedBanners)) {
-
+                throw new RuntimeException('`keywords` field does not exist.');
             }
 
             if (array_key_exists('signature', $classifiedBanners)) {
-
+                throw new RuntimeException('`signature` field does not exist.');
             }
 
             $this->banners[$bannerId] = new Classification($classification['keywords'], $classification['signature']);
@@ -53,7 +54,7 @@ class ClassifiedBanners
     public function findByBannerId(string $bannerId): ?Classification
     {
         if (!array_key_exists($bannerId, $this->banners)) {
-
+            return null;
         }
 
         return $this->banners[$bannerId];
