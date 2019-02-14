@@ -59,7 +59,7 @@ apt-get --yes --no-install-recommends install \
 
 # ===
 
-pip install pipenv
+pip install --system pipenv
 
 # ===
 
@@ -78,8 +78,10 @@ INSTALLATION_USER=${INSTALLATION_USER:-${1:-${VENDOR_NAME}}}
 id --user ${INSTALLATION_USER} || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
 
 INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
+
 mkdir -p ${INSTALLATION_DIR}/bin
-cp -r ${HERE}/*.sh ${INSTALLATION_DIR}/bin
+rm -rf ${INSTALLATION_DIR}/bin/*
+cp -rf ${HERE}/* ${INSTALLATION_DIR}/bin
 
 LOG_DIR=${LOG_DIR:-/var/log/${VENDOR_NAME}}
 mkdir -p ${LOG_DIR}
@@ -88,7 +90,7 @@ chown -R ${INSTALLATION_USER}:`id --group --name ${INSTALLATION_USER}` ${INSTALL
 
 # ===
 
-DB_DATABASE=${VENDOR_NAME}
+DB_DATABASE=adserver
 DB_USERNAME=${VENDOR_NAME}
 DB_PASSWORD=${VENDOR_NAME}
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+echo "- ${SERVICE_NAME} -"
 test -z ${SERVICE_NAME:-$1} && echo "Missing SERVICE_NAME" >&2 && exit 1
 test -z ${INSTALLATION_DIR:-$2} && echo "Missing INSTALLATION_DIR" >&2 && exit 1
 

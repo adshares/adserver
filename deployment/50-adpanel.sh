@@ -5,7 +5,7 @@ source ${HERE}/_functions.sh
 
 SERVICE_NAME=adpanel
 
-${HERE}/clone-service.sh
+source ${HERE}/clone-service.sh
 
 cd ${INSTALLATION_DIR}/${SERVICE_NAME}
 

@@ -5,7 +5,7 @@ source ${HERE}/_functions.sh
 
 SERVICE_NAME=adserver
 
-${HERE}/clone-service.sh
+source ${HERE}/clone-service.sh
 
 cd ${INSTALLATION_DIR}/${SERVICE_NAME}
 
@@ -24,8 +24,8 @@ export LOG_CHANNEL=single
 export DB_HOST=localhost
 export DB_PORT=3306
 export DB_DATABASE=${SERVICE_NAME}
-export DB_USERNAME=${SERVICE_NAME}
-export DB_PASSWORD=${SERVICE_NAME}
+export DB_USERNAME=${VENDOR_NAME}
+export DB_PASSWORD=${VENDOR_NAME}
 
 export BROADCAST_DRIVER=log
 export CACHE_DRIVER=file
@@ -77,7 +77,24 @@ function artisanCommand {
 artisanCommand config:cache
 artisanCommand storage:link
 
-artisanCommand migrate:fresh --force --seed
+if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
+then
+    artisanCommand migrate:fresh
+elif [[ ${DB_MIGRATE_FRESH_FORCE:-0} -eq 1 ]]
+then
+    artisanCommand migrate:fresh --force
+elif [[ ${DB_MIGRATE_FRESH_FORCE_SEED:-0} -eq 1 ]]
+then
+    artisanCommand migrate:fresh --force --seed
+elif [[ ${DB_MIGRATE:-0} -eq 1 ]]
+then
+    artisanCommand migrate
+fi
+
+if [[ ${DB_SEED:-0} -eq 1 ]]
+then
+    artisanCommand db:seed
+fi
 
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
