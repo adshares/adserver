@@ -48,8 +48,9 @@ class GuzzlePublisherClassifierClient implements ClassifierClient
         try {
             $response = $this->client->post(self::VERIFY_ENDPOINT, ['body' => $body]);
         } catch (RequestException $exception) {
+            $message = 'Could not connect to %s host (%s).';
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $this->client->getConfig('base_uri'), $exception->getMessage()),
+                sprintf($message, $this->client->getConfig('base_uri'), $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );

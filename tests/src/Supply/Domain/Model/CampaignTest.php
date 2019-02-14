@@ -165,29 +165,4 @@ final class CampaignTest extends TestCase
         $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());
         $this->assertEquals(new ArrayCollection(), $campaign->getBanners());
     }
-
-    public function testClassify(): void
-    {
-        $sourceHost = new SourceCampaign('example.com', '0001-00000001-0001', '0.1', new DateTime(), new DateTime());
-
-        $campaign = new Campaign(
-            Uuid::v4(),
-            Uuid::v4(),
-            Uuid::v4(),
-            'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
-            [],
-            new Budget(1000000000000, 100000000000, null),
-            $sourceHost,
-            Status::active(),
-            [],
-            []
-        );
-
-        $banner1 = new Banner($campaign);
-        $banner2 = new Banner($campaign);
-        $banner3 = new Banner($campaign);
-
-        $campaign->setBanners([$banner1, $banner2, $banner3]);
-    }
 }

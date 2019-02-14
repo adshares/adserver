@@ -22,6 +22,9 @@ namespace Adshares\Test\Supply\Application\Service;
 
 use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Supply\Application\Dto\ClassifiedBanners;
+use Adshares\Supply\Application\Service\ClassifierClient;
+use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -36,12 +39,20 @@ use PHPUnit\Framework\TestCase;
 
 final class InventoryImporterTest extends TestCase
 {
+    private $classifiedBanners = [
+        'B6454DBC67A94B108E3895700D570EF0' => null,
+        'B6454DBC67A94B108E3895700D570EF1' => null,
+        'B6454DBC67A94B108E3895700D570EF2' => null,
+    ];
+
     public function testImportWhenDemandClientReturnsNoCampaigns(): void
     {
         $repository = $this->repositoryMock();
         $demandClient = $this->clientMock();
         $transactionManager = $this->transactionManagerMock();
         $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
+        $classifierClient = $this->classifierClientMock();
+        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $transactionManager
             ->expects($this->never())
@@ -51,6 +62,8 @@ final class InventoryImporterTest extends TestCase
             $markCampaignAsDeletedService,
             $repository,
             $demandClient,
+            $classifierClient,
+            $signatureVerifier,
             $transactionManager
         );
 
@@ -67,6 +80,8 @@ final class InventoryImporterTest extends TestCase
         $demandClient = $this->clientMock(null, true);
         $transactionManager = $this->transactionManagerMock();
         $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
+        $classifierClient = $this->classifierClientMock();
+        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $transactionManager
             ->expects($this->never())
@@ -76,6 +91,8 @@ final class InventoryImporterTest extends TestCase
             $markCampaignAsDeletedService,
             $repository,
             $demandClient,
+            $classifierClient,
+            $signatureVerifier,
             $transactionManager
         );
 
@@ -130,6 +147,8 @@ final class InventoryImporterTest extends TestCase
     {
         $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
+        $classifierClient = $this->classifierClientMock();
+        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $repository = $this->repositoryMock();
         $repository
@@ -149,6 +168,8 @@ final class InventoryImporterTest extends TestCase
             $markCampaignAsDeletedService,
             $repository,
             $demandClient,
+            $classifierClient,
+            $signatureVerifier,
             $transactionManager
         );
 
@@ -179,11 +200,15 @@ final class InventoryImporterTest extends TestCase
         $demandClient = $this->clientMock($campaigns);
         $transactionManager = $this->transactionManagerMock();
         $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
+        $classifierClient = $this->classifierClientMock();
+        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $inventoryImporter = new InventoryImporter(
             $markCampaignAsDeletedService,
             $repository,
             $demandClient,
+            $classifierClient,
+            $signatureVerifier,
             $transactionManager
         );
 
@@ -196,4 +221,16 @@ final class InventoryImporterTest extends TestCase
         $this->assertEquals(Status::STATUS_ACTIVE, $statuses[0]);
         $this->assertEquals(Status::STATUS_ACTIVE, $statuses[1]);
     }
+
+    public function classifierClientMock(array $bannerIds = [])
+    {
+        $client = $this->createMock(ClassifierClient::class);
+
+        $client
+            ->method('verify')
+            ->willReturn(new ClassifiedBanners($this->classifiedBanners));
+
+            return $client;
+    }
+
 }
