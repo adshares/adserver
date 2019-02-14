@@ -3,7 +3,7 @@
         <img src="https://adshares.net/logos/ads.svg" alt="Adshares" width="100" height="100">
     </a>
 </p>
-<h3 align="center"><small>Adshares - AdServer</small></h3>
+<h3 align="center"><small>Adshares / AdServer</small></h3>
 <p align="center">
     <a href="https://github.com/adshares/adserver/issues/new?template=bug_report.md&labels=Bug">Report bug</a>
     ·
@@ -12,56 +12,49 @@
     <a href="https://github.com/adshares/adserver/wiki">Wiki</a>
 </p>
 <p align="center">
-    <a href="https://travis-ci.org/adshares/adserver" title="master" target="_blank">
+    <a href="https://travis-ci.org/adshares/adserver" title="Build Status" target="_blank">
         <img src="https://travis-ci.org/adshares/adserver.svg?branch=master" alt="Build Status">
+    </a>
+    <a href="https://sonarcloud.io/dashboard?id=adshares-adserver" title="Code Quality" target="_blank">
+        <img src="https://sonarcloud.io/api/project_badges/measure?project=adshares-adserver&metric=alert_status" alt="Code Quality">
     </a>
 </p>
 
-## Quick Start
+AdServer is the core software behind the ecosystem.
 
+## Quick Start (on Ubuntu 18.04)
+
+Get source code
 ```bash
-bin/init.sh --build --start --migrate
+git clone https://github.com/adshares/adserver.git
 ```
 
-Usage:
+Install dependencies
+```bash
+sudo adserver/deployment/bootstrap.sh `id --user --name`
 ```
-bin/init.sh         Initialize environment
-  --clean           Remove containers
-                     + remove dependencied and environment files when used with --force
-  --build           Download dependencies
-                     + regenerate secret when used with --force
-  --start           Start docker containers
-  --migrate         Update database schema (creating it if neccesary)
-                      and regenerate secret when used with --force
-  --migrate-fresh   Remove database before migration 
-  --logs            Show logs after everything else is done
-  --logs-follow     ...and follow them
-  --stop            Stop all containers (overrides all other options above)
-``` 
 
-With the default you should have two working locations:
-- [http://localhost:8101/](http://localhost:8101/) for the server
-- [http://localhost:8025/](http://localhost:8025/) for an e-mail interceptor  
+Install services (NO `sudo`)
+```bash
+# This will loop through all services
+adserver/deployment/bootstrap.sh
+```
 
 ## Documentation
 
 - [Wiki](https://github.com/adshares/adserver/wiki)
 - [Changelog](CHANGELOG.md)
+- [Contributing Guidelines](docs/CONTRIBUTING.md)
 - [Authors](https://github.com/adshares/adserver/contributors)
-
-## Contributing
-
-- Please follow our [Contributing Guidelines](docs/CONTRIBUTING.md)
-
-## Versioning
-
-- We use [Semantic Versioning](http://semver.org/).
-- See available [versions](https://github.com/adshares/adserver/tags). 
+- Available [Versions](https://github.com/adshares/adserver/tags) (we use [Semantic Versioning](http://semver.org/))
 
 ## Related projects
 
+- [AdUser](https://github.com/adshares/aduser)
+- [AdSelect](https://github.com/adshares/adselect)
+- [AdPay](https://github.com/adshares/adpay)
 - [AdPanel](https://github.com/adshares/adpanel)
-- [PHP ADS Client](https://github.com/adshares/adserver-php-client)
+- [ADS](https://github.com/adshares/ads)
 
 ## License
 
