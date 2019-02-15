@@ -40,13 +40,20 @@ final class Selector
     {
         return new Selector(...array_map(function (Item $item) {
             return $item->toSelectorOption();
-        }, $taxonomy->toArray()));
+        },
+            $taxonomy->toArray()));
     }
 
     public function toArrayRecursiveWithoutEmptyFields(): array
     {
         return array_map(function (Option $option) {
             return $option->toArrayRecursiveWithoutEmptyFields();
-        }, $this->items);
+        },
+            $this->items);
+    }
+
+    public function addOption(Option $option): void
+    {
+        $this->items[] = $option;
     }
 }
