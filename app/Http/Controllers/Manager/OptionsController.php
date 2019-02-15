@@ -50,7 +50,10 @@ class OptionsController extends Controller
     {
         $options = $this->optionsRepository->fetchFilteringOptions();
 
-        $options->addOption((new Option('string', 'classification', 'Classification', false))
+        $options->addOption((new Option('string',
+            'classificationMultiChoiceFlat',
+            'Classification Multi Choice Flat',
+            false))
             ->withValues(...[
                 new OptionValue('Positive for all my Sites', 'PUBLISHERxYES'),
                 new OptionValue('Negative for all my Sites', 'PUBLISHERxNO'),
@@ -58,14 +61,45 @@ class OptionsController extends Controller
                 new OptionValue('Negative for just this Sites', 'SITExNO'),
             ]));
 
-        $options->addOption((new Option(null, 'classification2', 'Sublevel Classification', false))
+        $options->addOption((new Option(null,
+            'classificationMultiChoiceTree',
+            'Classification Multi Choice Tree',
+            false))
             ->withChildren(new Selector(...[
-                (new Option('string', 'classificationXpublisher', 'All my Sites', false))
+                (new Option('string', 'publisher', 'All my Sites', false))
                     ->withValues(...[
                         new OptionValue('Positive', 'YES'),
                         new OptionValue('Negative', 'NO'),
                     ]),
-                (new Option('string', 'classificationXsite', 'Just this Site', false))
+                (new Option('string', 'site', 'Just this Site', false))
+                    ->withValues(...[
+                        new OptionValue('Positive', 'YES'),
+                        new OptionValue('Negative', 'NO'),
+                    ]),
+            ])));
+
+        $options->addOption((new Option('boolean',
+            'classificationSingleChoiceFlat',
+            'Classification Single Choice Flat',
+            false))
+            ->withValues(...[
+                new OptionValue('Positive for all my Sites', 'PUBLISHERxYES'),
+                new OptionValue('Negative for all my Sites', 'PUBLISHERxNO'),
+                new OptionValue('Positive for just this Sites', 'SITExYES'),
+                new OptionValue('Negative for just this Sites', 'SITExNO'),
+            ]));
+
+        $options->addOption((new Option(null,
+            'classificationSingleChoiceTree',
+            'Classification Single Choice Tree',
+            false))
+            ->withChildren(new Selector(...[
+                (new Option('boolean', 'publisher', 'All my Sites', false))
+                    ->withValues(...[
+                        new OptionValue('Positive', 'YES'),
+                        new OptionValue('Negative', 'NO'),
+                    ]),
+                (new Option('boolean', 'site', 'Just this Site', false))
                     ->withValues(...[
                         new OptionValue('Positive', 'YES'),
                         new OptionValue('Negative', 'NO'),
