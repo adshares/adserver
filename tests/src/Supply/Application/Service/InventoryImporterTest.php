@@ -232,5 +232,4 @@ final class InventoryImporterTest extends TestCase
 
             return $client;
     }
-
 }
