@@ -75,8 +75,9 @@ class CampaignFactory
             $size = new Size($banner['width'], $banner['height']);
             $id = isset($banner['id']) ? Uuid::fromString($banner['id']) : Uuid::v4();
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
+            $hash = $banner['checksum'] ?? '';
 
-            $banners[] = new Banner($campaign, $id, $bannerUrl, $banner['type'], $size, '', $status);
+            $banners[] = new Banner($campaign, $id, $bannerUrl, $banner['type'], $size, $hash, $status);
         }
 
         $campaign->setBanners(new ArrayCollection($banners));

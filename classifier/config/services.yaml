@@ -32,3 +32,9 @@ services:
         class: App\Verifier\DummyBannerVerifier
         arguments:
             $keyword: '%env(VERIFIER_KEYWORD)%'
+
+    App\Verifier\SignatureVerifierInterface:
+        class: App\Verifier\SodiumCompatSignatureVerifier
+        arguments:
+            $privateKey: '%env(CLASSIFIER_SECRET)%'
+

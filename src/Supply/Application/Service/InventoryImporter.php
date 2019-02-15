@@ -23,10 +23,15 @@ declare(strict_types=1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\ClassifiedBanners;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Domain\ValueObject\Classification;
 
 class InventoryImporter
 {
@@ -42,16 +47,26 @@ class InventoryImporter
     /** @var TransactionManager */
     private $transactionManager;
 
+    /** @var ClassifierClient */
+    private $classifierClient;
+
+    /** @var ClassifyVerifier */
+    private $classifyVerifier;
+
     public function __construct(
         MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
+        ClassifierClient $classifierClient,
+        ClassifyVerifier $classifyVerifier,
         TransactionManager $transactionManager
     ) {
         $this->client = $client;
         $this->campaignRepository = $campaignRepository;
         $this->transactionManager = $transactionManager;
         $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
+        $this->classifierClient = $classifierClient;
+        $this->classifyVerifier = $classifyVerifier;
     }
 
     public function import(string $host): void
@@ -62,6 +77,9 @@ class InventoryImporter
             return;
         }
 
+        $bannersIds = $this->getBannerIds($campaigns);
+
+        $classifiedBanners = $this->classifierClient->fetchBannersClassification($bannersIds);
         $this->transactionManager->begin();
 
         try {
@@ -71,6 +89,17 @@ class InventoryImporter
             foreach ($campaigns as $campaign) {
                 $campaign->activate();
 
+                /** @var Banner $banner */
+                foreach ($campaign->getBanners() as $banner) {
+                    $classification = $classifiedBanners->findByBannerId($banner->getId());
+
+                    if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
+                        $banner->classify($classification);
+                    } else {
+                        $banner->detachClassification();
+                    }
+                }
+
                 $this->campaignRepository->save($campaign);
             }
         } catch (CampaignRepositoryException $exception) {
@@ -78,5 +107,20 @@ class InventoryImporter
         }
 
         $this->transactionManager->commit();
+    }
+
+    private function getBannerIds(CampaignCollection $campaigns): array
+    {
+        $ids = [];
+
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            /** @var Banner $banner */
+            foreach ($campaign->getBanners() as $banner) {
+                $ids[] = $banner->getId();
+            }
+        }
+
+        return $ids;
     }
 }

@@ -25,7 +25,7 @@ public/img/
 /storage/phpunit
 phpunit.xml
 
-*.env
+.env
 *.override.*
 !*.dist
 

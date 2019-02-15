@@ -31,9 +31,13 @@ class DummyBannerVerifier implements BannerVerifierInterface
     /** @var string */
     private $keyword;
 
-    public function __construct(string $keyword)
+    /** @var SignatureVerifierInterface */
+    private $signatureVerifier;
+
+    public function __construct(string $keyword, SignatureVerifierInterface $signatureVerifier)
     {
         $this->keyword = $keyword;
+        $this->signatureVerifier = $signatureVerifier;
     }
 
     private $banners = [
@@ -42,6 +46,8 @@ class DummyBannerVerifier implements BannerVerifierInterface
         'C1310C68A2104460BCD18DFD960650F3' => self::KEYWORD_DECLINED,
         'C1310C68A2104460BCD18DFD960650F4' => self::KEYWORD_DECLINED,
         'C1310C68A2104460BCD18DFD960650F5' => self::KEYWORD_DECLINED,
+        'b6454dbc67a94b108e3895700d570ef0' => self::KEYWORD_ACCEPTED,
+        '0741db38a3ab463d956254f31a680a89' => self::KEYWORD_DECLINED,
     ];
 
     public function verify(string $bannerId, bool $trusted = false): void
@@ -56,7 +62,7 @@ class DummyBannerVerifier implements BannerVerifierInterface
         }
 
         $keywords = (array)$this->createKeyword($bannerId);
-        $signature = $this->createSignature($bannerId, $keywords);
+        $signature = $this->signatureVerifier->create($keywords, $bannerId);
 
         return new VerifierResponse($keywords, $signature);
     }

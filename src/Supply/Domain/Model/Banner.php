@@ -24,6 +24,7 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -53,13 +54,14 @@ final class Banner
     /** @var Size */
     private $size;
 
-    /**
-     * @var Status
-     */
+    /** @var Status */
     private $status;
 
     /** @var string */
     private $checksum;
+
+    /** @var Classification|null */
+    private $classification;
 
     public function __construct(
         Campaign $campaign,
@@ -68,7 +70,8 @@ final class Banner
         string $type,
         Size $size,
         string $checksum,
-        Status $status
+        Status $status,
+        ?Classification $classification = null
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerSizeException(sprintf(
@@ -85,6 +88,7 @@ final class Banner
         $this->size = $size;
         $this->status = $status;
         $this->checksum = $checksum;
+        $this->classification = $classification;
     }
 
     public function activate(): void
@@ -97,8 +101,27 @@ final class Banner
         $this->status = Status::deleted();
     }
 
+    public function classify(Classification $classification): void
+    {
+        $this->classification = $classification;
+    }
+
+    public function detachClassification(): void
+    {
+        $this->classification = null;
+    }
+
     public function toArray(): array
     {
+        if ($this->classification) {
+            $classification = [
+                'keywords' => $this->classification->getKeywords(),
+                'signature' => $this->classification->getSignature(),
+            ];
+        } else {
+            $classification = null;
+        }
+
         return [
             'id' => $this->getId(),
             'type' => $this->getType(),
@@ -110,6 +133,7 @@ final class Banner
             'click_url' => $this->bannerUrl->getClickUrl(),
             'view_url' => $this->bannerUrl->getViewUrl(),
             'status' => $this->status->getStatus(),
+            'classification' => $classification,
         ];
     }
 
@@ -146,5 +170,10 @@ final class Banner
     public function getStatus(): int
     {
         return $this->status->getStatus();
+    }
+
+    public function getChecksum(): string
+    {
+        return $this->checksum;
     }
 }

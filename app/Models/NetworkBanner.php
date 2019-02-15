@@ -51,6 +51,7 @@ class NetworkBanner extends Model
         'width',
         'height',
         'status',
+        'classification',
     ];
 
     /**
@@ -71,6 +72,10 @@ class NetworkBanner extends Model
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'checksum' => 'BinHex',
+    ];
+
+    protected $casts = [
+        'classification' => 'json',
     ];
 
     public static function getTableName()
