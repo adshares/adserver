@@ -34,7 +34,6 @@ class SodiumCompatClassifyVerifier implements ClassifyVerifier
 
     public function __construct(string $publicKey)
     {
-
         $this->publicKey = $publicKey;
     }
 
