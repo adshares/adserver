@@ -114,6 +114,7 @@ final class BannerTest extends TestCase
             'click_url' => 'http://example.com/click',
             'view_url' => 'http://example.com/view',
             'status' => Status::STATUS_ACTIVE,
+            'classification' => null,
         ];
 
         $this->assertEquals($expected, $banner->toArray());

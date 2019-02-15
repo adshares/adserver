@@ -26,6 +26,7 @@ use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;

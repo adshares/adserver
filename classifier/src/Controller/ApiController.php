@@ -25,6 +25,7 @@ namespace App\Controller;
 use App\Verifier\BannerVerifierInterface;
 use App\Verifier\Exception\BannerNotVerifiedException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ApiController
@@ -37,14 +38,20 @@ class ApiController
         $this->bannerVerifier = $bannerVerifier;
     }
 
-    public function verifyAction(string $id): JsonResponse
+    public function fetchAction(Request $request): JsonResponse
     {
-        try {
-            $verification = $this->bannerVerifier->fetchVerifiedBanner($id);
-        } catch (BannerNotVerifiedException $exception) {
-            return new JsonResponse(null, Response::HTTP_NOT_FOUND);
+        $bannerIds = json_decode($request->getContent(), true);
+
+        $results = [];
+        foreach ($bannerIds as $bannerId) {
+            try {
+                $verification = $this->bannerVerifier->fetchVerifiedBanner($bannerId);
+                $results[$bannerId] = $verification->toArray();
+            } catch (BannerNotVerifiedException $exception) {
+                $results[$bannerId] = null;
+            }
         }
 
-        return new JsonResponse($verification->toArray(), Response::HTTP_OK);
+        return new JsonResponse($results, Response::HTTP_OK);
     }
 }
