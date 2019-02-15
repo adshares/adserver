@@ -227,7 +227,7 @@ final class InventoryImporterTest extends TestCase
         $client = $this->createMock(ClassifierClient::class);
 
         $client
-            ->method('fetch')
+            ->method('fetchBannersClassification')
             ->willReturn(new ClassifiedBanners($this->classifiedBanners));
 
             return $client;
