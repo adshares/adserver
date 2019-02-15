@@ -27,13 +27,12 @@ yarn install
 
 screen -S ${SERVICE_NAME} -X quit || true
 
-//TODO: remove when nginx configured - build instead of run
 if [[ ${APP_ENV} == 'dev' ]]
 then
-    screen -S ${SERVICE_NAME} -dm bash -c "yarn start --port $APP_PORT"
+    yarn build
 elif [[ ${APP_ENV} == 'prod' ]]
 then
-    screen -S ${SERVICE_NAME} -dm bash -c "yarn start --prod --port $APP_PORT"
+    yarn build --prod
 else
     echo "ERROR: Unsupported environment ($APP_ENV)."
     exit 1

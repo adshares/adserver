@@ -56,7 +56,13 @@ export ADSHARES_SECRET= # account's secret key
 export ADSHARES_COMMAND=`which ads`
 export ADSHARES_WORKINGDIR=/tmp/adshares/ads-cache
 
-export ADUSER_EXTERNAL_LOCATION=http://localhost:8010 # publicly visible AdServer URL
+export ADSHARES_WALLET_COLD_ADDRESS=0000-00000000-XXXX
+E11="00000000000"
+export ADSHARES_WALLET_MAX_AMOUNT="10000$E11"
+export ADSHARES_WALLET_MIN_AMOUNT="5000$E11"
+export ADSHARES_OPERATOR_EMAIL=dev@adshares.net
+
+export ADUSER_EXTERNAL_LOCATION=http://localhost:8003 # publicly visible AdServer URL
 export ADUSER_INTERNAL_LOCATION=http://localhost:8010 # locally visible AdServer URL
 
 export ADSELECT_ENDPOINT=http://localhost:8011 # locally visible AdSelect URL
@@ -99,7 +105,3 @@ fi
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts
-
-//TODO: remove when nginx configured
-screen -S ${SERVICE_NAME} -X quit || true
-screen -S ${SERVICE_NAME} -dm bash -c "php -S localhost:${APP_PORT} public/index.php"
