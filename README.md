@@ -67,11 +67,12 @@ sudo --login --user adshares /opt/adshares/deployer/41-adserver_worker.sh
 sudo cp -rf /opt/adshares/deployer/supervisor/conf.d/adserver*.conf /etc/supervisor/conf.d
 sudo service supervisor restart
 ```
-
 Build static version of AdPanel
 ```bash
 sudo --login --user adshares /opt/adshares/deployer/50-adpanel.sh
-
+```
+configure Nginx
+```bash
 sudo cp -rf /opt/adshares/deployer/nginx/conf.d/*.conf /etc/nginx/conf.d
 sudo service nginx reload
 ```
