@@ -42,38 +42,38 @@ sudo adserver/deployment/bootstrap.sh
 > Should you wish to create a user with a different name, add an argument to the above command specifying it. 
 > Use ``` `id --user --name` ``` as the argument to pass the current user's name.
 
-Install & run helper services
+Install helper services
 ```bash
-sudo --login --user adshares /opt/adshares/bin/10-aduser.sh
-sudo --login --user adshares INSTALL_BROWSCAP_DATA=1 /opt/adshares/bin/11-aduser_browscap.sh
-sudo --login --user adshares INSTALL_GEOLITE_DATA=1 /opt/adshares/bin/12-aduser_geolite.sh
+sudo --login --user adshares /opt/adshares/deployer/10-aduser.sh
+sudo --login --user adshares INSTALL_BROWSCAP_DATA=1 /opt/adshares/deployer/11-aduser_browscap.sh
+sudo --login --user adshares INSTALL_GEOLITE_DATA=1 /opt/adshares/deployer/12-aduser_geolite.sh
 
-sudo cp -rf /opt/adshares/bin/supervisor/conf.d/1?-*.conf /etc/supervisor/conf.d
+sudo --login --user adshares /opt/adshares/deployer/20-adselect.sh
 
-sudo --login --user adshares /opt/adshares/bin/20-adselect.sh
+sudo --login --user adshares /opt/adshares/deployer/30-adpay.sh
+```
+Copy configs and start standalone services
+```bash
+sudo cp -rf /opt/adshares/deployer/supervisor/conf.d/aduser*.conf /etc/supervisor/conf.d
+sudo cp -rf /opt/adshares/deployer/supervisor/conf.d/adselect*.conf /etc/supervisor/conf.d
+sudo cp -rf /opt/adshares/deployer/supervisor/conf.d/adpay*.conf /etc/supervisor/conf.d
+sudo service supervisor restart
+```
+Install AdServer (with workers)
+```bash
+sudo --login --user adshares DB_MIGRATE=1 DB_SEED=1 /opt/adshares/deployer/40-adserver.sh
+sudo --login --user adshares /opt/adshares/deployer/41-adserver_worker.sh
 
-sudo cp -rf /opt/adshares/bin/supervisor/conf.d/2?-*.conf /etc/supervisor/conf.d
-
-sudo --login --user adshares /opt/adshares/bin/30-adpay.sh
-
-sudo cp -rf /opt/adshares/bin/supervisor/conf.d/3?-*.conf /etc/supervisor/conf.d
-
+sudo cp -rf /opt/adshares/deployer/supervisor/conf.d/adserver*.conf /etc/supervisor/conf.d
 sudo service supervisor restart
 ```
 
-Install & run AdServer
+Build static version of AdPanel
 ```bash
-sudo --login --user adshares DB_MIGRATE=1 DB_SEED=1 /opt/adshares/bin/40-adserver.sh
-sudo --login --user adshares /opt/adshares/bin/41-adserver_worker.sh
+sudo --login --user adshares /opt/adshares/deployer/50-adpanel.sh
 
-sudo cp -rf /opt/adshares/bin/supervisor/conf.d/4?-*.conf /etc/supervisor/conf.d
-
-sudo service supervisor restart
-```
-
-Install & run AdPanel
-```bash
-sudo --login --user adshares /opt/adshares/bin/50-adpanel.sh
+sudo cp -rf /opt/adshares/deployer/nginx/conf.d/*.conf /etc/nginx/conf.d
+sudo service nginx reload
 ```
 
 ## Documentation

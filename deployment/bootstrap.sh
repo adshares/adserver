@@ -75,18 +75,9 @@ rm -rf ${TEMP_DIR}
 # ===
 
 INSTALLATION_USER=${INSTALLATION_USER:-${1:-${VENDOR_NAME}}}
-id --user ${INSTALLATION_USER} || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
-
 INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
 
-mkdir -p ${INSTALLATION_DIR}/bin
-rm -rf ${INSTALLATION_DIR}/bin/*
-cp -rf ${HERE}/* ${INSTALLATION_DIR}/bin
-
-LOG_DIR=${LOG_DIR:-/var/log/${VENDOR_NAME}}
-mkdir -p ${LOG_DIR}
-
-chown -R ${INSTALLATION_USER}:`id --group --name ${INSTALLATION_USER}` ${INSTALLATION_DIR} ${LOG_DIR}
+source ${HERE}/prepare-directories.sh
 
 # ===
 

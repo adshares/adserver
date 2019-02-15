@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-echo "- ${SERVICE_NAME} -"
-test -z ${SERVICE_NAME:-$1} && echo "Missing SERVICE_NAME" >&2 && exit 1
-test -z ${INSTALLATION_DIR:-$2} && echo "Missing INSTALLATION_DIR" >&2 && exit 1
+SERVICE_NAME=${SERVICE_NAME:-$1}
+test -z ${SERVICE_NAME} && echo "Missing SERVICE_NAME" >&2 && exit 1
+
+INSTALLATION_DIR=${INSTALLATION_DIR:-$2}
+test -z ${INSTALLATION_DIR} && echo "Missing INSTALLATION_DIR" >&2 && exit 1
 
 GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-master}
 GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/adshares}
