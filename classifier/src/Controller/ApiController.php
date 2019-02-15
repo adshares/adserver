@@ -38,7 +38,7 @@ class ApiController
         $this->bannerVerifier = $bannerVerifier;
     }
 
-    public function verifyAction(Request $request): JsonResponse
+    public function fetchAction(Request $request): JsonResponse
     {
         $bannerIds = json_decode($request->getContent(), true);
 

@@ -26,5 +26,5 @@ use Adshares\Supply\Application\Dto\ClassifiedBanners;
 
 interface ClassifierClient
 {
-    public function verify(array $bannerIds): ClassifiedBanners;
+    public function fetchBannersClassification(array $bannerIds): ClassifiedBanners;
 }

@@ -78,8 +78,8 @@ class InventoryImporter
         }
 
         $bannersIds = $this->getBannerIds($campaigns);
-        $classifiedBanners = $this->classifierClient->verify($bannersIds);
 
+        $classifiedBanners = $this->classifierClient->fetchBannersClassification($bannersIds);
         $this->transactionManager->begin();
 
         try {

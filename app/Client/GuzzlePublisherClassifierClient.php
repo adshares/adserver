@@ -32,7 +32,7 @@ use function json_decode;
 
 class GuzzlePublisherClassifierClient implements ClassifierClient
 {
-    private const VERIFY_ENDPOINT = '/api/verify';
+    private const VERIFY_ENDPOINT = '/api/fetch';
 
     private $client;
 
@@ -41,7 +41,7 @@ class GuzzlePublisherClassifierClient implements ClassifierClient
         $this->client = $client;
     }
 
-    public function verify(array $bannerIds): ClassifiedBanners
+    public function fetchBannersClassification(array $bannerIds): ClassifiedBanners
     {
         $body = json_encode($bannerIds);
 

@@ -1,4 +1,4 @@
 verify:
-  path: /verify
-  controller: App\Controller\ApiController::verifyAction
+  path: /fetch
+  controller: App\Controller\ApiController::fetchAction
   methods: [POST]
