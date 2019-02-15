@@ -71,7 +71,7 @@ Build static version of AdPanel
 ```bash
 sudo --login --user adshares /opt/adshares/deployer/50-adpanel.sh
 ```
-configure Nginx
+Reconfigure Nginx
 ```bash
 sudo cp -rf /opt/adshares/deployer/nginx/conf.d/*.conf /etc/nginx/conf.d
 sudo service nginx reload
