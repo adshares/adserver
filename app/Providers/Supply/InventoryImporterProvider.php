@@ -39,7 +39,7 @@ class InventoryImporterProvider extends ServiceProvider
             function (Application $app) {
                 $campaignRepository = new NetworkCampaignRepository();
                 $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
-                $classifyPublicKey = config('app.classyfiy_publisher_public_key');
+                $classifyPublicKey = config('app.classify_publisher_public_key');
 
                 return new InventoryImporter(
                     $markedCampaignsAsDeactivatedService,
