@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+
 INSTALLATION_USER=${INSTALLATION_USER:-$1}
 test -z ${INSTALLATION_USER} && echo "Missing INSTALLATION_USER" >&2 && exit 1
 
@@ -14,7 +14,7 @@ test -z ${VENDOR_NAME:-$4} && echo "Missing VENDOR_NAME" >&2 && exit 1
 
 id --user ${INSTALLATION_USER} &>/dev/null || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
 
-rm -rf ${INSTALLATION_DIR}/deployer && cp -rf ${HERE} ${INSTALLATION_DIR}/deployer
+rm -rf ${INSTALLATION_DIR}/.deployment-scripts && cp -rf ${HERE} ${INSTALLATION_DIR}/.deployment-scripts
 
 LOG_DIR=${LOG_DIR:-/var/log/${VENDOR_NAME}}
 mkdir -p ${LOG_DIR}
