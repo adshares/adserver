@@ -32,7 +32,7 @@ use function json_decode;
 
 class GuzzlePublisherClassifierClient implements ClassifierClient
 {
-    private const VERIFY_ENDPOINT = '/api/fetch';
+    private const VERIFY_ENDPOINT = '/classify/fetch';
 
     private $client;
 

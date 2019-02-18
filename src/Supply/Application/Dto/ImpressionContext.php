@@ -121,6 +121,7 @@ final class ImpressionContext
                     'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                     'request_id' => $zone->id,
                     'user_id' => $this->user['uid'],
+                    'banner_filters' => [],
                 ];
             }
         )->toArray();

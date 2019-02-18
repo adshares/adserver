@@ -20,13 +20,14 @@
 
 declare(strict_types = 1);
 
-namespace App\Verifier;
+namespace Adshares\Classify\Infrastructure\Service;
 
-use RuntimeException;
+use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use function sodium_crypto_sign_detached;
 use function sodium_crypto_sign_secretkey;
 use function sodium_crypto_sign_seed_keypair;
 use SodiumException;
+use RuntimeException;
 
 class SodiumCompatSignatureVerifier implements SignatureVerifierInterface
 {

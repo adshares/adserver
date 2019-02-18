@@ -20,13 +20,15 @@
 
 declare(strict_types = 1);
 
-namespace App\Verifier;
+namespace Adshares\Classify\Infrastructure\Service;
 
-use App\Verifier\Dto\VerifierResponse;
-use App\Verifier\Exception\BannerNotVerifiedException;
+use Adshares\Classify\Application\Service\BannerClassifierInterface;
+use Adshares\Classify\Application\Service\SignatureVerifierInterface;
+use Adshares\Classify\Application\Dto\ClassificationList;
+use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
 use function array_key_exists;
 
-class DummyBannerVerifier implements BannerVerifierInterface
+class DummyBannerClassifier implements BannerClassifierInterface
 {
     /** @var string */
     private $keyword;
@@ -50,12 +52,12 @@ class DummyBannerVerifier implements BannerVerifierInterface
         '0741db38a3ab463d956254f31a680a89' => self::KEYWORD_DECLINED,
     ];
 
-    public function verify(string $bannerId, bool $trusted = false): void
+    public function verify(string $bannerId, ?string $classify): void
     {
         // TODO: Implement verify() method.
     }
 
-    public function fetchVerifiedBanner(string $bannerId): VerifierResponse
+    public function fetchClassifiedBanner(string $bannerId): ClassificationList
     {
         if (!array_key_exists($bannerId, $this->banners)) {
             throw new BannerNotVerifiedException(sprintf('Banner %s does not exist.', $bannerId));
@@ -64,13 +66,7 @@ class DummyBannerVerifier implements BannerVerifierInterface
         $keywords = (array)$this->createKeyword($bannerId);
         $signature = $this->signatureVerifier->create($keywords, $bannerId);
 
-        return new VerifierResponse($keywords, $signature);
-    }
-
-    private function createSignature(string $bannerId, array $keywords): string
-    {
-        // @todo sign keywords
-        return '';
+        return new ClassificationList($keywords, $signature);
     }
 
     private function createKeyword(string $bannerId): string

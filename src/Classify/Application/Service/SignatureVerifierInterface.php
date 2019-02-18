@@ -20,35 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace App\Verifier\Dto;
+namespace Adshares\Classify\Application\Service;
 
-class VerifierResponse
+interface SignatureVerifierInterface
 {
-    private $keywords;
-
-    private $signature;
-
-    public function __construct(array $keywords, string $signature)
-    {
-        $this->keywords = $keywords;
-        $this->signature = $signature;
-    }
-
-    public function getKeywords(): array
-    {
-        return $this->keywords;
-    }
-
-    public function getSignature(): string
-    {
-        return $this->signature;
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'keywords' => $this->keywords,
-            'signature' => $this->signature,
-        ];
-    }
+    public function create(array $keywords, string $bannerId): string;
 }
