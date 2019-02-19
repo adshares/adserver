@@ -23,14 +23,14 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Supply\Application\Dto\Classification\Collection;
-use Adshares\Supply\Application\Service\ClassifyClient;
+use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\HttpFoundation\Response;
 use function json_decode;
 
-class GuzzlePublisherClassifyClient implements ClassifyClient
+class GuzzlePublisherBannerClassifier implements BannerClassifier
 {
     private const VERIFY_ENDPOINT = '/classify/fetch';
 

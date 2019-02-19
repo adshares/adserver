@@ -24,7 +24,7 @@ namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Application\Dto\Classification\Collection;
 
-interface ClassifyClient
+interface BannerClassifier
 {
     public function fetchBannersClassification(array $bannerIds): Collection;
 }

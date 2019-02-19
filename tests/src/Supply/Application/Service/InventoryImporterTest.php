@@ -24,7 +24,7 @@ use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Dto\ClassifiedBanners;
-use Adshares\Supply\Application\Service\ClassifyClient;
+use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -225,7 +225,7 @@ final class InventoryImporterTest extends TestCase
 
     public function classifierClientMock(array $bannerIds = [])
     {
-        $client = $this->createMock(ClassifyClient::class);
+        $client = $this->createMock(BannerClassifier::class);
 
         $client
             ->method('fetchBannersClassification')

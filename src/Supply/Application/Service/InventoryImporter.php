@@ -46,7 +46,7 @@ class InventoryImporter
     /** @var TransactionManager */
     private $transactionManager;
 
-    /** @var ClassifyClient */
+    /** @var BannerClassifier */
     private $classifyClient;
 
     /** @var ClassifyVerifier */
@@ -56,7 +56,7 @@ class InventoryImporter
         MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
-        ClassifyClient $classifyClient,
+        BannerClassifier $classifyClient,
         ClassifyVerifier $classifyVerifier,
         TransactionManager $transactionManager
     ) {

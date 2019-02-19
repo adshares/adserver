@@ -24,11 +24,11 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Classify\Domain\Model\Classification;
 use Adshares\Supply\Application\Dto\Classification\Collection;
-use Adshares\Supply\Application\Service\ClassifyClient;
+use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
 
-class LocalPublisherClassifyClient implements ClassifyClient
+class LocalPublisherBannerClassifier implements BannerClassifier
 {
     private $classifier;
 
