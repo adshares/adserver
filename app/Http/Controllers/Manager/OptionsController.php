@@ -50,10 +50,12 @@ class OptionsController extends Controller
     {
         $options = $this->optionsRepository->fetchFilteringOptions();
 
-        $options->addOption((new Option('string',
+        $options->addOption((new Option(
+            'string',
             'classificationMultiChoiceFlat',
             'Classification Multi Choice Flat',
-            false))
+            false
+        ))
             ->withValues(...[
                 new OptionValue('Positive for all my Sites', 'PUBLISHERxYES'),
                 new OptionValue('Negative for all my Sites', 'PUBLISHERxNO'),
@@ -61,10 +63,12 @@ class OptionsController extends Controller
                 new OptionValue('Negative for just this Sites', 'SITExNO'),
             ]));
 
-        $options->addOption((new Option(null,
+        $options->addOption((new Option(
+            null,
             'classificationMultiChoiceTree',
             'Classification Multi Choice Tree',
-            false))
+            false
+        ))
             ->withChildren(new Selector(...[
                 (new Option('string', 'publisher', 'All my Sites', false))
                     ->withValues(...[
@@ -78,10 +82,12 @@ class OptionsController extends Controller
                     ]),
             ])));
 
-        $options->addOption((new Option('boolean',
+        $options->addOption((new Option(
+            'boolean',
             'classificationSingleChoiceFlat',
             'Classification Single Choice Flat',
-            false))
+            false
+        ))
             ->withValues(...[
                 new OptionValue('Positive for all my Sites', 'PUBLISHERxYES'),
                 new OptionValue('Negative for all my Sites', 'PUBLISHERxNO'),
@@ -89,10 +95,12 @@ class OptionsController extends Controller
                 new OptionValue('Negative for just this Sites', 'SITExNO'),
             ]));
 
-        $options->addOption((new Option(null,
+        $options->addOption((new Option(
+            null,
             'classificationSingleChoiceTree',
             'Classification Single Choice Tree',
-            false))
+            false
+        ))
             ->withChildren(new Selector(...[
                 (new Option('boolean', 'publisher', 'All my Sites', false))
                     ->withValues(...[
