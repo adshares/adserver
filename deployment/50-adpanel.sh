@@ -1,21 +1,13 @@
 #!/usr/bin/env bash
 
-set -ex
+HERE=$(dirname $(readlink -f "$0"))
+source ${HERE}/_functions.sh
 
-VENDOR_NAME=adshares
-PROJECT_NAME=adpanel
+SERVICE_NAME=adpanel
 
-INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
+source ${HERE}/clone-service.sh
 
-GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-master}
-GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/${VENDOR_NAME}}
-
-cd ${INSTALLATION_DIR}
-
-git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${PROJECT_NAME}.git \
-    || ( cd ${INSTALLATION_DIR}/${PROJECT_NAME} && git fetch && git reset --hard && git checkout ${GIT_BRANCH_NAME} )
-
-cd ${INSTALLATION_DIR}/${PROJECT_NAME}
+cd ${INSTALLATION_DIR}/${SERVICE_NAME}
 
 ADSERVER_URL_FROM_CMD=${1:-http://localhost:8001}
 
@@ -33,15 +25,15 @@ envsubst < src/environments/environment.ts.template | tee src/environments/envir
 
 yarn install
 
-#screen -S ${PROJECT_NAME} -X quit || true
-#
-#if [[ ${APP_ENV} == 'dev' ]]
-#then
-#    screen -S ${PROJECT_NAME} -dm bash -c "yarn start --port $APP_PORT"
-#elif [[ ${APP_ENV} == 'prod' ]]
-#then
-#    screen -S ${PROJECT_NAME} -dm bash -c "yarn start --prod --port $APP_PORT"
-#else
-#    echo "ERROR: Unsupported environment ($APP_ENV)."
-#    exit 1
-#fi
+screen -S ${SERVICE_NAME} -X quit || true
+
+if [[ ${APP_ENV} == 'dev' ]]
+then
+    yarn build
+elif [[ ${APP_ENV} == 'prod' ]]
+then
+    yarn build --prod
+else
+    echo "ERROR: Unsupported environment ($APP_ENV)."
+    exit 1
+fi

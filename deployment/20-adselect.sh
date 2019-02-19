@@ -1,42 +1,12 @@
 #!/usr/bin/env bash
 
-set -ex
+HERE=$(dirname $(readlink -f "$0"))
+source ${HERE}/_functions.sh
 
-VENDOR_NAME=adshares
-PROJECT_NAME=adselect
+SERVICE_NAME=adselect
 
-INSTALLATION_DIR=${INSTALLATION_DIR:-/opt/${VENDOR_NAME}}
+source ${HERE}/clone-service.sh
 
-GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-master}
-GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-https://github.com/${VENDOR_NAME}}
-
-cd ${INSTALLATION_DIR}
-
-git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${PROJECT_NAME}.git \
-    || ( cd ${INSTALLATION_DIR}/${PROJECT_NAME} && git fetch && git reset --hard && git checkout ${GIT_BRANCH_NAME} )
-
-#export PYTHONUNBUFFERED=1
-
-cd ${INSTALLATION_DIR}/${PROJECT_NAME}
+cd ${INSTALLATION_DIR}/${SERVICE_NAME}
 
 pipenv install
-
-#screen -S ${PROJECT_NAME} -X quit || true
-#
-#ADSELECT_LOG_CONFIG_JSON_FILE=
-#ADSELECT_LOG_LEVEL=DEBUG
-#
-#ADSELECT_MONGO_DB_PORT=27017
-#ADSELECT_MONGO_DB_NAME=${PROJECT_NAME}
-#ADSELECT_MONGO_DB_HOST=localhost
-#ADSELECT_SERVER_PORT=8011
-#
-#ADSELECT_RECALCULATE_TASK_SECONDS_INTERVAL=5
-#ADSELECT_NEW_BANNERS_IMPRESSION_CUTOFF=1000000
-#ADSELECT_SELECTED_BANNER_MAX_AMOUNT=1000
-#ADSELECT_NEW_BANNERS_MIX=50
-#ADSELECT_NEW_BANNERS_POOL_SIZE_FACTOR=4
-#
-#DOC_DEBUG=false
-#
-#screen -S ${PROJECT_NAME} -dm bash -c "pipenv run python daemon.py"
