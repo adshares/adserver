@@ -62,7 +62,25 @@ class GuzzlePublisherClassifyClient implements ClassifyClient
         $this->validateResponse($statusCode, $body);
         $decodedResponse = json_decode($body, true);
 
-        return new Collection($decodedResponse);
+        return $this->createClassificationCollection($decodedResponse);
+    }
+
+    private function createClassificationCollection(array $data): Collection
+    {
+        $collection = new Collection();
+        foreach ($data as $bannerId => $classifications) {
+            if (empty($classifications)) {
+                $collection->addEmptyClassification($bannerId);
+
+                continue;
+            }
+
+            foreach ($classifications as $item) {
+                $collection->addClassification($bannerId, $item['keyword'], $item['signature']);
+            }
+        }
+
+        return $collection;
     }
 
     private function validateResponse(int $statusCode, string $body): void
