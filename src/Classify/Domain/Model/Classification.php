@@ -41,26 +41,26 @@ class Classification
         string $namespace,
         string $publisherId,
         string $bannerId,
+        int $status,
         ?string $signature = null,
-        ?string $siteId = null,
-        ?int $status = null
+        ?string $siteId = null
     ) {
+        $this->namespace = $namespace;
         $this->publisherId = $publisherId;
         $this->bannerId = $bannerId;
         $this->status = $status;
         $this->signature = $signature;
         $this->siteId = $siteId;
-        $this->namespace = $namespace;
     }
 
     public static function createUnsigned(
         string $namespace,
         string $publisherId,
         string $bannerId,
-        ?string $siteId = null,
-        ?int $status = null
+        ?int $status,
+        ?string $siteId = null
     ): self {
-        return new self($namespace, $publisherId, $bannerId, null, $siteId, $status);
+        return new self($namespace, $publisherId, $bannerId, $status, null, $siteId);
     }
 
     public function export(): array

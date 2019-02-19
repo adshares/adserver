@@ -86,8 +86,8 @@ class DummyClassifier implements ClassifierInterface
             $this->keyword,
             $dummy['publisherId'],
             $bannerId,
-            $dummy['siteId'],
-            $dummy['status']
+            $dummy['status'],
+            $dummy['siteId']
         );
 
         $signature = $this->signatureVerifier->create($classification->keyword(), $bannerId);

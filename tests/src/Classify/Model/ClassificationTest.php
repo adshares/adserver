@@ -37,7 +37,7 @@ final class ClassificationTest extends TestCase
         $siteId = (string)Uuid::v4();
         $status = 0;
 
-        $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, null, $siteId, $status);
+        $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status, null, $siteId);
         $expected = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
 
 
@@ -50,7 +50,7 @@ final class ClassificationTest extends TestCase
         $bannerId = (string)Uuid::v4();
         $status = 0;
 
-        $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, null, null, $status);
+        $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status);
         $expected = sprintf('classify:%s:%s', $publisherId, $status);
 
 
