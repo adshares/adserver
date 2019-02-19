@@ -21,11 +21,11 @@ export DEV_XDEBUG=${DEV_XDEBUG:-false}
 export APP_ENV=${APP_ENV:-prod}
 export APP_PORT=${APP_PORT:-8002}
 
+envsubst < info.json.template | tee dist/info.json
+
 envsubst < src/environments/environment.ts.template | tee src/environments/environment.${APP_ENV}.ts
 
 yarn install
-
-screen -S ${SERVICE_NAME} -X quit || true
 
 if [[ ${APP_ENV} == 'dev' ]]
 then

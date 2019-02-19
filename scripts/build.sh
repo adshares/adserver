@@ -25,3 +25,5 @@ yarn run ${APP_ENV}
 
 mkdir -p storage/app/public/banners
 chmod a+rwX -R storage
+
+envsubst < info.json.template | tee public/info.json
