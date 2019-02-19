@@ -23,8 +23,7 @@ declare(strict_types=1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Common\Application\TransactionManager;
-use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Application\Dto\ClassifiedBanners;
+use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -47,8 +46,8 @@ class InventoryImporter
     /** @var TransactionManager */
     private $transactionManager;
 
-    /** @var ClassifierClient */
-    private $classifierClient;
+    /** @var ClassifyClient */
+    private $classifyClient;
 
     /** @var ClassifyVerifier */
     private $classifyVerifier;
@@ -57,7 +56,7 @@ class InventoryImporter
         MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
-        ClassifierClient $classifierClient,
+        ClassifyClient $classifyClient,
         ClassifyVerifier $classifyVerifier,
         TransactionManager $transactionManager
     ) {
@@ -65,7 +64,7 @@ class InventoryImporter
         $this->campaignRepository = $campaignRepository;
         $this->transactionManager = $transactionManager;
         $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
-        $this->classifierClient = $classifierClient;
+        $this->classifyClient = $classifyClient;
         $this->classifyVerifier = $classifyVerifier;
     }
 
@@ -79,7 +78,7 @@ class InventoryImporter
 
         $bannersIds = $this->getBannerIds($campaigns);
 
-        $classifiedBanners = $this->classifierClient->fetchBannersClassification($bannersIds);
+        $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersIds);
         $this->transactionManager->begin();
 
         try {
@@ -88,17 +87,7 @@ class InventoryImporter
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
                 $campaign->activate();
-
-                /** @var Banner $banner */
-                foreach ($campaign->getBanners() as $banner) {
-                    $classification = $classifiedBanners->findByBannerId($banner->getId());
-
-                    if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
-                        $banner->classify($classification);
-                    } else {
-                        $banner->detachClassification();
-                    }
-                }
+                $this->classifyCampaign($campaign, $classificationCollection);
 
                 $this->campaignRepository->save($campaign);
             }
@@ -122,5 +111,26 @@ class InventoryImporter
         }
 
         return $ids;
+    }
+
+    private function classifyCampaign(Campaign $campaign, Collection $classificationCollection): void
+    {
+        /** @var Banner $banner */
+        foreach ($campaign->getBanners() as $banner) {
+            $classifications = $classificationCollection->findByBannerId($banner->getId()) ?? [];
+
+            if (empty($classifications)) {
+                $banner->unclassified();
+            }
+
+            /** @var Classification $classification */
+            foreach ($classifications as $classification) {
+                if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
+                    $banner->classify($classification);
+                } else {
+                    $banner->removeClassification($classification);
+                }
+            }
+        }
     }
 }

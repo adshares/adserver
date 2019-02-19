@@ -39,8 +39,8 @@ class SodiumCompatClassifyVerifier implements ClassifyVerifier
 
     public function isVerified(Classification $classification, string $bannerId): bool
     {
-        $message = $this->createMessageHash($classification->getKeywords(), $bannerId);
-        $signature = hex2bin($classification->getSignature());
+        $message = $this->createMessageHash($classification->getKeyword(), $bannerId);
+        $signature = $classification->getSignature();
 
         try {
             return sodium_crypto_sign_verify_detached($signature, $message, hex2bin($this->publicKey));
@@ -49,8 +49,8 @@ class SodiumCompatClassifyVerifier implements ClassifyVerifier
         }
     }
 
-    private function createMessageHash(array $keywords, string $bannerId): string
+    private function createMessageHash(string $keyword, string $bannerId): string
     {
-        return sha1(implode('_', $keywords) . '.' . $bannerId);
+        return sha1($keyword . '.' . $bannerId);
     }
 }

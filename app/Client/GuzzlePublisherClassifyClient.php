@@ -22,15 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Supply\Application\Dto\ClassifiedBanners;
-use Adshares\Supply\Application\Service\ClassifierClient;
+use Adshares\Supply\Application\Dto\Classification\Collection;
+use Adshares\Supply\Application\Service\ClassifyClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\HttpFoundation\Response;
 use function json_decode;
 
-class GuzzlePublisherClassifierClient implements ClassifierClient
+class GuzzlePublisherClassifyClient implements ClassifyClient
 {
     private const VERIFY_ENDPOINT = '/classify/fetch';
 
@@ -41,7 +41,7 @@ class GuzzlePublisherClassifierClient implements ClassifierClient
         $this->client = $client;
     }
 
-    public function fetchBannersClassification(array $bannerIds): ClassifiedBanners
+    public function fetchBannersClassification(array $bannerIds): Collection
     {
         $body = json_encode($bannerIds);
 
@@ -62,7 +62,7 @@ class GuzzlePublisherClassifierClient implements ClassifierClient
         $this->validateResponse($statusCode, $body);
         $decodedResponse = json_decode($body, true);
 
-        return new ClassifiedBanners($decodedResponse);
+        return new Collection($decodedResponse);
     }
 
     private function validateResponse(int $statusCode, string $body): void

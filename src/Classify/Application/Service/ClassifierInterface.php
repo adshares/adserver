@@ -20,11 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Classify\Application\Service;
 
-use Adshares\Supply\Application\Dto\ClassifiedBanners;
 
-interface ClassifierClient
+use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
+use Adshares\Classify\Domain\Model\ClassificationCollection;
+
+interface ClassifierInterface
 {
-    public function fetchBannersClassification(array $bannerIds): ClassifiedBanners;
+    public const KEYWORD_ACCEPTED = 1;
+    public const KEYWORD_DECLINED = 0;
+
+    public function classify(string $bannerId, ?string $site): void;
+
+    /**
+     * @param string $bannerId
+     *
+     * @throws BannerNotVerifiedException
+     *
+     * @return ClassificationCollection
+     */
+    public function fetch(string $bannerId): ClassificationCollection;
 }

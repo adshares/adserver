@@ -22,26 +22,41 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
+use function hex2bin;
+
 class Classification
 {
     /** @var string */
     private $signature;
-    /** @var array */
-    private $keywords;
+    /** @var string */
+    private $keyword;
 
-    public function __construct(array $keywords, string $signature)
+    public function __construct(string $keyword, string $signature)
     {
         $this->signature = $signature;
-        $this->keywords = $keywords;
+        $this->keyword = $keyword;
     }
 
-    public function getKeywords(): array
+    public function getKeyword(): string
     {
-        return $this->keywords;
+        return $this->keyword;
     }
 
     public function getSignature(): string
     {
-        return $this->signature;
+        return hex2bin($this->signature);
+    }
+
+    public function equals(self $classification): bool
+    {
+        return $this->keyword === $classification->getKeyword();
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'signature' => $this->signature,
+            'keyword' => $this->keyword,
+        ];
     }
 }

@@ -24,18 +24,19 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
-use Adshares\Classify\Application\Service\BannerClassifierInterface;
+use Adshares\Classify\Application\Service\ClassifierInterface;
+use Adshares\Classify\Domain\Model\Classification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class ClassifyController extends Controller
 {
-    private $bannerVerifier;
+    private $classifier;
 
-    public function __construct(BannerClassifierInterface $bannerVerifier)
+    public function __construct(ClassifierInterface $classifier)
     {
-        $this->bannerVerifier = $bannerVerifier;
+        $this->classifier = $classifier;
     }
 
     public function fetch(Request $request): JsonResponse
@@ -45,10 +46,13 @@ class ClassifyController extends Controller
         $results = [];
         foreach ($bannerIds as $bannerId) {
             try {
-                $verification = $this->bannerVerifier->fetchClassifiedBanner($bannerId);
-                $results[$bannerId] = $verification->toArray();
+                $collection = $this->classifier->fetch($bannerId);
+                /** @var Classification $classification */
+                foreach ($collection as $classification) {
+                    $results[$bannerId][] = $classification->export();
+                }
             } catch (BannerNotVerifiedException $exception) {
-                $results[$bannerId] = null;
+                $results[$bannerId] = [];
             }
         }
 

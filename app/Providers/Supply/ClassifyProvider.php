@@ -22,9 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Classify\Application\Service\BannerClassifierInterface;
+use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
-use Adshares\Classify\Infrastructure\Service\DummyBannerClassifier;
+use Adshares\Classify\Infrastructure\Service\DummyClassifier;
 use Adshares\Classify\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Foundation\Application;
@@ -34,10 +34,10 @@ class ClassifyProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(
-            BannerClassifierInterface::class,
+            ClassifierInterface::class,
             function (Application $app) {
                 $keyword = (string)config('app.classify_keyword');
-                return new DummyBannerClassifier($keyword, $app->make(SignatureVerifierInterface::class));
+                return new DummyClassifier($keyword, $app->make(SignatureVerifierInterface::class));
             }
         );
 

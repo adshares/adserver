@@ -22,8 +22,9 @@ namespace Adshares\Test\Supply\Application\Service;
 
 use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Dto\ClassifiedBanners;
-use Adshares\Supply\Application\Service\ClassifierClient;
+use Adshares\Supply\Application\Service\ClassifyClient;
 use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -143,7 +144,7 @@ final class InventoryImporterTest extends TestCase
         return $transactionManager;
     }
 
-    public function testImportWhenMarkedCampaignsServiceThrowsAnException()
+    public function testImportWhenMarkedCampaignsServiceThrowsAnException(): void
     {
         $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
@@ -183,7 +184,7 @@ final class InventoryImporterTest extends TestCase
         $this->assertEquals(Status::STATUS_PROCESSING, $statuses[1]);
     }
 
-    public function testImportWhenActivateIsSuccessful()
+    public function testImportWhenActivateIsSuccessful(): void
     {
         $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
@@ -224,11 +225,11 @@ final class InventoryImporterTest extends TestCase
 
     public function classifierClientMock(array $bannerIds = [])
     {
-        $client = $this->createMock(ClassifierClient::class);
+        $client = $this->createMock(ClassifyClient::class);
 
         $client
             ->method('fetchBannersClassification')
-            ->willReturn(new ClassifiedBanners($this->classifiedBanners));
+            ->willReturn(new Collection([]));
 
             return $client;
     }

@@ -22,7 +22,7 @@ namespace Adshares\Adserver\Providers\Supply;
 
 use Adshares\Adserver\Manager\EloquentTransactionManager;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
-use Adshares\Supply\Application\Service\ClassifierClient;
+use Adshares\Supply\Application\Service\ClassifyClient;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
@@ -45,7 +45,7 @@ class InventoryImporterProvider extends ServiceProvider
                     $markedCampaignsAsDeactivatedService,
                     $campaignRepository,
                     $app->make(DemandClient::class),
-                    $app->make(ClassifierClient::class),
+                    $app->make(ClassifyClient::class),
                     new SodiumCompatClassifyVerifier($classifyPublicKey),
                     new EloquentTransactionManager()
                 );

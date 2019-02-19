@@ -60,7 +60,7 @@ final class Banner
     /** @var string */
     private $checksum;
 
-    /** @var Classification|null */
+    /** @var Classification[] */
     private $classification;
 
     public function __construct(
@@ -71,7 +71,7 @@ final class Banner
         Size $size,
         string $checksum,
         Status $status,
-        ?Classification $classification = null
+        ?array $classification = []
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerSizeException(sprintf(
@@ -103,23 +103,29 @@ final class Banner
 
     public function classify(Classification $classification): void
     {
-        $this->classification = $classification;
+        $this->classification[] = $classification;
     }
 
-    public function detachClassification(): void
+    public function removeClassification(Classification $classification): void
     {
-        $this->classification = null;
+        foreach ($this->classification as $key => $item) {
+            if ($classification->equals($item)) {
+                unset($this->classification[$key]);
+            }
+        }
+    }
+
+    public function unclassified(): void
+    {
+        $this->classification = [];
     }
 
     public function toArray(): array
     {
-        if ($this->classification) {
-            $classification = [
-                'keywords' => $this->classification->getKeywords(),
-                'signature' => $this->classification->getSignature(),
-            ];
-        } else {
-            $classification = null;
+        $classification = [];
+        /** @var Classification $classification */
+        foreach ($this->classification as $classificationItem) {
+            $classification[] = $classificationItem->toArray();
         }
 
         return [

@@ -14,7 +14,7 @@ class AddClassificationToNetworkBannersTable extends Migration
     public function up()
     {
         Schema::table('network_banners', function (Blueprint $table) {
-            $table->json('classification')->nullable(true);
+            $table->json('classification')->nullable();
         });
     }
 

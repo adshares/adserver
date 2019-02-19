@@ -20,35 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Classify\Application\Dto;
+namespace Adshares\Supply\Application\Service;
 
-class ClassificationList
+use Adshares\Supply\Application\Dto\Classification\Collection;
+
+interface ClassifyClient
 {
-    private $keywords;
-
-    private $signature;
-
-    public function __construct(array $keywords, string $signature)
-    {
-        $this->keywords = $keywords;
-        $this->signature = $signature;
-    }
-
-    public function getKeywords(): array
-    {
-        return $this->keywords;
-    }
-
-    public function getSignature(): string
-    {
-        return $this->signature;
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'keywords' => $this->keywords,
-            'signature' => $this->signature,
-        ];
-    }
+    public function fetchBannersClassification(array $bannerIds): Collection;
 }
