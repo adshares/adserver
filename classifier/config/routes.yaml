@@ -1,4 +1,0 @@
-api:
-  resource: "./routes/api.yaml"
-  type:     yaml
-  prefix:   /api/

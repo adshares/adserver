@@ -1,4 +1,0 @@
-verify:
-  path: /fetch
-  controller: App\Controller\ApiController::fetchAction
-  methods: [POST]

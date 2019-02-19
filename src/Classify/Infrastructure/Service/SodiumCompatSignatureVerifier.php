@@ -20,32 +20,36 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Infrastructure\Service;
+namespace Adshares\Classify\Infrastructure\Service;
 
-use Adshares\Supply\Application\Service\ClassifyVerifier;
-use Adshares\Supply\Domain\ValueObject\Classification;
+use Adshares\Classify\Application\Service\SignatureVerifierInterface;
+use function sodium_crypto_sign_detached;
+use function sodium_crypto_sign_secretkey;
+use function sodium_crypto_sign_seed_keypair;
 use SodiumException;
-use function sodium_crypto_sign_verify_detached;
+use RuntimeException;
 
-class SodiumCompatClassifyVerifier implements ClassifyVerifier
+class SodiumCompatSignatureVerifier implements SignatureVerifierInterface
 {
     /** @var string */
-    private $publicKey;
+    private $privateKey;
 
-    public function __construct(string $publicKey)
+    public function __construct(string $privateKey)
     {
-        $this->publicKey = $publicKey;
+        $this->privateKey = $privateKey;
     }
 
-    public function isVerified(Classification $classification, string $bannerId): bool
+    public function create(string $keyword, string $bannerId): string
     {
-        $message = $this->createMessageHash($classification->getKeyword(), $bannerId);
-        $signature = $classification->getSignature();
+        $message = $this->createMessageHash($keyword, $bannerId);
 
         try {
-            return sodium_crypto_sign_verify_detached($signature, $message, hex2bin($this->publicKey));
+            $key_pair = sodium_crypto_sign_seed_keypair(hex2bin($this->privateKey));
+            $key_secret = sodium_crypto_sign_secretkey($key_pair);
+
+            return bin2hex(sodium_crypto_sign_detached($message, $key_secret));
         } catch (SodiumException $exception) {
-            return false;
+            throw new RuntimeException('Cannot create a signature');
         }
     }
 

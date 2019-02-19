@@ -20,43 +20,28 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\ValueObject;
+namespace Adshares\Supply\Application\Dto\Classification;
 
-use function hex2bin;
+use Adshares\Common\Domain\Adapter\ArrayCollection;
+use Adshares\Supply\Domain\ValueObject\Classification;
 
-class Classification
+class Collection extends ArrayCollection
 {
-    /** @var string */
-    private $signature;
-    /** @var string */
-    private $keyword;
-
-    public function __construct(string $keyword, string $signature)
+    public function addClassification(string $bannerId, string $keyword, string $signature): void
     {
-        $this->signature = $signature;
-        $this->keyword = $keyword;
+        $elements = $this->get($bannerId) ?? [];
+        $elements[] = new Classification($keyword, $signature);
+
+        $this->set($bannerId, $elements);
     }
 
-    public function getKeyword(): string
+    public function addEmptyClassification(string $bannerId): void
     {
-        return $this->keyword;
+        $this->set($bannerId, []);
     }
 
-    public function getSignature(): string
+    public function findByBannerId(string $bannerId): ?array
     {
-        return hex2bin($this->signature);
-    }
-
-    public function equals(self $classification): bool
-    {
-        return $this->keyword === $classification->getKeyword();
-    }
-
-    public function toArray(): array
-    {
-        return [
-            'signature' => $this->signature,
-            'keyword' => $this->keyword,
-        ];
+        return $this->get($bannerId);
     }
 }
