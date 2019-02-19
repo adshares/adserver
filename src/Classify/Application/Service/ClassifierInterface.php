@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Classify\Application\Service;
 
-
 use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
 use Adshares\Classify\Domain\Model\ClassificationCollection;
 

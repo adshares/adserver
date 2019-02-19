@@ -44,8 +44,7 @@ class Classification
         ?string $signature = null,
         ?string $siteId = null,
         ?int $status = null
-    )
-    {
+    ) {
         $this->publisherId = $publisherId;
         $this->bannerId = $bannerId;
         $this->status = $status;
