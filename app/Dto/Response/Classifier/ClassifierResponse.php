@@ -53,9 +53,11 @@ class ClassifierResponse implements Arrayable
 
     private function globalStatusForBanner($bannerId, Collection $classifications): ?int
     {
-        $item = $classifications->filter(function(Classification $classification) use ($bannerId) {
-            return $classification->banner_id === $bannerId && $classification->site_id === null;
-        })->first();
+        $item = $classifications->filter(
+            function (Classification $classification) use ($bannerId) {
+                return $classification->banner_id === $bannerId && $classification->site_id === null;
+            }
+        )->first();
 
         return $item->status ?? null;
     }
@@ -66,9 +68,11 @@ class ClassifierResponse implements Arrayable
             return null;
         }
 
-        $item = $classifications->filter(function(Classification $classification) use ($bannerId, $siteId) {
-            return $classification->banner_id === $bannerId && $classification->site_id === $siteId;
-        })->first();
+        $item = $classifications->filter(
+            function (Classification $classification) use ($bannerId, $siteId) {
+                return $classification->banner_id === $bannerId && $classification->site_id === $siteId;
+            }
+        )->first();
 
         return $item->status ?? null;
     }
@@ -80,8 +84,10 @@ class ClassifierResponse implements Arrayable
      */
     public function toArray(): array
     {
-        return array_map(function(Item $item) {
-            return $item->toArray();
-        }, $this->items);
+        return array_map(
+            function (Item $item) {
+                return $item->toArray();
+            }, $this->items
+        );
     }
 }

@@ -37,9 +37,7 @@ class ClassifierController extends Controller
         $offset = (int)$request->get('offset', 0);
         $banners = NetworkBanner::fetch($limit, $offset);
         $bannerIds = $this->getIdsFromBanners($banners);
-
         $classifications = Classification::fetchByBannerIds($bannerIds);
-
 
         $response = new ClassifierResponse($banners, $classifications, $siteId);
 
@@ -49,8 +47,10 @@ class ClassifierController extends Controller
 
     private function getIdsFromBanners(Collection $banners): array
     {
-        return $banners->map(function(NetworkBanner $banner) {
-            return $banner->id;
-        })->toArray();
+        return $banners->map(
+            function (NetworkBanner $banner) {
+                return $banner->id;
+            }
+        )->toArray();
     }
 }
