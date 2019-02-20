@@ -72,14 +72,14 @@ final class ClassifierControllerTest extends TestCase
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => null]);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
 
-        $this->assertEquals(0, $content[0]['classifiedGlobal']);
+        $this->assertNull($content[0]['classifiedGlobal']);
         $this->assertNull($content[0]['classifiedSite']);
-        $this->assertNull($content[1]['classifiedGlobal']);
+        $this->assertFalse($content[1]['classifiedGlobal']);
         $this->assertNull($content[1]['classifiedSite']);
     }
 
@@ -97,10 +97,10 @@ final class ClassifierControllerTest extends TestCase
         $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
         $content = json_decode($response->getContent(), true);
 
-        $this->assertEquals(0, $content[0]['classifiedSite']);
         $this->assertNull($content[0]['classifiedGlobal']);
+        $this->assertNull($content[0]['classifiedSite']);
+        $this->assertFalse($content[1]['classifiedSite']);
         $this->assertNull($content[1]['classifiedGlobal']);
-        $this->assertNull($content[1]['classifiedSite']);
     }
 
     public function testSiteWhenThereIsGlobalAndSiteClassification(): void

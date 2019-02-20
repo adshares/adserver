@@ -88,7 +88,8 @@ class ClassifierResponse implements Arrayable
         return array_map(
             function (Item $item) {
                 return $item->toArray();
-            }, $this->items
+            },
+            $this->items
         );
     }
 }

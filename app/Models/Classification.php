@@ -44,12 +44,6 @@ class Classification extends Model
         'status',
     ];
 
-    protected $casts = [
-        'user_id' => 'int',
-        'banner_id' => 'int',
-        'site_id' => 'int',
-    ];
-
     public function banner(): BelongsTo
     {
         return $this->belongsTo(NetworkBanner::class, 'banner_id');
