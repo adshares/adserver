@@ -108,6 +108,27 @@ class WalletController extends Controller
         return config('app.adshares_address');
     }
 
+    public function approveWithdrawal(Request $request): JsonResponse
+    {
+        return self::json([], Response::HTTP_NOT_IMPLEMENTED);
+
+        Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
+
+        DB::beginTransaction();
+        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user = User::find($token['user_id']);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
+        $user->save();
+        DB::commit();
+
+        return self::json($user->toArray());
+    }
+
     public function withdraw(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();

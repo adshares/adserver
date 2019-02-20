@@ -34,7 +34,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
