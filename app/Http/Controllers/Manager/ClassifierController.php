@@ -42,7 +42,6 @@ class ClassifierController extends Controller
         $response = new ClassifierResponse($banners, $classifications, $siteId);
 
         return self::json($response);
-
     }
 
     private function getIdsFromBanners(Collection $banners): array

@@ -25,6 +25,15 @@ namespace Adshares\Adserver\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int id
+ * @property int user_id
+ * @property int site_id
+ * @property int banner_id
+ * @property string signature
+ * @property int|null status
+ */
+
 class Classification extends Model
 {
     protected $fillable = [
@@ -33,6 +42,12 @@ class Classification extends Model
         'banner_id',
         'signature',
         'status',
+    ];
+
+    protected $casts = [
+        'user_id' => 'int',
+        'banner_id' => 'int',
+        'site_id' => 'int',
     ];
 
     public function banner(): BelongsTo

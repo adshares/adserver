@@ -37,32 +37,32 @@ class ClassifierResponse implements Arrayable
             $globalStatus = $this->globalStatusForBanner($banner->id, $classifications);
             $siteStatus = $this->siteStatusForBanner($banner->id, $classifications, $siteId);
             $this->items[] = new Item(
-                $banner->id,
+                (int)$banner->id,
                 $banner->type,
-                $banner->width,
-                $banner->height,
+                (int)$banner->width,
+                (int)$banner->height,
                 $banner->source_host,
-                $banner->budget,
-                $banner->max_cpm,
-                $banner->max_cpc,
-                $globalStatus === null ? null : (bool)$globalStatus,
-                $siteStatus === null ? null : (bool)$siteStatus
+                (int)$banner->budget,
+                (int)$banner->max_cpm,
+                (int)$banner->max_cpc,
+                $globalStatus,
+                $siteStatus
             );
         }
     }
 
-    private function globalStatusForBanner($bannerId, Collection $classifications): ?int
+    private function globalStatusForBanner($bannerId, Collection $classifications): ?bool
     {
         $item = $classifications->filter(
             function (Classification $classification) use ($bannerId) {
-                return $classification->banner_id === $bannerId && $classification->site_id === null;
+                return (int)$classification->banner_id === $bannerId && $classification->site_id === null;
             }
         )->first();
 
-        return $item->status ?? null;
+        return isset($item->status) ? (bool)$item->status : null;
     }
 
-    private function siteStatusForBanner($bannerId, Collection $classifications, ?int $siteId): ?int
+    private function siteStatusForBanner($bannerId, Collection $classifications, ?int $siteId): ?bool
     {
         if (!$siteId) {
             return null;
@@ -70,11 +70,11 @@ class ClassifierResponse implements Arrayable
 
         $item = $classifications->filter(
             function (Classification $classification) use ($bannerId, $siteId) {
-                return $classification->banner_id === $bannerId && $classification->site_id === $siteId;
+                return (int)$classification->banner_id === $bannerId && (int)$classification->site_id === $siteId;
             }
         )->first();
 
-        return $item->status ?? null;
+        return isset($item->status) ? (bool)$item->status : null;
     }
 
     /**
