@@ -149,7 +149,7 @@ HTML;
 
     public static function fetchByPublicId(string $uuid): ?Zone
     {
-        return self::where('uuid', $uuid)->first();
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 
     public static function findByPublicIds(array $publicIds): Collection
