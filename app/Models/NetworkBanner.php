@@ -116,6 +116,7 @@ class NetworkBanner extends Model
         $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
         $query->select(
             'network_banners.id',
+            'network_banners.serve_url',
             'network_banners.type',
             'network_banners.width',
             'network_banners.height',

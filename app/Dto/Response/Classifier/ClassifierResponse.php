@@ -38,6 +38,7 @@ class ClassifierResponse implements Arrayable
             $siteStatus = $this->siteStatusForBanner($banner->id, $classifications, $siteId);
             $this->items[] = new Item(
                 (int)$banner->id,
+                $banner->serve_url,
                 $banner->type,
                 (int)$banner->width,
                 (int)$banner->height,
@@ -87,8 +88,7 @@ class ClassifierResponse implements Arrayable
         return array_map(
             function (Item $item) {
                 return $item->toArray();
-            },
-            $this->items
+            }, $this->items
         );
     }
 }

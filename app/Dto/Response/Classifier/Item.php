@@ -46,9 +46,12 @@ class Item implements Arrayable
     private $classifiedGlobal;
     /** @var bool|null */
     private $classifiedSite;
+    /** @var string */
+    private $url;
 
     public function __construct(
         int $bannerId,
+        string $url,
         string $type,
         int $width,
         int $height,
@@ -60,6 +63,7 @@ class Item implements Arrayable
         ?bool $classifiedSite = null
     ) {
         $this->bannerId = $bannerId;
+        $this->url = $url;
         $this->type = $type;
         $this->width = $width;
         $this->height = $height;
@@ -80,6 +84,7 @@ class Item implements Arrayable
     {
         return [
             'banner_id' => $this->bannerId,
+            'url' => $this->url,
             'type' => $this->type,
             'width' => $this->width,
             'height' => $this->height,
