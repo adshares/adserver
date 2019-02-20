@@ -87,12 +87,13 @@ class SupplySendPayments extends Command
             } catch (Exception $exception) {
                 DB::rollBack();
 
-                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
-                $message.= 'Payment (Network) id %s. Amount %s.';
+                throw $exception;
+//                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
+//                $message.= 'Payment (Network) id %s. Amount %s.';
+//
+//                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
 
-                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
-
-                continue;
+//                continue;
             }
         }
 
