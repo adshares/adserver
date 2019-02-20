@@ -71,6 +71,8 @@ export ADPAY_ENDPOINT=http://localhost:8012 # locally visible AdPay URL
 
 export ADPANEL_URL=http://localhost # publicly visible AdPanel URL
 
+envsubst < info.json.template | tee public/info.json
+
 composer install
 
 yarn install
