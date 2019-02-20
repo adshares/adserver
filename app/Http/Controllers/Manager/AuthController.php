@@ -27,6 +27,7 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -37,13 +38,18 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
     protected $password_recovery_resend_limit = 2 * 60; //2 minutes
+
     protected $password_recovery_token_time = 120 * 60; // 2 hours
+
     protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
+
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes
+
     protected $email_change_token_time = 60 * 60; // 1 hour
+
     protected $email_new_change_resend_limit = 5 * 60; // 1 minute
 
-    public function register(Request $request)
+    public function register(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
@@ -61,7 +67,7 @@ class AuthController extends Controller
         return self::json($user->toArray(), Response::HTTP_CREATED);
     }
 
-    public function emailActivate(Request $request)
+    public function emailActivate(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
@@ -80,7 +86,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function emailActivateResend(Request $request)
+    public function emailActivateResend(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['uri' => 'required'])->validate();
         $user = Auth::user();
@@ -106,7 +112,7 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function emailChangeStep1(Request $request)
+    public function emailChangeStep1(Request $request): JsonResponse
     {
         Validator::make(
             $request->all(),
@@ -144,7 +150,7 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function emailChangeStep2($token)
+    public function emailChangeStep2($token): JsonResponse
     {
         DB::beginTransaction();
         if (false === $token = Token::check($token)) {
@@ -173,7 +179,7 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function emailChangeStep3($token)
+    public function emailChangeStep3($token): JsonResponse
     {
         DB::beginTransaction();
         if (false === $token = Token::check($token)) {
@@ -199,7 +205,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function check()
+    public function check(): JsonResponse
     {
         return self::json(Auth::user());
     }
@@ -209,9 +215,9 @@ class AuthController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         if (Auth::guard()->attempt(
             $request->only('email', 'password'),
@@ -228,9 +234,9 @@ class AuthController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function logout()
+    public function logout(): JsonResponse
     {
         Auth::user()->clearApiKey();
 
@@ -242,9 +248,9 @@ class AuthController extends Controller
      *
      * @param \Illuminate\Http\Request $request
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function recovery(Request $request)
+    public function recovery(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['email' => 'required|email', 'uri' => 'required'])->validate();
         $user = User::where('email', $request->input('email'))->first();
@@ -269,9 +275,9 @@ class AuthController extends Controller
     /**
      * Tests and extends user password recovery token.
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function recoveryTokenExtend($token)
+    public function recoveryTokenExtend($token): JsonResponse
     {
         if (Token::extend($token, $this->password_recovery_token_time, null, 'password-recovery')) {
             return self::json([], Response::HTTP_NO_CONTENT);
@@ -280,8 +286,7 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, ['message' => 'Password recovery token is invalid']);
     }
 
-//TODO: To be refactored!!! - split recovery and normal changes (email, password)
-    public function updateSelf(Request $request)
+    public function updateSelf(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
             return self::json(
