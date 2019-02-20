@@ -382,6 +382,7 @@ class DemandController extends Controller
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
+                    'checksum' => $bannerArray['creative_sha1'],
                     'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
                     'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
                     'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),

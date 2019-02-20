@@ -24,6 +24,7 @@ namespace Adshares\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -53,13 +54,14 @@ final class Banner
     /** @var Size */
     private $size;
 
-    /**
-     * @var Status
-     */
+    /** @var Status */
     private $status;
 
     /** @var string */
     private $checksum;
+
+    /** @var Classification[] */
+    private $classification;
 
     public function __construct(
         Campaign $campaign,
@@ -68,7 +70,8 @@ final class Banner
         string $type,
         Size $size,
         string $checksum,
-        Status $status
+        Status $status,
+        ?array $classification = []
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
             throw new UnsupportedBannerSizeException(sprintf(
@@ -85,6 +88,7 @@ final class Banner
         $this->size = $size;
         $this->status = $status;
         $this->checksum = $checksum;
+        $this->classification = $classification;
     }
 
     public function activate(): void
@@ -97,8 +101,33 @@ final class Banner
         $this->status = Status::deleted();
     }
 
+    public function classify(Classification $classification): void
+    {
+        $this->classification[] = $classification;
+    }
+
+    public function removeClassification(Classification $classification): void
+    {
+        foreach ($this->classification as $key => $item) {
+            if ($classification->equals($item)) {
+                unset($this->classification[$key]);
+            }
+        }
+    }
+
+    public function unclassified(): void
+    {
+        $this->classification = [];
+    }
+
     public function toArray(): array
     {
+        $classification = [];
+        /** @var Classification $classification */
+        foreach ($this->classification as $classificationItem) {
+            $classification[] = $classificationItem->toArray();
+        }
+
         return [
             'id' => $this->getId(),
             'type' => $this->getType(),
@@ -110,6 +139,7 @@ final class Banner
             'click_url' => $this->bannerUrl->getClickUrl(),
             'view_url' => $this->bannerUrl->getViewUrl(),
             'status' => $this->status->getStatus(),
+            'classification' => $classification,
         ];
     }
 
@@ -146,5 +176,10 @@ final class Banner
     public function getStatus(): int
     {
         return $this->status->getStatus();
+    }
+
+    public function getChecksum(): string
+    {
+        return $this->checksum;
     }
 }

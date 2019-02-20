@@ -22,6 +22,7 @@ use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\ClassifyController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () { return ''; })->name('login');
@@ -50,3 +51,5 @@ Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 # should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])->name('banner-preview');
+
+Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);

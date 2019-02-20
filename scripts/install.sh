@@ -74,3 +74,4 @@ artisanCommand ops:filtering-options:update
 artisanCommand ads:fetch-hosts --quiet
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab-${VARIABLE_HOST}
+

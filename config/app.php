@@ -154,6 +154,10 @@ return [
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
     'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
+    'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
+    'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
+    'classify_keyword' => (string)env('CLASSIFY_KEYWORD'),
+    'classify_secret' => (string)env('CLASSIFY_SECRET'),
 
     /*
     |--------------------------------------------------------------------------
@@ -206,6 +210,7 @@ return [
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
         Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
         Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
+        Adshares\Adserver\Providers\Supply\ClassifyProvider::class,
     ],
 
     /*
