@@ -34,7 +34,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -64,7 +64,7 @@ class DemandController extends Controller
         $banner = $this->getBanner($id);
 
         if ('OPTIONS' === $request->getRealMethod()) {
-            $response = new Response('', 204);
+            $response = new Response('', Response::HTTP_NO_CONTENT);
         } else {
             $response = new GzippedStreamedResponse();
         }

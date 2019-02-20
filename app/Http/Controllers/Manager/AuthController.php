@@ -58,7 +58,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json($user->toArray(), 201);
+        return self::json($user->toArray(), Response::HTTP_CREATED);
     }
 
     public function emailActivate(Request $request)
@@ -67,17 +67,17 @@ class AuthController extends Controller
 
         DB::beginTransaction();
         if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
-            return self::json([], 403);
+            return self::json([], Response::HTTP_FORBIDDEN);
         }
         $user = User::find($token['user_id']);
         if (empty($user)) {
-            return self::json([], 403);
+            return self::json([], Response::HTTP_FORBIDDEN);
         }
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArray(), 200);
+        return self::json($user->toArray());
     }
 
     public function emailActivateResend(Request $request)
@@ -88,7 +88,7 @@ class AuthController extends Controller
         if (!Token::canGenerate($user->id, 'email-activate', $this->email_activation_resend_limit)) {
             return self::json(
                 [],
-                429,
+                Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'message' => 'You can request to resend email activation every 15 minutes.'
                         .' Please wait 15 minutes or less.',
@@ -103,7 +103,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function emailChangeStep1(Request $request)
@@ -113,7 +113,11 @@ class AuthController extends Controller
             ['email' => 'required|email', 'uri_step1' => 'required', 'uri_step2' => 'required']
         )->validate();
         if (User::withTrashed()->where('email', $request->input('email'))->count()) {
-            return self::json([], 422, ['email' => 'This email already exists in our database']);
+            return self::json(
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['email' => 'This email already exists in our database']
+            );
         }
 
         $user = Auth::user();
@@ -137,7 +141,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function emailChangeStep2($token)
@@ -146,13 +150,17 @@ class AuthController extends Controller
         if (false === $token = Token::check($token)) {
             DB::commit();
 
-            return self::json([], 403, ['message' => 'Invalid or outdated token']);
+            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
             DB::commit();
 
-            return self::json([], 422, ['message' => 'This email already exists in our database']);
+            return self::json(
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['message' => 'This email already exists in our database']
+            );
         }
         Mail::to($token['payload']['email'])->queue(
             new UserEmailChangeConfirm2New(
@@ -162,7 +170,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function emailChangeStep3($token)
@@ -171,20 +179,24 @@ class AuthController extends Controller
         if (false === $token = Token::check($token)) {
             DB::commit();
 
-            return self::json([], 403, ['message' => 'Invalid or outdated token']);
+            return self::json([], Response::HTTP_FORBIDDEN, ['message' => 'Invalid or outdated token']);
         }
         $user = User::findOrFail($token['user_id']);
         if (User::withTrashed()->where('email', $token['payload']['email'])->count()) {
             DB::commit();
 
-            return self::json([], 422, ['message' => 'This email already exists in our database']);
+            return self::json(
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['message' => 'This email already exists in our database']
+            );
         }
         $user->email = $token['payload']['email'];
         $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArray(), 200);
+        return self::json($user->toArray());
     }
 
     public function check()
@@ -216,15 +228,13 @@ class AuthController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @param \Illuminate\Http\Request $request
-     *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function logout(Request $request)
+    public function logout()
     {
         Auth::user()->clearApiKey();
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -239,11 +249,11 @@ class AuthController extends Controller
         Validator::make($request->all(), ['email' => 'required|email', 'uri' => 'required'])->validate();
         $user = User::where('email', $request->input('email'))->first();
         if (empty($user)) {
-            return self::json([], 204);
+            return self::json([], Response::HTTP_NO_CONTENT);
         }
         DB::beginTransaction();
         if (!Token::canGenerate($user->id, 'password-recovery', $this->password_recovery_resend_limit)) {
-            return self::json([], 204);
+            return self::json([], Response::HTTP_NO_CONTENT);
         }
         Mail::to($user)->queue(
             new AuthRecovery(
@@ -253,7 +263,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -264,17 +274,21 @@ class AuthController extends Controller
     public function recoveryTokenExtend($token)
     {
         if (Token::extend($token, $this->password_recovery_token_time, null, 'password-recovery')) {
-            return self::json([], 204);
+            return self::json([], Response::HTTP_NO_CONTENT);
         }
 
-        return self::json([], 422, ['message' => 'Password recovery token is invalid']);
+        return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, ['message' => 'Password recovery token is invalid']);
     }
 
 //TODO: To be refactored!!! - split recovery and normal changes (email, password)
     public function updateSelf(Request $request)
     {
         if (!Auth::check() && !$request->has('user.token')) {
-            return self::json([], 401, ['message' => 'Required authenticated access or token authentication']);
+            return self::json(
+                [],
+                Response::HTTP_UNAUTHORIZED,
+                ['message' => 'Required authenticated access or token authentication']
+            );
         }
 
         DB::beginTransaction();
@@ -285,7 +299,11 @@ class AuthController extends Controller
             if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
                 DB::rollBack();
 
-                return self::json([], 422, ['message' => 'Authentication token is invalid']);
+                return self::json(
+                    [],
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    ['message' => 'Authentication token is invalid']
+                );
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
@@ -298,7 +316,7 @@ class AuthController extends Controller
             $user->save();
             DB::commit();
 
-            return self::json($user->toArray(), 200);
+            return self::json($user->toArray());
         }
 
         if ($token_authorization) {
@@ -306,19 +324,23 @@ class AuthController extends Controller
             $user->save();
             DB::commit();
 
-            return self::json($user->toArray(), 200);
+            return self::json($user->toArray());
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
             DB::rollBack();
 
-            return self::json($user->toArray(), 422, ['password_old' => 'Old password is not valid']);
+            return self::json(
+                $user->toArray(),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['password_old' => 'Old password is not valid']
+            );
         }
 
         $user->password = $request->input('user.password_new');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArray(), 200);
+        return self::json($user->toArray());
     }
 }
