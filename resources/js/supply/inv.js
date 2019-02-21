@@ -59,7 +59,7 @@ function createIframeFromData(data, domInsertCallback) {
             iframe.contentWindow.contents = contents;
             iframe.src = 'javascript:window["contents"]';
             
-            iframe.setAttribute('sandbox', "allow-scripts");
+            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
         }
 
         if (requestBlob && data instanceof Blob) // blob
@@ -80,7 +80,7 @@ function createIframeFromData(data, domInsertCallback) {
 
     } else {
         getDataURI(data, function (dataUri) {
-            iframe.setAttribute('sandbox', "allow-scripts");
+            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
             iframe.src = dataUri;
             domInsertCallback(iframe);
         });
