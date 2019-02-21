@@ -33,6 +33,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ClassifierController extends Controller
@@ -101,6 +102,6 @@ class ClassifierController extends Controller
             Classification::classifyGlobal($userId, $bannerId, $status, $signature);
         }
 
-        return self::json();
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 }
