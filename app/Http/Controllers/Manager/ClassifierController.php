@@ -38,14 +38,11 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ClassifierController extends Controller
 {
-    /** @var ClassifierInterface */
-    private $classifier;
     /** @var SignatureVerifierInterface */
     private $signatureVerifier;
 
-    public function __construct(ClassifierInterface $classifier, SignatureVerifierInterface $signatureVerifier)
+    public function __construct(SignatureVerifierInterface $signatureVerifier)
     {
-        $this->classifier = $classifier;
         $this->signatureVerifier = $signatureVerifier;
     }
 
