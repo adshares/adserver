@@ -23,9 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use DateTime;
 
 /**
  * @property int id
@@ -36,6 +37,7 @@ use DateTime;
  * @property int deleted_at
  * @property int last_broadcast
  * @property int failed_connection
+ * @mixin Builder
  */
 class NetworkHost extends Model
 {

@@ -20,15 +20,15 @@
 
 namespace Adshares\Adserver\Models;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Query\Builder;
 use InvalidArgumentException;
 use function sprintf;
 
 /**
  * @method static Builder where(string $string, int $userId)
+ * @mixin Builder
  */
 class UserLedgerEntry extends Model
 {
@@ -129,9 +129,9 @@ class UserLedgerEntry extends Model
     public static function balanceRelevantEntriesByUserId(int $userId)
     {
         return self::where('user_id', $userId)
-            ->where(function (EloquentBuilder $query) {
+            ->where(function (Builder $query) {
                 $query->where('status', self::STATUS_ACCEPTED)
-                    ->orWhere(function (EloquentBuilder $query) {
+                    ->orWhere(function (Builder $query) {
                         $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED, self::STATUS_PROCESSING])
                             ->whereIn('type', self::DEBIT_TYPES);
                     });

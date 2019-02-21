@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -34,6 +35,7 @@ use function in_array;
 
 /**
  * @property Campaign campaign
+ * @mixin Builder
  */
 class Banner extends Model
 {
