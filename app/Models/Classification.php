@@ -44,6 +44,10 @@ class Classification extends Model
         'status',
     ];
 
+    protected $casts = [
+        'status' => 'bool',
+    ];
+
     public static function fetchByBannerIds(array $ids)
     {
         return self::whereIn('banner_id', $ids)->get();
