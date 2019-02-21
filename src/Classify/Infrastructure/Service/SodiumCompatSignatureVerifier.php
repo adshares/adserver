@@ -55,6 +55,6 @@ class SodiumCompatSignatureVerifier implements SignatureVerifierInterface
 
     private function createMessageHash(string $keyword): string
     {
-        return sha1($keyword );
+        return sha1($keyword);
     }
 }
