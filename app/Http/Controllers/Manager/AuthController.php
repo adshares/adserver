@@ -64,7 +64,7 @@ class AuthController extends Controller
         );
         DB::commit();
 
-        return self::json($user->toArray(), Response::HTTP_CREATED);
+        return self::json([], Response::HTTP_CREATED);
     }
 
     public function emailActivate(Request $request): JsonResponse
@@ -131,7 +131,7 @@ class AuthController extends Controller
         if (!Token::canGenerate($user->id, 'email-change-step1', $this->email_new_change_resend_limit)) {
             return self::json(
                 [],
-                429,
+                Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'message' => "You have already requested email change.\n"
                         ."You can request email change every 5 minutes.\n"
