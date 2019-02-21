@@ -24,6 +24,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property NetworkCampaign campaign
@@ -102,5 +103,29 @@ class NetworkBanner extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(NetworkCampaign::class, 'network_campaign_id');
+    }
+
+    public function banners(): HasMany
+    {
+        return $this->hasMany(Classification::class);
+    }
+
+    public static function fetch(int $limit, int $offset)
+    {
+        $query = self::skip($offset)->take($limit)->orderBy('network_banners.id', 'desc');
+        $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
+        $query->select(
+            'network_banners.id',
+            'network_banners.serve_url',
+            'network_banners.type',
+            'network_banners.width',
+            'network_banners.height',
+            'network_campaigns.source_host',
+            'network_campaigns.budget',
+            'network_campaigns.max_cpm',
+            'network_campaigns.max_cpc'
+        );
+
+        return $query->get();
     }
 }
