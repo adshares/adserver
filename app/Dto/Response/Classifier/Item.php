@@ -96,13 +96,4 @@ class Item implements Arrayable
             'classified_site' => $this->classifiedSite,
         ];
     }
-
-//    public static function fromArray(array $data): self
-//    {
-//        return new self(
-//            $data['banner_id'],
-//            $data['url'],
-//
-//        );
-//    }
 }
