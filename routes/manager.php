@@ -90,3 +90,4 @@ Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class
 
 Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
 Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
+Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);

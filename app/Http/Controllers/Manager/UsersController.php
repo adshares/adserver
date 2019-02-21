@@ -26,6 +26,7 @@ use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -62,38 +63,35 @@ class UsersController extends Controller
         );
         DB::commit();
 
-        return self::json($user->toArray(), 201)->header('Location', route('app.users.read', ['user_id' => $user->id]));
+        return self::json($user->toArray(), Response::HTTP_CREATED)
+            ->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
-    public function count(Request $request)
+    public function count()
     {
-        throw new ServerErrorException('Not implemented yet');
+        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
     }
 
-    public function browse(Request $request)
+    public function browse()
     {
-//        return self::json([], 501, ['message' => 'not yet implemented <3']);
         $users = User::get();
 
         return self::json($users->toArray());
     }
 
-    public function delete(Request $request, $user_id)
+    public function delete()
     {
-        return self::json([], 501, ['message' => 'not yet implemented <3']);
-        // TODO check privileges
-        // TODO reset email
-        // TODO process
-        $user = User::findOrFail($user_id);
-        $user->delete();
-
-        return self::json([], 204);
+        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
     }
 
     public function edit(Request $request)
     {
         if (!Auth::check() && !$request->has('user.token')) {
-            return self::json([], 401, ['message' => 'Required authenticated access or token authentication']);
+            return self::json(
+                [],
+                Response::HTTP_UNAUTHORIZED,
+                ['message' => 'Required authenticated access or token authentication']
+            );
         }
 
         DB::beginTransaction();
@@ -104,7 +102,11 @@ class UsersController extends Controller
             if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
                 DB::rollBack();
 
-                return self::json([], 422, ['message' => 'Authentication token is invalid']);
+                return self::json(
+                    [],
+                    Response::HTTP_UNPROCESSABLE_ENTITY,
+                    ['message' => 'Authentication token is invalid']
+                );
             }
             $user = User::findOrFail($token['user_id']);
             $token_authorization = true;
@@ -117,7 +119,7 @@ class UsersController extends Controller
             $user->save();
             DB::commit();
 
-            return self::json($user->toArray(), 200);
+            return self::json($user->toArray());
         }
 
         if ($token_authorization) {
@@ -125,23 +127,27 @@ class UsersController extends Controller
             $user->save();
             DB::commit();
 
-            return self::json($user->toArray(), 200);
+            return self::json($user->toArray());
         }
 
         if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
             DB::rollBack();
 
-            return self::json($user->toArray(), 422, ['password_old' => 'Old password is not valid']);
+            return self::json(
+                $user->toArray(),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['password_old' => 'Old password is not valid']
+            );
         }
 
         $user->password = $request->input('user.password_new');
         $user->save();
         DB::commit();
 
-        return self::json($user->toArray(), 200);
+        return self::json($user->toArray());
     }
 
-    public function read(Request $request, $user_id)
+    public function read($user_id)
     {
         // TODO check privileges
         $user = User::findOrFail($user_id);

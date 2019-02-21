@@ -64,7 +64,7 @@ class DemandController extends Controller
         $banner = $this->getBanner($id);
 
         if ('OPTIONS' === $request->getRealMethod()) {
-            $response = new Response('', 204);
+            $response = new Response('', Response::HTTP_NO_CONTENT);
         } else {
             $response = new GzippedStreamedResponse();
         }

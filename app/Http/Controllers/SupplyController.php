@@ -62,7 +62,7 @@ class SupplyController extends Controller
         } elseif ('POST' === $request->getRealMethod()) {
             $data = $request->getContent();
         } elseif ('OPTIONS' === $request->getRealMethod()) {
-            $response->setStatusCode(204);
+            $response->setStatusCode(Response::HTTP_NO_CONTENT);
             $response->headers->set('Access-Control-Max-Age', 1728000);
 
             return $response;
