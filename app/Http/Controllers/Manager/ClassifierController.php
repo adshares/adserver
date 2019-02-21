@@ -26,12 +26,27 @@ use Adshares\Adserver\Dto\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Classify\Application\Service\ClassifierInterface;
+use Adshares\Classify\Application\Service\SignatureVerifierInterface;
+use Adshares\Classify\Domain\Model\Classification as DomainClassification;
 use Illuminate\Support\Collection;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ClassifierController extends Controller
 {
-    public function fetch(Request $request, ?int $siteId = null)
+    /** @var SignatureVerifierInterface */
+    private $signatureVerifier;
+
+    public function __construct(SignatureVerifierInterface $signatureVerifier)
+    {
+        $this->signatureVerifier = $signatureVerifier;
+    }
+
+    public function fetch(Request $request, ?int $siteId = null): JsonResponse
     {
         $limit = (int)$request->get('limit', 20);
         $offset = (int)$request->get('offset', 0);
@@ -51,5 +66,39 @@ class ClassifierController extends Controller
                 return $banner->id;
             }
         )->toArray();
+    }
+
+    public function add(Request $request, int $siteId = null): JsonResponse
+    {
+        $input = $request->request->all();
+        $classification = $input['classification'];
+        $userId = (int)Auth::user()->id;
+
+        if (!isset($input['classification'], $classification['banner_id'], $classification['status'])) {
+            throw new BadRequestHttpException('Wrong input parameters.');
+        }
+
+        $bannerId = (int)$classification['banner_id'];
+        $status = (bool)$classification['status'];
+
+        $classificationDomain = new DomainClassification(
+            (string)config('app.classify_namespace'),
+            $userId,
+            $bannerId,
+            $status,
+            '',
+            $siteId
+        );
+
+        $signature = $this->signatureVerifier->create($classificationDomain->keyword(), $bannerId);
+        $classificationDomain->sign($signature);
+
+        if ($siteId) {
+            Classification::classifySite($siteId, $userId, $bannerId, $status, $signature);
+        } else {
+            Classification::classifyGlobal($userId, $bannerId, $status, $signature);
+        }
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 }

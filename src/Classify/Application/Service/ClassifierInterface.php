@@ -30,14 +30,12 @@ interface ClassifierInterface
     public const KEYWORD_ACCEPTED = 1;
     public const KEYWORD_DECLINED = 0;
 
-    public function classify(string $bannerId, ?string $site): void;
-
     /**
-     * @param string $bannerId
+     * @param int $bannerId
      *
      * @throws BannerNotVerifiedException
      *
      * @return ClassificationCollection
      */
-    public function fetch(string $bannerId): ClassificationCollection;
+    public function fetch(int $bannerId): ClassificationCollection;
 }

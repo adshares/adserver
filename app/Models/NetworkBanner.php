@@ -130,4 +130,11 @@ class NetworkBanner extends Model
 
         return $query->get();
     }
+
+    public static function findIdsByUuids(array $uuids)
+    {
+        return self::whereIn('uuid', $uuids)
+            ->select('id')
+            ->get();
+    }
 }

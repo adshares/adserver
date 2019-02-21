@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Classify\Domain\Model\Classification as DomainClassification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -33,7 +34,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string signature
  * @property int|null status
  */
-
 class Classification extends Model
 {
     protected $fillable = [
@@ -44,13 +44,56 @@ class Classification extends Model
         'status',
     ];
 
-    public function banner(): BelongsTo
-    {
-        return $this->belongsTo(NetworkBanner::class, 'banner_id');
-    }
+    protected $casts = [
+        'status' => 'bool',
+    ];
 
     public static function fetchByBannerIds(array $ids)
     {
         return self::whereIn('banner_id', $ids)->get();
+    }
+
+    public static function classifyGlobal(int $userId, int $bannerId, bool $status, string $signature)
+    {
+        $classification = self::where('banner_id', $bannerId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$classification) {
+            $classification = new self();
+            $classification->banner_id = $bannerId;
+            $classification->user_id = $userId;
+            $classification->site_id = null;
+        }
+
+        $classification->signature = $signature;
+        $classification->status = $status;
+
+        $classification->save();
+    }
+
+    public static function classifySite(int $siteId, int $userId, int $bannerId, bool $status, string $signature)
+    {
+        $classification = self::where('banner_id', $bannerId)
+            ->where('user_id', $userId)
+            ->where('site_id', $siteId)
+            ->first();
+
+        if (!$classification) {
+            $classification = new self();
+            $classification->banner_id = $bannerId;
+            $classification->user_id = $userId;
+            $classification->site_id = $siteId;
+        }
+
+        $classification->signature = $signature;
+        $classification->status = $status;
+
+        $classification->save();
+    }
+
+    public function banner(): BelongsTo
+    {
+        return $this->belongsTo(NetworkBanner::class, 'banner_id');
     }
 }
