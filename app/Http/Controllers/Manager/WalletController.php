@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -141,7 +142,11 @@ class WalletController extends Controller
 
     public function withdraw(Request $request): JsonResponse
     {
-        $addressFrom = new AccountId($this->getAdServerAdsAddress());
+        try {
+            $addressFrom = new AccountId($this->getAdServerAdsAddress());
+        } catch (InvalidArgumentException $e) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+        }
 
         Validator::make(
             $request->all(),
