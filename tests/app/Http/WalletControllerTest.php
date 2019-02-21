@@ -107,7 +107,9 @@ class WalletControllerTest extends TestCase
 
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
+
         $this->actingAs($user, 'api');
+
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [

@@ -22,16 +22,20 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class WalletController extends Controller
@@ -127,17 +131,17 @@ class WalletController extends Controller
         $user->save();
         DB::commit();
 
-        return self::json($user->toArray());
+        return self::json();
+        $memo = $request->input(self::FIELD_MEMO);
+        if ($result) {
+            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
+            AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
+        }
     }
 
     public function withdraw(Request $request): JsonResponse
     {
-        $addressFrom = $this->getAdServerAdsAddress();
-        if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            Log::error("Invalid ADS address is set: ${addressFrom}");
-
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        $addressFrom = new AccountId($this->getAdServerAdsAddress());
 
         Validator::make(
             $request->all(),
@@ -148,33 +152,49 @@ class WalletController extends Controller
             ]
         )->validate();
 
-        $amount = $request->input(self::FIELD_AMOUNT);
-        $addressTo = $request->input(self::FIELD_TO);
-        $memo = $request->input(self::FIELD_MEMO);
+        $addressTo = new AccountId($request->input(self::FIELD_TO));
+        $amount = (int)$request->input(self::FIELD_AMOUNT);
+        $fee = AdsUtils::calculateFee($addressFrom->toString(), $addressTo->toString(), $amount);
 
-        if (!AdsValidator::isAccountAddressValid($addressTo)) {
-            // invalid input for calculating fee
-            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
         $total = $amount + $fee;
 
+        $user = Auth::user();
+
         $ledgerEntry = UserLedgerEntry::construct(
-            Auth::user()->id,
+            $user->id,
             -$total,
-            UserLedgerEntry::STATUS_PENDING,
+            UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL
-        )->addressed($addressFrom, $addressTo);
+        )->addressed($addressFrom->toString(), $addressTo->toString());
 
-        $result = $ledgerEntry->save();
-
-        if ($result) {
-            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
-            AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
+        if (!$ledgerEntry->save()) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
+        DB::beginTransaction();
+
+        if (!Token::canGenerate($user->id, 'email-approve-withdrawal', 15 * 60)) {
+            return self::json(
+                [],
+                Response::HTTP_TOO_MANY_REQUESTS,
+                [
+                    'message' => "You have already requested email change.\n"
+                        ."You can request email change every 5 minutes.\n"
+                        ."Please wait 15 minutes or less to start configuring another email address.",
+                ]
+            );
+        }
+
+        Mail::to($user)->queue(
+            new UserEmailChangeConfirm1Old(
+                Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all()),
+                $request->input('uri_step1')
+            )
+        );
+
+        DB::commit();
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function depositInfo(): JsonResponse

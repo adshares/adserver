@@ -67,6 +67,12 @@ class UserLedgerEntry extends Model
         self::STATUS_AWAITING_APPROVAL,
     ];
 
+    private const DEBIT_STATUSES_RELEVANT_FOR_BALANCE = [
+        self::STATUS_PENDING,
+        self::STATUS_BLOCKED,
+        self::STATUS_PROCESSING,
+    ];
+
     public const ALLOWED_TYPE_LIST = [
         self::TYPE_DEPOSIT,
         self::TYPE_WITHDRAWAL,
@@ -143,7 +149,7 @@ class UserLedgerEntry extends Model
             ->where(function (Builder $query) {
                 $query->where('status', self::STATUS_ACCEPTED)
                     ->orWhere(function (Builder $query) {
-                        $query->whereIn('status', [self::STATUS_PENDING, self::STATUS_BLOCKED, self::STATUS_PROCESSING])
+                        $query->whereIn('status', self::DEBIT_STATUSES_RELEVANT_FOR_BALANCE)
                             ->whereIn('type', self::DEBIT_TYPES);
                     });
             });

@@ -22,12 +22,14 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
-use InvalidArgumentException;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use function dechex;
+use function ord;
 use function preg_match;
 use function random_int;
 use function sprintf;
 use function str_pad;
+use function strlen;
 
 final class AccountId implements Id
 {
@@ -79,8 +81,8 @@ final class AccountId implements Id
         $chars = hex2bin($hexChars);
         if ($chars) {
             $crc = 0x1D0F;
-            for ($i = 0, $iMax = \strlen($chars); $i < $iMax; $i++) {
-                $x = ($crc >> 8) ^ \ord($chars[$i]);
+            for ($i = 0, $iMax = strlen($chars); $i < $iMax; $i++) {
+                $x = ($crc >> 8) ^ ord($chars[$i]);
                 $x ^= $x >> 4;
                 $crc = (($crc << 8) ^ ($x << 12) ^ ($x << 5) ^ $x) & 0xFFFF;
             }
@@ -109,12 +111,17 @@ final class AccountId implements Id
             return new self("{$value}-{$checksum}");
         }
 
-        throw new InvalidArgumentException("'$value' is not a valid 'NODE-USER' string.");
+        throw new InvalidArgumentException("'$value' is not a valid 'NODE-ACCOUNT' string.");
+    }
+
+    public function toString(): string
+    {
+        return $this->value;
     }
 
     public function __toString(): string
     {
-        return $this->value;
+        return $this->toString();
     }
 
     public function equals(object $other, bool $strict = false): bool
