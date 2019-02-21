@@ -148,7 +148,7 @@ class Campaign extends Model
 
     public static function isStatusAllowed(int $status): bool
     {
-        return in_array($status, self::STATUSES);
+        return in_array($status, self::STATUSES, true);
     }
 
     public static function fetchAdvertiserId(int $campaignId): string

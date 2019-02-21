@@ -24,11 +24,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
+use function in_array;
 use function sprintf;
 
 /**
  * @method static Builder where(string $string, int $userId)
  * @mixin Builder
+ * @property int status
  */
 class UserLedgerEntry extends Model
 {
@@ -43,6 +45,8 @@ class UserLedgerEntry extends Model
     public const STATUS_BLOCKED = 3;
 
     public const STATUS_PROCESSING = 4;
+
+    public const STATUS_AWAITING_APPROVAL = 5;
 
     public const TYPE_UNKNOWN = 0;
 
@@ -60,6 +64,7 @@ class UserLedgerEntry extends Model
         self::STATUS_REJECTED,
         self::STATUS_BLOCKED,
         self::STATUS_PROCESSING,
+        self::STATUS_AWAITING_APPROVAL,
     ];
 
     public const ALLOWED_TYPE_LIST = [
@@ -70,6 +75,13 @@ class UserLedgerEntry extends Model
     ];
 
     public const DEBIT_TYPES = [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL];
+
+    private const AWAITING_PAYMENTS = [
+        self::STATUS_PROCESSING,
+        self::STATUS_PENDING,
+        self::STATUS_BLOCKED,
+        self::STATUS_AWAITING_APPROVAL,
+    ];
 
     protected $dates = [
         'deleted_at',
@@ -83,7 +95,7 @@ class UserLedgerEntry extends Model
 
     public static function waitingPayments(): int
     {
-        return (int)self::whereIn('status', [self::STATUS_PROCESSING, self::STATUS_PENDING, self::STATUS_BLOCKED])
+        return (int)self::whereIn('status', self::AWAITING_PAYMENTS)
             ->sum('amount');
     }
 
@@ -124,7 +136,6 @@ class UserLedgerEntry extends Model
 
         return $userLedgerEntry;
     }
-
 
     public static function balanceRelevantEntriesByUserId(int $userId)
     {
@@ -190,11 +201,25 @@ class UserLedgerEntry extends Model
         return $obj;
     }
 
+    public function setStatusAttribute(int $status): void
+    {
+        $this->failIfStatusNotAllowed($status);
+
+        $this->status = $status;
+    }
+
     public function addressed(string $addressFrom, string $addressTo): self
     {
         $this->address_from = $addressFrom;
         $this->address_to = $addressTo;
 
         return $this;
+    }
+
+    private function failIfStatusNotAllowed(int $status): void
+    {
+        if (!in_array($status, self::ALLOWED_STATUS_LIST, true)) {
+            throw new InvalidArgumentException("Status $status not allowed");
+        }
     }
 }

@@ -67,23 +67,6 @@ class UsersController extends Controller
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
-    public function count()
-    {
-        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
-    }
-
-    public function browse()
-    {
-        $users = User::get();
-
-        return self::json($users->toArray());
-    }
-
-    public function delete()
-    {
-        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
-    }
-
     public function edit(Request $request)
     {
         if (!Auth::check() && !$request->has('user.token')) {
