@@ -67,8 +67,8 @@ class DummyClassifier implements ClassifierInterface
             'siteId' => null,
             'status' => self::KEYWORD_ACCEPTED,
         ],
-        '6' => [
-            'bannerId' => 6,
+        '85' => [
+            'bannerId' => 85,
             'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_DECLINED,

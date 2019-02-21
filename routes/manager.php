@@ -88,5 +88,5 @@ Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [Sta
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
 
-Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
 Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
+Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);

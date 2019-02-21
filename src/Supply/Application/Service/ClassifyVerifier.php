@@ -24,5 +24,5 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 
 interface ClassifyVerifier
 {
-    public function isVerified(Classification $classification, string $bannerId): bool;
+    public function isVerified(Classification $classification): bool;
 }

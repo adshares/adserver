@@ -26,14 +26,15 @@ use Adshares\Adserver\Dto\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use Adshares\Classify\Domain\Model\Classification as DomainClassification;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class ClassifierController extends Controller
@@ -93,10 +94,10 @@ class ClassifierController extends Controller
         $signature = $this->signatureVerifier->create($classificationDomain->keyword(), $bannerId);
         $classificationDomain->sign($signature);
 
-        if ($siteId) {
-            Classification::classifySite($siteId, $userId, $bannerId, $status, $signature);
-        } else {
-            Classification::classifyGlobal($userId, $bannerId, $status, $signature);
+        try {
+            Classification::classify($userId, $bannerId, $status, $signature, $siteId);
+        } catch (QueryException $exception) {
+            throw new AccessDeniedHttpException('Operation cannot be proceed. Wrong permissions.');
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);

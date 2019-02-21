@@ -18,10 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Domain\Model\Banner;
@@ -31,6 +32,8 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Domain\ValueObject\Classification;
+use function array_key_exists;
+use function array_search;
 
 class InventoryImporter
 {
@@ -76,9 +79,9 @@ class InventoryImporter
             return;
         }
 
-        $bannersIds = $this->getBannerIds($campaigns);
+        $bannersPublicIds = $this->getBannerIds($campaigns);
+        $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersPublicIds);
 
-        $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersIds);
         $this->transactionManager->begin();
 
         try {
@@ -113,8 +116,10 @@ class InventoryImporter
         return $ids;
     }
 
-    private function classifyCampaign(Campaign $campaign, Collection $classificationCollection): void
-    {
+    private function classifyCampaign(
+        Campaign $campaign,
+        Collection $classificationCollection
+    ): void {
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
             $classifications = $classificationCollection->findByBannerId($banner->getId()) ?? [];
@@ -125,7 +130,7 @@ class InventoryImporter
 
             /** @var Classification $classification */
             foreach ($classifications as $classification) {
-                if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
+                if ($classification && $this->classifyVerifier->isVerified($classification)) {
                     $banner->classify($classification);
                 } else {
                     $banner->removeClassification($classification);

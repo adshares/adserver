@@ -27,8 +27,8 @@ use Adshares\Classify\Domain\Model\ClassificationCollection;
 
 interface ClassifierInterface
 {
-    public const KEYWORD_ACCEPTED = 1;
-    public const KEYWORD_DECLINED = 0;
+    public const KEYWORD_ACCEPTED = true;
+    public const KEYWORD_DECLINED = false;
 
     /**
      * @param int $bannerId

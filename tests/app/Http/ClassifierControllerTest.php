@@ -66,14 +66,16 @@ final class ClassifierControllerTest extends TestCase
 
     public function testGlobalWhenThereIsOnlyGlobalClassification(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => null]);
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => false, 'site_id' => null, 'user_id' => 1]
+        );
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
@@ -86,14 +88,14 @@ final class ClassifierControllerTest extends TestCase
 
     public function testSiteWhenThereIsOnlySiteClassification(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3, 'user_id' => 1]);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
         $content = json_decode($response->getContent(), true);
@@ -106,15 +108,15 @@ final class ClassifierControllerTest extends TestCase
 
     public function testSiteWhenThereIsGlobalAndSiteClassification(): void
     {
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => null]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3, 'user_id' => 1]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => null, 'user_id' => 1]);
 
         $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
         $content = json_decode($response->getContent(), true);
@@ -150,6 +152,22 @@ final class ClassifierControllerTest extends TestCase
 
         $this->assertFalse($classification->status);
         $this->assertEquals(204, $response->getStatusCode());
+    }
+
+    private function mockVerifier()
+    {
+        $this->app->bind(
+            SignatureVerifierInterface::class,
+            function () {
+                $signatureVerify = $this->createMock(SignatureVerifierInterface::class);
+
+                $signatureVerify
+                    ->method('create')
+                    ->willReturn('signature');
+
+                return $signatureVerify;
+            }
+        );
     }
 
     public function testChangeGlobalStatusWhenExistsInDb(): void
@@ -233,21 +251,5 @@ final class ClassifierControllerTest extends TestCase
 
         $this->assertTrue($classification->status);
         $this->assertEquals(204, $response->getStatusCode());
-    }
-
-    private function mockVerifier()
-    {
-        $this->app->bind(
-            SignatureVerifierInterface::class,
-            function () {
-                $signatureVerify = $this->createMock(SignatureVerifierInterface::class);
-
-                $signatureVerify
-                    ->method('create')
-                    ->willReturn('signature');
-
-                return $signatureVerify;
-            }
-        );
     }
 }
