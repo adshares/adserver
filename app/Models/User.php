@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Hash;
 /**
  * @property Collection|Campaign[] campaigns
  * @property int id
+ * @mixin Builder
  */
 class User extends Authenticatable
 {

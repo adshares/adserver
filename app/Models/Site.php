@@ -22,8 +22,9 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Models\Traits\Ownership;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -37,6 +38,7 @@ use Illuminate\Support\Collection;
  * @property Zone[]|Collection zones
  * @method static Site create($input = null)
  * @method static get()
+ * @mixin Builder
  */
 class Site extends Model
 {

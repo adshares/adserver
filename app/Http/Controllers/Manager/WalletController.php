@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Illuminate\Http\JsonResponse;
@@ -106,6 +107,27 @@ class WalletController extends Controller
     private function getAdServerAdsAddress(): string
     {
         return config('app.adshares_address');
+    }
+
+    public function approveWithdrawal(Request $request): JsonResponse
+    {
+        return self::json([], Response::HTTP_NOT_IMPLEMENTED);
+
+        Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
+
+        DB::beginTransaction();
+        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user = User::find($token['user_id']);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
+        $user->save();
+        DB::commit();
+
+        return self::json($user->toArray());
     }
 
     public function withdraw(Request $request): JsonResponse
