@@ -39,7 +39,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifierInterface
         $this->privateKey = $privateKey;
     }
 
-    public function create(string $keyword, string $bannerId): string
+    public function create(string $keyword, int $bannerId): string
     {
         $message = $this->createMessageHash($keyword, $bannerId);
 
@@ -53,7 +53,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifierInterface
         }
     }
 
-    private function createMessageHash(string $keyword, string $bannerId): string
+    private function createMessageHash(string $keyword, int $bannerId): string
     {
         return sha1($keyword . '.' . $bannerId);
     }

@@ -37,33 +37,39 @@ class DummyClassifier implements ClassifierInterface
     /** @var SignatureVerifierInterface */
     private $signatureVerifier;
     private $banners = [
-        'C1310C68A2104460BCD18DFD960650F1' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '1' => [
+            'bannerId' => 1,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_ACCEPTED,
         ],
-        'C1310C68A2104460BCD18DFD960650F2' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '2' => [
+            'bannerId' => 2,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_DECLINED,
         ],
-        'C1310C68A2104460BCD18DFD960650F3' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '3' => [
+            'bannerId' => 3,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_DECLINED,
         ],
-        'C1310C68A2104460BCD18DFD960650F4' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '4' => [
+            'bannerId' => 4,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_DECLINED,
         ],
-        'b6454dbc67a94b108e3895700d570ef0' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '5' => [
+            'bannerId' => 5,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_ACCEPTED,
         ],
-        '0741db38a3ab463d956254f31a680a89' => [
-            'publisherId' => 'C1310C68A2104460BCD18DFD960650P1',
+        '6' => [
+            'bannerId' => 6,
+            'publisherId' => 3,
             'siteId' => null,
             'status' => self::KEYWORD_DECLINED,
         ],
@@ -75,7 +81,7 @@ class DummyClassifier implements ClassifierInterface
         $this->signatureVerifier = $signatureVerifier;
     }
 
-    public function fetch(string $bannerId): ClassificationCollection
+    public function fetch(int $bannerId): ClassificationCollection
     {
         if (!array_key_exists($bannerId, $this->banners)) {
             throw new BannerNotVerifiedException(sprintf('Banner %s does not exist.', $bannerId));
@@ -85,19 +91,14 @@ class DummyClassifier implements ClassifierInterface
         $classification = Classification::createUnsigned(
             $this->keyword,
             $dummy['publisherId'],
-            $bannerId,
+            $dummy['bannerId'],
             $dummy['status'],
             $dummy['siteId']
         );
 
-        $signature = $this->signatureVerifier->create($classification->keyword(), $bannerId);
+        $signature = $this->signatureVerifier->create($classification->keyword(), $dummy['bannerId']);
         $classification->sign($signature);
 
         return new ClassificationCollection($classification);
-    }
-
-    public function classify(string $bannerId, ?string $site): void
-    {
-        // TODO: Implement classify() method.
     }
 }

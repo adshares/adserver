@@ -41,9 +41,9 @@ class GuzzlePublisherBannerClassifier implements BannerClassifier
         $this->client = $client;
     }
 
-    public function fetchBannersClassification(array $bannerIds): Collection
+    public function fetchBannersClassification(array $bannerUuids): Collection
     {
-        $body = json_encode($bannerIds);
+        $body = json_encode($bannerUuids);
 
         try {
             $response = $this->client->post(self::VERIFY_ENDPOINT, ['body' => $body]);
