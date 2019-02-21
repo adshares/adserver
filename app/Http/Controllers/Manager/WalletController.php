@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -157,7 +158,10 @@ class WalletController extends Controller
             ]
         )->validate();
 
-        $addressTo = new AccountId($request->input(self::FIELD_TO));
+        try {
+            $addressTo = new AccountId($request->input(self::FIELD_TO));
+        } catch (Exception $e) {
+        }
         $amount = (int)$request->input(self::FIELD_AMOUNT);
         $fee = AdsUtils::calculateFee($addressFrom->toString(), $addressTo->toString(), $amount);
 
