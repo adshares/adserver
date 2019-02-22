@@ -80,11 +80,22 @@ class Classification
     {
         if ($this->siteId) {
             return sprintf(
-                '%s:%s:%s:%s:%s', $this->namespace, $this->bannerId, $this->publisherId, $this->siteId, $this->status
+                '%s:%s:%s:%s:%s',
+                $this->namespace,
+                $this->bannerId,
+                $this->publisherId,
+                $this->siteId,
+                $this->status
             );
         }
 
-        return sprintf('%s:%s:%s:%s', $this->namespace, $this->bannerId, $this->publisherId, $this->status);
+        return sprintf(
+            '%s:%s:%s:%s',
+            $this->namespace,
+            $this->bannerId,
+            $this->publisherId,
+            $this->status
+        );
     }
 
     public function signature(): string
