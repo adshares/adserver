@@ -22,14 +22,13 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
+use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -64,9 +63,12 @@ class WalletController extends Controller
 
     const VALIDATOR_RULE_REQUIRED = 'required';
 
+    private const FIELD_NEXT_STEP = 'next_step_uri';
+
     public function calculateWithdrawal(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
+
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
 
@@ -110,9 +112,13 @@ class WalletController extends Controller
     /**
      * @return string AdServer address in ADS network
      */
-    private function getAdServerAdsAddress(): string
+    private function getAdServerAdsAddress(): AccountId
     {
-        return config('app.adshares_address');
+        try {
+            return new AccountId(config('app.adshares_address'));
+        } catch (InvalidArgumentException $e) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+        }
     }
 
     public function approveWithdrawal(Request $request): JsonResponse
@@ -143,11 +149,7 @@ class WalletController extends Controller
 
     public function withdraw(Request $request): JsonResponse
     {
-        try {
-            $addressFrom = new AccountId($this->getAdServerAdsAddress());
-        } catch (InvalidArgumentException $e) {
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
-        }
+        $addressFrom = $this->getAdServerAdsAddress();
 
         Validator::make(
             $request->all(),
@@ -155,15 +157,18 @@ class WalletController extends Controller
                 self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
                 self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
                 self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
+                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
             ]
         )->validate();
 
         try {
             $addressTo = new AccountId($request->input(self::FIELD_TO));
-        } catch (Exception $e) {
+        } catch (InvalidArgumentException $e) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
         }
+
         $amount = (int)$request->input(self::FIELD_AMOUNT);
-        $fee = AdsUtils::calculateFee($addressFrom->toString(), $addressTo->toString(), $amount);
+        $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
 
         $total = $amount + $fee;
 
@@ -174,7 +179,7 @@ class WalletController extends Controller
             -$total,
             UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL
-        )->addressed($addressFrom->toString(), $addressTo->toString());
+        )->addressed($addressFrom, $addressTo);
 
         if (!$ledgerEntry->save()) {
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -188,16 +193,16 @@ class WalletController extends Controller
                 Response::HTTP_TOO_MANY_REQUESTS,
                 [
                     'message' => "You have already requested email change.\n"
-                        ."You can request email change every 5 minutes.\n"
-                        ."Please wait 15 minutes or less to start configuring another email address.",
+                        .'You can request withdrawal approval every 15 minutes.',
                 ]
             );
         }
 
         Mail::to($user)->queue(
-            new UserEmailChangeConfirm1Old(
+            new WithdrawalApproval(
                 Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all()),
-                $request->input('uri_step1')
+                $request->input(self::FIELD_NEXT_STEP),
+                $amount, $fee, $addressTo
             )
         );
 
@@ -210,16 +215,12 @@ class WalletController extends Controller
     {
         $user = Auth::user();
         $uuid = $user->uuid;
-        /**
-         * Address of account on which funds should be deposit
-         */
+
         $address = $this->getAdServerAdsAddress();
-        /**
-         * Message which should be add to send_one tx
-         */
+
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS => $address,
+            self::FIELD_ADDRESS => $address->toString(),
             self::FIELD_MESSAGE => $message,
         ];
 
