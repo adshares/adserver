@@ -7,10 +7,10 @@ INSTALLATION_DIR=${INSTALLATION_DIR:-$2}
 test -z ${INSTALLATION_DIR} && echo "Missing INSTALLATION_DIR" >&2 && exit 1
 
 HERE=${HERE:-$3}
-test -z ${HERE:-$3} &>/dev/null && echo "Missing HERE (source dir for scripts)" >&2 && exit 1
+test -z ${HERE} &>/dev/null && echo "Missing HERE (source dir for scripts)" >&2 && exit 1
 
 VENDOR_NAME=${VENDOR_NAME:-$4}
-test -z ${VENDOR_NAME:-$4} && echo "Missing VENDOR_NAME" >&2 && exit 1
+test -z ${VENDOR_NAME} && echo "Missing VENDOR_NAME" >&2 && exit 1
 
 id --user ${INSTALLATION_USER} &>/dev/null || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
 

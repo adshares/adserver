@@ -123,8 +123,6 @@ class WalletController extends Controller
 
     public function approveWithdrawal(Request $request): JsonResponse
     {
-        return self::json([], Response::HTTP_NOT_IMPLEMENTED);
-
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
         DB::beginTransaction();
