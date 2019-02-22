@@ -19,6 +19,7 @@
  */
 
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
+use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,9 @@ Route::middleware(Kernel::USER_ACCESS)->group(function () {
 
     Route::patch('self', [AuthController::class, 'updateSelf']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
+
+    Route::get('wallet/confirm-withdrawal/{token}', [WalletController::class, 'approveWithdrawal'])
+        ->name('wallet.confirm-withdrawal');
 });
 
 Route::middleware(Kernel::GUEST_ACCESS)->group(function () {

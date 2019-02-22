@@ -178,30 +178,31 @@ class WalletController extends Controller
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
+        DB::beginTransaction();
+
         if (!$ledgerEntry->save()) {
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        DB::beginTransaction();
+//        if (!Token::canGenerate($user->id, 'email-approve-withdrawal', 15 * 60)) {
+//            return self::json(
+//                [],
+//                Response::HTTP_TOO_MANY_REQUESTS,
+//                [
+//                    'message' => "You have already requested email change.\n"
+//                        .'You can request withdrawal approval every 15 minutes.',
+//                ]
+//            );
+//        }
 
-        if (!Token::canGenerate($user->id, 'email-approve-withdrawal', 15 * 60)) {
-            return self::json(
-                [],
-                Response::HTTP_TOO_MANY_REQUESTS,
-                [
-                    'message' => "You have already requested email change.\n"
-                        .'You can request withdrawal approval every 15 minutes.',
-                ]
-            );
-        }
+        $token = Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all());
 
         Mail::to($user)->queue(
             new WithdrawalApproval(
-                Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all()),
-                $request->input(self::FIELD_NEXT_STEP),
+                route('wallet.confirm-withdrawal', ['token' => $token]),
                 $amount,
                 $fee,
-                $addressTo
+                $addressTo->toString()
             )
         );
 

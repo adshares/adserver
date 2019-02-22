@@ -7,7 +7,7 @@
     - Fee: {{ $fee }}
     - **TOTAL**: {{ $fee + $amount }}
 
-    @component('mail::button', ['url' => config('app.adpanel_base_url').$uri.$token])
+    @component('mail::button', ['url' => $url])
         Confirm Withdrawal
     @endcomponent
 

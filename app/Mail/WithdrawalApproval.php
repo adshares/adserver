@@ -28,9 +28,7 @@ class WithdrawalApproval extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $token;
-
-    protected $uri;
+    private $url;
 
     private $amount;
 
@@ -38,36 +36,24 @@ class WithdrawalApproval extends Mailable
 
     private $fee;
 
-    /**
-     * Create a new message instance.
-     *
-     * @param string $token
-     * @param string $uri
-     */
-    public function __construct($token, $uri, $amount, $fee, $target)
+    public function __construct($url, $amount, $fee, $target)
     {
-        $this->token = $token;
-        $this->uri = $uri;
+        $this->url = $url;
         $this->amount = $amount;
         $this->target = $target;
         $this->fee = $fee;
     }
 
-    /**
-     * Build the message.
-     *
-     * @return $this
-     */
     public function build(): self
     {
-        return $this->markdown('emails.withdrawal-approval')->with(
-            [
-                'token' => $this->token,
-                'uri' => $this->uri,
-                'amount' => $this->amount,
-                'target' => $this->target,
-                'fee' => $this->fee,
-            ]
-        );
+        return $this->markdown('emails.withdrawal-approval')
+            ->with(
+                [
+                    'url' => $this->url,
+                    'amount' => $this->amount,
+                    'fee' => $this->fee,
+                    'target' => $this->target,
+                ]
+            );
     }
 }
