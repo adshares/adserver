@@ -35,11 +35,11 @@ final class SodiumCompatSignatureVerifierTest extends TestCase
         $verifier = new SodiumCompatSignatureVerifier(self::PRIVATE_KEY);
         $publisherId = 1;
         $siteId = 1;
-        $bannerId = 1;
+        $bannerPublicId = (string)Uuid::v4();
         $status = 1;
         $keyword = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
 
-        $signature = $verifier->create($keyword, $bannerId);
+        $signature = $verifier->create($keyword, $bannerPublicId);
 
         $this->assertEquals(128, strlen($signature));
     }

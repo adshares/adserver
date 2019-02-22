@@ -80,21 +80,19 @@ class Classification
     {
         if ($this->siteId) {
             return sprintf(
-                '%s:%s:%s:%s:%s',
+                '%s:%s:%s:%s',
                 $this->namespace,
-                $this->bannerId,
                 $this->publisherId,
                 $this->siteId,
-                $this->status
+                (int)$this->status
             );
         }
 
         return sprintf(
-            '%s:%s:%s:%s',
+            '%s:%s:%s',
             $this->namespace,
-            $this->bannerId,
             $this->publisherId,
-            $this->status
+            (int)$this->status
         );
     }
 

@@ -182,4 +182,9 @@ final class Banner
     {
         return $this->checksum;
     }
+
+    public function getClassification(): ?array
+    {
+        return $this->classification;
+    }
 }

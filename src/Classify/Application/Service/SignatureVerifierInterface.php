@@ -24,5 +24,5 @@ namespace Adshares\Classify\Application\Service;
 
 interface SignatureVerifierInterface
 {
-    public function create(string $keyword): string;
+    public function create(string $keyword, string $publicBannerId): string;
 }
