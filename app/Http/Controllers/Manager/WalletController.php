@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -145,6 +146,27 @@ class WalletController extends Controller
             // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
             AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
         }
+    }
+
+    public function approveWithdrawal(Request $request): JsonResponse
+    {
+        return self::json([], Response::HTTP_NOT_IMPLEMENTED);
+
+        Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
+
+        DB::beginTransaction();
+        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user = User::find($token['user_id']);
+        if (empty($user)) {
+            return self::json([], Response::HTTP_FORBIDDEN);
+        }
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
+        $user->save();
+        DB::commit();
+
+        return self::json($user->toArray());
     }
 
     public function withdraw(Request $request): JsonResponse

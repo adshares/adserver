@@ -18,11 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\ValueObject\Classification;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Faker\Generator as Faker;
 
-interface ClassifyVerifier
-{
-    public function isVerified(Classification $classification): bool;
-}
+$factory->define(NetworkCampaign::class, function (Faker $faker) {
+    return [
+        'uuid' => $faker->uuid,
+        'source_address' => '0001-00000001-0001',
+        'demand_campaign_id' => $faker->uuid,
+        'publisher_id' => $faker->uuid,
+        'source_host' => $faker->url,
+        'source_version' => '0.1',
+        'landing_url' => $faker->url,
+        'max_cpc' => $faker->randomDigit,
+        'max_cpm' => $faker->randomDigit,
+        'budget' => $faker->randomDigit,
+        'date_start' => $faker->date('Y-m-d H:i:s'),
+        'date_end' => $faker->date('Y-m-d H:i:s'),
+    ];
+});

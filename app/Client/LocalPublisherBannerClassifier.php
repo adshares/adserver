@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Classify\Domain\Model\Classification;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Service\BannerClassifier;
@@ -40,20 +41,22 @@ class LocalPublisherBannerClassifier implements BannerClassifier
     public function fetchBannersClassification(array $bannerIds): Collection
     {
         $collection = new Collection();
-        foreach ($bannerIds as $bannerId) {
+        $publicIdsToInternalIdsMap = NetworkBanner::findIdsByUuids($bannerIds);
+
+        foreach ($publicIdsToInternalIdsMap as $publicId => $internalId) {
             try {
-                $classificationCollection = $this->classifier->fetch($bannerId);
+                $classificationCollection = $this->classifier->fetch($internalId);
 
                 /** @var Classification $classification */
                 foreach ($classificationCollection as $classification) {
                     $collection->addClassification(
-                        $bannerId,
+                        $publicId,
                         $classification->keyword(),
                         $classification->signature()
                     );
                 }
             } catch (BannerNotVerifiedException $exception) {
-                $collection->addEmptyClassification($bannerId);
+                $collection->addEmptyClassification($publicId);
             }
         }
 

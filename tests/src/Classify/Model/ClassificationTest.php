@@ -32,13 +32,13 @@ final class ClassificationTest extends TestCase
 
     public function testKeywordWhenSiteIdIsNotNull(): void
     {
-        $publisherId = (string)Uuid::v4();
-        $bannerId = (string)Uuid::v4();
-        $siteId = (string)Uuid::v4();
-        $status = 0;
+        $publisherId = 1;
+        $bannerId = 1;
+        $siteId = 1;
+        $status = true;
 
         $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status, null, $siteId);
-        $expected = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
+        $expected = sprintf('classify:%s:%s:%s:%s', $bannerId, $publisherId, $siteId, $status);
 
 
         $this->assertEquals($expected, $classification->keyword());
@@ -46,12 +46,12 @@ final class ClassificationTest extends TestCase
 
     public function testKeywordWhenSiteIdIsNull(): void
     {
-        $publisherId = (string)Uuid::v4();
-        $bannerId = (string)Uuid::v4();
-        $status = 0;
+        $publisherId = 1;
+        $bannerId = 1;
+        $status = false;
 
         $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status);
-        $expected = sprintf('classify:%s:%s', $publisherId, $status);
+        $expected = sprintf('classify:%s:%s:%s', $bannerId, $publisherId, $status);
 
 
         $this->assertEquals($expected, $classification->keyword());

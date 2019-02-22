@@ -23,8 +23,11 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Illuminate\Database\Eloquent\Builder;
+use function array_map;
+use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property NetworkCampaign campaign
@@ -90,6 +93,47 @@ class NetworkBanner extends Model
         return self::where('uuid', hex2bin($bannerId))->first();
     }
 
+    public static function fetch(int $limit, int $offset)
+    {
+        $query = self::skip($offset)->take($limit)->orderBy('network_banners.id', 'desc');
+        $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
+        $query->select(
+            'network_banners.id',
+            'network_banners.serve_url',
+            'network_banners.type',
+            'network_banners.width',
+            'network_banners.height',
+            'network_campaigns.source_host',
+            'network_campaigns.budget',
+            'network_campaigns.max_cpm',
+            'network_campaigns.max_cpc'
+        );
+
+        return $query->get();
+    }
+
+    public static function findIdsByUuids(array $publicUuids)
+    {
+        $binPublicIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $publicUuids
+        );
+
+        $banners = self::whereIn('uuid', $binPublicIds)
+            ->select('id', 'uuid')
+            ->get();
+
+        $ids = [];
+
+        foreach ($banners as $banner) {
+            $ids[$banner->uuid] = $banner->id;
+        }
+
+        return $ids;
+    }
+
     public function getAdSelectArray(): array
     {
         return [
@@ -104,5 +148,10 @@ class NetworkBanner extends Model
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(NetworkCampaign::class, 'network_campaign_id');
+    }
+
+    public function banners(): HasMany
+    {
+        return $this->hasMany(Classification::class);
     }
 }

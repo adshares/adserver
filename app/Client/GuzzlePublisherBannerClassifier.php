@@ -41,9 +41,9 @@ class GuzzlePublisherBannerClassifier implements BannerClassifier
         $this->client = $client;
     }
 
-    public function fetchBannersClassification(array $bannerIds): Collection
+    public function fetchBannersClassification(array $bannerPublicIds): Collection
     {
-        $body = json_encode($bannerIds);
+        $body = json_encode($bannerPublicIds);
 
         try {
             $response = $this->client->post(self::VERIFY_ENDPOINT, ['body' => $body]);
@@ -57,10 +57,10 @@ class GuzzlePublisherBannerClassifier implements BannerClassifier
         }
 
         $statusCode = $response->getStatusCode();
-        $body = (string)$response->getBody();
+        $responseBody = (string)$response->getBody();
 
-        $this->validateResponse($statusCode, $body);
-        $decodedResponse = json_decode($body, true);
+        $this->validateResponse($statusCode, $responseBody);
+        $decodedResponse = json_decode($responseBody, true);
 
         return $this->createClassificationCollection($decodedResponse);
     }

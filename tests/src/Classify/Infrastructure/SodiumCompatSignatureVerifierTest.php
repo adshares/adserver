@@ -33,9 +33,9 @@ final class SodiumCompatSignatureVerifierTest extends TestCase
     public function testOne(): void
     {
         $verifier = new SodiumCompatSignatureVerifier(self::PRIVATE_KEY);
-        $publisherId = (string)Uuid::v4();
-        $siteId = (string)Uuid::v4();
-        $bannerId = (string)Uuid::v4();
+        $publisherId = 1;
+        $siteId = 1;
+        $bannerId = 1;
         $status = 1;
         $keyword = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
 

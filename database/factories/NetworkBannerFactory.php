@@ -18,11 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\ValueObject\Classification;
+use Adshares\Adserver\Models\NetworkBanner;
+use Faker\Generator as Faker;
 
-interface ClassifyVerifier
-{
-    public function isVerified(Classification $classification): bool;
-}
+$factory->define(NetworkBanner::class, function (Faker $faker) {
+    return [
+        'uuid' => $faker->uuid,
+        'network_campaign_id' => $faker->randomDigit,
+        'serve_url' => $faker->url,
+        'view_url' => $faker->url,
+        'click_url' => $faker->url,
+        'type' => 'image',
+        'width' => (int)$faker->numberBetween(100,1024),
+        'height' => (int)$faker->numberBetween(100,1024),
+        'checksum' => $faker->uuid
+    ];
+});

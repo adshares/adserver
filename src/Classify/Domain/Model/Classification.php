@@ -24,26 +24,26 @@ namespace Adshares\Classify\Domain\Model;
 
 class Classification
 {
-    /** @var string */
+    /** @var int */
     private $publisherId;
-    /** @var string */
+    /** @var int */
     private $bannerId;
-    /** @var string */
+    /** @var bool */
     private $status;
     /** @var string */
     private $signature;
-    /** @var string|null */
+    /** @var int|null */
     private $siteId;
     /** @var string */
     private $namespace;
 
     public function __construct(
         string $namespace,
-        string $publisherId,
-        string $bannerId,
-        int $status,
+        int $publisherId,
+        int $bannerId,
+        bool $status,
         ?string $signature = null,
-        ?string $siteId = null
+        ?int $siteId = null
     ) {
         $this->namespace = $namespace;
         $this->publisherId = $publisherId;
@@ -55,12 +55,17 @@ class Classification
 
     public static function createUnsigned(
         string $namespace,
-        string $publisherId,
-        string $bannerId,
-        ?int $status,
-        ?string $siteId = null
+        int $publisherId,
+        int $bannerId,
+        ?bool $status,
+        ?int $siteId = null
     ): self {
         return new self($namespace, $publisherId, $bannerId, $status, null, $siteId);
+    }
+
+    public function getSiteId(): ?int
+    {
+        return $this->siteId;
     }
 
     public function export(): array
@@ -74,10 +79,23 @@ class Classification
     public function keyword(): string
     {
         if ($this->siteId) {
-            return sprintf('%s:%s:%s:%s', $this->namespace, $this->publisherId, $this->siteId, $this->status);
+            return sprintf(
+                '%s:%s:%s:%s:%s',
+                $this->namespace,
+                $this->bannerId,
+                $this->publisherId,
+                $this->siteId,
+                $this->status
+            );
         }
 
-        return sprintf('%s:%s:%s', $this->namespace, $this->publisherId, $this->status);
+        return sprintf(
+            '%s:%s:%s:%s',
+            $this->namespace,
+            $this->bannerId,
+            $this->publisherId,
+            $this->status
+        );
     }
 
     public function signature(): string

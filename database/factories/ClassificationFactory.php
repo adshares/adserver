@@ -18,11 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\ValueObject\Classification;
+use Adshares\Adserver\Models\Classification;
+use Faker\Generator as Faker;
 
-interface ClassifyVerifier
-{
-    public function isVerified(Classification $classification): bool;
-}
+$factory->define(Classification::class, function (Faker $faker) {
+    return [
+        'user_id' => $faker->randomDigit,
+        'site_id' => $faker->randomDigit,
+        'banner_id' => $faker->randomDigit,
+        'signature' => $faker->text(16),
+        'status' => null,
+    ];
+});

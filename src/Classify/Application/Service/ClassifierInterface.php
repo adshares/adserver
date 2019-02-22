@@ -27,17 +27,15 @@ use Adshares\Classify\Domain\Model\ClassificationCollection;
 
 interface ClassifierInterface
 {
-    public const KEYWORD_ACCEPTED = 1;
-    public const KEYWORD_DECLINED = 0;
-
-    public function classify(string $bannerId, ?string $site): void;
+    public const KEYWORD_ACCEPTED = true;
+    public const KEYWORD_DECLINED = false;
 
     /**
-     * @param string $bannerId
+     * @param int $bannerId
      *
      * @throws BannerNotVerifiedException
      *
      * @return ClassificationCollection
      */
-    public function fetch(string $bannerId): ClassificationCollection;
+    public function fetch(int $bannerId): ClassificationCollection;
 }

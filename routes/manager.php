@@ -28,6 +28,7 @@ use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
+use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
@@ -84,3 +85,6 @@ Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::c
 Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
+
+Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
+Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);
