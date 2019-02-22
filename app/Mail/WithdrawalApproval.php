@@ -46,14 +46,14 @@ class WithdrawalApproval extends Mailable
 
     public function build(): self
     {
+        $variables = [
+            'url' => $this->url,
+            'amount' => $this->amount,
+            'fee' => $this->fee,
+            'target' => $this->target,
+        ];
+
         return $this->markdown('emails.withdrawal-approval')
-            ->with(
-                [
-                    'url' => $this->url,
-                    'amount' => $this->amount,
-                    'fee' => $this->fee,
-                    'target' => $this->target,
-                ]
-            );
+            ->with($variables);
     }
 }

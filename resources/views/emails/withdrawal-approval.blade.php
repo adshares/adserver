@@ -1,5 +1,5 @@
 @component('mail::message')
-    # Confirm email change request
+    # Confirm withdrawal
 
     Please confirm your withdrawal request.
     - Recipient Address: {{ $target }}

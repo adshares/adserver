@@ -63,7 +63,7 @@ class WalletController extends Controller
 
     const VALIDATOR_RULE_REQUIRED = 'required';
 
-    private const FIELD_NEXT_STEP = 'next_step_uri';
+    private const RETURN_URL = 'return';
 
     public function calculateWithdrawal(Request $request): JsonResponse
     {
@@ -155,6 +155,7 @@ class WalletController extends Controller
                 self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
                 self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
                 self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
+//                self::RETURN_URL => self::VALIDATOR_RULE_REQUIRED, TODO: enable after front change
             ]
         )->validate();
 
