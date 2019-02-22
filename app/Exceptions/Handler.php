@@ -125,11 +125,11 @@ class Handler extends ExceptionHandler
                 '{"file":"%s:%s","message":%s,"context":%s,"trace":%s}',
                 $e->getFile(),
                 $e->getLine(),
-                str_replace(["\n", "\r"], '', json_encode($e->getMessage())),
-                str_replace(["\n", "\r"], '', json_encode($this->context())),
+                str_replace(["\n", "\r"], ' ', json_encode($e->getMessage())),
+                str_replace(["\n", "\r"], ' ', json_encode($this->context())),
                 str_replace(
                     ["\n", "\r"],
-                    '',
+                    ' ',
                     json_encode(array_filter(
                         $e->getTrace(),
                         function (array $row) {
