@@ -157,7 +157,6 @@ class WalletController extends Controller
                 self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', 'min:1'],
                 self::FIELD_MEMO => ['nullable', 'regex:/[0-9a-fA-F]{64}/', 'string'],
                 self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
-                self::FIELD_TO => self::VALIDATOR_RULE_REQUIRED,
             ]
         )->validate();
 
