@@ -35,7 +35,8 @@ class CampaignMapper
 
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
-            $classification = array_map(function(array $item) {
+            $classification = array_map(
+                function (array $item) {
                     return $item['keyword'];
                 },
                 $banner->getClassification()
