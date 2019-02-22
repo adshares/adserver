@@ -202,7 +202,9 @@ class WalletController extends Controller
             new WithdrawalApproval(
                 Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all()),
                 $request->input(self::FIELD_NEXT_STEP),
-                $amount, $fee, $addressTo
+                $amount,
+                $fee,
+                $addressTo
             )
         );
 
