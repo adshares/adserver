@@ -31,7 +31,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use JsonRPC\Exception\ServerErrorException;
 
 class UsersController extends Controller
 {
@@ -65,23 +64,6 @@ class UsersController extends Controller
 
         return self::json($user->toArray(), Response::HTTP_CREATED)
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
-    }
-
-    public function count()
-    {
-        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
-    }
-
-    public function browse()
-    {
-        $users = User::get();
-
-        return self::json($users->toArray());
-    }
-
-    public function delete()
-    {
-        return self::json([], Response::HTTP_NOT_IMPLEMENTED, ['message' => 'not yet implemented <3']);
     }
 
     public function edit(Request $request)

@@ -137,9 +137,14 @@ final class Uuid implements Id
         return new self($value);
     }
 
-    public function __toString(): string
+    public function toString(): string
     {
         return $this->id;
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 
     public function equals(object $other): bool

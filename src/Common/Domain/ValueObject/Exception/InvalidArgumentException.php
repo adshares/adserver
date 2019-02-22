@@ -18,11 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types = 1);
+
 namespace Adshares\Common\Domain\ValueObject\Exception;
 
-use RuntimeException;
-
-final class InvalidUuidException extends RuntimeException
+final class InvalidArgumentException extends \InvalidArgumentException
 {
-
 }
