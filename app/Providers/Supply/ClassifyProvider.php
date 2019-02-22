@@ -24,10 +24,9 @@ namespace Adshares\Adserver\Providers\Supply;
 
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
-use Adshares\Classify\Infrastructure\Service\DummyClassifier;
+use Adshares\Classify\Infrastructure\Service\LocalClassifier;
 use Adshares\Classify\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Foundation\Application;
 
 class ClassifyProvider extends ServiceProvider
 {
@@ -35,9 +34,8 @@ class ClassifyProvider extends ServiceProvider
     {
         $this->app->bind(
             ClassifierInterface::class,
-            function (Application $app) {
-                $keyword = (string)config('app.classify_keyword');
-                return new DummyClassifier($keyword, $app->make(SignatureVerifierInterface::class));
+            function () {
+                return new LocalClassifier((string)config('app.classify_namespace'));
             }
         );
 

@@ -26,5 +26,5 @@ use Adshares\Supply\Application\Dto\Classification\Collection;
 
 interface BannerClassifier
 {
-    public function fetchBannersClassification(array $bannerUuids): Collection;
+    public function fetchBannersClassification(array $bannerPublicIds): Collection;
 }

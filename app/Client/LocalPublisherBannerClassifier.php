@@ -38,24 +38,25 @@ class LocalPublisherBannerClassifier implements BannerClassifier
         $this->classifier = $classifier;
     }
 
-    public function fetchBannersClassification(array $bannerUuids): Collection
+    public function fetchBannersClassification(array $bannerIds): Collection
     {
-        $ids = NetworkBanner::findIdsByUuids($bannerUuids);
         $collection = new Collection();
-        foreach ($ids as $bannerId) {
+        $publicIdsToInternalIdsMap = NetworkBanner::findIdsByUuids($bannerIds);
+
+        foreach ($publicIdsToInternalIdsMap as $publicId => $internalId) {
             try {
-                $classificationCollection = $this->classifier->fetch($bannerId);
+                $classificationCollection = $this->classifier->fetch($internalId);
 
                 /** @var Classification $classification */
                 foreach ($classificationCollection as $classification) {
                     $collection->addClassification(
-                        $bannerId,
+                        $publicId,
                         $classification->keyword(),
                         $classification->signature()
                     );
                 }
             } catch (BannerNotVerifiedException $exception) {
-                $collection->addEmptyClassification($bannerId);
+                $collection->addEmptyClassification($publicId);
             }
         }
 

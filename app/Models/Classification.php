@@ -22,7 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Classify\Domain\Model\Classification as DomainClassification;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -36,6 +37,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Classification extends Model
 {
+    use Ownership;
+    use AutomateMutators;
+
     protected $fillable = [
         'user_id',
         'site_id',
@@ -53,26 +57,7 @@ class Classification extends Model
         return self::whereIn('banner_id', $ids)->get();
     }
 
-    public static function classifyGlobal(int $userId, int $bannerId, bool $status, string $signature)
-    {
-        $classification = self::where('banner_id', $bannerId)
-            ->where('user_id', $userId)
-            ->first();
-
-        if (!$classification) {
-            $classification = new self();
-            $classification->banner_id = $bannerId;
-            $classification->user_id = $userId;
-            $classification->site_id = null;
-        }
-
-        $classification->signature = $signature;
-        $classification->status = $status;
-
-        $classification->save();
-    }
-
-    public static function classifySite(int $siteId, int $userId, int $bannerId, bool $status, string $signature)
+    public static function classify(int $userId, int $bannerId, bool $status, string $signature, ?int $siteId): void
     {
         $classification = self::where('banner_id', $bannerId)
             ->where('user_id', $userId)
@@ -90,6 +75,11 @@ class Classification extends Model
         $classification->status = $status;
 
         $classification->save();
+    }
+
+    public static function findByBannerId(int $bannerId)
+    {
+        return self::where('banner_id', $bannerId)->get();
     }
 
     public function banner(): BelongsTo
