@@ -91,7 +91,7 @@ class ClassifierController extends Controller
             $siteId
         );
 
-        $signature = $this->signatureVerifier->create($classificationDomain->keyword(), $bannerId);
+        $signature = $this->signatureVerifier->create($classificationDomain->keyword());
         $classificationDomain->sign($signature);
 
         try {
