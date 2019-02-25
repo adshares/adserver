@@ -55,6 +55,7 @@ class AuthController extends Controller
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
+
         $user = User::register($request->input('user'));
         Mail::to($user)->queue(
             new UserEmailActivate(
@@ -62,6 +63,7 @@ class AuthController extends Controller
                 $request->input('uri')
             )
         );
+
         DB::commit();
 
         return self::json([], Response::HTTP_CREATED);

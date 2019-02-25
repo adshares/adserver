@@ -71,6 +71,7 @@ class UserLedgerEntry extends Model
         self::STATUS_PENDING,
         self::STATUS_BLOCKED,
         self::STATUS_PROCESSING,
+        self::STATUS_AWAITING_APPROVAL,
     ];
 
     public const ALLOWED_TYPE_LIST = [
@@ -131,16 +132,9 @@ class UserLedgerEntry extends Model
         string $addressTo,
         string $transactionId
     ): self {
-        $userLedgerEntry = new self();
-        $userLedgerEntry->user_id = $userId;
-        $userLedgerEntry->amount = $amount;
-        $userLedgerEntry->status = $status;
-        $userLedgerEntry->type = $type;
-        $userLedgerEntry->address_from = $addressFrom;
-        $userLedgerEntry->address_to = $addressTo;
-        $userLedgerEntry->txid = $transactionId;
-
-        return $userLedgerEntry;
+        return self::construct($userId, $amount, $status, $type)
+            ->addressed($addressFrom, $addressTo)
+            ->processed($transactionId);
     }
 
     public static function balanceRelevantEntriesByUserId(int $userId)
@@ -211,7 +205,7 @@ class UserLedgerEntry extends Model
     {
         $this->failIfStatusNotAllowed($status);
 
-        $this->status = $status;
+        $this->attributes['status'] = $status;
     }
 
     public function addressed(string $addressFrom, string $addressTo): self
@@ -227,5 +221,12 @@ class UserLedgerEntry extends Model
         if (!in_array($status, self::ALLOWED_STATUS_LIST, true)) {
             throw new InvalidArgumentException("Status $status not allowed");
         }
+    }
+
+    public function processed(string $transactionId)
+    {
+        $this->txid = $transactionId;
+
+        return $this;
     }
 }

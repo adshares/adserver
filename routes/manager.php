@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
+use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
@@ -28,7 +29,6 @@ use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
-use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('campaigns', [CampaignsController::class, 'browse'])->name('app.campaigns.browse');
@@ -77,6 +77,9 @@ Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdraw
 Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
+Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
+    ->name('wallet.confirm-withdrawal');
+
 
 // statistics
 Route::get('campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);

@@ -22,9 +22,9 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use function config;
 
 class WalletController extends Controller
 {
@@ -62,8 +63,6 @@ class WalletController extends Controller
     const FIELD_TOTAL = 'total';
 
     const VALIDATOR_RULE_REQUIRED = 'required';
-
-    private const FIELD_NEXT_STEP = 'next_step_uri';
 
     public function calculateWithdrawal(Request $request): JsonResponse
     {
@@ -123,26 +122,28 @@ class WalletController extends Controller
 
     public function approveWithdrawal(Request $request): JsonResponse
     {
-        Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
+        Validator::make($request->all(), ['token' => 'required'])->validate();
 
         DB::beginTransaction();
-        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
-            return self::json([], Response::HTTP_FORBIDDEN);
+
+        if (false === $token = Token::check($request->input('token'))) {
+            return self::json([], Response::HTTP_NOT_FOUND);
         }
-        $user = User::find($token['user_id']);
-        if (empty($user)) {
-            return self::json([], Response::HTTP_FORBIDDEN);
+
+        if (Auth::user()->id !== $token['user_id']) {
+            return self::json([], Response::HTTP_BAD_REQUEST);
         }
-        $user->email_confirmed_at = date('Y-m-d H:i:s');
-        $user->save();
+
+        AdsSendOne::dispatch(
+            UserLedgerEntry::find($token['payload']['ledgerEntry']),
+            $token['payload']['request']['to'],
+            $token['payload']['request']['amount'],
+            $token['payload']['request']['memo']
+        );
+
         DB::commit();
 
         return self::json();
-        $memo = $request->input(self::FIELD_MEMO);
-        if ($result) {
-            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
-            AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
-        }
     }
 
     public function withdraw(Request $request): JsonResponse
@@ -178,30 +179,25 @@ class WalletController extends Controller
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
+        DB::beginTransaction();
+
         if (!$ledgerEntry->save()) {
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        DB::beginTransaction();
+        $payload = [
+            'request' => $request->all(),
+            'ledgerEntry' => $ledgerEntry->id,
+        ];
 
-        if (!Token::canGenerate($user->id, 'email-approve-withdrawal', 15 * 60)) {
-            return self::json(
-                [],
-                Response::HTTP_TOO_MANY_REQUESTS,
-                [
-                    'message' => "You have already requested email change.\n"
-                        .'You can request withdrawal approval every 15 minutes.',
-                ]
-            );
-        }
+        $token = Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $payload);
 
         Mail::to($user)->queue(
             new WithdrawalApproval(
-                Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $request->all()),
-                $request->input(self::FIELD_NEXT_STEP),
+                config('app.adpanel_base_url')."/auth/withdrawal-confirmation/$token",
                 $amount,
                 $fee,
-                $addressTo
+                $addressTo->toString()
             )
         );
 
@@ -244,9 +240,9 @@ class WalletController extends Controller
         $resp = [];
         $items = [];
         if ($count > 0) {
-            foreach (UserLedgerEntry::where('user_id', $userId)->orderBy('created_at', 'desc')->skip($offset)->take(
-                $limit
-            )->cursor() as $ledgerItem) {
+            foreach (UserLedgerEntry::where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
                 $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
                 $status = (int)$ledgerItem->status;

@@ -1,9 +1,9 @@
 @component('mail::message')
-    ## Not enough funds on your account.
+## Not enough funds on your account.
 
-    Please transfer {{ $transferValue }} clicks from Cold Wallet to Hot Wallet - {{ $address }}.
+Please transfer {{ $transferValue }} clicks from Cold Wallet to Hot Wallet - {{ $address }}.
 
-    Thanks,
+Thanks,
 
-    {{ config('app.name') }} Team
+{{ config('app.name') }} Team
 @endcomponent
