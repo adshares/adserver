@@ -38,7 +38,7 @@ final class ClassificationTest extends TestCase
         $status = true;
 
         $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status, null, $siteId);
-        $expected = sprintf('classify:%s:%s:%s:%s', $bannerId, $publisherId, $siteId, $status);
+        $expected = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
 
 
         $this->assertEquals($expected, $classification->keyword());
@@ -51,7 +51,7 @@ final class ClassificationTest extends TestCase
         $status = false;
 
         $classification = new Classification(self::NAMESPACE, $publisherId, $bannerId, $status);
-        $expected = sprintf('classify:%s:%s:%s', $bannerId, $publisherId, $status);
+        $expected = sprintf('classify:%s:%s', $publisherId, (int)$status);
 
 
         $this->assertEquals($expected, $classification->keyword());

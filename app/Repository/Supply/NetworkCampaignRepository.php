@@ -142,6 +142,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'width' => $networkBanner->width,
                 'height' => $networkBanner->height,
                 'status' => $networkBanner->status,
+                'classification' => $networkBanner->classification,
             ];
         }
 
