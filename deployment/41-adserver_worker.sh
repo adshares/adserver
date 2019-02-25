@@ -6,8 +6,6 @@ source ${HERE}/_functions.sh
 SERVICE_NAME=adserver
 
 {
-    echo "45 */5 * * * mongodump --out ${INSTALLATION_DIR}/.backup/mongo-\$(date -u -Iseconds)          &> /dev/null"
-
     echo "0    */12 * * * php ${INSTALLATION_DIR}/${SERVICE_NAME}/artisan ads:broadcast-host            &> /dev/null"
 
     echo "30   */6  * * * php ${INSTALLATION_DIR}/${SERVICE_NAME}/artisan ads:fetch-hosts               &> /dev/null"

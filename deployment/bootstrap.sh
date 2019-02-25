@@ -105,6 +105,9 @@ then
     echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
 fi
 
-echo "45 */6 * * * mysqldump --add-drop-table --all-databases --result-file=${INSTALLATION_DIR}/.backup/mysql-\$(date -u -Iseconds).sql" | tee crontab-`id --user --name`.txt
+{
+    echo "5 5 * * * mongodump --out ${INSTALLATION_DIR}/.backup/mongo-\$(date -u -Iseconds)                                              &> /dev/null"
+    echo "6 6 * * * mysqldump --add-drop-table --all-databases --result-file=${INSTALLATION_DIR}/.backup/mysql-\$(date -u -Iseconds).sql &> /dev/null"
+} | tee crontab.txt
 
-crontab crontab-`id --user --name`.txt
+crontab crontab.txt
