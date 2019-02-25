@@ -34,21 +34,16 @@ AdServer is the core software behind the ecosystem.
 git clone https://github.com/adshares/adserver.git
 ```
 ### Prepare environment
-We recommend creating a separate user (without sudo privileges) to be the owner of all the installed services.
-> The script below creates such a user (called `adshares` by default).
-
+Install all required software and copy all the below-mentioned scripts and configs to `/opt/adshares/.deployment-scripts`.
 ```bash
 sudo adserver/deployment/bootstrap.sh
 ```
-> Should you wish to create a user with a different name, add an argument to the above command specifying it. 
-> Use ``` `id --user --name` ``` as the argument to pass the current user's name.
-
-The script will install all required software and will copy all the below-mentioned scripts and configs to `/opt/adshares/.deployment-scripts` (setting ownership to `adshares` user).
-
-The one-liners are created with `sudo` to run the scripts as the `adshares` user. You can omit `sudo --login --user adshares` if you want to run them as the current user.
+> The script above creates such a separate `adshares` user (without sudo privileges) to be the owner of all the installed services.
 
 Note that there are many environment variables you can override to tweak the behavior of the scripts (just inspect the scripts and configs to see what is being used).
 The variables are set to reasonable defaults. Adjust them to your needs :)
+
+> The one-liners use `sudo` to run the scripts as the `adshares` user. You can omit `sudo --login --user adshares` if you want to run them as the current user.
 
 # Install helper services
 ```bash
