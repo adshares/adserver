@@ -91,7 +91,6 @@ class ClassifierController extends Controller
         $classificationDomain = new DomainClassification(
             (string)config('app.classify_namespace'),
             $userId,
-            $bannerId,
             $status,
             '',
             $siteId
