@@ -166,6 +166,10 @@ class User extends Authenticatable
 
     public function generateApiKey(): void
     {
+        if ($this->api_token) {
+            return;
+        }
+
         do {
             $this->api_token = str_random(60);
         } while ($this->where('api_token', $this->api_token)->exists());
