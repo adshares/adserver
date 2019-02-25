@@ -78,7 +78,7 @@ class SupplySendPayments extends Command
                     $message = '[Supply] (SupplySendPayments) Insufficient funds on Operator Account. ';
                     $message.= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
 
-                    $this->info(sprintf($message, $payment->receiver_address, $payment->id, $payment->amunt));
+                    $this->info(sprintf($message, $payment->receiver_address, $payment->id, $payment->amount));
 
                     continue;
                 }
@@ -90,7 +90,7 @@ class SupplySendPayments extends Command
                 $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
                 $message.= 'Payment (Network) id %s. Amount %s.';
 
-                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amunt));
+                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
 
                 continue;
             }
