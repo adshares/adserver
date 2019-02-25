@@ -76,14 +76,14 @@ class SupplySendPayments extends Command
                     DB::rollBack();
 
                     $message = '[Supply] (SupplySendPayments) Insufficient funds on Operator Account. ';
-                    $message.= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
+                    $message .= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
 
                     $this->info(sprintf($message, $payment->receiver_address, $payment->id, $payment->amount));
 
                     continue;
                 }
 
-                throw new $exception;
+                throw new $exception();
             } catch (Exception $exception) {
                 DB::rollBack();
 
@@ -127,15 +127,13 @@ class SupplySendPayments extends Command
                 throw new RuntimeException(sprintf($message, $userUuid));
             }
 
-            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+            $userLedgerEntry = UserLedgerEntry::construct(
                 $user->id,
                 $amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
-                UserLedgerEntry::TYPE_AD_INCOME,
-                $adsPaymentSenderAddress,
-                (string)$adServerAddress,
-                $adsPaymentTxId
-            );
+                UserLedgerEntry::TYPE_DEPOSIT
+            )->addressed($adsPaymentSenderAddress, (string)$adServerAddress)
+                ->processed($adsPaymentTxId);
 
             $userLedgerEntry->save();
         }
