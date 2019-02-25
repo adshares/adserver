@@ -36,6 +36,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClassifierController extends Controller
 {
@@ -81,17 +82,21 @@ class ClassifierController extends Controller
 
         $bannerId = (int)$classification['banner_id'];
         $status = (bool)$classification['status'];
+        $banner = NetworkBanner::find($bannerId);
+
+        if (!$banner) {
+            throw new NotFoundHttpException(sprintf('Banner %s does not exist.', $bannerId));
+        }
 
         $classificationDomain = new DomainClassification(
             (string)config('app.classify_namespace'),
             $userId,
-            $bannerId,
             $status,
             '',
             $siteId
         );
 
-        $signature = $this->signatureVerifier->create($classificationDomain->keyword());
+        $signature = $this->signatureVerifier->create($classificationDomain->keyword(), $banner->uuid);
         $classificationDomain->sign($signature);
 
         try {

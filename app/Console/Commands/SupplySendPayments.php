@@ -56,6 +56,11 @@ class SupplySendPayments extends Command
                 $amount = $payment->amount;
 
                 DB::beginTransaction();
+
+                if ($payment->ads_payment_id !== null) {
+                    $this->addEntryToUserLedgerWithAdIncome($payment->ads_payment_id, $payment->id);
+                }
+
                 if ($amount > 0) {
                     $command = new SendOneCommand($receiverAddress, $amount);
                     $response = $adsClient->runTransaction($command);
@@ -64,10 +69,6 @@ class SupplySendPayments extends Command
                     $payment->tx_time = $response->getTx()->getTime()->getTimestamp();
                     $payment->processed = '1';
                     $payment->save();
-                }
-
-                if ($payment->ads_payment_id !== null) {
-                    $this->addEntryToUserLedgerWithAdIncome($payment->ads_payment_id, $payment->id);
                 }
 
                 DB::commit();
@@ -83,17 +84,16 @@ class SupplySendPayments extends Command
                     continue;
                 }
 
-                throw new $exception();
+                throw $exception;
             } catch (Exception $exception) {
                 DB::rollBack();
 
-                throw $exception;
-//                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
-//                $message.= 'Payment (Network) id %s. Amount %s.';
-//
-//                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
+                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
+                $message .= 'Payment (Network) id %s. Amount %s.';
 
-//                continue;
+                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
+
+                continue;
             }
         }
 
@@ -118,7 +118,7 @@ class SupplySendPayments extends Command
         $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPaymentId);
         foreach ($splitPayments as $splitPayment) {
             $userUuid = $splitPayment->publisher_id;
-            $amount = $splitPayment->paid_amount;
+            $amount = (int)$splitPayment->paid_amount;
 
             $user = User::fetchByUuid($userUuid);
 
@@ -127,13 +127,15 @@ class SupplySendPayments extends Command
                 throw new RuntimeException(sprintf($message, $userUuid));
             }
 
-            $userLedgerEntry = UserLedgerEntry::construct(
+            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
                 $amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
-                UserLedgerEntry::TYPE_DEPOSIT
-            )->addressed($adsPaymentSenderAddress, (string)$adServerAddress)
-                ->processed($adsPaymentTxId);
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $adsPaymentSenderAddress,
+                (string)$adServerAddress,
+                $adsPaymentTxId
+            );
 
             $userLedgerEntry->save();
         }

@@ -54,7 +54,6 @@ class LocalClassifier implements ClassifierInterface
             $domainClassification = new DomainClassification(
                 $this->namespace,
                 $classification->user_id,
-                $classification->banner_id,
                 $classification->status,
                 $classification->signature,
                 $classification->site_id

@@ -130,7 +130,7 @@ class InventoryImporter
 
             /** @var Classification $classification */
             foreach ($classifications as $classification) {
-                if ($classification && $this->classifyVerifier->isVerified($classification)) {
+                if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
                     $banner->classify($classification);
                 } else {
                     $banner->removeClassification($classification);

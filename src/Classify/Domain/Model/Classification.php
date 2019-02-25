@@ -26,8 +26,6 @@ class Classification
 {
     /** @var int */
     private $publisherId;
-    /** @var int */
-    private $bannerId;
     /** @var bool */
     private $status;
     /** @var string */
@@ -40,14 +38,12 @@ class Classification
     public function __construct(
         string $namespace,
         int $publisherId,
-        int $bannerId,
         bool $status,
         ?string $signature = null,
         ?int $siteId = null
     ) {
         $this->namespace = $namespace;
         $this->publisherId = $publisherId;
-        $this->bannerId = $bannerId;
         $this->status = $status;
         $this->signature = $signature;
         $this->siteId = $siteId;
@@ -56,11 +52,10 @@ class Classification
     public static function createUnsigned(
         string $namespace,
         int $publisherId,
-        int $bannerId,
         ?bool $status,
         ?int $siteId = null
     ): self {
-        return new self($namespace, $publisherId, $bannerId, $status, null, $siteId);
+        return new self($namespace, $publisherId, $status, null, $siteId);
     }
 
     public function getSiteId(): ?int
@@ -80,21 +75,19 @@ class Classification
     {
         if ($this->siteId) {
             return sprintf(
-                '%s:%s:%s:%s:%s',
+                '%s:%s:%s:%s',
                 $this->namespace,
-                $this->bannerId,
                 $this->publisherId,
                 $this->siteId,
-                $this->status
+                (int)$this->status
             );
         }
 
         return sprintf(
-            '%s:%s:%s:%s',
+            '%s:%s:%s',
             $this->namespace,
-            $this->bannerId,
             $this->publisherId,
-            $this->status
+            (int)$this->status
         );
     }
 
