@@ -91,7 +91,6 @@ class DummyClassifier implements ClassifierInterface
         $classification = Classification::createUnsigned(
             $this->keyword,
             $dummy['publisherId'],
-            $dummy['bannerId'],
             $dummy['status'],
             $dummy['siteId']
         );
