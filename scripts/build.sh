@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 
 if [[ -v GIT_CLONE ]]
 then
@@ -17,7 +17,7 @@ then
 
   cd ${BUILD_PATH}/build
 fi
-
+sleep 100000
 composer install
 
 yarn install
