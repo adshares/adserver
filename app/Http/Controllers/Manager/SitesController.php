@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Site;
+use Adshares\Classify\Domain\Model\Classification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,13 +36,15 @@ class SitesController extends Controller
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
+        $input = $request->input('site');
 
         DB::beginTransaction();
 
         try {
-            $site = Site::create($request->input('site'));
+            $site = Site::create($input);
             $site->user_id = Auth::user()->id;
             $site->save();
+            $this->addClassificationToSiteFiltering($site, $input);
 
             $site->zones()->createMany($request->input('site.ad_units'));
         } catch (Exception $exception) {
@@ -54,9 +57,145 @@ class SitesController extends Controller
         return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
+    private function addClassificationToSiteFiltering(Site $site, array $input): void
+    {
+        $siteRequires = $site->site_requires;
+        $siteExcludes = $site->site_excludes;
+
+        // remove classification from require and exclude
+        unset($siteRequires['classification']);
+        unset($siteExcludes['classification']);
+
+        // add keys
+        $publisherId = $site->user_id;
+        $siteId = $site->id;
+
+        if ($this->isRequiredClassified($input)) {
+            list($requireKeywords, $excludeKeywords) = $this->getClassificationRequireKeywords($publisherId, $siteId);
+
+            $siteRequires['classification'] = $requireKeywords;
+            $siteExcludes['classification'] = $excludeKeywords;
+        }
+        if ($this->isExcludedUnclassified($input)) {
+            $excludeKeywords = $this->getClassificationExcludeKeywords($publisherId, $siteId);
+
+            if (empty($siteExcludes['classification'])) {
+                $siteExcludes['classification'] = [];
+            }
+
+            foreach ($excludeKeywords as $excludeKeyword) {
+                if (!in_array($excludeKeyword, $siteExcludes['classification'], true)) {
+                    $siteExcludes['classification'][] = $excludeKeyword;
+                }
+            }
+        }
+
+        $site->site_excludes = $siteExcludes;
+        $site->site_requires = $siteRequires;
+        $site->save();
+    }
+
+    private function isRequiredClassified(array $input): bool
+    {
+        return $input['filtering']['require_classified'] ?? false;
+    }
+
+    private function isExcludedUnclassified(array $input): bool
+    {
+        return $input['filtering']['exclude_unclassified'] ?? false;
+    }
+
+    private function getClassificationRequireKeywords(int $publisherId, $siteId): array
+    {
+        $requireKeywords = [
+            $this->createClassificationKeyword($publisherId, true),
+            $this->createClassificationKeyword($publisherId, true, $siteId),
+        ];
+        $excludeKeywords = [
+            $this->createClassificationKeyword($publisherId, false),
+        ];
+
+        return [$requireKeywords, $excludeKeywords];
+    }
+
+    private function createClassificationKeyword(int $publisherId, bool $status, ?int $siteId = null): string
+    {
+        $classifyNamespace = (string)config('app.classify_namespace');
+
+        return Classification::createUnsigned($classifyNamespace, $publisherId, $status, $siteId)->keyword();
+    }
+
+    private function getClassificationExcludeKeywords(int $publisherId, $siteId): array
+    {
+        $excludeKeywords = [
+            $this->createClassificationKeyword($publisherId, false),
+            $this->createClassificationKeyword($publisherId, false, $siteId),
+        ];
+
+        return $excludeKeywords;
+    }
+
     public function read(Site $site): JsonResponse
     {
-        return self::json($site);
+        return self::json($this->processClassificationInFiltering($site));
+    }
+
+    private function processClassificationInFiltering(Site $site): array
+    {
+        $siteArray = $site->toArray();
+        $publisherId = $siteArray['user_id'];
+        $siteId = $siteArray['id'];
+
+        // extract classification key from filtering and set attributes
+        $filtering = $siteArray['filtering'];
+        if ($filtering['requires']['classification'] ?? false && $filtering['excludes']['classification'] ?? false) {
+            list($requireKeywords, $excludeKeywords) = $this->getClassificationRequireKeywords($publisherId, $siteId);
+
+            $filtering['require_classified'] =
+                $this->areValuesInArray($requireKeywords, $filtering['requires']['classification'])
+                && $this->areValuesInArray($excludeKeywords, $filtering['excludes']['classification']);
+        } else {
+            $filtering['require_classified'] = false;
+        }
+
+        if ($filtering['excludes']['classification'] ?? false) {
+            $excludeKeywords = $this->getClassificationExcludeKeywords($publisherId, $siteId);
+
+            $filtering['exclude_unclassified'] =
+                $this->areValuesInArray($excludeKeywords, $filtering['excludes']['classification']);
+        } else {
+            $filtering['exclude_unclassified'] = false;
+        }
+
+        // remove classification
+        if ($filtering['requires']['classification'] ?? false) {
+            unset($filtering['requires']['classification']);
+
+            if (!$filtering['requires']) {
+                $filtering['requires'] = null;
+            }
+        }
+        if ($filtering['excludes']['classification'] ?? false) {
+            unset($filtering['excludes']['classification']);
+
+            if (!$filtering['excludes']) {
+                $filtering['excludes'] = null;
+            }
+        }
+        $siteArray['filtering'] = $filtering;
+
+        return $siteArray;
+    }
+
+    private function areValuesInArray(array $values, array $array): bool
+    {
+        foreach ($values as $value) {
+            if (!in_array($value, $array)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function update(Request $request, Site $site): JsonResponse
@@ -69,8 +208,9 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
+            $this->addClassificationToSiteFiltering($site, $input);
 
-            $inputZones = $this->proccessInputZones($site, Collection::make($request->input('site.ad_units')));
+            $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
 
             $site->zones()->createMany($inputZones->all());
         } catch (Exception $exception) {
@@ -83,7 +223,7 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    private function proccessInputZones(Site $site, Collection $inputZones)
+    private function processInputZones(Site $site, Collection $inputZones)
     {
         foreach ($site->zones as $zone) {
             $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
@@ -121,7 +261,13 @@ class SitesController extends Controller
 
     public function list(): JsonResponse
     {
-        return self::json(Site::get());
+        $siteCollection = Site::get();
+        $sites = [];
+        foreach ($siteCollection as $site) {
+            $sites[] = $this->processClassificationInFiltering($site);
+        }
+
+        return self::json($sites);
     }
 
     public function count(): JsonResponse
