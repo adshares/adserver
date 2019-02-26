@@ -17,7 +17,6 @@ then
 
   cd ${BUILD_PATH}/build
 fi
-env
 
 composer install
 
