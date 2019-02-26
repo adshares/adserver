@@ -1,6 +1,7 @@
 {
     "private": true,
     "scripts": {
+      "test": "yarn run development",
         "local": "yarn run development",
         "demo": "yarn run development",
         "dev": "yarn run development",
