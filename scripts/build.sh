@@ -18,7 +18,7 @@ then
   cd ${BUILD_PATH}/build
 fi
 env
-sleep 100000
+
 composer install
 
 yarn install
