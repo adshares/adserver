@@ -65,7 +65,6 @@ class SitesController extends Controller
         unset($siteRequires['classification']);
         unset($siteExcludes['classification']);
 
-
         $publisherId = $site->user_id;
         $siteId = $site->id;
 
@@ -89,7 +88,6 @@ class SitesController extends Controller
                 }
             }
         }
-
 
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;
@@ -144,31 +142,8 @@ class SitesController extends Controller
     private function processClassificationInFiltering(Site $site): array
     {
         $siteArray = $site->toArray();
-        $publisherId = $siteArray['user_id'];
-        $siteId = $siteArray['id'];
-
 
         $filtering = $siteArray['filtering'];
-        if ($filtering['requires']['classification'] ?? false && $filtering['excludes']['classification'] ?? false) {
-            list($requireKeywords, $excludeKeywords) =
-                $this->getKeywordsForPositiveClassification($publisherId, $siteId);
-
-            $filtering['require_classified'] =
-                $this->areValuesInArray($requireKeywords, $filtering['requires']['classification'])
-                && $this->areValuesInArray($excludeKeywords, $filtering['excludes']['classification']);
-        } else {
-            $filtering['require_classified'] = false;
-        }
-
-        if ($filtering['excludes']['classification'] ?? false) {
-            $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
-
-            $filtering['exclude_unclassified'] =
-                $this->areValuesInArray($excludeKeywords, $filtering['excludes']['classification']);
-        } else {
-            $filtering['exclude_unclassified'] = false;
-        }
-
 
         if ($filtering['requires']['classification'] ?? false) {
             unset($filtering['requires']['classification']);
@@ -184,20 +159,10 @@ class SitesController extends Controller
                 $filtering['excludes'] = null;
             }
         }
+
         $siteArray['filtering'] = $filtering;
 
         return $siteArray;
-    }
-
-    private function areValuesInArray(array $values, array $array): bool
-    {
-        foreach ($values as $value) {
-            if (!in_array($value, $array)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     public function update(Request $request, Site $site): JsonResponse

@@ -35,6 +35,8 @@ use Illuminate\Support\Collection;
  * @property string name
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
+ * @property bool require_classified
+ * @property bool exclude_unclassified
  * @property Zone[]|Collection zones
  * @method static Site create($input = null)
  * @method static get()
@@ -125,6 +127,8 @@ class Site extends Model
     {
         $this->site_requires = $data['requires'];
         $this->site_excludes = $data['excludes'];
+        $this->require_classified = $data['require_classified'];
+        $this->exclude_unclassified = $data['exclude_unclassified'];
     }
 
     public function getFilteringAttribute(): array
@@ -132,6 +136,8 @@ class Site extends Model
         return [
             'requires' => $this->site_requires,
             'excludes' => $this->site_excludes,
+            'require_classified' => (bool)$this->require_classified,
+            'exclude_unclassified' => (bool)$this->exclude_unclassified,
         ];
     }
 
