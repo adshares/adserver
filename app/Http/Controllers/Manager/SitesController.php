@@ -62,11 +62,10 @@ class SitesController extends Controller
         $siteRequires = $site->site_requires;
         $siteExcludes = $site->site_excludes;
 
-        // remove classification from require and exclude
         unset($siteRequires['classification']);
         unset($siteExcludes['classification']);
 
-        // add keys
+
         $publisherId = $site->user_id;
         $siteId = $site->id;
 
@@ -89,6 +88,7 @@ class SitesController extends Controller
                 }
             }
         }
+
 
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;
@@ -146,7 +146,7 @@ class SitesController extends Controller
         $publisherId = $siteArray['user_id'];
         $siteId = $siteArray['id'];
 
-        // extract classification key from filtering and set attributes
+
         $filtering = $siteArray['filtering'];
         if ($filtering['requires']['classification'] ?? false && $filtering['excludes']['classification'] ?? false) {
             list($requireKeywords, $excludeKeywords) = $this->getClassificationRequireKeywords($publisherId, $siteId);
@@ -167,7 +167,7 @@ class SitesController extends Controller
             $filtering['exclude_unclassified'] = false;
         }
 
-        // remove classification
+
         if ($filtering['requires']['classification'] ?? false) {
             unset($filtering['requires']['classification']);
 
