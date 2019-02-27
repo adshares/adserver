@@ -127,8 +127,8 @@ class Site extends Model
     {
         $this->site_requires = $data['requires'];
         $this->site_excludes = $data['excludes'];
-        $this->require_classified = $data['require_classified'];
-        $this->exclude_unclassified = $data['exclude_unclassified'];
+        $this->require_classified = $data['require_classified'] ?? false;
+        $this->exclude_unclassified = $data['exclude_unclassified'] ?? false;
     }
 
     public function getFilteringAttribute(): array
