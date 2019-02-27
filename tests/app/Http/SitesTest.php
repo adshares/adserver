@@ -449,10 +449,13 @@ JSON
         $id = $this->getIdFromLocation($postResponse->headers->get('Location'));
 
         $getResponse = $this->getJson(self::URI.'/'.$id);
-        $getResponse->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(4, 'filtering');
-        
+        $getResponse->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
+            4,
+            'filtering'
+        );
+
         $filteringResponse = json_decode($getResponse->content(), true)['filtering'];
-        
+
         $this->assertEquals($preset['requireClassified'] ?? false, $filteringResponse['requireClassified']);
         $this->assertEquals($preset['excludeUnclassified'] ?? false, $filteringResponse['excludeUnclassified']);
     }
