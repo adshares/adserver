@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Dto\Response\Classifier;
+namespace Adshares\Adserver\Http\Response\Classifier;
 
 use Illuminate\Contracts\Support\Arrayable;
 
