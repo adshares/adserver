@@ -112,7 +112,7 @@ class SitesController extends Controller
             $this->createClassificationKeyword($publisherId, true, $siteId),
         ];
         $excludeKeywords = [
-            $this->createClassificationKeyword($publisherId, false),
+            $this->createClassificationKeyword($publisherId, false, $siteId),
         ];
 
         return [$requireKeywords, $excludeKeywords];
