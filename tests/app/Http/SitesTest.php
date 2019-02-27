@@ -100,7 +100,7 @@ class SitesTest extends TestCase
                 ]
             )
             ->assertJsonCount(1, 'adUnits')
-            ->assertJsonCount(2, 'filtering')
+            ->assertJsonCount(4, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
             ->assertJsonCount(0, 'filtering.excludes');
     }
