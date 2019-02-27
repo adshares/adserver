@@ -105,6 +105,71 @@ final class JsonRpcAdSelectClient implements AdSelect
         return new FoundBanners($banners);
     }
 
+    public function exportInventory(Campaign $campaign): void
+    {
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_UPDATE,
+            CampaignMapper::map($campaign)
+        );
+
+        $this->client->call($procedure);
+    }
+
+    public function exportEvents(array $eventsInput): void
+    {
+        $events = [];
+
+        foreach ($eventsInput as $event) {
+            $events[] = EventMapper::map($event);
+        }
+
+        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
+        $this->client->call($procedure);
+    }
+
+    public function exportEventsPayments(array $eventsInput): void
+    {
+        $events = [];
+
+        foreach ($eventsInput as $event) {
+            $events[] = EventPaymentMapper::map($event);
+        }
+
+        $procedure = new Procedure(self::METHOD_EVENT_PAYMENT_ADD, $events);
+        $this->client->call($procedure);
+    }
+
+    public function deleteFromInventory(CampaignCollection $campaigns): void
+    {
+        $mappedCampaigns = [];
+
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mappedCampaigns[] = $campaign->getId();
+        }
+
+        $procedure = new Procedure(
+            self::METHOD_CAMPAIGN_DELETE,
+            $mappedCampaigns
+        );
+
+        $this->client->call($procedure);
+    }
+
+    private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
+    {
+        $zones = [];
+        foreach ($zoneIds as $zonePublicIdPassedFromPublisher) {
+            $zones[] = $uniqueZones->filter(
+                function (Zone $zone) use ($zonePublicIdPassedFromPublisher) {
+                    return strtoupper($zone->uuid) === strtoupper($zonePublicIdPassedFromPublisher);
+                }
+            )->first();
+        }
+
+        return new Collection($zones);
+    }
+
     private function createRequestIdsToBannerMap(array $items): array
     {
         $idMap = [];
@@ -176,70 +241,5 @@ final class JsonRpcAdSelectClient implements AdSelect
                 }
             }
         }
-    }
-
-    public function exportInventory(Campaign $campaign): void
-    {
-        $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_UPDATE,
-            CampaignMapper::map($campaign)
-        );
-
-        $this->client->call($procedure);
-    }
-
-    public function exportEvents(array $eventsInput): void
-    {
-        $events = [];
-
-        foreach ($eventsInput as $event) {
-            $events[] = EventMapper::map($event);
-        }
-
-        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
-        $this->client->call($procedure);
-    }
-
-    public function exportEventsPayments(array $eventsInput): void
-    {
-        $events = [];
-
-        foreach ($eventsInput as $event) {
-            $events[] = EventPaymentMapper::map($event);
-        }
-
-        $procedure = new Procedure(self::METHOD_EVENT_PAYMENT_ADD, $events);
-        $this->client->call($procedure);
-    }
-
-    public function deleteFromInventory(CampaignCollection $campaigns): void
-    {
-        $mappedCampaigns = [];
-
-        /** @var Campaign $campaign */
-        foreach ($campaigns as $campaign) {
-            $mappedCampaigns[] = $campaign->getId();
-        }
-
-        $procedure = new Procedure(
-            self::METHOD_CAMPAIGN_DELETE,
-            $mappedCampaigns
-        );
-
-        $this->client->call($procedure);
-    }
-
-    private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
-    {
-        $zones = [];
-        foreach ($zoneIds as $zonePublicIdPassedFromPublisher) {
-            $zones[] = $uniqueZones->filter(
-                function (Zone $zone) use ($zonePublicIdPassedFromPublisher) {
-                    return strtoupper($zone->uuid) === strtoupper($zonePublicIdPassedFromPublisher);
-                }
-            )->first();
-        }
-
-        return new Collection($zones);
     }
 }
