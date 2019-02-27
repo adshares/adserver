@@ -44,6 +44,7 @@ use function array_map;
 use function GuzzleHttp\json_encode;
 use function iterator_to_array;
 use function sprintf;
+use function strtoupper;
 
 final class JsonRpcAdSelectClient implements AdSelect
 {
@@ -76,6 +77,10 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $zones = Zone::findByPublicIds($zoneIds);
 
+        if ($zones->count() !== count($zoneIds)) {
+            $zones = $this->attachDuplicatedZones($zones, $zoneIds);
+        }
+
         $params = $context->adSelectRequestParams($zones);
         $result = $this->client->call(
             new Procedure(
@@ -84,19 +89,93 @@ final class JsonRpcAdSelectClient implements AdSelect
             )
         );
 
-        $zoneToBannerMap = $this->createZoneToBannerMap($result->toArray());
-
-        $bannerIds = $this->fixBannerOrdering($zones, $zoneToBannerMap);
+        $bannerMap = $this->createRequestIdsToBannerMap($result->toArray());
+        $bannerIds = $this->fixBannerOrdering($zones, $bannerMap);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
-        Log::debug(sprintf(
-            '{"zones":%s,"banners":%s}',
-            json_encode($zoneIds),
-            json_encode($bannerIds)
-        ));
+        Log::debug(
+            sprintf(
+                '{"zones":%s,"banners":%s}',
+                json_encode($zoneIds),
+                json_encode($bannerIds)
+            )
+        );
 
         return new FoundBanners($banners);
+    }
+
+    private function createRequestIdsToBannerMap(array $items): array
+    {
+        $idMap = [];
+
+        foreach ($items as $item) {
+            $requestId = $item['request_id'];
+            if ($requestId !== false) {
+                $idMap[$requestId] = $item['banner_id'];
+            }
+        }
+
+        return $idMap;
+    }
+
+    private function fixBannerOrdering(Collection $zones, array $bannerMap): array
+    {
+        $bannerIds = [];
+
+        foreach ($zones as $requestId => $zone) {
+            $bannerId = $bannerMap[$requestId] ?? null;
+
+            if ($bannerId === null) {
+                Log::warning(sprintf('Zone %s not found (AdSelect `request_id`: %s).', $zone->id, $requestId));
+            }
+
+            $bannerIds[$zone->uuid][] = $bannerId;
+        }
+
+        return $bannerIds;
+    }
+
+    private function fetchInOrderOfAppearance(array $params): Generator
+    {
+        foreach ($params as $zoneId => $bannerIds) {
+            foreach ($bannerIds as $bannerId) {
+                $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
+
+                if (null === $banner) {
+                    Log::warning(sprintf('Banner %s not found.', $bannerId));
+
+                    yield null;
+                } else {
+                    $campaign = $banner->campaign;
+                    yield [
+                        'zone_id' => $zoneId,
+                        'pay_from' => $campaign->source_address,
+                        'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                        'serve_url' => $banner->serve_url,
+                        'creative_sha1' => $banner->checksum,
+                        'click_url' => ForceUrlProtocol::change(
+                            route(
+                                'log-network-click',
+                                [
+                                    'id' => $banner->uuid,
+                                    'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                                ]
+                            )
+                        ),
+                        'view_url' => ForceUrlProtocol::change(
+                            route(
+                                'log-network-view',
+                                [
+                                    'id' => $banner->uuid,
+                                    'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                                ]
+                            )
+                        ),
+                    ];
+                }
+            }
+        }
     }
 
     public function exportInventory(Campaign $campaign): void
@@ -150,69 +229,17 @@ final class JsonRpcAdSelectClient implements AdSelect
         $this->client->call($procedure);
     }
 
-    private function createZoneToBannerMap(array $items): array
+    private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
     {
-        $idMap = [];
-
-        foreach ($items as $item) {
-            if ($item['request_id']) {
-                $idMap[$item['request_id']] = $item['banner_id'];
-            }
+        $zones = [];
+        foreach ($zoneIds as $zonePublicIdPassedFromPublisher) {
+            $zones[] = $uniqueZones->filter(
+                function (Zone $zone) use ($zonePublicIdPassedFromPublisher) {
+                    return strtoupper($zone->uuid) === strtoupper($zonePublicIdPassedFromPublisher);
+                }
+            )->first();
         }
 
-        return $idMap;
-    }
-
-    private function fixBannerOrdering(Collection $zones, array $zoneToBannerMap): array
-    {
-        $bannerIds = [];
-
-        foreach ($zones as $zone) {
-            $bannerId = $zoneToBannerMap[$zone->id] ?? null;
-
-            if ($bannerId === null) {
-                Log::warning(sprintf('Zone %s not found.', $zone->id));
-            }
-
-            $bannerIds[$zone->uuid] = $bannerId;
-        }
-
-        return $bannerIds;
-    }
-
-    private function fetchInOrderOfAppearance(array $bannerIds): Generator
-    {
-        foreach ($bannerIds as $zoneId => $bannerId) {
-            $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
-
-            if (null === $banner) {
-                Log::warning(sprintf('Banner %s not found.', $bannerId));
-
-                yield null;
-            } else {
-                $campaign = $banner->campaign;
-                yield [
-                    'zone_id' => $zoneId,
-                    'pay_from' => $campaign->source_address,
-                    'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
-                    'serve_url' => $banner->serve_url,
-                    'creative_sha1' => $banner->checksum,
-                    'click_url' => ForceUrlProtocol::change(route(
-                        'log-network-click',
-                        [
-                            'id' => $banner->uuid,
-                            'r' => Utils::urlSafeBase64Encode($banner->click_url),
-                        ]
-                    )),
-                    'view_url' => ForceUrlProtocol::change(route(
-                        'log-network-view',
-                        [
-                            'id' => $banner->uuid,
-                            'r' => Utils::urlSafeBase64Encode($banner->view_url),
-                        ]
-                    )),
-                ];
-            }
-        }
+        return new Collection($zones);
     }
 }
