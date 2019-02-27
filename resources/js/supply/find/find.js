@@ -392,7 +392,7 @@ domReady(function () {
     });
 });
 
-var findDestination = function findDestination(zoneId, tags, excludedTags) {
+var findDestination = function (zoneId, tags, excludedTags) {
     if (!zoneId) {
         return;
     }
