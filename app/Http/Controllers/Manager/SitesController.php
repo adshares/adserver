@@ -69,14 +69,15 @@ class SitesController extends Controller
         $publisherId = $site->user_id;
         $siteId = $site->id;
 
-        if ($this->isRequiredClassified($input)) {
-            list($requireKeywords, $excludeKeywords) = $this->getClassificationRequireKeywords($publisherId, $siteId);
+        if ($this->isPositiveClassification($input)) {
+            list($requireKeywords, $excludeKeywords) =
+                $this->getKeywordsForPositiveClassification($publisherId, $siteId);
 
             $siteRequires['classification'] = $requireKeywords;
             $siteExcludes['classification'] = $excludeKeywords;
         }
-        if ($this->isExcludedUnclassified($input)) {
-            $excludeKeywords = $this->getClassificationExcludeKeywords($publisherId, $siteId);
+        if ($this->isNotNegativeClassification($input)) {
+            $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
 
             if (empty($siteExcludes['classification'])) {
                 $siteExcludes['classification'] = [];
@@ -95,17 +96,17 @@ class SitesController extends Controller
         $site->save();
     }
 
-    private function isRequiredClassified(array $input): bool
+    private function isPositiveClassification(array $input): bool
     {
         return $input['filtering']['require_classified'] ?? false;
     }
 
-    private function isExcludedUnclassified(array $input): bool
+    private function isNotNegativeClassification(array $input): bool
     {
         return $input['filtering']['exclude_unclassified'] ?? false;
     }
 
-    private function getClassificationRequireKeywords(int $publisherId, $siteId): array
+    private function getKeywordsForPositiveClassification(int $publisherId, $siteId): array
     {
         $requireKeywords = [
             $this->createClassificationKeyword($publisherId, true),
@@ -125,7 +126,7 @@ class SitesController extends Controller
         return Classification::createUnsigned($classifyNamespace, $publisherId, $status, $siteId)->keyword();
     }
 
-    private function getClassificationExcludeKeywords(int $publisherId, $siteId): array
+    private function getKeywordsForNotNegativeClassification(int $publisherId, $siteId): array
     {
         $excludeKeywords = [
             $this->createClassificationKeyword($publisherId, false),
@@ -149,7 +150,8 @@ class SitesController extends Controller
 
         $filtering = $siteArray['filtering'];
         if ($filtering['requires']['classification'] ?? false && $filtering['excludes']['classification'] ?? false) {
-            list($requireKeywords, $excludeKeywords) = $this->getClassificationRequireKeywords($publisherId, $siteId);
+            list($requireKeywords, $excludeKeywords) =
+                $this->getKeywordsForPositiveClassification($publisherId, $siteId);
 
             $filtering['require_classified'] =
                 $this->areValuesInArray($requireKeywords, $filtering['requires']['classification'])
@@ -159,7 +161,7 @@ class SitesController extends Controller
         }
 
         if ($filtering['excludes']['classification'] ?? false) {
-            $excludeKeywords = $this->getClassificationExcludeKeywords($publisherId, $siteId);
+            $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
 
             $filtering['exclude_unclassified'] =
                 $this->areValuesInArray($excludeKeywords, $filtering['excludes']['classification']);
