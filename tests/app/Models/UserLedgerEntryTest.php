@@ -26,7 +26,6 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
-use function in_array;
 
 final class UserLedgerEntryTest extends TestCase
 {
@@ -38,7 +37,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     public function testBalancePushing(): void
@@ -47,15 +46,13 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
-
         UserLedgerEntry::pushBlockedToProcessing();
 
-        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
 
-        UserLedgerEntry::removeProcessingExpenditures();
+        UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-165, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     public function testBalanceRemoval(): void
@@ -64,23 +61,28 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        UserLedgerEntry::removeProcessingExpenditures();
+        UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(-25, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-180, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     private function createAllEntries(User $user): void
     {
+        $amountMap = [
+            UserLedgerEntry::TYPE_UNKNOWN => 9,
+            UserLedgerEntry::TYPE_DEPOSIT => 100,
+            UserLedgerEntry::TYPE_WITHDRAWAL => -50,
+            UserLedgerEntry::TYPE_AD_INCOME => 30,
+            UserLedgerEntry::TYPE_AD_EXPENSE => -15,
+        ];
         foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
-            $debit = in_array($type, UserLedgerEntry::DEBIT_TYPES, true);
-
             foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {
                 foreach ([true, false] as $delete) {
                     /** @var UserLedgerEntry $object */
                     $object = factory(UserLedgerEntry::class)->create([
                         'status' => $status,
                         'type' => $type,
-                        'amount' => $debit ? -25 : 100,
+                        'amount' => $amountMap[$type],
                         'user_id' => $user->id,
                     ]);
 

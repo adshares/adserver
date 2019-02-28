@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
+use function array_merge;
 use function in_array;
 use function sprintf;
 
@@ -120,7 +121,7 @@ class UserLedgerEntry extends Model
                 ->orWhere(function (Builder $query) {
                     self::queryModificationForAwaitingPayments($query);
                 });
-        });
+        })->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
     }
 
     public static function getBalanceForAllUsers(): int
@@ -172,7 +173,7 @@ class UserLedgerEntry extends Model
             ->update(['status' => self::STATUS_PROCESSING]);
     }
 
-    public static function removeProcessingExpenditures(): void
+    public static function removeProcessingExpenses(): void
     {
         self::where('status', self::STATUS_PROCESSING)
             ->where('type', self::TYPE_AD_EXPENSE)
