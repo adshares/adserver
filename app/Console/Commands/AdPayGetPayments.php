@@ -139,7 +139,7 @@ class AdPayGetPayments extends Command
                     $user->id,
                     -$totalEventValue,
                     UserLedgerEntry::STATUS_ACCEPTED,
-                    UserLedgerEntry::TYPE_AD_EXPENDITURE
+                    UserLedgerEntry::TYPE_AD_EXPENSE
                 );
 
                 $userLedgerEntry->save();

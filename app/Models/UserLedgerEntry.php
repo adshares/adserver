@@ -28,7 +28,6 @@ use function in_array;
 use function sprintf;
 
 /**
- * @method static Builder where(string $string, int $userId)
  * @mixin Builder
  * @property int status
  */
@@ -56,7 +55,7 @@ class UserLedgerEntry extends Model
 
     public const TYPE_AD_INCOME = 3;
 
-    public const TYPE_AD_EXPENDITURE = 4;
+    public const TYPE_AD_EXPENSE = 4;
 
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
@@ -68,14 +67,20 @@ class UserLedgerEntry extends Model
     ];
 
     public const ALLOWED_TYPE_LIST = [
+        self::TYPE_UNKNOWN,
         self::TYPE_DEPOSIT,
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_INCOME,
-        self::TYPE_AD_EXPENDITURE,
+        self::TYPE_AD_EXPENSE,
+    ];
+
+    public const CREDIT_TYPES = [
+        self::TYPE_DEPOSIT,
+        self::TYPE_AD_INCOME,
     ];
 
     public const DEBIT_TYPES = [
-        self::TYPE_AD_EXPENDITURE,
+        self::TYPE_AD_EXPENSE,
         self::TYPE_WITHDRAWAL,
     ];
 
@@ -98,37 +103,42 @@ class UserLedgerEntry extends Model
 
     public static function waitingPayments(): int
     {
-        return (int)self::whereIn('status', self::AWAITING_PAYMENTS)
-            ->whereIn('type', self::DEBIT_TYPES)
+        return (int)self::queryModificationForAwaitingPayments(self::query())
             ->sum('amount');
     }
 
-    public static function getBalanceForAllUsers(): int
+    private static function queryModificationForAwaitingPayments(Builder $query): Builder
     {
-        return self::balanceRelevantEntries()
-            ->sum('amount');
+        return $query->whereIn('status', self::AWAITING_PAYMENTS)
+            ->where('amount', '<', 0);
     }
 
-    public static function balanceRelevantEntriesByUserId(int $userId)
-    {
-        return self::balanceRelevantEntries()->where('user_id', $userId);
-    }
-
-    public static function getBalanceByUserId(int $userId): int
-    {
-        return self::balanceRelevantEntriesByUserId($userId)
-            ->sum('amount');
-    }
-
-    public static function balanceRelevantEntries()
+    private static function queryForEntriesRelevantForBalance()
     {
         return self::where(function (Builder $query) {
             $query->where('status', self::STATUS_ACCEPTED)
                 ->orWhere(function (Builder $query) {
-                    $query->whereIn('status', self::AWAITING_PAYMENTS)
-                        ->whereIn('type', self::DEBIT_TYPES);
+                    self::queryModificationForAwaitingPayments($query);
                 });
         });
+    }
+
+    public static function getBalanceForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForBalance()
+            ->sum('amount');
+    }
+
+    public static function getBalanceByUserId(int $userId): int
+    {
+        return (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
+            ->sum('amount');
+    }
+
+    public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
+    {
+        return self::queryForEntriesRelevantForBalance()
+            ->where('user_id', $userId);
     }
 
     public static function construct(int $userId, int $amount, int $status, int $type): self
@@ -165,14 +175,14 @@ class UserLedgerEntry extends Model
     public static function removeProcessingExpenditures(): void
     {
         self::where('status', self::STATUS_PROCESSING)
-            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->where('type', self::TYPE_AD_EXPENSE)
             ->delete();
     }
 
     private static function blockedEntries()
     {
         return self::where('status', self::STATUS_BLOCKED)
-            ->where('type', self::TYPE_AD_EXPENDITURE);
+            ->where('type', self::TYPE_AD_EXPENSE);
     }
 
     public static function block(int $type, int $userId, int $nonNegativeAmount): self

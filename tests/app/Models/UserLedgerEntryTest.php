@@ -71,10 +71,10 @@ final class UserLedgerEntryTest extends TestCase
 
     private function createAllEntries(User $user): void
     {
-        foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {
-            foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
-                $debit = in_array($type, UserLedgerEntry::DEBIT_TYPES, true);
+        foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
+            $debit = in_array($type, UserLedgerEntry::DEBIT_TYPES, true);
 
+            foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {
                 foreach ([true, false] as $delete) {
                     /** @var UserLedgerEntry $object */
                     $object = factory(UserLedgerEntry::class)->create([
