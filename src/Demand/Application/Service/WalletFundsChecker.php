@@ -48,7 +48,7 @@ class WalletFundsChecker
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();
 
-        if ($operatorBalance + $waitingPaymentsAmount < $this->minAmount) {
+        if ($operatorBalance - $waitingPaymentsAmount < $this->minAmount) {
             return $limit - $operatorBalance + $waitingPaymentsAmount;
         }
 
