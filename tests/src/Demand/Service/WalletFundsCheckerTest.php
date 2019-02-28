@@ -44,7 +44,7 @@ class WalletFundsCheckerTest extends TestCase
             $this->createAdsClientMock($hotWalletValue)
         );
 
-        $transferValue = $service->check($waitingPayments);
+        $transferValue = $service->calculateTransferValue($waitingPayments);
 
         $this->assertEquals(60 + 8 - 5, $transferValue);
     }
@@ -62,7 +62,7 @@ class WalletFundsCheckerTest extends TestCase
             $this->createAdsClientMock($hotWalletValue)
         );
 
-        $transferValue = $service->check($waitingPayments);
+        $transferValue = $service->calculateTransferValue($waitingPayments);
 
         $this->assertNull($transferValue);
     }
