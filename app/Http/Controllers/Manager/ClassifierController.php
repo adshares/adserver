@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
-use Adshares\Adserver\Dto\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
@@ -56,7 +56,16 @@ class ClassifierController extends Controller
         $bannerIds = $this->getIdsFromBanners($banners);
         $classifications = Classification::fetchByBannerIds($bannerIds);
 
-        $response = new ClassifierResponse($banners, $classifications, $siteId);
+        $items = (new ClassifierResponse($banners, $classifications, $siteId))->toArray();
+        $count = count($items);
+        $totalCount = NetworkBanner::fetchCount();
+
+        $response = [];
+        $response['limit'] = $limit;
+        $response['offset'] = $offset;
+        $response['items_count'] = $count;
+        $response['items_count_all'] = $totalCount;
+        $response['items'] = $items;
 
         return self::json($response);
     }

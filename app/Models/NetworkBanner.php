@@ -112,6 +112,11 @@ class NetworkBanner extends Model
         return $query->get();
     }
 
+    public static function fetchCount(): int
+    {
+        return (new NetworkBanner())->count();
+    }
+    
     public static function findIdsByUuids(array $publicUuids)
     {
         $binPublicIds = array_map(
