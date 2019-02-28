@@ -114,18 +114,20 @@ final class ImpressionContext
 
     public function adSelectRequestParams(Collection $zones): array
     {
-        return $zones->map(
-            function (Zone $zone) {
-                return [
-                    'keywords' => $this->user['keywords'],
-                    'banner_size' => "{$zone->width}x{$zone->height}",
-                    'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
-                    'request_id' => $zone->id,
-                    'user_id' => $this->user['uid'],
-                    'banner_filters' => new stdClass(),
-                ];
-            }
-        )->toArray();
+        $params = [];
+
+        foreach ($zones as $requestId => $zone) {
+            $params[] = [
+                'keywords' => $this->user['keywords'],
+                'banner_size' => "{$zone->width}x{$zone->height}",
+                'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
+                'request_id' => $requestId,
+                'user_id' => $this->user['uid'],
+                'banner_filters' => new stdClass(),
+            ];
+        }
+
+        return $params;
     }
 
     public function keywords(): array

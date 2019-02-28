@@ -358,11 +358,20 @@ domReady(function () {
     }
 
     fetchURL(url, options).then(function (banners) {
+        var foundTagIndexes = [];
         banners.forEach(function (banner, i) {
             if (!banner)
                 return;
 
-            banner.destElement = findDestination(banner.zone_id, tags);
+            var foundIndex = findDestination(banner.zone_id, tags, foundTagIndexes);
+
+            if (foundIndex === null) {
+                foundIndex = findDestination(banner.zone_id, tags, []);
+            }
+
+            banner.destElement = tags[foundIndex];
+
+            foundTagIndexes.push(foundIndex);
 
             if (!banner.destElement) {
                 console.log('no element to replace', banner);
@@ -383,7 +392,7 @@ domReady(function () {
     });
 });
 
-var findDestination = function(zoneId, tags) {
+var findDestination = function (zoneId, tags, excludedTags) {
     if (!zoneId) {
         return;
     }
@@ -394,9 +403,10 @@ var findDestination = function(zoneId, tags) {
         if (!dataZone) {
             return;
         }
-
-        if (dataZone.toLowerCase() === zoneId) {
-            return tags[i];
+        if (dataZone.toLowerCase() === zoneId.toLowerCase()
+            && (excludedTags.length === 0 || excludedTags.indexOf(i) === -1)
+        ) {
+            return i;
         }
     }
 };
