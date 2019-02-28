@@ -158,6 +158,12 @@ return [
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),
+    'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
+    'adserver_info_name' => env('ADSERVER_INFO_NAME'),
+    'adserver_info_panel_url' => env('ADSERVER_INFO_PANEL_URL'),
+    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
+    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
+    'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
 
     /*
     |--------------------------------------------------------------------------
