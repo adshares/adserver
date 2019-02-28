@@ -42,9 +42,9 @@ class WalletFundsChecker
         $this->adsClient = $adsClient;
     }
 
-    public function check(int $waitingPaymentsAmount)
+    public function check(int $waitingPaymentsAmount): ?int
     {
-        $waitingPaymentsAmount = abs($waitingPaymentsAmount);
+        $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();
 
