@@ -60,17 +60,10 @@ class UserLedgerEntry extends Model
 
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
-        self::STATUS_PENDING,
         self::STATUS_REJECTED,
-        self::STATUS_BLOCKED,
         self::STATUS_PROCESSING,
-        self::STATUS_AWAITING_APPROVAL,
-    ];
-
-    private const DEBIT_STATUSES_RELEVANT_FOR_BALANCE = [
         self::STATUS_PENDING,
         self::STATUS_BLOCKED,
-        self::STATUS_PROCESSING,
         self::STATUS_AWAITING_APPROVAL,
     ];
 
@@ -81,7 +74,10 @@ class UserLedgerEntry extends Model
         self::TYPE_AD_EXPENDITURE,
     ];
 
-    public const DEBIT_TYPES = [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL];
+    public const DEBIT_TYPES = [
+        self::TYPE_AD_EXPENDITURE,
+        self::TYPE_WITHDRAWAL,
+    ];
 
     private const AWAITING_PAYMENTS = [
         self::STATUS_PROCESSING,
@@ -103,13 +99,36 @@ class UserLedgerEntry extends Model
     public static function waitingPayments(): int
     {
         return (int)self::whereIn('status', self::AWAITING_PAYMENTS)
+            ->whereIn('type', self::DEBIT_TYPES)
             ->sum('amount');
+    }
+
+    public static function getBalanceForAllUsers(): int
+    {
+        return self::balanceRelevantEntries()
+            ->sum('amount');
+    }
+
+    public static function balanceRelevantEntriesByUserId(int $userId)
+    {
+        return self::balanceRelevantEntries()->where('user_id', $userId);
     }
 
     public static function getBalanceByUserId(int $userId): int
     {
         return self::balanceRelevantEntriesByUserId($userId)
             ->sum('amount');
+    }
+
+    public static function balanceRelevantEntries()
+    {
+        return self::where(function (Builder $query) {
+            $query->where('status', self::STATUS_ACCEPTED)
+                ->orWhere(function (Builder $query) {
+                    $query->whereIn('status', self::AWAITING_PAYMENTS)
+                        ->whereIn('type', self::DEBIT_TYPES);
+                });
+        });
     }
 
     public static function construct(int $userId, int $amount, int $status, int $type): self
@@ -135,24 +154,6 @@ class UserLedgerEntry extends Model
         return self::construct($userId, $amount, $status, $type)
             ->addressed($addressFrom, $addressTo)
             ->processed($transactionId);
-    }
-
-    public static function balanceRelevantEntriesByUserId(int $userId)
-    {
-        return self::where('user_id', $userId)
-            ->where(function (Builder $query) {
-                $query->where('status', self::STATUS_ACCEPTED)
-                    ->orWhere(function (Builder $query) {
-                        $query->whereIn('status', self::DEBIT_STATUSES_RELEVANT_FOR_BALANCE)
-                            ->whereIn('type', self::DEBIT_TYPES);
-                    });
-            });
-    }
-
-    public static function removeBlockedExpenditures(): void
-    {
-        self::blockedEntries()
-            ->delete();
     }
 
     public static function pushBlockedToProcessing(): void

@@ -38,7 +38,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     public function testBalancePushing(): void
@@ -47,7 +47,13 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
+        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
+
         UserLedgerEntry::pushBlockedToProcessing();
+
+        self::assertEquals(-50, UserLedgerEntry::getBalanceByUserId($user->id));
+
+        UserLedgerEntry::removeProcessingExpenditures();
 
         self::assertEquals(0, UserLedgerEntry::getBalanceByUserId($user->id));
     }
@@ -58,27 +64,16 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        UserLedgerEntry::removeBlockedExpenditures();
-
-        self::assertEquals(25, UserLedgerEntry::getBalanceByUserId($user->id));
-
         UserLedgerEntry::removeProcessingExpenditures();
 
-        self::assertEquals(50, UserLedgerEntry::getBalanceByUserId($user->id));
+        self::assertEquals(-25, UserLedgerEntry::getBalanceByUserId($user->id));
     }
 
     private function createAllEntries(User $user): void
     {
         foreach (UserLedgerEntry::ALLOWED_STATUS_LIST as $status) {
             foreach (UserLedgerEntry::ALLOWED_TYPE_LIST as $type) {
-                $debit = in_array(
-                    $type,
-                    [
-                        UserLedgerEntry::TYPE_AD_EXPENDITURE,
-                        UserLedgerEntry::TYPE_WITHDRAWAL,
-                    ],
-                    true
-                );
+                $debit = in_array($type, UserLedgerEntry::DEBIT_TYPES, true);
 
                 foreach ([true, false] as $delete) {
                     /** @var UserLedgerEntry $object */
