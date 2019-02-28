@@ -33,6 +33,7 @@ use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -319,5 +320,18 @@ class SupplyController extends Controller
         $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
 
         return $response;
+    }
+
+    public function why(Request $request): View
+    {
+        $context = Utils::decodeZones($request->query->get('ctx'));
+
+        $zoneId = $context['page']['zone'];
+
+        $tid = $request->cookies->get('tid');
+        $caseId = $request->query->get('cid');
+
+        return view('supply/why');
+
     }
 }

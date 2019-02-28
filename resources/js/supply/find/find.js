@@ -90,8 +90,12 @@ navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
     });
 };
 
-var prepareElement = function (context, banner, element) {
+var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
+    div.setAttribute('style', 'position: relative; z-index: 1;');
+
+    var infoBox = prepareInfoBox(context, banner, contextParam);
+    div.appendChild(infoBox);
 
     if (element.tagName == 'IFRAME') {
         var mouseover = false, evFn;
@@ -151,6 +155,37 @@ var prepareElement = function (context, banner, element) {
         link.appendChild(element);
         div.appendChild(link);
     }
+
+    return div;
+};
+
+var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
+
+    var url = addUrlParam('http://localhost:8101/supply/why', {
+        'cid': context.cid,
+        'ctx': contextParam,
+        'iid': getImpressionId(),
+        'url': banner.serve_url,
+    });
+
+
+    var div = document.createElement('div');
+    div.setAttribute('style', 'position: absolute; top: 0; right: 0;');
+
+    var link = document.createElement('a');
+    link.target = '_blank';
+    link.href = url;
+
+    var image = new Image();
+    image.src = 'http://localhost:8101/img/watermark.png';
+
+    var linkText = document.createTextNode('>>');
+
+    link.setAttribute('style', 'text-decoration: none');
+    link.appendChild(image);
+    link.appendChild(linkText);
+
+    div.appendChild(link);
 
     return div;
 };
