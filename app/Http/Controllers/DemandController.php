@@ -42,6 +42,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+const HTML_BANNER_PREFIX = '<style>body{margin:0;padding:0;}</style>';
+
 /**
  * API commands used to serve banners and log relevant events.
  */
@@ -100,8 +102,19 @@ class DemandController extends Controller
 
         $response->setCallback(
             function () use ($response, $banner, $isIECompat) {
+                function getBannerCreativeContentsForIframe(Banner $banner)
+                {
+                    $creativeContents =
+                        ('html' === $banner->creative_type) ? HTML_BANNER_PREFIX.$banner->creative_contents
+                            : $banner->creative_contents;
+
+                    return $creativeContents;
+                }
+
+                $creativeContents = getBannerCreativeContentsForIframe($banner);
+
                 if (!$isIECompat) {
-                    echo $banner->creative_contents;
+                    echo $creativeContents;
 
                     return;
                 }
@@ -113,7 +126,7 @@ class DemandController extends Controller
                     }
                 }
                 echo implode("\n", $headers)."\n\n";
-                echo base64_encode($banner->creative_contents);
+                echo base64_encode($creativeContents);
             }
         );
 
@@ -362,7 +375,7 @@ class DemandController extends Controller
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = Config::getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
