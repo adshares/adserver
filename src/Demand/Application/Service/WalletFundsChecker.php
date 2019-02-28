@@ -46,10 +46,11 @@ class WalletFundsChecker
     {
         $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
-        $operatorBalance = $this->fetchOperatorBalance();
+        $adsOperatorBalance = $this->fetchOperatorBalance();
+        $actualOperatorBalance = $adsOperatorBalance - $waitingPaymentsAmount;
 
-        if ($operatorBalance - $waitingPaymentsAmount < $this->minAmount) {
-            return $limit - $operatorBalance + $waitingPaymentsAmount;
+        if ($actualOperatorBalance < $this->minAmount) {
+            return $limit - $actualOperatorBalance;
         }
 
         return 0;
