@@ -44,6 +44,7 @@ class WalletFundsChecker
 
     public function check(int $waitingPaymentsAmount)
     {
+        $waitingPaymentsAmount = abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();
 
