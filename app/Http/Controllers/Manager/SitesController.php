@@ -44,7 +44,7 @@ class SitesController extends Controller
             $site = Site::create($input);
             $site->user_id = Auth::user()->id;
             $site->save();
-            $this->addClassificationToSiteFiltering($site);
+            $this->addClassificationToSiteFiltering($site, $input);
 
             $site->zones()->createMany($request->input('site.ad_units'));
         } catch (Exception $exception) {
@@ -57,7 +57,7 @@ class SitesController extends Controller
         return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
-    private function addClassificationToSiteFiltering(Site $site): void
+    private function addClassificationToSiteFiltering(Site $site, array $input): void
     {
         $siteRequires = $site->site_requires;
         $siteExcludes = $site->site_excludes;
@@ -68,14 +68,14 @@ class SitesController extends Controller
         $publisherId = $site->user_id;
         $siteId = $site->id;
 
-        if ($site->require_classified) {
+        if ($this->isPositiveClassification($input)) {
             list($requireKeywords, $excludeKeywords) =
                 $this->getKeywordsForPositiveClassification($publisherId, $siteId);
 
             $siteRequires['classification'] = $requireKeywords;
             $siteExcludes['classification'] = $excludeKeywords;
         }
-        if ($site->exclude_unclassified) {
+        if ($this->isNotNegativeClassification($input)) {
             $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
 
             if (empty($siteExcludes['classification'])) {
@@ -92,6 +92,16 @@ class SitesController extends Controller
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;
         $site->save();
+    }
+
+    private function isPositiveClassification(array $input): bool
+    {
+        return $input['filtering']['require_classified'] ?? false;
+    }
+
+    private function isNotNegativeClassification(array $input): bool
+    {
+        return $input['filtering']['exclude_unclassified'] ?? false;
     }
 
     private function getKeywordsForPositiveClassification(int $publisherId, $siteId): array
@@ -126,7 +136,33 @@ class SitesController extends Controller
 
     public function read(Site $site): JsonResponse
     {
-        return self::json($site);
+        return self::json($this->processClassificationInFiltering($site));
+    }
+
+    private function processClassificationInFiltering(Site $site): array
+    {
+        $siteArray = $site->toArray();
+
+        $filtering = $siteArray['filtering'];
+
+        if ($filtering['requires']['classification'] ?? false) {
+            unset($filtering['requires']['classification']);
+
+            if (!$filtering['requires']) {
+                $filtering['requires'] = null;
+            }
+        }
+        if ($filtering['excludes']['classification'] ?? false) {
+            unset($filtering['excludes']['classification']);
+
+            if (!$filtering['excludes']) {
+                $filtering['excludes'] = null;
+            }
+        }
+
+        $siteArray['filtering'] = $filtering;
+
+        return $siteArray;
     }
 
     public function update(Request $request, Site $site): JsonResponse
@@ -139,7 +175,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            $this->addClassificationToSiteFiltering($site);
+            $this->addClassificationToSiteFiltering($site, $input);
 
             $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
 
@@ -192,7 +228,13 @@ class SitesController extends Controller
 
     public function list(): JsonResponse
     {
-        return self::json(Site::get());
+        $siteCollection = Site::get();
+        $sites = [];
+        foreach ($siteCollection as $site) {
+            $sites[] = $this->processClassificationInFiltering($site);
+        }
+
+        return self::json($sites);
     }
 
     public function count(): JsonResponse

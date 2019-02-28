@@ -134,24 +134,11 @@ class Site extends Model
     public function getFilteringAttribute(): array
     {
         return [
-            'requires' => $this->removeClassificationFromFilteringSubArray($this->site_requires),
-            'excludes' => $this->removeClassificationFromFilteringSubArray($this->site_excludes),
+            'requires' => $this->site_requires,
+            'excludes' => $this->site_excludes,
             'require_classified' => (bool)$this->require_classified,
             'exclude_unclassified' => (bool)$this->exclude_unclassified,
         ];
-    }
-
-    private function removeClassificationFromFilteringSubArray(array $filteringSubArray): ?array
-    {
-        if ($filteringSubArray['classification'] ?? false) {
-            unset($filteringSubArray['classification']);
-        }
-
-        if (!$filteringSubArray) {
-            return null;
-        }
-
-        return $filteringSubArray;
     }
 
     public function getCodeAttribute(): string
