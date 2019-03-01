@@ -83,7 +83,7 @@ jobs:
     - stage: Code Quality
       script:
         # SonarQube
-        - time sonar-scanner
+        - sonar-scanner
 
 #    - stage: build and install
 #      if: type = pull_request AND branch = master
