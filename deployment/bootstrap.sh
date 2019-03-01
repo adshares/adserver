@@ -55,7 +55,7 @@ apt-get --yes update
 apt-get --yes --no-install-recommends install \
     python python-pip python-dev gcc \
     php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-curl php7.2-gd php7.2-intl php7.2-mbstring php7.2-sqlite3 php7.2-zip php7.2-simplexml \
-    ads nginx percona-server-server-5.7 nodejs yarn mongodb-org
+    ads nginx percona-server-server-5.7 nodejs yarn mongodb
 
 # ===
 
@@ -104,10 +104,3 @@ then
 
     echo 'FLUSH PRIVILEGES ;' | "${mysql[@]}"
 fi
-
-{
-    echo "5 5 * * * mongodump --out ${INSTALLATION_DIR}/.backup/mongo-\$(date -u -Iseconds)                                              &> /dev/null"
-    echo "6 6 * * * mysqldump --add-drop-table --all-databases --result-file=${INSTALLATION_DIR}/.backup/mysql-\$(date -u -Iseconds).sql &> /dev/null"
-} | tee crontab.txt
-
-crontab crontab.txt

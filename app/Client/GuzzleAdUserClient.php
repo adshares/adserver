@@ -45,7 +45,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchTargetingOptions(): Taxonomy
     {
-        $response = $this->client->get('/getTaxonomy');
+        $response = $this->client->get('getTaxonomy');
         $taxonomy = json_decode((string)$response->getBody(), true);
 
         return TaxonomyFactory::fromArray($taxonomy);
@@ -54,7 +54,7 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $body = $partialContext->adUserRequestBody();
-        $path = '/getData';
+        $path = 'getData';
 
         try {
             $response = $this->client->post($path, ['body' => $body]);
