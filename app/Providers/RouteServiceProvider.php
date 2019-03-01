@@ -32,7 +32,9 @@ class RouteServiceProvider extends ServiceProvider
 
     public function map(): void
     {
-        Route::group([], base_path('routes/web.php'));
+        Route::group([], base_path('routes/main.php'));
+        Route::group([], base_path('routes/supply.php'));
+        Route::group([], base_path('routes/demand.php'));
 
         Route::middleware([Kernel::JSON_API])->group(function () {
             Route::prefix(self::PREFIX_AUTH)->group(base_path('routes/auth.php'));
