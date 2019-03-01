@@ -29,6 +29,6 @@ SERVICE_NAME=adserver
 
     echo "*/30 *    * * * php ${INSTALLATION_DIR}/${SERVICE_NAME}/artisan ops:wallet:transfer:cold      &> /dev/null"
     echo "*/30 *    * * * php ${INSTALLATION_DIR}/${SERVICE_NAME}/artisan ops:wallet:transfer:check     &> /dev/null"
-} | tee crontab.txt
+} | tee crontab-`id --user --name`.txt
 
-crontab crontab.txt
+crontab crontab-`id --user --name`.txt

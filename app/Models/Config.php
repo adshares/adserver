@@ -21,8 +21,12 @@
 namespace Adshares\Adserver\Models;
 
 use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin Builder
+ */
 class Config extends Model
 {
     public const ADS_LOG_START = 'ads-log-start';

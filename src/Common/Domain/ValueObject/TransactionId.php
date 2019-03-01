@@ -52,9 +52,14 @@ final class TransactionId implements Id
         return new self("{$nodeId}:{$tranId}:{$mesgId}");
     }
 
-    public function __toString(): string
+    public function toString(): string
     {
         return $this->value;
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 
     public function equals(object $other): bool

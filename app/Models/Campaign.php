@@ -26,10 +26,10 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Supply\Domain\ValueObject\Size;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use function hex2bin;
@@ -55,6 +55,7 @@ use function hex2bin;
  * @property User user
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
+ * @mixin Builder
  */
 class Campaign extends Model
 {
@@ -147,7 +148,7 @@ class Campaign extends Model
 
     public static function isStatusAllowed(int $status): bool
     {
-        return in_array($status, self::STATUSES);
+        return in_array($status, self::STATUSES, true);
     }
 
     public static function fetchAdvertiserId(int $campaignId): string

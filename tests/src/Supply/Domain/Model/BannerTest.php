@@ -26,6 +26,7 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
@@ -93,7 +94,7 @@ final class BannerTest extends TestCase
 
         $bannerId = Uuid::v4();
         $type = Banner::HTML_TYPE;
-        $checksum = uniqid();
+        $checksum = uniqid('', true);
         $bannerUrl = new BannerUrl(
             'http://example.com/serve',
             'http://example.com/click',
@@ -114,6 +115,7 @@ final class BannerTest extends TestCase
             'click_url' => 'http://example.com/click',
             'view_url' => 'http://example.com/view',
             'status' => Status::STATUS_ACTIVE,
+            'classification' => [],
         ];
 
         $this->assertEquals($expected, $banner->toArray());
@@ -123,6 +125,89 @@ final class BannerTest extends TestCase
         $this->assertEquals(90, $banner->getHeight());
         $this->assertEquals('728x90', $banner->getSize());
         $this->assertEquals($campaignId, $banner->getCampaignId());
+    }
+
+    public function testClassifications(): void
+    {
+        $campaign = $this->createCampaign();
+        $banner = $this->createBanner($campaign);
+
+        $keyword1 = 'classify:1:1:1';
+        $keyword2 = 'classify:1:2:0';
+        $keyword3 = 'classify:2:3:1';
+
+        $classification1 = new Classification($keyword1, 'signature#1');
+        $classification2 = new Classification($keyword2, 'signature#2');
+        $classification3 = new Classification($keyword3, 'signature#3');
+
+        // CLASSIFY
+        $banner->classify($classification1);
+        $banner->classify($classification2);
+        $banner->classify($classification3);
+
+        $expected = [
+            [
+                'keyword' => $keyword1,
+                'signature' => 'signature#1',
+            ],
+            [
+                'keyword' => $keyword2,
+                'signature' => 'signature#2',
+            ],
+            [
+                'keyword' => $keyword3,
+                'signature' => 'signature#3',
+            ],
+        ];
+
+        $this->assertEquals($expected, $banner->toArray()['classification']);
+
+        // REMOVE CLASSIFICATION
+        $banner->removeClassification($classification2);
+        unset($expected[1]);
+
+        $this->assertEquals(array_values($expected), $banner->toArray()['classification']);
+
+        // CLEAR CLASSIFICATION
+        $banner->unclassified();
+
+        $this->assertCount(0, $banner->toArray()['classification']);
+    }
+
+    private function createBanner(Campaign $campaign, int $width = 300, int $height = 250): Banner
+    {
+        $url = new BannerUrl('http://example.com/serve', 'http://example.com/click', 'http://example.com/view');
+        $banner = new Banner(
+            $campaign,
+            Uuid::v4(),
+            $url,
+            'image',
+            new Size($width, $height),
+            '',
+            Status::active()
+        );
+
+        return $banner;
+    }
+
+    private function createCampaign(): Campaign
+    {
+        $campaignId = Uuid::v4();
+        $campaign = new Campaign(
+            $campaignId,
+            UUid::fromString('4a27f6a938254573abe47810a0b03748'),
+            Uuid::v4(),
+            'http://example.com',
+            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
+            [],
+            new Budget(1000000000000, null, 200000000000),
+            new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
+            Status::active(),
+            [],
+            []
+        );
+
+        return $campaign;
     }
 
     public function dataProvider()

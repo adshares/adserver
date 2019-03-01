@@ -80,6 +80,7 @@ class NetworkCampaignRepository implements CampaignRepository
             $banner['serve_url'] = ForceUrlProtocol::change($banner['serve_url']);
             $banner['click_url'] = ForceUrlProtocol::change($banner['click_url']);
             $banner['view_url'] = ForceUrlProtocol::change($banner['view_url']);
+
             unset($banner['id']);
 
             $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
@@ -141,6 +142,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'width' => $networkBanner->width,
                 'height' => $networkBanner->height,
                 'status' => $networkBanner->status,
+                'classification' => $networkBanner->classification,
             ];
         }
 

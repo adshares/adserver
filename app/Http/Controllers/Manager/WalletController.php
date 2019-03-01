@@ -23,15 +23,23 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use function config;
 
 class WalletController extends Controller
 {
@@ -60,6 +68,7 @@ class WalletController extends Controller
     public function calculateWithdrawal(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
+
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
             Log::error("Invalid ADS address is set: ${addressFrom}");
 
@@ -103,19 +112,55 @@ class WalletController extends Controller
     /**
      * @return string AdServer address in ADS network
      */
-    private function getAdServerAdsAddress(): string
+    private function getAdServerAdsAddress(): AccountId
     {
-        return config('app.adshares_address');
+        try {
+            return new AccountId(config('app.adshares_address'));
+        } catch (InvalidArgumentException $e) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+        }
+    }
+
+    public function approveWithdrawal(Request $request): JsonResponse
+    {
+        Validator::make($request->all(), ['token' => 'required'])->validate();
+
+        DB::beginTransaction();
+
+        if (false === $token = Token::check($request->input('token'))) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        if (Auth::user()->id !== $token['user_id']) {
+            return self::json([], Response::HTTP_BAD_REQUEST);
+        }
+
+        $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
+
+        if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
+            DB::rollBack();
+
+            throw new UnprocessableEntityHttpException('Payment already approved');
+        }
+
+        $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
+        $userLedgerEntry->save();
+
+        AdsSendOne::dispatch(
+            $userLedgerEntry,
+            $token['payload']['request']['to'],
+            $token['payload']['request']['amount'],
+            $token['payload']['request']['memo']
+        );
+
+        DB::commit();
+
+        return self::json();
     }
 
     public function withdraw(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
-        if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            Log::error("Invalid ADS address is set: ${addressFrom}");
-
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
 
         Validator::make(
             $request->all(),
@@ -126,49 +171,63 @@ class WalletController extends Controller
             ]
         )->validate();
 
-        $amount = $request->input(self::FIELD_AMOUNT);
-        $addressTo = $request->input(self::FIELD_TO);
-        $memo = $request->input(self::FIELD_MEMO);
-
-        if (!AdsValidator::isAccountAddressValid($addressTo)) {
-            // invalid input for calculating fee
-            return self::json([self::FIELD_ERROR => 'invalid address'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        try {
+            $addressTo = new AccountId($request->input(self::FIELD_TO));
+        } catch (InvalidArgumentException $e) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, $e->getMessage());
         }
 
+        $amount = (int)$request->input(self::FIELD_AMOUNT);
         $fee = AdsUtils::calculateFee($addressFrom, $addressTo, $amount);
+
         $total = $amount + $fee;
 
+        $user = Auth::user();
+
         $ledgerEntry = UserLedgerEntry::construct(
-            Auth::user()->id,
+            $user->id,
             -$total,
-            UserLedgerEntry::STATUS_PENDING,
+            UserLedgerEntry::STATUS_AWAITING_APPROVAL,
             UserLedgerEntry::TYPE_WITHDRAWAL
         )->addressed($addressFrom, $addressTo);
 
-        $result = $ledgerEntry->save();
+        DB::beginTransaction();
 
-        if ($result) {
-            // add tx to queue: $addressTo is address, $amount is amount, $memo is message (can be null for no message)
-            AdsSendOne::dispatch($ledgerEntry, $addressTo, $amount, $memo);
+        if (!$ledgerEntry->save()) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        return self::json([], $result ? Response::HTTP_NO_CONTENT : Response::HTTP_INTERNAL_SERVER_ERROR);
+        $payload = [
+            'request' => $request->all(),
+            'ledgerEntry' => $ledgerEntry->id,
+        ];
+
+        $token = Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $payload);
+
+        Mail::to($user)->queue(
+            new WithdrawalApproval(
+                config('app.adpanel_base_url')."/auth/withdrawal-confirmation/$token",
+                $amount,
+                $fee,
+                $addressTo->toString()
+            )
+        );
+
+        DB::commit();
+
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function depositInfo(): JsonResponse
     {
         $user = Auth::user();
         $uuid = $user->uuid;
-        /**
-         * Address of account on which funds should be deposit
-         */
+
         $address = $this->getAdServerAdsAddress();
-        /**
-         * Message which should be add to send_one tx
-         */
+
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS => $address,
+            self::FIELD_ADDRESS => $address->toString(),
             self::FIELD_MESSAGE => $message,
         ];
 
@@ -193,9 +252,9 @@ class WalletController extends Controller
         $resp = [];
         $items = [];
         if ($count > 0) {
-            foreach (UserLedgerEntry::where('user_id', $userId)->orderBy('created_at', 'desc')->skip($offset)->take(
-                $limit
-            )->cursor() as $ledgerItem) {
+            foreach (UserLedgerEntry::where('user_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
                 $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
                 $status = (int)$ledgerItem->status;

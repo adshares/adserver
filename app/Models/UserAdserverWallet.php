@@ -22,8 +22,12 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin Builder
+ */
 class UserAdserverWallet extends Model
 {
     use AccountAddress;

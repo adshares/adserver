@@ -26,10 +26,10 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
-use function hex2bin;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Builder;
+use function hex2bin;
 
 /**
  * @property int created_at
@@ -143,7 +143,7 @@ class NetworkEventLog extends Model
 
     public static function fetchPaymentsForPublishersByAdsPaymentId(int $adsPaymentId): Collection
     {
-        $collection = DB::table(self::getTableName())->select(
+        $collection = self::select(
             'publisher_id',
             DB::raw('SUM(paid_amount) as paid_amount')
         )->where('ads_payment_id', $adsPaymentId)->groupBy('publisher_id')->get();

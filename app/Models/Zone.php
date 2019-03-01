@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -37,6 +38,7 @@ use function hex2bin;
  * @property Site site
  * @property int id
  * @property string uuid
+ * @mixin Builder
  */
 class Zone extends Model
 {
@@ -149,7 +151,7 @@ HTML;
 
     public static function fetchByPublicId(string $uuid): ?Zone
     {
-        return self::where('uuid', $uuid)->first();
+        return self::where('uuid', hex2bin($uuid))->first();
     }
 
     public static function findByPublicIds(array $publicIds): Collection

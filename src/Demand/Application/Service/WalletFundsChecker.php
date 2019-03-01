@@ -42,16 +42,18 @@ class WalletFundsChecker
         $this->adsClient = $adsClient;
     }
 
-    public function check(int $waitingPaymentsAmount)
+    public function calculateTransferValue(int $waitingPaymentsAmount): int
     {
+        $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
-        $operatorBalance = $this->fetchOperatorBalance();
+        $adsOperatorBalance = $this->fetchOperatorBalance();
+        $actualOperatorBalance = $adsOperatorBalance - $waitingPaymentsAmount;
 
-        if ($operatorBalance + $waitingPaymentsAmount < $this->minAmount) {
-            return $limit - $operatorBalance + $waitingPaymentsAmount;
+        if ($actualOperatorBalance < $this->minAmount) {
+            return $limit - $actualOperatorBalance;
         }
 
-        return null;
+        return 0;
     }
 
     private function calculateLimitValue(): int

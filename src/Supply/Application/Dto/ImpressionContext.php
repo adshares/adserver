@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
+use stdClass;
 use function array_filter;
 use function GuzzleHttp\json_encode;
 
@@ -113,17 +114,20 @@ final class ImpressionContext
 
     public function adSelectRequestParams(Collection $zones): array
     {
-        return $zones->map(
-            function (Zone $zone) {
-                return [
-                    'keywords' => $this->user['keywords'],
-                    'banner_size' => "{$zone->width}x{$zone->height}",
-                    'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
-                    'request_id' => $zone->id,
-                    'user_id' => $this->user['uid'],
-                ];
-            }
-        )->toArray();
+        $params = [];
+
+        foreach ($zones as $requestId => $zone) {
+            $params[] = [
+                'keywords' => $this->user['keywords'],
+                'banner_size' => "{$zone->width}x{$zone->height}",
+                'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
+                'request_id' => $requestId,
+                'user_id' => $this->user['uid'],
+                'banner_filters' => new stdClass(),
+            ];
+        }
+
+        return $params;
     }
 
     public function keywords(): array

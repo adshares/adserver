@@ -154,6 +154,18 @@ return [
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
     'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
+    'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
+    'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
+    'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
+    'classify_secret' => (string)env('CLASSIFY_SECRET'),
+    'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
+    'adserver_info_name' => env('ADSERVER_INFO_NAME'),
+    'adserver_info_panel_url' => env('ADSERVER_INFO_PANEL_URL'),
+    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
+    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
+    'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
+    'adserver_info_publisher' => env('ADSERVER_INFO_PUBLISHER'),
+    'adserver_info_advertiser' => env('ADSERVER_INFO_ADVERTISER'),
 
     /*
     |--------------------------------------------------------------------------
@@ -206,6 +218,7 @@ return [
         Adshares\Adserver\Providers\Common\OptionsProvider::class,
         Adshares\Adserver\Providers\Supply\AdSelectEventExporterProvider::class,
         Adshares\Adserver\Providers\Supply\PaymentDetailsVerifyProvider::class,
+        Adshares\Adserver\Providers\Supply\ClassifyProvider::class,
     ],
 
     /*

@@ -56,6 +56,11 @@ class SupplySendPayments extends Command
                 $amount = $payment->amount;
 
                 DB::beginTransaction();
+
+                if ($payment->ads_payment_id !== null) {
+                    $this->addEntryToUserLedgerWithAdIncome($payment->ads_payment_id, $payment->id);
+                }
+
                 if ($amount > 0) {
                     $command = new SendOneCommand($receiverAddress, $amount);
                     $response = $adsClient->runTransaction($command);
@@ -66,34 +71,29 @@ class SupplySendPayments extends Command
                     $payment->save();
                 }
 
-                if ($payment->ads_payment_id !== null) {
-                    $this->addEntryToUserLedgerWithAdIncome($payment->ads_payment_id, $payment->id);
-                }
-
                 DB::commit();
             } catch (CommandException $exception) {
                 if ($exception->getCode() === CommandError::LOW_BALANCE) {
                     DB::rollBack();
 
                     $message = '[Supply] (SupplySendPayments) Insufficient funds on Operator Account. ';
-                    $message.= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
+                    $message .= 'Could not send a license fee to %s. Payment (Network) id %s. Amount %s.';
 
                     $this->info(sprintf($message, $payment->receiver_address, $payment->id, $payment->amount));
 
                     continue;
                 }
 
-                throw new $exception;
+                throw $exception;
             } catch (Exception $exception) {
                 DB::rollBack();
 
-                throw $exception;
-//                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
-//                $message.= 'Payment (Network) id %s. Amount %s.';
-//
-//                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
+                $message = '[Supply] (SupplySendPayments) Unexpected Error (%s).';
+                $message .= 'Payment (Network) id %s. Amount %s.';
 
-//                continue;
+                $this->error(sprintf($message, $exception->getMessage(), $payment->id, $payment->amount));
+
+                continue;
             }
         }
 
@@ -118,7 +118,7 @@ class SupplySendPayments extends Command
         $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPaymentId);
         foreach ($splitPayments as $splitPayment) {
             $userUuid = $splitPayment->publisher_id;
-            $amount = $splitPayment->paid_amount;
+            $amount = (int)$splitPayment->paid_amount;
 
             $user = User::fetchByUuid($userUuid);
 

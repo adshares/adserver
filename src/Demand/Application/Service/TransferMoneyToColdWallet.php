@@ -52,6 +52,7 @@ class TransferMoneyToColdWallet
 
     public function transfer(int $waitingPaymentsAmount): ?TransferMoneyResponse
     {
+        $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
         $operatorBalance = $this->fetchOperatorBalance();
 

@@ -20,8 +20,12 @@
 
 namespace Adshares\Adserver\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @mixin Builder
+ */
 class AdsPayment extends Model
 {
     public const STATUS_INVALID = -1;
