@@ -53,12 +53,15 @@ sudo service php7.2-fpm restart
 if [ "${INSTALL_SCHEME^^}" == "HTTPS" ]
 then
     INSTALL_CERTBOT=Y
-    read_option USE_HTTPS "Do you want to setup SSL using Let's Encrypt / certbot" 0 1
-    add-apt-repository ppa:certbot/certbot
-    apt-get update
-    apt-get install certbot python-certbot-nginx
+    read_option INSTALL_CERTBOT "Do you want to setup SSL using Let's Encrypt / certbot" 0 1
+    if [ "${INSTALL_CERTBOT^^}" == "HTTPS" ]
+    then
+        add-apt-repository ppa:certbot/certbot
+        apt-get update
+        apt-get install certbot python-certbot-nginx
 
-    certbot --nginx
+        certbot --nginx
+    fi
 fi
 
 echo "Initializing adserver"
