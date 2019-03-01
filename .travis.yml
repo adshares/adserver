@@ -58,7 +58,7 @@ after_script:
 
 jobs:
   include:
-    - stage: code test and quality
+    - stage: Tests
       if: type = push
       script:
         # Run build script
@@ -80,32 +80,34 @@ jobs:
         # PHP unit tests
         - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
+    - stage: Code Quality
+      script:
         # SonarQube
         - time sonar-scanner
 
-    - stage: build and install
-      if: type = pull_request AND branch = master
-      script:
-        # Backing services and tools
-        - >
-          time docker run
-          --name mysql.dock
-          --network=test-network
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
-          -e MYSQL_USER=adserver
-          -e MYSQL_PASSWORD=adserver
-          -e MYSQL_DATABASE=adserver
-          -d
-          percona:5
-
-        - in_docker /bin/bash scripts/pre-build.sh"
-
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-        - in_docker /bin/bash scripts/pre-install.sh"
-
-        - docker ps -a
-        - in_docker /bin/bash scripts/install.sh"
+#    - stage: build and install
+#      if: type = pull_request AND branch = master
+#      script:
+#        # Backing services and tools
+#        - >
+#          time docker run
+#          --name mysql.dock
+#          --network=test-network
+#          -e MYSQL_ALLOW_EMPTY_PASSWORD=true
+#          -e MYSQL_USER=adserver
+#          -e MYSQL_PASSWORD=adserver
+#          -e MYSQL_DATABASE=adserver
+#          -d
+#          percona:5
+#
+#        - in_docker /bin/bash scripts/pre-build.sh"
+#
+#        # Run build script
+#        - in_docker /bin/bash scripts/build.sh"
+#        - in_docker /bin/bash scripts/pre-install.sh"
+#
+#        - docker ps -a
+#        - in_docker /bin/bash scripts/install.sh"
 
 # After a build, send email notification with the build results
 notifications:
