@@ -12,6 +12,9 @@ source ${HERE}/_functions.sh
 SERVICE_NAME=adserver source ${HERE}/clone-service.sh
 read_env ${INSTALLATION_DIR}/adserver/.env || read_env ${INSTALLATION_DIR}/adserver/.env.dist
 
+
+INSTALL_SCHEME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADPANEL_URL" scheme 2>/dev/null`
+
 INSTALL_HOSTNAME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADPANEL_URL" host 2>/dev/null`
 INSTALL_HOSTNAME=${INSTALL_HOSTNAME:-localhost}
 
@@ -19,13 +22,23 @@ INSTALL_API_HOSTNAME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$ar
 INSTALL_API_HOSTNAME=${INSTALL_API_HOSTNAME:-127.0.0.1}
 
 read_option INSTALL_HOSTNAME       "Adpanel domain (UI for advertisers and publishers)" 1
-read_option INSTALL_API_HOSTNAME   "Adserver domain (serving banners)"
+read_option INSTALL_API_HOSTNAME   "Adserver domain (serving banners)" 1
+
+USE_HTTPS=Y
+read_option USE_HTTPS "Configure for HTTPS?" 0 1
+
+if [ "${USE_HTTPS^^}" == "Y" ]
+then
+    INSTALL_SCHEME=https
+else
+    INSTALL_SCHEME=http
+fi
 
 export INSTALL_HOSTNAME
 export INSTALL_API_HOSTNAME
 
-ADPANEL_URL="http://$INSTALL_HOSTNAME"
-ADSERVER_HOST="http://${INSTALL_API_HOSTNAME}"
+ADPANEL_URL="${INSTALL_SCHEME}://$INSTALL_HOSTNAME"
+ADSERVER_HOST="${INSTALL_SCHEME}://${INSTALL_API_HOSTNAME}"
 ADSERVER_BANNER_HOST=$ADSERVER_HOST
 BANNER_FORCE_HTTPS=false
 
@@ -95,8 +108,8 @@ read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 
 if [ "${INSTALL_ADUSER^^}" == "Y" ]
 then
-    ADUSER_EXTERNAL_LOCATION="http://$INSTALL_HOSTNAME/_aduser/"
-    ADUSER_INTERNAL_LOCATION="http://$INSTALL_HOSTNAME/_aduser/"
+    ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+    ADUSER_INTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
 
     SERVICE_NAME=aduser source ${HERE}/clone-service.sh
     read_env ${INSTALLATION_DIR}/aduser/.env || read_env ${INSTALLATION_DIR}/aduser/.env.dist
