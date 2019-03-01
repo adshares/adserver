@@ -37,6 +37,8 @@ class SitesTest extends TestCase
         'id',
         'name',
         'filtering',
+        'requireClassified',
+        'excludeUnclassified',
         'adUnits' => [
             '*' => [
                 'name',
@@ -100,7 +102,7 @@ class SitesTest extends TestCase
                 ]
             )
             ->assertJsonCount(1, 'adUnits')
-            ->assertJsonCount(4, 'filtering')
+            ->assertJsonCount(2, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
             ->assertJsonCount(0, 'filtering.excludes');
     }
@@ -161,6 +163,8 @@ class SitesTest extends TestCase
       },
       "excludes": {}
     },
+    "requireClassified": false,
+    "excludeUnclassified": false,
     "adUnits": [
       {
         "name": "ssss",
@@ -448,16 +452,16 @@ JSON
 
         $id = $this->getIdFromLocation($postResponse->headers->get('Location'));
 
-        $getResponse = $this->getJson(self::URI.'/'.$id);
-        $getResponse->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
-            4,
+        $response = $this->getJson(self::URI.'/'.$id);
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
+            2,
             'filtering'
         );
 
-        $filteringResponse = json_decode($getResponse->content(), true)['filtering'];
+        $content = json_decode($response->content(), true);
 
-        $this->assertEquals($preset['requireClassified'] ?? false, $filteringResponse['requireClassified']);
-        $this->assertEquals($preset['excludeUnclassified'] ?? false, $filteringResponse['excludeUnclassified']);
+        $this->assertEquals($preset['requireClassified'] ?? false, $content['requireClassified']);
+        $this->assertEquals($preset['excludeUnclassified'] ?? false, $content['excludeUnclassified']);
     }
 
     public function filteringDataProvider(): array
@@ -514,12 +518,7 @@ JSON
 
         return array_map(
             function ($preset) use ($default) {
-                $data = $default;
-                foreach ($preset as $key => $entry) {
-                    $data['filtering'][$key] = $entry;
-                }
-
-                return [$data, $preset];
+                return [array_merge($default, $preset), $preset];
             },
             $presets
         );
