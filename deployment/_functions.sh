@@ -63,5 +63,5 @@ save_env () {
 # read_env(.env file)
 read_env() {
     if [ ! -e $1 ] ; then return 1; fi
-    source <(grep -v '^#' $1 | sed -E 's|^(.+)=(.*)$|: ${\1=\2}; export \1|g')
+    source <(grep -v '^#' $1 | sed -E 's|^([^=]+)=(.*)$|: ${\1=\2}; export \1|g')
 }
