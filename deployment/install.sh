@@ -58,7 +58,7 @@ then
     then
         add-apt-repository ppa:certbot/certbot
         apt-get update
-        apt-get install certbot python-certbot-nginx
+        apt-get --yes --no-install-recommends install certbot python-certbot-nginx
 
         certbot --nginx
     fi
