@@ -164,6 +164,8 @@ return [
     'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
     'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
     'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
+    'adserver_info_publisher' => env('ADSERVER_INFO_PUBLISHER'),
+    'adserver_info_advertiser' => env('ADSERVER_INFO_ADVERTISER'),
 
     /*
     |--------------------------------------------------------------------------

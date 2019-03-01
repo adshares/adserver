@@ -25,7 +25,7 @@ use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\ClassifyController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList']);
+Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])->name('demand-inventory');
 
 Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-view.js');
 
