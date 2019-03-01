@@ -35,6 +35,6 @@ class NotificationsController extends Controller
      */
     public function read()
     {
-        return self::json(Notification::where('user_id', Auth::user()->id)->get()->toArray(), 200);
+        return self::json(Notification::where('user_id', Auth::user()->id)->get()->toArray());
     }
 }

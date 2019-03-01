@@ -26,5 +26,5 @@ interface Id extends ValueObject
 {
     public function __construct(string $value);
 
-    public function __toString(): string;
+    public function toString(): string;
 }

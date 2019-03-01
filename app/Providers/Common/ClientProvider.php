@@ -28,7 +28,9 @@ use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
+use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
@@ -36,6 +38,7 @@ use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
 use GuzzleHttp\Client;
 use Illuminate\Contracts\Foundation\Application;
@@ -112,6 +115,13 @@ final class ClientProvider extends ServiceProvider
             Ads::class,
             function (Application $app) {
                 return new PhpAdsClient($app->make(AdsClient::class));
+            }
+        );
+
+        $this->app->bind(
+            BannerClassifier::class,
+            function (Application $app) {
+                return new LocalPublisherBannerClassifier($app->make(ClassifierInterface::class));
             }
         );
     }

@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
+use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
 use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
@@ -56,8 +57,6 @@ Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
 
 # only for admin
-Route::get('users', [UsersController::class, 'browse'])->name('app.users.browse');
-Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
 Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
 Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
 Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
@@ -78,6 +77,9 @@ Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdraw
 Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
+Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
+    ->name('wallet.confirm-withdrawal');
+
 
 // statistics
 Route::get('campaigns/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'advertiserChart']);
@@ -86,3 +88,6 @@ Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::c
 Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
+
+Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
+Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);

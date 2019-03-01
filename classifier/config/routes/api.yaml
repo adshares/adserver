@@ -1,4 +1,0 @@
-verify:
-  path: /verify/{id}
-  controller: App\Controller\ApiController::verifyAction
-  methods: [GET]

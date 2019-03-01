@@ -41,9 +41,14 @@ final class UniqueId implements Id
         return new self($uuid->toString());
     }
 
-    public function __toString(): string
+    public function toString(): string
     {
         return $this->value->toString();
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 
     public function equals(object $other): bool

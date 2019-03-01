@@ -20,13 +20,15 @@
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Adserver\Jobs\AdsSendOne;
+use Adshares\Adserver\Mail\WithdrawalApproval;
+use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Mail;
 
 class WalletControllerTest extends TestCase
 {
@@ -103,18 +105,25 @@ class WalletControllerTest extends TestCase
 
     public function testWithdraw(): void
     {
-        $this->expectsJobs(AdsSendOne::class);
+        Mail::fake();
 
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
+
         $this->actingAs($user, 'api');
+
+        $amount = 100000000000;
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 100000000000,
+                'amount' => $amount,
                 'to' => '0001-00000000-XXXX',
             ]
         );
+
+        self::assertCount(1, Token::all());
+
+        Mail::assertQueued(WithdrawalApproval::class, 1);
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
@@ -137,8 +146,6 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawWithMemo(): void
     {
-        $this->expectsJobs(AdsSendOne::class);
-
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
@@ -150,6 +157,8 @@ class WalletControllerTest extends TestCase
                 'to' => '0001-00000000-XXXX',
             ]
         );
+
+        self::assertCount(1, Token::all());
 
         $response->assertStatus(Response::HTTP_NO_CONTENT);
     }
@@ -206,8 +215,6 @@ class WalletControllerTest extends TestCase
 
     public function testWithdrawInsufficientFunds(): void
     {
-        $this->expectsJobs(AdsSendOne::class);
-
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
         $this->actingAs($user, 'api');
@@ -231,13 +238,17 @@ class WalletControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK)->assertJson(['address' => config('app.adshares_address')]);
         $content = json_decode($response->getContent());
+
         // check response field
         $this->assertObjectHasAttribute('message', $content);
+
         $message = $content->message;
+
         // check format
         $this->assertTrue((strlen($message) === 64) && ctype_xdigit($message));
+
         // check value
-        $this->assertTrue(strpos($message, $user->uuid) !== false);
+        $this->assertNotFalse(strpos($message, $user->uuid));
     }
 
     public function testHistory(): void

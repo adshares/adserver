@@ -30,11 +30,15 @@ use Symfony\Component\HttpFoundation\Response;
 class SitesTest extends TestCase
 {
     use RefreshDatabase;
+
     private const URI = '/api/sites';
+
     const SITE_STRUCTURE = [
         'id',
         'name',
         'filtering',
+        'requireClassified',
+        'excludeUnclassified',
         'adUnits' => [
             '*' => [
                 'name',
@@ -51,6 +55,7 @@ class SitesTest extends TestCase
         'status',
         'primaryLanguage',
     ];
+
     const BASIC_SITE_STRUCTURE = [
         'id',
         'name',
@@ -87,13 +92,15 @@ class SitesTest extends TestCase
         $id = $this->getIdFromLocation($response->headers->get('Location'));
 
         $response = $this->getJson(self::URI.'/'.$id);
-        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonFragment(
-            [
-                'name' => $preset['name'],
-                'primaryLanguage' => $preset['primaryLanguage'],
-                'status' => $preset['status'],
-            ]
-        )
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertJsonStructure(self::SITE_STRUCTURE)
+            ->assertJsonFragment(
+                [
+                    'name' => $preset['name'],
+                    'primaryLanguage' => $preset['primaryLanguage'],
+                    'status' => $preset['status'],
+                ]
+            )
             ->assertJsonCount(1, 'adUnits')
             ->assertJsonCount(2, 'filtering')
             ->assertJsonCount(1, 'filtering.requires')
@@ -156,6 +163,8 @@ class SitesTest extends TestCase
       },
       "excludes": {}
     },
+    "requireClassified": false,
+    "excludeUnclassified": false,
     "adUnits": [
       {
         "name": "ssss",
@@ -428,5 +437,90 @@ JSON
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::SITE_STRUCTURE);
         $response->assertJsonCount(2, 'adUnits');
+    }
+
+    /**
+     * @dataProvider filteringDataProvider
+     */
+    public function testSiteFiltering(array $data, array $preset): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        $postResponse = $this->postJson(self::URI, ['site' => $data]);
+
+        $postResponse->assertStatus(Response::HTTP_CREATED);
+        $postResponse->assertHeader('Location');
+
+        $id = $this->getIdFromLocation($postResponse->headers->get('Location'));
+
+        $response = $this->getJson(self::URI.'/'.$id);
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SITE_STRUCTURE)->assertJsonCount(
+            2,
+            'filtering'
+        );
+
+        $content = json_decode($response->content(), true);
+
+        $this->assertEquals($preset['requireClassified'] ?? false, $content['requireClassified']);
+        $this->assertEquals($preset['excludeUnclassified'] ?? false, $content['excludeUnclassified']);
+    }
+
+    public function filteringDataProvider(): array
+    {
+        $presets = [
+            [],
+            [
+                "requireClassified" => false,
+                "excludeUnclassified" => false,
+            ],
+            [
+                "requireClassified" => true,
+                "excludeUnclassified" => false,
+            ],
+            [
+                "requireClassified" => false,
+                "excludeUnclassified" => true,
+            ],
+            [
+                "requireClassified" => true,
+                "excludeUnclassified" => true,
+            ],
+        ];
+
+        $default = json_decode(
+            <<<JSON
+{
+    "filtering": {
+      "requires": {},
+      "excludes": {}
+    },
+    "status": "0",
+    "name": "nameA",
+    "primaryLanguage": "pl",
+    "adUnits": [
+      {
+        "name": "name",
+        "type": "image",
+        "size": {
+          "label": "large-rectangle",
+          "size": 2,
+          "tags": [
+            "Desktop",
+            "best"
+          ]
+        }
+      }
+    ]
+  }
+JSON
+            ,
+            true
+        );
+
+        return array_map(
+            function ($preset) use ($default) {
+                return [array_merge($default, $preset), $preset];
+            },
+            $presets
+        );
     }
 }

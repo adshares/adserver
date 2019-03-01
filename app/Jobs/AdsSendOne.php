@@ -39,19 +39,24 @@ class AdsSendOne implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     const QUEUE_NAME = 'ads';
+
     const QUEUE_TRY_AGAIN_INTERVAL = 600;
+
     /**
      * @var string recipent address
      */
     private $addressTo;
+
     /**
      * @var int transfer amount
      */
     private $amount;
+
     /**
      * @var null|string optional message
      */
     private $message;
+
     /**
      * @var UserLedgerEntry user id
      */
@@ -82,16 +87,9 @@ class AdsSendOne implements ShouldQueue
      * @throws CommandException
      * @throws JobException
      */
-    public function handle(AdsClient $adsClient)
+    public function handle(AdsClient $adsClient): void
     {
-        $total = -$this->userLedger->amount;
-        $balance = UserLedgerEntry::getBalanceByUserId($this->userLedger->user_id);
-
-        if ($balance < $total) {
-            Log::notice("Insufficient funds.");
-            $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
-            $this->userLedger->save();
-
+        if (UserLedgerEntry::STATUS_PENDING !== $this->userLedger->status) {
             return;
         }
 
@@ -102,7 +100,7 @@ class AdsSendOne implements ShouldQueue
         } catch (CommandException $exception) {
             if ($exception->getCode() === CommandError::LOW_BALANCE) {
                 $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s). ';
-                $message.= 'Operator does not have enough money. Will be tried again later.';
+                $message .= 'Operator does not have enough money. Will be tried again later.';
                 Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? '\'\''));
 
                 self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
@@ -114,6 +112,7 @@ class AdsSendOne implements ShouldQueue
             $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
 
             Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message));
+
             return;
         }
 

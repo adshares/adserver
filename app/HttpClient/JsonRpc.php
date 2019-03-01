@@ -51,7 +51,7 @@ final class JsonRpc
                 '{"url": "%s", "body": %s, "result": %s}',
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                (string)$response->getBody()
+                str_replace(["\n", "\r"], ' ', (string)$response->getBody())
             ));
 
             return (new Response($response, $procedure))->result();
@@ -60,7 +60,7 @@ final class JsonRpc
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                $e->getMessage()
+                str_replace(["\n", "\r"], ' ', $e->getMessage())
             );
         }
     }
