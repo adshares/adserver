@@ -43,14 +43,14 @@ class InfoController extends Controller
         }
 
         $data = [
-            'type' => config('app.adserver_info_type'),
+            'serviceType' => config('app.adserver_info_type'),
             'name' => config('app.adserver_info_name'),
-            'version' => config('app.adserver_info_version'),
+            'softwareVersion' => config('app.adserver_info_version'),
             'supported' => $supported,
-            'panel-base-url' => config('app.adserver_info_panel_url'),
-            'privacy-url' => config('app.adserver_info_privacy_url'),
-            'terms-url' => config('app.adserver_info_terms_url'),
-            'inventory-url' => route('demand-inventory'),
+            'panelUrl' => config('app.adserver_info_panel_url'),
+            'privacyUrl' => config('app.adserver_info_privacy_url'),
+            'termsUrl' => config('app.adserver_info_terms_url'),
+            'inventoryUrl' => route('demand-inventory'),
         ];
 
         return new JsonResponse($data);

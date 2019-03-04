@@ -20,7 +20,9 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -161,5 +163,19 @@ final class DummyDemandClient implements DemandClient
                 'event_value' => 100,
             ],
         ];
+    }
+
+    public function fetchInfo(string $infoUrl): Info
+    {
+        return new Info(
+            'ADSERVER',
+            'ADSERVER DEMAND',
+            '0.1',
+            ['PUB', 'ADV'],
+            new Url('https://panel.example.com/'),
+            new Url('https://example.com/privacy'),
+            new Url('https://example.com/terms'),
+            new Url('https://inventory.example.com/import')
+        );
     }
 }

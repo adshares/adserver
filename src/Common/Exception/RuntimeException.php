@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,18 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Exception;
 
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+class RuntimeException extends \RuntimeException
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array;
-
-    public function fetchInfo(string $infoUrl): Info;
 }
