@@ -181,7 +181,7 @@ class AdsFetchHosts extends Command
         $path = $parsedUrl['path'] ?? '';
 
         if ($path === '/info') {
-            return $path;
+            return $hostUrl;
         }
 
         return $hostUrl . '/info';
