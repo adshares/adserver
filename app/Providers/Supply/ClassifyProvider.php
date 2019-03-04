@@ -22,9 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
-use Adshares\Classify\Infrastructure\Service\LocalClassifier;
 use Adshares\Classify\Infrastructure\Service\SodiumCompatSignatureVerifier;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,17 +30,18 @@ class ClassifyProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(
-            ClassifierInterface::class,
-            function () {
-                return new LocalClassifier((string)config('app.classify_namespace'));
-            }
-        );
+//        $this->app->bind(
+//            ClassifierInterface::class,
+//            function () {
+//                return new LocalClassifier((string)config('app.classify_namespace'));
+//            }
+//        );
 
         $this->app->bind(
             SignatureVerifierInterface::class,
             function () {
                 $privateKey = (string)config('app.classify_secret');
+
                 return new SodiumCompatSignatureVerifier($privateKey);
             }
         );
