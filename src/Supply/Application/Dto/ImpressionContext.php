@@ -123,7 +123,7 @@ final class ImpressionContext
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
                 'user_id' => $this->user['uid'],
-                'banner_filters' => new stdClass(),
+                'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
 
@@ -147,5 +147,19 @@ final class ImpressionContext
             'device' => $this->device,
             'user' => $this->user,
         ];
+    }
+
+    private function getBannerFilters($zone)
+    {
+        /** @var array $filtering */
+        $filtering = $zone->site->filtering;
+        if (!$filtering['requires']) {
+            $filtering['requires'] = new stdClass();
+        }
+        if (!$filtering['excludes']) {
+            $filtering['excludes'] = new stdClass();
+        }
+
+        return $filtering ?? new stdClass();
     }
 }
