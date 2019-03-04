@@ -27,7 +27,7 @@ use Adshares\Supply\Application\Dto\UserContext;
 
 interface AdUser
 {
-    public const DEFAULT_HUMAN_SCORE = 0.5;
+    public const DEFAULT_HUMAN_SCORE = 0.49;
 
     public function fetchTargetingOptions(): Taxonomy;
 
