@@ -54,7 +54,7 @@ if [ "${INSTALL_SCHEME^^}" == "HTTPS" ]
 then
     INSTALL_CERTBOT=Y
     read_option INSTALL_CERTBOT "Do you want to setup SSL using Let's Encrypt / certbot" 0 1
-    if [ "${INSTALL_CERTBOT^^}" == "HTTPS" ]
+    if [ "${INSTALL_CERTBOT^^}" == "Y" ]
     then
         add-apt-repository ppa:certbot/certbot
         apt-get update
