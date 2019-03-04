@@ -50,6 +50,14 @@
             ]
         }
     },
+    "scripts": {
+        "post-root-package-install": [
+            "@php artisan key:generate"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
+        ]
+    },
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
