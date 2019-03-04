@@ -32,12 +32,13 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use DomainException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
@@ -189,7 +190,7 @@ final class GuzzleDemandClient implements DemandClient
         try {
             $decoded = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
+            throw new DomainRuntimeException('Invalid json data.');
         }
 
         return $decoded;
@@ -252,7 +253,7 @@ final class GuzzleDemandClient implements DemandClient
             || !$termsUrl
             || !$inventoryUrl
         ) {
-            throw new RuntimeException('Wrong info data format.');
+            throw new DomainRuntimeException('Wrong info data format.');
         }
     }
 }

@@ -30,8 +30,8 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Illuminate\Console\Command;
-use RuntimeException;
 use function parse_url;
 use function strlen;
 use function substr;
@@ -168,7 +168,7 @@ class AdsFetchHosts extends Command
             $info = $this->client->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
-        } catch (RuntimeException $exception) {
+        } catch (DomainRuntimeException $exception) {
             $this->error(sprintf(
                 'Could not import info data (%s) from server `%s`.',
                 $exception->getMessage(),
