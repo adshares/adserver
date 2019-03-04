@@ -26,6 +26,8 @@ use Adshares\Ads\Command\BroadcastCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Illuminate\Console\Command;
+use function strlen;
+use function strtoupper;
 
 class AdsBroadcastHost extends Command
 {
@@ -49,12 +51,12 @@ class AdsBroadcastHost extends Command
     /**
      * @var string
      */
-    private $host;
+    private $infoApiUrl;
 
     public function __construct()
     {
         parent::__construct();
-        $this->host = config('app.adserver_host');
+        $this->infoApiUrl = config('app.adserver_info_url');
     }
 
     /**
@@ -66,7 +68,7 @@ class AdsBroadcastHost extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $message = $this->strToHex(urlencode(self::BROADCAST_PREFIX.$this->host));
+        $message = $this->strToHex(urlencode(self::BROADCAST_PREFIX.$this->infoApiUrl));
 
         $command = new BroadcastCommand($message);
         try {
@@ -85,12 +87,13 @@ class AdsBroadcastHost extends Command
     private function strToHex(string $string): string
     {
         $hex = '';
-        for ($i = 0; $i < strlen($string); $i++) {
+        $length = strlen($string);
+        for ($i = 0; $i < $length; $i++) {
             $ord = ord($string[$i]);
             $hexCode = dechex($ord);
             $hex .= substr('0'.$hexCode, -2);
         }
 
-        return strToUpper($hex);
+        return strtoupper($hex);
     }
 }
