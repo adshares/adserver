@@ -102,7 +102,7 @@
     {
       "type": "bool",
       "label": "Javascript support",
-      "key": "js_enabled",
+      "key": "jsenabled",
       "list": [
         {
           "label": "Yes",
