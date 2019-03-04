@@ -130,6 +130,18 @@ final class ImpressionContext
         return $params;
     }
 
+    private function getBannerFilters($zone): array
+    {
+        /** @var array $filtering */
+        $filtering = $zone->site->filtering;
+
+        $bannerFilters = [];
+        $bannerFilters['requires'] = $filtering['requires'] ? $filtering['requires'] : new stdClass();
+        $bannerFilters['excludes'] = $filtering['excludes'] ? $filtering['excludes'] : new stdClass();
+
+        return $bannerFilters;
+    }
+
     public function keywords(): array
     {
         return $this->site['keywords'] ?? [];
@@ -147,19 +159,5 @@ final class ImpressionContext
             'device' => $this->device,
             'user' => $this->user,
         ];
-    }
-
-    private function getBannerFilters($zone): array
-    {
-        /** @var array $filtering */
-        $filtering = $zone->site->filtering;
-        if (!$filtering['requires']) {
-            $filtering['requires'] = new stdClass();
-        }
-        if (!$filtering['excludes']) {
-            $filtering['excludes'] = new stdClass();
-        }
-
-        return $filtering;
     }
 }
