@@ -149,7 +149,7 @@ final class ImpressionContext
         ];
     }
 
-    private function getBannerFilters($zone)
+    private function getBannerFilters($zone): array
     {
         /** @var array $filtering */
         $filtering = $zone->site->filtering;
@@ -160,6 +160,6 @@ final class ImpressionContext
             $filtering['excludes'] = new stdClass();
         }
 
-        return $filtering ?? new stdClass();
+        return $filtering;
     }
 }
