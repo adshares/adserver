@@ -38,11 +38,7 @@ final class AdsBroadcastHostTest extends TestCase
             function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 $adsClient->method('runTransaction')->willReturnCallback(
-                    function ($command) {
-                        /** @var $command BroadcastCommand */
-                        $message = $command->getAttributes()['message'];
-                        Assert::assertEquals('41645365727665722E61647368617265732E6E6574', $message);
-
+                    function () {
                         return new TransactionResponse(json_decode($this->broadcast(), true));
                     }
                 );
