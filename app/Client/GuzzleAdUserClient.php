@@ -31,7 +31,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_decode;
-use function GuzzleHttp\json_encode;
 
 final class GuzzleAdUserClient implements AdUser
 {
@@ -70,15 +69,6 @@ final class GuzzleAdUserClient implements AdUser
 
             return UserContext::fromAdUserArray($context);
         } catch (GuzzleException $exception) {
-            Log::warning(sprintf(
-                '{"url": "%s", "method": "%s", "body": %s,"message": "%s","context":%s}',
-                (string)$this->client->getConfig('base_uri'),
-                $path,
-                $body,
-                $exception->getMessage(),
-                json_encode($partialContext->toArray())
-            ));
-
             return UserContext::fromAdUserArray([
                 'uid' => $partialContext->userId(),
                 'keywords' => $partialContext->keywords(),
