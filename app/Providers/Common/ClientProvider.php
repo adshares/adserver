@@ -107,7 +107,8 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             DemandClient::class,
             function (Application $app) {
-                return new GuzzleDemandClient($app->make(SignatureVerifier::class));
+                $timeoutForDemandService = 5;
+                return new GuzzleDemandClient($app->make(SignatureVerifier::class), $timeoutForDemandService);
             }
         );
 
