@@ -24,11 +24,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
+use function array_merge;
 use function in_array;
 use function sprintf;
 
 /**
- * @method static Builder where(string $string, int $userId)
  * @mixin Builder
  * @property int status
  */
@@ -56,32 +56,34 @@ class UserLedgerEntry extends Model
 
     public const TYPE_AD_INCOME = 3;
 
-    public const TYPE_AD_EXPENDITURE = 4;
+    public const TYPE_AD_EXPENSE = 4;
 
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
-        self::STATUS_PENDING,
         self::STATUS_REJECTED,
-        self::STATUS_BLOCKED,
         self::STATUS_PROCESSING,
-        self::STATUS_AWAITING_APPROVAL,
-    ];
-
-    private const DEBIT_STATUSES_RELEVANT_FOR_BALANCE = [
         self::STATUS_PENDING,
         self::STATUS_BLOCKED,
-        self::STATUS_PROCESSING,
         self::STATUS_AWAITING_APPROVAL,
     ];
 
     public const ALLOWED_TYPE_LIST = [
+        self::TYPE_UNKNOWN,
         self::TYPE_DEPOSIT,
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_INCOME,
-        self::TYPE_AD_EXPENDITURE,
+        self::TYPE_AD_EXPENSE,
     ];
 
-    public const DEBIT_TYPES = [self::TYPE_AD_EXPENDITURE, self::TYPE_WITHDRAWAL];
+    public const CREDIT_TYPES = [
+        self::TYPE_DEPOSIT,
+        self::TYPE_AD_INCOME,
+    ];
+
+    public const DEBIT_TYPES = [
+        self::TYPE_AD_EXPENSE,
+        self::TYPE_WITHDRAWAL,
+    ];
 
     private const AWAITING_PAYMENTS = [
         self::STATUS_PROCESSING,
@@ -102,14 +104,42 @@ class UserLedgerEntry extends Model
 
     public static function waitingPayments(): int
     {
-        return (int)self::whereIn('status', self::AWAITING_PAYMENTS)
+        return (int)self::queryModificationForAwaitingPayments(self::query())
+            ->sum('amount');
+    }
+
+    private static function queryModificationForAwaitingPayments(Builder $query): Builder
+    {
+        return $query->whereIn('status', self::AWAITING_PAYMENTS)
+            ->where('amount', '<', 0);
+    }
+
+    private static function queryForEntriesRelevantForBalance()
+    {
+        return self::where(function (Builder $query) {
+            $query->where('status', self::STATUS_ACCEPTED)
+                ->orWhere(function (Builder $query) {
+                    self::queryModificationForAwaitingPayments($query);
+                });
+        })->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
+    }
+
+    public static function getBalanceForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForBalance()
             ->sum('amount');
     }
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return self::balanceRelevantEntriesByUserId($userId)
+        return (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
             ->sum('amount');
+    }
+
+    public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
+    {
+        return self::queryForEntriesRelevantForBalance()
+            ->where('user_id', $userId);
     }
 
     public static function construct(int $userId, int $amount, int $status, int $type): self
@@ -137,41 +167,23 @@ class UserLedgerEntry extends Model
             ->processed($transactionId);
     }
 
-    public static function balanceRelevantEntriesByUserId(int $userId)
-    {
-        return self::where('user_id', $userId)
-            ->where(function (Builder $query) {
-                $query->where('status', self::STATUS_ACCEPTED)
-                    ->orWhere(function (Builder $query) {
-                        $query->whereIn('status', self::DEBIT_STATUSES_RELEVANT_FOR_BALANCE)
-                            ->whereIn('type', self::DEBIT_TYPES);
-                    });
-            });
-    }
-
-    public static function removeBlockedExpenditures(): void
-    {
-        self::blockedEntries()
-            ->delete();
-    }
-
     public static function pushBlockedToProcessing(): void
     {
         self::blockedEntries()
             ->update(['status' => self::STATUS_PROCESSING]);
     }
 
-    public static function removeProcessingExpenditures(): void
+    public static function removeProcessingExpenses(): void
     {
         self::where('status', self::STATUS_PROCESSING)
-            ->where('type', self::TYPE_AD_EXPENDITURE)
+            ->where('type', self::TYPE_AD_EXPENSE)
             ->delete();
     }
 
     private static function blockedEntries()
     {
         return self::where('status', self::STATUS_BLOCKED)
-            ->where('type', self::TYPE_AD_EXPENDITURE);
+            ->where('type', self::TYPE_AD_EXPENSE);
     }
 
     public static function block(int $type, int $userId, int $nonNegativeAmount): self

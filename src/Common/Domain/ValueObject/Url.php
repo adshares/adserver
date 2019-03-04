@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,18 +18,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
+use RuntimeException;
+use const FILTER_VALIDATE_URL;
 
-interface DemandClient
+class Url
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+    /** @var string */
+    private $url;
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array;
+    public function __construct(string $url)
+    {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException(sprintf('Given url %s is not correct.', $url));
+        }
 
-    public function fetchInfo(string $infoUrl): Info;
+        $this->url = $url;
+    }
+
+    public function toString(): string
+    {
+        return $this->url;
+    }
+
+    public function __toString()
+    {
+        return $this->url;
+    }
 }

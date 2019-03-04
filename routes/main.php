@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,18 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+use Illuminate\Support\Facades\Route;
+use Adshares\Adserver\Http\Controllers\InfoController;
 
-namespace Adshares\Supply\Application\Service;
+Route::get('/', function () { return ''; })->name('login');
 
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
-{
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
-
-    public function fetchPaymentDetails(string $host, string $transactionId): array;
-
-    public function fetchInfo(string $infoUrl): Info;
-}
+# API INFO
+Route::get('/info', [InfoController::class, 'info']);

@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function config;
 
 class WalletController extends Controller
@@ -134,8 +135,19 @@ class WalletController extends Controller
             return self::json([], Response::HTTP_BAD_REQUEST);
         }
 
+        $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
+
+        if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
+            DB::rollBack();
+
+            throw new UnprocessableEntityHttpException('Payment already approved');
+        }
+
+        $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
+        $userLedgerEntry->save();
+
         AdsSendOne::dispatch(
-            UserLedgerEntry::find($token['payload']['ledgerEntry']),
+            $userLedgerEntry,
             $token['payload']['request']['to'],
             $token['payload']['request']['amount'],
             $token['payload']['request']['memo']

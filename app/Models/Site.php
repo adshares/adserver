@@ -35,6 +35,8 @@ use Illuminate\Support\Collection;
  * @property string name
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
+ * @property bool require_classified
+ * @property bool exclude_unclassified
  * @property Zone[]|Collection zones
  * @method static Site create($input = null)
  * @method static get()
@@ -70,6 +72,8 @@ class Site extends Model
     protected $casts = [
         'site_requires' => 'json',
         'site_excludes' => 'json',
+        'require_classified' => 'boolean',
+        'exclude_unclassified' => 'boolean',
     ];
 
     protected $fillable = [
@@ -77,6 +81,8 @@ class Site extends Model
         'status',
         'primary_language',
         'filtering',
+        'require_classified',
+        'exclude_unclassified',
     ];
 
     protected $hidden = [

@@ -52,16 +52,19 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
+        $items = $content['items'];
 
-        $this->assertCount(3, $content);
+        $this->assertCount(3, $items);
+        $this->assertEquals(3, $content['itemsCount']);
+        $this->assertEquals(3, $content['itemsCountAll']);
 
-        $this->assertNull($content[0]['classifiedGlobal']);
-        $this->assertNull($content[1]['classifiedGlobal']);
-        $this->assertNull($content[2]['classifiedGlobal']);
+        $this->assertNull($items[0]['classifiedGlobal']);
+        $this->assertNull($items[1]['classifiedGlobal']);
+        $this->assertNull($items[2]['classifiedGlobal']);
 
-        $this->assertNull($content[0]['classifiedSite']);
-        $this->assertNull($content[0]['classifiedSite']);
-        $this->assertNull($content[0]['classifiedSite']);
+        $this->assertNull($items[0]['classifiedSite']);
+        $this->assertNull($items[0]['classifiedSite']);
+        $this->assertNull($items[0]['classifiedSite']);
     }
 
     public function testGlobalWhenThereIsOnlyGlobalClassification(): void
@@ -79,11 +82,12 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
+        $items = $content['items'];
 
-        $this->assertNull($content[0]['classifiedGlobal']);
-        $this->assertNull($content[0]['classifiedSite']);
-        $this->assertFalse($content[1]['classifiedGlobal']);
-        $this->assertNull($content[1]['classifiedSite']);
+        $this->assertNull($items[0]['classifiedGlobal']);
+        $this->assertNull($items[0]['classifiedSite']);
+        $this->assertFalse($items[1]['classifiedGlobal']);
+        $this->assertNull($items[1]['classifiedSite']);
     }
 
     public function testSiteWhenThereIsOnlySiteClassification(): void
@@ -99,11 +103,12 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
         $content = json_decode($response->getContent(), true);
+        $items = $content['items'];
 
-        $this->assertNull($content[0]['classifiedGlobal']);
-        $this->assertNull($content[0]['classifiedSite']);
-        $this->assertFalse($content[1]['classifiedSite']);
-        $this->assertNull($content[1]['classifiedGlobal']);
+        $this->assertNull($items[0]['classifiedGlobal']);
+        $this->assertNull($items[0]['classifiedSite']);
+        $this->assertFalse($items[1]['classifiedSite']);
+        $this->assertNull($items[1]['classifiedGlobal']);
     }
 
     public function testSiteWhenThereIsGlobalAndSiteClassification(): void
@@ -120,11 +125,12 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
         $content = json_decode($response->getContent(), true);
+        $items = $content['items'];
 
-        $this->assertNull($content[0]['classifiedGlobal']);
-        $this->assertNull($content[0]['classifiedSite']);
-        $this->assertTrue($content[1]['classifiedGlobal']);
-        $this->assertFalse($content[1]['classifiedSite']);
+        $this->assertNull($items[0]['classifiedGlobal']);
+        $this->assertNull($items[0]['classifiedSite']);
+        $this->assertTrue($items[1]['classifiedGlobal']);
+        $this->assertFalse($items[1]['classifiedSite']);
     }
 
     public function testChangeGlobalStatusWhenDoesNotExistInDb(): void

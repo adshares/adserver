@@ -23,10 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Supply\Application\Dto\Info;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use function json_decode;
+use function json_encode;
 
 /**
  * @property int id
@@ -37,6 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int deleted_at
  * @property int last_broadcast
  * @property int failed_connection
+ * @property array|null info
  * @mixin Builder
  */
 class NetworkHost extends Model
@@ -53,6 +57,11 @@ class NetworkHost extends Model
         'host',
         'last_broadcast',
         'failed_connection',
+        'info',
+    ];
+
+    protected $casts = [
+        'info' => 'json',
     ];
 
     public static function fetchByAddress(string $address): ?NetworkHost
@@ -60,8 +69,12 @@ class NetworkHost extends Model
         return self::where('address', $address)->first();
     }
 
-    public static function registerHost(string $address, string $host, ?\DateTime $lastBroadcast = null): NetworkHost
-    {
+    public static function registerHost(
+        string $address,
+        string $host,
+        ?Info $info = null,
+        ?\DateTime $lastBroadcast = null
+    ): NetworkHost {
         $networkHost = self::where('address', $address)->first();
 
         if (empty($networkHost)) {
@@ -72,6 +85,11 @@ class NetworkHost extends Model
         $networkHost->host = $host;
         $networkHost->last_broadcast = $lastBroadcast ?? new DateTime();
         $networkHost->failed_connection = 0;
+
+        if ($info) {
+            $networkHost->info = $info;
+        }
+
         $networkHost->save();
 
         return $networkHost;
@@ -94,5 +112,21 @@ class NetworkHost extends Model
     {
         ++$this->failed_connection;
         $this->update();
+    }
+
+    public function getInfoAttribute(): ?Info
+    {
+        if ($this->attributes['info']) {
+            $info = json_decode($this->attributes['info'], true);
+
+            return Info::fromArray($info);
+        }
+
+        return null;
+    }
+
+    public function setInfoAttribute(Info $info): void
+    {
+        $this->attributes['info'] = json_encode($info->toArray());
     }
 }
