@@ -47,7 +47,7 @@ sudo --login --user adshares /opt/adshares/.deployment-scripts/configure.sh
 
 Script will ask you to provide your ADS wallet credentials, so please create ADS account first.
 
-The services are now configured to requests on `800x` ports on `localhost`:
+The services are now configured to requests on `800x` listen on `localhost`:
 - AdUser: `8010`
 - AdSelect: `8011`
 - AdPay: `8012`
@@ -56,7 +56,6 @@ The services are now configured to requests on `800x` ports on `localhost`:
 
 Note that there are many environment variables you can override to tweak the behavior of the services.
 Every project has the `.env` file where you can find most of configuration options. 
-
 
 ```bash
 sudo /opt/adshares/.deployment-scripts/install.sh
