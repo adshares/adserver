@@ -40,59 +40,30 @@ sudo adserver/deployment/bootstrap.sh
 ```
 > The script above creates such a separate `adshares` user (without sudo privileges) to be the owner of all the installed services.
 
-Note that there are many environment variables you can override to tweak the behavior of the scripts (just inspect the scripts and configs to see what is being used).
-The variables are set to reasonable defaults. Adjust them to your needs :)
-
-> The one-liners use `sudo` to run the scripts as the `adshares` user. You can omit `sudo --login --user adshares` if you want to run them as the current user.
-
-# Install helper services
+# Configure services
 ```bash
-sudo --login --user adshares /opt/adshares/.deployment-scripts/10-aduser.sh
-sudo --login --user adshares INSTALL_BROWSCAP_DATA=1 /opt/adshares/.deployment-scripts/11-aduser_browscap.sh
-sudo --login --user adshares INSTALL_GEOLITE_DATA=1 /opt/adshares/.deployment-scripts/12-aduser_geolite.sh
+sudo --login --user adshares /opt/adshares/.deployment-scripts/configure.sh
+```
 
-sudo --login --user adshares /opt/adshares/.deployment-scripts/20-adselect.sh
-sudo --login --user adshares /opt/adshares/.deployment-scripts/30-adpay.sh
-```
-Copy configs and start standalone services
-```bash
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/aduser*.conf /etc/supervisor/conf.d
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adselect*.conf /etc/supervisor/conf.d
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adpay*.conf /etc/supervisor/conf.d
-sudo service supervisor restart
-```
-The services are now listening to requests on `800x` ports on `localhost`:
+Script will ask you to provide your ADS wallet credentials, so please create ADS account first.
+
+The services are now configured to requests on `800x` listen on `localhost`:
 - AdUser: `8010`
 - AdSelect: `8011`
 - AdPay: `8012`
 
-Install AdServer (with workers)
-```bash
-sudo --login --user adshares DB_MIGRATE=1 DB_SEED=1 /opt/adshares/.deployment-scripts/40-adserver.sh
-sudo --login --user adshares /opt/adshares/.deployment-scripts/41-adserver_worker.sh
+### Install and start services
 
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adserver*.conf /etc/supervisor/conf.d
-sudo service supervisor restart
-```
-Build static version of AdPanel
+Note that there are many environment variables you can override to tweak the behavior of the services.
+Every project has the `.env` file where you can find most of configuration options. 
+
 ```bash
-sudo --login --user adshares /opt/adshares/.deployment-scripts/50-adpanel.sh
+sudo /opt/adshares/.deployment-scripts/install.sh
 ```
 
-### Start public web services
+You can now access you adserver frontend through your browser on the configured domain and port.
 
-Reconfigure Nginx
-```bash
-sudo cp -rf /opt/adshares/.deployment-scripts/nginx/conf.d/*.conf /etc/nginx/conf.d
-sudo service nginx reload
-```
-
-Publicly accessible services now listen on all interfaces on three new ports:
-- AdServer - the API server on port `8001` 
-- AdPanel - the system's user interface on port `8002`
-- AdUser - the visible part of the tracking service on port `8003`
-
-> If you installed all the stuff locally just point your browser to http://localhost:8002.
+> If you installed all the stuff locally just point your browser to http://localhost.
 
 ## Documentation
 
