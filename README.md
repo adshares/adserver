@@ -23,6 +23,7 @@
 AdServer is the core software behind the ecosystem.
 
 ## Prerequisites
+ - Existing ADS account (with credentials)
  - A clean Ubuntu/Bionic install
  - You are logged in as a user with `sudo` privileges
  - You have mail server ready somewhere (use something like [MailHog](https://github.com/mailhog/MailHog) for local testing)
@@ -47,11 +48,6 @@ sudo --login --user adshares /opt/adshares/.deployment-scripts/configure.sh
 
 Script will ask you to provide your ADS wallet credentials, so please create ADS account first.
 
-The services are now configured to requests on `800x` listen on `localhost`:
-- AdUser: `8010`
-- AdSelect: `8011`
-- AdPay: `8012`
-
 ### Install and start services
 
 Note that there are many environment variables you can override to tweak the behavior of the services.
@@ -64,6 +60,9 @@ sudo /opt/adshares/.deployment-scripts/install.sh
 You can now access you adserver frontend through your browser on the configured domain and port.
 
 > If you installed all the stuff locally just point your browser to http://localhost.
+> - AdUser: `8010`
+> - AdSelect: `8011`
+> - AdPay: `8012`
 
 ## Documentation
 
