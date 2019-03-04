@@ -50,19 +50,6 @@
             ]
         }
     },
-    "scripts": {
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.dist', '.env');\"",
-            "@php artisan key:generate"
-        ],
-        "post-autoload-dump": [
-          "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-          "@php artisan package:discover"
-        ],
-        "install-codestandards": [
-            "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
-        ]
-    },
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
