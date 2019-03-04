@@ -73,7 +73,7 @@ return [
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('APP_NAME', 'AdServer'),
             'emoji' => env('LOG_SLACK_EMOJI', ':-1:'),
-            'level' => env('LOG_LEVEL', 'warning'),
+            'level' => env('LOG_SLACK_LEVEL', env('LOG_LEVEL', 'warning')),
         ],
 
         'syslog' => [
