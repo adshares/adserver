@@ -169,22 +169,14 @@ class AdsFetchHosts extends Command
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
         } catch (RuntimeException $exception) {
-            $this->error(sprintf('Could not import info data (%s) from server `%s`.', $exception->getMessage(), $infoUrl));
+            $this->error(sprintf(
+                'Could not import info data (%s) from server `%s`.',
+                $exception->getMessage(),
+                $infoUrl
+            ));
         }
 
         NetworkHost::registerHost($address, $message, $info, $time);
-    }
-
-    private function prepareInfoUrl(string $hostUrl): string
-    {
-        $parsedUrl = parse_url($hostUrl);
-        $path = $parsedUrl['path'] ?? '';
-
-        if ($path === '/info') {
-            return $hostUrl;
-        }
-
-        return $hostUrl . '/info';
     }
 
     /**
@@ -200,5 +192,17 @@ class AdsFetchHosts extends Command
         }
 
         return $string;
+    }
+
+    private function prepareInfoUrl(string $hostUrl): string
+    {
+        $parsedUrl = parse_url($hostUrl);
+        $path = $parsedUrl['path'] ?? '';
+
+        if ($path === '/info') {
+            return $hostUrl;
+        }
+
+        return $hostUrl.'/info';
     }
 }
