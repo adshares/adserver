@@ -30,8 +30,8 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Illuminate\Console\Command;
-use RuntimeException;
 use function parse_url;
 use function strlen;
 use function substr;
@@ -168,23 +168,15 @@ class AdsFetchHosts extends Command
             $info = $this->client->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
-        } catch (RuntimeException $exception) {
-            $this->error(sprintf('Could not import info data (%s) from server `%s`.', $exception->getMessage(), $infoUrl));
+        } catch (DomainRuntimeException $exception) {
+            $this->error(sprintf(
+                'Could not import info data (%s) from server `%s`.',
+                $exception->getMessage(),
+                $infoUrl
+            ));
         }
 
         NetworkHost::registerHost($address, $message, $info, $time);
-    }
-
-    private function prepareInfoUrl(string $hostUrl): string
-    {
-        $parsedUrl = parse_url($hostUrl);
-        $path = $parsedUrl['path'] ?? '';
-
-        if ($path === '/info') {
-            return $path;
-        }
-
-        return $hostUrl . '/info';
     }
 
     /**
@@ -200,5 +192,17 @@ class AdsFetchHosts extends Command
         }
 
         return $string;
+    }
+
+    private function prepareInfoUrl(string $hostUrl): string
+    {
+        $parsedUrl = parse_url($hostUrl);
+        $path = $parsedUrl['path'] ?? '';
+
+        if ($path === '/info') {
+            return $hostUrl;
+        }
+
+        return $hostUrl.'/info';
     }
 }

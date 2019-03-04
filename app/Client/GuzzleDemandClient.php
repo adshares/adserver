@@ -32,12 +32,13 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use DomainException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
@@ -61,13 +62,7 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchAllInventory(string $inventoryHost): CampaignCollection
     {
-        $client = new Client(
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                'base_uri' => $inventoryHost,
-                'timeout' => $this->timeout,
-            ]
-        );
+        $client = new Client($this->requestParameters($inventoryHost));
 
         try {
             $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
@@ -84,11 +79,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $this->validateResponse($statusCode, $body);
 
-        try {
-            $campaigns = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
-        }
+        $campaigns = $this->createDecodedResponseFromBody($body);
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
@@ -101,13 +92,7 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId): array
     {
-        $client = new Client(
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                'base_uri' => $host,
-                'timeout' => $this->timeout,
-            ]
-        );
+        $client = new Client($this->requestParameters($host));
 
         $privateKey = (string)config('app.adshares_secret');
         $accountAddress = (string)config('app.adshares_address');
@@ -145,23 +130,12 @@ final class GuzzleDemandClient implements DemandClient
         $body = (string)$response->getBody();
         $this->validateResponse($statusCode, $body);
 
-        try {
-            $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
-        }
-
-        return $decoded;
+        return $this->createDecodedResponseFromBody($body);
     }
 
     public function fetchInfo(string $infoUrl): Info
     {
-        $client = new Client(
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                'timeout' => $this->timeout,
-            ]
-        );
+        $client = new Client($this->requestParameters());
 
         try {
             $response = $client->get($infoUrl);
@@ -178,15 +152,11 @@ final class GuzzleDemandClient implements DemandClient
 
         $this->validateResponse($statusCode, $body);
 
-        try {
-            $data = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
-        }
+        $data = $this->createDecodedResponseFromBody($body);
 
         $this->validateInfoResponse($data);
 
-        $info = new Info(
+        return new Info(
             $data['serviceType'],
             $data['name'],
             $data['softwareVersion'],
@@ -196,8 +166,34 @@ final class GuzzleDemandClient implements DemandClient
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl'])
         );
+    }
 
-        return $info;
+    private function requestParameters(?string $baseUrl = null): array
+    {
+        $params = [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-cache',
+            ],
+            'timeout' => $this->timeout,
+        ];
+
+        if ($baseUrl) {
+            $params['base_uri'] = $baseUrl;
+        }
+
+        return $params;
+    }
+
+    private function createDecodedResponseFromBody(string $body): array
+    {
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new DomainRuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
     }
 
     private function validateResponse(int $statusCode, string $body): void
@@ -257,7 +253,7 @@ final class GuzzleDemandClient implements DemandClient
             || !$termsUrl
             || !$inventoryUrl
         ) {
-            throw new RuntimeException('Wrong info data format.');
+            throw new DomainRuntimeException('Wrong info data format.');
         }
     }
 }
