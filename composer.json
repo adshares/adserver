@@ -14,8 +14,8 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
-      "ramsey/uuid": "^3",
-      "ext-intl": "*"
+        "ramsey/uuid": "^3",
+        "ext-intl": "*"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
