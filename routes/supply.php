@@ -37,3 +37,7 @@ Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])->nam
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
+
+# WHY PAGE
+Route::get('/supply/why', [SupplyController::class, 'why']);
+

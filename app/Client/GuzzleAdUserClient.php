@@ -31,7 +31,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_decode;
-use function GuzzleHttp\json_encode;
 
 final class GuzzleAdUserClient implements AdUser
 {
@@ -45,7 +44,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchTargetingOptions(): Taxonomy
     {
-        $response = $this->client->get('/getTaxonomy');
+        $response = $this->client->get('getTaxonomy');
         $taxonomy = json_decode((string)$response->getBody(), true);
 
         return TaxonomyFactory::fromArray($taxonomy);
@@ -54,7 +53,7 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $body = $partialContext->adUserRequestBody();
-        $path = '/getData';
+        $path = 'getData';
 
         try {
             $response = $this->client->post($path, ['body' => $body]);
@@ -70,15 +69,6 @@ final class GuzzleAdUserClient implements AdUser
 
             return UserContext::fromAdUserArray($context);
         } catch (GuzzleException $exception) {
-            Log::warning(sprintf(
-                '{"url": "%s", "method": "%s", "body": %s,"message": "%s","context":%s}',
-                (string)$this->client->getConfig('base_uri'),
-                $path,
-                $body,
-                $exception->getMessage(),
-                json_encode($partialContext->toArray())
-            ));
-
             return UserContext::fromAdUserArray([
                 'uid' => $partialContext->userId(),
                 'keywords' => $partialContext->keywords(),

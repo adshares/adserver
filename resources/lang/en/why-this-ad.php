@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,19 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+return [
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\UserContext;
-
-interface AdUser
-{
-    public const DEFAULT_HUMAN_SCORE = 0.49;
-
-    public function fetchTargetingOptions(): Taxonomy;
-
-    public function getUserContext(ImpressionContext $context): UserContext;
-}
+];
