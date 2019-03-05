@@ -4,6 +4,7 @@
         "ext-gd": "*",
         "ext-json": "*",
         "ext-sodium": "*",
+        "ext-intl": "*",
         "adshares/ads-client": "^1",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
@@ -14,8 +15,7 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
-        "ramsey/uuid": "^3",
-        "ext-intl": "*"
+        "ramsey/uuid": "^3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
