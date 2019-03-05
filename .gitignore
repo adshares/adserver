@@ -21,6 +21,7 @@ yarn-error.log
 /.scannerwork
 _ide_helper.php
 public/img/
+public/info.json
 
 /storage/phpunit
 phpunit.xml
