@@ -58,7 +58,7 @@ Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.co
 
 # only for admin
 Route::get('users', [UsersController::class, 'browse'])->name('app.users.browse');
-Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
+//Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
 //Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
 //Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
 //Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
