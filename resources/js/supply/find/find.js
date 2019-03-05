@@ -177,7 +177,7 @@ var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
     link.href = url;
 
     var image = new Image();
-    image.src = serverOrigin + 'img/watermark.png';
+    image.src = serverOrigin + '/img/watermark.png';
 
     link.setAttribute('style', 'text-decoration: none');
     link.appendChild(image);
