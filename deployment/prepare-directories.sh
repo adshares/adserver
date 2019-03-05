@@ -20,5 +20,5 @@ cp -r ${HERE} ${INSTALLATION_DIR}/.deployment-scripts
 LOG_DIR=${LOG_DIR:-/var/log/${VENDOR_NAME}}
 mkdir -p ${LOG_DIR}
 
-id --user ${INSTALLATION_USER} &>/dev/null || useradd --no-user-group --create-home --shell /bin/bash ${INSTALLATION_USER}
+id --user ${INSTALLATION_USER} &>/dev/null || useradd --create-home --shell /bin/bash ${INSTALLATION_USER}
 chown -R ${INSTALLATION_USER}:`id --group --name ${INSTALLATION_USER}` ${INSTALLATION_DIR} ${LOG_DIR}

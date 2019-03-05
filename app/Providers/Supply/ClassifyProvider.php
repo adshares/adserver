@@ -43,6 +43,7 @@ class ClassifyProvider extends ServiceProvider
             SignatureVerifierInterface::class,
             function () {
                 $privateKey = (string)config('app.classify_secret');
+
                 return new SodiumCompatSignatureVerifier($privateKey);
             }
         );

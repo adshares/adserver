@@ -5,10 +5,6 @@ source ${HERE}/_functions.sh
 
 SERVICE_NAME=adpanel
 
-source ${HERE}/clone-service.sh
-
-cd ${INSTALLATION_DIR}/${SERVICE_NAME}
-
 ADSERVER_URL_FROM_CMD=${1:-http://localhost:8001}
 
 GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
@@ -21,6 +17,7 @@ export DEV_XDEBUG=${DEV_XDEBUG:-false}
 export APP_ENV=${APP_ENV:-prod}
 export APP_PORT=${APP_PORT:-8002}
 
+test ! -e dist && mkdir dist
 envsubst < info.json.template | tee dist/info.json
 
 envsubst < src/environments/environment.ts.template | tee src/environments/environment.${APP_ENV}.ts
