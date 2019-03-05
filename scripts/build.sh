@@ -26,4 +26,8 @@ yarn run ${APP_ENV}
 mkdir -p storage/app/public/banners
 chmod a+rwX -R storage
 
+GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
+GIT_HASH="#"$(git rev-parse --short HEAD)
+
+export APP_VERSION=${APP_VERSION:-${GIT_TAG:-${GIT_HASH}}}
 envsubst < info.json.template | tee public/info.json
