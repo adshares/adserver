@@ -107,4 +107,24 @@ class Info
             'inventoryUrl' => $this->inventoryUrl->toString(),
         ];
     }
+
+    public function getTermsUrl(): string
+    {
+        return $this->termsUrl->toString();
+    }
+
+    public function getPrivacyUrl(): string
+    {
+        return $this->privacyUrl->toString();
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getPanelUrl(): string
+    {
+        return $this->panelUrl->toString();
+    }
 }

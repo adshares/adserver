@@ -90,8 +90,12 @@ navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
     });
 };
 
-var prepareElement = function (context, banner, element) {
+var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
+    div.setAttribute('style', 'position: relative; z-index: 1;');
+
+    var infoBox = prepareInfoBox(context, banner, contextParam);
+    div.appendChild(infoBox);
 
     if (element.tagName == 'IFRAME') {
         var mouseover = false, evFn;
@@ -151,6 +155,34 @@ var prepareElement = function (context, banner, element) {
         link.appendChild(element);
         div.appendChild(link);
     }
+
+    return div;
+};
+
+var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
+    var url = addUrlParam(serverOrigin + '/supply/why', {
+        'bid': banner.id,
+        'cid': context.cid,
+        'ctx': contextParam,
+        'iid': getImpressionId(),
+        'url': banner.serve_url,
+    });
+
+
+    var div = document.createElement('div');
+    div.setAttribute('style', 'position: absolute; top: 0; right: 0; background: #ffffff');
+
+    var link = document.createElement('a');
+    link.target = '_blank';
+    link.href = url;
+
+    var image = new Image();
+    image.src = serverOrigin + 'img/watermark.png';
+
+    link.setAttribute('style', 'text-decoration: none');
+    link.appendChild(image);
+
+    div.appendChild(link);
 
     return div;
 };
