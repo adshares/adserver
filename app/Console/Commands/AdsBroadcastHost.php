@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Common\Domain\InfoUrlBroadcastCommand;
+use Adshares\Common\Domain\BroadcastCommand;
 use Adshares\Common\Domain\ValueObject\Url;
 use Illuminate\Console\Command;
 
@@ -61,7 +61,7 @@ class AdsBroadcastHost extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $command = new InfoUrlBroadcastCommand(new Url($this->infoApiUrl));
+        $command = new BroadcastCommand(new Url($this->infoApiUrl));
 
         $response = $adsClient->runTransaction($command);
 

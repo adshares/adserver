@@ -20,12 +20,12 @@
 
 namespace Adshares\Common\Domain;
 
-use Adshares\Ads\Command\BroadcastCommand;
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Ads\Command\BroadcastCommand as AdsClientBroadcastCommand;
+use Adshares\Common\Hexable;
 
-final class InfoUrlBroadcastCommand extends BroadcastCommand
+final class BroadcastCommand extends AdsClientBroadcastCommand
 {
-    public function __construct(Url $url)
+    public function __construct(Hexable $url)
     {
         parent::__construct($url->toHex());
     }

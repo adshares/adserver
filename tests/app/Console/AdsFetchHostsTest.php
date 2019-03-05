@@ -34,14 +34,15 @@ final class AdsFetchHostsTest extends TestCase
 
     public function testAdsFetchHosts(): void
     {
-        $this->app->bind(AdsClient::class, function () {
-            return $this->createAdsClient();
-        });
+        $this->app->bind(AdsClient::class,
+            function () {
+                return $this->createAdsClient();
+            });
 
         $this->artisan('ads:fetch-hosts')->assertExitCode(0);
     }
 
-    private function createAdsClient()
+    private function createAdsClient(): AdsClient
     {
         $process = $this->createMock(Process::class);
         $process->method('getExitCode')->willReturn(0);
@@ -106,7 +107,7 @@ final class AdsFetchHostsTest extends TestCase
                     "time": "1542382322",
                     "date": "2018-11-16 16:32:02",
                     "data": "030200040000001E000000F2E2EE5B1900",
-                    "message": "01020304",
+                    "message": "68747470733A2F2F61647368617265732E6E6574",
                     "signature": "ED6BAE0D1D6E0A012E0A3F1231A0D9B4BBF42F50626A9971DCE31009A3B'
             .'83ABE17B200C787D86792813FCD70B415450E929F35D5C9DC7B8E32665251E2A98C0E",
                     "input_hash": "B0DC84AF498AE72BD99D59CFF0D7AF6C591DFC987A4E5202BF7F3FC3ACBCB923",
@@ -194,7 +195,7 @@ final class AdsFetchHostsTest extends TestCase
                     "time": "1542382322",
                     "date": "2018-11-16 16:32:02",
                     "data": "030200040000001E000000F2E2EE5B1900",
-                    "message": "41645365727665722E6C6F63616C686F737425334138313032",
+                    "message": "68747470733A2F2F61647368617265732E6E6574",
                     "signature": "ED6BAE0D1D6E0A012E0A3F1231A0D9B4BBF42F50626A9971DCE31009A3B'
             .'83ABE17B200C787D86792813FCD70B415450E929F35D5C9DC7B8E32665251E2A98C0E",
                     "input_hash": "B0DC84AF498AE72BD99D59CFF0D7AF6C591DFC987A4E5202BF7F3FC3ACBCB923",
@@ -235,7 +236,7 @@ final class AdsFetchHostsTest extends TestCase
                     "time": "1542382322",
                     "date": "2018-11-16 16:32:02",
                     "data": "030200040000001E000000F2E2EE5B1900",
-                    "message": "41645365727665722E",
+                    "message": "68747470733A2F2F61647368617265732E6E6574",
                     "signature": "ED6BAE0D1D6E0A012E0A3F1231A0D9B4BBF42F50626A9971DCE31009A3B'
             .'83ABE17B200C787D86792813FCD70B415450E929F35D5C9DC7B8E32665251E2A98C0E",
                     "input_hash": "B0DC84AF498AE72BD99D59CFF0D7AF6C591DFC987A4E5202BF7F3FC3ACBCB923",

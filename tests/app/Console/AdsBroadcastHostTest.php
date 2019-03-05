@@ -21,10 +21,7 @@
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\GetAccountCommand;
-use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\TransactionResponse;
-use Adshares\Adserver\Console\Commands\AdsBroadcastHost;
 use Adshares\Adserver\Tests\TestCase;
 
 final class AdsBroadcastHostTest extends TestCase
@@ -46,7 +43,7 @@ final class AdsBroadcastHostTest extends TestCase
         );
 
         $this->artisan('ads:broadcast-host')
-            ->expectsOutput('Broadcast message sent successfully. Txid: [0002:00000C5E:0001]');
+            ->expectsOutput('Message broadcast successfully. TxId: 0002:00000C5E:0001');
     }
 
     private function broadcast(): string
@@ -85,24 +82,5 @@ final class AdsBroadcastHostTest extends TestCase
                 "hash": "78461CFB5DCAD81849AA2BC0C2ECFEBA1B3ADF7E976D94968E19DADF0F4B7CF4"
             }
         }';
-    }
-
-    public function testAdsBroadcastHostException()
-    {
-        $this->app->bind(
-            AdsClient::class,
-            function () {
-                $adsClient = $this->createMock(AdsClient::class);
-                $command = new GetAccountCommand('0002-00000004-3539');
-                $exception = new CommandException($command, 'Process timed out');
-                $adsClient->method('runTransaction')->willThrowException($exception);
-
-                return $adsClient;
-            }
-        );
-
-        $this->artisan('ads:broadcast-host')
-            ->expectsOutput('Cannot send broadcast due to error 0')
-            ->assertExitCode(AdsBroadcastHost::EXIT_CODE_ERROR);
     }
 }

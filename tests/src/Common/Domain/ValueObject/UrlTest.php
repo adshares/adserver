@@ -34,8 +34,15 @@ class UrlTest extends TestCase
 
         self::assertEquals($url, $object->toString());
         self::assertEquals($idn, $object->idn());
+    }
 
-        self::assertEquals(self::strToHex($object->idn()), $object->toHex());
+    /** @dataProvider provider */
+    public function testHexability(string $url, string $idn): void
+    {
+        self::assertEquals($url, Url::fromHex(self::strToHex($idn))->toString());
+
+        $hex = (new Url($url))->toHex();
+        self::assertEquals($idn, self::hexToStr($hex));
     }
 
     private static function strToHex(string $string): string
@@ -49,6 +56,16 @@ class UrlTest extends TestCase
         }
 
         return strtoupper($hex);
+    }
+
+    private static function hexToStr(string $hex): string
+    {
+        $string = '';
+        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
+            $string .= chr(hexdec($hex[$i].$hex[$i + 1]));
+        }
+
+        return $string;
     }
 
     public function provider(): array

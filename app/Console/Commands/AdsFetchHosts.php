@@ -28,13 +28,13 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Illuminate\Console\Command;
 use function parse_url;
 use function strlen;
-use function substr;
 
 class AdsFetchHosts extends Command
 {
@@ -144,28 +144,12 @@ class AdsFetchHosts extends Command
      */
     private function handleBroadcast(Broadcast $broadcast): void
     {
-        $message = urldecode($this->hexToStr($broadcast->getMessage()));
-
-        if (substr($message, 0, strlen(AdsBroadcastHost::BROADCAST_PREFIX))
-            !== AdsBroadcastHost::BROADCAST_PREFIX) {
-            return;
-        }
-
-        $message = trim(substr($message, strlen(AdsBroadcastHost::BROADCAST_PREFIX)));
-
-        // TODO check if message is valid host
-        if (empty($message)) {
-            return;
-        }
-
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-
-        $info = null;
-        $infoUrl = $this->prepareInfoUrl($message);
+        $infoUrl = Url::fromHex($broadcast->getMessage());
 
         try {
-            $info = $this->client->fetchInfo($infoUrl);
+            $info = $this->client->fetchInfo($infoUrl->toString());
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
         } catch (DomainRuntimeException $exception) {
@@ -176,7 +160,7 @@ class AdsFetchHosts extends Command
             ));
         }
 
-        NetworkHost::registerHost($address, $message, $info, $time);
+        NetworkHost::registerHost($address, $infoUrl->toString(), $info ?? null, $time);
     }
 
     /**
