@@ -21,17 +21,15 @@
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\BroadcastCommand;
 use Adshares\Ads\Command\GetAccountCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsBroadcastHost;
 use Adshares\Adserver\Tests\TestCase;
-use PHPUnit\Framework\Assert;
 
 final class AdsBroadcastHostTest extends TestCase
 {
-    public function testAdsBroadcastHost()
+    public function testAdsBroadcastHost(): void
     {
         $this->app->bind(
             AdsClient::class,
@@ -48,8 +46,7 @@ final class AdsBroadcastHostTest extends TestCase
         );
 
         $this->artisan('ads:broadcast-host')
-            ->expectsOutput('Broadcast message sent successfully. Txid: [0002:00000C5E:0001]')
-            ->assertExitCode(AdsBroadcastHost::EXIT_CODE_SUCCESS);
+            ->expectsOutput('Broadcast message sent successfully. Txid: [0002:00000C5E:0001]');
     }
 
     private function broadcast(): string

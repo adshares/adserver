@@ -22,21 +22,14 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\BroadcastCommand;
-use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Common\Domain\InfoUrlBroadcastCommand;
+use Adshares\Common\Domain\ValueObject\Url;
 use Illuminate\Console\Command;
-use function strlen;
-use function strtoupper;
 
 class AdsBroadcastHost extends Command
 {
     use LineFormatterTrait;
-
-    const BROADCAST_PREFIX = 'AdServer.';
-
-    const EXIT_CODE_SUCCESS = 0;
-    const EXIT_CODE_ERROR = 1;
 
     /**
      * @var string
@@ -64,36 +57,16 @@ class AdsBroadcastHost extends Command
      *
      * @return int
      */
-    public function handle(AdsClient $adsClient): int
+    public function handle(AdsClient $adsClient): void
     {
         $this->info('Start command '.$this->signature);
 
-        $message = $this->strToHex(urlencode(self::BROADCAST_PREFIX.$this->infoApiUrl));
+        $command = new InfoUrlBroadcastCommand(new Url($this->infoApiUrl));
 
-        $command = new BroadcastCommand($message);
-        try {
-            $response = $adsClient->runTransaction($command);
-            $txid = $response->getTx()->getId();
-            $this->info("Broadcast message sent successfully. Txid: [$txid]");
-        } catch (CommandException $exc) {
-            $this->error('Cannot send broadcast due to error '.$exc->getCode());
+        $response = $adsClient->runTransaction($command);
 
-            return self::EXIT_CODE_ERROR;
-        }
+        $txId = $response->getTx()->getId();
 
-        return self::EXIT_CODE_SUCCESS;
-    }
-
-    private function strToHex(string $string): string
-    {
-        $hex = '';
-        $length = strlen($string);
-        for ($i = 0; $i < $length; $i++) {
-            $ord = ord($string[$i]);
-            $hexCode = dechex($ord);
-            $hex .= substr('0'.$hexCode, -2);
-        }
-
-        return strtoupper($hex);
+        $this->info("Message broadcast successfully. TxId: $txId");
     }
 }

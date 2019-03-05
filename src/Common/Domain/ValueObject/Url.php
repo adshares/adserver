@@ -23,29 +23,44 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use RuntimeException;
+use function idn_to_utf8;
+use function strtoupper;
 use const FILTER_VALIDATE_URL;
+use const IDNA_ERROR_DISALLOWED;
 
 class Url
 {
     /** @var string */
-    private $url;
+    private $idn;
 
     public function __construct(string $url)
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        $idn = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+
+        if (!filter_var($idn, FILTER_VALIDATE_URL)) {
             throw new RuntimeException(sprintf('Given url %s is not correct.', $url));
         }
 
-        $this->url = $url;
+        $this->idn = $idn;
+    }
+
+    public function idn(): string
+    {
+        return $this->idn;
     }
 
     public function toString(): string
     {
-        return $this->url;
+        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
     }
 
-    public function __toString()
+    public function toHex(): string
     {
-        return $this->url;
+        return strtoupper(unpack('H*', $this->idn)[1]);
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 }
