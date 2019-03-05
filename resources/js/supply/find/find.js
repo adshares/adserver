@@ -177,7 +177,7 @@ var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
     link.href = url;
 
     var image = new Image();
-    image.src = serverOrigin + 'img/watermark.png';
+    image.src = serverOrigin + '/img/watermark.png';
 
     link.setAttribute('style', 'text-decoration: none');
     link.appendChild(image);
@@ -300,15 +300,20 @@ var getImpressionId = function () {
 
 var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
+    var url = serverOrigin + '/supply/register?iid=' + impressionId;
 
+    document.body.appendChild(createIframeFromUrl(url));
+};
+
+var createIframeFromUrl = function createIframeFromUrl(url) {
     var iframe = document.createElement('iframe');
     iframe.setAttribute('style', 'display:none');
     iframe.setAttribute('width', 1);
     iframe.setAttribute('height', 1);
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-    iframe.src = serverOrigin + '/supply/register?iid=' + impressionId;
+    iframe.src = url;
 
-    document.body.appendChild(iframe);
+    return iframe;
 };
 
 var getPageKeywords = function () {
@@ -445,12 +450,8 @@ var findDestination = function (zoneId, tags, excludedTags) {
 
 var addTrackingPixel = function (context, banner, element) {
     if (!context.view_url) return;
-    var img = new Image();
-    img.setAttribute('style', 'display:none');
-    img.setAttribute('width', 1);
-    img.setAttribute('height', 1);
-    img.src = context.view_url;
-    element.parentNode.insertBefore(img, element);
+
+    element.parentNode.insertBefore(createIframeFromUrl(context.view_url), element);
 };
 
 var fetchBanner = function (banner, context) {
