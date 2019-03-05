@@ -159,4 +159,9 @@ class NetworkBanner extends Model
     {
         return $this->hasMany(Classification::class);
     }
+
+    public static function fetchByPublicId(string $publicId): ?self
+    {
+        return self::where('uuid', hex2bin($publicId))->first();
+    }
 }

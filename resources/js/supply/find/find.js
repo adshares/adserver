@@ -160,8 +160,8 @@ var prepareElement = function (context, banner, element, contextParam) {
 };
 
 var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
-
-    var url = addUrlParam('http://localhost:8101/supply/why', {
+    var url = addUrlParam(serverOrigin + '/supply/why', {
+        'bid': banner.id,
         'cid': context.cid,
         'ctx': contextParam,
         'iid': getImpressionId(),
@@ -170,20 +170,17 @@ var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute; top: 0; right: 0;');
+    div.setAttribute('style', 'position: absolute; top: 0; right: 0; background: #ffffff');
 
     var link = document.createElement('a');
     link.target = '_blank';
     link.href = url;
 
     var image = new Image();
-    image.src = 'http://localhost:8101/img/watermark.png';
-
-    var linkText = document.createTextNode('>>');
+    image.src = serverOrigin + 'img/watermark.png';
 
     link.setAttribute('style', 'text-decoration: none');
     link.appendChild(image);
-    link.appendChild(linkText);
 
     div.appendChild(link);
 

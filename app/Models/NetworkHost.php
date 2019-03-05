@@ -40,7 +40,7 @@ use function json_encode;
  * @property int deleted_at
  * @property int last_broadcast
  * @property int failed_connection
- * @property array|null info
+ * @property Info info
  * @mixin Builder
  */
 class NetworkHost extends Model
@@ -64,9 +64,14 @@ class NetworkHost extends Model
         'info' => 'json',
     ];
 
-    public static function fetchByAddress(string $address): ?NetworkHost
+    public static function fetchByAddress(string $address): ?self
     {
         return self::where('address', $address)->first();
+    }
+
+    public static function fetchByHost(string $host): ?self
+    {
+        return self::where('host', $host)->first();
     }
 
     public static function registerHost(

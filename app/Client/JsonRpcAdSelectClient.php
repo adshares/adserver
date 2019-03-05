@@ -214,6 +214,7 @@ final class JsonRpcAdSelectClient implements AdSelect
                 } else {
                     $campaign = $banner->campaign;
                     yield [
+                        'id' => $bannerId,
                         'zone_id' => $zoneId,
                         'pay_from' => $campaign->source_address,
                         'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),

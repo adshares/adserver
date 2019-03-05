@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
@@ -325,13 +326,44 @@ class SupplyController extends Controller
     public function why(Request $request): View
     {
         $context = Utils::decodeZones($request->query->get('ctx'));
-
+        $bannerId = $request->query->get('bid');
         $zoneId = $context['page']['zone'];
+
 
         $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
 
-        return view('supply/why');
+        $banner = NetworkBanner::fetchByPublicId($bannerId);
+        $campaign = $banner->campaign()->first();
+        $networkHost = NetworkHost::fetchByHost($campaign->source_host);
 
+        $info = $networkHost->info ?? null;
+
+        $data = [
+            'url' => $banner->serve_url,
+            'supplyName' => config('app.adserver_info_name'),
+            'supplyTermsUrl' => config('app.adserver_info_terms_url'),
+            'supplyPrivacyUrl' => config('app.adserver_info_privacy_url'),
+            'supplyPanelUrl' => config('app.adserver_info_panel_url'),
+            'demand' => false,
+        ];
+
+        if ($info) {
+            $data = array_merge(
+                $data,
+                [
+                    'demand' => true,
+                    'demandName' => $info->getName(),
+                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
+                    'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
+                    'demandPanelUrl' => $info->getPanelUrl(),
+                ]
+            );
+        }
+
+        return view(
+            'supply/why',
+            $data
+        );
     }
 }

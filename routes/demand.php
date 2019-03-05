@@ -41,5 +41,3 @@ Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])->name('banner-preview');
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
-
-Route::get('/supply/why', [SupplyController::class, 'why']);
