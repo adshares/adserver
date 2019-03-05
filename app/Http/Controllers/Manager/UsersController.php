@@ -66,6 +66,13 @@ class UsersController extends Controller
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
     }
 
+    public function browse()
+    {
+        $users = User::with('AdserverWallet')->get();
+
+        return self::json($users->toArray());
+    }
+
     public function edit(Request $request)
     {
         if (!Auth::check() && !$request->has('user.token')) {
