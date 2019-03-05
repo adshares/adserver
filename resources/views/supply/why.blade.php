@@ -25,6 +25,14 @@
                 </ul>
             </section>
             @endif
+
+            <section id="adshares">
+                <h3>Ecosystem is powered by Adshares</h3>
+                <ul>
+                    <li>Website: <a href="https://adshares.net">https://adshares.net</a></li>
+                    <li>Contact: <a href="mailto:office@adshares.net">office@adshares.net</a></li>
+                </ul>
+            </section>
         </div>
     </body>
 </html>
