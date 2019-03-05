@@ -33,8 +33,6 @@ use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
-use function parse_url;
-use function strlen;
 
 class AdsFetchHosts extends Command
 {
@@ -161,32 +159,5 @@ class AdsFetchHosts extends Command
         }
 
         NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
-    }
-
-    /**
-     * @param string $hex
-     *
-     * @return string
-     */
-    private function hexToStr(string $hex): string
-    {
-        $string = '';
-        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
-            $string .= chr(hexdec($hex[$i].$hex[$i + 1]));
-        }
-
-        return $string;
-    }
-
-    private function prepareInfoUrl(string $hostUrl): string
-    {
-        $parsedUrl = parse_url($hostUrl);
-        $path = $parsedUrl['path'] ?? '';
-
-        if ($path === '/info') {
-            return $hostUrl;
-        }
-
-        return $hostUrl.'/info';
     }
 }
