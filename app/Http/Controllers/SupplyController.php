@@ -325,13 +325,7 @@ class SupplyController extends Controller
 
     public function why(Request $request): View
     {
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $bannerId = $request->query->get('bid');
-        $zoneId = $context['page']['zone'];
-
-
-        $tid = $request->cookies->get('tid');
-        $caseId = $request->query->get('cid');
 
         $banner = NetworkBanner::fetchByPublicId($bannerId);
         $campaign = $banner->campaign()->first();

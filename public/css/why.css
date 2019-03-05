@@ -30,7 +30,9 @@ body {
 }
 
 #container #banner-preview {
+    padding: 5px;
     text-align: center;
+    border: 1px solid #cccccc;
 }
 
 #container #adshares {
