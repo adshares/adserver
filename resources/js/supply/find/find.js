@@ -26,12 +26,6 @@ if(window['serverOrigin:' + serverOrigin]) {
 }
 window['serverOrigin:' + serverOrigin] = 1;
 
-var UrlSafeBase64Encode = function (data) {
-    return btoa(data).replace(/=|\+|\//g, function (x) {
-        return x == '+' ? '-' : (x == '/' ? '_' : '')
-    });
-};
-
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -73,21 +67,6 @@ var replaceTag = function (oldTag, newTag) {
     }
     newTag.style.overflow = 'hidden';
     oldTag.parentNode.replaceChild(newTag, oldTag);
-};
-
-var addListener = function (element, event, handler, phase) {
-    if (element.addEventListener) {
-        return element.addEventListener(event, handler, phase);
-    } else {
-        return element.attachEvent('on' + event, handler);
-    }
-};
-
-navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
-    fetchURL(url, {
-        method: 'post',
-        post: data
-    });
 };
 
 var prepareElement = function (context, banner, element, contextParam) {
@@ -260,25 +239,6 @@ var isVisible = function (el) {
         && top > -height
         && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
         && left > -width;
-};
-
-var addUrlParam = function (url, names, value) {
-
-    if (typeof name != 'object') {
-        name = {};
-        name[name] = value;
-    }
-    for (var name in names) {
-        value = names[name];
-        var param = name + '=' + encodeURIComponent(value);
-        var qPos = url.indexOf('?');
-        if (qPos > -1) {
-            url += (qPos < url.length ? '&' : '') + param;
-        } else {
-            url += '?' + param;
-        }
-    }
-    return url;
 };
 
 var impressionId;
