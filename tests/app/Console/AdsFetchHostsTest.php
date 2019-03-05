@@ -34,10 +34,12 @@ final class AdsFetchHostsTest extends TestCase
 
     public function testAdsFetchHosts(): void
     {
-        $this->app->bind(AdsClient::class,
+        $this->app->bind(
+            AdsClient::class,
             function () {
                 return $this->createAdsClient();
-            });
+            }
+        );
 
         $this->artisan('ads:fetch-hosts')->assertExitCode(0);
     }
