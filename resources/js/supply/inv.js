@@ -77,6 +77,20 @@ function createIframeFromData(data, domInsertCallback) {
             var csp = doc.createElement('meta');
             csp.setAttribute('http-equiv', "Content-Security-Policy");
             csp.setAttribute('content', "frame-src blob:; child-src blob:");
+
+            addListener(iframe.contentWindow, "message", function (event) {
+                var targets = [document.getElementById("frame").contentWindow, parent];
+                var target;
+                if (event.source == targets[0]) {
+                    target = targets[1];
+                }
+                else if(event.source == targets[1]) {
+                    target = targets[0];
+                }
+                if(target) {
+                    target.postMessage(event.data, "*");
+                }
+            });
             setTimeout(function() {
 
                 doc.head.appendChild(csp);
@@ -112,6 +126,27 @@ function createIframeFromData(data, domInsertCallback) {
             '<head>' +
             '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
             '<body>' +
+            '<script>' +
+            'var addListener = function (element, event, handler, phase) {' +
+            '    if (element.addEventListener) {' +
+            '        return element.addEventListener(event, handler, phase);' +
+            '    } else {' +
+            '        return element.attachEvent("on" + event, handler);' +
+            '    }' +
+            '};' +
+            'addListener(window, "message", function (event) {' +
+            '    var targets = [document.getElementById("frame").contentWindow, parent];' +
+            '    var target;' +
+            '    if (event.source == targets[0]) {' +
+            '        target = targets[1];' +
+            '    }' +
+            '    else if(event.source == targets[1]) {' +
+            '        target = targets[0];' +
+            '    } ' +
+            '    if(target) {' +
+            '        target.postMessage(event.data, "*"); ' +
+            '    }' +
+            '});</script>' +
             '<iframe src="' + bannerDataUri + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
             '</body>' +
             '</html>'], {'type': 'text/html'});
