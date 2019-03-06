@@ -144,9 +144,9 @@ class AdsFetchHosts extends Command
     {
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-        $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
+            $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
             $info = $this->client->fetchInfo($infoUrl);
             NetworkHost::registerHost($address, $info, $time);
         } catch (UnexpectedClientResponseException $exception) {
@@ -154,9 +154,9 @@ class AdsFetchHosts extends Command
         } catch (RuntimeException $exception) {
             $this->info(
                 sprintf(
-                    'Could not import info data (%s) from server `%s`.',
-                    $exception->getMessage(),
-                    (string)$infoUrl
+                    'Could not import info data from `%s`. %s',
+                    (string)$infoUrl,
+                    $exception->getMessage()
                 ),
                 OutputInterface::VERBOSITY_DEBUG
             );
