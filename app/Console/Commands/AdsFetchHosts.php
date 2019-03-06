@@ -146,12 +146,13 @@ class AdsFetchHosts extends Command
         $time = $broadcast->getTime();
 
         try {
-            $info = $this->client->fetchInfo(BroadcastableUrl::fromHex($broadcast->getMessage()));
+            $url = BroadcastableUrl::fromHex($broadcast->getMessage());
+            $info = $this->client->fetchInfo($url);
 
             NetworkHost::registerHost($address, $info, $time);
         } catch (RuntimeException|UnexpectedClientResponseException $exception) {
-            $info = $info ?? '';
-            Log::debug("[$info] {$exception->getMessage()}");
+            $url = $url ?? '';
+            Log::debug("[$url] {$exception->getMessage()}");
         }
     }
 }
