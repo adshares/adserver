@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Test\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Exception\RuntimeException;
 use PHPUnit\Framework\TestCase;
 
 class UrlTest extends TestCase
@@ -34,6 +35,14 @@ class UrlTest extends TestCase
 
         self::assertEquals($url, $object->toString());
         self::assertEquals($idn, $object->idn());
+    }
+
+    /** @dataProvider failureProvider */
+    public function testFailure($url): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        new Url($url);
     }
 
     public function provider(): array
@@ -48,6 +57,15 @@ class UrlTest extends TestCase
             ['https://adshares.n🍕et', 'https://adshares.xn--net-p803b'],
             ['https://adshares.ne🍕t', 'https://adshares.xn--net-q803b'],
             ['https://adshares.net🍕', 'https://adshares.xn--net-r803b'],
+        ];
+    }
+
+    public function failureProvider()
+    {
+        return [
+            ['AdServer.https%3A%2F%2Fadshares.net'],
+            ['https%3A%2F%2Fadshares.net'],
+            ['adshares.net'],
         ];
     }
 }

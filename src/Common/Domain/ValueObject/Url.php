@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlObject;
-use RuntimeException;
 use function idn_to_utf8;
 use const FILTER_VALIDATE_URL;
 use const IDNA_ERROR_DISALLOWED;
@@ -38,7 +38,7 @@ final class Url implements UrlObject
         $idn = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
 
         if (!filter_var($idn, FILTER_VALIDATE_URL)) {
-            throw new RuntimeException(sprintf('Given url %s is not correct.', $url));
+            throw new RuntimeException(sprintf('Given url (%s) is not correct.', $url));
         }
 
         $this->idn = $idn;
