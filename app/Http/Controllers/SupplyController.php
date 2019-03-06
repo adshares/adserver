@@ -340,6 +340,7 @@ class SupplyController extends Controller
             'supplyPrivacyUrl' => config('app.adserver_info_privacy_url'),
             'supplyPanelUrl' => config('app.adserver_info_panel_url'),
             'demand' => false,
+            'bannerType' => $banner->type,
         ];
 
         if ($info) {
