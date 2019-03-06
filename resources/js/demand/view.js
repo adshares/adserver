@@ -30,7 +30,6 @@ window.demandLogContext = function(url) {
 
     console.log(url);
 	url = addUrlParam(url, 'k', UrlSafeBase64Encode(JSON.stringify(getBrowserContext())));
-    console.log(url)
 	var img = new Image();
 	img.src = url;
 
