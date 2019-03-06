@@ -282,6 +282,7 @@ class DemandController extends Controller
             'view_script_url' => url('-/view.js'),
             'aduser_url' => $adUserUrl
         ]));
+        $response->send();
 
         $banner = $this->getBanner($bannerId);
         $campaign = $banner->campaign;
