@@ -172,12 +172,12 @@ final class DummyDemandClient implements DemandClient
             'ADSERVER',
             'ADSERVER DEMAND',
             '0.1',
-            ['PUB', 'ADV'],
             new Url('https://server.example.com/'),
             new Url('https://panel.example.com/'),
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
-            new Url('https://inventory.example.com/import')
+            new Url('https://inventory.example.com/import'),
+            ['PUB', 'ADV']
         );
     }
 }

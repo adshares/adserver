@@ -97,12 +97,12 @@ class AdsProcessTxTest extends TestCase
             'ADSERVER',
             'AdServer',
             '0.1',
-            ['PUB'],
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1')
+            new Url('http://127.0.0.1'),
+            ['PUB']
         );
 
 

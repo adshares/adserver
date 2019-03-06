@@ -55,12 +55,12 @@ class Info
         string $serviceType,
         string $name,
         string $version,
-        array $supported,
         Url $serverUrl,
         Url $panelUrl,
         Url $privacyUrl,
         Url $termsUrl,
-        Url $inventoryUrl
+        Url $inventoryUrl,
+        string ...$supported
     ) {
         $this->validateSupportedValue($supported);
 
@@ -87,22 +87,22 @@ class Info
     public static function fromArray(array $data): self
     {
         return new self(
-            $data['serviceType'],
+            $data['type'],
             $data['name'],
             $data['version'],
-            $data['supported'],
             new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
-            new Url($data['inventoryUrl'])
+            new Url($data['inventoryUrl']),
+            ...$data['supported']
         );
     }
 
     public function toArray(): array
     {
         return [
-            'serviceType' => $this->serviceType,
+            'type' => $this->serviceType,
             'name' => $this->name,
             'version' => $this->version,
             'supported' => $this->supported,
