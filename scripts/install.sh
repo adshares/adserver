@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -ex
+set -e
 
 function sudoBash {
     sudo -E -u ${INSTALLATION_USER} -- bash -c "$*"
@@ -11,6 +11,10 @@ function artisanCommand {
 }
 
 crontab -u ${INSTALLATION_USER} -r || echo "No previous crontab for ${INSTALLATION_USER}"
+
+set -a
+source .env.from-build
+set +a
 
 # Create installation directory
 mkdir -p ${INSTALLATION_PATH}

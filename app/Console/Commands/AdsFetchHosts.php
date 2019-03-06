@@ -125,11 +125,7 @@ class AdsFetchHosts extends Command
             $broadcastArray = $resp->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                try {
-                    $this->handleBroadcast($broadcast);
-                } catch (RuntimeException $e) {
-                    $this->info($e->getMessage(), OutputInterface::VERBOSITY_DEBUG);
-                }
+                $this->handleBroadcast($broadcast);
             }
         } catch (CommandException $ce) {
             $code = $ce->getCode();
@@ -156,11 +152,14 @@ class AdsFetchHosts extends Command
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (RuntimeException $exception) {
-            $this->error(sprintf(
-                'Could not import info data (%s) from server `%s`.',
-                $exception->getMessage(),
-                (string)$infoUrl
-            ));
+            $this->info(
+                sprintf(
+                    'Could not import info data (%s) from server `%s`.',
+                    $exception->getMessage(),
+                    (string)$infoUrl
+                ),
+                OutputInterface::VERBOSITY_DEBUG
+            );
         }
     }
 }
