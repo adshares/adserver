@@ -49,17 +49,43 @@ function getDataURI(data, callback) {
     callback('data:' + data.type + ';base64,' + btoa(data.bytes));
 }
 
+var prepareIframe = function (element) {
+    element.setAttribute('width', '100%');
+    element.setAttribute('height', '100%');
+    element.setAttribute('marginwidth', '0');
+    element.setAttribute('marginheight', '0');
+    element.setAttribute('vspace', '0');
+    element.setAttribute('hspace', '0');
+    element.setAttribute('allowtransparency', 'true');
+    element.setAttribute('scrolling', 'no');
+    element.setAttribute('frameborder', '0');
+};
+
 function createIframeFromData(data, domInsertCallback) {
     var iframe = document.createElement('iframe');
     if (!iframeDataUri) {
         iframe.src = 'about:blank';
+        iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
         domInsertCallback(iframe);
 
         var fn = function (contents) {
-            iframe.contentWindow.contents = contents;
-            iframe.src = 'javascript:window["contents"]';
-            
-            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
+            var doc = iframe.contentWindow.document;
+            var doc_iframe = doc.createElement('iframe');
+            doc_iframe.src = 'about:blank';
+            prepareIframe(doc_iframe);
+
+            var csp = doc.createElement('meta');
+            csp.setAttribute('http-equiv', "Content-Security-Policy");
+            csp.setAttribute('content', "frame-src blob:; child-src blob:");
+            setTimeout(function() {
+
+                doc.head.appendChild(csp);
+                doc.body.appendChild(doc_iframe);
+                doc_iframe.contentWindow.contents = contents;
+                doc_iframe.src = 'javascript:window["contents"]';
+
+                doc_iframe.setAttribute('sandbox', "allow-scripts");
+            }, 1);
         }
 
         if (requestBlob && data instanceof Blob) // blob
@@ -67,6 +93,7 @@ function createIframeFromData(data, domInsertCallback) {
             var reader = new FileReader();
 
             reader.onload = function (e) {
+
                 fn(reader.result);
             }
 
@@ -79,10 +106,20 @@ function createIframeFromData(data, domInsertCallback) {
         }
 
     } else {
-        getDataURI(data, function (dataUri) {
+        getDataURI(data, function (bannerDataUri) {
             iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
-            iframe.src = dataUri;
-            domInsertCallback(iframe);
+            var blob = new Blob(['<html>' +
+            '<head>' +
+            '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
+            '<body>' +
+            '<iframe src="' + bannerDataUri + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
+            '</body>' +
+            '</html>'], {'type': 'text/html'});
+
+            getDataURI({blob: blob}, function(dataUri) {
+                iframe.src = dataUri;
+                domInsertCallback(iframe);
+            });
         });
     }
 }

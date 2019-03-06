@@ -258,28 +258,30 @@ class DemandController extends Controller
         $response = new SymfonyResponse();
 
         if ($adUserEndpoint) {
-            $impressionId = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
-
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
                 config('app.adserver_secret'),
                 $request,
                 $response,
                 '',
-                new DateTime(),
-                $impressionId
+                new DateTime()
             );
 
             $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.gif',
+                '%s/register/%s/%s/%s.htm',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $demandTrackingId,
-                $impressionId
+                Utils::urlSafeBase64Encode(random_bytes(8))
             );
-
-            $response->headers->set('Location', $adUserUrl);
+        } else {
+            $adUserUrl = null;
         }
 
+        $response->setContent(view('demand/view-event', [
+            'log_url' => route('banner-context', ['id' => $eventId]),
+            'view_script_url' => url('-/view.js'),
+            'aduser_url' => $adUserUrl
+        ]));
         $response->send();
 
         $banner = $this->getBanner($bannerId);
@@ -302,6 +304,26 @@ class DemandController extends Controller
             $keywords,
             EventLog::TYPE_VIEW
         );
+
+        return $response;
+    }
+
+    public function context(Request $request, string $eventId)
+    {
+        $response = new SymfonyResponse();
+
+        //transparent 1px gif
+        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
+        $response->headers->set('Content-Type', 'image/gif');
+
+        $context = Utils::urlSafeBase64Decode($request->query->get('k'));
+
+        $event = EventLog::where('event_id', hex2bin($eventId))->first();
+
+        if ($event) {
+            $event->our_context = $context;
+            $event->save();
+        }
 
         return $response;
     }
