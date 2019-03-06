@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InfoController extends Controller
@@ -47,11 +48,12 @@ class InfoController extends Controller
             'name' => config('app.adserver_info_name'),
             'softwareVersion' => config('app.adserver_info_version'),
             'supported' => $supported,
-            'panelUrl' => config('app.adserver_info_panel_url'),
-            'panel-base-url' => config('app.adserver_info_panel_url'),
+            'serverUrl' => config('app.adserver_host'),
+            'panelUrl' => config('app.adpanel_base_url'),
+            'panel-base-url' => config('app.adpanel_base_url'),
             'privacyUrl' => config('app.adserver_info_privacy_url'),
             'termsUrl' => config('app.adserver_info_terms_url'),
-            'inventoryUrl' => route('demand-inventory'),
+            'inventoryUrl' => ForceUrlProtocol::change(route('demand-inventory')),
         ];
 
         return new JsonResponse($data);

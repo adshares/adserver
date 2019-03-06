@@ -139,7 +139,6 @@ return [
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
     'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
     'adserver_info_name' => env('ADSERVER_INFO_NAME'),
-    'adserver_info_panel_url' => env('ADSERVER_INFO_PANEL_URL'),
     'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
     'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
     'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
