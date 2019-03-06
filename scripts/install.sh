@@ -32,6 +32,9 @@ chown -R ${INSTALLATION_USER} ${INSTALLATION_PATH}
 cd ${INSTALLATION_PATH}
 
 if [ ! -v TRAVIS ]; then
+    set -a
+    source .env.from-build
+    set +a
     artisanCommand config:cache
 fi
 
