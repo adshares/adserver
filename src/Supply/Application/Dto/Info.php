@@ -48,12 +48,15 @@ class Info
     private $termsUrl;
     /** @var string */
     private $inventoryUrl;
+    /** @var Url */
+    private $serverUrl;
 
     public function __construct(
         string $serviceType,
         string $name,
         string $version,
         array $supported,
+        Url $serverUrl,
         Url $panelUrl,
         Url $privacyUrl,
         Url $termsUrl,
@@ -69,6 +72,7 @@ class Info
         $this->privacyUrl = $privacyUrl;
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
+        $this->serverUrl = $serverUrl;
     }
 
     public function validateSupportedValue(array $values): void
@@ -87,6 +91,7 @@ class Info
             $data['name'],
             $data['version'],
             $data['supported'],
+            new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
@@ -101,6 +106,7 @@ class Info
             'name' => $this->name,
             'version' => $this->version,
             'supported' => $this->supported,
+            'serverUrl' => $this->serverUrl->toString(),
             'panelUrl' => $this->panelUrl->toString(),
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
@@ -126,5 +132,15 @@ class Info
     public function getPanelUrl(): string
     {
         return $this->panelUrl->toString();
+    }
+
+    public function getServerUrl(): string
+    {
+        return $this->serverUrl->toString();
+    }
+
+    public function getInventoryUrl(): string
+    {
+        return $this->inventoryUrl->toString();
     }
 }

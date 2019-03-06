@@ -45,8 +45,6 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
-
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     /** @var SignatureVerifier */
@@ -61,15 +59,15 @@ final class GuzzleDemandClient implements DemandClient
         $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
     {
-        $client = new Client($this->requestParameters($inventoryHost));
+        $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+            $response = $client->get($inventoryUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $inventoryHost, $exception->getMessage()),
+                sprintf('Could not connect to %s host (%s).', $inventoryUrl, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -84,7 +82,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryHost));
+            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryUrl));
             $campaignsCollection->add($campaign);
         }
 
@@ -162,6 +160,7 @@ final class GuzzleDemandClient implements DemandClient
             $data['name'],
             $data['softwareVersion'],
             $data['supported'],
+            new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
@@ -240,6 +239,7 @@ final class GuzzleDemandClient implements DemandClient
         $name = $data['name'] ?? null;
         $version = $data['softwareVersion'] ?? null;
         $supported = $data['supported'] ?? null;
+        $serverUrl = $data['serverUrl'] ?? null;
         $panelUrl = $data['panelUrl'] ?? null;
         $privacyUrl = $data['privacyUrl'] ?? null;
         $termsUrl = $data['termsUrl'] ?? null;
@@ -249,6 +249,7 @@ final class GuzzleDemandClient implements DemandClient
             || !$name
             || !$version
             || !$supported
+            || !$serverUrl
             || !$panelUrl
             || !$privacyUrl
             || !$termsUrl

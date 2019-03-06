@@ -36,6 +36,7 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -92,7 +93,20 @@ class AdsProcessTxTest extends TestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        NetworkHost::registerHost('0001-00000000-9B6F', new Url('http://127.0.0.1'));
+        $info = new Info(
+            'ADSERVER',
+            'AdServer',
+            '0.1',
+            ['PUB'],
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1')
+        );
+
+
+        NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
         $demandClient = new DummyDemandClient();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '');

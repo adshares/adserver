@@ -148,6 +148,7 @@ class AdsFetchHosts extends Command
 
         try {
             $info = $this->client->fetchInfo($infoUrl);
+            NetworkHost::registerHost($address, $info, $time);
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (DomainRuntimeException $exception) {
@@ -157,7 +158,5 @@ class AdsFetchHosts extends Command
                 (string)$infoUrl
             ));
         }
-
-        NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
     }
 }
