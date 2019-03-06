@@ -43,7 +43,7 @@ final class AdsBroadcastHostTest extends TestCase
         );
 
         $this->artisan('ads:broadcast-host')
-            ->expectsOutput('Message broadcast successfully. TxId: 0002:00000C5E:0001');
+            ->expectsOutput('Url (https://adshares.net/info) broadcast successfully. TxId: 0002:00000C5E:0001');
     }
 
     private function broadcast(): string
