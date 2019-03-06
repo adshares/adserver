@@ -75,7 +75,6 @@ class CreativeSha1
         $banner_script = $doc->createElement('script');
         $banner_script->nodeValue = $jsCode;
         if (!count($scripts) || $scripts[0]->nodeValue != $banner_script->nodeValue) {
-
             $body->insertBefore($banner_script, $body->firstChild);
         }
 
