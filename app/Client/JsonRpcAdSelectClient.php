@@ -153,11 +153,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $mappedCampaigns
         );
 
-        $response = $this->client->call($procedure);
-
-        if (!$response->isTrue()) {
-//            throw new RuntimeException(sprintf('[ADSELECT] `campaign_delete` failed', ));
-        }
+        $this->client->call($procedure);
     }
 
     private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
