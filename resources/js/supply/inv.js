@@ -80,7 +80,7 @@ function createIframeFromData(data, domInsertCallback) {
             csp.setAttribute('content', "frame-src blob:; child-src blob:");
 
             addListener(iframe.contentWindow, "message", function (event) {
-                var targets = [document.getElementById("frame").contentWindow, parent];
+                var targets = [doc.getElementById("frame").contentWindow, parent];
                 var target;
                 if (event.source == targets[0]) {
                     target = targets[1];
