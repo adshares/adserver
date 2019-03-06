@@ -30,9 +30,6 @@ domReady(function() {
     };
 
     var links = document.getElementsByTagName('a');
-    for(var i=0;i<links.length;i++) {
-        // addListener(links[i], 'click', handler, true);
-    }
     addListener(document, 'click', handler, true);
 
     try {
