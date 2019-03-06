@@ -111,7 +111,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                     }
                     var url = context.click_url;
                     if (!window.open(url, '_blank')) {
-                        top.location.href = url;
+                        window.location.href = url;
                     }
                 }
             }
@@ -141,7 +141,7 @@ var prepareInfoBox = function (context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute; top: 1; right: 1; background: #ffffff');
+    div.setAttribute('style', 'position: absolute; top: 1px; right: 1px');
 
     var link = document.createElement('a');
     link.target = '_blank';
