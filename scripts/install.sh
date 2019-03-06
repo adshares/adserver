@@ -27,6 +27,11 @@ mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
 chown -R ${INSTALLATION_USER} ${INSTALLATION_PATH}
 cd ${INSTALLATION_PATH}
 
+GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
+GIT_HASH="#"$(git rev-parse --short HEAD)
+export APP_VERSION=${APP_VERSION:-${GIT_TAG:-${GIT_HASH}}}
+export ADSERVER_INFO_VERSION=${ADSERVER_INFO_VERSION:-${APP_VERSION}}
+
 if [ ! -v TRAVIS ]; then
     artisanCommand config:cache
 fi

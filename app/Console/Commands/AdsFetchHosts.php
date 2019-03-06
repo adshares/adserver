@@ -28,11 +28,12 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class AdsFetchHosts extends Command
 {
@@ -124,8 +125,11 @@ class AdsFetchHosts extends Command
             $broadcastArray = $resp->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                /** @var $broadcast Broadcast */
-                $this->handleBroadcast($broadcast);
+                try {
+                    $this->handleBroadcast($broadcast);
+                } catch (RuntimeException $e) {
+                    $this->info($e->getMessage(), OutputInterface::VERBOSITY_DEBUG);
+                }
             }
         } catch (CommandException $ce) {
             $code = $ce->getCode();
@@ -150,7 +154,7 @@ class AdsFetchHosts extends Command
             $info = $this->client->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
-        } catch (DomainRuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->error(sprintf(
                 'Could not import info data (%s) from server `%s`.',
                 $exception->getMessage(),
