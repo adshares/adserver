@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -77,7 +76,7 @@ class NetworkHost extends Model
 
     public static function registerHost(
         string $address,
-        Url $host,
+        string $host,
         ?Info $info = null,
         ?\DateTime $lastBroadcast = null
     ): NetworkHost {

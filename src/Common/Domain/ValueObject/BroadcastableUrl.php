@@ -45,4 +45,19 @@ final class BroadcastableUrl implements Hexable
     {
         return new self(new Url(pack('H*', strtolower($hex))));
     }
+
+    public function toString(): string
+    {
+        return $this->url->toString();
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
+    }
+
+    public function url(): Url
+    {
+        return $this->url;
+    }
 }

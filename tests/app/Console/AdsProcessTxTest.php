@@ -92,7 +92,7 @@ class AdsProcessTxTest extends TestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        NetworkHost::registerHost('0001-00000000-9B6F', new Url('127.0.0.1'));
+        NetworkHost::registerHost('0001-00000000-9B6F', new Url('http://localhost'));
 
         $demandClient = new DummyDemandClient();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '');

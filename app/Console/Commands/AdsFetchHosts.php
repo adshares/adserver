@@ -28,7 +28,7 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Domain\ValueObject\BroadcastableUrl;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -144,20 +144,20 @@ class AdsFetchHosts extends Command
     {
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-        $infoUrl = Url::fromHex($broadcast->getMessage());
+        $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
-            $info = $this->client->fetchInfo($infoUrl->toString());
+            $info = $this->client->fetchInfo($infoUrl->url());
         } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
+            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (DomainRuntimeException $exception) {
             $this->error(sprintf(
                 'Could not import info data (%s) from server `%s`.',
                 $exception->getMessage(),
-                $infoUrl
+                (string)$infoUrl
             ));
         }
 
-        NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
+        NetworkHost::registerHost($address, (string)$infoUrl, $info ?? null, $time);
     }
 }

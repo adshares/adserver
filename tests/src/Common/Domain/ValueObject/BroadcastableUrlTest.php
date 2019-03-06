@@ -22,23 +22,27 @@ declare(strict_types = 1);
 
 namespace Adshares\Test\Common\Domain\ValueObject;
 
+use Adshares\Common\Domain\ValueObject\BroadcastableUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use PHPUnit\Framework\TestCase;
+use function array_map;
 
-class UrlTest extends TestCase
+class BroadcastableUrlTest extends TestCase
 {
     /** @dataProvider provider */
-    public function test(string $url, string $idn): void
+    public function test(Url $url, string $hex): void
     {
-        $object = new Url($url);
+        self::assertEquals($hex, (new BroadcastableUrl($url))->toHex());
 
-        self::assertEquals($url, $object->toString());
-        self::assertEquals($idn, $object->idn());
+        $broadcastableUrl = BroadcastableUrl::fromHex($hex);
+
+        self::assertEquals($url, $broadcastableUrl->url());
+        self::assertSame($url->idn(), self::hexToStr($broadcastableUrl->toHex()));
     }
 
     public function provider(): array
     {
-        return [
+        $values = [
             ['https://adshares.net', 'https://adshares.net'],
             ['https://🍕adshares.net', 'xn--https://adshares-pg68o.net'],
             ['https://a🍕dshares.net', 'xn--https://adshares-qg68o.net'],
@@ -49,5 +53,34 @@ class UrlTest extends TestCase
             ['https://adshares.ne🍕t', 'https://adshares.xn--net-q803b'],
             ['https://adshares.net🍕', 'https://adshares.xn--net-r803b'],
         ];
+
+        $mapper = function (array $args) {
+            return [new Url($args[0]), self::strToHex($args[1])];
+        };
+
+        return array_map($mapper, $values);
+    }
+
+    private static function hexToStr(string $hex): string
+    {
+        $string = '';
+        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
+            $string .= chr(hexdec($hex[$i].$hex[$i + 1]));
+        }
+
+        return $string;
+    }
+
+    private static function strToHex(string $string): string
+    {
+        $hex = '';
+        $length = strlen($string);
+        for ($i = 0; $i < $length; $i++) {
+            $ord = ord($string[$i]);
+            $hexCode = dechex($ord);
+            $hex .= substr('0'.$hexCode, -2);
+        }
+
+        return strtoupper($hex);
     }
 }

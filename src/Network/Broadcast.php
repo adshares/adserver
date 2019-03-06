@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Common\Domain;
+namespace Adshares\Network;
 
 use Adshares\Ads\Command\BroadcastCommand as AdsClientBroadcastCommand;
 use Adshares\Common\Hexable;

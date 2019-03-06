@@ -165,7 +165,7 @@ final class DummyDemandClient implements DemandClient
         ];
     }
 
-    public function fetchInfo(string $infoUrl): Info
+    public function fetchInfo(Url $infoUrl): Info
     {
         return new Info(
             'ADSERVER',
