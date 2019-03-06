@@ -38,7 +38,7 @@ class MockDataNetworkHostsSeeder extends Seeder
             new Url('http://webserver/policies/privacy.html'),
             new Url('http://webserver/policies/terms.html'),
             new Url('http://webserver/adshares/inventory/list'),
-            ['PUB', 'ADV']
+            'PUB', 'ADV'
         );
 
         NetworkHost::registerHost('0001-00000001-0001', $info, new DateTime());
