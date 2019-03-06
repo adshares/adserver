@@ -147,7 +147,7 @@ class AdsFetchHosts extends Command
         $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
-            $info = $this->client->fetchInfo($infoUrl->url());
+            $info = $this->client->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (DomainRuntimeException $exception) {
