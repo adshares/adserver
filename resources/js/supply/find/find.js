@@ -66,12 +66,12 @@ var replaceTag = function (oldTag, newTag) {
         }
     }
     newTag.style.overflow = 'hidden';
+    newTag.style.position = 'relative';
     oldTag.parentNode.replaceChild(newTag, oldTag);
 };
 
 var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: relative; z-index: 1;');
 
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
@@ -130,7 +130,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     return div;
 };
 
-var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
+var prepareInfoBox = function (context, banner, contextParam) {
     var url = addUrlParam(serverOrigin + '/supply/why', {
         'bid': banner.id,
         'cid': context.cid,
