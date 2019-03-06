@@ -22,11 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Adserver\Http\Utils;
-use InvalidArgumentException;
 use function array_merge;
 use function config;
-use function sprintf;
 use function str_replace;
 use function strpos;
 
@@ -46,15 +43,6 @@ final class UserContext
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
         $this->userId = $userId;
-
-        $this->failIfInvalid();
-    }
-
-    private function failIfInvalid(): void
-    {
-        if (!Utils::validTrackingId($this->userId, config('app.adserver_secret'))) {
-            throw new InvalidArgumentException(sprintf('Invalid trackingId (%s)', $this->userId));
-        }
     }
 
     public static function fromAdUserArray(array $context): self

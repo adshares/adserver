@@ -33,7 +33,7 @@ use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Output\OutputInterface;
+use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends Command
 {
@@ -144,22 +144,15 @@ class AdsFetchHosts extends Command
     {
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-        $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
-            $info = $this->client->fetchInfo($infoUrl);
+            $url = BroadcastableUrl::fromHex($broadcast->getMessage());
+            $info = $this->client->fetchInfo($url);
+
             NetworkHost::registerHost($address, $info, $time);
-        } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
-        } catch (RuntimeException $exception) {
-            $this->info(
-                sprintf(
-                    'Could not import info data (%s) from server `%s`.',
-                    $exception->getMessage(),
-                    (string)$infoUrl
-                ),
-                OutputInterface::VERBOSITY_DEBUG
-            );
+        } catch (RuntimeException|UnexpectedClientResponseException $exception) {
+            $url = $url ?? '';
+            Log::debug("[$url] {$exception->getMessage()}");
         }
     }
 }

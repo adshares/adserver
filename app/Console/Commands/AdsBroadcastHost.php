@@ -23,10 +23,12 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
+use function route;
 
 class AdsBroadcastHost extends Command
 {
@@ -51,7 +53,7 @@ class AdsBroadcastHost extends Command
     {
         parent::__construct();
 
-        $this->infoApiUrl = new Url((string)config('app.adserver_info_url'));
+        $this->infoApiUrl = new Url(ForceUrlProtocol::change(route('app.infoEndpoint')));
     }
 
     /**
@@ -63,12 +65,13 @@ class AdsBroadcastHost extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $command = new Broadcast(new BroadcastableUrl($this->infoApiUrl));
+        $url = new BroadcastableUrl($this->infoApiUrl);
+        $command = new Broadcast($url);
 
         $response = $adsClient->runTransaction($command);
 
         $txId = $response->getTx()->getId();
 
-        $this->info("Message broadcast successfully. TxId: $txId");
+        $this->info("Url ($url) broadcast successfully. TxId: $txId");
     }
 }
