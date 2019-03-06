@@ -52,6 +52,7 @@ class AdPayEventExportCommand extends Command
                 $userContext = $adUser->getUserContext($event->createImpressionContext())->toArray();
                 $event->human_score = $userContext['human_score'];
                 $event->our_userdata = $userContext['keywords'];
+                $event->save();
             }
 
             $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
