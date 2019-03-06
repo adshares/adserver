@@ -338,7 +338,7 @@ class SupplyController extends Controller
             'supplyName' => config('app.adserver_info_name'),
             'supplyTermsUrl' => config('app.adserver_info_terms_url'),
             'supplyPrivacyUrl' => config('app.adserver_info_privacy_url'),
-            'supplyPanelUrl' => config('app.adserver_info_panel_url'),
+            'supplyPanelUrl' => config('app.adpanel_base_url'),
             'demand' => false,
             'bannerType' => $banner->type,
         ];
