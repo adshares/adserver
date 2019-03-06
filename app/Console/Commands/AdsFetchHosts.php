@@ -151,12 +151,14 @@ class AdsFetchHosts extends Command
         } catch (UnexpectedClientResponseException $exception) {
             $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (RuntimeException $exception) {
-            $this->info(sprintf(
-                'Could not import info data (%s) from server `%s`.',
-                $exception->getMessage(),
-                (string)$infoUrl
-            ),
-                OutputInterface::VERBOSITY_DEBUG);
+            $this->info(
+                sprintf(
+                    'Could not import info data (%s) from server `%s`.',
+                    $exception->getMessage(),
+                    (string)$infoUrl
+                ),
+                OutputInterface::VERBOSITY_DEBUG
+            );
         }
 
         NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
