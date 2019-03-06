@@ -25,6 +25,8 @@ namespace Adshares\Adserver\Client;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\UrlObject;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -32,13 +34,11 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
-use DomainException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
@@ -51,6 +51,7 @@ final class GuzzleDemandClient implements DemandClient
 
     /** @var SignatureVerifier */
     private $signatureVerifier;
+
     /** @var int */
     private $timeout;
 
@@ -133,15 +134,15 @@ final class GuzzleDemandClient implements DemandClient
         return $this->createDecodedResponseFromBody($body);
     }
 
-    public function fetchInfo(string $infoUrl): Info
+    public function fetchInfo(UrlObject $infoUrl): Info
     {
         $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get($infoUrl);
+            $response = $client->get((string)$infoUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s (%s).', $infoUrl, $exception->getMessage()),
+                sprintf('Could not connect to %s (%s).', (string)$infoUrl, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );

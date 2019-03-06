@@ -20,38 +20,36 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Network;
 
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\UrlObject;
-use RuntimeException;
-use function idn_to_utf8;
-use const FILTER_VALIDATE_URL;
-use const IDNA_ERROR_DISALLOWED;
+use function strtolower;
+use function strtoupper;
 
-final class Url implements UrlObject
+final class BroadcastableUrl implements Broadcastable, UrlObject
 {
-    /** @var string */
-    private $idn;
+    /** @var Url */
+    private $url;
 
-    public function __construct(string $url)
+    public function __construct(Url $url)
     {
-        $idn = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
-
-        if (!filter_var($idn, FILTER_VALIDATE_URL)) {
-            throw new RuntimeException(sprintf('Given url %s is not correct.', $url));
-        }
-
-        $this->idn = $idn;
+        $this->url = $url;
     }
 
-    public function idn(): string
+    public function toHex(): string
     {
-        return $this->idn;
+        return strtoupper(unpack('H*', $this->url->idn())[1]);
+    }
+
+    public static function fromHex(string $hex): self
+    {
+        return new self(new Url(pack('H*', strtolower($hex))));
     }
 
     public function toString(): string
     {
-        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        return $this->url->toString();
     }
 
     public function __toString(): string

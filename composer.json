@@ -4,6 +4,7 @@
         "ext-gd": "*",
         "ext-json": "*",
         "ext-sodium": "*",
+        "ext-intl": "*",
         "adshares/ads-client": "^1",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",

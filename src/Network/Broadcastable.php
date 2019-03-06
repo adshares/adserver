@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,17 +20,11 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Application\Service;
+namespace Adshares\Network;
 
-use Adshares\Common\UrlObject;
-use Adshares\Supply\Application\Dto\Info;
-use Adshares\Supply\Domain\Model\CampaignCollection;
-
-interface DemandClient
+interface Broadcastable
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+    public static function fromHex(string $hex);
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array;
-
-    public function fetchInfo(UrlObject $infoUrl): Info;
+    public function toHex(): string;
 }

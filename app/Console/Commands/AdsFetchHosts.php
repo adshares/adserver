@@ -28,13 +28,11 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Illuminate\Console\Command;
-use function parse_url;
-use function strlen;
-use function substr;
 
 class AdsFetchHosts extends Command
 {
@@ -144,65 +142,22 @@ class AdsFetchHosts extends Command
      */
     private function handleBroadcast(Broadcast $broadcast): void
     {
-        $message = urldecode($this->hexToStr($broadcast->getMessage()));
-
-        if (substr($message, 0, strlen(AdsBroadcastHost::BROADCAST_PREFIX))
-            !== AdsBroadcastHost::BROADCAST_PREFIX) {
-            return;
-        }
-
-        $message = trim(substr($message, strlen(AdsBroadcastHost::BROADCAST_PREFIX)));
-
-        // TODO check if message is valid host
-        if (empty($message)) {
-            return;
-        }
-
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-
-        $info = null;
-        $infoUrl = $this->prepareInfoUrl($message);
+        $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
             $info = $this->client->fetchInfo($infoUrl);
         } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
+            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
         } catch (DomainRuntimeException $exception) {
             $this->error(sprintf(
                 'Could not import info data (%s) from server `%s`.',
                 $exception->getMessage(),
-                $infoUrl
+                (string)$infoUrl
             ));
         }
 
-        NetworkHost::registerHost($address, $message, $info, $time);
-    }
-
-    /**
-     * @param string $hex
-     *
-     * @return string
-     */
-    private function hexToStr(string $hex): string
-    {
-        $string = '';
-        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
-            $string .= chr(hexdec($hex[$i].$hex[$i + 1]));
-        }
-
-        return $string;
-    }
-
-    private function prepareInfoUrl(string $hostUrl): string
-    {
-        $parsedUrl = parse_url($hostUrl);
-        $path = $parsedUrl['path'] ?? '';
-
-        if ($path === '/info') {
-            return $hostUrl;
-        }
-
-        return $hostUrl.'/info';
+        NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
     }
 }
