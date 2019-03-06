@@ -19,12 +19,16 @@
 
 domReady(function() {
     var onlyStrings = false;
+    var target = parent;
+    if(target.parent) {
+        target = target.parent;
+    }
 
     var handler = function(e) {
         var msg = {
             adsharesClick : 1
         };
-        parent.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
+        target.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
         e.preventDefault();
     };
 
@@ -65,5 +69,5 @@ domReady(function() {
     msg = {
         adsharesLoad : 1
     };
-    parent.postMessage(onlyStrings ? JSON.stringify(msg) : msg , '*');
+    target.postMessage(onlyStrings ? JSON.stringify(msg) : msg , '*');
 });

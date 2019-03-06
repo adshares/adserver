@@ -86,15 +86,7 @@ var prepareElement = function (context, banner, element, contextParam) {
             mouseover = false;
         });
 
-        element.setAttribute('width', '100%');
-        element.setAttribute('height', '100%');
-        element.setAttribute('marginwidth', '0');
-        element.setAttribute('marginheight', '0');
-        element.setAttribute('vspace', '0');
-        element.setAttribute('hspace', '0');
-        element.setAttribute('allowtransparency', 'true');
-        element.setAttribute('scrolling', 'no');
-        element.setAttribute('frameborder', '0');
+        prepareIframe(element);
 
         addListener(window, 'message', function (event) {
             if (event.source == element.contentWindow && event.data) {
