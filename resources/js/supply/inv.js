@@ -71,6 +71,7 @@ function createIframeFromData(data, domInsertCallback) {
         var fn = function (contents) {
             var doc = iframe.contentWindow.document;
             var doc_iframe = doc.createElement('iframe');
+            doc_iframe.setAttribute('id', 'frame');
             doc_iframe.src = 'about:blank';
             prepareIframe(doc_iframe);
 
@@ -147,7 +148,7 @@ function createIframeFromData(data, domInsertCallback) {
             '        target.postMessage(event.data, "*"); ' +
             '    }' +
             '});</script>' +
-            '<iframe src="' + bannerDataUri + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
+            '<iframe id="frame" src="' + bannerDataUri + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
             '</body>' +
             '</html>'], {'type': 'text/html'});
 
