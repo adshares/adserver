@@ -146,20 +146,11 @@ class AdsFetchHosts extends Command
         $time = $broadcast->getTime();
 
         try {
-            $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
-            $info = $this->client->fetchInfo($infoUrl);
+            $info = $this->client->fetchInfo(BroadcastableUrl::fromHex($broadcast->getMessage()));
+
             NetworkHost::registerHost($address, $info, $time);
-        } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
-        } catch (RuntimeException $exception) {
-            $this->info(
-                sprintf(
-                    'Could not import info data from `%s`. %s',
-                    (string)$infoUrl,
-                    $exception->getMessage()
-                ),
-                OutputInterface::VERBOSITY_DEBUG
-            );
+        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
+            $this->info($exception->getMessage(), OutputInterface::VERBOSITY_DEBUG);
         }
     }
 }
