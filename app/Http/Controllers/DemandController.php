@@ -258,7 +258,6 @@ class DemandController extends Controller
         $response = new SymfonyResponse();
 
         if ($adUserEndpoint) {
-
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
                 config('app.adserver_secret'),
                 $request,
@@ -274,7 +273,6 @@ class DemandController extends Controller
                 $demandTrackingId,
                 Utils::urlSafeBase64Encode(random_bytes(8))
             );
-
         } else {
             $adUserUrl = null;
         }
@@ -321,7 +319,7 @@ class DemandController extends Controller
 
         $event = EventLog::where('event_id', hex2bin($eventId))->first();
 
-        if($event) {
+        if ($event) {
             $event->our_context = $context;
             $event->save();
         }

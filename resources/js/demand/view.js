@@ -27,8 +27,6 @@ var getBrowserContext = function() {
 }
 
 window.demandLogContext = function(url) {
-
-    console.log(url);
 	url = addUrlParam(url, 'k', UrlSafeBase64Encode(JSON.stringify(getBrowserContext())));
 	var img = new Image();
 	img.src = url;
