@@ -48,6 +48,7 @@ class InfoController extends Controller
             'softwareVersion' => config('app.adserver_info_version'),
             'supported' => $supported,
             'panelUrl' => config('app.adserver_info_panel_url'),
+            'panel-base-url' => config('app.adserver_info_panel_url'),
             'privacyUrl' => config('app.adserver_info_privacy_url'),
             'termsUrl' => config('app.adserver_info_terms_url'),
             'inventoryUrl' => route('demand-inventory'),
