@@ -20,9 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common;
+namespace Adshares\Network;
 
-interface Hexable
+interface Broadcastable
 {
     public static function fromHex(string $hex);
 

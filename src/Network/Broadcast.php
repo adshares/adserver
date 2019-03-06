@@ -21,11 +21,10 @@
 namespace Adshares\Network;
 
 use Adshares\Ads\Command\BroadcastCommand as AdsClientBroadcastCommand;
-use Adshares\Common\Hexable;
 
 final class Broadcast extends AdsClientBroadcastCommand
 {
-    public function __construct(Hexable $url)
+    public function __construct(Broadcastable $url)
     {
         parent::__construct($url->toHex());
     }

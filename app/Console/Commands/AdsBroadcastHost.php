@@ -23,9 +23,9 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Common\Domain\ValueObject\BroadcastableUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\Broadcast;
+use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
 
 class AdsBroadcastHost extends Command

@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Test\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\ValueObject\BroadcastableUrl;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Network\BroadcastableUrl;
 use PHPUnit\Framework\TestCase;
 use function array_map;
 
@@ -34,7 +34,7 @@ class BroadcastableUrlTest extends TestCase
     {
         self::assertEquals($hex, (new BroadcastableUrl($url))->toHex());
 
-        $broadcastableUrl = BroadcastableUrl::fromHex($hex);
+        $broadcastableUrl = \Adshares\Network\BroadcastableUrl::fromHex($hex);
 
         self::assertEquals($url, $broadcastableUrl->url());
         self::assertSame($url->idn(), self::hexToStr($broadcastableUrl->toHex()));

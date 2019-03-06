@@ -20,13 +20,14 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Network;
 
-use Adshares\Common\Hexable;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\UrlObject;
 use function strtolower;
 use function strtoupper;
 
-final class BroadcastableUrl implements Hexable
+final class BroadcastableUrl implements Broadcastable, UrlObject
 {
     /** @var Url */
     private $url;
