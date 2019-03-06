@@ -33,7 +33,7 @@ use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
-use Symfony\Component\Console\Output\OutputInterface;
+use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends Command
 {
@@ -149,8 +149,10 @@ class AdsFetchHosts extends Command
             $info = $this->client->fetchInfo(BroadcastableUrl::fromHex($broadcast->getMessage()));
 
             NetworkHost::registerHost($address, $info, $time);
-        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
-            $this->info($exception->getMessage(), OutputInterface::VERBOSITY_DEBUG);
+        } catch (RuntimeException $exception) {
+            Log::debug($exception->getMessage());
+        } catch (UnexpectedClientResponseException $exception) {
+            Log::debug("[$info] {$exception->getMessage()}");
         }
     }
 }
