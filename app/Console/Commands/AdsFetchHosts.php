@@ -158,6 +158,6 @@ class AdsFetchHosts extends Command
             ));
         }
 
-        NetworkHost::registerHost($address, (string)$infoUrl, $info ?? null, $time);
+        NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
     }
 }
