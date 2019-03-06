@@ -311,7 +311,7 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.gif',
+            '%s/register/%s/%s/%s.htm',
             config('app.aduser_external_location'),
             urlencode(config('app.adserver_id')),
             $trackingId,
