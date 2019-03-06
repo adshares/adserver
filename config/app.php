@@ -132,7 +132,7 @@ return [
     */
 
     'adserver_host' => env('ADSERVER_HOST'),
-    'adserver_info_url' => env('ADSERVER_INFO_URL'),
+    'adserver_info_url' => env('ADSERVER_INFO_URL', env('APP_URL').'info.json'),
     'adpanel_base_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('ADSERVER_ID'),
@@ -161,7 +161,7 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('ADSERVER_ID', 'a-name-that-does-not-collide'),
-    'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
+    'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
@@ -203,7 +203,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-
 
         /*
          * Application Service Providers...
