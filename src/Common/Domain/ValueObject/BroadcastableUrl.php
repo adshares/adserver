@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 /**
  * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
@@ -18,15 +18,31 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Common\Domain;
+declare(strict_types = 1);
 
-use Adshares\Ads\Command\BroadcastCommand as AdsClientBroadcastCommand;
+namespace Adshares\Common\Domain\ValueObject;
+
 use Adshares\Common\Hexable;
+use function strtolower;
+use function strtoupper;
 
-final class BroadcastCommand extends AdsClientBroadcastCommand
+final class BroadcastableUrl implements Hexable
 {
-    public function __construct(Hexable $url)
+    /** @var Url */
+    private $url;
+
+    public function __construct(Url $url)
     {
-        parent::__construct($url->toHex());
+        $this->url = $url;
+    }
+
+    public function toHex(): string
+    {
+        return strtoupper(unpack('H*', $this->url->idn())[1]);
+    }
+
+    public static function fromHex(string $hex): self
+    {
+        return new self(new Url(pack('H*', strtolower($hex))));
     }
 }

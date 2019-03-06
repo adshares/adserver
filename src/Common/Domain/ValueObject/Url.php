@@ -22,15 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Hexable;
 use RuntimeException;
 use function idn_to_utf8;
-use function strtolower;
-use function strtoupper;
 use const FILTER_VALIDATE_URL;
 use const IDNA_ERROR_DISALLOWED;
 
-final class Url implements Hexable
+final class Url
 {
     /** @var string */
     private $idn;
@@ -54,16 +51,6 @@ final class Url implements Hexable
     public function toString(): string
     {
         return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
-    }
-
-    public function toHex(): string
-    {
-        return strtoupper(unpack('H*', $this->idn)[1]);
-    }
-
-    public static function fromHex(string $hex): self
-    {
-        return new self(pack('H*', strtolower($hex)));
     }
 
     public function __toString(): string
