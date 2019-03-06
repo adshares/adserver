@@ -56,9 +56,4 @@ final class BroadcastableUrl implements Broadcastable, UrlObject
     {
         return $this->toString();
     }
-
-    public function url(): Url
-    {
-        return $this->url;
-    }
 }

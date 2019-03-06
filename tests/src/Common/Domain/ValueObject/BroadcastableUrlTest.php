@@ -36,7 +36,6 @@ class BroadcastableUrlTest extends TestCase
 
         $broadcastableUrl = BroadcastableUrl::fromHex($hex);
 
-        self::assertEquals($url, $broadcastableUrl->url());
         self::assertSame($url->idn(), self::hexToStr($broadcastableUrl->toHex()));
     }
 
