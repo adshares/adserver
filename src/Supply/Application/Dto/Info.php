@@ -33,7 +33,7 @@ class Info
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
     /** @var string */
-    private $serviceType;
+    private $module;
     /** @var string */
     private $name;
     /** @var string */
@@ -52,7 +52,7 @@ class Info
     private $serverUrl;
 
     public function __construct(
-        string $serviceType,
+        string $module,
         string $name,
         string $version,
         Url $serverUrl,
@@ -64,7 +64,7 @@ class Info
     ) {
         $this->validateSupportedValue($supported);
 
-        $this->serviceType = $serviceType;
+        $this->module = $module;
         $this->name = $name;
         $this->version = $version;
         $this->supported = $supported;
@@ -87,7 +87,7 @@ class Info
     public static function fromArray(array $data): self
     {
         return new self(
-            $data['type'],
+            $data['module'],
             $data['name'],
             $data['version'],
             new Url($data['serverUrl']),
@@ -102,7 +102,7 @@ class Info
     public function toArray(): array
     {
         return [
-            'type' => $this->serviceType,
+            'module' => $this->module,
             'name' => $this->name,
             'version' => $this->version,
             'supported' => $this->supported,
