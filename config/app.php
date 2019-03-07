@@ -34,7 +34,7 @@ return [
 
     'name' => env('APP_NAME', 'AdServer'),
     'version' => env('APP_VERSION', '#'),
-    'module' => 'urn:x-adshares:adserver',
+    'module' => 'adserver',
 
     /*
     |--------------------------------------------------------------------------
@@ -135,7 +135,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'adpanel_url' => env('ADPANEL_URL'),
+    'adpanel_base_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('ADSERVER_ID'),
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
