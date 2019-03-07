@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
+use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
@@ -34,10 +35,9 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -47,6 +47,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class DemandController extends Controller
 {
+    private const CONTENT_TYPE = 'Content-Type';
+
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
@@ -137,7 +139,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Cid', $caseId);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
+            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
         }
 
         return $response;
@@ -173,7 +175,7 @@ class DemandController extends Controller
             }
         );
 
-        $response->headers->set('Content-Type', 'text/javascript');
+        $response->headers->set(self::CONTENT_TYPE, 'text/javascript');
 
         $response->setCache(
             [
@@ -255,7 +257,7 @@ class DemandController extends Controller
         $keywords = $context['page']['keywords'];
 
         $adUserEndpoint = config('app.aduser_external_location');
-        $response = new SymfonyResponse();
+        $response = new Response();
 
         if ($adUserEndpoint) {
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
@@ -277,11 +279,12 @@ class DemandController extends Controller
             $adUserUrl = null;
         }
 
-        $response->setContent(view('demand/view-event', [
-            'log_url' => route('banner-context', ['id' => $eventId]),
-            'view_script_url' => url('-/view.js'),
-            'aduser_url' => $adUserUrl
-        ]));
+        $response->setContent(view('demand/view-event',
+            [
+                'log_url' => route('banner-context', ['id' => $eventId]),
+                'view_script_url' => url('-/view.js'),
+                'aduser_url' => $adUserUrl,
+            ]));
         $response->send();
 
         $banner = $this->getBanner($bannerId);
@@ -310,11 +313,11 @@ class DemandController extends Controller
 
     public function context(Request $request, string $eventId)
     {
-        $response = new SymfonyResponse();
+        $response = new Response();
 
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
-        $response->headers->set('Content-Type', 'image/gif');
+        $response->headers->set(self::CONTENT_TYPE, 'image/gif');
 
         $context = Utils::urlSafeBase64Decode($request->query->get('k'));
 
@@ -333,7 +336,7 @@ class DemandController extends Controller
         string $accountAddress,
         string $date,
         string $signature
-    ): JsonResponse {
+    ): PaymentDetailsResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
         $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
@@ -357,34 +360,14 @@ class DemandController extends Controller
             );
         }
 
-        $ids = $payments->map(
-            function ($payment) {
-                return $payment->id;
-            }
-        )->toArray();
+        $ids = $payments->pluck('id')->all();
 
-        $events = EventLog::fetchEvents($ids);
-
-        $results = [];
-
-        foreach ($events as $event) {
-            $data = $event->toArray();
-            $results[] = [
-                'event_id' => $data['event_id'],
-                'event_type' => $data['event_type'],
-                'banner_id' => $data['banner_id'],
-                'zone_id' => $data['zone_id'],
-                'publisher_id' => $data['publisher_id'],
-                'event_value' => $data['paid_amount'],
-            ];
-        }
-
-        return new JsonResponse($results);
+        return new PaymentDetailsResponse(EventLog::fetchEvents($ids));
     }
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = Config::getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
@@ -429,7 +412,7 @@ class DemandController extends Controller
             ];
         }
 
-        return Response::json($campaigns, SymfonyResponse::HTTP_OK);
+        return self::json($campaigns, Response::HTTP_OK);
     }
 
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
