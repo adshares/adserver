@@ -41,6 +41,7 @@ final class InfoResponse implements Arrayable
     {
         $data = $this->info->toArray();
         $data['panel-base-url'] = $data['panelUrl'];
+        $data['serviceVersion'] = $data['version'];
 
         return $data;
     }
