@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Common\UrlInterface;
+use Adshares\Common\UrlObject;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 
@@ -32,5 +32,5 @@ interface DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId): array;
 
-    public function fetchInfo(UrlInterface $infoUrl): Info;
+    public function fetchInfo(UrlObject $infoUrl): Info;
 }
