@@ -22,13 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlObject;
-use Illuminate\Contracts\Support\Arrayable;
 
-final class Info implements Arrayable
+final class Info
 {
     private const SUPPORTED_PUBLISHER = 'PUB';
 
@@ -156,21 +154,5 @@ final class Info implements Arrayable
     public function getInventoryUrl(): string
     {
         return $this->inventoryUrl->toString();
-    }
-
-    public static function defaults(): self
-    {
-        return new self(
-            (string)config('app.module'),
-            (string)config('app.name'),
-            (string)config('app.version'),
-            new SecureUrl((string)config('app.url')),
-            new Url((string)config('app.adpanel_url')),
-            new SecureUrl((string)config('app.privacy_url')),
-            new SecureUrl((string)config('app.terms_url')),
-            new SecureUrl(route('demand-inventory')),
-            'ADV',
-            'PUB'
-        );
     }
 }

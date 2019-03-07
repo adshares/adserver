@@ -23,13 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Supply\Application\Dto\Info;
-use Illuminate\Contracts\Support\Arrayable;
+use Adshares\Adserver\Http\Response\InfoResponse;
 
 class InfoController extends Controller
 {
-    public function info(): Arrayable
+    public function info(): InfoResponse
     {
-        return Info::defaults();
+        return InfoResponse::defaults();
     }
 }
