@@ -34,7 +34,7 @@ return [
 
     'name' => env('APP_NAME', 'AdServer'),
     'version' => env('APP_VERSION', '#'),
-    'module' => 'urn:x-adshares:adserver',
+    'module' => 'adserver',
 
     /*
     |--------------------------------------------------------------------------
