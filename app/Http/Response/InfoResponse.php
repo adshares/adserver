@@ -40,9 +40,11 @@ final class InfoResponse implements Arrayable
     public function toArray(): array
     {
         $data = $this->info->toArray();
+
         $data['panel-base-url'] = $data['panelUrl'];
         $data['serviceVersion'] = $data['version'];
         $data['supported'] = $data['capabilities'];
+        $data['serviceType'] = $data['module'];
 
         return $data;
     }
