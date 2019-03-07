@@ -103,9 +103,9 @@ final class Info
             $data['version'],
             new Url($data['serverUrl']),
             new Url($data['panelUrl']),
-            new SecureUrl($data['privacyUrl']),
-            new SecureUrl($data['termsUrl']),
-            new SecureUrl($data['inventoryUrl']),
+            new Url($data['privacyUrl']),
+            new Url($data['termsUrl']),
+            new Url($data['inventoryUrl']),
             ...$data['supported']
         );
     }
