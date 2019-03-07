@@ -189,7 +189,6 @@ class NetworkCampaignRepository implements CampaignRepository
                 ->where('uuid', hex2bin($campaign->getId()))
                 ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
-            // mark all banners as DELETED for given $host
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
                 ->join(
                     sprintf('%s as campaign', NetworkCampaign::getTableName()),
