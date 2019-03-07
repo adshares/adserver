@@ -331,7 +331,7 @@ class DemandController extends Controller
             $event->our_context = $context;
             $event->save();
         } catch (ModelNotFoundException $e) {
-            Log::debug($e->getMessage());
+            Log::warning($e->getMessage());
         }
 
         return $response;
