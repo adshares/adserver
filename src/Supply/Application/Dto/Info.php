@@ -98,9 +98,9 @@ final class Info
     public static function fromArray(array $data): self
     {
         return new self(
-            $data['module'],
+            $data['module'] ?? $data['serviceType'],
             $data['name'],
-            $data['version'],
+            $data['version'] ?? $data['softwareVersion'],
             new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
