@@ -24,37 +24,39 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Supply\Application\Dto\Info;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class InfoController extends Controller
 {
     public function info(): JsonResponse
     {
-        $isAdvertiser = (bool)config('app.adserver_info_advertiser');
-        $isPublisher = (bool)config('app.adserver_info_publisher');
-
         $supported = [];
 
-        if ($isAdvertiser) {
+        if ((bool)config('app.adserver_info_advertiser')) {
             $supported[] = 'ADV';
         }
 
-        if ($isPublisher) {
+        if ((bool)config('app.adserver_info_publisher')) {
             $supported[] = 'PUB';
         }
 
-        $data = [
-            'serviceType' => config('app.adserver_info_type'),
-            'name' => config('app.adserver_info_name'),
-            'softwareVersion' => config('app.adserver_info_version'),
-            'supported' => $supported,
-            'serverUrl' => config('app.adserver_host'),
-            'panelUrl' => config('app.adpanel_base_url'),
-            'panel-base-url' => config('app.adpanel_base_url'),
-            'privacyUrl' => config('app.adserver_info_privacy_url'),
-            'termsUrl' => config('app.adserver_info_terms_url'),
-            'inventoryUrl' => ForceUrlProtocol::change(route('demand-inventory')),
-        ];
+        $info = new Info(
+            (string)config('app.adserver_info_type'),
+            (string)config('app.adserver_info_name'),
+            (string)config('app.adserver_info_version'),
+            new Url((string)config('app.adserver_host')),
+            new Url((string)config('app.adpanel_base_url')),
+            new Url((string)config('app.adserver_info_privacy_url')),
+            new Url((string)config('app.adserver_info_terms_url')),
+            new Url(ForceUrlProtocol::change(route('demand-inventory'))),
+            ...$supported
+        );
+
+        //BC for Wordpress Plugin
+        $data = $info->toArray();
+        $data['panel-base-url'] = $data['panelUrl'];
 
         return new JsonResponse($data);
     }

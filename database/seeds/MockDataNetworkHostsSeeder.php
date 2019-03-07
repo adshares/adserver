@@ -19,8 +19,8 @@
  */
 
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Supply\Application\Dto\Info;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Supply\Application\Dto\Info;
 use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder
@@ -33,12 +33,12 @@ class MockDataNetworkHostsSeeder extends Seeder
             'ADSERVER',
             'ADSERVER DEMAND',
             '0.1',
-            ['PUB', 'ADV'],
             new Url('http://webserver'),
             new Url('http://localhost:4200'),
             new Url('http://webserver/policies/privacy.html'),
             new Url('http://webserver/policies/terms.html'),
-            new Url('http://webserver/adshares/inventory/list')
+            new Url('http://webserver/adshares/inventory/list'),
+            'PUB', 'ADV'
         );
 
         NetworkHost::registerHost('0001-00000001-0001', $info, new DateTime());

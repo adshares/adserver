@@ -97,14 +97,13 @@ class AdsProcessTxTest extends TestCase
             'ADSERVER',
             'AdServer',
             '0.1',
-            ['PUB'],
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1')
+            new Url('http://127.0.0.1'),
+            'PUB'
         );
-
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
