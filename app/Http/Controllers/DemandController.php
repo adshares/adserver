@@ -322,6 +322,7 @@ class DemandController extends Controller
         //transparent 1px gif
         $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
         $response->headers->set(self::CONTENT_TYPE, 'image/gif');
+        $response->send();
 
         $context = Utils::urlSafeBase64Decode($request->query->get('k'));
 
