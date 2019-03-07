@@ -23,11 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Network;
 
 use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use function strtolower;
 use function strtoupper;
 
-final class BroadcastableUrl implements Broadcastable, UrlObject
+final class BroadcastableUrl implements Broadcastable, UrlInterface
 {
     /** @var Url */
     private $url;
