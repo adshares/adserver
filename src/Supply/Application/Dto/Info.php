@@ -94,6 +94,7 @@ final class Info
         }
     }
 
+    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
         return new self(
@@ -121,8 +122,6 @@ final class Info
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
-            //BC for Wordpress Plugin
-            $data['panel-base-url'] = $this->panelUrl->toString(),
         ];
     }
 
