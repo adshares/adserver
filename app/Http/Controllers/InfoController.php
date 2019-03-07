@@ -46,7 +46,7 @@ class InfoController extends Controller
             (string)config('app.module'),
             (string)config('app.name'),
             (string)config('app.version'),
-            new Url((string)config('app.adserver_host')),
+            new Url((string)config('app.url')),
             new Url((string)config('app.adpanel_base_url')),
             new Url((string)config('app.adserver_info_privacy_url')),
             new Url((string)config('app.adserver_info_terms_url')),

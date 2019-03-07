@@ -31,27 +31,27 @@ use const IDNA_ERROR_DISALLOWED;
 final class Url implements UrlObject
 {
     /** @var string */
-    private $idn;
+    private $idnUrl;
 
     public function __construct(string $url)
     {
-        $idn = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        $idnUrl = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
 
-        if (!filter_var($idn, FILTER_VALIDATE_URL)) {
+        if (!filter_var($idnUrl, FILTER_VALIDATE_URL)) {
             throw new RuntimeException(sprintf('Given url (%s) is not correct.', $url));
         }
 
-        $this->idn = $idn;
+        $this->idnUrl = $idnUrl;
     }
 
     public function utf8(): string
     {
-        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        return idn_to_utf8($this->idnUrl, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
     }
 
     public function toString(): string
     {
-        return $this->idn;
+        return $this->idnUrl;
     }
 
     public function __toString(): string

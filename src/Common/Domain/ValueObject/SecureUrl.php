@@ -27,17 +27,17 @@ use Adshares\Common\UrlObject;
 
 final class SecureUrl implements UrlObject
 {
-    /** @var Url */
-    private $url;
+    /** @var string */
+    private $secureUrl;
 
     public function __construct(string $url)
     {
-        $this->url = new Url($url);
+        $this->secureUrl = ForceUrlProtocol::change($url);
     }
 
     public function toString(): string
     {
-        return ForceUrlProtocol::change($this->url->toString());
+        return $this->secureUrl;
     }
 
     public function __toString(): string

@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+$appUrl = env('APP_URL', 'http://localhost');
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -71,7 +73,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://server.ads'),
+    'url' => $appUrl,
 
     /*
     |--------------------------------------------------------------------------
@@ -133,13 +135,12 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'adserver_host' => env('ADSERVER_HOST'),
     'adpanel_base_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('ADSERVER_ID'),
-    'adserver_banner_host' => env('ADSERVER_BANNER_HOST', env('ADSERVER_HOST')),
-    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL', env('ADSERVER_HOST').'/policies/terms.html'),
-    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL', env('ADSERVER_HOST').'/policies/privacy.html'),
+    'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
+    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL', $appUrl.'/policies/terms.html'),
+    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL', $appUrl.'/policies/privacy.html'),
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
     'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),
