@@ -23,10 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
-use Adshares\Common\UrlInterface;
+use Adshares\Common\UrlObject;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -132,7 +132,7 @@ final class GuzzleDemandClient implements DemandClient
         return $this->createDecodedResponseFromBody($body);
     }
 
-    public function fetchInfo(UrlInterface $infoUrl): Info
+    public function fetchInfo(UrlObject $infoUrl): Info
     {
         $client = new Client($this->requestParameters());
 
@@ -159,11 +159,11 @@ final class GuzzleDemandClient implements DemandClient
             $data['serviceType'],
             $data['name'],
             $data['softwareVersion'],
-            new IdnUrl($data['serverUrl']),
-            new IdnUrl($data['panelUrl']),
-            new IdnUrl($data['privacyUrl']),
-            new IdnUrl($data['termsUrl']),
-            new IdnUrl($data['inventoryUrl']),
+            new Url($data['serverUrl']),
+            new Url($data['panelUrl']),
+            new Url($data['privacyUrl']),
+            new Url($data['termsUrl']),
+            new Url($data['inventoryUrl']),
             ...$data['supported']
         );
     }

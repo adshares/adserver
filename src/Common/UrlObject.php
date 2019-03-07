@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common;
 
-interface UrlInterface
+interface UrlObject
 {
     public function __toString(): string;
 

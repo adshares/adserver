@@ -20,9 +20,9 @@
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Common\UrlInterface;
+use Adshares\Common\UrlObject;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
@@ -166,17 +166,17 @@ final class DummyDemandClient implements DemandClient
         ];
     }
 
-    public function fetchInfo(UrlInterface $infoUrl): Info
+    public function fetchInfo(UrlObject $infoUrl): Info
     {
         return new Info(
             'ADSERVER',
             'ADSERVER DEMAND',
             '0.1',
-            new IdnUrl('https://server.example.com/'),
-            new IdnUrl('https://panel.example.com/'),
-            new IdnUrl('https://example.com/privacy'),
-            new IdnUrl('https://example.com/terms'),
-            new IdnUrl('https://inventory.example.com/import'),
+            new Url('https://server.example.com/'),
+            new Url('https://panel.example.com/'),
+            new Url('https://example.com/privacy'),
+            new Url('https://example.com/terms'),
+            new Url('https://inventory.example.com/import'),
             'PUB',
             'ADV'
         );

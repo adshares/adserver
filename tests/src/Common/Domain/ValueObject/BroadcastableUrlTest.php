@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Test\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\BroadcastableUrl;
 use PHPUnit\Framework\TestCase;
 use function array_map;
@@ -30,7 +30,7 @@ use function array_map;
 class BroadcastableUrlTest extends TestCase
 {
     /** @dataProvider provider */
-    public function test(IdnUrl $url, string $hex): void
+    public function test(Url $url, string $hex): void
     {
         self::assertEquals($hex, (new BroadcastableUrl($url))->toHex());
 
@@ -54,7 +54,7 @@ class BroadcastableUrlTest extends TestCase
         ];
 
         $mapper = function (array $args) {
-            return [new IdnUrl($args[0]), self::strToHex($args[1])];
+            return [new Url($args[0]), self::strToHex($args[1])];
         };
 
         return array_map($mapper, $values);

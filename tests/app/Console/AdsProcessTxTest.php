@@ -34,7 +34,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -97,11 +97,11 @@ class AdsProcessTxTest extends TestCase
             'ADSERVER',
             'AdServer',
             '0.1',
-            new IdnUrl('http://127.0.0.1'),
-            new IdnUrl('http://127.0.0.1'),
-            new IdnUrl('http://127.0.0.1'),
-            new IdnUrl('http://127.0.0.1'),
-            new IdnUrl('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
             'PUB'
         );
 

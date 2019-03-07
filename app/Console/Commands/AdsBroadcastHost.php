@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
-use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
@@ -45,7 +45,7 @@ class AdsBroadcastHost extends Command
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
     /**
-     * @var IdnUrl
+     * @var Url
      */
     private $infoApiUrl;
 
@@ -53,7 +53,7 @@ class AdsBroadcastHost extends Command
     {
         parent::__construct();
 
-        $this->infoApiUrl = new IdnUrl(ForceUrlProtocol::change(route('app.infoEndpoint')));
+        $this->infoApiUrl = new Url(ForceUrlProtocol::change(route('app.infoEndpoint')));
     }
 
     /**

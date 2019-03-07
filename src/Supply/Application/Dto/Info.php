@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Common\Domain\ValueObject\IdnUrl;
-use Adshares\Common\UrlInterface;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\UrlObject;
 use RuntimeException;
 
 class Info
@@ -58,18 +58,18 @@ class Info
     /** @var string */
     private $inventoryUrl;
 
-    /** @var IdnUrl */
+    /** @var Url */
     private $serverUrl;
 
     public function __construct(
         string $module,
         string $name,
         string $version,
-        UrlInterface $serverUrl,
-        UrlInterface $panelUrl,
-        UrlInterface $privacyUrl,
-        UrlInterface $termsUrl,
-        UrlInterface $inventoryUrl,
+        UrlObject $serverUrl,
+        UrlObject $panelUrl,
+        UrlObject $privacyUrl,
+        UrlObject $termsUrl,
+        UrlObject $inventoryUrl,
         string ...$supported
     ) {
         $this->validateSupportedValue($supported);
@@ -100,11 +100,11 @@ class Info
             $data['module'],
             $data['name'],
             $data['version'],
-            new IdnUrl($data['serverUrl']),
-            new IdnUrl($data['panelUrl']),
-            new IdnUrl($data['privacyUrl']),
-            new IdnUrl($data['termsUrl']),
-            new IdnUrl($data['inventoryUrl']),
+            new Url($data['serverUrl']),
+            new Url($data['panelUrl']),
+            new Url($data['privacyUrl']),
+            new Url($data['termsUrl']),
+            new Url($data['inventoryUrl']),
             ...$data['supported']
         );
     }
