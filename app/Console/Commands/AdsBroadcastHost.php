@@ -28,6 +28,7 @@ use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
+use function route;
 
 class AdsBroadcastHost extends Command
 {
@@ -64,12 +65,13 @@ class AdsBroadcastHost extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $command = new Broadcast(new BroadcastableUrl($this->infoApiUrl));
+        $url = new BroadcastableUrl($this->infoApiUrl);
+        $command = new Broadcast($url);
 
         $response = $adsClient->runTransaction($command);
 
         $txId = $response->getTx()->getId();
 
-        $this->info("Message broadcast successfully. TxId: $txId");
+        $this->info("Url ($url) broadcast successfully. TxId: $txId");
     }
 }

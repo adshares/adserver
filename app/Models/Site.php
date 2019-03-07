@@ -143,7 +143,7 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $serverUrl = config('app.adserver_host');
+        $serverUrl = config('app.url');
 
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
     }

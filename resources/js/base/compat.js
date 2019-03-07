@@ -19,9 +19,9 @@
 
 if (typeof Array.prototype.forEach != 'function') {
     Array.prototype.forEach = function(callback){
-      for (var i = 0; i < this.length; i++){
-        callback.apply(this, [this[i], i, this]);
-      }
+        for (var i = 0; i < this.length; i++){
+            callback.apply(this, [this[i], i, this]);
+        }
     };
 }
 
@@ -40,3 +40,11 @@ if (!Function.prototype.bind) {
 		return fBound;
 	};
 }
+
+var addListener = function (element, event, handler, phase) {
+    if (element.addEventListener) {
+        return element.addEventListener(event, handler, phase);
+    } else {
+        return element.attachEvent('on' + event, handler);
+    }
+};

@@ -20,16 +20,23 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
-class ForceUrlProtocol
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
+
+class SecureUrlTest extends TestCase
 {
-    public static function change(string $uri): string
+    /** @dataProvider provider */
+    public function testToString(string $url): void
     {
-        if (config('app.banner_force_https') === false) {
-            return $uri;
-        }
+        $secureUrl = new SecureUrl($url);
 
-        return str_replace('http:', 'https:', $uri);
+        self::assertSame('https://adshares.net', (string)$secureUrl);
+    }
+
+    public function provider(): array
+    {
+        return [['http://adshares.net'], ['https://adshares.net']];
     }
 }

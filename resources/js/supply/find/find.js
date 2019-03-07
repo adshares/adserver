@@ -26,12 +26,6 @@ if(window['serverOrigin:' + serverOrigin]) {
 }
 window['serverOrigin:' + serverOrigin] = 1;
 
-var UrlSafeBase64Encode = function (data) {
-    return btoa(data).replace(/=|\+|\//g, function (x) {
-        return x == '+' ? '-' : (x == '/' ? '_' : '')
-    });
-};
-
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -72,27 +66,12 @@ var replaceTag = function (oldTag, newTag) {
         }
     }
     newTag.style.overflow = 'hidden';
+    newTag.style.position = 'relative';
     oldTag.parentNode.replaceChild(newTag, oldTag);
-};
-
-var addListener = function (element, event, handler, phase) {
-    if (element.addEventListener) {
-        return element.addEventListener(event, handler, phase);
-    } else {
-        return element.attachEvent('on' + event, handler);
-    }
-};
-
-navigator.sendBeacon = navigator.sendBeacon || function (url, data) {
-    fetchURL(url, {
-        method: 'post',
-        post: data
-    });
 };
 
 var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: relative; z-index: 1;');
 
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
@@ -107,15 +86,7 @@ var prepareElement = function (context, banner, element, contextParam) {
             mouseover = false;
         });
 
-        element.setAttribute('width', '100%');
-        element.setAttribute('height', '100%');
-        element.setAttribute('marginwidth', '0');
-        element.setAttribute('marginheight', '0');
-        element.setAttribute('vspace', '0');
-        element.setAttribute('hspace', '0');
-        element.setAttribute('allowtransparency', 'true');
-        element.setAttribute('scrolling', 'no');
-        element.setAttribute('frameborder', '0');
+        prepareIframe(element);
 
         addListener(window, 'message', function (event) {
             if (event.source == element.contentWindow && event.data) {
@@ -140,7 +111,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                     }
                     var url = context.click_url;
                     if (!window.open(url, '_blank')) {
-                        top.location.href = url;
+                        window.location.href = url;
                     }
                 }
             }
@@ -159,7 +130,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     return div;
 };
 
-var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
+var prepareInfoBox = function (context, banner, contextParam) {
     var url = addUrlParam(serverOrigin + '/supply/why', {
         'bid': banner.id,
         'cid': context.cid,
@@ -170,7 +141,7 @@ var prepareInfoBox = function prepareInfoBox(context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute; top: 0; right: 0; background: #ffffff');
+    div.setAttribute('style', 'position: absolute; top: 1px; right: 1px');
 
     var link = document.createElement('a');
     link.target = '_blank';
@@ -260,25 +231,6 @@ var isVisible = function (el) {
         && top > -height
         && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
         && left > -width;
-};
-
-var addUrlParam = function (url, names, value) {
-
-    if (typeof name != 'object') {
-        name = {};
-        name[name] = value;
-    }
-    for (var name in names) {
-        value = names[name];
-        var param = name + '=' + encodeURIComponent(value);
-        var qPos = url.indexOf('?');
-        if (qPos > -1) {
-            url += (qPos < url.length ? '&' : '') + param;
-        } else {
-            url += '?' + param;
-        }
-    }
-    return url;
 };
 
 var impressionId;

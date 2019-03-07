@@ -28,7 +28,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 
 interface DemandClient
 {
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection;
+    public function fetchAllInventory(string $inventoryUrl): CampaignCollection;
 
     public function fetchPaymentDetails(string $host, string $transactionId): array;
 

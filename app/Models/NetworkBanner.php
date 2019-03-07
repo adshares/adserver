@@ -119,7 +119,7 @@ class NetworkBanner extends Model
 
     public static function fetchCount(): int
     {
-        return (new NetworkBanner())->count();
+        return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
     }
 
     public static function findIdsByUuids(array $publicUuids)

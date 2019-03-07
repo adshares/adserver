@@ -18,8 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Route;
 use Adshares\Adserver\Http\Controllers\InfoController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () { return ''; })->name('login');
 

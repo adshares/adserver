@@ -57,4 +57,13 @@ mix.babel([
   'resources/js/footer/*',
 ], 'public/-/view.js');
 
+mix.babel([
+    'resources/js/header/*',
+    'resources/js/base/compat.js',
+    'resources/js/base/domready.js',
+    'resources/js/demand/banner.js',
+    'resources/js/footer/*',
+], 'public/-/banner.js');
+
+
 mix.copyDirectory('resources/img', 'public/img');

@@ -23,37 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Adshares\Adserver\Http\Response\InfoResponse;
 
 class InfoController extends Controller
 {
-    public function info(): JsonResponse
+    public function info(): InfoResponse
     {
-        $isAdvertiser = (bool)config('app.adserver_info_advertiser');
-        $isPublisher = (bool)config('app.adserver_info_publisher');
-
-        $supported = [];
-
-        if ($isAdvertiser) {
-            $supported[] = 'ADV';
-        }
-
-        if ($isPublisher) {
-            $supported[] = 'PUB';
-        }
-
-        $data = [
-            'serviceType' => config('app.adserver_info_type'),
-            'name' => config('app.adserver_info_name'),
-            'softwareVersion' => config('app.adserver_info_version'),
-            'supported' => $supported,
-            'panelUrl' => config('app.adserver_info_panel_url'),
-            'panel-base-url' => config('app.adserver_info_panel_url'),
-            'privacyUrl' => config('app.adserver_info_privacy_url'),
-            'termsUrl' => config('app.adserver_info_terms_url'),
-            'inventoryUrl' => route('demand-inventory'),
-        ];
-
-        return new JsonResponse($data);
+        return InfoResponse::defaults();
     }
 }
