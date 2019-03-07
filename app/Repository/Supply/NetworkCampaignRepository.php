@@ -40,7 +40,7 @@ class NetworkCampaignRepository implements CampaignRepository
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
-            ->update(['status' => Status::STATUS_TO_DELETED]);
+            ->update(['status' => Status::STATUS_TO_DELETE]);
 
 
         // mark all banners as DELETED for given $host
@@ -52,7 +52,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_host', $host)
-            ->update(['banner.status' => Status::STATUS_TO_DELETED]);
+            ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 
     public function save(Campaign $campaign): void
@@ -118,7 +118,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function fetchCampaignsToDelete(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_TO_DELETED)->get();
+        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_TO_DELETE)->get();
 
         $campaigns = [];
 

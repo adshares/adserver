@@ -59,7 +59,7 @@ final class CampaignTest extends TestCase
             []
         );
 
-        $this->assertEquals(Status::STATUS_TO_DELETED, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_TO_DELETE, $campaign->getStatus());
 
         $campaign->activate();
 

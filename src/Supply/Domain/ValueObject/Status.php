@@ -28,13 +28,13 @@ class Status
 {
     public const STATUS_PROCESSING = 0;
     public const STATUS_ACTIVE = 1;
-    public const STATUS_TO_DELETED = 2;
+    public const STATUS_TO_DELETE = 2;
     public const STATUS_DELETED = 3;
 
     private const STATUS_ALLOWED = [
         self::STATUS_PROCESSING,
         self::STATUS_ACTIVE,
-        self::STATUS_TO_DELETED,
+        self::STATUS_TO_DELETE,
         self::STATUS_DELETED,
     ];
 
@@ -52,7 +52,7 @@ class Status
 
     public static function toDelete(): self
     {
-        return new self(self::STATUS_TO_DELETED);
+        return new self(self::STATUS_TO_DELETE);
     }
 
     public static function deleted(): self
