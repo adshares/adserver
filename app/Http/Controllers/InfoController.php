@@ -48,8 +48,8 @@ class InfoController extends Controller
             (string)config('app.version'),
             new Url((string)config('app.url')),
             new Url((string)config('app.adpanel_url')),
-            new Url((string)config('app.adserver_info_privacy_url')),
-            new Url((string)config('app.adserver_info_terms_url')),
+            new Url((string)config('app.privacy_url')),
+            new Url((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
             ...$supported
         );
