@@ -166,7 +166,8 @@ final class Info
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
-            ...'ADV', 'PUB'
+            ...'ADV',
+            'PUB'
         );
     }
 }

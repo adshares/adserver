@@ -31,6 +31,7 @@ class InfoController extends Controller
     public function info(): JsonResponse
     {
         $data = Info::defaults()->toArray();
+
         //BC for Wordpress Plugin
         $data['panel-base-url'] = $data['panelUrl'];
 
