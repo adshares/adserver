@@ -164,7 +164,7 @@ final class GuzzleDemandClient implements DemandClient
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
-            $data['supported']
+            ...$data['supported']
         );
     }
 
