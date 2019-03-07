@@ -24,6 +24,8 @@ var isEdge = !isIE && !!window.StyleMedia;
 // Chrome on iOs has bug with blob url in iframe.src
 var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match('CriOS');
 
+var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
 var tmp = new XMLHttpRequest();
 supportBinaryFetch = !isIE || tmp.upload;
 
@@ -61,7 +63,24 @@ var prepareIframe = function (element) {
     element.setAttribute('frameborder', '0');
 };
 
-var proxyScript = 'var addListener = function (element, event, handler, phase) {' +
+var proxyScript = '' +
+    'var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match(\'CriOS\');' +
+    'function getDataURI(data, callback) {\n' +
+    '    if (window.Blob && data.blob instanceof window.Blob) {\n' +
+    '        if (!isCriOS && URL && URL.createObjectURL) {\n' +
+    '            callback(URL.createObjectURL(data.blob));\n' +
+    '        } else if (window.FileReader) {\n' +
+    '            var reader = new FileReader();\n' +
+    '            reader.onload = function (e) {\n' +
+    '                callback(reader.result);\n' +
+    '            }\n' +
+    '            reader.readAsDataURL(data.blob);\n' +
+    '        }\n' +
+    '        return;\n' +
+    '    }\n' +
+    '    callback(\'data:\' + data.type + \';base64,\' + btoa(data.bytes));\n' +
+    '}' +
+    'var addListener = function (element, event, handler, phase) {' +
     '    if (element.addEventListener) {' +
     '        return element.addEventListener(event, handler, phase);' +
     '    } else {' +
@@ -69,7 +88,14 @@ var proxyScript = 'var addListener = function (element, event, handler, phase) {
     '    }' +
     '};' +
     'addListener(window, "message", function (event) {' +
-    '    var targets = [document.getElementById("frame").contentWindow, parent];' +
+    '    var iframe = document.getElementById("frame");' +
+    '    if(iframe.src == "about:blank")  {' +
+    '       getDataURI(event.data, function(dataUri) {' +
+    '           iframe.src = dataUri;' +
+    '       });' +
+    '       return;' +
+    '    }' +
+    '    var targets = [iframe.contentWindow, parent];' +
     '    var target;' +
     '    if (event.source == targets[0]) {' +
     '        target = targets[1];' +
@@ -131,22 +157,26 @@ function createIframeFromData(data, domInsertCallback) {
         }
 
     } else {
-        getDataURI(data, function (bannerDataUri) {
-            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
+        // getDataURI(data, function (bannerDataUri) {
+            iframe.setAttribute('sandbox', "allow-scripts");
             var blob = new Blob(['<html>' +
             '<head>' +
             '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
             '<body>' +
             '<script>' + proxyScript +  '</script>' +
-            '<iframe id="frame" src="' + bannerDataUri + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
+            '<iframe id="frame" src="about:blank" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
             '</body>' +
             '</html>'], {'type': 'text/html'});
 
             getDataURI({blob: blob}, function(dataUri) {
                 iframe.src = dataUri;
+
+                iframe.onload = function() {
+                    iframe.contentWindow.postMessage(data, '*');
+                };
                 domInsertCallback(iframe);
             });
-        });
+        // });
     }
 }
 
