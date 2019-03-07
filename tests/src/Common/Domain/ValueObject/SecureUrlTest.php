@@ -20,40 +20,23 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Network;
+namespace Adshares\Tests\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Common\UrlObject;
-use function strtolower;
-use function strtoupper;
+use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 
-final class BroadcastableUrl implements Broadcastable, UrlObject
+class SecureUrlTest extends TestCase
 {
-    /** @var Url */
-    private $url;
-
-    public function __construct(Url $url)
+    /** @dataProvider provider */
+    public function testToString(string $url): void
     {
-        $this->url = $url;
+        $secureUrl = new SecureUrl($url);
+
+        self::assertSame('https://adshares.net', (string)$secureUrl);
     }
 
-    public function toHex(): string
+    public function provider(): array
     {
-        return strtoupper(unpack('H*', $this->url->toString())[1]);
-    }
-
-    public static function fromHex(string $hex): self
-    {
-        return new self(new Url(pack('H*', strtolower($hex))));
-    }
-
-    public function toString(): string
-    {
-        return $this->url->toString();
-    }
-
-    public function __toString(): string
-    {
-        return $this->toString();
+        return [['http://adshares.net'], ['https://adshares.net']];
     }
 }

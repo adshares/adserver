@@ -23,31 +23,41 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\UrlObject;
 use RuntimeException;
 
 class Info
 {
     private const SUPPORTED_PUBLISHER = 'PUB';
+
     private const SUPPORTED_ADVERTISER = 'ADV';
 
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
     /** @var string */
     private $module;
+
     /** @var string */
     private $name;
+
     /** @var string */
     private $version;
+
     /** @var array */
     private $supported;
+
     /** @var string */
     private $panelUrl;
+
     /** @var string */
     private $privacyUrl;
+
     /** @var string */
     private $termsUrl;
+
     /** @var string */
     private $inventoryUrl;
+
     /** @var Url */
     private $serverUrl;
 
@@ -55,11 +65,11 @@ class Info
         string $module,
         string $name,
         string $version,
-        Url $serverUrl,
-        Url $panelUrl,
-        Url $privacyUrl,
-        Url $termsUrl,
-        Url $inventoryUrl,
+        UrlObject $serverUrl,
+        UrlObject $panelUrl,
+        UrlObject $privacyUrl,
+        UrlObject $termsUrl,
+        UrlObject $inventoryUrl,
         string ...$supported
     ) {
         $this->validateSupportedValue($supported);

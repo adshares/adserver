@@ -22,36 +22,22 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\Exception\RuntimeException;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\UrlObject;
-use function idn_to_utf8;
-use const FILTER_VALIDATE_URL;
-use const IDNA_ERROR_DISALLOWED;
 
-final class Url implements UrlObject
+final class SecureUrl implements UrlObject
 {
     /** @var string */
-    private $idnUrl;
+    private $secureUrl;
 
     public function __construct(string $url)
     {
-        $idnUrl = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
-
-        if (!filter_var($idnUrl, FILTER_VALIDATE_URL)) {
-            throw new RuntimeException(sprintf('Given url (%s) is not correct.', $url));
-        }
-
-        $this->idnUrl = $idnUrl;
-    }
-
-    public function utf8(): string
-    {
-        return idn_to_utf8($this->idnUrl, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        $this->secureUrl = ForceUrlProtocol::change($url);
     }
 
     public function toString(): string
     {
-        return $this->idnUrl;
+        return $this->secureUrl;
     }
 
     public function __toString(): string

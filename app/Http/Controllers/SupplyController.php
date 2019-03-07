@@ -102,7 +102,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_host'),
+            config('app.url'),
             config('app.aduser_external_location'),
             '.'.config('app.website_banner_class'),
         ];
