@@ -20,9 +20,6 @@
 domReady(function() {
     var onlyStrings = false;
     var target = parent;
-    if(target.parent) {
-        target = target.parent;
-    }
 
     var handler = function(e) {
         var msg = {
@@ -33,9 +30,7 @@ domReady(function() {
     };
 
     var links = document.getElementsByTagName('a');
-    for(var i=0;i<links.length;i++) {
-        addListener(links[i], 'click', handler, true);
-    }
+    addListener(document, 'click', handler, true);
 
     try {
         window.postMessage({
