@@ -23,9 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 
-final class SecureUrl implements UrlObject
+final class SecureUrl implements UrlInterface
 {
     /** @var string */
     private $secureUrl;

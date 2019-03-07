@@ -23,12 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use function idn_to_utf8;
 use const FILTER_VALIDATE_URL;
 use const IDNA_ERROR_DISALLOWED;
 
-final class Url implements UrlObject
+final class Url implements UrlInterface
 {
     /** @var string */
     private $idnUrl;
