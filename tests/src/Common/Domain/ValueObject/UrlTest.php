@@ -33,8 +33,8 @@ class UrlTest extends TestCase
     {
         $object = new Url($url);
 
-        self::assertEquals($url, $object->utf8());
-        self::assertEquals($idn, $object->toString());
+        self::assertSame($url, $object->utf8());
+        self::assertSame($idn, $object->toString());
     }
 
     /** @dataProvider failureProvider */
