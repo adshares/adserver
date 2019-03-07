@@ -27,5 +27,5 @@ Route::get('/',
     })->name('login');
 
 # API INFO
-Route::get('/info', [InfoController::class, 'info'])->name('app.infoEndpoint');
-Route::get('/info.json', [InfoController::class, 'info']);
+Route::get('/info', [InfoController::class, 'info']);
+Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
