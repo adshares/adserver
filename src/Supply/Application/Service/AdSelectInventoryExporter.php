@@ -36,7 +36,7 @@ class AdSelectInventoryExporter
         $this->repository = $repository;
     }
 
-    public function export(?CampaignCollection $campaignsToAddOrUpdate, ?CampaignCollection $campaignsToDelete): void
+    public function export(CampaignCollection $campaignsToAddOrUpdate, CampaignCollection $campaignsToDelete): void
     {
         if ($campaignsToAddOrUpdate) {
             /** @var Campaign $campaign */
