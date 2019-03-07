@@ -22,11 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\UrlObject;
 use RuntimeException;
 
-class Info
+final class Info
 {
     private const SUPPORTED_PUBLISHER = 'PUB';
 
@@ -102,9 +103,9 @@ class Info
             $data['version'],
             new Url($data['serverUrl']),
             new Url($data['panelUrl']),
-            new Url($data['privacyUrl']),
-            new Url($data['termsUrl']),
-            new Url($data['inventoryUrl']),
+            new SecureUrl($data['privacyUrl']),
+            new SecureUrl($data['termsUrl']),
+            new SecureUrl($data['inventoryUrl']),
             ...$data['supported']
         );
     }
@@ -152,5 +153,20 @@ class Info
     public function getInventoryUrl(): string
     {
         return $this->inventoryUrl->toString();
+    }
+
+    public static function defaults(): self
+    {
+        return new self(
+            (string)config('app.module'),
+            (string)config('app.name'),
+            (string)config('app.version'),
+            new SecureUrl((string)config('app.url')),
+            new Url((string)config('app.adpanel_url')),
+            new SecureUrl((string)config('app.privacy_url')),
+            new SecureUrl((string)config('app.terms_url')),
+            new SecureUrl(route('demand-inventory')),
+            ...'ADV', 'PUB'
+        );
     }
 }
