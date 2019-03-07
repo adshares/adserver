@@ -151,10 +151,14 @@ class AdsFetchHosts extends Command
 
             $info = $this->client->fetchInfo($url);
 
-            NetworkHost::registerHost($address, $info, $time);
+            Log::debug("Got {$url->toString()}");
+
+            $host = NetworkHost::registerHost($address, $info, $time);
+
+            Log::debug("Stored {$url->toString()} as #{$host->id}");
         } catch (RuntimeException|UnexpectedClientResponseException $exception) {
             $url = $url ?? '';
-            Log::warning("[$url] {$exception->getMessage()}");
+            Log::debug("[$url] {$exception->getMessage()}");
         }
     }
 }
