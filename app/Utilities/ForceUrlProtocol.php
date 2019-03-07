@@ -22,13 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Utilities;
 
-use Illuminate\Support\Facades\Config;
-
 class ForceUrlProtocol
 {
     public static function change(string $uri): string
     {
-        if (Config::get('app.banner_force_https') === false) {
+        if (config('app.banner_force_https') === false) {
             return $uri;
         }
 

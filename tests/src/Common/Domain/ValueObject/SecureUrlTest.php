@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Common\Domain\ValueObject;
 
+use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use PHPUnit\Framework\TestCase;
 
 class SecureUrlTest extends TestCase
 {
