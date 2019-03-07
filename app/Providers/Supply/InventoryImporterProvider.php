@@ -37,7 +37,7 @@ class InventoryImporterProvider extends ServiceProvider
     {
         $this->app->bind(
             CampaignRepository::class,
-            function() {
+            function () {
                 return new NetworkCampaignRepository();
             }
         );
