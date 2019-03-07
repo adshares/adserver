@@ -57,8 +57,8 @@ final class InfoResponse implements Arrayable
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
-            'ADV',
-            'PUB'
+            Info::SUPPORTED_ADVERTISER,
+            Info::SUPPORTED_PUBLISHER
         ));
     }
 }

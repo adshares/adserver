@@ -28,9 +28,9 @@ use Adshares\Common\UrlObject;
 
 final class Info
 {
-    private const SUPPORTED_PUBLISHER = 'PUB';
+    public const SUPPORTED_PUBLISHER = 'PUB';
 
-    private const SUPPORTED_ADVERTISER = 'ADV';
+    public const SUPPORTED_ADVERTISER = 'ADV';
 
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
