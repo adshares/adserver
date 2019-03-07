@@ -22,17 +22,17 @@ declare(strict_types = 1);
 
 namespace Adshares\Network;
 
-use Adshares\Common\Domain\ValueObject\Url;
-use Adshares\Common\UrlObject;
+use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\UrlInterface;
 use function strtolower;
 use function strtoupper;
 
-final class BroadcastableUrl implements Broadcastable, UrlObject
+final class BroadcastableUrl implements Broadcastable, UrlInterface
 {
-    /** @var Url */
+    /** @var IdnUrl */
     private $url;
 
-    public function __construct(Url $url)
+    public function __construct(IdnUrl $url)
     {
         $this->url = $url;
     }
@@ -44,7 +44,7 @@ final class BroadcastableUrl implements Broadcastable, UrlObject
 
     public static function fromHex(string $hex): self
     {
-        return new self(new Url(pack('H*', strtolower($hex))));
+        return new self(new IdnUrl(pack('H*', strtolower($hex))));
     }
 
     public function toString(): string

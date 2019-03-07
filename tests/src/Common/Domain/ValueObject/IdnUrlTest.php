@@ -22,16 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Test\Common\Domain\ValueObject;
 
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Domain\ValueObject\IdnUrl;
 use Adshares\Common\Exception\RuntimeException;
 use PHPUnit\Framework\TestCase;
 
-class UrlTest extends TestCase
+class IdnUrlTest extends TestCase
 {
     /** @dataProvider provider */
     public function test(string $url, string $idn): void
     {
-        $object = new Url($url);
+        $object = new IdnUrl($url);
 
         self::assertSame($url, $object->utf8());
         self::assertSame($idn, $object->toString());
@@ -42,7 +42,7 @@ class UrlTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        new Url($url);
+        new IdnUrl($url);
     }
 
     public function provider(): array
