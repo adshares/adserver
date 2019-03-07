@@ -23,14 +23,14 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlObject;
-use RuntimeException;
 
-class Info
+final class Info
 {
-    private const SUPPORTED_PUBLISHER = 'PUB';
+    public const SUPPORTED_PUBLISHER = 'PUB';
 
-    private const SUPPORTED_ADVERTISER = 'ADV';
+    public const SUPPORTED_ADVERTISER = 'ADV';
 
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
@@ -94,6 +94,7 @@ class Info
         }
     }
 
+    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
         return new self(

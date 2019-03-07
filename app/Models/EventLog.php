@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -146,7 +147,7 @@ class EventLog extends Model
         return $query->get();
     }
 
-    public static function fetchEvents(array $paymentIds): Collection
+    public static function fetchEvents(Arrayable $paymentIds): Collection
     {
         return self::whereIn('payment_id', $paymentIds)
             ->get();

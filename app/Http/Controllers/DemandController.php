@@ -366,9 +366,7 @@ class DemandController extends Controller
             );
         }
 
-        $ids = $payments->pluck('id')->all();
-
-        return new PaymentDetailsResponse(EventLog::fetchEvents($ids));
+        return new PaymentDetailsResponse(EventLog::fetchEvents($payments->pluck('id')));
     }
 
     public function inventoryList(Request $request): JsonResponse
