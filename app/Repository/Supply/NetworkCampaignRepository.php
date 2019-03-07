@@ -36,11 +36,14 @@ use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
+    private const STATUS_FIELD = 'status';
+
+
     public function markedAsDeletedByHost(string $host): void
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
-            ->update(['status' => Status::STATUS_TO_DELETE]);
+            ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
 
         // mark all banners as DELETED for given $host
@@ -105,7 +108,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function fetchActiveCampaigns(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_ACTIVE)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_ACTIVE)->get();
 
         $campaigns = [];
 
@@ -118,7 +121,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function fetchCampaignsToDelete(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_TO_DELETE)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_TO_DELETE)->get();
 
         $campaigns = [];
 
@@ -184,7 +187,7 @@ class NetworkCampaignRepository implements CampaignRepository
         try {
             DB::table(NetworkCampaign::getTableName())
                 ->where('uuid', hex2bin($campaign->getId()))
-                ->update(['status' => $campaign->getStatus()]);
+                ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
             // mark all banners as DELETED for given $host
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
