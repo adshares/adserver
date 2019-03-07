@@ -26,7 +26,7 @@ use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -132,7 +132,7 @@ final class GuzzleDemandClient implements DemandClient
         return $this->createDecodedResponseFromBody($body);
     }
 
-    public function fetchInfo(UrlObject $infoUrl): Info
+    public function fetchInfo(UrlInterface $infoUrl): Info
     {
         $client = new Client($this->requestParameters());
 
