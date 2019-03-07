@@ -177,7 +177,8 @@ final class DummyDemandClient implements DemandClient
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
             new Url('https://inventory.example.com/import'),
-            'PUB', 'ADV'
+            'PUB',
+            'ADV'
         );
     }
 }
