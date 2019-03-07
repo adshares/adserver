@@ -436,7 +436,7 @@ var addTrackingIframe = function (url, element) {
     element.parentNode.insertBefore(iframe, element);
     setTimeout(function() {
         iframe.parentElement.removeChild(iframe);
-    }, 30000);
+    }, 3000);
     return iframe;
 }
 
