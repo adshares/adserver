@@ -40,8 +40,7 @@ final class InfoResponse implements Arrayable
     public function toArray(): array
     {
         $data = $this->info->toArray();
-        //BC for Wordpress Plugin
-        $data['panel-base-url'] = $this->panelUrl->toString();
+        $data['panel-base-url'] = $data['panelUrl'];
 
         return $data;
     }
