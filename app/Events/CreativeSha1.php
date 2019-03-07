@@ -60,23 +60,25 @@ class CreativeSha1
             $html->insertBefore($head, $body);
         }
 
-        $metas = $xpath->query('//head/meta');
+        $metas = $xpath->query("//head/meta[@data-inject='1']");
+        foreach ($metas as $tag) {
+            $head->removeChild($tag);
+        }
 
         $csp_tag = $doc->createElement('meta');
         $csp_tag->setAttribute('http-equiv', "Content-Security-Policy");
         $csp_tag->setAttribute('content', "default-src 'unsafe-inline' data: blob:");
+        $csp_tag->setAttribute('data-inject', "1");
+        $head->insertBefore($csp_tag, $head->firstChild);
 
-        if (!count($metas) || trim($doc->saveHTML($csp_tag)) != trim($doc->saveHTML($metas[0]))) {
-            $head->insertBefore($csp_tag, $head->firstChild);
+        $scripts = $xpath->query("//body/script[@data-inject='1']");
+        foreach ($scripts as $tag) {
+            $body->removeChild($tag);
         }
-
-        $scripts = $xpath->query('//body/script');
-
         $banner_script = $doc->createElement('script');
         $banner_script->nodeValue = $jsCode;
-        if (!count($scripts) || $scripts[0]->nodeValue != $banner_script->nodeValue) {
-            $body->insertBefore($banner_script, $body->firstChild);
-        }
+        $banner_script->setAttribute('data-inject', "1");
+        $body->insertBefore($banner_script, $body->firstChild);
 
         return $doc->saveHTML();
     }
