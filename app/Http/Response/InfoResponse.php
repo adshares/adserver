@@ -43,6 +43,7 @@ final class InfoResponse implements Arrayable
         $data['panel-base-url'] = $data['panelUrl'];
         $data['serviceVersion'] = $data['version'];
         $data['supported'] = $data['capabilities'];
+        $data['serviceType'] = $data['module'];
 
         return $data;
     }
