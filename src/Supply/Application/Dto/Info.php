@@ -23,45 +23,58 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\ValueObject\Url;
-use RuntimeException;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlObject;
 
-class Info
+final class Info
 {
-    private const SUPPORTED_PUBLISHER = 'PUB';
-    private const SUPPORTED_ADVERTISER = 'ADV';
+    public const SUPPORTED_PUBLISHER = 'PUB';
+
+    public const SUPPORTED_ADVERTISER = 'ADV';
 
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
     /** @var string */
-    private $serviceType;
+    private $module;
+
     /** @var string */
     private $name;
+
     /** @var string */
     private $version;
+
     /** @var array */
     private $supported;
+
     /** @var string */
     private $panelUrl;
+
     /** @var string */
     private $privacyUrl;
+
     /** @var string */
     private $termsUrl;
+
     /** @var string */
     private $inventoryUrl;
 
+    /** @var Url */
+    private $serverUrl;
+
     public function __construct(
-        string $serviceType,
+        string $module,
         string $name,
         string $version,
-        array $supported,
-        Url $panelUrl,
-        Url $privacyUrl,
-        Url $termsUrl,
-        Url $inventoryUrl
+        UrlObject $serverUrl,
+        UrlObject $panelUrl,
+        UrlObject $privacyUrl,
+        UrlObject $termsUrl,
+        UrlObject $inventoryUrl,
+        string ...$supported
     ) {
         $this->validateSupportedValue($supported);
 
-        $this->serviceType = $serviceType;
+        $this->module = $module;
         $this->name = $name;
         $this->version = $version;
         $this->supported = $supported;
@@ -69,6 +82,7 @@ class Info
         $this->privacyUrl = $privacyUrl;
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
+        $this->serverUrl = $serverUrl;
     }
 
     public function validateSupportedValue(array $values): void
@@ -80,27 +94,30 @@ class Info
         }
     }
 
+    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
         return new self(
-            $data['serviceType'],
+            $data['module'],
             $data['name'],
             $data['version'],
-            $data['supported'],
+            new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
-            new Url($data['inventoryUrl'])
+            new Url($data['inventoryUrl']),
+            ...$data['supported']
         );
     }
 
     public function toArray(): array
     {
         return [
-            'serviceType' => $this->serviceType,
+            'module' => $this->module,
             'name' => $this->name,
             'version' => $this->version,
             'supported' => $this->supported,
+            'serverUrl' => $this->serverUrl->toString(),
             'panelUrl' => $this->panelUrl->toString(),
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
@@ -126,5 +143,15 @@ class Info
     public function getPanelUrl(): string
     {
         return $this->panelUrl->toString();
+    }
+
+    public function getServerUrl(): string
+    {
+        return $this->serverUrl->toString();
+    }
+
+    public function getInventoryUrl(): string
+    {
+        return $this->inventoryUrl->toString();
     }
 }

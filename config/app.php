@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+$appUrl = env('APP_URL', 'http://localhost');
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -30,7 +32,9 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Adserver'),
+    'name' => env('APP_NAME', 'AdServer'),
+    'version' => env('APP_VERSION', '#'),
+    'module' => 'adserver',
 
     /*
     |--------------------------------------------------------------------------
@@ -69,7 +73,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://server.ads'),
+    'url' => $appUrl,
 
     /*
     |--------------------------------------------------------------------------
@@ -131,20 +135,12 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'adserver_host' => env('ADSERVER_HOST'),
-    'adserver_info_url' => env('ADSERVER_INFO_URL'),
-    'adpanel_base_url' => env('ADPANEL_URL'),
+    'adpanel_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('ADSERVER_ID'),
-    'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
-    'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
-    'adserver_info_name' => env('ADSERVER_INFO_NAME'),
-    'adserver_info_panel_url' => env('ADSERVER_INFO_PANEL_URL'),
-    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
-    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
-    'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
-    'adserver_info_publisher' => env('ADSERVER_INFO_PUBLISHER'),
-    'adserver_info_advertiser' => env('ADSERVER_INFO_ADVERTISER'),
+    'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
+    'terms_url' => $appUrl.'/policies/terms.html',
+    'privacy_url' => $appUrl.'/policies/privacy.html',
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
     'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),
@@ -161,7 +157,7 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('ADSERVER_ID', 'a-name-that-does-not-collide'),
-    'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
+    'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
@@ -203,7 +199,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-
 
         /*
          * Application Service Providers...

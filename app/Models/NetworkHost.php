@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
-use Adshares\Common\UrlObject;
 use Adshares\Supply\Application\Dto\Info;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -77,8 +76,7 @@ class NetworkHost extends Model
 
     public static function registerHost(
         string $address,
-        UrlObject $host,
-        ?Info $info = null,
+        Info $info,
         ?\DateTime $lastBroadcast = null
     ): NetworkHost {
         $networkHost = self::where('address', $address)->first();
@@ -88,13 +86,10 @@ class NetworkHost extends Model
             $networkHost->address = $address;
         }
 
-        $networkHost->host = $host->toString();
+        $networkHost->host = $info->getServerUrl();
         $networkHost->last_broadcast = $lastBroadcast ?? new DateTime();
         $networkHost->failed_connection = 0;
-
-        if ($info) {
-            $networkHost->info = $info;
-        }
+        $networkHost->info = $info;
 
         $networkHost->save();
 

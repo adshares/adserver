@@ -62,7 +62,7 @@ class InventoryImporterCommand extends Command
         try {
             /** @var NetworkHost $networkHost */
             foreach ($networkHosts as $networkHost) {
-                $this->inventoryImporterService->import($networkHost->host);
+                $this->inventoryImporterService->import($networkHost->info->getInventoryUrl());
 
                 $networkHost->connectionSuccessful();
             }

@@ -39,7 +39,7 @@ final class BroadcastableUrl implements Broadcastable, UrlObject
 
     public function toHex(): string
     {
-        return strtoupper(unpack('H*', $this->url->idn())[1]);
+        return strtoupper(unpack('H*', $this->url->toString())[1]);
     }
 
     public static function fromHex(string $hex): self

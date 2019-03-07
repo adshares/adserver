@@ -1,3 +1,8 @@
 {
-  "panel-base-url": "${ADPANEL_URL}"
+  "panel-base-url": "${ADPANEL_URL}",
+  "panelUrl": "${ADPANEL_URL}",
+  "version": "${APP_VERSION}",
+  "name": "${APP_NAME}",
+  "serviceType": "adserver",
+  "module": "adserver"
 }

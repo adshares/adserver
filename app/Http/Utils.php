@@ -311,7 +311,7 @@ class Utils
         return $tid;
     }
 
-    public static function validTrackingId($input, $secret): bool
+    private static function validTrackingId($input, $secret): bool
     {
         if (!\is_string($input)) {
             return false;
@@ -347,12 +347,12 @@ class Utils
         );
     }
 
-    public static function createTrackingId(string $secret, ?string $impressionId = null): string
+    public static function createTrackingId(string $secret, ?string $nonce = null): string
     {
         $input = [];
 
-        if ($impressionId !== null) {
-            $input[] = $impressionId;
+        if ($nonce !== null) {
+            $input[] = $nonce;
             $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
         } else {
             $input[] = microtime();

@@ -18,10 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Route;
 use Adshares\Adserver\Http\Controllers\InfoController;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () { return ''; })->name('login');
 
 # API INFO
-Route::get('/info', [InfoController::class, 'info']);
+Route::get('/info', [InfoController::class, 'info'])->name('app.infoEndpoint');

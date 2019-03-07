@@ -85,7 +85,6 @@ then
     read_option ADSELECT_ENDPOINT "External adselect service endpoint" 1
 fi
 
-
 INSTALL_ADPAY=Y
 read_option INSTALL_ADPAY "Install local adpay service?" 0 1
 

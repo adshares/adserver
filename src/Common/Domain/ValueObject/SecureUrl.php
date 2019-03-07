@@ -20,16 +20,28 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common\Domain\ValueObject;
 
-class ForceUrlProtocol
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\UrlObject;
+
+final class SecureUrl implements UrlObject
 {
-    public static function change(string $uri): string
-    {
-        if (config('app.banner_force_https') === false) {
-            return $uri;
-        }
+    /** @var string */
+    private $secureUrl;
 
-        return str_replace('http:', 'https:', $uri);
+    public function __construct(string $url)
+    {
+        $this->secureUrl = ForceUrlProtocol::change($url);
+    }
+
+    public function toString(): string
+    {
+        return $this->secureUrl;
+    }
+
+    public function __toString(): string
+    {
+        return $this->toString();
     }
 }

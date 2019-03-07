@@ -102,7 +102,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_host'),
+            config('app.url'),
             config('app.aduser_external_location'),
             '.'.config('app.website_banner_class'),
         ];
@@ -311,7 +311,7 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.gif',
+            '%s/register/%s/%s/%s.htm',
             config('app.aduser_external_location'),
             urlencode(config('app.adserver_id')),
             $trackingId,
@@ -336,10 +336,11 @@ class SupplyController extends Controller
         $data = [
             'url' => $banner->serve_url,
             'supplyName' => config('app.adserver_info_name'),
-            'supplyTermsUrl' => config('app.adserver_info_terms_url'),
-            'supplyPrivacyUrl' => config('app.adserver_info_privacy_url'),
-            'supplyPanelUrl' => config('app.adserver_info_panel_url'),
+            'supplyTermsUrl' => config('app.terms_url'),
+            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyPanelUrl' => config('app.adpanel_url'),
             'demand' => false,
+            'bannerType' => $banner->type,
         ];
 
         if ($info) {
