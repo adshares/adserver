@@ -5,9 +5,13 @@
     <body>
         <script type="text/javascript">
             demandLogContext('{{ $log_url }}');
+            @isset($aduser_url)
+            parent.postMessage({
+                'adsharesTrack': [
+                    {'type': 'iframe', 'url': '{{ $aduser_url }}'}
+                ]
+            }, '*');
+            @endisset
         </script>
-    @isset($aduser_url)
-        <iframe src="{{ $aduser_url }}" sandbox="allow-scripts allow-same-origin"></iframe>
-    @endisset
     </body>
 </html>
