@@ -30,7 +30,7 @@ domReady(function() {
     };
 
     var links = document.getElementsByTagName('a');
-    addListener(document, 'click', handler, true);
+    addListener(document.body, 'click', handler, true);
 
     try {
         window.postMessage({
