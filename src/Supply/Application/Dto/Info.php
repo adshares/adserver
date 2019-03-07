@@ -24,7 +24,7 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 
 final class Info
 {
@@ -65,11 +65,11 @@ final class Info
         string $module,
         string $name,
         string $version,
-        UrlObject $serverUrl,
-        UrlObject $panelUrl,
-        UrlObject $privacyUrl,
-        UrlObject $termsUrl,
-        UrlObject $inventoryUrl,
+        UrlInterface $serverUrl,
+        UrlInterface $panelUrl,
+        UrlInterface $privacyUrl,
+        UrlInterface $termsUrl,
+        UrlInterface $inventoryUrl,
         string ...$supported
     ) {
         $this->validateSupportedValue($supported);
