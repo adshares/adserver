@@ -44,18 +44,15 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        $data = [
-            'module' => (string)config('app.module'),
-            'name' => (string)config('app.name'),
-            'version' => (string)config('app.version'),
-            'serverUrl' => new SecureUrl((string)config('app.url')),
-            'panelUrl' => new Url((string)config('app.adpanel_url')),
-            'privacyUrl' => new SecureUrl((string)config('app.privacy_url')),
-            'termsUrl' => new SecureUrl((string)config('app.terms_url')),
-            'inventoryUrl' => new SecureUrl(route('demand-inventory')),
-            'supported' => ['ADV', 'PUB'],
-        ];
-
-        return new self(Info::fromArray($data));
+        return new self(new Info(
+            (string)config('app.module'),
+            (string)config('app.name'),
+            (string)config('app.version'),
+            new SecureUrl((string)config('app.url')),
+            new Url((string)config('app.adpanel_url')),
+            new SecureUrl((string)config('app.privacy_url')),
+            new SecureUrl((string)config('app.terms_url')),
+            new SecureUrl(route('demand-inventory')),
+            'ADV', 'PUB'));
     }
 }
