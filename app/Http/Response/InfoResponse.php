@@ -42,6 +42,7 @@ final class InfoResponse implements Arrayable
         $data = $this->info->toArray();
         $data['panel-base-url'] = $data['panelUrl'];
         $data['serviceVersion'] = $data['version'];
+        $data['supported'] = $data['capabilities'];
 
         return $data;
     }
@@ -57,8 +58,8 @@ final class InfoResponse implements Arrayable
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
-            Info::SUPPORTED_ADVERTISER,
-            Info::SUPPORTED_PUBLISHER
+            Info::CAPABILITY_ADVERTISER,
+            Info::CAPABILITY_PUBLISHER
         ));
     }
 }

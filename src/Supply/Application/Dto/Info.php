@@ -28,11 +28,14 @@ use Adshares\Common\UrlInterface;
 
 final class Info
 {
-    public const SUPPORTED_PUBLISHER = 'PUB';
+    public const CAPABILITY_PUBLISHER = 'PUB';
 
-    public const SUPPORTED_ADVERTISER = 'ADV';
+    public const CAPABILITY_ADVERTISER = 'ADV';
 
-    private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
+    private const AVAILABLE_CAPABILITY_VALUES = [
+        self::CAPABILITY_PUBLISHER,
+        self::CAPABILITY_ADVERTISER,
+    ];
 
     /** @var string */
     private $module;
@@ -44,7 +47,7 @@ final class Info
     private $version;
 
     /** @var array */
-    private $supported;
+    private $capabilities;
 
     /** @var string */
     private $panelUrl;
@@ -70,14 +73,14 @@ final class Info
         UrlInterface $privacyUrl,
         UrlInterface $termsUrl,
         UrlInterface $inventoryUrl,
-        string ...$supported
+        string ...$capabilities
     ) {
-        $this->validateSupportedValue($supported);
+        $this->validateCapabilities($capabilities);
 
         $this->module = $module;
         $this->name = $name;
         $this->version = $version;
-        $this->supported = $supported;
+        $this->capabilities = $capabilities;
         $this->panelUrl = $panelUrl;
         $this->privacyUrl = $privacyUrl;
         $this->termsUrl = $termsUrl;
@@ -85,10 +88,10 @@ final class Info
         $this->serverUrl = $serverUrl;
     }
 
-    public function validateSupportedValue(array $values): void
+    public function validateCapabilities(array $values): void
     {
         foreach ($values as $value) {
-            if (!in_array($value, self::AVAILABLE_SUPPORTED_VALUES, true)) {
+            if (!in_array($value, self::AVAILABLE_CAPABILITY_VALUES, true)) {
                 throw new RuntimeException(sprintf('Given supported value %s is not correct.', $value));
             }
         }
@@ -106,7 +109,7 @@ final class Info
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
-            ...$data['supported']
+            ...$data['capabilities'] ?? $data['supported']
         );
     }
 
@@ -116,7 +119,7 @@ final class Info
             'module' => $this->module,
             'name' => $this->name,
             'version' => $this->version,
-            'supported' => $this->supported,
+            'capabilities' => $this->capabilities,
             'serverUrl' => $this->serverUrl->toString(),
             'panelUrl' => $this->panelUrl->toString(),
             'privacyUrl' => $this->privacyUrl->toString(),
