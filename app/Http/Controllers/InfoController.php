@@ -24,17 +24,12 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Supply\Application\Dto\Info;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Contracts\Support\Arrayable;
 
 class InfoController extends Controller
 {
-    public function info(): JsonResponse
+    public function info(): Arrayable
     {
-        $data = Info::defaults()->toArray();
-
-        //BC for Wordpress Plugin
-        $data['panel-base-url'] = $data['panelUrl'];
-
-        return new JsonResponse($data);
+        return Info::defaults();
     }
 }

@@ -34,6 +34,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -342,7 +343,7 @@ class DemandController extends Controller
         string $accountAddress,
         string $date,
         string $signature
-    ): PaymentDetailsResponse {
+    ): Arrayable {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
         $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
@@ -366,9 +367,7 @@ class DemandController extends Controller
             );
         }
 
-        $ids = $payments->pluck('id')->all();
-
-        return new PaymentDetailsResponse(EventLog::fetchEvents($ids));
+        return new PaymentDetailsResponse(EventLog::fetchEvents($payments->pluck('id')));
     }
 
     public function inventoryList(Request $request): JsonResponse

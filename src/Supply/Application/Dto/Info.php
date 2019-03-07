@@ -24,10 +24,11 @@ namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlObject;
-use RuntimeException;
+use Illuminate\Contracts\Support\Arrayable;
 
-final class Info
+final class Info implements Arrayable
 {
     private const SUPPORTED_PUBLISHER = 'PUB';
 
@@ -122,6 +123,8 @@ final class Info
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
+            //BC for Wordpress Plugin
+            $data['panel-base-url'] = $this->panelUrl->toString(),
         ];
     }
 
@@ -166,7 +169,7 @@ final class Info
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
-            ...'ADV',
+            'ADV',
             'PUB'
         );
     }
