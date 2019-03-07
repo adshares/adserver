@@ -24,4 +24,4 @@ use Adshares\Adserver\Http\Controllers\InfoController;
 Route::get('/', function () { return ''; })->name('login');
 
 # API INFO
-Route::get('/info', [InfoController::class, 'info']);
+Route::get('/info', [InfoController::class, 'info'])->name('app.infoEndpoint');

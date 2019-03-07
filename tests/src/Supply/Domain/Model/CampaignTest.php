@@ -54,12 +54,12 @@ final class CampaignTest extends TestCase
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
-            Status::deleted(),
+            Status::toDelete(),
             [],
             []
         );
 
-        $this->assertEquals(Status::STATUS_DELETED, $campaign->getStatus());
+        $this->assertEquals(Status::STATUS_TO_DELETED, $campaign->getStatus());
 
         $campaign->activate();
 

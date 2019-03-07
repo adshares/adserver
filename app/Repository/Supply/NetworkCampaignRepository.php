@@ -31,7 +31,8 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTime;
+use Exception;
+use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
@@ -39,7 +40,7 @@ class NetworkCampaignRepository implements CampaignRepository
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
-            ->update(['status' => Status::STATUS_DELETED]);
+            ->update(['status' => Status::STATUS_TO_DELETED]);
 
 
         // mark all banners as DELETED for given $host
@@ -51,7 +52,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_host', $host)
-            ->update(['banner.status' => Status::STATUS_DELETED]);
+            ->update(['banner.status' => Status::STATUS_TO_DELETED]);
     }
 
     public function save(Campaign $campaign): void
@@ -115,9 +116,9 @@ class NetworkCampaignRepository implements CampaignRepository
         return new CampaignCollection(...$campaigns);
     }
 
-    public function fetchDeletedCampaigns(): CampaignCollection
+    public function fetchCampaignsToDelete(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_DELETED)->get();
+        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_TO_DELETED)->get();
 
         $campaigns = [];
 
@@ -172,5 +173,34 @@ class NetworkCampaignRepository implements CampaignRepository
                 'status' => $networkCampaign->status,
             ]
         );
+    }
+
+    public function deleteCampaign(Campaign $campaign): void
+    {
+        $campaign->delete();
+
+        DB::beginTransaction();
+
+        try {
+            DB::table(NetworkCampaign::getTableName())
+                ->where('uuid', hex2bin($campaign->getId()))
+                ->update(['status' => $campaign->getStatus()]);
+
+            // mark all banners as DELETED for given $host
+            DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
+                ->join(
+                    sprintf('%s as campaign', NetworkCampaign::getTableName()),
+                    'banner.network_campaign_id',
+                    '=',
+                    'campaign.id'
+                )
+                ->where('campaign.uuid', hex2bin($campaign->getId()))
+                ->update(['banner.status' => Status::STATUS_DELETED]);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+
+        DB::commit();
     }
 }

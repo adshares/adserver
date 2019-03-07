@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
@@ -51,7 +52,7 @@ class AdsBroadcastHost extends Command
     {
         parent::__construct();
 
-        $this->infoApiUrl = new Url((string)config('app.adserver_info_url'));
+        $this->infoApiUrl = new Url(ForceUrlProtocol::change(route('app.infoEndpoint')));
     }
 
     /**

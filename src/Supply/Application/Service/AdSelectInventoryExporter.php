@@ -20,17 +20,20 @@
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Application\Service\Exception\NoBannersForGivenCampaign;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class AdSelectInventoryExporter
 {
     private $client;
+    /** @var CampaignRepository */
+    private $repository;
 
-    public function __construct(AdSelect $client)
+    public function __construct(AdSelect $client, CampaignRepository $repository)
     {
         $this->client = $client;
+        $this->repository = $repository;
     }
 
     public function export(?CampaignCollection $campaignsToAddOrUpdate, ?CampaignCollection $campaignsToDelete): void
@@ -44,6 +47,10 @@ class AdSelectInventoryExporter
 
         if ($campaignsToDelete) {
             $this->client->deleteFromInventory($campaignsToDelete);
+
+            foreach ($campaignsToDelete as $campaign) {
+                $this->repository->deleteCampaign($campaign);
+            }
         }
     }
 }
