@@ -32,7 +32,7 @@ final class BroadcastableUrl implements Broadcastable, UrlObject
     /** @var Url */
     private $url;
 
-    public function __construct(Url $url)
+    public function __construct(UrlObject $url)
     {
         $this->url = $url;
     }
