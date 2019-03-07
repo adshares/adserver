@@ -23,12 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use function idn_to_utf8;
 use const FILTER_VALIDATE_URL;
 use const IDNA_ERROR_DISALLOWED;
 
-final class Url implements UrlObject
+final class IdnUrl implements UrlInterface
 {
     /** @var string */
     private $idn;
@@ -44,14 +44,14 @@ final class Url implements UrlObject
         $this->idn = $idn;
     }
 
-    public function idn(): string
+    public function utf8(): string
     {
-        return $this->idn;
+        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
     }
 
     public function toString(): string
     {
-        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        return $this->idn;
     }
 
     public function __toString(): string

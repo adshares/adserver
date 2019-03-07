@@ -30,7 +30,9 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Adserver'),
+    'name' => env('APP_NAME', 'AdServer'),
+    'version' => env('APP_VERSION', '#'),
+    'module' => 'urn:x-adshares:adserver',
 
     /*
     |--------------------------------------------------------------------------
@@ -135,14 +137,9 @@ return [
     'adpanel_base_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('ADSERVER_ID'),
-    'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
-    'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
-    'adserver_info_name' => env('ADSERVER_INFO_NAME'),
-    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
-    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
-    'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
-    'adserver_info_publisher' => env('ADSERVER_INFO_PUBLISHER'),
-    'adserver_info_advertiser' => env('ADSERVER_INFO_ADVERTISER'),
+    'adserver_banner_host' => env('ADSERVER_BANNER_HOST', env('ADSERVER_HOST')),
+    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL', env('ADSERVER_HOST').'/policies/terms.html'),
+    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL', env('ADSERVER_HOST').'/policies/privacy.html'),
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
     'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),

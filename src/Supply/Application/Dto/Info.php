@@ -22,44 +22,54 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Domain\ValueObject\IdnUrl;
+use Adshares\Common\UrlInterface;
 use RuntimeException;
 
 class Info
 {
     private const SUPPORTED_PUBLISHER = 'PUB';
+
     private const SUPPORTED_ADVERTISER = 'ADV';
 
     private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
 
     /** @var string */
     private $module;
+
     /** @var string */
     private $name;
+
     /** @var string */
     private $version;
+
     /** @var array */
     private $supported;
+
     /** @var string */
     private $panelUrl;
+
     /** @var string */
     private $privacyUrl;
+
     /** @var string */
     private $termsUrl;
+
     /** @var string */
     private $inventoryUrl;
-    /** @var Url */
+
+    /** @var IdnUrl */
     private $serverUrl;
 
     public function __construct(
         string $module,
         string $name,
         string $version,
-        Url $serverUrl,
-        Url $panelUrl,
-        Url $privacyUrl,
-        Url $termsUrl,
-        Url $inventoryUrl,
+        UrlInterface $serverUrl,
+        UrlInterface $panelUrl,
+        UrlInterface $privacyUrl,
+        UrlInterface $termsUrl,
+        UrlInterface $inventoryUrl,
         string ...$supported
     ) {
         $this->validateSupportedValue($supported);
@@ -90,11 +100,11 @@ class Info
             $data['module'],
             $data['name'],
             $data['version'],
-            new Url($data['serverUrl']),
-            new Url($data['panelUrl']),
-            new Url($data['privacyUrl']),
-            new Url($data['termsUrl']),
-            new Url($data['inventoryUrl']),
+            new IdnUrl($data['serverUrl']),
+            new IdnUrl($data['panelUrl']),
+            new IdnUrl($data['privacyUrl']),
+            new IdnUrl($data['termsUrl']),
+            new IdnUrl($data['inventoryUrl']),
             ...$data['supported']
         );
     }
