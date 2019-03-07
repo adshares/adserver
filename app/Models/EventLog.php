@@ -28,6 +28,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use function hex2bin;
 
@@ -189,6 +190,18 @@ class EventLog extends Model
         $log->their_userdata = $userData;
         $log->event_type = $type;
         $log->save();
+    }
+
+    public static function fetchOneByEventId(string $eventId): self
+    {
+        $event = self::where('event_id', hex2bin($eventId))->first();
+
+        if (!$event) {
+            throw (new ModelNotFoundException('Model not found'))
+                ->setModel(self::class, [$eventId]);
+        }
+
+        return $event;
     }
 
     public function payment(): BelongsTo

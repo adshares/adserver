@@ -34,6 +34,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -279,12 +280,14 @@ class DemandController extends Controller
             $adUserUrl = null;
         }
 
-        $response->setContent(view('demand/view-event',
+        $response->setContent(view(
+            'demand/view-event',
             [
                 'log_url' => route('banner-context', ['id' => $eventId]),
                 'view_script_url' => url('-/view.js'),
                 'aduser_url' => $adUserUrl,
-            ]));
+            ]
+        ));
         $response->send();
 
         $banner = $this->getBanner($bannerId);
@@ -311,7 +314,7 @@ class DemandController extends Controller
         return $response;
     }
 
-    public function context(Request $request, string $eventId)
+    public function context(Request $request, string $eventId): Response
     {
         $response = new Response();
 
@@ -321,11 +324,12 @@ class DemandController extends Controller
 
         $context = Utils::urlSafeBase64Decode($request->query->get('k'));
 
-        $event = EventLog::where('event_id', hex2bin($eventId))->first();
-
-        if ($event) {
+        try {
+            $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $context;
             $event->save();
+        } catch (ModelNotFoundException $e) {
+            Log::debug($e->getMessage());
         }
 
         return $response;
