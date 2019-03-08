@@ -128,7 +128,8 @@ class NetworkHost extends Model
 
         return new Info(
             InfoResponse::ADSHARES_MODULE_NAME,
-            'bc-tmp-srv', 'pre-v0.3',
+            'bc-tmp-srv',
+            'pre-v0.3',
             new SecureUrl($this->attributes['host']),
             new NullUrl(),
             new NullUrl(),
