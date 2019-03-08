@@ -251,6 +251,9 @@ class CampaignsController extends Controller
 
             if ($bannerFromInput) {
                 $banner->name = $bannerFromInput['name'];
+                if (Banner::HTML_TYPE === $bannerFromInput['type']) {
+                    $banner->creative_contents = $bannerFromInput['html'];
+                }
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(

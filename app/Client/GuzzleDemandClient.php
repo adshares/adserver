@@ -24,6 +24,9 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\UrlInterface;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -34,7 +37,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use function GuzzleHttp\json_decode;
 
@@ -42,31 +44,29 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
-
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     /** @var SignatureVerifier */
     private $signatureVerifier;
 
-    public function __construct(SignatureVerifier $signatureVerifier)
+    /** @var int */
+    private $timeout;
+
+    public function __construct(SignatureVerifier $signatureVerifier, int $timeout)
     {
         $this->signatureVerifier = $signatureVerifier;
+        $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
     {
-        $client = new Client([
-            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-            'base_uri' => $inventoryHost,
-            'timeout' => 5,
-        ]);
+        $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+            $response = $client->get($inventoryUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $inventoryHost, $exception->getMessage()),
+                sprintf('Could not connect to %s host (%s).', $inventoryUrl, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -77,15 +77,11 @@ final class GuzzleDemandClient implements DemandClient
 
         $this->validateResponse($statusCode, $body);
 
-        try {
-            $campaigns = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
-        }
+        $campaigns = $this->createDecodedResponseFromBody($body);
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryHost));
+            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryUrl));
             $campaignsCollection->add($campaign);
         }
 
@@ -94,11 +90,7 @@ final class GuzzleDemandClient implements DemandClient
 
     public function fetchPaymentDetails(string $host, string $transactionId): array
     {
-        $client = new Client([
-            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-            'base_uri' => $host,
-            'timeout' => 5,
-        ]);
+        $client = new Client($this->requestParameters($host));
 
         $privateKey = (string)config('app.adshares_secret');
         $accountAddress = (string)config('app.adshares_address');
@@ -136,10 +128,56 @@ final class GuzzleDemandClient implements DemandClient
         $body = (string)$response->getBody();
         $this->validateResponse($statusCode, $body);
 
+        return $this->createDecodedResponseFromBody($body);
+    }
+
+    public function fetchInfo(UrlInterface $infoUrl): Info
+    {
+        $client = new Client($this->requestParameters());
+
+        try {
+            $response = $client->get((string)$infoUrl);
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Could not connect to %s (%s).', (string)$infoUrl, $exception->getMessage()),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        $statusCode = $response->getStatusCode();
+        $body = (string)$response->getBody();
+
+        $this->validateResponse($statusCode, $body);
+
+        $data = $this->createDecodedResponseFromBody($body);
+
+        return Info::fromArray($data);
+    }
+
+    private function requestParameters(?string $baseUrl = null): array
+    {
+        $params = [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Cache-Control' => 'no-cache',
+            ],
+            'timeout' => $this->timeout,
+        ];
+
+        if ($baseUrl) {
+            $params['base_uri'] = $baseUrl;
+        }
+
+        return $params;
+    }
+
+    private function createDecodedResponseFromBody(string $body): array
+    {
         try {
             $decoded = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException('Invalid json data.');
+            throw new DomainRuntimeException('Invalid json data.');
         }
 
         return $decoded;

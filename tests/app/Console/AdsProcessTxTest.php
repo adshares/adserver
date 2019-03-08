@@ -34,7 +34,9 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -91,7 +93,19 @@ class AdsProcessTxTest extends TestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        NetworkHost::registerHost('0001-00000000-9B6F', '127.0.0.1');
+        $info = new Info(
+            'ADSERVER',
+            'AdServer',
+            '0.1',
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            new Url('http://127.0.0.1'),
+            'PUB'
+        );
+
+        NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
         $demandClient = new DummyDemandClient();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '');
@@ -397,7 +411,7 @@ JSON
             "tx": {
                 "data": "140100020000000568C85B0100080600000200",
                 "signature": "08463696728F197EE3CC93DDFC4EA8F91C8BE1EBC1E086A0C13336F3FAB19A7410E61'
-                .'1E8752FF79A4D8EC4F560F0EA7DD80579621C7411297C22D20155533D0E",
+            .'1E8752FF79A4D8EC4F560F0EA7DD80579621C7411297C22D20155533D0E",
                 "time": "1539860485",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",

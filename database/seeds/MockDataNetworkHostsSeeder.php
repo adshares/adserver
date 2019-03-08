@@ -19,6 +19,8 @@
  */
 
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Supply\Application\Dto\Info;
 use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder
@@ -27,11 +29,18 @@ class MockDataNetworkHostsSeeder extends Seeder
     {
         $this->command->info('[mock] seeding: network_hosts');
 
-        $networkHost = new NetworkHost();
-        $networkHost->address = '0001-00000001-0001';
-        $networkHost->host = 'http://webserver';
-        $networkHost->last_broadcast = new DateTime();
+        $info = new Info(
+            'ADSERVER',
+            'ADSERVER DEMAND',
+            '0.1',
+            new Url('http://webserver'),
+            new Url('http://localhost:4200'),
+            new Url('http://webserver/policies/privacy.html'),
+            new Url('http://webserver/policies/terms.html'),
+            new Url('http://webserver/adshares/inventory/list'),
+            'PUB', 'ADV'
+        );
 
-        $networkHost->save();
+        NetworkHost::registerHost('0001-00000001-0001', $info, new DateTime());
     }
 }

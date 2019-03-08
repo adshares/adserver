@@ -1,6 +1,0 @@
-{
-  "panel-base-url": "${ADPANEL_URL}",
-  "version": "${APP_VERSION}",
-  "name": "${APP_NAME}",
-  "serviceType": "server"
-}

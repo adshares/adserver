@@ -20,7 +20,10 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\UrlInterface;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -136,7 +139,7 @@ final class DummyDemandClient implements DemandClient
         ];
     }
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
     {
         return new CampaignCollection(...$this->campaigns);
     }
@@ -161,5 +164,21 @@ final class DummyDemandClient implements DemandClient
                 'event_value' => 100,
             ],
         ];
+    }
+
+    public function fetchInfo(UrlInterface $infoUrl): Info
+    {
+        return new Info(
+            'ADSERVER',
+            'ADSERVER DEMAND',
+            '0.1',
+            new Url('https://server.example.com/'),
+            new Url('https://panel.example.com/'),
+            new Url('https://example.com/privacy'),
+            new Url('https://example.com/terms'),
+            new Url('https://inventory.example.com/import'),
+            'PUB',
+            'ADV'
+        );
     }
 }

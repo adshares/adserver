@@ -22,19 +22,17 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\BroadcastCommand;
-use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Network\Broadcast;
+use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
+use function route;
 
 class AdsBroadcastHost extends Command
 {
     use LineFormatterTrait;
-
-    const BROADCAST_PREFIX = 'AdServer.';
-
-    const EXIT_CODE_SUCCESS = 0;
-    const EXIT_CODE_ERROR = 1;
 
     /**
      * @var string
@@ -47,14 +45,15 @@ class AdsBroadcastHost extends Command
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
     /**
-     * @var string
+     * @var Url
      */
-    private $host;
+    private $infoApiUrl;
 
     public function __construct()
     {
         parent::__construct();
-        $this->host = config('app.adserver_host');
+
+        $this->infoApiUrl = new Url(ForceUrlProtocol::change(route('app.infoEndpoint')));
     }
 
     /**
@@ -62,35 +61,17 @@ class AdsBroadcastHost extends Command
      *
      * @return int
      */
-    public function handle(AdsClient $adsClient): int
+    public function handle(AdsClient $adsClient): void
     {
         $this->info('Start command '.$this->signature);
 
-        $message = $this->strToHex(urlencode(self::BROADCAST_PREFIX.$this->host));
+        $url = new BroadcastableUrl($this->infoApiUrl);
+        $command = new Broadcast($url);
 
-        $command = new BroadcastCommand($message);
-        try {
-            $response = $adsClient->runTransaction($command);
-            $txid = $response->getTx()->getId();
-            $this->info("Broadcast message sent successfully. Txid: [$txid]");
-        } catch (CommandException $exc) {
-            $this->error('Cannot send broadcast due to error '.$exc->getCode());
+        $response = $adsClient->runTransaction($command);
 
-            return self::EXIT_CODE_ERROR;
-        }
+        $txId = $response->getTx()->getId();
 
-        return self::EXIT_CODE_SUCCESS;
-    }
-
-    private function strToHex(string $string): string
-    {
-        $hex = '';
-        for ($i = 0; $i < strlen($string); $i++) {
-            $ord = ord($string[$i]);
-            $hexCode = dechex($ord);
-            $hex .= substr('0'.$hexCode, -2);
-        }
-
-        return strToUpper($hex);
+        $this->info("Url ($url) broadcast successfully. TxId: $txId");
     }
 }

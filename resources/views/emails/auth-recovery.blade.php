@@ -5,7 +5,7 @@
 
 Please use button below to setup your new password
 
-@component('mail::button', ['url' => config('app.adpanel_base_url').$uri.$token])
+@component('mail::button', ['url' => config('app.adpanel_url').$uri.$token])
 Setup new password
 @endcomponent
 

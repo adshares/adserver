@@ -48,7 +48,8 @@ $factory->define(
             'ip' => bin2hex(inet_pton($faker->ipv4)),
             'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'pay_from' => $faker->randomElement($addresses),
-            'headers' => <<<JSON
+            'headers' => json_decode(
+                <<<JSON
 {
     "host": [
         "{$faker->ipv4}"
@@ -82,7 +83,9 @@ $factory->define(
     ]
 }
 JSON
-            ,
+                ,
+                true
+            ),
         ];
     }
 );

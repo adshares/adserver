@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
@@ -33,6 +34,7 @@ use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -100,7 +102,7 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_host'),
+            config('app.url'),
             config('app.aduser_external_location'),
             '.'.config('app.website_banner_class'),
         ];
@@ -309,7 +311,7 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.gif',
+            '%s/register/%s/%s/%s.htm',
             config('app.aduser_external_location'),
             urlencode(config('app.adserver_id')),
             $trackingId,
@@ -319,5 +321,44 @@ class SupplyController extends Controller
         $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
 
         return $response;
+    }
+
+    public function why(Request $request): View
+    {
+        $bannerId = $request->query->get('bid');
+
+        $banner = NetworkBanner::fetchByPublicId($bannerId);
+        $campaign = $banner->campaign()->first();
+        $networkHost = NetworkHost::fetchByHost($campaign->source_host);
+
+        $info = $networkHost->info ?? null;
+
+        $data = [
+            'url' => $banner->serve_url,
+            'supplyName' => config('app.adserver_info_name'),
+            'supplyTermsUrl' => config('app.terms_url'),
+            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyPanelUrl' => config('app.adpanel_url'),
+            'demand' => false,
+            'bannerType' => $banner->type,
+        ];
+
+        if ($info) {
+            $data = array_merge(
+                $data,
+                [
+                    'demand' => true,
+                    'demandName' => $info->getName(),
+                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
+                    'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
+                    'demandPanelUrl' => $info->getPanelUrl(),
+                ]
+            );
+        }
+
+        return view(
+            'supply/why',
+            $data
+        );
     }
 }

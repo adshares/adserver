@@ -22,12 +22,13 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
-use function array_map;
-use function hex2bin;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use function array_map;
+use function hex2bin;
 
 /**
  * @property NetworkCampaign campaign
@@ -95,7 +96,11 @@ class NetworkBanner extends Model
 
     public static function fetch(int $limit, int $offset)
     {
-        $query = self::skip($offset)->take($limit)->orderBy('network_banners.id', 'desc');
+        $query =
+            self::where('network_banners.status', Status::STATUS_ACTIVE)->skip($offset)->take($limit)->orderBy(
+                'network_banners.id',
+                'desc'
+            );
         $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
         $query->select(
             'network_banners.id',
@@ -114,9 +119,9 @@ class NetworkBanner extends Model
 
     public static function fetchCount(): int
     {
-        return (new NetworkBanner())->count();
+        return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
     }
-    
+
     public static function findIdsByUuids(array $publicUuids)
     {
         $binPublicIds = array_map(
@@ -158,5 +163,10 @@ class NetworkBanner extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Classification::class);
+    }
+
+    public static function fetchByPublicId(string $publicId): ?self
+    {
+        return self::where('uuid', hex2bin($publicId))->first();
     }
 }

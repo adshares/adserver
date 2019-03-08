@@ -206,7 +206,7 @@ class WalletController extends Controller
 
         Mail::to($user)->queue(
             new WithdrawalApproval(
-                config('app.adpanel_base_url')."/auth/withdrawal-confirmation/$token",
+                config('app.adpanel_url')."/auth/withdrawal-confirmation/$token",
                 $amount,
                 $fee,
                 $addressTo->toString()
