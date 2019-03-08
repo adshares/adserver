@@ -73,8 +73,6 @@ class InventoryImporterCommand extends Command
                 $networkHost->connectionFailed();
 
                 Log::error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
-
-                continue;
             }
         }
 
