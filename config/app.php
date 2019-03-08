@@ -27,7 +27,6 @@ $appAdserverId = env('ADSERVER_ID', 'a-name-that-does-not-collide');
 return [
     'name' => env('APP_NAME', 'AdServer'),
     'version' => env('APP_VERSION', '#'),
-    'module' => 'adserver',
     'env' => $appEnv,
     'url' => $appUrl,
     'debug' => env('APP_DEBUG', false),
