@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use function array_map;
 use function hex2bin;
+use Illuminate\Database\Query\JoinClause;
 
 /**
  * @property NetworkCampaign campaign
@@ -96,11 +98,119 @@ class NetworkBanner extends Model
 
     public static function fetch(int $limit, int $offset)
     {
-        $query =
-            self::where('network_banners.status', Status::STATUS_ACTIVE)->skip($offset)->take($limit)->orderBy(
-                'network_banners.id',
-                'desc'
-            );
+        $query = self::queryBannersWithCampaign();
+
+        return self::queryPaging($query, $limit, $offset)->get();
+    }
+
+    public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset)
+    {
+        if (!$networkBannerFilter->isApproved()
+            && !$networkBannerFilter->isRejected()
+            && !$networkBannerFilter->isUnclassified()) {
+            $query = self::fetchAllByUserId($networkBannerFilter);
+        } else if ($networkBannerFilter->isApproved()) {
+            $query = self::fetchApprovedByUserId($networkBannerFilter);
+        } else if ($networkBannerFilter->isRejected()) {
+            $query = self::fetchRejectedByUserId($networkBannerFilter);
+        } else if ($networkBannerFilter->isUnclassified()) {
+            $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
+        } else {
+            $query = self::fetchAllByUserId($networkBannerFilter);
+        }
+
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        if (null !== $siteId) {
+            self::querySkipRejectedGlobally($query, $userId);
+        }
+
+        return self::queryPaging($query, $limit, $offset)->get();
+    }
+
+    public static function fetchAllByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        return self::queryBannersWithCampaign($networkBannerFilter);
+    }
+
+    private static function fetchApprovedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+        $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
+            ->where('classifications.status', Classification::DB_STATUS_APPROVED);
+        
+        return $query;
+    }
+
+    public static function fetchRejectedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+        $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
+            ->where('classifications.status', Classification::DB_STATUS_REJECTED);
+
+        return $query;
+    }
+
+    public static function fetchUnclassifiedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+        $query->leftJoin(
+            'classifications',
+            function (JoinClause $join) use ($userId, $siteId) {
+                $join->on('network_banners.id', '=', 'classifications.banner_id')
+                    ->where(
+                        [
+                            'classifications.user_id' => $userId,
+                            'classifications.site_id' => $siteId,
+                        ]
+                    );
+            }
+         )->whereNull('classifications.banner_id');
+
+        return $query;
+    }
+
+    public static function fetchCount(): int
+    {
+        return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
+    }
+
+    private static function queryPaging(Builder $query, int $limit, int $offset): Builder
+    {
+        return $query->skip($offset)->take($limit);
+    }
+
+    private static function queryBannersWithCampaign(?NetworkBannerFilter $networkBannerFilter = null): Builder
+    {
+        $whereClause = [];
+        $whereClause[] = ['network_banners.status', '=', Status::STATUS_ACTIVE];
+
+        if (null !== $networkBannerFilter) {
+            $bannerWidth = $networkBannerFilter->getWidth();
+            if (null !== $bannerWidth) {
+                $whereClause[] = ['network_banners.width', '=', $bannerWidth];
+            }
+
+            $bannerHeight = $networkBannerFilter->getHeight();
+            if (null !== $bannerHeight) {
+                $whereClause[] = ['network_banners.height', '=', $bannerHeight];
+            }
+        }
+
+        $query = self::where($whereClause)->orderBy(
+            'network_banners.id',
+            'desc'
+        );
         $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
         $query->select(
             'network_banners.id',
@@ -114,12 +224,44 @@ class NetworkBanner extends Model
             'network_campaigns.max_cpc'
         );
 
-        return $query->get();
+        return $query;
     }
 
-    public static function fetchCount(): int
+    private static function queryJoinWithUserClassification(Builder $query, int $userId, ?int $siteId): Builder
     {
-        return (new NetworkBanner())->count();
+        $query = $query->join(
+            'classifications',
+            function (JoinClause $join) use ($userId, $siteId) {
+                $join->on('network_banners.id', '=', 'classifications.banner_id')->where(
+                    [
+                        'classifications.user_id' => $userId,
+                        'classifications.site_id' => $siteId,
+                    ]
+                );
+            }
+        );
+
+        return $query;
+    }
+
+    private static function querySkipRejectedGlobally(Builder $query, int $userId): void
+    {
+        $query->leftJoin(
+            'classifications as classification_global_reject',
+            function (JoinClause $join) use ($userId) {
+                $join->on('network_banners.id', '=', 'classification_global_reject.banner_id')->where(
+                    [
+                        'classification_global_reject.user_id' => $userId,
+                        'classification_global_reject.site_id' => null,
+                    ]
+                );
+            }
+        )->where(
+            function (Builder $whereClause) {
+                $whereClause->where('classification_global_reject.status', Classification::DB_STATUS_APPROVED)
+                    ->orWhereNull('classification_global_reject.status');
+            }
+        );
     }
 
     public static function findIdsByUuids(array $publicUuids)
