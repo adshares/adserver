@@ -118,7 +118,7 @@ class NetworkHost extends Model
         $this->update();
     }
 
-    public function getInfoAttribute(): ?Info
+    public function getInfoAttribute(): Info
     {
         if ($this->attributes['info']) {
             $info = json_decode($this->attributes['info'], true);

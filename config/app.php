@@ -114,7 +114,6 @@ return [
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'website_banner_class' => env('X_BANNER_CLASS', $appAdserverId),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
-    'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),
