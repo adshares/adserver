@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class InventoryImporterCommand extends Command
 {
@@ -68,7 +69,9 @@ class InventoryImporterCommand extends Command
             }
         } catch (UnexpectedClientResponseException $exception) {
             $networkHost->connectionFailed();
-            $this->error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+
+            Log::warning(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+
             return;
         }
 
