@@ -96,39 +96,36 @@ class MockDataSitesSeeder extends Seeder
 
         DB::beginTransaction();
         foreach ($publishers as $publisher) {
-            try {
-                $user = User::where('email', $publisher->email)->first();
-                if (empty($user)) {
-                    DB::rollback();
-                    throw new Exception("User not found <{$publisher->email}>");
-                }
-
-                foreach ($publisher->sites as $site) {
-                    $newSite = factory(Site::class)->create([
-                        'user_id' => $user->id,
-                        'name' => $site->name,
-                        'status' => $site->status,
-                        'site_requires' => isset($site->site_requires) ? json_encode($site->site_requires) : null,
-                        'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
-                    ]);
-
-                    $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
-
-                    foreach ($zones as $zoneNames => $zone) {
-                        factory(Zone::class)->create([
-                            'uuid' => $zone['uuid'] ?? null,
-                            'name' => $zoneNames,
-                            'site_id' => $newSite->id,
-                            'width' => $zone['width'],
-                            'height' => $zone['height'],
-                        ]);
-                    }
-
-                    $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
-                }
-            } catch (\Exception $exception) {
-                echo $exception->getMessage();die();
+            $user = User::where('email', $publisher->email)->first();
+            if (empty($user)) {
+                DB::rollback();
+                throw new Exception("User not found <{$publisher->email}>");
             }
+
+            foreach ($publisher->sites as $site) {
+                $newSite = factory(Site::class)->create([
+                    'user_id' => $user->id,
+                    'name' => $site->name,
+                    'status' => $site->status,
+                    'site_requires' => isset($site->site_requires) ? json_encode($site->site_requires) : null,
+                    'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
+                ]);
+
+                $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
+
+                foreach ($zones as $zoneNames => $zone) {
+                    factory(Zone::class)->create([
+                        'uuid' => $zone['uuid'] ?? null,
+                        'name' => $zoneNames,
+                        'site_id' => $newSite->id,
+                        'width' => $zone['width'],
+                        'height' => $zone['height'],
+                    ]);
+                }
+
+                $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
+            }
+
         }
         DB::commit();
 
