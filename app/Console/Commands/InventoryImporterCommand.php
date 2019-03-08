@@ -70,7 +70,7 @@ class InventoryImporterCommand extends Command
         } catch (UnexpectedClientResponseException $exception) {
             $networkHost->connectionFailed();
 
-            Log::warning(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+            Log::error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
 
             return;
         }
