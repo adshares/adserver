@@ -27,25 +27,49 @@ use Illuminate\Database\Seeder;
 class MockDataSitesSeeder extends Seeder
 {
     private $zones = [
-        'top' => [
+        'Leaderboard' => [
             'width' => 728,
             'height' => 90,
         ],
-        'left' => [
+        'Wide Skycraper' => [
             'width' => 160,
             'height' => 600,
         ],
-        'right' => [
+        'Large Rectangle' => [
+            'width' => 336,
+            'height' => 280,
+        ],
+        'Half Page' => [
             'width' => 300,
             'height' => 600,
         ],
-        'mid' => [
-            'width' => 750,
-            'height' => 300,
+        'Large Mobile' => [
+            'width' => 320,
+            'height' => 100,
         ],
-        'bottom' => [
+        'Leaderboard 2' => [
             'width' => 728,
             'height' => 90,
+        ],
+        'Leaderboard 3' => [
+            'width' => 728,
+            'height' => 90,
+        ],
+        'Large Rectangle 2' => [
+            'width' => 336,
+            'height' => 280,
+        ],
+        'Large Mobile 2' => [
+            'width' => 320,
+            'height' => 100,
+        ],
+        'Large Mobile 3' => [
+            'width' => 320,
+            'height' => 100,
+        ],
+        'Wide Skyscraper 2' => [
+            'width' => 160,
+            'height' => 600,
         ],
     ];
 
@@ -72,34 +96,38 @@ class MockDataSitesSeeder extends Seeder
 
         DB::beginTransaction();
         foreach ($publishers as $publisher) {
-            $user = User::where('email', $publisher->email)->first();
-            if (empty($user)) {
-                DB::rollback();
-                throw new Exception("User not found <{$publisher->email}>");
-            }
-
-            foreach ($publisher->sites as $site) {
-                $newSite = factory(Site::class)->create([
-                    'user_id' => $user->id,
-                    'name' => $site->name,
-                    'status' => $site->status,
-                    'site_requires' => isset($site->site_requires) ? json_encode($site->site_requires) : null,
-                    'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
-                ]);
-
-                $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
-
-                foreach ($zones as $zoneNames => $zone) {
-                    factory(Zone::class)->create([
-                        'uuid' => $zone['uuid'],
-                        'name' => $zoneNames,
-                        'site_id' => $newSite->id,
-                        'width' => $zone['width'],
-                        'height' => $zone['height'],
-                    ]);
+            try {
+                $user = User::where('email', $publisher->email)->first();
+                if (empty($user)) {
+                    DB::rollback();
+                    throw new Exception("User not found <{$publisher->email}>");
                 }
 
-                $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
+                foreach ($publisher->sites as $site) {
+                    $newSite = factory(Site::class)->create([
+                        'user_id' => $user->id,
+                        'name' => $site->name,
+                        'status' => $site->status,
+                        'site_requires' => isset($site->site_requires) ? json_encode($site->site_requires) : null,
+                        'site_excludes' => isset($site->site_excludes) ? json_encode($site->site_excludes) : null,
+                    ]);
+
+                    $zones = isset($site->zones) ? json_decode(json_encode($site->zones), true) : $this->zones;
+
+                    foreach ($zones as $zoneNames => $zone) {
+                        factory(Zone::class)->create([
+                            'uuid' => $zone['uuid'] ?? null,
+                            'name' => $zoneNames,
+                            'site_id' => $newSite->id,
+                            'width' => $zone['width'],
+                            'height' => $zone['height'],
+                        ]);
+                    }
+
+                    $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
+                }
+            } catch (\Exception $exception) {
+                echo $exception->getMessage();die();
             }
         }
         DB::commit();

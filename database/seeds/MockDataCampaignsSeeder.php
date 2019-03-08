@@ -69,7 +69,7 @@ class MockDataCampaignsSeeder extends Seeder
                 $files = glob(__DIR__."/assets/{$cr->code}/*.png");
 
                 foreach ($files as $filename) {
-                    $b = $this->makeBanner($campaign, getimagesize($filename), $filename);
+                    $b = $this->makeImageBanner($campaign, getimagesize($filename), $filename);
                     $b->save();
                     $banners[] = $b;
                     $this->command->info(" Added banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
@@ -77,11 +77,18 @@ class MockDataCampaignsSeeder extends Seeder
 
                 if (empty($banners)) {
                     foreach ($this->bannerSizes as $size) {
-                        $b = $this->makeBanner($campaign, $size);
+                        $b = $this->makeImageBanner($campaign, $size);
                         $b->save();
                         $banners[] = $b;
-                        $this->command->info(" Added banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
+                        $this->command->info(" Added IMAGE banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
                     }
+                }
+
+                foreach ($this->bannerSizes as $size) {
+                    $b = $this->makeHtmlBanner($campaign, $size);
+                    $b->save();
+                    $banners[] = $b;
+                    $this->command->info(" Added HTML banner - #{$b->id} [{$b->creative_width}x{$b->creative_height}]");
                 }
 
                 $this->command->info(" Added - [$campaign->landing_url] for user <{$user->email}>");
@@ -113,16 +120,15 @@ class MockDataCampaignsSeeder extends Seeder
         return $campaign;
     }
 
-    private function makeBanner($c, $s = [], $filename = null): Banner
+    private function makeImageBanner($campaign, $size = [], $filename = null): Banner
     {
-        $t = 'image';
         $b = new Banner();
         $b->fill(
             [
-                'campaign_id' => $c->id,
-                'creative_type' => $t,
-                'creative_width' => $s[0],
-                'creative_height' => $s[1],
+                'campaign_id' => $campaign->id,
+                'creative_type' => 'image',
+                'creative_width' => $size[0],
+                'creative_height' => $size[1],
                 'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
                 'status' => Banner::STATUS_ACTIVE,
             ]
@@ -131,8 +137,26 @@ class MockDataCampaignsSeeder extends Seeder
         if (!empty($filename)) {
             $b->creative_contents = file_get_contents($filename);
         } else {
-            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $s[0], $s[1], "CID: $c->id");
+            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $size[0], $size[1], "CID: $campaign->id");
         }
+
+        return $b;
+    }
+
+    private function makeHtmlBanner($campaign, array $size): Banner
+    {
+        $b = new Banner();
+        $b->fill(
+            [
+                'campaign_id' => $campaign->id,
+                'creative_type' => 'html',
+                'creative_width' => $size[0],
+                'creative_height' => $size[1],
+                'creative_contents' => $this->generateBannerHTML(rand(1,9), $size[0], $size[1]),
+                'name' => sprintf('Banner HTML %s-%s', $size[0], $size[1]),
+                'status' => Banner::STATUS_ACTIVE,
+            ]
+        );
 
         return $b;
     }
