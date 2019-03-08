@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Common\Domain\ValueObject\NullUrl;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\Info;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -115,7 +118,7 @@ class NetworkHost extends Model
         $this->update();
     }
 
-    public function getInfoAttribute(): ?Info
+    public function getInfoAttribute(): Info
     {
         if ($this->attributes['info']) {
             $info = json_decode($this->attributes['info'], true);
@@ -123,7 +126,17 @@ class NetworkHost extends Model
             return Info::fromArray($info);
         }
 
-        return null;
+        return new Info(
+            InfoResponse::ADSHARES_MODULE_NAME,
+            'bc-tmp-srv',
+            'pre-v0.3',
+            new SecureUrl($this->attributes['host']),
+            new NullUrl(),
+            new NullUrl(),
+            new NullUrl(),
+            new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            Info::CAPABILITY_ADVERTISER
+        );
     }
 
     public function setInfoAttribute(Info $info): void
