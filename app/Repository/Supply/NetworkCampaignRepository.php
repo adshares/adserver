@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
@@ -81,9 +81,9 @@ class NetworkCampaignRepository implements CampaignRepository
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
             $banner['uuid'] = $banner['id'];
-            $banner['serve_url'] = ForceUrlProtocol::change($banner['serve_url']);
-            $banner['click_url'] = ForceUrlProtocol::change($banner['click_url']);
-            $banner['view_url'] = ForceUrlProtocol::change($banner['view_url']);
+            $banner['serve_url'] = SecureUrl::change($banner['serve_url']);
+            $banner['click_url'] = SecureUrl::change($banner['click_url']);
+            $banner['view_url'] = SecureUrl::change($banner['view_url']);
 
             unset($banner['id']);
 
