@@ -20,60 +20,16 @@
 
 $appUrl = env('APP_URL', 'http://localhost');
 
-return [
-    /*
-    |--------------------------------------------------------------------------
-    | Application Name
-    |--------------------------------------------------------------------------
-    |
-    | This value is the name of your application. This value is used when the
-    | framework needs to place the application's name in a notification or
-    | any other location as required by the application or its packages.
-    |
-    */
+$appEnv = env('APP_ENV', 'production');
 
+$appAdserverId = env('ADSERVER_ID', 'a-name-that-does-not-collide');
+
+return [
     'name' => env('APP_NAME', 'AdServer'),
     'version' => env('APP_VERSION', '#'),
-    'module' => 'adserver',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application Environment
-    |--------------------------------------------------------------------------
-    |
-    | This value determines the "environment" your application is currently
-    | running in. This may determine how you prefer to configure various
-    | services your application utilizes. Set this in your ".env" file.
-    |
-    */
-
-    'env' => env('APP_ENV', 'production'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application Debug Mode
-    |--------------------------------------------------------------------------
-    |
-    | When your application is in debug mode, detailed error messages with
-    | stack traces will be shown on every error that occurs within your
-    | application. If disabled, a simple generic error page is shown.
-    |
-    */
-
-    'debug' => env('APP_DEBUG', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application URL
-    |--------------------------------------------------------------------------
-    |
-    | This URL is used by the console to properly generate URLs when using
-    | the Artisan command line tool. You should set this to the root of
-    | your application so that it is used when running Artisan tasks.
-    |
-    */
-
+    'env' => $appEnv,
     'url' => $appUrl,
+    'debug' => env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -137,7 +93,7 @@ return [
 
     'adpanel_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
-    'adserver_id' => env('ADSERVER_ID'),
+    'adserver_id' => $appAdserverId,
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
     'terms_url' => $appUrl.'/policies/terms.html',
     'privacy_url' => $appUrl.'/policies/privacy.html',
@@ -156,9 +112,8 @@ return [
     'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-    'website_banner_class' => env('ADSERVER_ID', 'a-name-that-does-not-collide'),
+    'website_banner_class' => env('X_BANNER_CLASS', $appAdserverId),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
-    'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),

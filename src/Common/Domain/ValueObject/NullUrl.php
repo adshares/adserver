@@ -18,14 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\InfoController;
-use Illuminate\Support\Facades\Route;
+declare(strict_types = 1);
 
-Route::get('/',
-    function () {
-        return '';
-    })->name('login');
+namespace Adshares\Common\Domain\ValueObject;
 
-# API INFO
-Route::get('/info', [InfoController::class, 'info']);
-Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlInterface;
+
+final class NullUrl implements UrlInterface
+{
+    public function __toString(): string
+    {
+        return $this->toString();
+    }
+
+    public function toString(): string
+    {
+        throw new RuntimeException('This is a NULL object.');
+    }
+}

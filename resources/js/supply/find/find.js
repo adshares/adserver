@@ -76,6 +76,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
 
+    banner.adsharesTrackAccess = [];
     if (element.tagName == 'IFRAME') {
         var mouseover = false, evFn;
         addListener(element, 'mouseenter', evFn = function () {
@@ -113,6 +114,35 @@ var prepareElement = function (context, banner, element, contextParam) {
                     if (!window.open(url, '_blank')) {
                         window.location.href = url;
                     }
+                }
+            }
+
+            var has_access = event.source == element.contentWindow;
+            has_access || banner.adsharesTrackAccess.forEach(function(win) {
+                if(win == event.source) {
+                    has_access = true;
+                }
+            });
+            if (has_access && event.data)
+            {
+                var data, isString = typeof event.data == "string";
+                if (isString) {
+                    data = JSON.parse(event.data);
+                } else {
+                    data = event.data;
+                }
+                if (data.adsharesTrack) {
+                    data.adsharesTrack.forEach(function (request) {
+                        if(banner.adsharesTrackAccess.length >= 5) return;
+                        if(request.type == 'iframe') {
+                            var iframe = addTrackingIframe(request.url, div);
+                            banner.adsharesTrackAccess.push(iframe.contentWindow);
+                        } else if(request.type == 'img') {
+                            addTrackingImage(request.url, div);
+                            banner.adsharesTrackAccess.push('img');
+                        }
+
+                    });
                 }
             }
         });
@@ -179,7 +209,7 @@ function isRendered(domObj) {
             return true;
         }
         domObj = domObj.parentNode;
-    };
+    }
     return true;
 }
 
@@ -225,7 +255,7 @@ var isVisible = function (el) {
         if ((left + width) < rect.left)
             return false;
         el = el.parentNode;
-    };
+    }
     // Check its within the document viewport
     return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
         && top > -height
@@ -400,10 +430,26 @@ var findDestination = function (zoneId, tags, excludedTags) {
     }
 };
 
-var addTrackingPixel = function (context, banner, element) {
-    if (!context.view_url) return;
+var addTrackingIframe = function (url, element) {
+    if (!url) return;
+    var iframe = createIframeFromUrl(url);
+    element.parentNode.insertBefore(iframe, element);
+    setTimeout(function() {
+        iframe.parentElement.removeChild(iframe);
+    }, 3000);
+    return iframe;
+};
 
-    element.parentNode.insertBefore(createIframeFromUrl(context.view_url), element);
+var addTrackingImage = function (url, element) {
+    if (!url) return;
+    var img = new Image();
+    img.setAttribute('style', 'display:none');
+    img.setAttribute('width', 1);
+    img.setAttribute('height', 1);
+    img.src = url;
+    document.body.appendChild(img);
+    element.parentNode.insertBefore(img, element);
+    return img;
 };
 
 var fetchBanner = function (banner, context) {
@@ -447,7 +493,7 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                addTrackingPixel(context, banner, element);
+                banner.adsharesTrackAccess.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
