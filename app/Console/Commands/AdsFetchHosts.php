@@ -130,9 +130,9 @@ class AdsFetchHosts extends Command
         } catch (CommandException $ce) {
             $code = $ce->getCode();
             if (CommandError::BROADCAST_NOT_READY === $code) {
-                $this->info("Error $code: Broadcast not ready for block $blockId");
+                Log::warning("Error $code: Broadcast not ready for block $blockId");
             } else {
-                $this->info("Error $code: Unexpected error for block $blockId");
+                Log::error("Error $code: Unexpected error for block $blockId");
             }
         }
     }
@@ -147,9 +147,15 @@ class AdsFetchHosts extends Command
 
         try {
             $url = BroadcastableUrl::fromHex($broadcast->getMessage());
+            Log::debug("Fetching {$url->toString()}");
+
             $info = $this->client->fetchInfo($url);
 
-            NetworkHost::registerHost($address, $info, $time);
+            Log::debug("Got {$url->toString()}");
+
+            $host = NetworkHost::registerHost($address, $info, $time);
+
+            Log::debug("Stored {$url->toString()} as #{$host->id}");
         } catch (RuntimeException|UnexpectedClientResponseException $exception) {
             $url = $url ?? '';
             Log::debug("[$url] {$exception->getMessage()}");

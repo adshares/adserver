@@ -30,7 +30,7 @@ domReady(function() {
     };
 
     var links = document.getElementsByTagName('a');
-    addListener(document, 'click', handler, true);
+    addListener(document.body, 'click', handler, true);
 
     try {
         window.postMessage({
@@ -55,7 +55,7 @@ domReady(function() {
             if (data.click_url) {
                 for(var i=0;i<links.length;i++) {
                     links[i].href = data.click_url;
-                };
+                }
             }
         }
     };
