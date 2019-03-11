@@ -145,7 +145,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'type' => $networkBanner->type,
                 'width' => $networkBanner->width,
                 'height' => $networkBanner->height,
-                'status' => $networkBanner->status,
+                self::STATUS_FIELD => $networkBanner->status,
                 'classification' => $networkBanner->classification,
             ];
         }
@@ -173,7 +173,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'budget' => (int)$networkCampaign->budget,
                 'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
                 'targeting_requires' => $networkCampaign->targeting_requires ?? [],
-                'status' => $networkCampaign->status,
+                self::STATUS_FIELD => $networkCampaign->status,
             ]
         );
     }
