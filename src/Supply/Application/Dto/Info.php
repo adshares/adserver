@@ -108,7 +108,7 @@ final class Info
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
-            ...($data['capabilities'] ?? $data['supported'])
+            ...$data['capabilities'] ?? $data['supported']
         );
     }
 
