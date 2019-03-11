@@ -361,6 +361,8 @@ domReady(function () {
             params.push(param);
         }
     }
+    console.log('PARAMS', params);
+    console.log('SELECTORCLASS: ', selectorClass);
 
     var data = encodeZones(params);
 
