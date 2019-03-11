@@ -32,6 +32,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -157,7 +158,14 @@ final class JsonRpcAdSelectClient implements AdSelect
             $mappedCampaigns
         );
 
-        $this->client->call($procedure);
+        $response = $this->client->call($procedure);
+
+        if (!$response->isTrue()) {
+            throw new RuntimeException(sprintf(
+                '[ADSELECT] `campaign_delete` failed (ids: %s)',
+                implode(',', $mappedCampaigns)
+            ));
+        }
     }
 
     private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection

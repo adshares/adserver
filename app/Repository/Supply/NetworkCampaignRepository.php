@@ -31,15 +31,19 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTime;
+use Exception;
+use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
+    private const STATUS_FIELD = 'status';
+
+
     public function markedAsDeletedByHost(string $host): void
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
-            ->update(['status' => Status::STATUS_DELETED]);
+            ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
 
         // mark all banners as DELETED for given $host
@@ -51,7 +55,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_host', $host)
-            ->update(['banner.status' => Status::STATUS_DELETED]);
+            ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 
     public function save(Campaign $campaign): void
@@ -104,7 +108,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function fetchActiveCampaigns(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_ACTIVE)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_ACTIVE)->get();
 
         $campaigns = [];
 
@@ -115,9 +119,9 @@ class NetworkCampaignRepository implements CampaignRepository
         return new CampaignCollection(...$campaigns);
     }
 
-    public function fetchDeletedCampaigns(): CampaignCollection
+    public function fetchCampaignsToDelete(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_DELETED)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_TO_DELETE)->get();
 
         $campaigns = [];
 
@@ -172,5 +176,33 @@ class NetworkCampaignRepository implements CampaignRepository
                 'status' => $networkCampaign->status,
             ]
         );
+    }
+
+    public function deleteCampaign(Campaign $campaign): void
+    {
+        $campaign->delete();
+
+        DB::beginTransaction();
+
+        try {
+            DB::table(NetworkCampaign::getTableName())
+                ->where('uuid', hex2bin($campaign->getId()))
+                ->update([self::STATUS_FIELD => $campaign->getStatus()]);
+
+            DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
+                ->join(
+                    sprintf('%s as campaign', NetworkCampaign::getTableName()),
+                    'banner.network_campaign_id',
+                    '=',
+                    'campaign.id'
+                )
+                ->where('campaign.uuid', hex2bin($campaign->getId()))
+                ->update(['banner.status' => Status::STATUS_DELETED]);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+
+        DB::commit();
     }
 }
