@@ -203,7 +203,7 @@ HTML;
             '{{zoneId}}' => $this->uuid,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,
-            '{{selectorClass}}' => config('app.website_banner_class'),
+            '{{selectorClass}}' => config('app.adserver_id'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);
