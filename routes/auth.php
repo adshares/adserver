@@ -44,4 +44,3 @@ Route::middleware(Kernel::GUEST_ACCESS)->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::patch('password', [AuthController::class, 'updateSelf']);
 });
-
