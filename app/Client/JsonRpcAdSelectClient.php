@@ -31,7 +31,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
@@ -232,7 +232,7 @@ final class JsonRpcAdSelectClient implements AdSelect
                         'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                         'serve_url' => $banner->serve_url,
                         'creative_sha1' => $banner->checksum,
-                        'click_url' => ForceUrlProtocol::change(
+                        'click_url' => SecureUrl::change(
                             route(
                                 'log-network-click',
                                 [
@@ -241,7 +241,7 @@ final class JsonRpcAdSelectClient implements AdSelect
                                 ]
                             )
                         ),
-                        'view_url' => ForceUrlProtocol::change(
+                        'view_url' => SecureUrl::change(
                             route(
                                 'log-network-view',
                                 [

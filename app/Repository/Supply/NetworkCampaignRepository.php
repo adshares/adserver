@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
@@ -37,7 +37,15 @@ use function hex2bin;
 class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
-
+    private const BANNER_CLICK_URL_FIELD = 'click_url';
+    private const BANNER_SERVE_URL_FIELD = 'serve_url';
+    private const BANNER_VIEW_URL_FIELD = 'view_url';
+    private const BANNER_UUID_FIELD = 'uuid';
+    private const BANNER_ID_FIELD = 'id';
+    private const BANNER_TYPE_FIELD = 'type';
+    private const BANNER_WIDTH_FIELD = 'width';
+    private const BANNER_HEIGHT_FIELD = 'height';
+    private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
     public function markedAsDeletedByHost(string $host): void
     {
@@ -80,14 +88,14 @@ class NetworkCampaignRepository implements CampaignRepository
         /** @var Banner $domainBanner */
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
-            $banner['uuid'] = $banner['id'];
-            $banner['serve_url'] = ForceUrlProtocol::change($banner['serve_url']);
-            $banner['click_url'] = ForceUrlProtocol::change($banner['click_url']);
-            $banner['view_url'] = ForceUrlProtocol::change($banner['view_url']);
+            $banner[self::BANNER_UUID_FIELD] = $banner[self::BANNER_ID_FIELD];
+            $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
+            $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
+            $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
 
             unset($banner['id']);
 
-            $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
+            $networkBanner = NetworkBanner::where(self::BANNER_UUID_FIELD, hex2bin($domainBanner->getId()))->first();
 
             if (!$networkBanner) {
                 $networkBanner = new NetworkBanner();
@@ -138,15 +146,15 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
-                'id' => $networkBanner->uuid,
-                'serve_url' => $networkBanner->serve_url,
-                'click_url' => $networkBanner->click_url,
-                'view_url' => $networkBanner->view_url,
-                'type' => $networkBanner->type,
-                'width' => $networkBanner->width,
-                'height' => $networkBanner->height,
+                self::BANNER_ID_FIELD => $networkBanner->uuid,
+                self::BANNER_SERVE_URL_FIELD => $networkBanner->serve_url,
+                self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
+                self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
+                self::BANNER_TYPE_FIELD => $networkBanner->type,
+                self::BANNER_WIDTH_FIELD => $networkBanner->width,
+                self::BANNER_HEIGHT_FIELD => $networkBanner->height,
                 self::STATUS_FIELD => $networkBanner->status,
-                'classification' => $networkBanner->classification,
+                self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,
             ];
         }
 
@@ -186,7 +194,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         try {
             DB::table(NetworkCampaign::getTableName())
-                ->where('uuid', hex2bin($campaign->getId()))
+                ->where(self::BANNER_UUID_FIELD, hex2bin($campaign->getId()))
                 ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
