@@ -88,7 +88,7 @@ class NetworkCampaignRepository implements CampaignRepository
         /** @var Banner $domainBanner */
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
-            $banner[self::BANNER_UUID_FIELD] = $banner['id'];
+            $banner[self::BANNER_UUID_FIELD] = $banner[self::BANNER_ID_FIELD];
             $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
             $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
             $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
