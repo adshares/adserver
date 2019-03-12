@@ -245,7 +245,7 @@ class SitesController extends Controller
     {
         $zones = $this->getZones($siteId);
         
-        $sizes = $zones->map(function(Zone $zone) {
+        $sizes = $zones->map(function (Zone $zone) {
             return $zone->getSizeAsString();
         })->unique()->values();
 
