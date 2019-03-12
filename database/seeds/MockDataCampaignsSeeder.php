@@ -193,7 +193,6 @@ class MockDataCampaignsSeeder extends Seeder
         $base64Image = base64_encode($img);
 
         $server_url = env('APP_URL');
-        $view_js_route = route('demand-view.js');
 
         //if(!mt_rand(0, 2))        return self::tankHTML();
         return '
@@ -212,9 +211,6 @@ class MockDataCampaignsSeeder extends Seeder
             .' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
-            <script src="'
-            .$view_js_route
-            .'"></script>
             <a id="adsharesLink">
             <img src="data:image/png;base64,'
             .$base64Image
