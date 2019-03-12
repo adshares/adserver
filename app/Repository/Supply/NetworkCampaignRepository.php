@@ -37,10 +37,15 @@ use function hex2bin;
 class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
-    private const CLICK_URL_FIELD = 'click_url';
-    private const SERVE_URL_FIELD = 'serve_url';
-    private const VIEW_URL_FIELD = 'view_url';
+    private const BANNER_CLICK_URL_FIELD = 'click_url';
+    private const BANNER_SERVE_URL_FIELD = 'serve_url';
+    private const BANNER_VIEW_URL_FIELD = 'view_url';
     private const BANNER_UUID_FIELD = 'uuid';
+    private const BANNER_ID_FIELD = 'id';
+    private const BANNER_TYPE_FIELD = 'type';
+    private const BANNER_WIDTH_FIELD = 'width';
+    private const BANNER_HEIGHT_FIELD = 'height';
+    private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
     public function markedAsDeletedByHost(string $host): void
     {
@@ -84,9 +89,9 @@ class NetworkCampaignRepository implements CampaignRepository
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
             $banner[self::BANNER_UUID_FIELD] = $banner['id'];
-            $banner[self::SERVE_URL_FIELD] = SecureUrl::change($banner[self::SERVE_URL_FIELD]);
-            $banner[self::CLICK_URL_FIELD] = SecureUrl::change($banner[self::CLICK_URL_FIELD]);
-            $banner[self::VIEW_URL_FIELD] = SecureUrl::change($banner[self::VIEW_URL_FIELD]);
+            $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
+            $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
+            $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
 
             unset($banner['id']);
 
@@ -141,15 +146,15 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
-                'id' => $networkBanner->uuid,
-                self::SERVE_URL_FIELD => $networkBanner->serve_url,
-                self::CLICK_URL_FIELD => $networkBanner->click_url,
-                self::VIEW_URL_FIELD => $networkBanner->view_url,
-                'type' => $networkBanner->type,
-                'width' => $networkBanner->width,
-                'height' => $networkBanner->height,
+                self::BANNER_ID_FIELD => $networkBanner->uuid,
+                self::BANNER_SERVE_URL_FIELD => $networkBanner->serve_url,
+                self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
+                self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
+                self::BANNER_TYPE_FIELD => $networkBanner->type,
+                self::BANNER_WIDTH_FIELD => $networkBanner->width,
+                self::BANNER_HEIGHT_FIELD => $networkBanner->height,
                 self::STATUS_FIELD => $networkBanner->status,
-                'classification' => $networkBanner->classification,
+                self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,
             ];
         }
 
