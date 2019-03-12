@@ -1,6 +1,8 @@
 <html>
     <head>
-        <link href="<?php echo \Adshares\Adserver\Utilities\ForceUrlProtocol::change(asset('css/why.css'))?>" rel="stylesheet">
+        <link href="<?php use Adshares\Common\Domain\ValueObject\SecureUrl;echo SecureUrl::change(
+            asset('css/why.css')
+        )?>" rel="stylesheet">
     </head>
 
     <body>

@@ -27,8 +27,8 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
@@ -318,7 +318,7 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
+        $response->headers->set('Location', SecureUrl::change($adUserUrl));
 
         return $response;
     }
