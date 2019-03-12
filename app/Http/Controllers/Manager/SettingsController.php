@@ -21,6 +21,8 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\SettingsResponse;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserSettings;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,5 +48,17 @@ class SettingsController extends Controller
         $settings['payload'] = $payload;
 
         return self::json($settings, 200);
+    }
+
+    public function update()
+    {
+
+    }
+
+    public function read(): SettingsResponse
+    {
+        $settings = Config::fetchAdminSettings();
+
+        return SettingsResponse::fromConfigModel($settings);
     }
 }
