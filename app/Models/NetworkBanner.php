@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -28,9 +29,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\JoinClause;
 use function array_map;
 use function hex2bin;
-use Illuminate\Database\Query\JoinClause;
 
 /**
  * @property NetworkCampaign campaign
@@ -117,7 +118,7 @@ class NetworkBanner extends Model
         return $query->count();
     }
 
-    public static function fetchAllByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    private static function fetchAllByUserId(NetworkBannerFilter $networkBannerFilter): Builder
     {
         return self::queryBannersWithCampaign($networkBannerFilter);
     }
@@ -231,6 +232,23 @@ class NetworkBanner extends Model
             'network_banners.id',
             'desc'
         );
+
+        if (null !== $networkBannerFilter) {
+            $siteId = $networkBannerFilter->getSiteId();
+            if (null !== $siteId) {
+                $site = Site::fetchById($siteId);
+                if ($site) {
+                    $zones = $site->zones;
+                    $sizes = $zones->map(function (Zone $item) {
+                        return $item->width.'x'.$item->height;
+                    });
+
+                    $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
+                    $query->whereIn($concatSizeExpression, $sizes);
+                }
+            }
+        }
+        
         $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
         $query->select(
             'network_banners.id',
