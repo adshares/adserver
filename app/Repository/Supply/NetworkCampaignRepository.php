@@ -37,7 +37,10 @@ use function hex2bin;
 class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
-
+    private const CLICK_URL_FIELD = 'click_url';
+    private const SERVE_URL_FIELD = 'serve_url';
+    private const VIEW_URL_FIELD = 'view_url';
+    private const BANNER_UUID_FIELD = 'uuid';
 
     public function markedAsDeletedByHost(string $host): void
     {
@@ -80,14 +83,14 @@ class NetworkCampaignRepository implements CampaignRepository
         /** @var Banner $domainBanner */
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
-            $banner['uuid'] = $banner['id'];
-            $banner['serve_url'] = SecureUrl::change($banner['serve_url']);
-            $banner['click_url'] = SecureUrl::change($banner['click_url']);
-            $banner['view_url'] = SecureUrl::change($banner['view_url']);
+            $banner[self::BANNER_UUID_FIELD] = $banner['id'];
+            $banner[self::SERVE_URL_FIELD] = SecureUrl::change($banner[self::SERVE_URL_FIELD]);
+            $banner[self::CLICK_URL_FIELD] = SecureUrl::change($banner[self::CLICK_URL_FIELD]);
+            $banner[self::VIEW_URL_FIELD] = SecureUrl::change($banner[self::VIEW_URL_FIELD]);
 
             unset($banner['id']);
 
-            $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
+            $networkBanner = NetworkBanner::where(self::BANNER_UUID_FIELD, hex2bin($domainBanner->getId()))->first();
 
             if (!$networkBanner) {
                 $networkBanner = new NetworkBanner();
@@ -139,9 +142,9 @@ class NetworkCampaignRepository implements CampaignRepository
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
                 'id' => $networkBanner->uuid,
-                'serve_url' => $networkBanner->serve_url,
-                'click_url' => $networkBanner->click_url,
-                'view_url' => $networkBanner->view_url,
+                self::SERVE_URL_FIELD => $networkBanner->serve_url,
+                self::CLICK_URL_FIELD => $networkBanner->click_url,
+                self::VIEW_URL_FIELD => $networkBanner->view_url,
                 'type' => $networkBanner->type,
                 'width' => $networkBanner->width,
                 'height' => $networkBanner->height,
@@ -186,7 +189,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         try {
             DB::table(NetworkCampaign::getTableName())
-                ->where('uuid', hex2bin($campaign->getId()))
+                ->where(self::BANNER_UUID_FIELD, hex2bin($campaign->getId()))
                 ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
