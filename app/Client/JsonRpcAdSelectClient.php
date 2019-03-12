@@ -82,7 +82,11 @@ final class JsonRpcAdSelectClient implements AdSelect
             $zones = $this->attachDuplicatedZones($zones, $zoneIds);
         }
 
-        $params = $context->adSelectRequestParams($zones);
+        $existingZones = $zones->reject(function ($zone) {
+            return $zone === null;
+        });
+
+        $params = $context->adSelectRequestParams($existingZones);
         $result = $this->client->call(
             new Procedure(
                 self::METHOD_BANNER_SELECT,
@@ -91,7 +95,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         );
 
         $bannerMap = $this->createRequestIdsToBannerMap($result->toArray());
-        $bannerIds = $this->fixBannerOrdering($zones, $bannerMap);
+        $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
