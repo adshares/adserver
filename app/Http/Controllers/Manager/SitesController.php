@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Classify\Domain\Model\Classification;
 use Exception;
 use Illuminate\Http\Request;
@@ -238,5 +239,39 @@ class SitesController extends Controller
         ];
 
         return self::json($siteCount, 200);
+    }
+    
+    public function readSitesZonesSizes(?int $siteId = null): JsonResponse
+    {
+        $zones = $this->getZones($siteId);
+        
+        $sizes = $zones->map(function(Zone $zone) {
+            return $zone->getSizeAsString();
+        })->unique()->values();
+
+        return self::json(['sizes' => $sizes]);
+    }
+
+    private function getZones(?int $siteId): Collection
+    {
+        if (null === $siteId) {
+            $sites = Site::get();
+            if (!$sites) {
+                return new Collection();
+            }
+
+            $zones = $sites->map(function (Site $site) {
+                return $site->zones;
+            })->flatten();
+        } else {
+            $site = Site::fetchById($siteId);
+            if (!$site) {
+                return new Collection();
+            }
+
+            $zones = $site->zones;
+        }
+
+        return $zones;
     }
 }
