@@ -55,6 +55,8 @@ Route::patch('sites/{site}', [SitesController::class, 'update'])->name('app.site
 Route::delete('sites/{site}', [SitesController::class, 'delete'])->name('app.sites.delete');
 Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
+Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
+    ->name('app.sites.change_status');
 
 # only for admin
 Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
