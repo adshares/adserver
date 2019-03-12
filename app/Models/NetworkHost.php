@@ -50,7 +50,6 @@ class NetworkHost extends Model
 {
     use AutomateMutators;
 
-    private const MAX_FAILED_CONNECTION = 3;
     private const FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED = 10;
 
     /**
