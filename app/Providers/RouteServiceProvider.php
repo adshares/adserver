@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Route;
 class RouteServiceProvider extends ServiceProvider
 {
     private const PREFIX_AUTH = 'auth';
+
     private const PREFIX_API = 'api';
 
     public function map(): void
@@ -37,7 +38,9 @@ class RouteServiceProvider extends ServiceProvider
         Route::group([], base_path('routes/demand.php'));
 
         Route::middleware([Kernel::JSON_API])->group(function () {
-            Route::prefix(self::PREFIX_AUTH)->group(base_path('routes/auth.php'));
+            Route::prefix(self::PREFIX_AUTH)
+                ->group(base_path('routes/auth.php'));
+
             Route::prefix(self::PREFIX_API)
                 ->middleware(Kernel::USER_ACCESS)
                 ->group(base_path('routes/manager.php'));

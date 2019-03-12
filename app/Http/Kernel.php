@@ -38,13 +38,12 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
+
     public const USER_ACCESS = 'only-authenticated-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const JSON_API = 'api';
-    public const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
-        #pre
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
@@ -61,7 +60,7 @@ class Kernel extends HttpKernel
             ValidatePostSize::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
-            self::SNAKE_CASING,
+            SnakizeRequest::class,
             SubstituteBindings::class,
             #post
             SetCacheHeaders::class,
@@ -72,6 +71,5 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
-        self::SNAKE_CASING => SnakizeRequest::class,
     ];
 }
