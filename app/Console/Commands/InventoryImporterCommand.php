@@ -78,7 +78,6 @@ class InventoryImporterCommand extends Command
                     $exception->getMessage()
                 ));
 
-
                 if ($networkHost->isInventoryToBeRemoved()) {
                     $this->inventoryImporterService->clearInventoryForHost($host);
 
