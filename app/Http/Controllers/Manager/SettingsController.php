@@ -52,7 +52,6 @@ class SettingsController extends Controller
 
     public function update()
     {
-
     }
 
     public function read(): SettingsResponse

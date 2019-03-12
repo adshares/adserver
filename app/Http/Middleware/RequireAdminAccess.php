@@ -38,7 +38,6 @@ class RequireAdminAccess extends Authenticate
 
         if (!$user->isAdmin()) {
             throw new AccessDeniedHttpException('Forbidden access.');
-
         }
 
         return $next($request);
