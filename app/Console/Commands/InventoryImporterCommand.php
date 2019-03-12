@@ -27,7 +27,6 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class InventoryImporterCommand extends Command
 {
