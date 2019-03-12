@@ -63,7 +63,7 @@ class ClassifierController extends Controller
 
         $items = (new ClassifierResponse($banners, $classifications, $siteId))->toArray();
         $count = count($items);
-        $totalCount = NetworkBanner::fetchCount();
+        $totalCount = NetworkBanner::fetchCountByFilter($networkBannerFilter);
 
         $response = [];
         $response['limit'] = $limit;

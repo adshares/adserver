@@ -105,28 +105,16 @@ class NetworkBanner extends Model
 
     public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset)
     {
-        if (!$networkBannerFilter->isApproved()
-            && !$networkBannerFilter->isRejected()
-            && !$networkBannerFilter->isUnclassified()) {
-            $query = self::fetchAllByUserId($networkBannerFilter);
-        } else if ($networkBannerFilter->isApproved()) {
-            $query = self::fetchApprovedByUserId($networkBannerFilter);
-        } else if ($networkBannerFilter->isRejected()) {
-            $query = self::fetchRejectedByUserId($networkBannerFilter);
-        } else if ($networkBannerFilter->isUnclassified()) {
-            $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
-        } else {
-            $query = self::fetchAllByUserId($networkBannerFilter);
-        }
-
-        $userId = $networkBannerFilter->getUserId();
-        $siteId = $networkBannerFilter->getSiteId();
-
-        if (null !== $siteId) {
-            self::querySkipRejectedGlobally($query, $userId);
-        }
+        $query = self::queryByFilter($networkBannerFilter);
 
         return self::queryPaging($query, $limit, $offset)->get();
+    }
+
+    public static function fetchCountByFilter(NetworkBannerFilter $networkBannerFilter): int
+    {
+        $query = self::queryByFilter($networkBannerFilter);
+
+        return $query->count();
     }
 
     public static function fetchAllByUserId(NetworkBannerFilter $networkBannerFilter): Builder
@@ -183,6 +171,38 @@ class NetworkBanner extends Model
     public static function fetchCount(): int
     {
         return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
+    }
+
+    private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        if (!$networkBannerFilter->isApproved()
+            && !$networkBannerFilter->isRejected()
+            && !$networkBannerFilter->isUnclassified()) {
+            $query = self::fetchAllByUserId($networkBannerFilter);
+        } else {
+            if ($networkBannerFilter->isApproved()) {
+                $query = self::fetchApprovedByUserId($networkBannerFilter);
+            } else {
+                if ($networkBannerFilter->isRejected()) {
+                    $query = self::fetchRejectedByUserId($networkBannerFilter);
+                } else {
+                    if ($networkBannerFilter->isUnclassified()) {
+                        $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
+                    } else {
+                        $query = self::fetchAllByUserId($networkBannerFilter);
+                    }
+                }
+            }
+        }
+
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        if (null !== $siteId) {
+            self::querySkipRejectedGlobally($query, $userId);
+        }
+
+        return $query;
     }
 
     private static function queryPaging(Builder $query, int $limit, int $offset): Builder
