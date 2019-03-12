@@ -26,7 +26,7 @@ use Adshares\Common\Exception\RuntimeException;
 use const FILTER_VALIDATE_EMAIL;
 use function filter_var;
 
-class Email
+final class Email
 {
     public function __construct(string $email)
     {

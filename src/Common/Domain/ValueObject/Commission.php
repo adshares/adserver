@@ -24,7 +24,7 @@ namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Exception\RuntimeException;
 
-class Commission
+final class Commission
 {
     private $value;
 
