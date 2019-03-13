@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Console;
 
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -55,5 +56,12 @@ class Kernel extends ConsoleKernel
         $this->load(__DIR__.'/Commands');
 
         require base_path('routes/console.php');
+    }
+
+    public function bootstrap()
+    {
+        parent::bootstrap();
+
+        DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }
