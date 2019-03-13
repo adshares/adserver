@@ -79,7 +79,7 @@ final class GuzzleAdUserClient implements AdUser
         }
     }
 
-    public function getUserContextNew(ImpressionContext $partialContext): UserContext
+    public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $path = sprintf(
             '/data/%s/%s',
