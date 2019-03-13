@@ -27,7 +27,6 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class InventoryImporterCommand extends Command
 {
@@ -70,9 +69,23 @@ class InventoryImporterCommand extends Command
                 $networkHost->connectionSuccessful();
                 ++$networkHostSuccessfulConnectionCount;
             } catch (UnexpectedClientResponseException $exception) {
+                $host = $networkHost->info->getInventoryUrl();
                 $networkHost->connectionFailed();
 
-                Log::error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+                $this->warn(sprintf(
+                    '[Inventory Importer] Inventory host (%s) is unavailable (Exception: %s)',
+                    $host,
+                    $exception->getMessage()
+                ));
+
+                if ($networkHost->isInventoryToBeRemoved()) {
+                    $this->inventoryImporterService->clearInventoryForHost($host);
+
+                    $this->info(sprintf(
+                        '[Inventory Importer] Inventory (%s) has been removed.',
+                        $host
+                    ));
+                }
             }
         }
 

@@ -76,6 +76,7 @@ class InventoryImporter
         try {
             $campaigns = $this->client->fetchAllInventory($host);
         } catch (EmptyInventoryException $exception) {
+            $this->clearInventoryForHost($host);
             return;
         }
 
@@ -85,7 +86,7 @@ class InventoryImporter
         $this->transactionManager->begin();
 
         try {
-            $this->markedCampaignsAsDeletedService->execute($host);
+            $this->clearInventoryForHost($host);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -137,5 +138,10 @@ class InventoryImporter
                 }
             }
         }
+    }
+
+    public function clearInventoryForHost(string $host): void
+    {
+        $this->markedCampaignsAsDeletedService->execute($host);
     }
 }
