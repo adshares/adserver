@@ -35,12 +35,13 @@ else
     INSTALLATION_USER="$3"
 fi
 
+set -x
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
 
 export SCRIPT_DIR="${TEMP_DIR}"
 
-${TEMP_DIR}/bootstrap.sh
+#${TEMP_DIR}/bootstrap.sh
 
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
@@ -52,7 +53,6 @@ then
         else
             ${TEMP_DIR}/clone.sh ${SERVICE} ${BRANCH}
         fi
-
     done
 fi
 
@@ -66,7 +66,7 @@ then
         then
             ${TEMP_DIR}/run-target.sh build /opt/adshares/aduser ${TEMP_DIR}/${SERVICE} ${INSTALLATION_USER}
         else
-            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} ${TEMP_DIR}/${SERVICE} ${INSTALLATION_USER}
+            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER}
 
             if [[ "$SERVICE" == "aduser" ]]
             then
