@@ -3,15 +3,15 @@ set -e
 
 [[ $# -ge 2 ]] || echo "Usage: `basename $0` <target> <workdir> [[[<SCRIPT_DIR>] <sudo_as>] ...]"
 TARGET="$1"
-WORKDIR="$2"
-
 shift
+
+WORKDIR="$1"
 shift
 
 SCRIPT_DIR="$1"
-SUDO_AS="$2"
-
 test -z $1 || shift
+
+SUDO_AS="$1"
 test -z $1 || shift
 
 HERE=$(dirname $(readlink -f "$0"))

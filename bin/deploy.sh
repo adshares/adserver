@@ -37,6 +37,7 @@ else
 fi
 
         SKIP_BOOTSTRAP=1
+        SKIP_CLONE=1
 
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
