@@ -47,7 +47,6 @@ class Kernel extends HttpKernel
     public const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
-        #pre
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,

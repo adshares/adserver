@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Classify\Domain\Model\Classification;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -240,7 +241,25 @@ class SitesController extends Controller
 
         return self::json($siteCount, 200);
     }
-    
+
+    public function changeStatus(Site $site, Request $request): JsonResponse
+    {
+        if (!$request->has('site.status')) {
+            throw new InvalidArgumentException('No status provided');
+        }
+
+        $status = (int)$request->input('site.status');
+
+        $site->changeStatus($status);
+        $site->save();
+
+        return self::json([
+            'site' => [
+                'status' => $site->status,
+            ],
+        ]);
+    }
+
     public function readSitesSizes(?int $siteId = null): JsonResponse
     {
         $response = new SizesResponse($siteId);
