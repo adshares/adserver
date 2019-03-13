@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -e
 
 HERE=$(dirname $(readlink -f "$0"))
 INSTALLER_DIR=$(dirname ${HERE})/installer
@@ -36,7 +36,6 @@ else
     INSTALLATION_USER="$3"
 fi
 
-        SKIP_CLONE=1
         SKIP_BOOTSTRAP=1
 
 TEMP_DIR=$(mktemp --directory)
@@ -83,9 +82,9 @@ then
             fi
         fi
 
-        ${TEMP_DIR}/configure-daemon.sh fpm ${TEMP_DIR}/${SERVICE} /etc/php/7.2/fpm/pool.d
-        ${TEMP_DIR}/configure-daemon.sh nginx ${TEMP_DIR}/${SERVICE}
-        ${TEMP_DIR}/configure-daemon.sh supervisor ${TEMP_DIR}/${SERVICE}
+        ${TEMP_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
+        ${TEMP_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
+        ${TEMP_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
     done
 fi
 
