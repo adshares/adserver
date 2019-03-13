@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Request\Classifier;
 
+use Adshares\Adserver\Models\NetworkBanner;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 class NetworkBannerFilter
@@ -58,6 +60,8 @@ class NetworkBannerFilter
 
         $this->userId = $userId;
         $this->siteId = $siteId;
+
+        $this->validate();
     }
 
     public function isApproved(): bool
@@ -93,5 +97,18 @@ class NetworkBannerFilter
     public function getSiteId(): ?int
     {
         return $this->siteId;
+    }
+
+    private function validate(): void
+    {
+        if (null !== $this->type && !in_array($this->type, NetworkBanner::ALLOWED_TYPES, true)) {
+            throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid type (%s)', $this->type));
+        }
+
+        foreach ($this->sizes as $size) {
+            if (1 !== preg_match('/^\d+x\d+$/', $size)) {
+                throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid size (%s)', $size));
+            }
+        }
     }
 }
