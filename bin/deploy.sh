@@ -66,7 +66,7 @@ then
         then
             ${TEMP_DIR}/run-target.sh build /opt/adshares/aduser ${TEMP_DIR}/${SERVICE} ${INSTALLATION_USER}
         else
-            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER}
+            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER} ${TEMP_DIR}
 
             if [[ "$SERVICE" == "aduser" ]]
             then

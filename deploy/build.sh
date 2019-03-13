@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-HERE=$(dirname $(dirname $(readlink -f "$0")))
+HERE=${1:-$(dirname $(dirname $(readlink -f "$0")))}
 source ${HERE}/_functions.sh
 
 mkdir -pm 777 storage
