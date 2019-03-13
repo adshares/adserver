@@ -39,11 +39,11 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
-    public const HTML_TYPE = 'html';
+    public const TYPE_HTML = 'html';
 
-    public const IMAGE_TYPE = 'image';
+    public const TYPE_IMAGE = 'image';
 
-    public const ALLOWED_TYPES = [self::HTML_TYPE, self::IMAGE_TYPE];
+    public const ALLOWED_TYPES = [self::TYPE_IMAGE, self::TYPE_HTML];
 
     use AutomateMutators;
     use BinHex;
@@ -136,7 +136,7 @@ class NetworkBanner extends Model
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
         $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where('classifications.status', Classification::DB_STATUS_APPROVED);
+            ->where('classifications.status', Classification::STATUS_APPROVED);
         
         return $query;
     }
@@ -148,7 +148,7 @@ class NetworkBanner extends Model
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
         $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where('classifications.status', Classification::DB_STATUS_REJECTED);
+            ->where('classifications.status', Classification::STATUS_REJECTED);
 
         return $query;
     }
@@ -290,7 +290,7 @@ class NetworkBanner extends Model
             }
         )->where(
             function (Builder $whereClause) {
-                $whereClause->where('classification_global_reject.status', Classification::DB_STATUS_APPROVED)
+                $whereClause->where('classification_global_reject.status', Classification::STATUS_APPROVED)
                     ->orWhereNull('classification_global_reject.status');
             }
         );

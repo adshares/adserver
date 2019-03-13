@@ -40,9 +40,9 @@ class Classification extends Model
     use Ownership;
     use AutomateMutators;
 
-    public const DB_STATUS_REJECTED = 0;
+    public const STATUS_REJECTED = 0;
 
-    public const DB_STATUS_APPROVED = 1;
+    public const STATUS_APPROVED = 1;
 
     protected $fillable = [
         'user_id',
