@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
+use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
@@ -38,6 +39,8 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
+    private const ADMIN = 'admin';
+    public const ADMIN_ACCESS = 'only-admin-users';
     public const USER_ACCESS = 'only-authenticated-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const JSON_API = 'api';
@@ -51,6 +54,9 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareGroups = [
+        self::ADMIN_ACCESS => [
+            self::ADMIN.':api',
+        ],
         self::USER_ACCESS => [
             self::AUTH.':api',
         ],
@@ -72,6 +78,7 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
+        self::ADMIN => RequireAdminAccess::class,
         self::SNAKE_CASING => SnakizeRequest::class,
     ];
 }
