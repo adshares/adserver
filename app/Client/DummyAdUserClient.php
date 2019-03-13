@@ -42,7 +42,7 @@ final class DummyAdUserClient implements AdUser
         return TaxonomyFactory::fromArray($taxonomy);
     }
 
-    public function getUserContext(ImpressionContext $context): UserContext
+    public function getUserContextOld(ImpressionContext $context): UserContext
     {
         throw new Exception('Method getUserContext() not implemented');
     }
