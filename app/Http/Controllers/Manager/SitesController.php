@@ -252,6 +252,10 @@ class SitesController extends Controller
         $site->changeStatus($status);
         $site->save();
 
-        return self::json($site->status, Response::HTTP_OK);
+        return self::json([
+            'site' => [
+                'status' => $site->status,
+            ],
+        ]);
     }
 }
