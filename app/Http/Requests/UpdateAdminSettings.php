@@ -3,6 +3,7 @@
 namespace Adshares\Adserver\Http\Requests;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Rules\AccountIdRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAdminSettings extends FormRequest
@@ -17,6 +18,7 @@ class UpdateAdminSettings extends FormRequest
         return [
             'settings.hotwallet_min_value' => 'required|integer|min:0',
             'settings.hotwallet_max_value' => 'required|integer|min:1|gt:settings.hotwallet_min_value',
+            'settings.hotwallet_address' => ['required', 'string', new AccountIdRule()],
             'settings.adserver_name' => 'required|string|max:255',
             'settings.technical_email' => 'required|email|max:255',
             'settings.support_email' => 'required|email|max:255',
@@ -32,6 +34,7 @@ class UpdateAdminSettings extends FormRequest
         $data = [
             Config::HOT_WALLET_MIN_VALUE => $values['hotwallet_min_value'],
             Config::HOT_WALLET_MAX_VALUE => $values['hotwallet_max_value'],
+            Config::HOT_WALLET_ADDRESS => $values['hotwallet_address'],
             Config::ADSERVER_NAME => $values['adserver_name'],
             Config::TECHNICAL_EMAIL => $values['technical_email'],
             Config::SUPPORT_EMAIL => $values['support_email'],
