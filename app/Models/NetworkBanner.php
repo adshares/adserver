@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
 use function array_map;
+
 use function hex2bin;
 
 /**
@@ -44,6 +45,38 @@ class NetworkBanner extends Model
     public const TYPE_IMAGE = 'image';
 
     public const ALLOWED_TYPES = [self::TYPE_IMAGE, self::TYPE_HTML];
+
+    private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
+
+    private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
+
+    private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
+
+    private const NETWORK_BANNERS_COLUMN_WIDTH = 'network_banners.width';
+
+    private const NETWORK_BANNERS_COLUMN_HEIGHT = 'network_banners.height';
+
+    private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
+
+    private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
+
+    private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
+
+    private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
+
+    private const CLASSIFICATIONS_COLUMN_SITE_ID = 'classifications.site_id';
+
+    private const CLASSIFICATIONS_COLUMN_USER_ID = 'classifications.user_id';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_ID = 'network_campaigns.id';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
 
     use AutomateMutators;
     use BinHex;
@@ -136,7 +169,7 @@ class NetworkBanner extends Model
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
         $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where('classifications.status', Classification::STATUS_APPROVED);
+            ->where(self::CLASSIFICATIONS_COLUMN_STATUS, Classification::STATUS_APPROVED);
         
         return $query;
     }
@@ -148,7 +181,7 @@ class NetworkBanner extends Model
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
         $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where('classifications.status', Classification::STATUS_REJECTED);
+            ->where(self::CLASSIFICATIONS_COLUMN_STATUS, Classification::STATUS_REJECTED);
 
         return $query;
     }
@@ -162,22 +195,22 @@ class NetworkBanner extends Model
         $query->leftJoin(
             'classifications',
             function (JoinClause $join) use ($userId, $siteId) {
-                $join->on('network_banners.id', '=', 'classifications.banner_id')
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)
                     ->where(
                         [
-                            'classifications.user_id' => $userId,
-                            'classifications.site_id' => $siteId,
+                            self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
+                            self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
                         ]
                     );
             }
-         )->whereNull('classifications.banner_id');
+         )->whereNull(self::CLASSIFICATIONS_COLUMN_BANNER_ID);
 
         return $query;
     }
 
     public static function fetchCount(): int
     {
-        return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
+        return self::where(self::NETWORK_BANNERS_COLUMN_STATUS, Status::STATUS_ACTIVE)->count();
     }
 
     private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
@@ -220,17 +253,17 @@ class NetworkBanner extends Model
     private static function queryBannersWithCampaign(?NetworkBannerFilter $networkBannerFilter = null): Builder
     {
         $whereClause = [];
-        $whereClause[] = ['network_banners.status', '=', Status::STATUS_ACTIVE];
+        $whereClause[] = [self::NETWORK_BANNERS_COLUMN_STATUS, '=', Status::STATUS_ACTIVE];
         if (null !== $networkBannerFilter) {
             $type = $networkBannerFilter->getType();
 
             if (null !== $type) {
-                $whereClause[] = ['network_banners.type', '=', $type];
+                $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
             }
         }
 
         $query = self::where($whereClause)->orderBy(
-            'network_banners.id',
+            self::NETWORK_BANNERS_COLUMN_ID,
             'desc'
         );
 
@@ -243,17 +276,17 @@ class NetworkBanner extends Model
             }
         }
 
-        $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
+        $query->join('network_campaigns', self::NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID, '=', self::NETWORK_CAMPAIGNS_COLUMN_ID);
         $query->select(
-            'network_banners.id',
-            'network_banners.serve_url',
-            'network_banners.type',
-            'network_banners.width',
-            'network_banners.height',
-            'network_campaigns.source_host',
-            'network_campaigns.budget',
-            'network_campaigns.max_cpm',
-            'network_campaigns.max_cpc'
+            self::NETWORK_BANNERS_COLUMN_ID,
+            self::NETWORK_BANNERS_COLUMN_SERVE_URL,
+            self::NETWORK_BANNERS_COLUMN_TYPE,
+            self::NETWORK_BANNERS_COLUMN_WIDTH,
+            self::NETWORK_BANNERS_COLUMN_HEIGHT,
+            self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
+            self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
+            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,
+            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPC
         );
 
         return $query;
@@ -264,10 +297,10 @@ class NetworkBanner extends Model
         $query = $query->join(
             'classifications',
             function (JoinClause $join) use ($userId, $siteId) {
-                $join->on('network_banners.id', '=', 'classifications.banner_id')->where(
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)->where(
                     [
-                        'classifications.user_id' => $userId,
-                        'classifications.site_id' => $siteId,
+                        self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
+                        self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
                     ]
                 );
             }
@@ -281,7 +314,7 @@ class NetworkBanner extends Model
         $query->leftJoin(
             'classifications as classification_global_reject',
             function (JoinClause $join) use ($userId) {
-                $join->on('network_banners.id', '=', 'classification_global_reject.banner_id')->where(
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', 'classification_global_reject.banner_id')->where(
                     [
                         'classification_global_reject.user_id' => $userId,
                         'classification_global_reject.site_id' => null,
