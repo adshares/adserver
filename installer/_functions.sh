@@ -95,7 +95,7 @@ unset _REQUIRED_USER_TYPE
 
 set -u
 
-if [[ ${VERBOSE_MODE:-0} -eq 1 ]]
+if [[ ${DEBUG_MODE:-0} -eq 1 ]]
 then
     echo ""
     echo "$0 $*"

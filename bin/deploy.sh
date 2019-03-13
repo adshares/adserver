@@ -35,7 +35,6 @@ else
     INSTALLATION_USER="$3"
 fi
 
-set -x
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
 
@@ -58,6 +57,7 @@ fi
 
 ${TEMP_DIR}/prepare-directories.sh
 
+export DEBUG_MODE=1
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
     for SERVICE in ${SERVICES}

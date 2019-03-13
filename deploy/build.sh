@@ -10,7 +10,7 @@ GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
 GIT_HASH="#"$(git rev-parse --short HEAD)
 
 set -a
-source .env
+source ./.env
 set +a
 
 composer install --no-dev
