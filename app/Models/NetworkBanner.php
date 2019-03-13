@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -135,14 +136,14 @@ class NetworkBanner extends Model
         return self::where('uuid', hex2bin($bannerId))->first();
     }
 
-    public static function fetch(int $limit, int $offset)
+    public static function fetch(int $limit, int $offset): Collection
     {
         $query = self::queryBannersWithCampaign();
 
         return self::queryPaging($query, $limit, $offset)->get();
     }
 
-    public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset)
+    public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset): Collection
     {
         $query = self::queryByFilter($networkBannerFilter);
 
@@ -219,7 +220,7 @@ class NetworkBanner extends Model
 
         if (null !== $networkBannerFilter->getSiteId()) {
             $userId = $networkBannerFilter->getUserId();
-            self::querySkipRejectedGlobally($query, $userId);
+            $query = self::querySkipRejectedGlobally($query, $userId);
         }
 
         return $query;
@@ -309,9 +310,9 @@ class NetworkBanner extends Model
         );
     }
 
-    private static function querySkipRejectedGlobally(Builder $query, int $userId): void
+    private static function querySkipRejectedGlobally(Builder $query, int $userId): Builder
     {
-        $query->leftJoin(
+        return $query->leftJoin(
             'classifications as classification_global_reject',
             function (JoinClause $join) use ($userId) {
                 $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', 'classification_global_reject.banner_id')->where(
@@ -329,7 +330,7 @@ class NetworkBanner extends Model
         );
     }
 
-    public static function findIdsByUuids(array $publicUuids)
+    public static function findIdsByUuids(array $publicUuids): array
     {
         $binPublicIds = array_map(
             function (string $item) {
