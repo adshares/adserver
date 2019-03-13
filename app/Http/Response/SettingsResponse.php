@@ -84,8 +84,8 @@ class SettingsResponse implements Arrayable
     public function toArray()
     {
         $data = [
-            'hotWalletMinValue' => $this->hotWalletMinValue,
-            'hotWalletMaxValue' => $this->hotWalletMaxValue,
+            'hotwalletMinValue' => $this->hotWalletMinValue,
+            'hotwalletMaxValue' => $this->hotWalletMaxValue,
             'adserverName' => $this->adserverName,
             'technicalEmail' => $this->technicalEmail->toString(),
             'supportEmail' => $this->supportEmail->toString(),
@@ -99,6 +99,6 @@ class SettingsResponse implements Arrayable
             $data['publisherCommission'] = $this->publisherCommission->getValue();
         }
 
-        return $data;
+        return ['settings' => $data];
     }
 }

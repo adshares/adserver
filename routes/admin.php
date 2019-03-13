@@ -24,4 +24,5 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(Kernel::ADMIN_ACCESS)->group(function () {
     Route::get('settings', [AdminController::class, 'listSettings']);
+    Route::put('settings', [AdminController::class, 'updateSettings']);
 });

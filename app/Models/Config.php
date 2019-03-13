@@ -161,4 +161,13 @@ class Config extends Model
 
         return $data->pluck('value', 'key')->toArray();
     }
+
+    public static function updateAdminSettings(array $settings): void
+    {
+        foreach ($settings as $key => $value) {
+            $config = self::where('key', $key)->first();
+            $config->value = $value;
+            $config->update();
+        }
+    }
 }

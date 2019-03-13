@@ -23,8 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\UpdateAdminSettings;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Models\Config;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class AdminController extends Controller
 {
@@ -33,5 +36,13 @@ class AdminController extends Controller
         $settings = Config::fetchAdminSettings();
 
         return SettingsResponse::fromConfigModel($settings);
+    }
+
+    public function updateSettings(UpdateAdminSettings $request): JsonResponse
+    {
+        $input = $request->toConfigFormat();
+        Config::updateAdminSettings($input);
+
+        return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 }
