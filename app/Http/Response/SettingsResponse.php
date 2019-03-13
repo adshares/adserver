@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Response;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
 use Illuminate\Contracts\Support\Arrayable;
@@ -56,22 +57,22 @@ class SettingsResponse implements Arrayable
 
     public static function fromConfigModel(array $data): self
     {
-        $publisherCommission = $data['payment-rx-fee'] ?? null;
-        $advertiserCommission = $data['payment-tx-fee'] ?? null;
-        $hotWalletMinValue = $data['hotwallet-min-value'];
-        $hotWalletMaxValue = $data['hotwallet-max-value'];
-        $adserverName = $data['adserver-name'];
-        $technicalEmail = $data['technical-email'];
-        $supportEmail = $data['support-email'];
+        $publisherCommission = $data[Config::OPERATOR_RX_FEE] ?? null;
+        $advertiserCommission = $data[Config::OPERATOR_TX_FEE] ?? null;
+        $hotWalletMinValue = $data[Config::HOT_WALLET_MIN_VALUE];
+        $hotWalletMaxValue = $data[Config::HOT_WALLET_MAX_VALUE];
+        $adserverName = $data[Config::ADSERVER_NAME];
+        $technicalEmail = $data[Config::TECHNICAL_EMAIL];
+        $supportEmail = $data[Config::SUPPORT_EMAIL];
 
         return new self(
-            (int) $hotWalletMinValue,
-            (int) $hotWalletMaxValue,
+            (int)$hotWalletMinValue,
+            (int)$hotWalletMaxValue,
             $adserverName,
             new Email($technicalEmail),
             new Email($supportEmail),
-            new Commission((float) $advertiserCommission),
-            new Commission((float) $publisherCommission)
+            new Commission((float)$advertiserCommission),
+            new Commission((float)$publisherCommission)
         );
     }
 
