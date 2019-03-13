@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
@@ -50,12 +49,12 @@ Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, '
     ->name('app.campaigns.disable_classify');
 
 Route::post('sites', [SitesController::class, 'create'])->name('app.sites.add');
+Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])->name('app.sites.sizes');
 Route::get('sites/{site}', [SitesController::class, 'read'])->name('app.sites.read');
 Route::patch('sites/{site}', [SitesController::class, 'update'])->name('app.sites.edit');
 Route::delete('sites/{site}', [SitesController::class, 'delete'])->name('app.sites.delete');
 Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
-Route::get('sites/zones/sizes/{site_id?}', [SitesController::class, 'readSitesZonesSizes'])->name('app.sites.zones.sizes');
 
 # only for admin
 Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
