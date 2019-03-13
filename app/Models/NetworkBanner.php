@@ -215,22 +215,16 @@ class NetworkBanner extends Model
 
     private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
     {
-        if (!$networkBannerFilter->isApproved()
-            && !$networkBannerFilter->isRejected()
-            && !$networkBannerFilter->isUnclassified()) {
-            $query = self::fetchAllByUserId($networkBannerFilter);
+        if ($networkBannerFilter->isApproved()) {
+            $query = self::fetchApprovedByUserId($networkBannerFilter);
         } else {
-            if ($networkBannerFilter->isApproved()) {
-                $query = self::fetchApprovedByUserId($networkBannerFilter);
+            if ($networkBannerFilter->isRejected()) {
+                $query = self::fetchRejectedByUserId($networkBannerFilter);
             } else {
-                if ($networkBannerFilter->isRejected()) {
-                    $query = self::fetchRejectedByUserId($networkBannerFilter);
+                if ($networkBannerFilter->isUnclassified()) {
+                    $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
                 } else {
-                    if ($networkBannerFilter->isUnclassified()) {
-                        $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
-                    } else {
-                        $query = self::fetchAllByUserId($networkBannerFilter);
-                    }
+                    $query = self::fetchAllByUserId($networkBannerFilter);
                 }
             }
         }

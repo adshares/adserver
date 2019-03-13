@@ -101,6 +101,20 @@ class NetworkBannerFilter
 
     private function validate(): void
     {
+        $selectedStatusCount = 0;
+        if ($this->approved) {
+            ++$selectedStatusCount;
+        }
+        if ($this->rejected) {
+            ++$selectedStatusCount;
+        }
+        if ($this->unclassified) {
+            ++$selectedStatusCount;
+        }
+        if ($selectedStatusCount > 1) {
+            throw new InvalidArgumentException('[NetworkBannerFilter] Too much statuses selected.');
+        }
+
         if (null !== $this->type && !in_array($this->type, NetworkBanner::ALLOWED_TYPES, true)) {
             throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid type (%s)', $this->type));
         }
