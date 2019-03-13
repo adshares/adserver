@@ -156,12 +156,12 @@ class NetworkBanner extends Model
         return $query->count();
     }
 
-    private static function fetchAllByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    private static function fetchAll(NetworkBannerFilter $networkBannerFilter): Builder
     {
         return self::queryBannersWithCampaign($networkBannerFilter);
     }
 
-    private static function fetchApprovedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    private static function fetchApproved(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $userId = $networkBannerFilter->getUserId();
         $siteId = $networkBannerFilter->getSiteId();
@@ -174,7 +174,7 @@ class NetworkBanner extends Model
         );
     }
 
-    public static function fetchRejectedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    public static function fetchRejected(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $userId = $networkBannerFilter->getUserId();
         $siteId = $networkBannerFilter->getSiteId();
@@ -187,7 +187,7 @@ class NetworkBanner extends Model
         );
     }
 
-    public static function fetchUnclassifiedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
+    public static function fetchUnclassified(NetworkBannerFilter $networkBannerFilter): Builder
     {
         $userId = $networkBannerFilter->getUserId();
         $siteId = $networkBannerFilter->getSiteId();
@@ -215,28 +215,31 @@ class NetworkBanner extends Model
 
     private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
     {
-        if ($networkBannerFilter->isApproved()) {
-            $query = self::fetchApprovedByUserId($networkBannerFilter);
-        } else {
-            if ($networkBannerFilter->isRejected()) {
-                $query = self::fetchRejectedByUserId($networkBannerFilter);
-            } else {
-                if ($networkBannerFilter->isUnclassified()) {
-                    $query = self::fetchUnclassifiedByUserId($networkBannerFilter);
-                } else {
-                    $query = self::fetchAllByUserId($networkBannerFilter);
-                }
-            }
-        }
+        $query = self::getBaseQuery($networkBannerFilter);
 
-        $userId = $networkBannerFilter->getUserId();
-        $siteId = $networkBannerFilter->getSiteId();
-
-        if (null !== $siteId) {
+        if (null !== $networkBannerFilter->getSiteId()) {
+            $userId = $networkBannerFilter->getUserId();
             self::querySkipRejectedGlobally($query, $userId);
         }
 
         return $query;
+    }
+
+    private static function getBaseQuery(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        if ($networkBannerFilter->isApproved()) {
+            return self::fetchApproved($networkBannerFilter);
+        }
+
+        if ($networkBannerFilter->isRejected()) {
+            return self::fetchRejected($networkBannerFilter);
+        }
+
+        if ($networkBannerFilter->isUnclassified()) {
+            return self::fetchUnclassified($networkBannerFilter);
+        }
+
+        return self::fetchAll($networkBannerFilter);
     }
 
     private static function queryPaging(Builder $query, int $limit, int $offset): Builder
