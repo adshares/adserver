@@ -38,6 +38,9 @@ class NetworkBannerFilter
     /** @var array */
     private $sizes;
 
+    /** @var string */
+    private $type;
+
     /** @var int */
     private $userId;
 
@@ -51,6 +54,7 @@ class NetworkBannerFilter
         $this->unclassified = (bool)$request->get('unclassified', false);
 
         $this->sizes = json_decode($request->get('sizes', '[]'), true);
+        $this->type = $request->get('type');
 
         $this->userId = $userId;
         $this->siteId = $siteId;
@@ -74,6 +78,11 @@ class NetworkBannerFilter
     public function getSizes(): array
     {
         return $this->sizes;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
     }
 
     public function getUserId(): int

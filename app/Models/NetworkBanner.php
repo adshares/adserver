@@ -39,6 +39,12 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
+    public const HTML_TYPE = 'html';
+
+    public const IMAGE_TYPE = 'image';
+
+    public const ALLOWED_TYPES = [self::HTML_TYPE, self::IMAGE_TYPE];
+
     use AutomateMutators;
     use BinHex;
 
@@ -215,6 +221,13 @@ class NetworkBanner extends Model
     {
         $whereClause = [];
         $whereClause[] = ['network_banners.status', '=', Status::STATUS_ACTIVE];
+        if (null !== $networkBannerFilter) {
+            $type = $networkBannerFilter->getType();
+
+            if (null !== $type) {
+                $whereClause[] = ['network_banners.type', '=', $type];
+            }
+        }
 
         $query = self::where($whereClause)->orderBy(
             'network_banners.id',

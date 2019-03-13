@@ -33,6 +33,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -51,6 +52,10 @@ class ClassifierController extends Controller
 
     public function fetch(Request $request, ?int $siteId = null): JsonResponse
     {
+        $request->validate([
+            'type' => Rule::in(NetworkBanner::ALLOWED_TYPES),
+        ]);
+
         $limit = (int)$request->get('limit', 20);
         $offset = (int)$request->get('offset', 0);
         $userId = Auth::user()->id;
