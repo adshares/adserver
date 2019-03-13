@@ -158,11 +158,6 @@ class Site extends Model
         );
     }
 
-    public static function fetchById(int $id): ?self
-    {
-        return self::find($id);
-    }
-
     public static function fetchByPublicId(string $publicId): ?self
     {
         return self::where('uuid', hex2bin($publicId))->first();

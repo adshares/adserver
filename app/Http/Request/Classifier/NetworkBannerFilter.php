@@ -35,11 +35,8 @@ class NetworkBannerFilter
     /** @var bool */
     private $unclassified;
 
-    /** @var int|null */
-    private $width;
-
-    /** @var int|null */
-    private $height;
+    /** @var array */
+    private $sizes;
 
     /** @var int */
     private $userId;
@@ -53,8 +50,7 @@ class NetworkBannerFilter
         $this->rejected = (bool)$request->get('rejected', false);
         $this->unclassified = (bool)$request->get('unclassified', false);
 
-        $this->width = $request->get('width') ?: null;
-        $this->height = $request->get('height') ?: null;
+        $this->sizes = json_decode($request->get('sizes', '[]'), true);
 
         $this->userId = $userId;
         $this->siteId = $siteId;
@@ -75,14 +71,9 @@ class NetworkBannerFilter
         return $this->unclassified;
     }
 
-    public function getWidth(): ?int
+    public function getSizes(): array
     {
-        return $this->width;
-    }
-
-    public function getHeight(): ?int
-    {
-        return $this->height;
+        return $this->sizes;
     }
 
     public function getUserId(): int

@@ -216,39 +216,20 @@ class NetworkBanner extends Model
         $whereClause = [];
         $whereClause[] = ['network_banners.status', '=', Status::STATUS_ACTIVE];
 
-        if (null !== $networkBannerFilter) {
-            $bannerWidth = $networkBannerFilter->getWidth();
-            if (null !== $bannerWidth) {
-                $whereClause[] = ['network_banners.width', '=', $bannerWidth];
-            }
-
-            $bannerHeight = $networkBannerFilter->getHeight();
-            if (null !== $bannerHeight) {
-                $whereClause[] = ['network_banners.height', '=', $bannerHeight];
-            }
-        }
-
         $query = self::where($whereClause)->orderBy(
             'network_banners.id',
             'desc'
         );
 
         if (null !== $networkBannerFilter) {
-            $siteId = $networkBannerFilter->getSiteId();
-            if (null !== $siteId) {
-                $site = Site::fetchById($siteId);
-                if ($site) {
-                    $zones = $site->zones;
-                    $sizes = $zones->map(function (Zone $item) {
-                        return $item->width.'x'.$item->height;
-                    });
+            $sizes = $networkBannerFilter->getSizes();
 
-                    $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
-                    $query->whereIn($concatSizeExpression, $sizes);
-                }
+            if ($sizes) {
+                $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
+                $query->whereIn($concatSizeExpression, $sizes);
             }
         }
-        
+
         $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
         $query->select(
             'network_banners.id',
