@@ -87,7 +87,6 @@ class Kernel extends HttpKernel
         parent::bootstrap();
 
         if (config('app.env') !== 'testing') {
-            echo 'aaa';die();
             DatabaseConfigReader::overwriteAdministrationConfig();
         }
     }
