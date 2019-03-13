@@ -255,7 +255,7 @@ HTML;
         if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
             $this->setSizeAttribute(
                 [
-                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
                 ]
             );
         }
@@ -267,9 +267,14 @@ HTML;
         if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
             $this->setSizeAttribute(
                 [
-                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
                 ]
             );
         }
+    }
+
+    public function getSizeAsString(): string
+    {
+        return "{$this->attributes['width']}x{$this->attributes['height']}";
     }
 }

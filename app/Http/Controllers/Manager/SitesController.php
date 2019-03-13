@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Classify\Domain\Model\Classification;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
@@ -257,5 +258,12 @@ class SitesController extends Controller
                 'status' => $site->status,
             ],
         ]);
+    }
+
+    public function readSitesSizes(?int $siteId = null): JsonResponse
+    {
+        $response = new SizesResponse($siteId);
+
+        return self::json($response);
     }
 }
