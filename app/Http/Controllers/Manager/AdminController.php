@@ -18,10 +18,20 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Manager\AdminController;
-use Adshares\Adserver\Http\Kernel;
-use Illuminate\Support\Facades\Route;
+declare(strict_types = 1);
 
-Route::middleware(Kernel::ADMIN_ACCESS)->group(function () {
-    Route::get('settings', [AdminController::class, 'listSettings']);
-});
+namespace Adshares\Adserver\Http\Controllers\Manager;
+
+use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\SettingsResponse;
+use Adshares\Adserver\Models\Config;
+
+class AdminController extends Controller
+{
+    public function listSettings(): SettingsResponse
+    {
+        $settings = Config::fetchAdminSettings();
+
+        return SettingsResponse::fromConfigModel($settings);
+    }
+}
