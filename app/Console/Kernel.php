@@ -62,6 +62,8 @@ class Kernel extends ConsoleKernel
     {
         parent::bootstrap();
 
-        DatabaseConfigReader::overwriteAdministrationConfig();
+        if (config('app.env') !== 'testing') {
+            DatabaseConfigReader::overwriteAdministrationConfig();
+        }
     }
 }
