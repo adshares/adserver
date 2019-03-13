@@ -18,9 +18,8 @@ git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_
 || (\
     cd ${VENDOR_DIR}/${SERVICE_NAME} \
     && git reset --hard \
-    && git remote update --prune \
-    && git fetch --tags --force --all \
-    && git checkout --force ${GIT_BRANCH_NAME} \
+    && git fetch --tags \
+    && git checkout ${GIT_BRANCH_NAME} \
     && git pull \
 )
 
