@@ -56,6 +56,7 @@ then
 fi
 
 ${TEMP_DIR}/prepare-directories.sh
+${TEMP_DIR}/prepare-directories.sh
 
 export DEBUG_MODE=1
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]

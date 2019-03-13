@@ -9,9 +9,7 @@ fi
 HERE=$(dirname $(readlink -f "$0"))
 source ${HERE}/_functions.sh
 
-#SERVICE_NAME=adserver source ${HERE}/clone-service.sh
 read_env ${INSTALLATION_DIR}/adserver/.env || read_env ${INSTALLATION_DIR}/adserver/.env.dist
-
 
 INSTALL_SCHEME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADPANEL_URL" scheme 2>/dev/null`
 
@@ -119,13 +117,6 @@ then
     ADUSER_PIXEL_PATH=register
 
     save_env ${INSTALLATION_DIR}/aduser/.env.dist ${INSTALLATION_DIR}/aduser/.env
-
-
-    cd ${INSTALLATION_DIR}/aduser
-    ${HERE}/10-aduser.sh
-
-    if [ "${INSTALL_ADUSER_BROWSCAP^^}" == "Y" ] ; then ${HERE}/11-aduser_browscap.sh; fi
-    if [ "${INSTALL_ADUSER_GEOLITE^^}" == "Y" ] ; then ${HERE}/12-aduser_geolite.sh; fi
 fi
 
 if [ "${INSTALL_ADSELECT^^}" == "Y" ]
@@ -137,9 +128,6 @@ then
     ADSELECT_SERVER_PORT=8011
     ADSELECT_SERVER_INTERFACE=127.0.0.1
     save_env ${INSTALLATION_DIR}/adselect/.env.dist ${INSTALLATION_DIR}/adselect/.env
-
-    cd ${INSTALLATION_DIR}/adselect
-    ${HERE}/20-adselect.sh
 fi
 
 if [ "${INSTALL_ADPAY^^}" == "Y" ]
@@ -151,9 +139,6 @@ then
     ADPAY_SERVER_PORT=8012
     ADPAY_SERVER_INTERFACE=127.0.0.1
     save_env ${INSTALLATION_DIR}/adpay/.env.dist ${INSTALLATION_DIR}/adpay/.env
-
-    cd ${INSTALLATION_DIR}/adpay
-    ${HERE}/30-adpay.sh
 fi
 
 
@@ -166,16 +151,9 @@ then
     read_env ${INSTALLATION_DIR}/adpanel/.env || read_env ${INSTALLATION_DIR}/adpanel/.env.dist
     # adserver url
     save_env ${INSTALLATION_DIR}/adpanel/.env.dist ${INSTALLATION_DIR}/adpanel/.env
-
-    cd ${INSTALLATION_DIR}/adpanel
-    ${HERE}/50-adpanel.sh
 fi
 
 APP_URL=$ADSERVER_HOST
 test -z "${APP_KEY}" && APP_KEY=base64:`date | sha256sum | head -c 32 | base64`
 test -z "${ADSERVER_SECRET}" && ADSERVER_SECRET="${APP_KEY}"
 save_env ${INSTALLATION_DIR}/adserver/.env.dist ${INSTALLATION_DIR}/adserver/.env
-cd ${INSTALLATION_DIR}/adserver
-DB_MIGRATE=1 ${HERE}/40-adserver.sh
-
-if [ "${INSTALL_ADSERVER_CRON^^}" == "Y" ] ; then ${HERE}/41-adserver_worker.sh; fi
