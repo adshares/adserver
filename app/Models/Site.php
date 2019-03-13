@@ -57,7 +57,11 @@ class Site extends Model
 
     public const STATUS_ACTIVE = 2;
 
-    public const ALLOWED_STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    public const ALLOWED_STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_INACTIVE,
+        self::STATUS_ACTIVE,
+    ];
 
     private const ZONE_STATUS = [
         Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
