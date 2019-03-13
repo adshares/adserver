@@ -89,7 +89,7 @@ class SupplyController extends Controller
         }
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
         $zones = Utils::decodeZones($data)['zones'];
@@ -202,7 +202,7 @@ class SupplyController extends Controller
         $response->send();
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         NetworkEventLog::create(
@@ -267,7 +267,7 @@ class SupplyController extends Controller
         $response->send();
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         NetworkEventLog::create(
