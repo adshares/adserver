@@ -44,6 +44,7 @@ class Kernel extends HttpKernel
     public const USER_ACCESS = 'only-authenticated-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const JSON_API = 'api';
+    public const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -65,7 +66,7 @@ class Kernel extends HttpKernel
             ValidatePostSize::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
-            SnakizeRequest::class,
+            self::SNAKE_CASING,
             SubstituteBindings::class,
             #post
             SetCacheHeaders::class,
