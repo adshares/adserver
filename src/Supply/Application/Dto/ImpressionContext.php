@@ -136,8 +136,8 @@ final class ImpressionContext
         $filtering = $zone->site->filtering;
 
         $bannerFilters = [];
-        $bannerFilters['require'] = $filtering['requires'] ? $filtering['requires'] : new stdClass();
-        $bannerFilters['exclude'] = $filtering['excludes'] ? $filtering['excludes'] : new stdClass();
+        $bannerFilters['require'] = $filtering['requires'] ?: new stdClass();
+        $bannerFilters['exclude'] = $filtering['excludes'] ?: new stdClass();
 
         return $bannerFilters;
     }
