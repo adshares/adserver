@@ -47,5 +47,12 @@ then
     artisanCommand db:seed
 fi
 
-#artisanCommand ops:targeting-options:update
-#artisanCommand ops:filtering-options:update
+if [[ ${SKIP_TARGETING:-0} -ne 1 ]]
+then
+    artisanCommand ops:targeting-options:update
+fi
+
+if [[ ${SKIP_FILTERING:-0} -ne 1 ]]
+then
+    artisanCommand ops:filtering-options:update
+fi
