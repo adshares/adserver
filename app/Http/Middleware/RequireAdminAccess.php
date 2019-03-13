@@ -20,11 +20,26 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common;
+namespace Adshares\Adserver\Http\Middleware;
 
-interface UrlObject
+use Auth;
+use Closure;
+use Illuminate\Auth\Middleware\Authenticate;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+
+class RequireAdminAccess extends Authenticate
 {
-    public function __toString(): string;
 
-    public function toString(): string;
+    public function handle($request, Closure $next, ...$guards)
+    {
+        $this->authenticate($request, $guards);
+
+        $user = Auth::user();
+
+        if (!$user->isAdmin()) {
+            throw new AccessDeniedHttpException('Forbidden access.');
+        }
+
+        return $next($request);
+    }
 }

@@ -25,13 +25,13 @@ class ChangeNetworkEventLogsHumanScoreToDecimal extends Migration
     public function down(): void
     {
         Schema::table(
-            'event_logs',
+            'network_event_logs',
             function (Blueprint $table) {
                 $table->dropColumn('human_score');
             }
         );
         Schema::table(
-            'event_logs',
+            'network_event_logs',
             function (Blueprint $table) {
                 $table->integer('human_score')->after('context')->nullable();
             }

@@ -22,36 +22,36 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Common\UrlObject;
-use RuntimeException;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlInterface;
 use function idn_to_utf8;
 use const FILTER_VALIDATE_URL;
 use const IDNA_ERROR_DISALLOWED;
 
-final class Url implements UrlObject
+final class Url implements UrlInterface
 {
     /** @var string */
-    private $idn;
+    private $idnUrl;
 
     public function __construct(string $url)
     {
-        $idn = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        $idnUrl = idn_to_ascii($url, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
 
-        if (!filter_var($idn, FILTER_VALIDATE_URL)) {
-            throw new RuntimeException(sprintf('Given url %s is not correct.', $url));
+        if (!filter_var($idnUrl, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException(sprintf('Given url (%s) is not correct.', $url));
         }
 
-        $this->idn = $idn;
+        $this->idnUrl = $idnUrl;
     }
 
-    public function idn(): string
+    public function utf8(): string
     {
-        return $this->idn;
+        return idn_to_utf8($this->idnUrl, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
     }
 
     public function toString(): string
     {
-        return idn_to_utf8($this->idn, IDNA_ERROR_DISALLOWED, INTL_IDNA_VARIANT_UTS46);
+        return $this->idnUrl;
     }
 
     public function __toString(): string

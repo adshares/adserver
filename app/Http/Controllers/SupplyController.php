@@ -27,8 +27,8 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
@@ -102,9 +102,9 @@ class SupplyController extends Controller
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_host'),
+            config('app.url'),
             config('app.aduser_external_location'),
-            '.'.config('app.website_banner_class'),
+            '.'.config('app.adserver_id'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -311,14 +311,14 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.gif',
+            '%s/register/%s/%s/%s.htm',
             config('app.aduser_external_location'),
             urlencode(config('app.adserver_id')),
             $trackingId,
             $impressionId
         );
 
-        $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
+        $response->headers->set('Location', SecureUrl::change($adUserUrl));
 
         return $response;
     }
@@ -336,10 +336,11 @@ class SupplyController extends Controller
         $data = [
             'url' => $banner->serve_url,
             'supplyName' => config('app.adserver_info_name'),
-            'supplyTermsUrl' => config('app.adserver_info_terms_url'),
-            'supplyPrivacyUrl' => config('app.adserver_info_privacy_url'),
-            'supplyPanelUrl' => config('app.adserver_info_panel_url'),
+            'supplyTermsUrl' => config('app.terms_url'),
+            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyPanelUrl' => config('app.adpanel_url'),
             'demand' => false,
+            'bannerType' => $banner->type,
         ];
 
         if ($info) {

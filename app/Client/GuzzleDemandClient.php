@@ -23,10 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -45,8 +44,6 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
-
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     /** @var SignatureVerifier */
@@ -61,15 +58,15 @@ final class GuzzleDemandClient implements DemandClient
         $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
     {
-        $client = new Client($this->requestParameters($inventoryHost));
+        $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+            $response = $client->get($inventoryUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $inventoryHost, $exception->getMessage()),
+                sprintf('Could not connect to %s host (%s).', $inventoryUrl, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -84,7 +81,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryHost));
+            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryUrl));
             $campaignsCollection->add($campaign);
         }
 
@@ -134,7 +131,7 @@ final class GuzzleDemandClient implements DemandClient
         return $this->createDecodedResponseFromBody($body);
     }
 
-    public function fetchInfo(UrlObject $infoUrl): Info
+    public function fetchInfo(UrlInterface $infoUrl): Info
     {
         $client = new Client($this->requestParameters());
 
@@ -155,18 +152,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $data = $this->createDecodedResponseFromBody($body);
 
-        $this->validateInfoResponse($data);
-
-        return new Info(
-            $data['serviceType'],
-            $data['name'],
-            $data['softwareVersion'],
-            $data['supported'],
-            new Url($data['panelUrl']),
-            new Url($data['privacyUrl']),
-            new Url($data['termsUrl']),
-            new Url($data['inventoryUrl'])
-        );
+        return Info::fromArray($data);
     }
 
     private function requestParameters(?string $baseUrl = null): array
@@ -232,29 +218,5 @@ final class GuzzleDemandClient implements DemandClient
         unset($data['id']);
 
         return $data;
-    }
-
-    private function validateInfoResponse(array $data): void
-    {
-        $type = $data['serviceType'] ?? null;
-        $name = $data['name'] ?? null;
-        $version = $data['softwareVersion'] ?? null;
-        $supported = $data['supported'] ?? null;
-        $panelUrl = $data['panelUrl'] ?? null;
-        $privacyUrl = $data['privacyUrl'] ?? null;
-        $termsUrl = $data['termsUrl'] ?? null;
-        $inventoryUrl = $data['inventoryUrl'] ?? null;
-
-        if (!$type
-            || !$name
-            || !$version
-            || !$supported
-            || !$panelUrl
-            || !$privacyUrl
-            || !$termsUrl
-            || !$inventoryUrl
-        ) {
-            throw new DomainRuntimeException('Wrong info data format.');
-        }
     }
 }

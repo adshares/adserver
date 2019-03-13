@@ -53,25 +53,48 @@ class InventoryImporterCommand extends Command
 
         $networkHosts = NetworkHost::fetchHosts();
 
-        if ($networkHosts->count() === 0) {
+        $networkHostCount = $networkHosts->count();
+        if ($networkHostCount === 0) {
             $this->info('[Inventory Importer] Stopped importing. No hosts found.');
 
             return;
         }
 
-        try {
-            /** @var NetworkHost $networkHost */
-            foreach ($networkHosts as $networkHost) {
-                $this->inventoryImporterService->import($networkHost->host);
+        $networkHostSuccessfulConnectionCount = 0;
+        /** @var NetworkHost $networkHost */
+        foreach ($networkHosts as $networkHost) {
+            try {
+                $this->inventoryImporterService->import($networkHost->info->getInventoryUrl());
 
                 $networkHost->connectionSuccessful();
+                ++$networkHostSuccessfulConnectionCount;
+            } catch (UnexpectedClientResponseException $exception) {
+                $host = $networkHost->info->getInventoryUrl();
+                $networkHost->connectionFailed();
+
+                $this->warn(sprintf(
+                    '[Inventory Importer] Inventory host (%s) is unavailable (Exception: %s)',
+                    $host,
+                    $exception->getMessage()
+                ));
+
+                if ($networkHost->isInventoryToBeRemoved()) {
+                    $this->inventoryImporterService->clearInventoryForHost($host);
+
+                    $this->info(sprintf(
+                        '[Inventory Importer] Inventory (%s) has been removed.',
+                        $host
+                    ));
+                }
             }
-        } catch (UnexpectedClientResponseException $exception) {
-            $networkHost->connectionFailed();
-            $this->error(sprintf('[Inventory Importer] %s', $exception->getMessage()));
-            return;
         }
 
-        $this->info('[Inventory Importer] Finished importing data from all inventories.');
+        $this->info(
+            sprintf(
+                '[Inventory Importer] Finished importing data from %d/%d inventories.',
+                $networkHostSuccessfulConnectionCount,
+                $networkHostCount
+            )
+        );
     }
 }

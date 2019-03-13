@@ -74,6 +74,6 @@ sleep 10
 
 artisanCommand ops:targeting-options:update
 artisanCommand ops:filtering-options:update
-artisanCommand ads:fetch-hosts
+artisanCommand ads:fetch-hosts -q
 
 echo "Install OK. Visit ${ADPANEL_URL}"

@@ -23,10 +23,12 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\UrlObject;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
+use function route;
 
 class AdsBroadcastHost extends Command
 {
@@ -43,7 +45,7 @@ class AdsBroadcastHost extends Command
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
     /**
-     * @var Url
+     * @var UrlObject
      */
     private $infoApiUrl;
 
@@ -51,7 +53,7 @@ class AdsBroadcastHost extends Command
     {
         parent::__construct();
 
-        $this->infoApiUrl = new Url((string)config('app.adserver_info_url'));
+        $this->infoApiUrl = new SecureUrl(route('app.infoEndpoint'));
     }
 
     /**
@@ -63,12 +65,13 @@ class AdsBroadcastHost extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $command = new Broadcast(new BroadcastableUrl($this->infoApiUrl));
+        $url = new BroadcastableUrl($this->infoApiUrl);
+        $command = new Broadcast($url);
 
         $response = $adsClient->runTransaction($command);
 
         $txId = $response->getTx()->getId();
 
-        $this->info("Message broadcast successfully. TxId: $txId");
+        $this->info("Url ($url) broadcast successfully. TxId: $txId");
     }
 }

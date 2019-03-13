@@ -203,6 +203,12 @@ class User extends Authenticatable
         return (bool)$this->is_publisher;
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool)$this->is_admin;
+    }
+
+
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);

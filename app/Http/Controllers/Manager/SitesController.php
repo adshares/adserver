@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Classify\Domain\Model\Classification;
 use Exception;
@@ -238,5 +239,12 @@ class SitesController extends Controller
         ];
 
         return self::json($siteCount, 200);
+    }
+    
+    public function readSitesSizes(?int $siteId = null): JsonResponse
+    {
+        $response = new SizesResponse($siteId);
+
+        return self::json($response);
     }
 }

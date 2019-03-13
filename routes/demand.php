@@ -32,6 +32,7 @@ Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-vi
 Route::get('/serve/{id}', [DemandController::class, 'serve'])->name('banner-serve');
 Route::get('/view/{id}', [DemandController::class, 'view'])->name('banner-view');
 Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
+Route::get('/context/{id}', [DemandController::class, 'context'])->name('banner-context');
 Route::get('/payment-details/{transactionId}/{accountAddress}/{date}/{signature}', [DemandController::class, 'paymentDetails']);
 
 ### simulator ###

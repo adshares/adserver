@@ -143,7 +143,7 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $serverUrl = config('app.adserver_host');
+        $serverUrl = config('app.url');
 
         return "<script src=\"$serverUrl/supply/find.js\" async></script>";
     }
@@ -156,6 +156,11 @@ class Site extends Model
                 $zone->status = Site::ZONE_STATUS[$value];
             }
         );
+    }
+
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
     }
 
     public static function fetchByPublicId(string $publicId): ?self

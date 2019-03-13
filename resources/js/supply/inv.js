@@ -24,6 +24,8 @@ var isEdge = !isIE && !!window.StyleMedia;
 // Chrome on iOs has bug with blob url in iframe.src
 var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match('CriOS');
 
+var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+
 var tmp = new XMLHttpRequest();
 supportBinaryFetch = !isIE || tmp.upload;
 
@@ -41,7 +43,7 @@ function getDataURI(data, callback) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 callback(reader.result);
-            }
+            };
             reader.readAsDataURL(data.blob);
         }
         return;
@@ -49,26 +51,102 @@ function getDataURI(data, callback) {
     callback('data:' + data.type + ';base64,' + btoa(data.bytes));
 }
 
+var prepareIframe = function (element) {
+    element.setAttribute('width', '100%');
+    element.setAttribute('height', '100%');
+    element.setAttribute('marginwidth', '0');
+    element.setAttribute('marginheight', '0');
+    element.setAttribute('vspace', '0');
+    element.setAttribute('hspace', '0');
+    element.setAttribute('allowtransparency', 'true');
+    element.setAttribute('scrolling', 'no');
+    element.setAttribute('frameborder', '0');
+};
+
+var proxyScript = '' +
+    'var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match(\'CriOS\');' +
+    'function getDataURI(data, callback) {\n' +
+    '    if (window.Blob && data.blob instanceof window.Blob) {\n' +
+    '        if (!isCriOS && URL && URL.createObjectURL) {\n' +
+    '            callback(URL.createObjectURL(data.blob));\n' +
+    '        } else if (window.FileReader) {\n' +
+    '            var reader = new FileReader();\n' +
+    '            reader.onload = function (e) {\n' +
+    '                callback(reader.result);\n' +
+    '            }\n' +
+    '            reader.readAsDataURL(data.blob);\n' +
+    '        }\n' +
+    '        return;\n' +
+    '    }\n' +
+    '    callback(\'data:\' + data.type + \';base64,\' + btoa(data.bytes));\n' +
+    '}' +
+    'var addListener = function (element, event, handler, phase) {' +
+    '    if (element.addEventListener) {' +
+    '        return element.addEventListener(event, handler, phase);' +
+    '    } else {' +
+    '        return element.attachEvent("on" + event, handler);' +
+    '    }' +
+    '};' +
+    'addListener(window, "message", function (event) {' +
+    '    var iframe = document.getElementById("frame");' +
+    '    if(iframe.src == "about:blank")  {' +
+    '       getDataURI(event.data, function(dataUri) {' +
+    '           iframe.src = dataUri;' +
+    '       });' +
+    '       return;' +
+    '    }' +
+    '    var targets = [iframe.contentWindow, parent];' +
+    '    var target;' +
+    '    if (event.source == targets[0]) {' +
+    '        target = targets[1];' +
+    '    }' +
+    '    else if(event.source == targets[1]) {' +
+    '        target = targets[0];' +
+    '    } ' +
+    '    if(target) {' +
+    '        target.postMessage(event.data, "*"); ' +
+    '    }' +
+    '});';
+
 function createIframeFromData(data, domInsertCallback) {
     var iframe = document.createElement('iframe');
     if (!iframeDataUri) {
         iframe.src = 'about:blank';
+        iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
         domInsertCallback(iframe);
 
         var fn = function (contents) {
-            iframe.contentWindow.contents = contents;
-            iframe.src = 'javascript:window["contents"]';
+            var doc = iframe.contentWindow.document;
+            var doc_iframe = doc.createElement('iframe');
+            doc_iframe.setAttribute('id', 'frame');
+            doc_iframe.src = 'about:blank';
+            prepareIframe(doc_iframe);
+
+            var csp = doc.createElement('meta');
+            csp.setAttribute('http-equiv', "Content-Security-Policy");
+            csp.setAttribute('content', "frame-src blob:; child-src blob:");
+
+            iframe.contentWindow.eval(proxyScript);
             
-            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
-        }
+            setTimeout(function() {
+
+                doc.head.appendChild(csp);
+                doc.body.appendChild(doc_iframe);
+                doc_iframe.contentWindow.contents = contents;
+                doc_iframe.src = 'javascript:window["contents"]';
+
+                doc_iframe.setAttribute('sandbox', "allow-scripts");
+            }, 1);
+        };
 
         if (requestBlob && data instanceof Blob) // blob
         {
             var reader = new FileReader();
 
             reader.onload = function (e) {
+
                 fn(reader.result);
-            }
+            };
 
             if (reader.readAsBinaryString)
                 reader.readAsBinaryString(data);
@@ -79,9 +157,22 @@ function createIframeFromData(data, domInsertCallback) {
         }
 
     } else {
-        getDataURI(data, function (dataUri) {
-            iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
+        iframe.setAttribute('sandbox', "allow-scripts");
+        var blob = new Blob(['<html>' +
+        '<head>' +
+        '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
+        '<body>' +
+        '<script>' + proxyScript +  '</script>' +
+        '<iframe id="frame" src="about:blank" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
+        '</body>' +
+        '</html>'], {'type': 'text/html'});
+
+        getDataURI({blob: blob}, function(dataUri) {
             iframe.src = dataUri;
+
+            iframe.onload = function() {
+                iframe.contentWindow.postMessage(data, '*');
+            };
             domInsertCallback(iframe);
         });
     }
@@ -95,10 +186,10 @@ function createImageFromData(data, domInsertCallback) {
                 image = new Image();
                 image.src = data.originalUrl;
                 domInsertCallback(image);
-            }
+            };
             image.onload = function () {
                 domInsertCallback(image);
-            }
+            };
             image.src = dataUri;
         } else {
             image.src = dataUri;
@@ -136,7 +227,7 @@ function fetchURL(url, options) {
                     var pos = headers[i].indexOf(':');
                     this.__responseHeaders[headers[i].substring(0, pos)] = headers[i].substr(pos+1);
                 }
-            }
+            };
             xhr.getResponseHeader = function(header)
             {
                 return this.__responseHeaders[header];
@@ -171,12 +262,12 @@ function fetchURL(url, options) {
     var ok, fail;
     xhr.ontimeout = function (event) {
         fail && fail();
-    }
+    };
 
     xhr.then = function (onSuccess, onError) {
         ok = onSuccess;
         fail = onError;
-    }
+    };
 
     if (xdr) {
         xhr.onerror = xhr.ontimeout;
@@ -206,7 +297,7 @@ function fetchURL(url, options) {
     } else {
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
-                var callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail
+                var callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail;
                 if (callback) {
                     var data;
                     if (options.binary) {
@@ -219,9 +310,9 @@ function fetchURL(url, options) {
                                        bytes: reader.result,
                                        type: xhr.response.type,
                                        blob: xhr.response
-                                    }
+                                    };
                                     callback && callback(data, xhr);
-                                }
+                                };
 
                                 if (reader.readAsBinaryString)
                                     reader.readAsBinaryString(xhr.response);

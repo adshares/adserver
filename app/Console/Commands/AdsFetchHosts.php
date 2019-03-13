@@ -28,11 +28,12 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends Command
 {
@@ -124,15 +125,14 @@ class AdsFetchHosts extends Command
             $broadcastArray = $resp->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                /** @var $broadcast Broadcast */
                 $this->handleBroadcast($broadcast);
             }
         } catch (CommandException $ce) {
             $code = $ce->getCode();
             if (CommandError::BROADCAST_NOT_READY === $code) {
-                $this->info("Error $code: Broadcast not ready for block $blockId");
+                Log::warning("Error $code: Broadcast not ready for block $blockId");
             } else {
-                $this->info("Error $code: Unexpected error for block $blockId");
+                Log::error("Error $code: Unexpected error for block $blockId");
             }
         }
     }
@@ -144,20 +144,21 @@ class AdsFetchHosts extends Command
     {
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
-        $infoUrl = BroadcastableUrl::fromHex($broadcast->getMessage());
 
         try {
-            $info = $this->client->fetchInfo($infoUrl);
-        } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', (string)$infoUrl));
-        } catch (DomainRuntimeException $exception) {
-            $this->error(sprintf(
-                'Could not import info data (%s) from server `%s`.',
-                $exception->getMessage(),
-                (string)$infoUrl
-            ));
-        }
+            $url = BroadcastableUrl::fromHex($broadcast->getMessage());
+            Log::debug("Fetching {$url->toString()}");
 
-        NetworkHost::registerHost($address, $infoUrl, $info ?? null, $time);
+            $info = $this->client->fetchInfo($url);
+
+            Log::debug("Got {$url->toString()}");
+
+            $host = NetworkHost::registerHost($address, $info, $time);
+
+            Log::debug("Stored {$url->toString()} as #{$host->id}");
+        } catch (RuntimeException|UnexpectedClientResponseException $exception) {
+            $url = $url ?? '';
+            Log::debug("[$url] {$exception->getMessage()}");
+        }
     }
 }

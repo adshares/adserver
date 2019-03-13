@@ -78,6 +78,7 @@ jobs:
         - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
     - stage: Code Quality
+      if: type = pull_request
       script:
         # SonarQube
         - sonar-scanner

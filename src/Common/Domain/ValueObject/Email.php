@@ -20,18 +20,25 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Common\Domain\ValueObject;
 
-use Illuminate\Support\Facades\Config;
+use Adshares\Common\Exception\RuntimeException;
+use const FILTER_VALIDATE_EMAIL;
+use function filter_var;
 
-class ForceUrlProtocol
+final class Email
 {
-    public static function change(string $uri): string
+    public function __construct(string $email)
     {
-        if (Config::get('app.banner_force_https') === false) {
-            return $uri;
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException(sprintf('Email (%s) is not valid.', $email));
         }
 
-        return str_replace('http:', 'https:', $uri);
+        $this->email = $email;
+    }
+
+    public function toString(): string
+    {
+        return $this->email;
     }
 }
