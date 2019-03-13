@@ -31,7 +31,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\JoinClause;
 use function array_map;
-
 use function hex2bin;
 
 /**
@@ -168,10 +167,11 @@ class NetworkBanner extends Model
         $siteId = $networkBannerFilter->getSiteId();
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
-        $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where(self::CLASSIFICATIONS_COLUMN_STATUS, Classification::STATUS_APPROVED);
-        
-        return $query;
+
+        return self::queryJoinWithUserClassification($query, $userId, $siteId)->where(
+            self::CLASSIFICATIONS_COLUMN_STATUS,
+            Classification::STATUS_APPROVED
+        );
     }
 
     public static function fetchRejectedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
@@ -180,10 +180,11 @@ class NetworkBanner extends Model
         $siteId = $networkBannerFilter->getSiteId();
 
         $query = self::queryBannersWithCampaign($networkBannerFilter);
-        $query = self::queryJoinWithUserClassification($query, $userId, $siteId)
-            ->where(self::CLASSIFICATIONS_COLUMN_STATUS, Classification::STATUS_REJECTED);
 
-        return $query;
+        return self::queryJoinWithUserClassification($query, $userId, $siteId)->where(
+            self::CLASSIFICATIONS_COLUMN_STATUS,
+            Classification::STATUS_REJECTED
+        );
     }
 
     public static function fetchUnclassifiedByUserId(NetworkBannerFilter $networkBannerFilter): Builder
@@ -195,15 +196,14 @@ class NetworkBanner extends Model
         $query->leftJoin(
             'classifications',
             function (JoinClause $join) use ($userId, $siteId) {
-                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)
-                    ->where(
-                        [
-                            self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
-                            self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
-                        ]
-                    );
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)->where(
+                    [
+                        self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
+                        self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
+                    ]
+                );
             }
-         )->whereNull(self::CLASSIFICATIONS_COLUMN_BANNER_ID);
+        )->whereNull(self::CLASSIFICATIONS_COLUMN_BANNER_ID);
 
         return $query;
     }
@@ -276,7 +276,12 @@ class NetworkBanner extends Model
             }
         }
 
-        $query->join('network_campaigns', self::NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID, '=', self::NETWORK_CAMPAIGNS_COLUMN_ID);
+        $query->join(
+            'network_campaigns',
+            self::NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID,
+            '=',
+            self::NETWORK_CAMPAIGNS_COLUMN_ID
+        );
         $query->select(
             self::NETWORK_BANNERS_COLUMN_ID,
             self::NETWORK_BANNERS_COLUMN_SERVE_URL,
@@ -294,7 +299,7 @@ class NetworkBanner extends Model
 
     private static function queryJoinWithUserClassification(Builder $query, int $userId, ?int $siteId): Builder
     {
-        $query = $query->join(
+        return $query->join(
             'classifications',
             function (JoinClause $join) use ($userId, $siteId) {
                 $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)->where(
@@ -305,8 +310,6 @@ class NetworkBanner extends Model
                 );
             }
         );
-
-        return $query;
     }
 
     private static function querySkipRejectedGlobally(Builder $query, int $userId): void
@@ -338,9 +341,7 @@ class NetworkBanner extends Model
             $publicUuids
         );
 
-        $banners = self::whereIn('uuid', $binPublicIds)
-            ->select('id', 'uuid')
-            ->get();
+        $banners = self::whereIn('uuid', $binPublicIds)->select('id', 'uuid')->get();
 
         $ids = [];
 
