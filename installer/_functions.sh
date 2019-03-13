@@ -28,7 +28,11 @@ read_option () {
 save_env () {
     test -e $2 && rm $2
     local EXPORT=$(export -p)
-    while read i; do
+
+    echo "Preparing ($2) environment file."
+
+    while read i
+    do
         echo -n $i= >> $2
         echo "$EXPORT" | grep $i= | head -n1 | awk 'NF { st = index($0,"=");printf("%s", substr($0,st+1)) }' >> $2
         echo "" >> $2
@@ -38,7 +42,11 @@ save_env () {
 # read dotenv file and export vars. Does not overwrite existing vars
 # read_env(.env file)
 read_env() {
-    if [ ! -e $1 ] ; then return 1; fi
+    if [ ! -e $1 ]
+    then
+        echo "Environment file ($1) not found."
+        return 1
+    fi
     source <(grep -v '^#' $1 | sed -E 's|^([^=]+)=(.*)$|: ${\1=\2}; export \1|g')
 }
 
@@ -97,9 +105,11 @@ set -u
 
 if [[ ${DEBUG_MODE:-0} -eq 1 ]]
 then
-    echo ""
-    echo "$0 $*"
-    echo ""
+    echo "# ==="
+    echo "#"
+    echo "# $0 $*"
+    echo "#"
+    echo "# --- #"
     echo "# `id`"
     echo "# SERVICE_NAME: $SERVICE_NAME"
     echo "#  SERVICE_DIR: $SERVICE_DIR"
@@ -114,7 +124,5 @@ then
     echo "#    RUN_DIR=$RUN_DIR"
     echo "#"
     echo "# SCRIPT_DIR=$SCRIPT_DIR"
-    echo "#       HERE=$HERE"
-    echo "#"
     echo "# --- #"
 fi

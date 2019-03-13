@@ -47,5 +47,5 @@ then
     artisanCommand db:seed
 fi
 
-artisanCommand ops:targeting-options:update
-artisanCommand ops:filtering-options:update
+#artisanCommand ops:targeting-options:update
+#artisanCommand ops:filtering-options:update

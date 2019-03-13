@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 HERE=$(dirname $(readlink -f "$0"))
-INSTALLER_DIR=$(dirname $(dirname ${HERE}))/adserver/installer
+INSTALLER_DIR=$(dirname ${HERE})/installer
 
 if [[ $EUID -ne 0 ]]
 then
@@ -18,6 +18,7 @@ else
     if [[ "$SERVICES" == "-" ]]
     then
         SKIP_SERVICES=1
+        SKIP_CLONE=1
     fi
 fi
 
@@ -35,14 +36,20 @@ else
     INSTALLATION_USER="$3"
 fi
 
+        SKIP_CLONE=1
+        SKIP_BOOTSTRAP=1
+
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
 
 export SCRIPT_DIR="${TEMP_DIR}"
 
-#${TEMP_DIR}/bootstrap.sh
+if [[ ${SKIP_BOOTSTRAP:-0} -ne 1 ]]
+then
+    ${TEMP_DIR}/bootstrap.sh
+fi
 
-if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
+if [[ ${SKIP_CLONE:-0} -ne 1 ]]
 then
     for SERVICE in ${SERVICES}
     do
@@ -56,9 +63,9 @@ then
 fi
 
 ${TEMP_DIR}/prepare-directories.sh
-${TEMP_DIR}/prepare-directories.sh
-
 export DEBUG_MODE=1
+sudo -E --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
+
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
     for SERVICE in ${SERVICES}

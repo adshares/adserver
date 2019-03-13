@@ -1,22 +1,16 @@
 #!/usr/bin/env bash
-set -ex
-if [[ $EUID -eq 0 ]]
-then
-    echo "Don't be root when running $0" >&2
-    exit 1
-fi
+set -e
 
-HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh
+source $(dirname $(readlink -f "$0"))/_functions.sh
 
-read_env ${INSTALLATION_DIR}/adserver/.env || read_env ${INSTALLATION_DIR}/adserver/.env.dist
+read_env ${VENDOR_DIR}/adserver/.env || read_env ${VENDOR_DIR}/adserver/.env.dist
 
 INSTALL_SCHEME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADPANEL_URL" scheme 2>/dev/null`
 
 INSTALL_HOSTNAME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADPANEL_URL" host 2>/dev/null`
 INSTALL_HOSTNAME=${INSTALL_HOSTNAME:-localhost}
 
-INSTALL_API_HOSTNAME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$ADSERVER_HOST" host 2>/dev/null`
+INSTALL_API_HOSTNAME=`php -r 'if(count($argv) == 3) echo parse_url($argv[1])[$argv[2]];' "$APP_URL" host 2>/dev/null`
 INSTALL_API_HOSTNAME=${INSTALL_API_HOSTNAME:-127.0.0.1}
 
 read_option INSTALL_HOSTNAME       "Adpanel domain (UI for advertisers and publishers)" 1
@@ -39,7 +33,7 @@ export INSTALL_API_HOSTNAME
 
 ADPANEL_URL="${INSTALL_SCHEME}://$INSTALL_HOSTNAME"
 ADSERVER_HOST="${INSTALL_SCHEME}://${INSTALL_API_HOSTNAME}"
-ADSERVER_BANNER_HOST=$ADSERVER_HOST
+ADSERVER_BANNER_HOST=${APP_URL}
 
 read_option ADSHARES_ADDRESS "ADS wallet address" 1
 read_option ADSHARES_SECRET "ADS wallet secret" 1
@@ -48,7 +42,7 @@ read_option ADSHARES_NODE_PORT "ADS node port" 1
 read_option ADSHARES_OPERATOR_EMAIL "ADS wallet owner email (for balance alerts)" 1
 
 ADSHARES_COMMAND=`which ads`
-ADSHARES_WORKINGDIR="${INSTALLATION_DIR}/adserver/storage/wallet"
+ADSHARES_WORKINGDIR="${VENDOR_DIR}/adserver/storage/wallet"
 ADSERVER_ID=x`echo "${INSTALL_HOSTNAME}" | sha256sum | head -c 16`
 
 read_option MAIL_HOST "mail smtp host" 1
@@ -65,11 +59,13 @@ if [ "${INSTALL_ADUSER^^}" == "Y" ]
 then
     INSTALL_ADUSER_BROWSCAP=Y
     read_option INSTALL_ADUSER_BROWSCAP "Install local aduser browscap?" 0 1
+
     INSTALL_ADUSER_GEOLITE=Y
     read_option INSTALL_ADUSER_GEOLITE "Install local aduser geolite?" 0 1
 else
     ADUSER_ENDPOINT="https://example.com/"
     read_option ADUSER_ENDPOINT "External aduser service endpoint" 1
+
     ADUSER_INTERNAL_LOCATION="$ADUSER_ENDPOINT"
     ADUSER_EXTERNAL_LOCATION="$ADUSER_ENDPOINT"
 fi
@@ -104,56 +100,54 @@ fi
 INSTALL_ADSERVER_CRON=Y
 read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 
-if [ "${INSTALL_ADUSER^^}" == "Y" ]
-then
-    ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
-    ADUSER_INTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+#if [ "${INSTALL_ADUSER^^}" == "Y" ]
+#then
+#    ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+#    ADUSER_INTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+#
+#    read_env ${VENDOR_DIR}/aduser/.env || read_env ${VENDOR_DIR}/aduser/.env.dist
+#
+#    ADUSER_PORT=8003
+#    ADUSER_INTERFACE=127.0.0.1
+#    ADUSER_PIXEL_PATH=register
+#
+#    save_env ${VENDOR_DIR}/aduser/.env.dist ${VENDOR_DIR}/aduser/.env
+#fi
+#
+#if [ "${INSTALL_ADSELECT^^}" == "Y" ]
+#then
+#    ADSELECT_ENDPOINT=http://localhost:8011
+#
+#    read_env ${VENDOR_DIR}/adselect/.env || read_env ${VENDOR_DIR}/adselect/.env.dist
+#
+#    ADSELECT_SERVER_PORT=8011
+#    ADSELECT_SERVER_INTERFACE=127.0.0.1
+#
+#    save_env ${VENDOR_DIR}/adselect/.env.dist ${VENDOR_DIR}/adselect/.env
+#fi
+#
+#if [ "${INSTALL_ADPAY^^}" == "Y" ]
+#then
+#    ADPAY_ENDPOINT=http://localhost:8012
+#
+#    read_env ${VENDOR_DIR}/adpay/.env || read_env ${VENDOR_DIR}/adpay/.env.dist
+#
+#    ADPAY_SERVER_PORT=8012
+#    ADPAY_SERVER_INTERFACE=127.0.0.1
+#
+#    save_env ${VENDOR_DIR}/adpay/.env.dist ${VENDOR_DIR}/adpay/.env
+#fi
+#
+#
+#if [ "${INSTALL_ADPANEL^^}" == "Y" ]
+#then
+#    ADSERVER_URL="$APP_URL"
+#
+#    unset APP_ENV
+#
+#    read_env ${VENDOR_DIR}/adpanel/.env || read_env ${VENDOR_DIR}/adpanel/.env.dist
+#
+#    save_env ${VENDOR_DIR}/adpanel/.env.dist ${VENDOR_DIR}/adpanel/.env
+#fi
 
-    SERVICE_NAME=aduser source ${HERE}/clone-service.sh
-    read_env ${INSTALLATION_DIR}/aduser/.env || read_env ${INSTALLATION_DIR}/aduser/.env.dist
-
-    ADUSER_PORT=8003
-    ADUSER_INTERFACE=127.0.0.1
-    ADUSER_PIXEL_PATH=register
-
-    save_env ${INSTALLATION_DIR}/aduser/.env.dist ${INSTALLATION_DIR}/aduser/.env
-fi
-
-if [ "${INSTALL_ADSELECT^^}" == "Y" ]
-then
-    ADSELECT_ENDPOINT=http://localhost:8011
-
-    SERVICE_NAME=adselect source ${HERE}/clone-service.sh
-    read_env ${INSTALLATION_DIR}/adselect/.env || read_env ${INSTALLATION_DIR}/adselect/.env.dist
-    ADSELECT_SERVER_PORT=8011
-    ADSELECT_SERVER_INTERFACE=127.0.0.1
-    save_env ${INSTALLATION_DIR}/adselect/.env.dist ${INSTALLATION_DIR}/adselect/.env
-fi
-
-if [ "${INSTALL_ADPAY^^}" == "Y" ]
-then
-    ADPAY_ENDPOINT=http://localhost:8012
-
-    SERVICE_NAME=adpay source ${HERE}/clone-service.sh
-    read_env ${INSTALLATION_DIR}/adpay/.env || read_env ${INSTALLATION_DIR}/adpay/.env.dist
-    ADPAY_SERVER_PORT=8012
-    ADPAY_SERVER_INTERFACE=127.0.0.1
-    save_env ${INSTALLATION_DIR}/adpay/.env.dist ${INSTALLATION_DIR}/adpay/.env
-fi
-
-
-if [ "${INSTALL_ADPANEL^^}" == "Y" ]
-then
-    ADSERVER_URL="$ADSERVER_HOST"
-
-    unset APP_ENV
-    SERVICE_NAME=adpanel source ${HERE}/clone-service.sh
-    read_env ${INSTALLATION_DIR}/adpanel/.env || read_env ${INSTALLATION_DIR}/adpanel/.env.dist
-    # adserver url
-    save_env ${INSTALLATION_DIR}/adpanel/.env.dist ${INSTALLATION_DIR}/adpanel/.env
-fi
-
-APP_URL=$ADSERVER_HOST
-test -z "${APP_KEY}" && APP_KEY=base64:`date | sha256sum | head -c 32 | base64`
-test -z "${ADSERVER_SECRET}" && ADSERVER_SECRET="${APP_KEY}"
-save_env ${INSTALLATION_DIR}/adserver/.env.dist ${INSTALLATION_DIR}/adserver/.env
+save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
