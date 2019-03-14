@@ -3,6 +3,12 @@ set -e
 
 source ${1:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
 
+test -z $1 || shift
+WORKDIR="$1"
+test -z $1 || shift
+
+test -z ${WORKDIR} || cd ${WORKDIR}
+
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 

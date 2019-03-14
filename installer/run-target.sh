@@ -17,14 +17,15 @@ test -z $1 || shift
 HERE=$(dirname $(readlink -f "$0"))
 source ${HERE}/_functions.sh any
 
-set -x
-
 if [[ -z ${SUDO_AS} ]] || [[ `id --user --name` == ${SUDO_AS} ]]
 then
-echo "$0"
+echo "1: $0"
 env | sort | grep SKIP_ || echo "NO SKIP_..."
     cd ${WORKDIR}
     ${SCRIPT_DIR}/${TARGET}.sh $@
 else
-    sudo --preserve-env --login --user=${SUDO_AS} $(readlink -f "$0") ${TARGET} ${WORKDIR} ${SCRIPT_DIR} ${SUDO_AS} $@
+echo "2: $0"
+env | sort | grep SKIP_ || echo "NO SKIP_..."
+#    sudo --preserve-env --login --user=${SUDO_AS} $(readlink -f "$0") ${TARGET} ${WORKDIR} ${SCRIPT_DIR} ${SUDO_AS} $@
+    sudo --login --preserve-env --user=${SUDO_AS} ${SCRIPT_DIR}/${TARGET}.sh $@
 fi
