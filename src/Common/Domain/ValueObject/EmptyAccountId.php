@@ -42,5 +42,4 @@ class EmptyAccountId implements Id
     {
         return $other instanceof self;
     }
-
 }
