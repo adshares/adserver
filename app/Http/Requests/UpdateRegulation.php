@@ -18,16 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Manager\AdminController;
-use Adshares\Adserver\Http\Kernel;
-use Illuminate\Support\Facades\Route;
+namespace Adshares\Adserver\Http\Requests;
 
-Route::middleware(Kernel::ADMIN_ACCESS)->group(function () {
-    Route::get('settings', [AdminController::class, 'listSettings']);
-    Route::put('settings', [AdminController::class, 'updateSettings']);
+use Adshares\Adserver\Models\Regulation;
+use Illuminate\Foundation\Http\FormRequest;
 
-    Route::get('terms', [AdminController::class, 'getTerms']);
-    Route::put('terms', [AdminController::class, 'putTerms']);
-    Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
-    Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
-});
+class UpdateRegulation extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'content' => sprintf('required|string|max:%d', Regulation::MAXIMUM_CONTENT_LENGTH),
+        ];
+    }
+
+    public function toString(): string
+    {
+        $values = $this->validated()['content'];
+
+        return (string)$values;
+    }
+}
