@@ -3,16 +3,13 @@ set -e
 
 source ${1:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
 [[ -z ${2:-""} ]] || cd $2
+[[ -z ${3:-".env"} ]] || set -a && source .env && set +a
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 
 GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
 GIT_HASH="#"$(git rev-parse --short HEAD)
-
-set -a
-source .env
-set +a
 
 composer install --no-dev
 
@@ -46,10 +43,7 @@ then
     artisanCommand db:seed
 fi
 
-env | sort | grep SKIP_ || echo "NO SKIP_..."
-set -x
-SKIP_TARGETING=${SKIP_TARGETING:-0}
-if [[ ${SKIP_TARGETING:-0} -ne 1 ]] && [[ "$SKIP_TARGETING" != "1" ]]
+if [[ ${SKIP_TARGETING:-0} -ne 1 ]]
 then
     artisanCommand ops:targeting-options:update
 fi

@@ -151,3 +151,8 @@ read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 #fi
 
 save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
+
+{
+echo "SKIP_TARGETING=1"
+echo "SKIP_FILTERING=1"
+} | tee -a ${VENDOR_DIR}/adserver/.env

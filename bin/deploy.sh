@@ -67,9 +67,6 @@ ${TEMP_DIR}/prepare-directories.sh
 export DEBUG_MODE=1
 sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
 
-export SKIP_TARGETING=1
-export SKIP_FILTERING=1
-
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
     for SERVICE in ${SERVICES}
