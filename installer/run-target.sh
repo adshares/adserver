@@ -21,6 +21,7 @@ set -x
 
 if [[ -z ${SUDO_AS} ]] || [[ `id --user --name` == ${SUDO_AS} ]]
 then
+echo "$0"
 env | sort | grep SKIP_ || echo "NO SKIP_..."
     cd ${WORKDIR}
     ${SCRIPT_DIR}/${TARGET}.sh $@

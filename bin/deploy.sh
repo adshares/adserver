@@ -68,7 +68,7 @@ export DEBUG_MODE=1
 export SKIP_TARGETING=1
 export SKIP_FILTERING=1
 
-sudo -E --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
+sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
 
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
