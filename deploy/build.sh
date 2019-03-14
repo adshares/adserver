@@ -48,6 +48,7 @@ fi
 
 env | sort | grep SKIP_ || echo "NO SKIP_..."
 set -x
+SKIP_TARGETING=${SKIP_TARGETING:-0}
 if [[ ${SKIP_TARGETING:-0} -ne 1 ]] && [[ "$SKIP_TARGETING" != "1" ]]
 then
     artisanCommand ops:targeting-options:update
