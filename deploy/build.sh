@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 set -e
-set -x
-X="$1"
-[[ -z $1 ]] || shift
-source ${X:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
-[[ -z $1 ]] || cd $1 && shift
-set +x
+
+[[ -z $2 ]] || cd $2
+source ${1:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
+
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 
