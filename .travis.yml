@@ -20,7 +20,7 @@ env:
     - BUILD_PATH=/build/adserver
     - BUILD_NAME=adserver_build
     - MYSQL_ROOT_PASSWORD=root
-    - APP_ENV=dev
+    - APP_ENV=testing
     - APP_DEBUG=true
 
 stages:

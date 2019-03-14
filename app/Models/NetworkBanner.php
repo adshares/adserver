@@ -147,6 +147,7 @@ class NetworkBanner extends Model
     {
         $query = self::queryByFilter($networkBannerFilter);
 
+
         return self::queryPaging($query, $limit, $offset)->get();
     }
 
@@ -228,16 +229,22 @@ class NetworkBanner extends Model
 
     private static function getBaseQuery(NetworkBannerFilter $networkBannerFilter): Builder
     {
+        $query = null;
+
         if ($networkBannerFilter->isApproved()) {
-            return self::fetchApproved($networkBannerFilter);
+            $query = self::fetchApproved($networkBannerFilter);
         }
 
         if ($networkBannerFilter->isRejected()) {
-            return self::fetchRejected($networkBannerFilter);
+            $query = self::fetchRejected($networkBannerFilter);
         }
 
         if ($networkBannerFilter->isUnclassified()) {
-            return self::fetchUnclassified($networkBannerFilter);
+            $query = self::fetchUnclassified($networkBannerFilter);
+        }
+
+        if ($query) {
+            return $query;
         }
 
         return self::fetchAll($networkBannerFilter);
@@ -348,17 +355,6 @@ class NetworkBanner extends Model
         }
 
         return $ids;
-    }
-
-    public function getAdSelectArray(): array
-    {
-        return [
-            'banner_id' => $this->uuid,
-            'banner_size' => $this->width.'x'.$this->height,
-            'keywords' => [
-                'type' => $this->type,
-            ],
-        ];
     }
 
     public function campaign(): BelongsTo

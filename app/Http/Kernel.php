@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -80,4 +81,10 @@ class Kernel extends HttpKernel
         self::ADMIN => RequireAdminAccess::class,
         self::SNAKE_CASING => SnakizeRequest::class,
     ];
+
+    public function bootstrap()
+    {
+        parent::bootstrap();
+        DatabaseConfigReader::overwriteAdministrationConfig();
+    }
 }
