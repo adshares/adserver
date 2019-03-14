@@ -28,40 +28,20 @@ class DatabaseConfigReader
     public static function overwriteAdministrationConfig(): void
     {
         $settings = Config::fetchAdminSettings();
-        $hotWalletMinValue = $settings[Config::HOT_WALLET_MIN_VALUE] ?? null;
-        $hotWalletMaxValue = $settings[Config::HOT_WALLET_MAX_VALUE] ?? null;
-        $serverName = $settings[Config::ADSERVER_NAME] ?? null;
-        $technicalEmail = $settings[Config::TECHNICAL_EMAIL] ?? null;
-        $supportEmail = $settings[Config::SUPPORT_EMAIL] ?? null;
-        $operatorTxFee = $settings[Config::OPERATOR_TX_FEE] ?? null;
-        $operatorRxFee = $settings[Config::OPERATOR_RX_FEE] ?? null;
+        $hotWalletMinValue = $settings[Config::HOT_WALLET_MIN_VALUE];
+        $hotWalletMaxValue = $settings[Config::HOT_WALLET_MAX_VALUE];
+        $serverName = $settings[Config::ADSERVER_NAME];
+        $technicalEmail = $settings[Config::TECHNICAL_EMAIL];
+        $supportEmail = $settings[Config::SUPPORT_EMAIL];
+        $operatorTxFee = $settings[Config::OPERATOR_TX_FEE];
+        $operatorRxFee = $settings[Config::OPERATOR_RX_FEE];
 
-        if ($hotWalletMinValue) {
-            SystemConfig::set('app.adshares_wallet_min_amount', $hotWalletMinValue);
-        }
-
-        if ($hotWalletMaxValue) {
-            SystemConfig::set('app.adshares_wallet_max_amount', $hotWalletMaxValue);
-        }
-
-        if ($serverName) {
-            SystemConfig::set('app.name', $serverName);
-        }
-
-        if ($technicalEmail) {
-            SystemConfig::set('app.adshares_operator_email', $technicalEmail);
-        }
-
-        if ($supportEmail) {
-            SystemConfig::set('app.adshares_support_email', $supportEmail);
-        }
-
-        if ($operatorTxFee) {
-            SystemConfig::set('app.'.Config::OPERATOR_TX_FEE, $operatorTxFee);
-        }
-
-        if ($operatorRxFee) {
-            SystemConfig::set('app.'.Config::OPERATOR_RX_FEE, $operatorRxFee);
-        }
+        SystemConfig::set('app.adshares_wallet_min_amount', $hotWalletMinValue);
+        SystemConfig::set('app.adshares_wallet_max_amount', $hotWalletMaxValue);
+        SystemConfig::set('app.name', $serverName);
+        SystemConfig::set('app.adshares_operator_email', $technicalEmail);
+        SystemConfig::set('app.adshares_support_email', $supportEmail);
+        SystemConfig::set('app.'.Config::OPERATOR_TX_FEE, $operatorTxFee);
+        SystemConfig::set('app.'.Config::OPERATOR_RX_FEE, $operatorRxFee);
     }
 }

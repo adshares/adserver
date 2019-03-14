@@ -20,7 +20,9 @@
 
 namespace Adshares\Adserver\Console;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Utilities\DatabaseConfigReader;
+use Exception;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -62,8 +64,11 @@ class Kernel extends ConsoleKernel
     {
         parent::bootstrap();
 
-        if (config('app.env') !== 'testing') {
+        try {
+            DB::connection()->getPdo();
             DatabaseConfigReader::overwriteAdministrationConfig();
+        } catch (Exception $exception) {
+            // do not overwrite environments' variables
         }
     }
 }
