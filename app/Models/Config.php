@@ -55,7 +55,7 @@ class Config extends Model
 
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
-    public const HOT_WALLET_ADDRESS = 'hotwallet-min-address';
+    public const HOT_WALLET_ADDRESS = 'hotwallet-address';
     public const ADSERVER_NAME = 'adserver-name';
     public const TECHNICAL_EMAIL = 'technical-email';
     public const SUPPORT_EMAIL = 'support-email';

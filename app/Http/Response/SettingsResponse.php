@@ -24,8 +24,10 @@ namespace Adshares\Adserver\Http\Response;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Illuminate\Contracts\Support\Arrayable;
 
 class SettingsResponse implements Arrayable
@@ -42,10 +44,10 @@ class SettingsResponse implements Arrayable
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
-        AccountId $address,
         string $adserverName,
         Email $technicalEmail,
         Email $supportEmail,
+        ?Id $address = null,
         ?Commission $advertiserCommission = null,
         ?Commission $publisherCommission = null
     ) {
@@ -65,7 +67,7 @@ class SettingsResponse implements Arrayable
         $advertiserCommission = $data[Config::OPERATOR_TX_FEE] ?? null;
         $hotWalletMinValue = $data[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $data[Config::HOT_WALLET_MAX_VALUE];
-        $hotWalletAddress = $data[Config::HOT_WALLET_ADDRESS];
+        $hotWalletAddress = $data[Config::HOT_WALLET_ADDRESS] ?? null;
         $adserverName = $data[Config::ADSERVER_NAME];
         $technicalEmail = $data[Config::TECHNICAL_EMAIL];
         $supportEmail = $data[Config::SUPPORT_EMAIL];
@@ -73,10 +75,10 @@ class SettingsResponse implements Arrayable
         return new self(
             (int)$hotWalletMinValue,
             (int)$hotWalletMaxValue,
-            new AccountId($hotWalletAddress),
             $adserverName,
             new Email($technicalEmail),
             new Email($supportEmail),
+            $hotWalletAddress !== null ? new AccountId((string)$hotWalletAddress) : new EmptyAccountId(),
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission)
         );
