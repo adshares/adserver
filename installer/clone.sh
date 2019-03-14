@@ -14,7 +14,8 @@ test -z ${VENDOR_DIR} && echo "Missing VENDOR_DIR" >&2 && exit 1
 
 echo "Clone or update source for ${SERVICE_NAME} (${GIT_BRANCH_NAME})"
 
-git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${SERVICE_NAME}.git ${VENDOR_DIR}/${SERVICE_NAME} &> /dev/null \
+#git clone --depth=1 --single-branch --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${SERVICE_NAME}.git ${VENDOR_DIR}/${SERVICE_NAME} &> /dev/null \
+git clone --branch ${GIT_BRANCH_NAME} ${GIT_REPO_BASE_URL}/${SERVICE_NAME}.git ${VENDOR_DIR}/${SERVICE_NAME} &> /dev/null \
 || (\
     cd ${VENDOR_DIR}/${SERVICE_NAME} \
     && git reset --hard \

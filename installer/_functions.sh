@@ -26,6 +26,7 @@ read_option () {
 # save current env to file based on template
 # save_env (template, output file)
 save_env () {
+    test ! -e $1 && echo "Environment template ($1) not found." && return 1
     test -e $2 && rm $2
     local EXPORT=$(export -p)
 

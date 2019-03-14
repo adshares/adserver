@@ -54,10 +54,13 @@ then
     do
         if [[ "$SERVICE" == "aduser" ]]
         then
-            ${SCRIPT_DIR}/clone.sh ${SERVICE} php
+            ${SCRIPT_DIR}/clone.sh ${SERVICE} deploy
         elif [[ "$SERVICE" == "adserver" ]]
         then
             ${SCRIPT_DIR}/clone.sh ${SERVICE} deploy
+        elif [[ "$SERVICE" == "adpanel" ]]
+        then
+            ${SCRIPT_DIR}/clone.sh ${SERVICE} develop
         else
             ${SCRIPT_DIR}/clone.sh ${SERVICE} ${BRANCH}
         fi
@@ -77,17 +80,14 @@ if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
     for SERVICE in ${SERVICES}
     do
-        if [[ "$SERVICE" == "aduser" ]]
-        then
-            ${SCRIPT_DIR}/run-target.sh build /opt/adshares/aduser ${SCRIPT_DIR}/${SERVICE} ${INSTALLATION_USER}
-        else
-            ${SCRIPT_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER} ${SCRIPT_DIR} /opt/adshares/${SERVICE}
-        fi
+        export SERVICE_NAME=${SERVICE}
+        ${SCRIPT_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER} ${SCRIPT_DIR} /opt/adshares/${SERVICE}
 
-        ${SCRIPT_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
         ${SCRIPT_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
         ${SCRIPT_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
     done
 fi
+
+${SCRIPT_DIR}/configure-daemon.sh fpm ${SCRIPT_DIR} /etc/php/7.2/fpm/pool.d php7.2-fpm
 
 rm -rf ${SCRIPT_DIR}

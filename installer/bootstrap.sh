@@ -69,9 +69,11 @@ rm -rf ${TEMP_DIR}
 DB_USERNAME=${VENDOR_NAME}
 DB_PASSWORD=${VENDOR_NAME}
 
-mysql=( mysql --user=root )
+DB_DATABASES=(adserver aduser)
 
-DB_DATABASE=(adserver aduser)
+for DB_DATABASE in "${DB_DATABASES[*]}"
+do
+mysql=( mysql --user=root )
 
 if [[ "$DB_DATABASE" ]]
 then
@@ -90,7 +92,7 @@ then
 
     echo 'FLUSH PRIVILEGES;' | "${mysql[@]}"
 fi
-
+done
 # ===
 
 crontab -r &> /dev/null || echo "No crontab to remove"

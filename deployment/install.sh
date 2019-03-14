@@ -1,13 +1,7 @@
 #!/usr/bin/env bash
 
-if [[ $EUID -ne 0 ]]
-then
-    echo "You need to be root to run this" >&2
-    exit 1
-fi
-
 HERE=$(dirname $(readlink -f "$0"))
-DO_INSTALL=1 source ${HERE}/_functions.sh
+DO_INSTALL=1 source ${HERE}/_functions.sh root
 
 read_env ${INSTALLATION_DIR}/adserver/.env
 

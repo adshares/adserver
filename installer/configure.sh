@@ -100,6 +100,8 @@ fi
 INSTALL_ADSERVER_CRON=Y
 read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 
+set -x
+
 if [[ "${INSTALL_ADUSER^^}" == "Y" ]]
 then
     ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
@@ -107,11 +109,11 @@ then
 
     read_env ${VENDOR_DIR}/aduser/.env || read_env ${VENDOR_DIR}/aduser/.env.dist
 
-    ADUSER_PORT=8003
+    ADUSER_PORT=8004
     ADUSER_INTERFACE=127.0.0.1
     ADUSER_PIXEL_PATH=register
 
-    save_env ${VENDOR_DIR}/aduser/.env.dist ${VENDOR_DIR}/aduser/.env
+    save_env ${VENDOR_DIR}/aduser/.env.dist ${VENDOR_DIR}/aduser/.env || echo "Skipped aduser/.env"
 fi
 
 if [[ "${INSTALL_ADSELECT^^}" == "Y" ]]
