@@ -60,7 +60,7 @@ then
             ${SCRIPT_DIR}/clone.sh ${SERVICE} deploy
         elif [[ "$SERVICE" == "adpanel" ]]
         then
-            ${SCRIPT_DIR}/clone.sh ${SERVICE} develop
+            ${SCRIPT_DIR}/clone.sh ${SERVICE} deploy
         else
             ${SCRIPT_DIR}/clone.sh ${SERVICE} ${BRANCH}
         fi
