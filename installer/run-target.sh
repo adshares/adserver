@@ -24,5 +24,5 @@ then
     cd ${WORKDIR}
     ${SCRIPT_DIR}/${TARGET}.sh $@
 else
-    sudo --login --preserve-env --user=${SUDO_AS} "`env`" ${SCRIPT_DIR}/${TARGET}.sh $@
+    sudo --login --user=${SUDO_AS} "`env`" ${SCRIPT_DIR}/${TARGET}.sh $@
 fi

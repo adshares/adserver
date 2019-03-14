@@ -37,7 +37,7 @@ else
 fi
 
         SKIP_BOOTSTRAP=1
-        SKIP_CLONE=1
+#        SKIP_CLONE=1
 
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
@@ -65,10 +65,11 @@ fi
 ${TEMP_DIR}/prepare-directories.sh
 
 export DEBUG_MODE=1
-export SKIP_TARGETING=1
-export SKIP_FILTERING=1
 
 sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
+
+export SKIP_TARGETING=1
+export SKIP_FILTERING=1
 
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
