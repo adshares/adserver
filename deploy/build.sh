@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -e
 set -x
-[[ -z $1 ]] || X="$1" shift
+X="$1"
+[[ -z $1 ]] || shift
 source ${X:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
 [[ -z $1 ]] || cd $1 && shift
 set +x
