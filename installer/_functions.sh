@@ -99,6 +99,10 @@ fi
 
 unset _REQUIRED_USER_TYPE
 
+#_WORKDIR=${2:-""}
+#[[ -z ${_WORKDIR} ]] || cd ${_WORKDIR}
+#unset _WORKDIR
+
 #===
 
 set -u

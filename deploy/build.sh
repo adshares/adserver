@@ -46,10 +46,9 @@ then
     artisanCommand db:seed
 fi
 
+env | sort | grep SKIP_ || echo "NO SKIP_..."
 if [[ ${SKIP_TARGETING:-0} -ne 1 ]]
 then
-echo "$0"
-env | sort | grep SKIP_ || echo "NO SKIP_..."
     artisanCommand ops:targeting-options:update
 fi
 

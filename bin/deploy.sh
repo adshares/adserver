@@ -37,7 +37,7 @@ else
 fi
 
         SKIP_BOOTSTRAP=1
-#        SKIP_CLONE=1
+        SKIP_CLONE=1
 
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
@@ -78,7 +78,7 @@ then
         then
             ${TEMP_DIR}/run-target.sh build /opt/adshares/aduser ${TEMP_DIR}/${SERVICE} ${INSTALLATION_USER}
         else
-            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER} ${TEMP_DIR}
+            ${TEMP_DIR}/run-target.sh build /opt/adshares/${SERVICE} /opt/adshares/${SERVICE}/deploy ${INSTALLATION_USER} ${TEMP_DIR} /opt/adshares/${SERVICE}
 
             if [[ "$SERVICE" == "aduser" ]]
             then
@@ -87,9 +87,9 @@ then
             fi
         fi
 
-        ${TEMP_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
-        ${TEMP_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
-        ${TEMP_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
+#        ${TEMP_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
+#        ${TEMP_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
+#        ${TEMP_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
     done
 fi
 
