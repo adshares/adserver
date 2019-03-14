@@ -55,6 +55,7 @@ class Config extends Model
 
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
+    public const HOT_WALLET_ADDRESS = 'hotwallet-address';
     public const ADSERVER_NAME = 'adserver-name';
     public const TECHNICAL_EMAIL = 'technical-email';
     public const SUPPORT_EMAIL = 'support-email';
@@ -65,6 +66,7 @@ class Config extends Model
         self::LICENCE_RX_FEE,
         self::HOT_WALLET_MIN_VALUE,
         self::HOT_WALLET_MAX_VALUE,
+        self::HOT_WALLET_ADDRESS,
         self::ADSERVER_NAME,
         self::TECHNICAL_EMAIL,
         self::SUPPORT_EMAIL,
@@ -166,8 +168,14 @@ class Config extends Model
     {
         foreach ($settings as $key => $value) {
             $config = self::where('key', $key)->first();
+
+            if (!$config) {
+                $config = new self();
+                $config->key = $key;
+            }
+
             $config->value = $value;
-            $config->update();
+            $config->save();
         }
     }
 }
