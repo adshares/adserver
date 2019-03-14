@@ -36,8 +36,7 @@ else
     INSTALLATION_USER="$3"
 fi
 
-        SKIP_BOOTSTRAP=1
-#        SKIP_CLONE=1
+SKIP_BOOTSTRAP=1
 
 TEMP_DIR=$(mktemp --directory)
 cp -r ${INSTALLER_DIR}/* ${TEMP_DIR}
@@ -65,7 +64,11 @@ fi
 ${TEMP_DIR}/prepare-directories.sh
 
 export DEBUG_MODE=1
-sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
+
+if [[ ${SKIP_CONFIGURE:-0} -ne 1 ]]
+then
+    sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
+fi
 
 if [[ ${SKIP_SERVICES:-0} -ne 1 ]]
 then
@@ -84,9 +87,9 @@ then
             fi
         fi
 
-#        ${TEMP_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
-#        ${TEMP_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
-#        ${TEMP_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
+        ${TEMP_DIR}/configure-daemon.sh fpm /opt/adshares/${SERVICE}/deploy /etc/php/7.2/fpm/pool.d php7.2-fpm
+        ${TEMP_DIR}/configure-daemon.sh nginx /opt/adshares/${SERVICE}/deploy
+        ${TEMP_DIR}/configure-daemon.sh supervisor /opt/adshares/${SERVICE}/deploy
     done
 fi
 

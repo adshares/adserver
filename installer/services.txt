@@ -1,4 +1,4 @@
-aduser-php
+aduser
 adselect
 adpay
 adserver
