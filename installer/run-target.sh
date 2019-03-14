@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+echo "$*"
+
 [[ $# -ge 2 ]] || echo "Usage: `basename $0` <target> <workdir> [[[<SCRIPT_DIR>] <sudo_as>] ...]"
 TARGET="$1"
 shift
