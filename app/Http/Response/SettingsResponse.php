@@ -47,7 +47,7 @@ class SettingsResponse implements Arrayable
         string $adserverName,
         Email $technicalEmail,
         Email $supportEmail,
-        ?Id $address = null,
+        Id $address,
         ?Commission $advertiserCommission = null,
         ?Commission $publisherCommission = null
     ) {
