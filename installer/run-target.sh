@@ -15,12 +15,15 @@ SUDO_AS="$1"
 test -z $1 || shift
 
 HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh root
+source ${HERE}/_functions.sh any
 
-if [[ -z ${SUDO_AS} ]]
+set -x
+
+if [[ -z ${SUDO_AS} ]] || [[ `id --user --name` == ${SUDO_AS} ]]
 then
+env | sort | grep SKIP_ || echo "NO SKIP_..."
     cd ${WORKDIR}
     ${SCRIPT_DIR}/${TARGET}.sh $@
 else
-    sudo --login --user=${SUDO_AS} bash --login -c "cd ${WORKDIR}; ${SCRIPT_DIR}/${TARGET}.sh $@"
+    sudo --preserve-env --login --user=${SUDO_AS} $(readlink -f "$0") ${TARGET} ${WORKDIR} ${SCRIPT_DIR} ${SUDO_AS} $@
 fi
