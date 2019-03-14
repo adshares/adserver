@@ -99,16 +99,13 @@ fi
 
 unset _REQUIRED_USER_TYPE
 
-#_WORKDIR=${2:-""}
-#[[ -z ${_WORKDIR} ]] || cd ${_WORKDIR}
-#unset _WORKDIR
-
 #===
 
 set -u
 
 if [[ ${DEBUG_MODE:-0} -eq 1 ]]
 then
+    echo ""
     echo "# ==="
     echo "#"
     echo "# $0 $*"
@@ -128,5 +125,6 @@ then
     echo "#    RUN_DIR=$RUN_DIR"
     echo "#"
     echo "# SCRIPT_DIR=$SCRIPT_DIR"
+    echo "#        PWD=$PWD"
     echo "# --- #"
 fi

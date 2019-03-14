@@ -55,7 +55,7 @@ read_option MAIL_FROM_NAME "mail from name" 1
 INSTALL_ADUSER=Y
 read_option INSTALL_ADUSER "Install local aduser service?" 0 1
 
-if [ "${INSTALL_ADUSER^^}" == "Y" ]
+if [[ "${INSTALL_ADUSER^^}" == "Y" ]]
 then
     INSTALL_ADUSER_BROWSCAP=Y
     read_option INSTALL_ADUSER_BROWSCAP "Install local aduser browscap?" 0 1
@@ -73,7 +73,7 @@ fi
 INSTALL_ADSELECT=Y
 read_option INSTALL_ADSELECT "Install local adselect service?" 0 1
 
-if [ "${INSTALL_ADSELECT^^}" != "Y" ]
+if [[ "${INSTALL_ADSELECT^^}" != "Y" ]]
 then
     ADSELECT_ENDPOINT="https://example.com"
     read_option ADSELECT_ENDPOINT "External adselect service endpoint" 1
@@ -82,7 +82,7 @@ fi
 INSTALL_ADPAY=Y
 read_option INSTALL_ADPAY "Install local adpay service?" 0 1
 
-if [ "${INSTALL_ADPAY^^}" != "Y" ]
+if [[ "${INSTALL_ADPAY^^}" != "Y" ]]
 then
     ADPAY_ENDPOINT="https://example.com"
     read_option ADPAY_ENDPOINT "External adselect service endpoint" 1
@@ -91,7 +91,7 @@ fi
 INSTALL_ADPANEL=Y
 read_option INSTALL_ADPANEL "Install local adpanel service?" 0 1
 
-if [ "${INSTALL_ADPANEL^^}" != "Y" ]
+if [[ "${INSTALL_ADPANEL^^}" != "Y" ]]
 then
     ADPANEL_ENDPOINT="https://example.com"
     read_option ADPANEL_ENDPOINT "External adselect service endpoint" 1
@@ -100,59 +100,54 @@ fi
 INSTALL_ADSERVER_CRON=Y
 read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 
-#if [ "${INSTALL_ADUSER^^}" == "Y" ]
-#then
-#    ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
-#    ADUSER_INTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
-#
-#    read_env ${VENDOR_DIR}/aduser/.env || read_env ${VENDOR_DIR}/aduser/.env.dist
-#
-#    ADUSER_PORT=8003
-#    ADUSER_INTERFACE=127.0.0.1
-#    ADUSER_PIXEL_PATH=register
-#
-#    save_env ${VENDOR_DIR}/aduser/.env.dist ${VENDOR_DIR}/aduser/.env
-#fi
-#
-#if [ "${INSTALL_ADSELECT^^}" == "Y" ]
-#then
-#    ADSELECT_ENDPOINT=http://localhost:8011
-#
-#    read_env ${VENDOR_DIR}/adselect/.env || read_env ${VENDOR_DIR}/adselect/.env.dist
-#
-#    ADSELECT_SERVER_PORT=8011
-#    ADSELECT_SERVER_INTERFACE=127.0.0.1
-#
-#    save_env ${VENDOR_DIR}/adselect/.env.dist ${VENDOR_DIR}/adselect/.env
-#fi
-#
-#if [ "${INSTALL_ADPAY^^}" == "Y" ]
-#then
-#    ADPAY_ENDPOINT=http://localhost:8012
-#
-#    read_env ${VENDOR_DIR}/adpay/.env || read_env ${VENDOR_DIR}/adpay/.env.dist
-#
-#    ADPAY_SERVER_PORT=8012
-#    ADPAY_SERVER_INTERFACE=127.0.0.1
-#
-#    save_env ${VENDOR_DIR}/adpay/.env.dist ${VENDOR_DIR}/adpay/.env
-#fi
-#
-#
-#if [ "${INSTALL_ADPANEL^^}" == "Y" ]
-#then
-#    ADSERVER_URL="$APP_URL"
-#
-#    unset APP_ENV
-#
-#    read_env ${VENDOR_DIR}/adpanel/.env || read_env ${VENDOR_DIR}/adpanel/.env.dist
-#
-#    save_env ${VENDOR_DIR}/adpanel/.env.dist ${VENDOR_DIR}/adpanel/.env
-#fi
+if [[ "${INSTALL_ADUSER^^}" == "Y" ]]
+then
+    ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+    ADUSER_INTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
+
+    read_env ${VENDOR_DIR}/aduser/.env || read_env ${VENDOR_DIR}/aduser/.env.dist
+
+    ADUSER_PORT=8003
+    ADUSER_INTERFACE=127.0.0.1
+    ADUSER_PIXEL_PATH=register
+
+    save_env ${VENDOR_DIR}/aduser/.env.dist ${VENDOR_DIR}/aduser/.env
+fi
+
+if [[ "${INSTALL_ADSELECT^^}" == "Y" ]]
+then
+    ADSELECT_ENDPOINT=http://localhost:8011
+
+    read_env ${VENDOR_DIR}/adselect/.env || read_env ${VENDOR_DIR}/adselect/.env.dist
+
+    ADSELECT_SERVER_PORT=8011
+    ADSELECT_SERVER_INTERFACE=127.0.0.1
+
+    save_env ${VENDOR_DIR}/adselect/.env.dist ${VENDOR_DIR}/adselect/.env
+fi
+
+if [[ "${INSTALL_ADPAY^^}" == "Y" ]]
+then
+    ADPAY_ENDPOINT=http://localhost:8012
+
+    read_env ${VENDOR_DIR}/adpay/.env || read_env ${VENDOR_DIR}/adpay/.env.dist
+
+    ADPAY_SERVER_PORT=8012
+    ADPAY_SERVER_INTERFACE=127.0.0.1
+
+    save_env ${VENDOR_DIR}/adpay/.env.dist ${VENDOR_DIR}/adpay/.env
+fi
+
+
+if [[ "${INSTALL_ADPANEL^^}" == "Y" ]]
+then
+    ADSERVER_URL="$APP_URL"
+
+    unset APP_ENV
+
+    read_env ${VENDOR_DIR}/adpanel/.env || read_env ${VENDOR_DIR}/adpanel/.env.dist
+
+    save_env ${VENDOR_DIR}/adpanel/.env.dist ${VENDOR_DIR}/adpanel/.env
+fi
 
 save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
-
-{
-echo "SKIP_TARGETING=1"
-echo "SKIP_FILTERING=1"
-} | tee -a ${VENDOR_DIR}/adserver/.env
