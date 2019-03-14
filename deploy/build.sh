@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-[[ -z $2 ]] || cd $2
 source ${1:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
+[[ -z ${2:-""} ]] || cd $2
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners

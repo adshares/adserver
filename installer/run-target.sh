@@ -16,13 +16,13 @@ test -z $1 || shift
 SUDO_AS="$1"
 test -z $1 || shift
 
-HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh any
+source $(dirname $(readlink -f "$0"))/_functions.sh any
 
 if [[ -z ${SUDO_AS} ]] || [[ `id --user --name` == ${SUDO_AS} ]]
 then
     cd ${WORKDIR}
     ${SCRIPT_DIR}/${TARGET}.sh $@
 else
-    sudo --login --user=${SUDO_AS} "`env`" ${SCRIPT_DIR}/${TARGET}.sh $@
+
+    sudo --preserve-env --login --user=${SUDO_AS} ${SCRIPT_DIR}/${TARGET}.sh $@
 fi

@@ -65,7 +65,6 @@ fi
 ${TEMP_DIR}/prepare-directories.sh
 
 export DEBUG_MODE=1
-
 sudo --preserve-env --user=${INSTALLATION_USER} ${TEMP_DIR}/configure.sh
 
 export SKIP_TARGETING=1
