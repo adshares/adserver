@@ -47,6 +47,7 @@ fi
 
 if [[ ${SKIP_TARGETING:-0} -ne 1 ]]
 then
+env
     artisanCommand ops:targeting-options:update
 fi
 
