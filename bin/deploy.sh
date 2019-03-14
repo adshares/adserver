@@ -20,20 +20,23 @@ else
         SKIP_SERVICES=1
         SKIP_CLONE=1
     fi
+    shift
 fi
 
-if [[ -z "$2" ]]
+if [[ -z "$1" ]]
 then
     BRANCH=master
 else
-    BRANCH="$2"
+    BRANCH="$1"
+    shift
 fi
 
-if [[ -z "$3" ]]
+if [[ -z "$1" ]]
 then
     INSTALLATION_USER=adshares
 else
-    INSTALLATION_USER="$3"
+    INSTALLATION_USER="$1"
+    shift
 fi
 
 export SCRIPT_DIR=$(mktemp --directory)
@@ -52,6 +55,11 @@ then
         if [[ "$SERVICE" == "aduser" ]]
         then
             ${SCRIPT_DIR}/clone.sh ${SERVICE} php
+        elif [[ "$SERVICE" == "adserver" ]]
+        then
+            ${SCRIPT_DIR}/clone.sh ${SERVICE} deploy
+        else
+            ${SCRIPT_DIR}/clone.sh ${SERVICE} ${BRANCH}
         fi
     done
 fi
