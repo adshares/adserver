@@ -20,27 +20,24 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject;
+namespace Adshares\Adserver\Http\Requests;
 
-use Adshares\Common\Domain\Id;
+use Illuminate\Foundation\Http\FormRequest as LaravelFormRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
-class EmptyAccountId implements Id
+class FormRequest extends LaravelFormRequest
 {
-    private $value;
-
-    public function __construct(string $value = '')
+    protected function failedValidation(Validator $validator): void
     {
-        $this->value = $value;
+        $errors = (new ValidationException($validator))->errors();
+        throw new HttpResponseException(response()->json(
+            [
+                'errors' => $errors,
+            ],
+            JsonResponse::HTTP_UNPROCESSABLE_ENTITY
+        ));
     }
-
-    public function toString(): string
-    {
-        return $this->value;
-    }
-
-    public function equals(object $other): bool
-    {
-        return $other instanceof self;
-    }
-
 }

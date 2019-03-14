@@ -4,7 +4,6 @@ namespace Adshares\Adserver\Http\Requests;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Rules\AccountIdRule;
-use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAdminSettings extends FormRequest
 {
