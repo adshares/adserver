@@ -23,7 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
@@ -31,15 +31,27 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
-use DateTime;
+use Exception;
+use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
+    private const STATUS_FIELD = 'status';
+    private const BANNER_CLICK_URL_FIELD = 'click_url';
+    private const BANNER_SERVE_URL_FIELD = 'serve_url';
+    private const BANNER_VIEW_URL_FIELD = 'view_url';
+    private const BANNER_UUID_FIELD = 'uuid';
+    private const BANNER_ID_FIELD = 'id';
+    private const BANNER_TYPE_FIELD = 'type';
+    private const BANNER_WIDTH_FIELD = 'width';
+    private const BANNER_HEIGHT_FIELD = 'height';
+    private const BANNER_CLASSIFICATION_FIELD = 'classification';
+
     public function markedAsDeletedByHost(string $host): void
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
-            ->update(['status' => Status::STATUS_DELETED]);
+            ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
 
         // mark all banners as DELETED for given $host
@@ -51,7 +63,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_host', $host)
-            ->update(['banner.status' => Status::STATUS_DELETED]);
+            ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 
     public function save(Campaign $campaign): void
@@ -76,14 +88,14 @@ class NetworkCampaignRepository implements CampaignRepository
         /** @var Banner $domainBanner */
         foreach ($banners as $domainBanner) {
             $banner = $domainBanner->toArray();
-            $banner['uuid'] = $banner['id'];
-            $banner['serve_url'] = ForceUrlProtocol::change($banner['serve_url']);
-            $banner['click_url'] = ForceUrlProtocol::change($banner['click_url']);
-            $banner['view_url'] = ForceUrlProtocol::change($banner['view_url']);
+            $banner[self::BANNER_UUID_FIELD] = $banner[self::BANNER_ID_FIELD];
+            $banner[self::BANNER_SERVE_URL_FIELD] = SecureUrl::change($banner[self::BANNER_SERVE_URL_FIELD]);
+            $banner[self::BANNER_CLICK_URL_FIELD] = SecureUrl::change($banner[self::BANNER_CLICK_URL_FIELD]);
+            $banner[self::BANNER_VIEW_URL_FIELD] = SecureUrl::change($banner[self::BANNER_VIEW_URL_FIELD]);
 
             unset($banner['id']);
 
-            $networkBanner = NetworkBanner::where('uuid', hex2bin($domainBanner->getId()))->first();
+            $networkBanner = NetworkBanner::where(self::BANNER_UUID_FIELD, hex2bin($domainBanner->getId()))->first();
 
             if (!$networkBanner) {
                 $networkBanner = new NetworkBanner();
@@ -104,7 +116,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     public function fetchActiveCampaigns(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_ACTIVE)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_ACTIVE)->get();
 
         $campaigns = [];
 
@@ -115,9 +127,9 @@ class NetworkCampaignRepository implements CampaignRepository
         return new CampaignCollection(...$campaigns);
     }
 
-    public function fetchDeletedCampaigns(): CampaignCollection
+    public function fetchCampaignsToDelete(): CampaignCollection
     {
-        $networkCampaigns = NetworkCampaign::where('status', Status::STATUS_DELETED)->get();
+        $networkCampaigns = NetworkCampaign::where(self::STATUS_FIELD, Status::STATUS_TO_DELETE)->get();
 
         $campaigns = [];
 
@@ -134,15 +146,15 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
-                'id' => $networkBanner->uuid,
-                'serve_url' => $networkBanner->serve_url,
-                'click_url' => $networkBanner->click_url,
-                'view_url' => $networkBanner->view_url,
-                'type' => $networkBanner->type,
-                'width' => $networkBanner->width,
-                'height' => $networkBanner->height,
-                'status' => $networkBanner->status,
-                'classification' => $networkBanner->classification,
+                self::BANNER_ID_FIELD => $networkBanner->uuid,
+                self::BANNER_SERVE_URL_FIELD => $networkBanner->serve_url,
+                self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
+                self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
+                self::BANNER_TYPE_FIELD => $networkBanner->type,
+                self::BANNER_WIDTH_FIELD => $networkBanner->width,
+                self::BANNER_HEIGHT_FIELD => $networkBanner->height,
+                self::STATUS_FIELD => $networkBanner->status,
+                self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,
             ];
         }
 
@@ -169,8 +181,36 @@ class NetworkCampaignRepository implements CampaignRepository
                 'budget' => (int)$networkCampaign->budget,
                 'targeting_excludes' => $networkCampaign->targeting_excludes ?? [],
                 'targeting_requires' => $networkCampaign->targeting_requires ?? [],
-                'status' => $networkCampaign->status,
+                self::STATUS_FIELD => $networkCampaign->status,
             ]
         );
+    }
+
+    public function deleteCampaign(Campaign $campaign): void
+    {
+        $campaign->delete();
+
+        DB::beginTransaction();
+
+        try {
+            DB::table(NetworkCampaign::getTableName())
+                ->where(self::BANNER_UUID_FIELD, hex2bin($campaign->getId()))
+                ->update([self::STATUS_FIELD => $campaign->getStatus()]);
+
+            DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
+                ->join(
+                    sprintf('%s as campaign', NetworkCampaign::getTableName()),
+                    'banner.network_campaign_id',
+                    '=',
+                    'campaign.id'
+                )
+                ->where('campaign.uuid', hex2bin($campaign->getId()))
+                ->update(['banner.status' => Status::STATUS_DELETED]);
+        } catch (Exception $exception) {
+            DB::rollBack();
+            throw $exception;
+        }
+
+        DB::commit();
     }
 }

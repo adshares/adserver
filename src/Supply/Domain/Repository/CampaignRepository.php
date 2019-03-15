@@ -33,5 +33,7 @@ interface CampaignRepository
 
     public function fetchActiveCampaigns(): CampaignCollection;
 
-    public function fetchDeletedCampaigns(): CampaignCollection;
+    public function fetchCampaignsToDelete(): CampaignCollection;
+
+    public function deleteCampaign(Campaign $campaign): void;
 }

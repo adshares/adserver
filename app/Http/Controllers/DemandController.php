@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -284,8 +285,8 @@ class DemandController extends Controller
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => route('banner-context', ['id' => $eventId]),
-                'view_script_url' => url('-/view.js'),
+                'log_url' => (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString(),
+                'view_script_url' => (new SecureUrl(url('-/view.js')))->toString(),
                 'aduser_url' => $adUserUrl,
             ]
         ));

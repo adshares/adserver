@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Common\UrlInterface;
@@ -153,19 +152,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $data = $this->createDecodedResponseFromBody($body);
 
-        $this->validateInfoResponse($data);
-
-        return new Info(
-            $data['serviceType'],
-            $data['name'],
-            $data['softwareVersion'],
-            new Url($data['serverUrl']),
-            new Url($data['panelUrl']),
-            new Url($data['privacyUrl']),
-            new Url($data['termsUrl']),
-            new Url($data['inventoryUrl']),
-            ...$data['supported']
-        );
+        return Info::fromArray($data);
     }
 
     private function requestParameters(?string $baseUrl = null): array
@@ -231,31 +218,5 @@ final class GuzzleDemandClient implements DemandClient
         unset($data['id']);
 
         return $data;
-    }
-
-    private function validateInfoResponse(array $data): void
-    {
-        $type = $data['serviceType'] ?? null;
-        $name = $data['name'] ?? null;
-        $version = $data['softwareVersion'] ?? null;
-        $supported = $data['supported'] ?? null;
-        $serverUrl = $data['serverUrl'] ?? null;
-        $panelUrl = $data['panelUrl'] ?? null;
-        $privacyUrl = $data['privacyUrl'] ?? null;
-        $termsUrl = $data['termsUrl'] ?? null;
-        $inventoryUrl = $data['inventoryUrl'] ?? null;
-
-        if (!$type
-            || !$name
-            || !$version
-            || !$supported
-            || !$serverUrl
-            || !$panelUrl
-            || !$privacyUrl
-            || !$termsUrl
-            || !$inventoryUrl
-        ) {
-            throw new DomainRuntimeException('Wrong info data format.');
-        }
     }
 }

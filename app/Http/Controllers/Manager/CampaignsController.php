@@ -30,10 +30,10 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -297,20 +297,13 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function changeStatus(Request $request, int $campaignId): JsonResponse
+    public function changeStatus(Campaign $campaign, Request $request): JsonResponse
     {
-        $this->validateRequestObject(
-            $request,
-            'campaign',
-            array_intersect_key(
-                Campaign::$rules,
-                $request->input('campaign')
-            )
-        );
+        if (!$request->has('campaign.status')) {
+            throw new InvalidArgumentException('No status provided');
+        }
 
         $status = (int)$request->input('campaign.status');
-
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         try {
             $campaign->changeStatus($status);

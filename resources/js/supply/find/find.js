@@ -209,7 +209,7 @@ function isRendered(domObj) {
             return true;
         }
         domObj = domObj.parentNode;
-    };
+    }
     return true;
 }
 
@@ -255,7 +255,7 @@ var isVisible = function (el) {
         if ((left + width) < rect.left)
             return false;
         el = el.parentNode;
-    };
+    }
     // Check its within the document viewport
     return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
         && top > -height
@@ -438,7 +438,7 @@ var addTrackingIframe = function (url, element) {
         iframe.parentElement.removeChild(iframe);
     }, 3000);
     return iframe;
-}
+};
 
 var addTrackingImage = function (url, element) {
     if (!url) return;
@@ -450,7 +450,7 @@ var addTrackingImage = function (url, element) {
     document.body.appendChild(img);
     element.parentNode.insertBefore(img, element);
     return img;
-}
+};
 
 var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {

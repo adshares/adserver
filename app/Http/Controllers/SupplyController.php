@@ -27,8 +27,8 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
@@ -89,7 +89,7 @@ class SupplyController extends Controller
         }
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
         $zones = Utils::decodeZones($data)['zones'];
@@ -104,7 +104,7 @@ class SupplyController extends Controller
         $params = [
             config('app.url'),
             config('app.aduser_external_location'),
-            '.'.config('app.website_banner_class'),
+            '.'.config('app.adserver_id'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -202,7 +202,7 @@ class SupplyController extends Controller
         $response->send();
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         NetworkEventLog::create(
@@ -267,7 +267,7 @@ class SupplyController extends Controller
         $response->send();
 
         ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
+        $userContext = $contextProvider->getUserContextOld(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
         NetworkEventLog::create(
@@ -318,7 +318,7 @@ class SupplyController extends Controller
             $impressionId
         );
 
-        $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
+        $response->headers->set('Location', SecureUrl::change($adUserUrl));
 
         return $response;
     }

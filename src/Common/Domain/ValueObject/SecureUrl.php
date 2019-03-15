@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Domain\ValueObject;
 
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\UrlInterface;
 
 final class SecureUrl implements UrlInterface
@@ -32,7 +31,22 @@ final class SecureUrl implements UrlInterface
 
     public function __construct(string $url)
     {
-        $this->secureUrl = ForceUrlProtocol::change($url);
+        $this->secureUrl = self::changeIfNeeded($url);
+    }
+
+    /** @deprecated Use: SecureUrl */
+    public static function change(string $uri): string
+    {
+        if (config('app.banner_force_https') === false) {
+            return $uri;
+        }
+
+        return str_replace('http:', 'https:', $uri);
+    }
+
+    private function changeIfNeeded(string $url): string
+    {
+        return self::change($url);
     }
 
     public function toString(): string

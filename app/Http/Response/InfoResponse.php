@@ -32,6 +32,8 @@ final class InfoResponse implements Arrayable
     /** @var Info */
     private $info;
 
+    public const ADSHARES_MODULE_NAME = 'adserver';
+
     public function __construct(Info $info)
     {
         $this->info = $info;
@@ -40,8 +42,11 @@ final class InfoResponse implements Arrayable
     public function toArray(): array
     {
         $data = $this->info->toArray();
-        //BC for Wordpress Plugin
-        $data['panel-base-url'] = $this->panelUrl->toString();
+
+        $data['panel-base-url'] = $data['panelUrl'];
+        $data['serviceVersion'] = $data['version'];
+        $data['supported'] = $data['capabilities'];
+        $data['serviceType'] = $data['module'];
 
         return $data;
     }
@@ -49,7 +54,7 @@ final class InfoResponse implements Arrayable
     public static function defaults(): self
     {
         return new self(new Info(
-            (string)config('app.module'),
+            self::ADSHARES_MODULE_NAME,
             (string)config('app.name'),
             (string)config('app.version'),
             new SecureUrl((string)config('app.url')),
@@ -57,8 +62,8 @@ final class InfoResponse implements Arrayable
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
-            Info::SUPPORTED_ADVERTISER,
-            Info::SUPPORTED_PUBLISHER
+            Info::CAPABILITY_ADVERTISER,
+            Info::CAPABILITY_PUBLISHER
         ));
     }
 }

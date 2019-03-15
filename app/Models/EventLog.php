@@ -210,7 +210,7 @@ class EventLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function createImpressionContext(): ImpressionContext
+    public function impressionContext(): ImpressionContext
     {
         // TODO input data should be validated - currently ErrorException could be thrown
 

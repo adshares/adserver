@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Common\Domain\ValueObject\NullUrl;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\Info;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -47,7 +50,7 @@ class NetworkHost extends Model
 {
     use AutomateMutators;
 
-    private const MAX_FAILED_CONNECTION = 3;
+    private const FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED = 10;
 
     /**
      * @var array
@@ -98,7 +101,12 @@ class NetworkHost extends Model
 
     public static function fetchHosts(): Collection
     {
-        return self::where('failed_connection', '<', self::MAX_FAILED_CONNECTION)->get();
+        return self::where(
+            'failed_connection',
+            '<',
+            self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED
+        )
+            ->get();
     }
 
     public function connectionSuccessful(): void
@@ -111,11 +119,18 @@ class NetworkHost extends Model
 
     public function connectionFailed(): void
     {
-        ++$this->failed_connection;
-        $this->update();
+        if ($this->failed_connection < self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED) {
+            ++$this->failed_connection;
+            $this->update();
+        }
     }
 
-    public function getInfoAttribute(): ?Info
+    public function isInventoryToBeRemoved(): bool
+    {
+        return $this->failed_connection >= self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED;
+    }
+
+    public function getInfoAttribute(): Info
     {
         if ($this->attributes['info']) {
             $info = json_decode($this->attributes['info'], true);
@@ -123,7 +138,17 @@ class NetworkHost extends Model
             return Info::fromArray($info);
         }
 
-        return null;
+        return new Info(
+            InfoResponse::ADSHARES_MODULE_NAME,
+            'bc-tmp-srv',
+            'pre-v0.3',
+            new SecureUrl($this->attributes['host']),
+            new NullUrl(),
+            new NullUrl(),
+            new NullUrl(),
+            new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            Info::CAPABILITY_ADVERTISER
+        );
     }
 
     public function setInfoAttribute(Info $info): void
