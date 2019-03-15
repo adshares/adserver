@@ -17,8 +17,7 @@ test -z $1 || shift
 
 SERVICE_NAME=$(basename ${SOURCE_DIR})
 
-HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh root
+source $(dirname $(readlink -f "$0"))/_functions.sh root
 
 echo "Remove ${SERVICE_NAME}-${DAEMON_NAME}-*.conf from ${DAEMON_NAME} (if any exist)"
 find  ${TARGET_DIR} -maxdepth 1 -name "${SERVICE_NAME}-${DAEMON_NAME}-*.conf" -type f -delete
@@ -31,7 +30,8 @@ then
     for FILE in ${FILE_ITEMS}
     do
         echo "Copy ${FILE} to ${TARGET_DIR}"
-        cp ${FILE} ${TARGET_DIR}/${SERVICE_NAME}-$(basename ${FILE})
+        [[ -e ${VENDOR_DIR}/${SERVICE_NAME}/.env ]] && cat ${VENDOR_DIR}/${SERVICE_NAME}/.env && source ${VENDOR_DIR}/${SERVICE_NAME}/.env
+        envsubst < ${FILE} | tee ${TARGET_DIR}/${SERVICE_NAME}-$(basename ${FILE})
     done
 
     echo "Reload or (re)start ${DAEMON_SERVICE_NAME}"

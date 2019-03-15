@@ -9,7 +9,6 @@ fi
 HERE=$(dirname $(readlink -f "$0"))
 source ${HERE}/_functions.sh
 
-#SERVICE_NAME=adserver source ${HERE}/clone-service.sh
 read_env ${INSTALLATION_DIR}/adserver/.env || read_env ${INSTALLATION_DIR}/adserver/.env.dist
 
 

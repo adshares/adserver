@@ -6,8 +6,7 @@ GIT_BRANCH_NAME=${GIT_BRANCH_NAME:-${2:-master}}
 VENDOR_DIR=${VENDOR_DIR:-$3}
 GIT_REPO_BASE_URL=${GIT_REPO_BASE_URL:-${4:-https://github.com/adshares}}
 
-HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh any
+source $(dirname $(readlink -f "$0"))/_functions.sh any
 
 test -z ${SERVICE_NAME} && echo "Missing SERVICE_NAME" >&2 && exit 1
 test -z ${VENDOR_DIR} && echo "Missing VENDOR_DIR" >&2 && exit 1

@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-HERE=$(dirname $(readlink -f "$0"))
-source ${HERE}/_functions.sh root
+source $(dirname $(readlink -f "$0"))/_functions.sh root
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -21,6 +20,7 @@ echo "deb [ arch=amd64 ] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/
 # ===
 
 add-apt-repository --yes ppa:adshares/releases
+add-apt-repository --yes ppa:certbot/certbot
 
 # ===
 
@@ -28,18 +28,54 @@ TEMP_DIR=$(mktemp --directory)
 
 # ===
 
-#if [[ -f /etc/os-release ]]
-#then
-#    source /etc/os-release
-#    if [[ -z ${UBUNTU_CODENAME} ]]
-#    then
-#        UBUNTU_CODENAME=$(lsb_release -sc)
-#    fi
-#fi
+DIST_ID=$(lsb_release -si)
 
-#PERCONA_FILENAME="percona-release_latest.${UBUNTU_CODENAME}_all.deb"
-#curl https://repo.percona.com/apt/${PERCONA_FILENAME} -sS -o ${TEMP_DIR}/${PERCONA_FILENAME}
-#dpkg --install ${TEMP_DIR}/${PERCONA_FILENAME}
+if [[ "${DIST_ID^^}" != "UBUNTU" ]]
+then
+    if [[ "${DIST_ID^^}" != "LINUXMINT" ]]
+    then
+        echo "Unsupported > $DIST_ID < distribution."
+        exit 1
+    fi
+
+    if [[ ! -f /etc/os-release ]]
+    then
+        echo "Missing > os-release < file."
+        exit 1
+    fi
+
+    source /etc/os-release
+
+    if [[ -z ${UBUNTU_CODENAME:-""} ]]
+    then
+        echo "Missing > UBUNTU_CODENAME < value."
+        exit 1
+    fi
+
+    LSB_RELEASE_BACKUP=$(cat /etc/lsb-release)
+    DISTRIB_CODENAME="${UBUNTU_CODENAME}"
+
+    source /etc/lsb-release
+    {
+        echo "DISTRIB_ID=${ID_LIKE}"
+        echo "DISTRIB_RELEASE=${DISTRIB_RELEASE}"
+        echo "DISTRIB_CODENAME=${UBUNTU_CODENAME}"
+        echo "DISTRIB_DESCRIPTION=${DISTRIB_DESCRIPTION}"
+    } > /etc/lsb-release
+
+    _NEED_TO_REVERT_LSB=1
+fi
+
+PERCONA_FILE=percona-release_latest.$(lsb_release -sc)_all.deb
+curl https://repo.percona.com/apt/${PERCONA_FILE} -sS -o ${TEMP_DIR}/${PERCONA_FILE}
+dpkg --install ${TEMP_DIR}/${PERCONA_FILE} || echo "Couldn't install Percona"
+
+if [[ ${_NEED_TO_REVERT_LSB:-0} -eq 1 ]]
+then
+    echo "$LSB_RELEASE_BACKUP" > /etc/lsb-release
+    unset _NEED_TO_REVERT_LSB
+    unset LSB_RELEASE_BACKUP
+fi
 
 # ===
 
@@ -47,7 +83,8 @@ apt-get --yes update
 apt-get --yes --no-install-recommends install \
     python python-pip python-dev gcc \
     php7.2-fpm php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-curl php7.2-gd php7.2-intl php7.2-mbstring php7.2-sqlite3 php7.2-zip php7.2-simplexml \
-    ads nginx percona-server-server-5.7 nodejs yarn mongodb-org
+    ads nginx percona-server-server-5.7 percona-server-client-5.7 nodejs yarn mongodb-org \
+    certbot python-certbot-nginx
 
 # ===
 
