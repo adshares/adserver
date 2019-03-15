@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-exit 1
 source ${1}/_functions.sh || { echo "Missing source path (first param)."; exit 1 }
 [[ -z ${2:-""} ]] || cd $2
-
+echo $PWD
+exit 1
 set -a
 source .env
 set +a
