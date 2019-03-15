@@ -29,9 +29,7 @@ then
     do
         echo "Copy ${FILE} to ${TARGET_DIR}"
         [[ -e ${VENDOR_DIR}/${SERVICE_NAME}/.env ]] && cat ${VENDOR_DIR}/${SERVICE_NAME}/.env && source ${VENDOR_DIR}/${SERVICE_NAME}/.env
-        echo "-$APP_HOST-"
         envsubst < ${FILE} | tee ${TARGET_DIR}/${SERVICE_NAME}-$(basename ${FILE})
-
     done
 
     echo "Reload or (re)start ${DAEMON_SERVICE_NAME}"
