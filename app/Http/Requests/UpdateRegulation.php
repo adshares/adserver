@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Http\Requests;
 
 use Adshares\Adserver\Models\Regulation;
-use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateRegulation extends FormRequest
 {

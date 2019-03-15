@@ -29,3 +29,6 @@ Route::get('/',
 # API INFO
 Route::get('/info', [InfoController::class, 'info']);
 Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
+
+Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
+Route::get('/policies/terms.html', [InfoController::class, 'terms']);
