@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-set -e
 source ${1}/_functions.sh
 [[ -z ${2:-""} ]] || cd $2
-echo $PWD
-exit 1
+
 set -a
 source .env
 set +a
