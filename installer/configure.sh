@@ -150,5 +150,5 @@ then
     save_env ${VENDOR_DIR}/adpanel/.env.dist ${VENDOR_DIR}/adpanel/.env
 fi
 
-APP_HOST=${INSTALL_API_HOSTNAME}
+export APP_HOST=${INSTALL_API_HOSTNAME}
 save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
