@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-
-source ${1}/_functions.sh || { echo "Missing source path (first param)."; exit 1 }
+set -e
+source ${1}/_functions.sh
 [[ -z ${2:-""} ]] || cd $2
 echo $PWD
 exit 1
