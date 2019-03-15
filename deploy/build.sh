@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-set -e
-
-source ${1:-$(dirname $(readlink -f "$0"))/bin}/_functions.sh
+source ${1}/_functions.sh || { echo "Missing source path (first param)."; exit 1 }
 [[ -z ${2:-""} ]] || cd $2
 [[ -z ${3:-".env"} ]] || set -a && source .env && set +a
+
+GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
+GIT_HASH="#"$(git rev-parse --short HEAD)
 
 function artisanCommand {
     ./artisan --no-interaction "$@"
 }
-
-GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
-GIT_HASH="#"$(git rev-parse --short HEAD)
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
