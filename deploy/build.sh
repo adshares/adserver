@@ -13,8 +13,6 @@ function artisanCommand {
     ./artisan --no-interaction "$@"
 }
 
-artisanCommand
-
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 
