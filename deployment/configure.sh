@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-set -ex
+set -e
+
 if [[ $EUID -eq 0 ]]
 then
     echo "Don't be root when running $0" >&2

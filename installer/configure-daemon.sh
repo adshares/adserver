@@ -15,8 +15,6 @@ test -z $1 || shift
 DAEMON_SERVICE_NAME=${1:-${DAEMON_NAME}}
 test -z $1 || shift
 
-SERVICE_NAME=$(basename ${SOURCE_DIR})
-
 source $(dirname $(readlink -f "$0"))/_functions.sh root
 
 echo "Remove ${SERVICE_NAME}-${DAEMON_NAME}-*.conf from ${DAEMON_NAME} (if any exist)"
@@ -30,7 +28,8 @@ then
     for FILE in ${FILE_ITEMS}
     do
         echo "Copy ${FILE} to ${TARGET_DIR}"
-        [[ -e ${VENDOR_DIR}/${SERVICE_NAME}/.env ]] && cat ${VENDOR_DIR}/${SERVICE_NAME}/.env && source ${VENDOR_DIR}/${SERVICE_NAME}/.env
+        #[[ -e ${VENDOR_DIR}/${SERVICE_NAME}/.env ]] &&
+        cat ${VENDOR_DIR}/${SERVICE_NAME}/.env && source ${VENDOR_DIR}/${SERVICE_NAME}/.env
         envsubst < ${FILE} | tee ${TARGET_DIR}/${SERVICE_NAME}-$(basename ${FILE})
     done
 

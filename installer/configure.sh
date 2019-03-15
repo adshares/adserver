@@ -100,8 +100,6 @@ fi
 INSTALL_ADSERVER_CRON=Y
 read_option INSTALL_ADSERVER_CRON "Install adserver cronjob?" 0 1
 
-set -x
-
 if [[ "${INSTALL_ADUSER^^}" == "Y" ]]
 then
     ADUSER_EXTERNAL_LOCATION="${INSTALL_SCHEME}://$INSTALL_HOSTNAME/_aduser/"
@@ -152,4 +150,5 @@ then
     save_env ${VENDOR_DIR}/adpanel/.env.dist ${VENDOR_DIR}/adpanel/.env
 fi
 
+APP_HOST=${INSTALL_API_HOSTNAME}
 save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
