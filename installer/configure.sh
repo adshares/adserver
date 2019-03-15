@@ -151,4 +151,5 @@ then
 fi
 
 export APP_HOST=${INSTALL_API_HOSTNAME}
+export APP_PORT=80
 save_env ${VENDOR_DIR}/adserver/.env.dist ${VENDOR_DIR}/adserver/.env
