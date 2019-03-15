@@ -157,7 +157,7 @@ class Config extends Model
         return (string)$config->value;
     }
 
-    public static function fetchAdminSettings()
+    public static function fetchAdminSettings(): array
     {
         $data = self::whereIn('key', self::ADMIN_SETTINGS)->get();
 
