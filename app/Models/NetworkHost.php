@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Common\Domain\ValueObject\NullEmail;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\Info;
@@ -147,6 +148,7 @@ class NetworkHost extends Model
             new NullUrl(),
             new NullUrl(),
             new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            null,
             Info::CAPABILITY_ADVERTISER
         );
     }
