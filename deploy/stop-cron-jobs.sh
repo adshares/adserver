@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-set -e
-
-HERE=$(dirname $(dirname $(readlink -f "$0")))
-source ${HERE}/_functions.sh root
+source ${1}/_functions.sh
+[[ -z ${2:-""} ]] || cd $2
 
 crontab -u ${VENDOR_USER} -r
