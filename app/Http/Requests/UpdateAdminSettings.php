@@ -4,6 +4,7 @@ namespace Adshares\Adserver\Http\Requests;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Rules\AccountIdRule;
+use Adshares\Common\Domain\ValueObject\AccountId;
 
 class UpdateAdminSettings extends FormRequest
 {
@@ -14,10 +15,16 @@ class UpdateAdminSettings extends FormRequest
      */
     public function rules(): array
     {
+        $blacklistedAccountIds = [new AccountId(config('app.adshares_address'))];
+
         return [
             'settings.hotwallet_min_value' => 'required|integer|min:0',
             'settings.hotwallet_max_value' => 'required|integer|min:1|gt:settings.hotwallet_min_value',
-            'settings.hotwallet_address' => ['required_if:settings.ishotwalletactive,1', 'string', new AccountIdRule()],
+            'settings.hotwallet_address' => [
+                'required_if:settings.ishotwalletactive,1',
+                'string',
+                new AccountIdRule($blacklistedAccountIds),
+            ],
             'settings.hotwallet_is_active' => 'required|boolean',
             'settings.adserver_name' => 'required|string|max:255',
             'settings.technical_email' => 'required|email|max:255',
