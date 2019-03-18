@@ -48,6 +48,22 @@ class AdminController extends Controller
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 
+    public function getLicence(): JsonResponse
+    {
+        // TODO replace mock with licence data
+        $mockData = [
+            'licence' => [
+                'code' => 'ABCD-00000000-00000000-WXYZ',
+                'organisation' => 'open source',
+                'dateStart' => '2019-01-01 00:00:00',
+                'dateEnd' => '2019-12-31 23:59:59',
+                'serverUrl' => 'http://adshares.net',
+            ],
+        ];
+
+        return new JsonResponse($mockData);
+    }
+
     public function getTerms(): JsonResponse
     {
         return new JsonResponse(Regulation::fetchTerms());
