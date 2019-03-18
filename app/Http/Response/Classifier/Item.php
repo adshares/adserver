@@ -35,6 +35,8 @@ class Item implements Arrayable
     /** @var int */
     private $height;
     /** @var string */
+    private $landingUrl;
+    /** @var string */
     private $sourceHost;
     /** @var int */
     private $budget;
@@ -55,6 +57,7 @@ class Item implements Arrayable
         string $type,
         int $width,
         int $height,
+        string $landingUrl,
         string $sourceHost,
         int $budget,
         int $cpm,
@@ -67,6 +70,7 @@ class Item implements Arrayable
         $this->type = $type;
         $this->width = $width;
         $this->height = $height;
+        $this->landingUrl = $landingUrl;
         $this->sourceHost = $sourceHost;
         $this->budget = $budget;
         $this->cpm = $cpm;
@@ -88,6 +92,7 @@ class Item implements Arrayable
             'type' => $this->type,
             'width' => $this->width,
             'height' => $this->height,
+            'landing_url' => $this->landingUrl,
             'source_host' => $this->sourceHost,
             'budget' => $this->budget,
             'cpm' => $this->cpm,

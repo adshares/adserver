@@ -42,6 +42,7 @@ class ClassifierResponse implements Arrayable
                 $banner->type,
                 (int)$banner->width,
                 (int)$banner->height,
+                $banner->landing_url,
                 $banner->source_host,
                 (int)$banner->budget,
                 (int)$banner->max_cpm,
