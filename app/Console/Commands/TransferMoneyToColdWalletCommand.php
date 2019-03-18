@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Exception\TransferMoneyException;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
@@ -50,6 +51,13 @@ class TransferMoneyToColdWalletCommand extends Command
     public function handle(): void
     {
         $this->info('[Wallet] Start command '.$this->signature);
+
+        if (!Config::isHotWalletActive()) {
+            $this->info('[Wallet] Cold wallet feature is disabled.');
+
+            return;
+        }
+
         $waitingPayments = UserLedgerEntry::waitingPayments();
 
         try {
