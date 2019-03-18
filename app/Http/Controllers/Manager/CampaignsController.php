@@ -26,7 +26,9 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Adshares\Adserver\Uploader\Factory;
+use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,14 +36,12 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
-use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function strrpos;
 
 class CampaignsController extends Controller
 {
-    private const FILESYSTEM_DISK = 'public';
-
     /**
      * @var CampaignRepository
      */
@@ -52,27 +52,20 @@ class CampaignsController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function upload(Request $request): JsonResponse
+    public function upload(Request $request)
     {
-        $file = $request->file('file');
-        $path = $file->store('banners', self::FILESYSTEM_DISK);
+        return Factory::create($request)->upload();
+    }
 
-        $name = $file->getClientOriginalName();
-        $imageSize = getimagesize($file->getRealPath());
-        $size = '';
-
-        if (isset($imageSize[0], $imageSize[1])) {
-            $size = sprintf('%sx%s', $imageSize[0], $imageSize[1]);
+    public function uploadPreview(Request $request, string $type, string $name)
+    {
+        if ($type === ZipUploader::ZIP_FILE) {
+            $uploader = new ZipUploader($request);
+        } else {
+            $uploader = new ImageUploader($request);
         }
 
-        return self::json(
-            [
-                'imageUrl' => config('app.url').'/storage/'.$path,
-                'name' => $name,
-                'size' => $size,
-            ],
-            Response::HTTP_OK
-        );
+        return $uploader->preview($name);
     }
 
     public function preview($bannerPublicId): Response
@@ -84,7 +77,10 @@ class CampaignsController extends Controller
         }
 
         $response = ResponseFacade::make($banner->creative_contents, 200);
-        $response->header('Content-Type', 'image/png');
+
+        if ($banner->creative_type === Banner::IMAGE_TYPE) {
+            $response->header('Content-Type', 'image/png');
+        }
 
         return $response;
     }
@@ -101,19 +97,15 @@ class CampaignsController extends Controller
         $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
 
         $banners = [];
-        $temporaryFileToRemove = [];
 
         if (isset($input['ads']) && count($input['ads']) > 0) {
-            $temporaryFileToRemove = $this->temporaryBannersToRemove($input['ads']);
             $banners = $this->prepareBannersFromInput($input['ads']);
         }
 
         $campaign = new Campaign($input);
         $this->campaignRepository->save($campaign, $banners);
 
-        if ($temporaryFileToRemove) {
-            $this->removeLocalBannerImages($temporaryFileToRemove);
-        }
+        $this->removeTemporaryUploadedFiles((array)$input['ads']);
 
         try {
             $campaign->changeStatus($status);
@@ -129,24 +121,18 @@ class CampaignsController extends Controller
         );
     }
 
-    private function temporaryBannersToRemove(array $input): array
+    private function removeTemporaryUploadedFiles(array $files): void
     {
-        $banners = [];
-
-        foreach ($input as $banner) {
-            if ($banner['type'] === Banner::HTML_TYPE) {
-                continue;
+        foreach ($files as $file) {
+            if (!isset($file['uuid'])) {
+                Factory::removeFile($this->filename($file['url']));
             }
-
-            $banners[] = $this->getBannerLocalPublicPath($banner['image_url']);
         }
-
-        return $banners;
     }
 
-    private function getBannerLocalPublicPath(string $imageUrl): string
+    private function filename(string $imageUrl): string
     {
-        return str_replace(config('app.url').'/storage/', '', $imageUrl);
+        return substr($imageUrl, strrpos($imageUrl, '/') + 1);
     }
 
     private function prepareBannersFromInput(array $input): array
@@ -167,30 +153,19 @@ class CampaignsController extends Controller
             $bannerModel->creative_height = $size[1];
             $bannerModel->creative_type = Banner::type($banner['type']);
 
+            $fileName = $this->filename($banner['url']);
             if ($banner['type'] === Banner::HTML_TYPE) {
-                $bannerModel->creative_contents = $banner['html'];
+                $content = ZipUploader::content($fileName);
             } else {
-                $path = $this->getBannerLocalPublicPath($banner['image_url']);
-                $content = Storage::disk(self::FILESYSTEM_DISK)->get($path);
-
-                $bannerModel->creative_contents = $content;
+                $content = ImageUploader::content($fileName);
             }
+
+            $bannerModel->creative_contents = $content;
 
             $banners[] = $bannerModel;
         }
 
         return $banners;
-    }
-
-    private function removeLocalBannerImages(array $files): void
-    {
-        foreach ($files as $file) {
-            try {
-                Storage::disk(self::FILESYSTEM_DISK)->delete($file);
-            } catch (FileNotFoundException $ex) {
-                // do nothing
-            }
-        }
     }
 
     public function browse(): JsonResponse
@@ -244,7 +219,6 @@ class CampaignsController extends Controller
         $bannersToUpdate = [];
         $bannersToDelete = [];
         $bannersToInsert = [];
-        $temporaryFileToRemove = [];
 
         foreach ($campaign->banners as $banner) {
             $bannerFromInput = $banners->firstWhere('uuid', $banner->uuid);
@@ -272,15 +246,12 @@ class CampaignsController extends Controller
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
         }
 
-        if ($ads) {
-            $this->temporaryBannersToRemove($ads);
-        }
-
         $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
 
-        if ($temporaryFileToRemove) {
-            $this->removeLocalBannerImages($temporaryFileToRemove);
+        if ($ads) {
+            $this->removeTemporaryUploadedFiles($ads);
         }
+
 
         if ($status !== $campaign->status) {
             try {

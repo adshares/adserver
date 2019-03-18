@@ -18,16 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\InfoController;
-use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Illuminate\Support\Facades\Route;
+namespace Adshares\Adserver\Uploader;
 
-Route::get('/',
-    function () {
-        return '';
-    })->name('login');
+use Illuminate\Contracts\Support\Arrayable;
 
-# API INFO
-Route::get('/info', [InfoController::class, 'info']);
-Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
-Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])->name('app.campaigns.upload_preview');
+interface UploadedFile extends Arrayable
+{
+}

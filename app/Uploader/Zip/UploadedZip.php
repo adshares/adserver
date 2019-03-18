@@ -18,16 +18,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\InfoController;
-use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Illuminate\Support\Facades\Route;
+declare(strict_types = 1);
 
-Route::get('/',
-    function () {
-        return '';
-    })->name('login');
+namespace Adshares\Adserver\Uploader\Zip;
 
-# API INFO
-Route::get('/info', [InfoController::class, 'info']);
-Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
-Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])->name('app.campaigns.upload_preview');
+use Adshares\Adserver\Uploader\UploadedFile;
+
+class UploadedZip implements UploadedFile
+{
+    /** @var string */
+    private $name;
+    /** @var string */
+    private $previewUrl;
+
+    public function __construct(string $name, string $previewUrl)
+    {
+        $this->name = $name;
+        $this->previewUrl = $previewUrl;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'url' => $this->previewUrl,
+        ];
+    }
+}
