@@ -22,6 +22,7 @@
 
 AdServer is the core software behind the ecosystem.
 
+For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Project.
 
 ## Documentation
 
