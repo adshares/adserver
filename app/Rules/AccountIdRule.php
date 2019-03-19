@@ -10,8 +10,8 @@ class AccountIdRule implements Rule
     /** @var array */
     private $blacklistedAccountIds;
 
-    /** @var AccountId */
-    private $blacklistedAccountId;
+    /** @var string|null */
+    private $message;
 
     public function __construct(array $blacklistedAccountIds = [])
     {
@@ -28,6 +28,8 @@ class AccountIdRule implements Rule
     public function passes($attribute, $value): bool
     {
         if (!AccountId::isValid($value)) {
+            $this->message = 'The :attribute must be valid AccountId.';
+
             return false;
         }
 
@@ -35,7 +37,7 @@ class AccountIdRule implements Rule
 
         foreach ($this->blacklistedAccountIds as $blacklistedAccountId) {
             if ($accountId->equals($blacklistedAccountId)) {
-                $this->blacklistedAccountId = $blacklistedAccountId;
+                $this->message = 'The :attribute must be different than blacklisted (:input)';
 
                 return false;
             }
@@ -49,15 +51,8 @@ class AccountIdRule implements Rule
      *
      * @return string
      */
-    public function message(): string
+    public function message(): ?string
     {
-        if (null !== $this->blacklistedAccountId) {
-            return sprintf(
-                'The :attribute must be different than blacklisted (%s)',
-                $this->blacklistedAccountId->toString()
-            );
-        }
-
-        return 'The :attribute must be valid AccountId.';
+        return $this->message;
     }
 }

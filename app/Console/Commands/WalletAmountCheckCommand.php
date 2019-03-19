@@ -57,7 +57,7 @@ class WalletAmountCheckCommand extends Command
         $this->info('[Wallet] Start command '.$this->signature);
 
         if (!Config::isHotWalletActive()) {
-            $this->info('[Wallet] Cold wallet feature is disabled.');
+            $this->info('[Wallet] Hot wallet feature is disabled.');
 
             return;
         }
