@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source ${1}/_functions.sh
+source ${1}/_functions.sh --root
 [[ -z ${2:-""} ]] || cd $2
+[[ ${DRY_RUN:-0} -eq 1 ]] && echo "DRY-RUN: $0 $@"
 
 SKIP_BROADCAST=1
 SKIP_HOST_FETCHING=1
@@ -39,4 +40,6 @@ test ${SKIP_COLD_WALLET:-0} -eq 0 && \
     }
 } | tee ${TEMP_FILE}
 
-crontab -u ${VENDOR_USER} ${TEMP_FILE}
+[[ ${DRY_RUN:-0} -eq 1 ]] || crontab -u ${VENDOR_USER} ${TEMP_FILE}
+
+rm ${TEMP_FILE}

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-source ${1}/_functions.sh
+source ${1}/_functions.sh --vendor
 [[ -z ${2:-""} ]] || cd $2
+[[ ${DRY_RUN:-0} -eq 1 ]] && echo "DRY-RUN: $0 $@" && exit 127
 
 set -a
 source .env
 set +a
 
-GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
-GIT_HASH="#"$(git rev-parse --short HEAD)
+export APP_VERSION=$(versionFromGit)
 
 function artisanCommand {
     ./artisan --no-interaction "$@"
