@@ -70,6 +70,8 @@ class NetworkBanner extends Model
 
     private const NETWORK_CAMPAIGNS_COLUMN_ID = 'network_campaigns.id';
 
+    private const NETWORK_CAMPAIGNS_COLUMN_LANDING_URL = 'network_campaigns.landing_url';
+
     private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
 
     private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
@@ -293,6 +295,7 @@ class NetworkBanner extends Model
             self::NETWORK_BANNERS_COLUMN_TYPE,
             self::NETWORK_BANNERS_COLUMN_WIDTH,
             self::NETWORK_BANNERS_COLUMN_HEIGHT,
+            self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
             self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
             self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
             self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,

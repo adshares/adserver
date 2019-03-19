@@ -147,6 +147,7 @@ class NetworkHost extends Model
             new NullUrl(),
             new NullUrl(),
             new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            null,
             Info::CAPABILITY_ADVERTISER
         );
     }

@@ -23,8 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Response;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Illuminate\Contracts\Support\Arrayable;
 
 class SettingsResponse implements Arrayable
@@ -33,26 +36,32 @@ class SettingsResponse implements Arrayable
     private $publisherCommission;
     private $hotWalletMinValue;
     private $hotWalletMaxValue;
+    private $hotWalletIsActive;
     private $adserverName;
     private $technicalEmail;
     private $supportEmail;
+    private $address;
 
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
+        int $hotWalletIsActive,
         string $adserverName,
         Email $technicalEmail,
         Email $supportEmail,
+        Id $address,
         ?Commission $advertiserCommission = null,
         ?Commission $publisherCommission = null
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
+        $this->hotWalletIsActive = $hotWalletIsActive;
         $this->adserverName = $adserverName;
         $this->technicalEmail = $technicalEmail;
         $this->supportEmail = $supportEmail;
         $this->advertiserCommission = $advertiserCommission;
         $this->publisherCommission = $publisherCommission;
+        $this->address = $address;
     }
 
     public static function fromConfigModel(array $data): self
@@ -61,6 +70,8 @@ class SettingsResponse implements Arrayable
         $advertiserCommission = $data[Config::OPERATOR_TX_FEE] ?? null;
         $hotWalletMinValue = $data[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $data[Config::HOT_WALLET_MAX_VALUE];
+        $hotWalletIsActive = (int)$data[Config::HOT_WALLET_IS_ACTIVE] ?? 0;
+        $hotWalletAddress = $data[Config::HOT_WALLET_ADDRESS] ?? null;
         $adserverName = $data[Config::ADSERVER_NAME];
         $technicalEmail = $data[Config::TECHNICAL_EMAIL];
         $supportEmail = $data[Config::SUPPORT_EMAIL];
@@ -68,9 +79,11 @@ class SettingsResponse implements Arrayable
         return new self(
             (int)$hotWalletMinValue,
             (int)$hotWalletMaxValue,
+            (int)$hotWalletIsActive,
             $adserverName,
             new Email($technicalEmail),
             new Email($supportEmail),
+            $hotWalletAddress !== null ? new AccountId((string)$hotWalletAddress) : new EmptyAccountId(),
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission)
         );
@@ -86,6 +99,8 @@ class SettingsResponse implements Arrayable
         $data = [
             'hotwalletMinValue' => $this->hotWalletMinValue,
             'hotwalletMaxValue' => $this->hotWalletMaxValue,
+            'hotwalletIsActive' => $this->hotWalletIsActive,
+            'hotwalletAddress' => $this->address->toString(),
             'adserverName' => $this->adserverName,
             'technicalEmail' => $this->technicalEmail->toString(),
             'supportEmail' => $this->supportEmail->toString(),
