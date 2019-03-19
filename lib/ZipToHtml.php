@@ -115,7 +115,7 @@ MYSCRIPT;
 
                 if ($size > 0 && \zip_entry_open($zip, $zip_entry, "r")) {
 
-                    if ($ext == 'html' || $ext == 'htm') {
+                    if ($ext === 'html' || $ext === 'htm') {
                         if ($this->html_file) {
                             throw new \RuntimeException("Zip file must contain only one html file");
                         }
@@ -166,7 +166,7 @@ MYSCRIPT;
             $href = $sheet->getAttribute('href');
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme == 'data') {
+                if ($scheme === 'data') {
                     continue;
                 } else {
                     throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
@@ -192,7 +192,7 @@ MYSCRIPT;
             $href = $script->getAttribute('src');
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme == 'data') {
+                if ($scheme === 'data') {
                     continue;
                 } else {
                     throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
@@ -217,7 +217,7 @@ MYSCRIPT;
             $href = $tag->getAttribute('src');
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme == 'data') {
+                if ($scheme === 'data') {
                     continue;
                 } else {
                     throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
@@ -278,12 +278,12 @@ MYSCRIPT;
                 if (is_null($test)) {
                     $parts[] = $segment;
                 } else {
-                    if ($segment == '..') {
-                        if ($test == '..') {
+                    if ($segment === '..') {
+                        if ($test === '..') {
                             $parts[] = $test;
                         }
 
-                        if ($test == '..' || $test == '') {
+                        if ($test === '..' || $test === '') {
                             $parts[] = $segment;
                         }
                     } else {
@@ -305,7 +305,7 @@ MYSCRIPT;
             '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im', function ($match) use ($basedir) {
             $scheme = parse_url($match[1], PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme == 'data') {
+                if ($scheme === 'data') {
                     return $match[0];
                 } else {
                     throw new \RuntimeException(
