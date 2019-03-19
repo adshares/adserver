@@ -85,7 +85,7 @@ class CreativeSha1
     private function loadHtml(string $html)
     {
         $doc = new \DOMDocument();
-        $old = libxml_use_internal_errors(TRUE);
+        $old = libxml_use_internal_errors(true);
         libxml_clear_errors();
         $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
         $errors = libxml_get_errors();
