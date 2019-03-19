@@ -18,16 +18,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\Manager\AdminController;
-use Adshares\Adserver\Http\Kernel;
-use Illuminate\Support\Facades\Route;
+declare(strict_types = 1);
 
-Route::middleware(Kernel::ADMIN_ACCESS)->group(function () {
-    Route::get('settings', [AdminController::class, 'listSettings']);
-    Route::put('settings', [AdminController::class, 'updateSettings']);
+namespace Adshares\Common\Domain\ValueObject;
 
-    Route::get('terms', [AdminController::class, 'getTerms']);
-    Route::put('terms', [AdminController::class, 'putTerms']);
-    Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
-    Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
-});
+use Adshares\Common\Domain\Id;
+
+class EmptyAccountId implements Id
+{
+    private $value;
+
+    public function __construct(string $value = '')
+    {
+        $this->value = $value;
+    }
+
+    public function toString(): string
+    {
+        return $this->value;
+    }
+
+    public function equals(object $other): bool
+    {
+        return $other instanceof self;
+    }
+}

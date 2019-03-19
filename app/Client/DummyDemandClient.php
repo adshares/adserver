@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\UrlInterface;
@@ -177,6 +178,7 @@ final class DummyDemandClient implements DemandClient
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
             new Url('https://inventory.example.com/import'),
+            new Email('mail@example.com'),
             'PUB',
             'ADV'
         );
