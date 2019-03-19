@@ -45,15 +45,22 @@ class Factory
         return new ImageUploader($request);
     }
 
-    public static function removeFile(string $name): void
+    public static function createFromType(string $type, Request $request): Uploader
     {
-        if (self::isZipFile($name)) {
-            ZipUploader::removeTemporaryFiles($name);
-
-            return;
+        if ($type === ZipUploader::ZIP_FILE) {
+            return new ZipUploader($request);
         }
 
-        ImageUploader::removeTemporaryFiles($name);
+        return new ImageUploader($request);
+    }
+
+    public static function createFromExtension(string $fileName, Request $request)
+    {
+        if (self::isZipFile($fileName)) {
+            return new ZipUploader($request);
+        }
+
+        return new ImageUploader($request);
     }
 
     private static function isZipFile(string $name): bool

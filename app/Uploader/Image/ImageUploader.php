@@ -55,7 +55,7 @@ class ImageUploader implements Uploader
         return new UploadedImage($name, $previewUrl, $imageSize);
     }
 
-    public static function removeTemporaryFiles(string $fileName): void
+    public function removeTemporaryFile(string $fileName): void
     {
         try {
             Storage::disk(self::IMAGE_DISK)->delete($fileName);

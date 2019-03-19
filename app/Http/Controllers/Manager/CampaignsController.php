@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
+use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,20 +53,14 @@ class CampaignsController extends Controller
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function upload(Request $request)
+    public function upload(Request $request): UploadedFile
     {
         return Factory::create($request)->upload();
     }
 
-    public function uploadPreview(Request $request, string $type, string $name)
+    public function uploadPreview(Request $request, string $type, string $name): Response
     {
-        if ($type === ZipUploader::ZIP_FILE) {
-            $uploader = new ZipUploader($request);
-        } else {
-            $uploader = new ImageUploader($request);
-        }
-
-        return $uploader->preview($name);
+        return Factory::createFromType($type, $request)->preview($name);
     }
 
     public function preview($bannerPublicId): Response
@@ -105,7 +100,7 @@ class CampaignsController extends Controller
         $campaign = new Campaign($input);
         $this->campaignRepository->save($campaign, $banners);
 
-        $this->removeTemporaryUploadedFiles((array)$input['ads']);
+        $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
         try {
             $campaign->changeStatus($status);
@@ -121,11 +116,13 @@ class CampaignsController extends Controller
         );
     }
 
-    private function removeTemporaryUploadedFiles(array $files): void
+    private function removeTemporaryUploadedFiles(array $files, Request $request): void
     {
         foreach ($files as $file) {
             if (!isset($file['uuid'])) {
-                Factory::removeFile($this->filename($file['url']));
+                $filename = $this->filename($file['url']);
+                $uploader = Factory::createFromExtension($filename, $request);
+                $uploader->removeTemporaryFile($filename);
             }
         }
     }
@@ -225,14 +222,11 @@ class CampaignsController extends Controller
 
             if ($bannerFromInput) {
                 $banner->name = $bannerFromInput['name'];
-                if (Banner::HTML_TYPE === $bannerFromInput['type']) {
-                    $banner->creative_contents = $bannerFromInput['html'];
-                }
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(
                     function ($value) use ($banner) {
-                        return (string)($value['uuid'] ?? "") === $banner->uuid;
+                        return (string)($value['uuid'] ?? '') === $banner->uuid;
                     }
                 );
 
@@ -249,7 +243,7 @@ class CampaignsController extends Controller
         $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
 
         if ($ads) {
-            $this->removeTemporaryUploadedFiles($ads);
+            $this->removeTemporaryUploadedFiles($ads, $request);
         }
 
 

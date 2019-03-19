@@ -28,7 +28,7 @@ interface Uploader
 
     public function preview(string $fileName): Response;
 
-    public static function content(string $fileName): string;
+    public function removeTemporaryFile(string $fileName): void;
 
-    public static function removeTemporaryFiles(string $fileName): void;
+    public static function content(string $fileName): string;
 }

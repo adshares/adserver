@@ -60,7 +60,7 @@ class ZipUploader implements Uploader
         $zip->getHtml();
     }
 
-    public static function removeTemporaryFiles(string $fileName): void
+    public function removeTemporaryFile(string $fileName): void
     {
         try {
             Storage::disk(self::ZIP_DISK)->delete($fileName);

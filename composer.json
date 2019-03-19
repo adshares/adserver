@@ -5,7 +5,7 @@
         "ext-intl": "*",
         "ext-json": "*",
         "ext-sodium": "*",
-        "ext-fileinfo": "*",,
+        "ext-fileinfo": "*",
         "adshares/ads-client": "^1",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
