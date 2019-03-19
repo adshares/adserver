@@ -2,10 +2,6 @@
 source ${1}/_functions.sh --vendor
 [[ -z ${2:-""} ]] || cd $2
 
-set -a
-source .env
-set +a
-
 export APP_VERSION=$(versionFromGit)
 
 function artisanCommand {
