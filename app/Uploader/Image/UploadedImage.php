@@ -30,7 +30,7 @@ class UploadedImage implements UploadedFile
     private $name;
     /** @var string */
     private $previewUrl;
-    /** @var string */
+    /** @var array */
     private $size;
 
     public function __construct(string $name, string $previewUrl, array $size)
