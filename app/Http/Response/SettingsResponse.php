@@ -36,6 +36,7 @@ class SettingsResponse implements Arrayable
     private $publisherCommission;
     private $hotWalletMinValue;
     private $hotWalletMaxValue;
+    private $hotWalletIsActive;
     private $adserverName;
     private $technicalEmail;
     private $supportEmail;
@@ -44,6 +45,7 @@ class SettingsResponse implements Arrayable
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
+        int $hotWalletIsActive,
         string $adserverName,
         Email $technicalEmail,
         Email $supportEmail,
@@ -53,6 +55,7 @@ class SettingsResponse implements Arrayable
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
+        $this->hotWalletIsActive = $hotWalletIsActive;
         $this->adserverName = $adserverName;
         $this->technicalEmail = $technicalEmail;
         $this->supportEmail = $supportEmail;
@@ -67,6 +70,7 @@ class SettingsResponse implements Arrayable
         $advertiserCommission = $data[Config::OPERATOR_TX_FEE] ?? null;
         $hotWalletMinValue = $data[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $data[Config::HOT_WALLET_MAX_VALUE];
+        $hotWalletIsActive = (int)$data[Config::HOT_WALLET_IS_ACTIVE] ?? 0;
         $hotWalletAddress = $data[Config::HOT_WALLET_ADDRESS] ?? null;
         $adserverName = $data[Config::ADSERVER_NAME];
         $technicalEmail = $data[Config::TECHNICAL_EMAIL];
@@ -75,6 +79,7 @@ class SettingsResponse implements Arrayable
         return new self(
             (int)$hotWalletMinValue,
             (int)$hotWalletMaxValue,
+            (int)$hotWalletIsActive,
             $adserverName,
             new Email($technicalEmail),
             new Email($supportEmail),
@@ -94,6 +99,7 @@ class SettingsResponse implements Arrayable
         $data = [
             'hotwalletMinValue' => $this->hotWalletMinValue,
             'hotwalletMaxValue' => $this->hotWalletMaxValue,
+            'hotwalletIsActive' => $this->hotWalletIsActive,
             'hotwalletAddress' => $this->address->toString(),
             'adserverName' => $this->adserverName,
             'technicalEmail' => $this->technicalEmail->toString(),
