@@ -22,47 +22,7 @@
 
 AdServer is the core software behind the ecosystem.
 
-## Prerequisites
- - Existing ADS account (with credentials)
- - A clean Ubuntu/Bionic install
- - You are logged in as a user with `sudo` privileges
- - You have mail server ready somewhere (use something like [MailHog](https://github.com/mailhog/MailHog) for local testing)
- 
-## Quick Start (on Ubuntu 18.04)
-
-### Get source code
-```bash
-git clone https://github.com/adshares/adserver.git
-```
-### Prepare environment
-Install all required software and copy all the below-mentioned scripts and configs to `/opt/adshares/.deployment-scripts`.
-```bash
-sudo adserver/deployment/bootstrap.sh
-```
-> The script above creates such a separate `adshares` user (without sudo privileges) to be the owner of all the installed services.
-
-# Configure services
-```bash
-sudo --login --user adshares /opt/adshares/.deployment-scripts/configure.sh
-```
-
-Script will ask you to provide your ADS wallet credentials, so please create ADS account first.
-
-### Install and start services
-
-Note that there are many environment variables you can override to tweak the behavior of the services.
-Every project has the `.env` file where you can find most of configuration options. 
-
-```bash
-sudo /opt/adshares/.deployment-scripts/install.sh
-```
-
-You can now access you adserver frontend through your browser on the configured domain and port.
-
-> If you installed all the stuff locally just point your browser to http://localhost.
-> - AdUser: `8010`
-> - AdSelect: `8011`
-> - AdPay: `8012`
+For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Project.
 
 ## Documentation
 
@@ -79,6 +39,7 @@ You can now access you adserver frontend through your browser on the configured 
 - [AdPay](https://github.com/adshares/adpay)
 - [AdPanel](https://github.com/adshares/adpanel)
 - [ADS](https://github.com/adshares/ads)
+- [INSTALLER](https://github.com/adshares/installer)
 
 ## License
 

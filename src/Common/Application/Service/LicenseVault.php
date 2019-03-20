@@ -18,19 +18,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Http\Controllers\InfoController;
-use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Illuminate\Support\Facades\Route;
+declare(strict_types = 1);
 
-Route::get('/',
-    function () {
-        return '';
-    })->name('login');
+namespace Adshares\Common\Application\Service;
 
-# API INFO
-Route::get('/info', [InfoController::class, 'info']);
-Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
-Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])->name('app.campaigns.upload_preview');
+use Adshares\Common\Domain\ValueObject\License;
 
-Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
-Route::get('/policies/terms.html', [InfoController::class, 'terms']);
+interface LicenseVault
+{
+    public function read(): License;
+
+    public function store(string $license): void;
+}
