@@ -119,13 +119,7 @@ class Banner extends Model
 
     protected function toArrayExtras($array)
     {
-        if ($this->type === self::HTML_TYPE) {
-            $array['html'] = $this->creative_contents;
-        }
-
-        if ($this->type === self::IMAGE_TYPE) {
-            $array['image_url'] = SecureUrl::change(route('banner-preview', ['id' => $this->uuid]));
-        }
+        $array['url'] = (new SecureUrl(route('banner-preview', ['id' => $this->uuid])))->toString();
 
         return $array;
     }
