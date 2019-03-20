@@ -23,9 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Dto\EncodedLicense;
-use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
-use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
