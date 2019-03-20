@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Application\Dto\EncodedLicense;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\LicenseVault;
@@ -36,26 +37,18 @@ class GuzzleLicenseClient implements LicenseProvider
 
     /** @var Client */
     private $client;
-    /** @var LicenseVault */
-    private $licenseVault;
-    /** @var LicenseDecoder */
-    private $licenseDecoder;
     /** @var string */
     private $licenseId;
 
     public function __construct(
         Client $client,
-        string $licenseId,
-        LicenseDecoder $licenseDecoder,
-        LicenseVault $licenseVault
+        string $licenseId
     ) {
         $this->client = $client;
-        $this->licenseVault = $licenseVault;
-        $this->licenseDecoder = $licenseDecoder;
         $this->licenseId = $licenseId;
     }
 
-    public function get()
+    public function fetchLicense(): EncodedLicense
     {
         $uri = self::GET_ENDPOINT.$this->licenseId;
 
@@ -72,7 +65,6 @@ class GuzzleLicenseClient implements LicenseProvider
 
         $body = json_decode((string)$response->getBody());
 
-        $this->licenseDecoder->decode($body->data);
-        $this->licenseVault->store($body->data);
+        return new EncodedLicense($body->data);
     }
 }

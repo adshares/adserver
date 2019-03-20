@@ -58,8 +58,7 @@ class License
         Commission $fixedFee,
         Commission $demandFee,
         Commission $supplyFee
-    )
-    {
+    ) {
         $this->type = $type;
         $this->status = $status;
         $this->dateStart = $dateStart;

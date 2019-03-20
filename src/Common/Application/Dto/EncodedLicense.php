@@ -20,11 +20,20 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Common\Application\Dto;
 
-use Adshares\Common\Application\Dto\EncodedLicense;
-
-interface LicenseProvider
+class EncodedLicense
 {
-    public function fetchLicense(): EncodedLicense;
+    /** @var string */
+    private $license;
+
+    public function __construct(string $license)
+    {
+        $this->license = $license;
+    }
+
+    public function toString(): string
+    {
+        return $this->license;
+    }
 }

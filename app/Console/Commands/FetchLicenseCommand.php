@@ -23,7 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
+use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
@@ -37,12 +39,18 @@ class FetchLicenseCommand extends Command
     protected $description = 'Fetch operator license from License Server';
     /** @var LicenseProvider */
     private $license;
+    /** @var LicenseDecoder */
+    private $licenseDecoder;
+    /** @var LicenseVault */
+    private $licenseVault;
 
-    public function __construct(LicenseProvider $license)
+    public function __construct(LicenseProvider $license, LicenseDecoder $licenseDecoder, LicenseVault $licenseVault)
     {
         $this->license = $license;
 
         parent::__construct();
+        $this->licenseDecoder = $licenseDecoder;
+        $this->licenseVault = $licenseVault;
     }
 
     public function handle(): void
@@ -50,7 +58,9 @@ class FetchLicenseCommand extends Command
         $this->info('Start command '.$this->signature);
 
         try {
-            $this->license->get();
+            $encodedLicense = $this->license->fetchLicense();
+            $this->licenseDecoder->decode($encodedLicense->toString());
+            $this->licenseVault->store($encodedLicense->toString());
         } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
             return;

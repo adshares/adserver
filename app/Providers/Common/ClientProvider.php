@@ -144,9 +144,7 @@ final class ClientProvider extends ServiceProvider
                             'timeout' => 5,
                         ]
                     ),
-                    (string)config('app.license_id'),
-                    $app->make(LicenseDecoder::class),
-                    $app->make(LicenseVault::class)
+                    (string)config('app.license_id')
                 );
             }
         );
