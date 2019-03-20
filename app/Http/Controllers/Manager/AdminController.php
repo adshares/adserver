@@ -28,11 +28,22 @@ use Adshares\Adserver\Http\Requests\UpdateRegulation;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Regulation;
+use Adshares\Common\Application\Service\LicenseVault;
+use Adshares\Common\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AdminController extends Controller
 {
+    /** @var LicenseVault */
+    private $licenseVault;
+
+    public function __construct(LicenseVault $licenseVault)
+    {
+        $this->licenseVault = $licenseVault;
+    }
+
     public function listSettings(): SettingsResponse
     {
         $settings = Config::fetchAdminSettings();
@@ -46,6 +57,17 @@ class AdminController extends Controller
         Config::updateAdminSettings($input);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function getLicense(): JsonResponse
+    {
+        try {
+            $license = $this->licenseVault->read();
+        } catch (RuntimeException $exception) {
+            throw new NotFoundHttpException($exception->getMessage());
+        }
+
+        return new JsonResponse($license->toArray());
     }
 
     public function getTerms(): JsonResponse

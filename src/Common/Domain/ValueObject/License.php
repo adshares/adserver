@@ -70,4 +70,20 @@ class License
         $this->demandFee = $demandFee;
         $this->supplyFee = $supplyFee;
     }
+
+    public function toArray(): array
+    {
+        return [
+            'type' => $this->type,
+            'status' => $this->status,
+            'dateStart' => $this->dateStart->format(DateTime::ATOM),
+            'dateEnd' => $this->dateEnd->format(DateTime::ATOM),
+            'owner' => $this->owner,
+            'paymentAddress' => $this->paymentAddress->toString(),
+            'paymentMessage' => $this->paymentMessage,
+            'fixedFee' => $this->fixedFee->getValue(),
+            'demandFee' => $this->demandFee->getValue(),
+            'supplyFee' => $this->supplyFee->getValue(),
+        ];
+    }
 }
