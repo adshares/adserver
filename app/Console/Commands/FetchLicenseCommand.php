@@ -47,10 +47,10 @@ class FetchLicenseCommand extends Command
     public function __construct(LicenseProvider $license, LicenseDecoder $licenseDecoder, LicenseVault $licenseVault)
     {
         $this->license = $license;
-
-        parent::__construct();
         $this->licenseDecoder = $licenseDecoder;
         $this->licenseVault = $licenseVault;
+
+        parent::__construct();
     }
 
     public function handle(): void
@@ -66,6 +66,6 @@ class FetchLicenseCommand extends Command
             return;
         }
 
-        $this->info('License has been downloaded.');
+        $this->info('License has been downloaded');
     }
 }
