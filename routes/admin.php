@@ -26,7 +26,7 @@ Route::middleware(Kernel::ADMIN_ACCESS)->group(function () {
     Route::get('settings', [AdminController::class, 'listSettings']);
     Route::put('settings', [AdminController::class, 'updateSettings']);
 
-    Route::get('licence', [AdminController::class, 'getLicence']);
+    Route::get('license', [AdminController::class, 'getLicense']);
 
     Route::get('terms', [AdminController::class, 'getTerms']);
     Route::put('terms', [AdminController::class, 'putTerms']);

@@ -25,6 +25,8 @@ namespace Adshares\Common\Infrastructure\Service;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Domain\ValueObject\License;
+use Adshares\Common\Exception\RuntimeException;
+use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 
@@ -43,6 +45,10 @@ class LicenseVaultFilesystem implements LicenseVault
 
     public function read(): License
     {
+        if (!file_exists($this->path)) {
+            throw new RuntimeException('License not found.');
+        }
+
         $content = file_get_contents($this->path);
 
         return $this->licenseDecoder->decode($content);
