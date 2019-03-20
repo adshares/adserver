@@ -35,6 +35,7 @@ use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublishe
 use Adshares\Adserver\Services\Adselect;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Foundation\Application;
+use Storage;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -110,7 +111,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             LicenseVault::class,
             function (Application $app) {
-                return new LicenseVaultFilesystem('./license.txt', $app->make(LicenseDecoder::class));
+                $path = Storage::disk('local')->path('license.txt');
+                return new LicenseVaultFilesystem($path, $app->make(LicenseDecoder::class));
             }
         );
     }
