@@ -114,6 +114,9 @@ return [
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),
+    'license_url' => env('ADSHARES_LICENSE_URL'),
+    'license_key' => env('ADSHARES_LICENSE_KEY'),
+    'license_id' => substr(env('ADSHARES_LICENSE_KEY'), 0, 10),
 
     /*
     |--------------------------------------------------------------------------
