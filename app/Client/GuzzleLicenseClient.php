@@ -65,6 +65,10 @@ class GuzzleLicenseClient implements LicenseProvider
 
         $body = json_decode((string)$response->getBody());
 
+        if (!isset($body->data)) {
+            throw new UnexpectedClientResponseException('Unexpected data format from a License Server.');
+        }
+
         return new EncodedLicense($body->data);
     }
 }
