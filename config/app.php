@@ -115,7 +115,8 @@ return [
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),
     'license_url' => env('LICENSE_URL'),
-    'license_id' => env('LICENSE_ID'),
+    'license_id' => substr(env('LICENSE_KEY'), 0, 10),
+    'license_key' => env('LICENSE_KEY'),
 
     /*
     |--------------------------------------------------------------------------

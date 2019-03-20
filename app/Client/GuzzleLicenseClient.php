@@ -22,8 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
-use Adshares\Common\Domain\ValueObject\License;
+use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -35,12 +36,22 @@ class GuzzleLicenseClient implements LicenseProvider
 
     /** @var Client */
     private $client;
+    /** @var LicenseVault */
+    private $licenseVault;
+    /** @var LicenseDecoder */
+    private $licenseDecoder;
     /** @var string */
     private $licenseId;
 
-    public function __construct(Client $client, string $licenseId)
-    {
+    public function __construct(
+        Client $client,
+        string $licenseId,
+        LicenseDecoder $licenseDecoder,
+        LicenseVault $licenseVault
+    ) {
         $this->client = $client;
+        $this->licenseVault = $licenseVault;
+        $this->licenseDecoder = $licenseDecoder;
         $this->licenseId = $licenseId;
     }
 
@@ -51,46 +62,17 @@ class GuzzleLicenseClient implements LicenseProvider
         try {
             $response = $this->client->get($uri);
         } catch (RequestException $exception) {
-            $message = 'Could not connect to LICENSE SERVER (%s) (Exception: %s).';
+            $message = 'Could not download a license (%s) from LICENSE SERVER (%s/%s).';
             throw new UnexpectedClientResponseException(
-                sprintf($message, $this->client->getConfig('base_uri'), $exception->getMessage()),
+                sprintf($message, $this->licenseId, $this->client->getConfig('base_uri'), $uri),
                 $exception->getCode(),
                 $exception
             );
         }
 
+        $body = json_decode((string)$response->getBody());
 
-        $body = (string)$response->getBody();
-        $decoded = json_decode($body, true);
-
-        $this->decodeResponse($decoded['data']);
-
-        return new License();
+        $this->licenseDecoder->decode($body->data);
+        $this->licenseVault->store($body->data);
     }
-
-    private function decodeResponse(string $data)
-    {
-        $licenseKey = 'SRV-sEr4tG-Ol3Em-Dkem9-8Juy-5298';
-
-        $raw = base64_decode($data);
-        $ivlen = openssl_cipher_iv_length($cipher = 'AES-128-CBC');
-        $iv = substr($raw, 0, $ivlen);
-        $hmac = substr($raw, $ivlen, $sha2len = 32);
-        $encrypted = substr($raw, $ivlen + $sha2len);
-        $data = openssl_decrypt(
-            $encrypted,
-            $cipher,
-            $licenseKey,
-            OPENSSL_RAW_DATA,
-            $iv
-        );
-        $calcmac = hash_hmac('sha256', $encrypted, $licenseKey, true);
-
-        if (hash_equals($hmac, $calcmac)) {
-
-            dump(json_decode($data));
-        }
-
-    }
-
 }

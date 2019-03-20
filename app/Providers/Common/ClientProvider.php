@@ -35,7 +35,9 @@ use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
+use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
@@ -133,7 +135,7 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             LicenseProvider::class,
-            function () {
+            function (Application $app) {
                 return new GuzzleLicenseClient(
                     new Client(
                         [
@@ -142,7 +144,9 @@ final class ClientProvider extends ServiceProvider
                             'timeout' => 5,
                         ]
                     ),
-                    (string)config('app.license_id')
+                    (string)config('app.license_id'),
+                    $app->make(LicenseDecoder::class),
+                    $app->make(LicenseVault::class)
                 );
             }
         );

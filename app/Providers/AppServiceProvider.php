@@ -22,6 +22,10 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
+use Adshares\Common\Application\Service\LicenseDecoder;
+use Adshares\Common\Application\Service\LicenseVault;
+use Adshares\Common\Infrastructure\Service\LicenseDecoderV1;
+use Adshares\Common\Infrastructure\Service\LicenseVaultFilesystem;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
@@ -93,6 +97,20 @@ class AppServiceProvider extends ServiceProvider
                 $adsClient = $app->make(AdsClient::class);
 
                 return new WalletFundsChecker($minAmount, $maxAmount, $adsClient);
+            }
+        );
+
+        $this->app->bind(
+            LicenseDecoder::class,
+            function () {
+                return new LicenseDecoderV1((string)config('app.license_key'));
+            }
+        );
+
+        $this->app->bind(
+            LicenseVault::class,
+            function (Application $app) {
+                return new LicenseVaultFilesystem('./license.txt', $app->make(LicenseDecoder::class));
             }
         );
     }

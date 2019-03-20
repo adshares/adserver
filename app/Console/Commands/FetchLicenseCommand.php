@@ -24,6 +24,8 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Common\Application\Service\LicenseProvider;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
 
 class FetchLicenseCommand extends Command
@@ -47,6 +49,13 @@ class FetchLicenseCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $license = $this->license->get();
+        try {
+            $this->license->get();
+        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
+            $this->error($exception->getMessage());
+            return;
+        }
+
+        $this->info('License has been downloaded.');
     }
 }

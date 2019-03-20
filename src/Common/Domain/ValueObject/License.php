@@ -28,7 +28,7 @@ class License
 {
     /** @var string */
     private $type;
-    /** @var string */
+    /** @var int */
     private $status;
     /** @var DateTime */
     private $dateStart;
@@ -49,7 +49,7 @@ class License
 
     public function __construct(
         string $type,
-        string $status,
+        int $status,
         DateTime $dateStart,
         DateTime $dateEnd,
         string $owner,
