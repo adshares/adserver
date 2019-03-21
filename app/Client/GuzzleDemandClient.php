@@ -58,7 +58,7 @@ final class GuzzleDemandClient implements DemandClient
         $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
+    public function fetchAllInventory(string $sourceHost, string $inventoryUrl): CampaignCollection
     {
         $client = new Client($this->requestParameters());
 
@@ -66,7 +66,7 @@ final class GuzzleDemandClient implements DemandClient
             $response = $client->get($inventoryUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $inventoryUrl, $exception->getMessage()),
+                sprintf('Could not connect to %s host (%s).', $sourceHost, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -81,7 +81,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryUrl));
+            $campaign = CampaignFactory::createFromArray($this->processData($data, $sourceHost));
             $campaignsCollection->add($campaign);
         }
 
@@ -194,7 +194,7 @@ final class GuzzleDemandClient implements DemandClient
         }
     }
 
-    private function processData(array $data, string $inventoryHost): array
+    private function processData(array $data, string $sourceHost): array
     {
         $data['demand_id'] = Uuid::fromString($data['id']);
         $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
@@ -202,7 +202,7 @@ final class GuzzleDemandClient implements DemandClient
         $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
 
         $data['source_campaign'] = [
-            'host' => $inventoryHost,
+            'host' => $sourceHost,
             'address' => $data['address'],
             'version' => self::VERSION,
             'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),

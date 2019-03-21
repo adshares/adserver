@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
@@ -51,6 +52,8 @@ class InventoryImporterCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
+        $this->removeNonExistentHosts();
+
         $networkHosts = NetworkHost::fetchHosts();
 
         $networkHostCount = $networkHosts->count();
@@ -64,12 +67,13 @@ class InventoryImporterCommand extends Command
         /** @var NetworkHost $networkHost */
         foreach ($networkHosts as $networkHost) {
             try {
-                $this->inventoryImporterService->import($networkHost->info->getInventoryUrl());
+                $info = $networkHost->info;
+                $this->inventoryImporterService->import($info->getServerUrl(), $info->getInventoryUrl());
 
                 $networkHost->connectionSuccessful();
                 ++$networkHostSuccessfulConnectionCount;
             } catch (UnexpectedClientResponseException $exception) {
-                $host = $networkHost->info->getInventoryUrl();
+                $host = $networkHost->info->getServerUrl();
                 $networkHost->connectionFailed();
 
                 $this->warn(sprintf(
@@ -86,6 +90,14 @@ class InventoryImporterCommand extends Command
                         $host
                     ));
                 }
+            } catch (EmptyInventoryException $exception) {
+                $host = $networkHost->info->getServerUrl();
+                $this->inventoryImporterService->clearInventoryForHost($host);
+
+                $this->info(sprintf(
+                    '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database.',
+                    $host
+                ));
             }
         }
 
@@ -96,5 +108,20 @@ class InventoryImporterCommand extends Command
                 $networkHostCount
             )
         );
+    }
+
+    private function removeNonExistentHosts(): void
+    {
+        $hosts = NetworkHost::findNonExistentHosts();
+        foreach ($hosts as $host) {
+            $this->inventoryImporterService->clearInventoryForHost($host);
+
+            $this->info(
+                sprintf(
+                    '[Inventory Importer] Inventory (%s) has been removed.',
+                    $host
+                )
+            );
+        }
     }
 }
