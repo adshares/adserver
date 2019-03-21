@@ -16,7 +16,6 @@ composer install --no-dev
 yarn install
 yarn run prod
 
-artisanCommand key:generate
 artisanCommand storage:link
 artisanCommand config:cache
 

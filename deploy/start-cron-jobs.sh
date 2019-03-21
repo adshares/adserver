@@ -2,10 +2,6 @@
 source ${1}/_functions.sh --root
 [[ -z ${2:-""} ]] || cd $2
 
-SKIP_BROADCAST=1
-SKIP_HOST_FETCHING=1
-SKIP_COLD_WALLET=1
-
 TEMP_FILE="$(mktemp).txt"
 
 {
