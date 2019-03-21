@@ -41,7 +41,7 @@ class CreateAdminUserCommand extends Command
 
     public function handle(): void
     {
-        $input = $this->ask('Please type an admin email');
+        $input = $this->ask('Please type an admin email', config('app.adshares_operator_email'));
 
         if (!$input) {
             $this->error('Email address cannot be empty.');
