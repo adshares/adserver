@@ -21,7 +21,7 @@
 use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
 
-class InsertConfigSettings extends Migration
+class InsertConfigSettings2 extends Migration
 {
     /**
      * Run the migrations.
