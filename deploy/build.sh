@@ -16,8 +16,10 @@ composer install --no-dev
 yarn install
 yarn run prod
 
+artisanCommand key:generate
 artisanCommand storage:link
 artisanCommand config:cache
+artisanCommand ops:admin:create
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then
