@@ -140,7 +140,7 @@ final class DummyDemandClient implements DemandClient
         ];
     }
 
-    public function fetchAllInventory(string $inventoryUrl): CampaignCollection
+    public function fetchAllInventory(string $sourceHost, string $inventoryUrl): CampaignCollection
     {
         return new CampaignCollection(...$this->campaigns);
     }

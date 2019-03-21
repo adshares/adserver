@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -155,5 +156,20 @@ class NetworkHost extends Model
     public function setInfoAttribute(Info $info): void
     {
         $this->attributes['info'] = json_encode($info->toArray());
+    }
+
+    public static function findNonExistentHosts(): array
+    {
+        $self = new self();
+
+        $query = $self
+            ->select(['network_campaigns.source_host as host'])
+            ->rightJoin('network_campaigns', function ($join) {
+                $join->on('network_hosts.host', '=', 'network_campaigns.source_host');
+            })
+            ->where('network_hosts.host', null)
+            ->where('network_campaigns.status', '=', Status::STATUS_ACTIVE);
+
+        return $query->get()->pluck('host')->toArray();
     }
 }
