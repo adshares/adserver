@@ -73,13 +73,7 @@ class InventoryImporter
 
     public function import(string $sourceHost, string $inventoryHost): void
     {
-        try {
-            $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
-        } catch (EmptyInventoryException $exception) {
-            $this->clearInventoryForHost($sourceHost);
-            return;
-        }
-
+        $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
         $bannersPublicIds = $this->getBannerIds($campaigns);
         $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersPublicIds);
 

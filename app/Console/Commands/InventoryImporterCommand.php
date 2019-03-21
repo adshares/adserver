@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
@@ -89,6 +90,14 @@ class InventoryImporterCommand extends Command
                         $host
                     ));
                 }
+            } catch (EmptyInventoryException $exception) {
+                $host = $networkHost->info->getServerUrl();
+                $this->inventoryImporterService->clearInventoryForHost($host);
+
+                $this->info(sprintf(
+                    '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database.',
+                    $host
+                ));
             }
         }
 

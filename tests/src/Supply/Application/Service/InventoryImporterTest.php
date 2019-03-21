@@ -46,33 +46,6 @@ final class InventoryImporterTest extends TestCase
         'B6454DBC67A94B108E3895700D570EF2' => null,
     ];
 
-    public function testImportWhenDemandClientReturnsNoCampaigns(): void
-    {
-        $repository = $this->repositoryMock();
-        $demandClient = $this->clientMock();
-        $transactionManager = $this->transactionManagerMock();
-        $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
-        $classifierClient = $this->classifierClientMock();
-        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
-
-        $transactionManager
-            ->expects($this->never())
-            ->method('begin');
-
-        $inventoryImporter = new InventoryImporter(
-            $markCampaignAsDeletedService,
-            $repository,
-            $demandClient,
-            $classifierClient,
-            $signatureVerifier,
-            $transactionManager
-        );
-
-        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
-
-        $this->doesNotPerformAssertions();
-    }
-
     public function testImportWhenDemandClientReturnsUnexpectedResponse(): void
     {
         $this->expectException(UnexpectedClientResponseException::class);
