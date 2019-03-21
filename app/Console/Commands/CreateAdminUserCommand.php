@@ -21,6 +21,7 @@
 declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
+
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Domain\ValueObject\Email;
@@ -44,6 +45,7 @@ class CreateAdminUserCommand extends Command
 
         if (!$input) {
             $this->error('Email address cannot be empty.');
+
             return;
         }
 
@@ -51,6 +53,7 @@ class CreateAdminUserCommand extends Command
             $email = new Email($input);
         } catch (RuntimeException $exception) {
             $this->error($exception->getMessage());
+
             return;
         }
 
