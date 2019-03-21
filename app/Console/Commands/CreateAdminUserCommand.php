@@ -54,7 +54,6 @@ class CreateAdminUserCommand extends Command
             return;
         }
 
-
         $name = 'admin';
         $password = substr(Hash::make(str_random(8)), -8);
         User::createAdmin($email, $name, $password);
