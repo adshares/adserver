@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use function apcu_fetch;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
