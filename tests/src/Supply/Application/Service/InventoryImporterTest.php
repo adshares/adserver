@@ -68,7 +68,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $this->doesNotPerformAssertions();
     }
@@ -97,7 +97,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $this->doesNotPerformAssertions();
     }
@@ -174,7 +174,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();
@@ -213,7 +213,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();

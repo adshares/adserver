@@ -71,12 +71,12 @@ class InventoryImporter
         $this->classifyVerifier = $classifyVerifier;
     }
 
-    public function import(string $host): void
+    public function import(string $sourceHost, string $inventoryHost): void
     {
         try {
-            $campaigns = $this->client->fetchAllInventory($host);
+            $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
         } catch (EmptyInventoryException $exception) {
-            $this->clearInventoryForHost($host);
+            $this->clearInventoryForHost($sourceHost);
             return;
         }
 
@@ -86,7 +86,7 @@ class InventoryImporter
         $this->transactionManager->begin();
 
         try {
-            $this->clearInventoryForHost($host);
+            $this->clearInventoryForHost($sourceHost);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
