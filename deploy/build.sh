@@ -29,7 +29,7 @@ then
 elif [[ ${DB_MIGRATE_FRESH_FORCE_SEED:-0} -eq 1 ]]
 then
     artisanCommand migrate:fresh --force --seed
-elif [[ ${DB_MIGRATE:-0} -eq 1 ]]
+elif [[ ${SKIP_DB_MIGRATE:-0} -eq 0 ]]
 then
     artisanCommand migrate
 fi
