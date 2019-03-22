@@ -5,16 +5,23 @@ set -e
 apt-get -qq -y --no-install-recommends install \
         php7.2-cli php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl \
         php7.2-gd php7.2-intl php7.2-json php7.2-mbstring php7.2-opcache \
-        php7.2-readline php7.2-sqlite3 php7.2-zip php7.2-xml
+        php7.2-readline php7.2-sqlite3 php7.2-zip php7.2-xml php-pear
 
-echo "Available APCU packages: "
-apt-cache search apcu
+echo "Installing apcu "
+pecl install apu
 
-echo "PHP config file"
-ls /etc/php/
-ls /etc/php/7.2
-ls /etc/php/7.2/cli
+echo "extension = apcu.so" | sudo tee -a /etc/php/7.2/mods-available/apcu.ini
 echo "apc.enable_cli=1" >> /etc/php/7.2/cli/php.ini
+
+#echo "Available APCU packages: "
+#apt-cache search apcu
+
+#echo "PHP config file"
+#ls /etc/php/
+#ls /etc/php/7.2
+#ls /etc/php/7.2/cli
+
+
 
 
 composer --version || export INSTALL_COMPOSER=true
