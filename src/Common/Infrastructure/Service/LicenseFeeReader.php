@@ -48,21 +48,23 @@ class LicenseFeeReader
 
         $value = apcu_fetch($type);
 
-        if ($value === false) {
-            try {
-                $license = $this->licenseVault->read();
-            } catch (RuntimeException $exception) {
-                return Config::getFee($type); // default fees are fetched from DB
-            }
-
-            if ($type === self::LICENCE_TX_FEE) {
-                $value = $license->getDemandFee();
-            } else if ($type === self::LICENCE_RX_FEE) {
-                $value = $license->getSupplyFee();
-            }
-
-            apcu_store($type, $value);
+        if ($value) {
+            return $value;
         }
+
+        try {
+            $license = $this->licenseVault->read();
+        } catch (RuntimeException $exception) {
+            return Config::getFee($type); // default fees are fetched from DB
+        }
+
+        if ($type === self::LICENCE_TX_FEE) {
+            $value = $license->getDemandFee();
+        } else if ($type === self::LICENCE_RX_FEE) {
+            $value = $license->getSupplyFee();
+        }
+
+        apcu_store($type, $value);
 
         return $value;
     }
