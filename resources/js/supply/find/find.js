@@ -114,6 +114,8 @@ var prepareElement = function (context, banner, element, contextParam) {
                     if (!window.open(url, '_blank')) {
                         window.location.href = url;
                     }
+                    // prevent double click
+                    document.activeElement.blur();
                 }
             }
 
