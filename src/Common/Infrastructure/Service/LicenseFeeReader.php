@@ -60,7 +60,7 @@ class LicenseFeeReader
 
         if ($type === self::LICENCE_TX_FEE) {
             $value = $license->getDemandFee();
-        } else if ($type === self::LICENCE_RX_FEE) {
+        } elseif ($type === self::LICENCE_RX_FEE) {
             $value = $license->getSupplyFee();
         }
 
