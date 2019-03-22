@@ -18,32 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
 
-class InsertConfigSettings2 extends Migration
+class InsertConfigWalletDisable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
+        $isWalletConfig = DB::table('configs')->where('key', Config::HOT_WALLET_IS_ACTIVE)->count() > 0;
+        if ($isWalletConfig) {
+            return;
+        }
+
         DB::table('configs')->insert(
             [
                 'key' => Config::HOT_WALLET_IS_ACTIVE,
                 'value' => false,
+                'created_at' => new DateTime(),
             ]
         );
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         DB::table('configs')->whereIn(
             'key',

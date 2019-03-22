@@ -30,6 +30,7 @@ class DatabaseConfigReader
         $settings = Config::fetchAdminSettings();
         $hotWalletMinValue = $settings[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $settings[Config::HOT_WALLET_MAX_VALUE];
+        $hotWalletAddress = $settings[Config::HOT_WALLET_ADDRESS] ?? '';
         $serverName = $settings[Config::ADSERVER_NAME];
         $technicalEmail = $settings[Config::TECHNICAL_EMAIL];
         $supportEmail = $settings[Config::SUPPORT_EMAIL];
@@ -38,6 +39,7 @@ class DatabaseConfigReader
 
         SystemConfig::set('app.adshares_wallet_min_amount', $hotWalletMinValue);
         SystemConfig::set('app.adshares_wallet_max_amount', $hotWalletMaxValue);
+        SystemConfig::set('app.adshares_wallet_cold_address', $hotWalletAddress);
         SystemConfig::set('app.name', $serverName);
         SystemConfig::set('app.adshares_operator_email', $technicalEmail);
         SystemConfig::set('app.adshares_support_email', $supportEmail);
