@@ -53,18 +53,20 @@ final class GuzzleAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
-        $body = $partialContext->adUserRequestBody();
-        $path = 'getData';
+        $path = sprintf(
+            '/api/v0/data/%s/%s',
+            config('app.adserver_id'),
+            $partialContext->userId()
+        );
 
         try {
-            $response = $this->client->post($path, ['body' => $body]);
+            $response = $this->client->get($path);
             $context = json_decode((string)$response->getBody(), true);
 
             Log::debug(sprintf(
-                '{"url": "%s", "method": "%s", "req": %s, "res": "%s"}',
+                '{"url": "%s", "path": "%s",  "response": "%s"}',
                 (string)$this->client->getConfig('base_uri'),
                 $path,
-                $body,
                 (string)$response->getBody()
             ));
 

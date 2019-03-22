@@ -24,9 +24,9 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
-use Adshares\Adserver\Client\GuzzleNewAdUserClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
@@ -89,7 +89,7 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             AdUser::class,
             function () {
-                return new GuzzleNewAdUserClient(new Client(
+                return new GuzzleAdUserClient(new Client(
                     [
                         'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                         'base_uri' => config('app.aduser_internal_location'),
