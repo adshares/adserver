@@ -31,7 +31,9 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
+use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
 use Adshares\Supply\Domain\Model\CampaignCollection;
+use Illuminate\Support\Facades\Log;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -81,8 +83,12 @@ final class GuzzleDemandClient implements DemandClient
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $sourceHost));
-            $campaignsCollection->add($campaign);
+            try {
+                $campaign = CampaignFactory::createFromArray($this->processData($data, $sourceHost));
+                $campaignsCollection->add($campaign);
+            } catch (InvalidCampaignArgumentException $exception) {
+                Log::info(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+            }
         }
 
         return $campaignsCollection;
