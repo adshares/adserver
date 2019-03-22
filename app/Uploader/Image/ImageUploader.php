@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Uploader\Image;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -48,11 +49,13 @@ class ImageUploader implements Uploader
     {
         $file = $this->request->file('file');
         $name = $file->store('', self::IMAGE_DISK);
-        $previewUrl = route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name]);
+        $previewUrl = new SecureUrl(
+            route('app.campaigns.upload_preview', ['type' => self::IMAGE_FILE, 'name' => $name])
+        );
 
         $imageSize = getimagesize($file->getRealPath());
 
-        return new UploadedImage($name, $previewUrl, $imageSize);
+        return new UploadedImage($name, $previewUrl->toString(), $imageSize);
     }
 
     public function removeTemporaryFile(string $fileName): void

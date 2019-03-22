@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Uploader\Zip;
 
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Uploader;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Lib\ZipToHtml;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -46,11 +47,13 @@ class ZipUploader implements Uploader
     {
         $file = $this->request->file('file');
         $name = $file->store('', self::ZIP_DISK);
-        $previewUrl = route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name]);
+        $previewUrl = new SecureUrl(
+            route('app.campaigns.upload_preview', ['type' => self::ZIP_FILE, 'name' => $name])
+        );
 
         $this->validateContent($name);
 
-        return new UploadedZip($name, $previewUrl);
+        return new UploadedZip($name, $previewUrl->toString());
     }
 
     private function validateContent(string $name): void
