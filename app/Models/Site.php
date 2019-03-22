@@ -149,9 +149,9 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $serverUrl = config('app.url');
+        $serverUrl = route('supply-find.js');
 
-        return "<script src=\"$serverUrl/supply/find.js\" async></script>";
+        return "<script src=\"{$serverUrl}\" async></script>";
     }
 
     public function setStatusAttribute($value): void
