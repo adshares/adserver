@@ -35,9 +35,7 @@ use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
-use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
@@ -45,8 +43,8 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
-use Illuminate\Foundation\Application;
 use GuzzleHttp\Client;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 final class ClientProvider extends ServiceProvider
@@ -91,15 +89,13 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             AdUser::class,
             function () {
-                return new GuzzleAdUserClient(
-                    new Client(
-                        [
-                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.aduser_internal_location'),
-                            'timeout' => 1,
-                        ]
-                    )
-                );
+                return new GuzzleAdUserClient(new Client(
+                    [
+                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                        'base_uri' => config('app.aduser_internal_location'),
+                        'timeout' => 1,
+                    ]
+                ));
             }
         );
 
@@ -135,7 +131,7 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             LicenseProvider::class,
-            function (Application $app) {
+            function () {
                 return new GuzzleLicenseClient(
                     new Client(
                         [
