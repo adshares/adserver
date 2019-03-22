@@ -32,6 +32,10 @@ class Factory
 {
     private const MIME_ZIP_LIST = [
         'application/zip',
+        'application/x-compressed',
+        'multipart/x-zip',
+        'application/octet-stream',
+        'application/x-zip-compressed',
     ];
 
     public static function create(Request $request): Uploader
