@@ -78,14 +78,6 @@ var prepareElement = function (context, banner, element, contextParam) {
 
     banner.adsharesTrackAccess = [];
     if (element.tagName == 'IFRAME') {
-        var mouseover = false, evFn;
-        addListener(element, 'mouseenter', evFn = function () {
-            mouseover = true;
-        });
-        addListener(element, 'mouseover', evFn);
-        addListener(element, 'mouseleave', function () {
-            mouseover = false;
-        });
 
         prepareIframe(element);
 
@@ -102,7 +94,7 @@ var prepareElement = function (context, banner, element, contextParam) {
 
                     event.source.postMessage(isString ? JSON.stringify(msg) : msg, '*');
                 } else if (data.adsharesClick) {
-                    if (!mouseover && document.activeElement != element) {
+                    if (document.activeElement != element) {
                         console.log('click without mouse interaction');
                         return;
                     }
