@@ -8,7 +8,7 @@ apt-get -qq -y --no-install-recommends install \
         php7.2-readline php7.2-sqlite3 php7.2-zip php7.2-xml
 
 echo "Installing apcu "
-apt-get -y install gcc make autoconf libc-dev pkg-config
+#apt-get -y install libc-dev pkg-config
 pecl7.2-sp install apcu
 
 echo "extension = apcu.so" | sudo tee -a /etc/php/7.2/cli/conf.d/apcu.ini
