@@ -1,32 +1,14 @@
 #!/usr/bin/env bash
 
 set -e
+apt-get update
 
 apt-get -qq -y --no-install-recommends install \
         php7.2-cli php7.2-mysql php7.2-bcmath php7.2-bz2 php7.2-cli php7.2-curl \
         php7.2-gd php7.2-intl php7.2-json php7.2-mbstring php7.2-opcache \
-        php7.2-readline php7.2-sqlite3 php7.2-zip php7.2-xml
+        php7.2-readline php7.2-sqlite3 php7.2-zip php7.2-xml php-apcu
 
-echo "Installing apcu "
-apt-cache search pecl
-whereis pecl
-
-#apt-get -y install libc-dev pkg-config
-#pecl7.2-sp install apcu
-
-#echo "extension = apcu.so" | sudo tee -a /etc/php/7.2/cli/conf.d/apcu.ini
-#echo "apc.enable_cli=1" >> /etc/php/7.2/cli/php.ini
-
-#echo "Available APCU packages: "
-#apt-cache search apcu
-
-#echo "PHP config file"
-#ls /etc/php/
-#ls /etc/php/7.2
-#ls /etc/php/7.2/cli
-
-
-
+echo "apc.enable_cli=1" >> /etc/php/7.2/cli/php.ini
 
 composer --version || export INSTALL_COMPOSER=true
 nodejs --version || export INSTALL_NODEJS=true
