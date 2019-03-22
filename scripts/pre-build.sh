@@ -10,6 +10,10 @@ apt-get -qq -y --no-install-recommends install \
 echo "Available APCU packages: "
 apt-cache search apcu
 
+echo "PHP config file"
+ls /etc/php/
+ls /etc/php/7.2
+ls /etc/php/7.2/cli
 echo "apc.enable_cli=1" >> /etc/php/7.2/cli/php.ini
 
 
