@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -149,9 +150,9 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $serverUrl = route('supply-find.js');
+        $scriptUrl = (new SecureUrl(route('supply-find.js')))->toString();
 
-        return "<script src=\"{$serverUrl}\" async></script>";
+        return "<script src=\"{$scriptUrl}\" async></script>";
     }
 
     public function setStatusAttribute($value): void
