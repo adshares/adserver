@@ -109,7 +109,7 @@ final class Info
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
 
         return new self(
-            $data['module'] ?? $data['module'],
+            $data['serviceType'] ?? $data['module'],
             $data['name'],
             $data['version'] ?? $data['softwareVersion'],
             new Url($data['serverUrl']),

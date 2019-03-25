@@ -40,6 +40,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
+use function in_array;
 use function GuzzleHttp\json_decode;
 
 final class GuzzleDemandClient implements DemandClient
@@ -155,8 +156,9 @@ final class GuzzleDemandClient implements DemandClient
         $body = (string)$response->getBody();
 
         $this->validateResponse($statusCode, $body);
-
         $data = $this->createDecodedResponseFromBody($body);
+
+        $this->validateFetchInfoResponse($data);
 
         return Info::fromArray($data);
     }
@@ -178,17 +180,6 @@ final class GuzzleDemandClient implements DemandClient
         return $params;
     }
 
-    private function createDecodedResponseFromBody(string $body): array
-    {
-        try {
-            $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new DomainRuntimeException('Invalid json data.');
-        }
-
-        return $decoded;
-    }
-
     private function validateResponse(int $statusCode, string $body): void
     {
         if ($statusCode !== Response::HTTP_OK) {
@@ -198,6 +189,17 @@ final class GuzzleDemandClient implements DemandClient
         if (empty($body)) {
             throw new EmptyInventoryException('Empty list');
         }
+    }
+
+    private function createDecodedResponseFromBody(string $body): array
+    {
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new DomainRuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
     }
 
     private function processData(array $data, string $sourceHost): array
@@ -224,5 +226,35 @@ final class GuzzleDemandClient implements DemandClient
         unset($data['id']);
 
         return $data;
+    }
+
+    public function validateFetchInfoResponse(array $data): bool
+    {
+        $expectedKeys = [
+            'name',
+            'serverUrl',
+            'panelUrl',
+            'privacyUrl',
+            'termsUrl',
+            'inventoryUrl',
+        ];
+
+        foreach ($expectedKeys as $key) {
+            if (!in_array($key, $data, true)) {
+                throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
+            }
+        }
+
+        if (!isset($data['version']) && !isset($data['softwareVersion'])) {
+            throw new UnexpectedClientResponseException('Field `version` (deprecated: `softwareVersion`) is required.');
+        }
+
+        if (!isset($data['module']) && !isset($data['serviceType'])) {
+            throw new UnexpectedClientResponseException('Field `module` (deprecated: `serviceType`) is required.');
+        }
+
+        if (!isset($data['capabilities']) && !isset($data['supported'])) {
+            throw new UnexpectedClientResponseException('Field `capabilities` (deprecated: `supported`) is required.');
+        }
     }
 }
