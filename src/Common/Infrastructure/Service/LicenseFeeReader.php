@@ -29,9 +29,6 @@ use function apcu_fetch;
 
 class LicenseFeeReader
 {
-    private const LICENCE_TX_FEE = 'licence-tx-fee';
-    private const LICENCE_RX_FEE = 'licence-rx-fee';
-
     /** @var LicenseVault */
     private $licenseVault;
 
@@ -42,7 +39,7 @@ class LicenseFeeReader
 
     public function getFee(string $type): float
     {
-        if (!in_array($type, [self::LICENCE_RX_FEE, self::LICENCE_TX_FEE], true)) {
+        if (!in_array($type, [Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE], true)) {
             throw new RuntimeException(sprintf('Unsupported fee (%s) type', $type));
         }
 
@@ -58,9 +55,9 @@ class LicenseFeeReader
             return Config::getFee($type); // default fees are fetched from DB
         }
 
-        if ($type === self::LICENCE_TX_FEE) {
+        if ($type === Config::LICENCE_TX_FEE) {
             $value = $license->getDemandFee();
-        } elseif ($type === self::LICENCE_RX_FEE) {
+        } elseif ($type === Config::LICENCE_RX_FEE) {
             $value = $license->getSupplyFee();
         }
 
