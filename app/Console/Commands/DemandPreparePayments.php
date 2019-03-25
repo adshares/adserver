@@ -25,6 +25,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +35,16 @@ class DemandPreparePayments extends Command
     use LineFormatterTrait;
 
     protected $signature = 'ops:demand:payments:prepare';
+
+    /** @var LicenseFeeReader */
+    private $licenseFeeReader;
+
+    public function __construct(LicenseFeeReader $licenseFeeReader)
+    {
+        $this->licenseFeeReader = $licenseFeeReader;
+
+        parent::__construct();
+    }
 
     public function handle(): void
     {
@@ -48,8 +59,9 @@ class DemandPreparePayments extends Command
             return;
         }
 
-        $groupedEvents = $events->each(function (EventLog $entry) {
-            $entry->licence_fee = (int)floor($entry->event_value * Config::fetch(Config::LICENCE_TX_FEE));
+        $demandFee = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
+        $groupedEvents = $events->each(function (EventLog $entry) use ($demandFee) {
+            $entry->licence_fee = (int)floor($entry->event_value * $demandFee);
 
             $amountAfterFee = $entry->event_value - $entry->licenceFee;
 

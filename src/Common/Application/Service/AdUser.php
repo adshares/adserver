@@ -31,5 +31,5 @@ interface AdUser
 
     public function fetchTargetingOptions(): Taxonomy;
 
-    public function getUserContextOld(ImpressionContext $context): UserContext;
+    public function getUserContext(ImpressionContext $context): UserContext;
 }

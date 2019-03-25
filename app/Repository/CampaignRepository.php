@@ -35,10 +35,12 @@ class CampaignRepository
     {
         $query = Campaign::where('status', Campaign::STATUS_ACTIVE);
 
-        $query->where(function($q) {
-            $q->where('time_end', '>', new DateTime())
-                ->orWhere('time_end', null);
-        });
+        $query->where(
+            function ($q) {
+                $q->where('time_end', '>', new DateTime())
+                    ->orWhere('time_end', null);
+            }
+        );
 
         return $query->get();
     }
