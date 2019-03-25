@@ -43,12 +43,12 @@ then
     artisanCommand db:seed
 fi
 
-if [[ ${UPDATE_TARGETING:-0} -eq 1 ]]
+if [[ ${UPDATE_TARGETING:-1} -eq 1 ]]
 then
     artisanCommand ops:targeting-options:update
 fi
 
-if [[ ${UPDATE_FILTERING:-0} -eq 1 ]]
+if [[ ${UPDATE_FILTERING:-1} -eq 1 ]]
 then
     artisanCommand ops:filtering-options:update
 fi
