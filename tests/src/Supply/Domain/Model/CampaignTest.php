@@ -26,7 +26,6 @@ use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -50,7 +49,7 @@ final class CampaignTest extends TestCase
             UUid::v4(),
             Uuid::v4(),
             'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
@@ -81,7 +80,7 @@ final class CampaignTest extends TestCase
             Uuid::v4(),
             Uuid::v4(),
             'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, 100000000000, null),
             $sourceHost,
