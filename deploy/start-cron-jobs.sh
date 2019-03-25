@@ -27,6 +27,7 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo "*/8  *    * * * php ${SERVICE_DIR}/artisan ads:process-tx                &> /dev/null"
     echo "*/8  *    * * * php ${SERVICE_DIR}/artisan ops:supply:payments:send      &> /dev/null"
     echo "*/8  *    * * * php ${SERVICE_DIR}/artisan ops:adselect:payment:export   &> /dev/null"
+    echo "0    0    * * * php ${SERVICE_DIR}/artisan ops:license:fetch             &> /dev/null"
 
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
     {
