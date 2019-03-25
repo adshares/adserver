@@ -154,6 +154,8 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         string $bannerId
     ): RedirectResponse {
+        $this->validateEventRequest($request);
+
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
@@ -227,6 +229,8 @@ class SupplyController extends Controller
 
     public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
     {
+        $this->validateEventRequest($request);
+
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
@@ -286,6 +290,16 @@ class SupplyController extends Controller
         );
 
         return $response;
+    }
+
+    private function validateEventRequest(Request $request): void
+    {
+        if (!$request->cookies->get('tid')
+            || !$request->query->has('ctx')
+            || !$request->query->has('cid')
+        ) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
     }
 
     /**
