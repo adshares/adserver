@@ -99,8 +99,6 @@ class Campaign extends Model
 
     protected $fillable = [
         'landing_url',
-        'time_start',
-        'time_end',
         'require_count',
         'user_id',
         'name',
