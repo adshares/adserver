@@ -86,4 +86,14 @@ class License
             'supplyFee' => $this->supplyFee->getValue(),
         ];
     }
+
+    public function getDemandFee(): float
+    {
+        return $this->demandFee->getValue();
+    }
+
+    public function getSupplyFee(): float
+    {
+        return $this->supplyFee->getValue();
+    }
 }

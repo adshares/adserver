@@ -49,7 +49,7 @@ class AdPayEventExportCommand extends Command
         if (count($createdEvents) > 0) {
             foreach ($createdEvents as $event) {
                 /** @var $event EventLog */
-                $userContext = $adUser->getUserContextOld($event->impressionContext())->toArray();
+                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
                 $event->human_score = $userContext['human_score'];
                 $event->our_userdata = $userContext['keywords'];
                 $event->save();

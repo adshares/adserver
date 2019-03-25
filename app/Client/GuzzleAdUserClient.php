@@ -51,38 +51,10 @@ final class GuzzleAdUserClient implements AdUser
         return TaxonomyFactory::fromArray($taxonomy);
     }
 
-    /** @deprecated */
-    public function getUserContextOld(ImpressionContext $partialContext): UserContext
-    {
-        $body = $partialContext->adUserRequestBody();
-        $path = 'getData';
-
-        try {
-            $response = $this->client->post($path, ['body' => $body]);
-            $context = json_decode((string)$response->getBody(), true);
-
-            Log::debug(sprintf(
-                '{"url": "%s", "method": "%s", "req": %s, "res": "%s"}',
-                (string)$this->client->getConfig('base_uri'),
-                $path,
-                $body,
-                (string)$response->getBody()
-            ));
-
-            return UserContext::fromAdUserArray($context, $partialContext->userId());
-        } catch (GuzzleException $exception) {
-            return new UserContext(
-                $partialContext->keywords(),
-                AdUser::DEFAULT_HUMAN_SCORE,
-                $partialContext->userId()
-            );
-        }
-    }
-
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $path = sprintf(
-            '/data/%s/%s',
+            '/api/v0/data/%s/%s',
             config('app.adserver_id'),
             $partialContext->userId()
         );
