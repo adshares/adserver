@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Supply\Domain\ValueObject\Size;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -166,6 +167,18 @@ class Campaign extends Model
         return self::where('uuid', hex2bin($uuid))->first();
     }
 
+    public static function fetchRequiredBudgetsPerUser(): Collection
+    {
+        $query = self::where('status', self::STATUS_ACTIVE)->where(
+            function ($q) {
+                $dateTime = self::getDateTimeRoundedToNextHour();
+                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
+            }
+        );
+
+        return $query->groupBy('user_id')->selectRaw('sum(budget) as sum, user_id')->pluck('sum', 'user_id');
+    }
+
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
@@ -259,5 +272,17 @@ class Campaign extends Model
                 sprintf('Status must be one of [%s]', implode(',', self::STATUSES))
             );
         }
+    }
+
+    private static function getDateTimeRoundedToNextHour(): DateTime
+    {
+        $date = new DateTime();
+        $minutes = (int)$date->format('i');
+        if ($minutes > 0) {
+            $date->modify('+1 hour');
+            $date->modify('-'.$minutes.' minutes');
+        }
+
+        return $date;
     }
 }
