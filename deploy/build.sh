@@ -19,7 +19,10 @@ yarn run prod
 artisanCommand key:generate
 artisanCommand storage:link
 artisanCommand config:cache
+
+echo -e "### This is ADMIN password ###\n#"
 artisanCommand ops:admin:create
+echo -e "#\n###"
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then
