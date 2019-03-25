@@ -59,7 +59,7 @@ final class BannerTest extends TestCase
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
             Uuid::v4(),
             'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
@@ -83,7 +83,7 @@ final class BannerTest extends TestCase
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
             Uuid::v4(),
             'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
             new Budget(1000000000000, null, 200000000000),
             new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
@@ -100,7 +100,6 @@ final class BannerTest extends TestCase
             'http://example.com/click',
             'http://example.com/view'
         );
-
 
         $banner = new Banner($campaign, $bannerId, $bannerUrl, $type, new Size(728, 90), $checksum, Status::active());
 
@@ -174,6 +173,26 @@ final class BannerTest extends TestCase
         $this->assertCount(0, $banner->toArray()['classification']);
     }
 
+    private function createCampaign(): Campaign
+    {
+        $campaignId = Uuid::v4();
+        $campaign = new Campaign(
+            $campaignId,
+            UUid::fromString('4a27f6a938254573abe47810a0b03748'),
+            Uuid::v4(),
+            'http://example.com',
+            new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
+            [],
+            new Budget(1000000000000, null, 200000000000),
+            new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
+            Status::active(),
+            [],
+            []
+        );
+
+        return $campaign;
+    }
+
     private function createBanner(Campaign $campaign, int $width = 300, int $height = 250): Banner
     {
         $url = new BannerUrl('http://example.com/serve', 'http://example.com/click', 'http://example.com/view');
@@ -188,26 +207,6 @@ final class BannerTest extends TestCase
         );
 
         return $banner;
-    }
-
-    private function createCampaign(): Campaign
-    {
-        $campaignId = Uuid::v4();
-        $campaign = new Campaign(
-            $campaignId,
-            UUid::fromString('4a27f6a938254573abe47810a0b03748'),
-            Uuid::v4(),
-            'http://example.com',
-            new CampaignDate(new DateTime(), new DateTime(), new DateTime(), new DateTime()),
-            [],
-            new Budget(1000000000000, null, 200000000000),
-            new SourceCampaign('localhost', '0000-00000000-0001', '0.1', new DateTime(), new DateTime()),
-            Status::active(),
-            [],
-            []
-        );
-
-        return $campaign;
     }
 
     public function dataProvider()
