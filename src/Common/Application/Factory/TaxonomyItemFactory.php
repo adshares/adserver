@@ -30,6 +30,7 @@ final class TaxonomyItemFactory
 {
     /** @var string[] */
     public const MAP_TYPE = [
+        '' => Type::TYPE_GROUP,
         'num' => Type::TYPE_NUMBER,
         'number' => Type::TYPE_NUMBER,
         'bool' => Type::TYPE_BOOLEAN,
@@ -59,6 +60,15 @@ final class TaxonomyItemFactory
             $item['label'],
             ...self::mapValues($item['values'] ?? [])
         );
+    }
+
+    public static function groupingItem(string $key, string $label, Item...$items): Item
+    {
+        return (new Item(
+            new Type(Type::TYPE_GROUP),
+            $key,
+            $label
+        ))->withChildren(...$items);
     }
 
     public static function map($value): Type

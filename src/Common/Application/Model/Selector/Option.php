@@ -30,13 +30,20 @@ use function is_bool;
 
 final class Option
 {
+    public const TYPE_GROUP = 'group';
+
     public const TYPE_STRING = 'string';
 
     public const TYPE_NUMBER = 'number';
 
     public const TYPE_BOOLEAN = 'boolean';
 
-    public const TYPES = [self::TYPE_STRING, self::TYPE_NUMBER, self::TYPE_BOOLEAN];
+    public const TYPES = [
+        self::TYPE_STRING,
+        self::TYPE_NUMBER,
+        self::TYPE_BOOLEAN,
+        self::TYPE_GROUP,
+    ];
 
     /** @var string */
     private $type;
@@ -57,12 +64,12 @@ final class Option
     private $values = [];
 
     public function __construct(
-        ?string $type,
+        string $type,
         string $key,
         string $label,
-        bool $allowInput
+        ?bool $allowInput
     ) {
-        if (($type ?? false) && !in_array($type, self::TYPES, true)) {
+        if (!in_array($type, self::TYPES, true)) {
             throw new InvalidArgumentException('Type has to be one of ['.implode(',', self::TYPES)."]. Is: $type");
         }
         $this->type = $type;
@@ -88,29 +95,28 @@ final class Option
 
     public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        return array_filter([
-            'value_type' => $this->type,
-            'key' => $this->key,
-            'label' => $this->label,
-            'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursiveWithoutEmptyFieldsAndOnlyWithValues(),
-            'values' => $this->valuesToArray(),
-        ],
+        return array_filter(
+            [
+                'value_type' => $this->type,
+                'key' => $this->key,
+                'label' => $this->label,
+                'allow_input' => $this->allowInput,
+                'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+                'values' => $this->valuesToArray(),
+            ],
             function ($item) {
                 return !empty($item) || is_bool($item);
-            });
+            }
+        );
     }
 
     private function valuesToArray(): array
     {
-        return array_map(function (OptionValue $option) {
-            return $option->toArray();
-        },
-            $this->values);
-    }
-
-    public function hasValues(): bool
-    {
-        return !empty($this->values);
+        return array_map(
+            function (OptionValue $option) {
+                return $option->toArray();
+            },
+            $this->values
+        );
     }
 }

@@ -39,27 +39,40 @@ final class TaxonomyFactory
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
         $version = SemVer::fromString($taxonomy['$version'] ?? $taxonomy['meta']['version']);
 
+//        $items = array_map(
+//            function (array $item) {
+//                return TaxonomyItemFactory::fromArray($item);
+//            },
+//            $taxonomy['items'] ?? $taxonomy['data']
+//        );
+
         $itemsUser = array_map(
             function (array $item) {
                 return TaxonomyItemFactory::fromArray($item);
             },
-            $taxonomy['items'] ?? $taxonomy['data']['user']
+            $taxonomy['data']['user']
         );
 
         $itemsSite = array_map(
             function (array $item) {
                 return TaxonomyItemFactory::fromArray($item);
             },
-            $taxonomy['items'] ?? $taxonomy['data']['site']
+            $taxonomy['data']['site']
         );
 
         $itemsDevice = array_map(
             function (array $item) {
                 return TaxonomyItemFactory::fromArray($item);
             },
-            $taxonomy['items'] ?? $taxonomy['data']['device']
+            $taxonomy['data']['device']
         );
 
-        return new Taxonomy($schema, $version, ...array_merge($itemsUser, $itemsSite, $itemsDevice));
+        return new Taxonomy(
+            $schema,
+            $version,
+            TaxonomyItemFactory::groupingItem('user', 'User', ...$itemsUser),
+            TaxonomyItemFactory::groupingItem('site', 'Site', ...$itemsSite),
+            TaxonomyItemFactory::groupingItem('device', 'Device', ...$itemsDevice)
+        );
     }
 }

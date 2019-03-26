@@ -27,6 +27,7 @@ use function in_array;
 
 final class Type
 {
+    public const TYPE_GROUP = 'group';
     public const TYPE_NUMBER = 'number';
     public const TYPE_BOOLEAN = 'boolean';
     public const TYPE_DICTIONARY = 'dictionary';
@@ -36,6 +37,7 @@ final class Type
         self::TYPE_INPUT,
         self::TYPE_BOOLEAN,
         self::TYPE_DICTIONARY,
+        self::TYPE_GROUP,
     ];
 
     /** @var string */

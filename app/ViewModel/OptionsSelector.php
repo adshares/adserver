@@ -37,6 +37,6 @@ class OptionsSelector implements Arrayable
 
     public function toArray(): array
     {
-        return $this->selector->toArrayRecursiveWithoutEmptyFieldsAndOnlyWithValues();
+        return $this->selector->toArrayRecursiveWithoutEmptyFields();
     }
 }

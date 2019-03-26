@@ -38,26 +38,22 @@ final class Selector
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
-        return new Selector(...array_map(function (Item $item) {
-            return $item->toSelectorOption();
-        },
-            $taxonomy->toArray()));
+        return new Selector(...array_map(
+                function (Item $item) {
+                    return $item->toSelectorOption();
+                },
+                $taxonomy->toArray()
+            )
+        );
     }
 
-    public function toArrayRecursiveWithoutEmptyFieldsAndOnlyWithValues(): array
+    public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        $options = array_filter(
-            $this->items,
-            function (Option $option) {
-                return $option->hasValues();
-            }
-        );
-
         return array_map(
             function (Option $option) {
                 return $option->toArrayRecursiveWithoutEmptyFields();
             },
-            $options
+            $this->items
         );
     }
 }

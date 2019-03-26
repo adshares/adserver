@@ -24,6 +24,7 @@ namespace Adshares\Common\Application\Dto\Taxonomy;
 
 use Adshares\Common\Application\Dto\Taxonomy\Item\Type;
 use Adshares\Common\Application\Dto\Taxonomy\Item\Value;
+use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Model\Selector\Option;
 use Adshares\Common\Application\Model\Selector\OptionValue;
 use InvalidArgumentException;
@@ -33,12 +34,18 @@ final class Item
 {
     /** @var Type */
     private $type;
+
     /** @var string */
     private $key;
+
     /** @var string */
     private $label;
+
     /** @var Value[] */
     private $values;
+
+    /** @var Item[] */
+    private $children = [];
 
     public function __construct(Type $type, string $key, string $label, Value ...$values)
     {
@@ -77,19 +84,23 @@ final class Item
             return $this->fromNumber();
         }
 
-        return new Option(
-            Option::TYPE_STRING,
-            $this->key,
-            $this->label,
-            true
-        );
+        if ($this->ofType(Type::TYPE_INPUT)) {
+            return $this->fromInput();
+        }
+
+        return $this->fromGroup();
+    }
+
+    public function toSelector(): Selector
+    {
     }
 
     private function fromDictionary(): Option
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
-        }, $this->values);
+        },
+            $this->values);
 
         return (new Option(
             Option::TYPE_STRING,
@@ -103,7 +114,8 @@ final class Item
     {
         $values = array_map(function (Value $listItemValue) {
             return $listItemValue->toOptionValue();
-        }, $this->values);
+        },
+            $this->values);
 
         if (empty($values)) {
             $values = [
@@ -128,5 +140,39 @@ final class Item
             $this->label,
             false
         );
+    }
+
+    private function fromInput(): Option
+    {
+        return new Option(
+            Option::TYPE_STRING,
+            $this->key,
+            $this->label,
+            true
+        );
+    }
+
+    private function fromGroup(): Option
+    {
+        $options = array_map(
+            function (Item $item) {
+                return $item->toSelectorOption();
+            },
+            $this->children
+        );
+
+        return (new Option(
+            Option::TYPE_GROUP,
+            $this->key,
+            $this->label,
+            false
+        ))->withChildren(new Selector(...$options));
+    }
+
+    public function withChildren(self...$children): self
+    {
+        $this->children = $children;
+
+        return $this;
     }
 }
