@@ -40,13 +40,24 @@ final class Selector
     {
         return new Selector(...array_map(function (Item $item) {
             return $item->toSelectorOption();
-        }, $taxonomy->toArray()));
+        },
+            $taxonomy->toArray()));
     }
 
-    public function toArrayRecursiveWithoutEmptyFields(): array
+    public function toArrayRecursiveWithoutEmptyFieldsAndOnlyWithValues(): array
     {
-        return array_map(function (Option $option) {
-            return $option->toArrayRecursiveWithoutEmptyFields();
-        }, $this->items);
+        $options = array_filter(
+            $this->items,
+            function (Option $option) {
+                return $option->hasValues();
+            }
+        );
+
+        return array_map(
+            function (Option $option) {
+                return $option->toArrayRecursiveWithoutEmptyFields();
+            },
+            $options
+        );
     }
 }

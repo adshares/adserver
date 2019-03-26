@@ -37,11 +37,29 @@ final class TaxonomyFactory
     public static function fromArray(array $taxonomy): Taxonomy
     {
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
-        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
-        $items = array_map(function (array $item) {
-            return TaxonomyItemFactory::fromArray($item);
-        }, $taxonomy['items'] ?? $taxonomy['data']);
+        $version = SemVer::fromString($taxonomy['$version'] ?? $taxonomy['meta']['version']);
 
-        return new Taxonomy($schema, $version, ...$items);
+        $itemsUser = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['items'] ?? $taxonomy['data']['user']
+        );
+
+        $itemsSite = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['items'] ?? $taxonomy['data']['site']
+        );
+
+        $itemsDevice = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['items'] ?? $taxonomy['data']['device']
+        );
+
+        return new Taxonomy($schema, $version, ...array_merge($itemsUser, $itemsSite, $itemsDevice));
     }
 }

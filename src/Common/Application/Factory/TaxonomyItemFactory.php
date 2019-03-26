@@ -70,7 +70,8 @@ final class TaxonomyItemFactory
     {
         return array_map(function (array $listItem) {
             return self::mapValue($listItem);
-        }, $values);
+        },
+            $values);
     }
 
     private static function mapValue(array $value): Value

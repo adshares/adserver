@@ -31,19 +31,28 @@ use function is_bool;
 final class Option
 {
     public const TYPE_STRING = 'string';
+
     public const TYPE_NUMBER = 'number';
+
     public const TYPE_BOOLEAN = 'boolean';
+
     public const TYPES = [self::TYPE_STRING, self::TYPE_NUMBER, self::TYPE_BOOLEAN];
+
     /** @var string */
     private $type;
+
     /** @var string */
     private $key;
+
     /** @var string */
     private $label;
+
     /** @var bool */
     private $allowInput;
+
     /** @var Selector */
     private $children;
+
     /** @var OptionValue[] */
     private $values = [];
 
@@ -84,17 +93,24 @@ final class Option
             'key' => $this->key,
             'label' => $this->label,
             'allow_input' => $this->allowInput,
-            'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+            'children' => $this->children->toArrayRecursiveWithoutEmptyFieldsAndOnlyWithValues(),
             'values' => $this->valuesToArray(),
-        ], function ($item) {
-            return !empty($item) || is_bool($item);
-        });
+        ],
+            function ($item) {
+                return !empty($item) || is_bool($item);
+            });
     }
 
     private function valuesToArray(): array
     {
         return array_map(function (OptionValue $option) {
             return $option->toArray();
-        }, $this->values);
+        },
+            $this->values);
+    }
+
+    public function hasValues(): bool
+    {
+        return !empty($this->values);
     }
 }
