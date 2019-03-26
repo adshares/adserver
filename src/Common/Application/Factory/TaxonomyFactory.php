@@ -40,7 +40,7 @@ final class TaxonomyFactory
         $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
         $items = array_map(function (array $item) {
             return TaxonomyItemFactory::fromArray($item);
-        }, $taxonomy['items'] ?? $taxonomy['data']['user']);
+        }, $taxonomy['items'] ?? $taxonomy['data']);
 
         return new Taxonomy($schema, $version, ...$items);
     }
