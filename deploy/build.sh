@@ -34,8 +34,6 @@ then
     artisanCommand migrate
 fi
 
-source .env
-
 if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
     artisanCommand db:seed
@@ -63,6 +61,5 @@ fi
 
 if [[ ${_CREATE_ADMIN:-0} -eq 1 ]]
 then
-    echo "### Creating admin user."
     artisanCommand ops:admin:create --password
 fi
