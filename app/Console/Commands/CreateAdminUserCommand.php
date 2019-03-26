@@ -54,7 +54,7 @@ class CreateAdminUserCommand extends Command
         if (!$input) {
             $this->error('Email address cannot be empty');
 
-            return;
+            exit(0);
         }
 
         try {
@@ -62,7 +62,7 @@ class CreateAdminUserCommand extends Command
         } catch (RuntimeException $exception) {
             $this->error($exception->getMessage());
 
-            return;
+            exit(0);
         }
 
         $name = 'admin';
@@ -76,11 +76,12 @@ class CreateAdminUserCommand extends Command
             if ($exception->getCode() === '23000') { // 23000 = duplicated
                 $this->error(sprintf('User %s already exists', $email->toString()));
 
-                return;
+                exit(0);
             }
 
             $this->error($exception->getMessage());
-            return;
+
+            exit(0);
         }
 
 
