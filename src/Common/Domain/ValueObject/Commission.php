@@ -31,14 +31,19 @@ final class Commission
     public function __construct(float $value)
     {
         if ($value < 0) {
-            throw new RuntimeException('Commission must be greater than 0.');
+            throw new RuntimeException('Commission must be greater than 0.00.');
         }
 
-        if ($value > 100) {
-            throw new RuntimeException('Commission must be smaller than 100.');
+        if ($value > 1) {
+            throw new RuntimeException('Commission must be smaller than 1.00.');
         }
 
-        $this->value = $value;
+        $this->value = round($value, 4);
+    }
+
+    public static function createFromPercentage(float $value): self
+    {
+        return new self($value / 100);
     }
 
     public function getValue(): float
