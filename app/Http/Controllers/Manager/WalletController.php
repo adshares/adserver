@@ -288,6 +288,10 @@ class WalletController extends Controller
      */
     private function getUserLedgerEntryAddress($ledgerItem): ?string
     {
+        if ($ledgerItem->type === UserLedgerEntry::TYPE_AD_INCOME) {
+            return $ledgerItem->address_from;
+        }
+
         if ((int)$ledgerItem->amount > 0) {
             $address = $ledgerItem->address_to;
         } else {
