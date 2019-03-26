@@ -34,8 +34,6 @@ then
     artisanCommand migrate
 fi
 
-env | sort
-
 if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
     artisanCommand db:seed
