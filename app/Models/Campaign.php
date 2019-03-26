@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function hex2bin;
 
@@ -245,6 +246,7 @@ class Campaign extends Model
 
         self::failIfInvalidStatus($status);
         $this->failIfTransitionNotAllowed($status);
+        $this->updateBlockade($status);
 
         $this->status = $status;
     }
@@ -254,14 +256,48 @@ class Campaign extends Model
         if ($status === self::STATUS_ACTIVE) {
             $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
 
-            $requiredBalance = self::fetchByUserId($this->user_id)
-                ->filter(function (Campaign $campaign) {
-                    return $campaign->status === Campaign::STATUS_ACTIVE || $campaign->id === $this->id;
-                })->sum('budget');
+            $requiredBalance = $this->getBudgetForCurrentDateTime();
 
             if ($balance < $requiredBalance) {
                 throw new InvalidArgumentException('Campaign budgets exceed account balance');
             }
+        }
+    }
+
+    private function updateBlockade(int $status): void
+    {
+        $budgetForCurrentDateTime = $this->getBudgetForCurrentDateTime();
+        if (0 === $budgetForCurrentDateTime) {
+            return;
+        }
+
+        $userLedgerEntry = UserLedgerEntry::fetchBlockedEntriesByUserId($this->user_id)->first();
+        if (null === $userLedgerEntry) {
+            if ($status === self::STATUS_ACTIVE) {
+                UserLedgerEntry::block(UserLedgerEntry::TYPE_AD_EXPENSE, $this->user_id, $budgetForCurrentDateTime);
+            } else {
+                Log::error(
+                    sprintf(
+                        '[Campaign] Attempt to release non existing blockade for user_id (%d), campaign_id (%d).',
+                        $this->user_id,
+                        $this->id
+                    )
+                );
+            }
+
+            return;
+        }
+
+        if ($status === self::STATUS_ACTIVE) {
+            $userLedgerEntry->amount = $userLedgerEntry->amount - $budgetForCurrentDateTime;
+        } else {
+            $userLedgerEntry->amount = $userLedgerEntry->amount + $budgetForCurrentDateTime;
+        }
+
+        if (0 === $userLedgerEntry->amount) {
+            $userLedgerEntry->delete();
+        } else {
+            $userLedgerEntry->save();
         }
     }
 
@@ -272,5 +308,14 @@ class Campaign extends Model
                 sprintf('Status must be one of [%s]', implode(',', self::STATUSES))
             );
         }
+    }
+
+    private function getBudgetForCurrentDateTime(): int
+    {
+        if ($this->time_end != null && $this->time_end < DateUtils::getDateTimeRoundedToCurrentHour()) {
+            return 0;
+        }
+
+        return $this->budget;
     }
 }
