@@ -25,15 +25,16 @@ namespace Adshares\Common\Application\Model;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Dto\Taxonomy\Item;
 use Adshares\Common\Application\Model\Selector\Option;
+use function array_filter;
 
 final class Selector
 {
     /** @var Option[] */
-    private $items;
+    private $options;
 
-    public function __construct(Option ...$items)
+    public function __construct(Option ...$options)
     {
-        $this->items = $items;
+        $this->options = $options;
     }
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
@@ -53,7 +54,22 @@ final class Selector
             function (Option $option) {
                 return $option->toArrayRecursiveWithoutEmptyFields();
             },
-            $this->items
+            $this->onlyViewable()
         );
+    }
+
+    public function isEmpty(): bool
+    {
+        return empty($this->onlyViewable());
+    }
+
+    private function onlyViewable(): array
+    {
+        return array_values(array_filter(
+            $this->options,
+            function (Option $option) {
+                return $option->isViewable();
+            }
+        ));
     }
 }

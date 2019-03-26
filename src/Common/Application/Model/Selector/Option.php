@@ -58,7 +58,7 @@ final class Option
     private $allowInput;
 
     /** @var Selector */
-    private $children;
+    private $subSelector;
 
     /** @var OptionValue[] */
     private $values = [];
@@ -76,7 +76,7 @@ final class Option
         $this->key = $key;
         $this->label = $label;
         $this->allowInput = $allowInput;
-        $this->children = new Selector();
+        $this->subSelector = new Selector();
     }
 
     public function withValues(OptionValue ...$values)
@@ -88,7 +88,7 @@ final class Option
 
     public function withChildren(Selector $children): self
     {
-        $this->children = $children;
+        $this->subSelector = $children;
 
         return $this;
     }
@@ -101,7 +101,7 @@ final class Option
                 'key' => $this->key,
                 'label' => $this->label,
                 'allow_input' => $this->allowInput,
-                'children' => $this->children->toArrayRecursiveWithoutEmptyFields(),
+                'children' => $this->subSelector->toArrayRecursiveWithoutEmptyFields(),
                 'values' => $this->valuesToArray(),
             ],
             function ($item) {
@@ -118,5 +118,23 @@ final class Option
             },
             $this->values
         );
+    }
+
+    public function isViewable(): bool
+    {
+        if ($this->allowInput) {
+            //TODO: remove when front ready
+            return false;
+        }
+
+        if ($this->type === self::TYPE_GROUP) {
+            return !$this->subSelector->isEmpty();
+        }
+
+        if (!$this->allowInput && empty($this->values)) {
+            return false;
+        }
+
+        return true;
     }
 }
