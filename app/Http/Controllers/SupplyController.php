@@ -295,8 +295,7 @@ class SupplyController extends Controller
 
     private function validateEventRequest(Request $request): void
     {
-        if (!$request->cookies->get('tid')
-            || !$request->query->has('ctx')
+        if (!$request->query->has('ctx')
             || !$request->query->has('cid')
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
