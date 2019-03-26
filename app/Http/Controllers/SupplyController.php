@@ -156,10 +156,9 @@ class SupplyController extends Controller
     ): RedirectResponse {
         $this->validateEventRequest($request);
 
-        if ($request->query->get('r')) {
-            $url = Utils::urlSafeBase64Decode($request->query->get('r'));
-            $request->query->remove('r');
-        } else {
+        $url = $this->getRedirectionUrlFromQuery($request);
+
+        if (!$url) {
             $banner = NetworkBanner::where('uuid', hex2bin($bannerId))->first();
 
             if (!$banner) {
@@ -169,30 +168,18 @@ class SupplyController extends Controller
             $url = $banner->click_url;
         }
 
-        $qString = http_build_query($request->query->all());
-        if ($qString) {
-            $qPos = strpos($url, '?');
+        $url = $this->addQueryStringToUrl($request, $url);
 
-            if (false === $qPos) {
-                $url .= '?'.$qString;
-            } elseif ($qPos == strlen($url) - 1) {
-                $url .= $qString;
-            } else {
-                $url .= '&'.$qString;
-            }
-        }
-
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $tid = $request->cookies->get('tid');
-        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = $context['page']['zone'];
+        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
 
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
@@ -216,7 +203,7 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_CLICK
@@ -227,39 +214,53 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
+    private function getRedirectionUrlFromQuery(Request $request): ?string
     {
-        $this->validateEventRequest($request);
-
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
-        }
 
+            return $url;
+        }
+    }
+
+    private function addQueryStringToUrl(Request $request, string $url): string
+    {
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
                 $url .= '?'.$qString;
-            } elseif ($qPos == strlen($url) - 1) {
+            } elseif ($qPos === strlen($url) - 1) {
                 $url .= $qString;
             } else {
                 $url .= '&'.$qString;
             }
         }
 
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        return $url;
+    }
+
+    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
+    {
+        $this->validateEventRequest($request);
+
+        $url = $this->getRedirectionUrlFromQuery($request);
+        if ($url) {
+            $url = $this->addQueryStringToUrl($request, $url);
+        }
+
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = $context['page']['zone'];
+        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
@@ -283,7 +284,7 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_VIEW
