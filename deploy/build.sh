@@ -20,10 +20,6 @@ artisanCommand key:generate
 artisanCommand storage:link
 artisanCommand config:cache
 
-echo -e "### This is ADMIN password ###\n#"
-artisanCommand ops:admin:create
-echo -e "#\n###"
-
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then
     artisanCommand migrate:fresh
@@ -43,12 +39,12 @@ then
     artisanCommand db:seed
 fi
 
-if [[ ${UPDATE_TARGETING:-1} -eq 1 ]]
+if [[ ${UPDATE_TARGETING:-0} -eq 1 ]]
 then
     artisanCommand ops:targeting-options:update
 fi
 
-if [[ ${UPDATE_FILTERING:-1} -eq 1 ]]
+if [[ ${UPDATE_FILTERING:-0} -eq 1 ]]
 then
     artisanCommand ops:filtering-options:update
 fi
@@ -61,4 +57,10 @@ fi
 if [[ ${BROADCAST_SERVER:-0} -eq 1 ]]
 then
     artisanCommand ads:broadcast-host
+fi
+
+if [[ ${CREATE_ADMIN:-0} -eq 1 ]]
+then
+    echo "### Creating admin user."
+    artisanCommand ops:admin:create --password
 fi
