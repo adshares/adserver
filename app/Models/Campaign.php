@@ -25,8 +25,8 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Supply\Domain\ValueObject\Size;
-use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -171,7 +171,7 @@ class Campaign extends Model
     {
         $query = self::where('status', self::STATUS_ACTIVE)->where(
             function ($q) {
-                $dateTime = self::getDateTimeRoundedToNextHour();
+                $dateTime = DateUtils::getDateTimeRoundedToNextHour();
                 $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
             }
         );
@@ -272,17 +272,5 @@ class Campaign extends Model
                 sprintf('Status must be one of [%s]', implode(',', self::STATUSES))
             );
         }
-    }
-
-    private static function getDateTimeRoundedToNextHour(): DateTime
-    {
-        $date = new DateTime();
-        $minutes = (int)$date->format('i');
-        if ($minutes > 0) {
-            $date->modify('+1 hour');
-            $date->modify('-'.$minutes.' minutes');
-        }
-
-        return $date;
     }
 }
