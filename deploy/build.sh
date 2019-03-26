@@ -2,10 +2,6 @@
 source ${1}/_functions.sh --vendor
 [[ -z ${2:-""} ]] || cd $2
 
-set -a
-source .env
-set +a
-
 export APP_VERSION=$(versionFromGit)
 
 function artisanCommand {
@@ -37,6 +33,8 @@ elif [[ ${SKIP_DB_MIGRATE:-0} -eq 0 ]]
 then
     artisanCommand migrate
 fi
+
+source .env
 
 if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
