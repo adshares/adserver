@@ -67,7 +67,10 @@ class AdminController extends Controller
             throw new NotFoundHttpException($exception->getMessage());
         }
 
-        return new JsonResponse($license->toArray());
+        $licenseArray = $license->toArray();
+        $licenseArray['detailsUrl'] = sprintf('%s/license/%s', config('app.license_url'), $licenseArray['id']);
+
+        return new JsonResponse($licenseArray);
     }
 
     public function getTerms(): JsonResponse
