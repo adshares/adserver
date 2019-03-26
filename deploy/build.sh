@@ -35,7 +35,7 @@ then
 fi
 
 source .env
-
+env | sort | grep _
 if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
     artisanCommand db:seed
