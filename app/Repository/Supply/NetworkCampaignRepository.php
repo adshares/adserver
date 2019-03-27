@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
@@ -52,7 +53,6 @@ class NetworkCampaignRepository implements CampaignRepository
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
             ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
-
 
         // mark all banners as DELETED for given $host
         DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
@@ -121,7 +121,11 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
+            try {
+                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
+            } catch (RuntimeException $exception) {
+                // backward compatibility
+            }
         }
 
         return new CampaignCollection(...$campaigns);
@@ -134,7 +138,11 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
+            try {
+                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
+            } catch (RuntimeException $exception) {
+                // backward compatibility
+            }
         }
 
         return new CampaignCollection(...$campaigns);
