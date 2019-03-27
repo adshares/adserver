@@ -267,7 +267,7 @@ class DemandController extends Controller
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'] ?? '';
 
-        $adUserEndpoint = config('app.aduser_external_location');
+        $adUserEndpoint = config('app.aduser_base_url');
         $response = new Response();
 
         if ($adUserEndpoint) {
