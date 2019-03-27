@@ -40,12 +40,11 @@ final class Selector
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
         return new Selector(...array_map(
-                function (Item $item) {
+            function (Item $item) {
                     return $item->toSelectorOption();
-                },
-                $taxonomy->toArray()
-            )
-        );
+            },
+            $taxonomy->toArray()
+        ));
     }
 
     public function toArrayRecursiveWithoutEmptyFields(): array
