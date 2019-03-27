@@ -27,26 +27,34 @@ use Adshares\Adserver\Models\User;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
 use function str_random;
 use function substr;
+use function env;
 
 class CreateAdminUserCommand extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:admin:create';
+    protected $signature = 'ops:admin:create {--password=}';
 
     protected $description = 'Create an admin user';
 
     public function handle(): void
     {
+        $password = $this->option('password');
+
+        if (!$password) {
+            $password = env('TMP_ADMIN_PASSWORD');
+        }
+
         $input = $this->ask('Please type an admin email', config('app.adshares_operator_email'));
 
         if (!$input) {
-            $this->error('Email address cannot be empty.');
+            $this->error('Email address cannot be empty');
 
-            return;
+            exit(0);
         }
 
         try {
@@ -54,12 +62,28 @@ class CreateAdminUserCommand extends Command
         } catch (RuntimeException $exception) {
             $this->error($exception->getMessage());
 
-            return;
+            exit(0);
         }
 
         $name = 'admin';
-        $password = substr(Hash::make(str_random(8)), -8);
-        User::createAdmin($email, $name, $password);
+        if (!$password) {
+            $password = substr(Hash::make(str_random(8)), -8);
+        }
+
+        try {
+            User::createAdmin($email, $name, $password);
+        } catch (QueryException $exception) {
+            if ($exception->getCode() === '23000') { // 23000 = duplicated
+                $this->error(sprintf('User %s already exists', $email->toString()));
+
+                exit(0);
+            }
+
+            $this->error($exception->getMessage());
+
+            exit(0);
+        }
+
 
         $this->info(sprintf('Password: %s', $password));
     }

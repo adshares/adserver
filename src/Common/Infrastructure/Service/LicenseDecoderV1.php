@@ -73,6 +73,7 @@ class LicenseDecoderV1 implements LicenseDecoder
         $data = json_decode($data, true);
 
         return new License(
+            (string)config('app.license_id'),
             $data['type'],
             $data['status'],
             DateTime::createFromFormat(DateTime::ATOM, $data['beginDate']),

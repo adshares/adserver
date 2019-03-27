@@ -27,6 +27,8 @@ use DateTime;
 class License
 {
     /** @var string */
+    private $id;
+    /** @var string */
     private $type;
     /** @var int */
     private $status;
@@ -48,6 +50,7 @@ class License
     private $supplyFee;
 
     public function __construct(
+        string $id,
         string $type,
         int $status,
         DateTime $dateStart,
@@ -59,6 +62,7 @@ class License
         Commission $demandFee,
         Commission $supplyFee
     ) {
+        $this->id = $id;
         $this->type = $type;
         $this->status = $status;
         $this->dateStart = $dateStart;
@@ -74,6 +78,7 @@ class License
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
             'type' => $this->type,
             'status' => $this->status,
             'dateStart' => $this->dateStart->format(DateTime::ATOM),

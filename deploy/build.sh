@@ -19,7 +19,6 @@ yarn run prod
 artisanCommand key:generate
 artisanCommand storage:link
 artisanCommand config:cache
-artisanCommand ops:admin:create
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then
@@ -35,27 +34,32 @@ then
     artisanCommand migrate
 fi
 
-if [[ ${DB_SEED:-0} -eq 1 ]]
+if [[ ${_DB_SEED:-0} -eq 1 ]]
 then
     artisanCommand db:seed
 fi
 
-if [[ ${UPDATE_TARGETING:-0} -eq 1 ]]
+if [[ ${_UPDATE_TARGETING:-0} -eq 1 ]]
 then
     artisanCommand ops:targeting-options:update
 fi
 
-if [[ ${UPDATE_FILTERING:-0} -eq 1 ]]
+if [[ ${_UPDATE_FILTERING:-0} -eq 1 ]]
 then
     artisanCommand ops:filtering-options:update
 fi
 
-if [[ ${UPDATE_NETWORK_HOSTS:-0} -eq 1 ]]
+if [[ ${_UPDATE_NETWORK_HOSTS:-0} -eq 1 ]]
 then
     artisanCommand ads:fetch-hosts --quiet
 fi
 
-if [[ ${BROADCAST_SERVER:-0} -eq 1 ]]
+if [[ ${_BROADCAST_SERVER:-0} -eq 1 ]]
 then
     artisanCommand ads:broadcast-host
+fi
+
+if [[ ${_CREATE_ADMIN:-0} -eq 1 ]]
+then
+    artisanCommand ops:admin:create --password
 fi
