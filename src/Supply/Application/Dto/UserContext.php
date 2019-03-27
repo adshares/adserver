@@ -23,6 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use function array_merge;
+use function config;
+use function str_replace;
+use function strpos;
 
 final class UserContext
 {
