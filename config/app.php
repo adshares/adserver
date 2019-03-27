@@ -110,7 +110,7 @@ return [
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
-    'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
+    'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'classifiy'),
     'classify_secret' => (string)env('CLASSIFY_SECRET'),
     'license_url' => env('ADSHARES_LICENSE_SERVER_URL'),
     'license_key' => env('ADSHARES_LICENSE_SERVER_KEY'),
