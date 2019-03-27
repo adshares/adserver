@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http;
 
 use DateTime;
 use Doctrine\Common\Cache\FilesystemCache;
+use RuntimeException;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
@@ -456,6 +457,17 @@ class Utils
             return $caseId.'03';
         }
 
-        throw new \RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
+        throw new RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
+    }
+
+    public static function getZoneFromContext(string $zoneStr)
+    {
+        $context = self::decodeZones($zoneStr);
+
+        if (!isset($context['page']['zone'])) {
+            throw new RuntimeException(sprintf('Could not found zone id.'));
+        }
+
+        return $context['page']['zone'];
     }
 }

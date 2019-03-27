@@ -157,7 +157,7 @@ class EventLog extends Model
         string $caseId,
         string $eventId,
         string $bannerId,
-        string $zoneId,
+        ?string $zoneId,
         string $trackingId,
         string $publisherId,
         string $campaignId,
