@@ -213,13 +213,13 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -233,13 +233,13 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             Utils::getImpressionContext($request),
             $keywords,
@@ -253,18 +253,19 @@ class DemandController extends Controller
 
     public function view(Request $request, string $bannerId)
     {
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $this->validateEventRequest($request);
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $keywords = $context['page']['keywords'];
+        $keywords = $context['page']['keywords'] ?? '';
 
         $adUserEndpoint = config('app.aduser_external_location');
         $response = new Response();
@@ -307,13 +308,13 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             Utils::getImpressionContext($request),
             $keywords,
@@ -321,6 +322,17 @@ class DemandController extends Controller
         );
 
         return $response;
+    }
+
+    private function validateEventRequest(Request $request): void
+    {
+        if (!$request->query->has('ctx')
+            || !$request->query->has('cid')
+            || !$request->query->has('pto')
+            || !$request->query->has('pid')
+        ) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
     }
 
     public function context(Request $request, string $eventId): Response
