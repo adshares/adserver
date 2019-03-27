@@ -45,7 +45,7 @@ final class CommissionTest extends TestCase
         $value = 0.56789;
         $commission = new Commission($value);
 
-        $this->assertEquals(0.5679,$commission->getValue());
+        $this->assertEquals(0.5679, $commission->getValue());
     }
 
     public function commissionProvider(): array
@@ -56,7 +56,7 @@ final class CommissionTest extends TestCase
             [0.100],
             [0.877],
             [100.01, true],
-            [-1, true]
+            [-1, true],
 
         ];
     }

@@ -41,11 +41,6 @@ final class Commission
         $this->value = round($value, 4);
     }
 
-    public static function createFromPercentage(float $value): self
-    {
-        return new self($value / 100);
-    }
-
     public function getValue(): float
     {
         return $this->value;
