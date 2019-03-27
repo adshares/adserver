@@ -40,7 +40,9 @@ final class TaxonomyFactory
     public static function fromArray(array $taxonomy): Taxonomy
     {
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
-        $version = SemVer::fromString($taxonomy['$version'] ?? $taxonomy['meta']['version']);
+
+        $fallbackVersion = ($taxonomy['meta'] ?? false) ? $taxonomy['meta']['version'] : '0.0.0';
+        $version = SemVer::fromString($taxonomy['$version'] ?? $fallbackVersion);
 
         if (!isset($taxonomy['data']) && isset($taxonomy['items'])) {
             $taxonomy['data'] = $taxonomy['items'];
