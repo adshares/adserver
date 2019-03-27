@@ -54,7 +54,6 @@ class NetworkCampaignRepository implements CampaignRepository
             ->where('source_host', $host)
             ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
-
         // mark all banners as DELETED for given $host
         DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
             ->join(
