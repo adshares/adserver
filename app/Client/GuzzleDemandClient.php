@@ -228,7 +228,7 @@ final class GuzzleDemandClient implements DemandClient
         return $data;
     }
 
-    public function validateFetchInfoResponse(array $data): bool
+    public function validateFetchInfoResponse(array $data): void
     {
         $expectedKeys = [
             'name',
