@@ -105,9 +105,7 @@ return [
     'adshares_secret' => env('ADSHARES_SECRET'),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
-
-    'aduser_external_location' => env('ADUSER_EXTERNAL_LOCATION'),
-    'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
+    'aduser_base_url' => env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION'))),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
