@@ -50,12 +50,27 @@ class ZipToHtml
     
     }
     
-
     var refs = document.querySelectorAll('[data-asset-src]');
     for(var i=0;i<refs.length;i++) {
         var org = document.querySelector('[data-asset-org="' + refs[i].getAttribute('data-asset-src') + '"]');
         if(org) {
             refs[i].setAttribute('src', org.getAttribute('src'));
+        }
+    }
+    
+    var refs = document.querySelectorAll('img[srcset], source[srcset]');
+    for(var i=0;i<refs.length;i++) {
+        var any_found = false;
+        var newsrcset = refs[i].getAttribute('srcset').replace(/asset-src:([^,\s]+)/g, function(match, href) {
+            any_found = true;
+            var uri = 'null'; var org = document.querySelector('[data-asset-org="' + href + '"]');
+            if(org) {
+                uri = org.getAttribute('src') || org.getAttribute('data-src');
+            } 
+            return uri;
+        })
+        if(any_found) {
+            refs[i].setAttribute('srcset', newsrcset);
         }
     }
 })();
@@ -111,6 +126,9 @@ MYSCRIPT;
                 }
 
                 $name = \zip_entry_name($zip_entry);
+                if(preg_match("#(/|^)(__|\.)#", $name)) {
+                    continue;
+                }
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
                 if ($size > 0 && \zip_entry_open($zip, $zip_entry, "r")) {
@@ -238,6 +256,35 @@ MYSCRIPT;
             } else {
                 $tag->removeAttribute('src');
             }
+        }
+
+        $media = $xpath->query("//img[@srcset]|//source[@srcset]");
+        foreach ($media as $tag) {
+            $newsrcset = preg_replace_callback('/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/', function ($match) {
+                $href = $match[1];
+                $scheme = parse_url($href, PHP_URL_SCHEME);
+                if ($scheme) {
+                    if ($scheme === 'data') {
+                        return $href . $match[2] . ($match[3] ?? '');
+                    } else {
+                        throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    }
+                }
+                $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+                if (isset($this->assets[$file])) {
+                    if (isset($this->assets[$file]['used'])) {
+                        return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
+                    } else {
+                        $this->assets[$file]['used'] = true;
+                        return $this->getAssetDataUri($this->assets[$file]) . $match[2] . ($match[3] ?? '');
+                    }
+                } else {
+                    return '';
+                }
+
+            }, $tag->getAttribute('srcset'));
+
+            $tag->setAttribute('srcset', $newsrcset);
         }
 
         $media = $xpath->query("//video|//audio");
