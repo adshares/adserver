@@ -15,7 +15,7 @@ class UpdateAdminSettings extends FormRequest
      *
      * @return void
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         $input = $this->all();
         $settings = $input['settings'];
@@ -39,7 +39,12 @@ class UpdateAdminSettings extends FormRequest
 
         return [
             'settings.hotwallet_is_active' => 'required|boolean',
-            'settings.hotwallet_min_value' => 'required_if:settings.hotwallet_is_active,1|integer|min:0|max:100000000000000000',
+            'settings.hotwallet_min_value' => [
+                'required_if:settings.hotwallet_is_active,1',
+                'integer',
+                'min:0',
+                'max:100000000000000000',
+            ],
             'settings.hotwallet_max_value' => [
                 'required_if:settings.hotwallet_is_active,1',
                 'integer',
