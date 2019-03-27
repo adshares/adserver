@@ -126,7 +126,6 @@ class NetworkCampaignRepository implements CampaignRepository
             } catch (RuntimeException $exception) {
                 // backward compatibility
             }
-
         }
 
         return new CampaignCollection(...$campaigns);
@@ -144,7 +143,6 @@ class NetworkCampaignRepository implements CampaignRepository
             } catch (RuntimeException $exception) {
                 // backward compatibility
             }
-
         }
 
         return new CampaignCollection(...$campaigns);
