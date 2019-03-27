@@ -40,15 +40,23 @@ final class CommissionTest extends TestCase
         $this->assertEquals($value, $commission->getValue());
     }
 
+    public function testRoundUp(): void
+    {
+        $value = 0.56789;
+        $commission = new Commission($value);
+
+        $this->assertEquals(0.5679, $commission->getValue());
+    }
+
     public function commissionProvider(): array
     {
         return [
-            [2.45],
+            [0.245],
             [0],
-            [100],
-            [87.777],
+            [0.100],
+            [0.877],
             [100.01, true],
-            [-1, true]
+            [-1, true],
 
         ];
     }

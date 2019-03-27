@@ -175,7 +175,7 @@ class CampaignsController extends Controller
                     $banner['type'],
                     $exception->getMessage()
                 ));
-                
+
                 continue;
             }
 
