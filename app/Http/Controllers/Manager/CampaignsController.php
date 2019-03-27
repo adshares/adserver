@@ -71,7 +71,6 @@ class CampaignsController extends Controller
         } catch (RuntimeException $exception) {
             throw new BadRequestHttpException($exception->getMessage());
         }
-
     }
 
     public function preview($bannerPublicId): Response
@@ -174,8 +173,8 @@ class CampaignsController extends Controller
                     'Banner (name: %s, type: %s) could not be added (%s).',
                     $banner['name'],
                     $banner['type'],
-                    $exception->getMessage())
-                );
+                    $exception->getMessage()
+                ));
                 continue;
             }
 
