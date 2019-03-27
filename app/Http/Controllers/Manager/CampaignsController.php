@@ -71,7 +71,6 @@ class CampaignsController extends Controller
         } catch (RuntimeException $exception) {
             throw new BadRequestHttpException($exception->getMessage());
         }
-
     }
 
     public function preview($bannerPublicId): Response
