@@ -38,6 +38,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use InvalidArgumentException;
+use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
 
@@ -55,12 +57,21 @@ class CampaignsController extends Controller
 
     public function upload(Request $request): UploadedFile
     {
-        return Factory::create($request)->upload();
+        try {
+            return Factory::create($request)->upload();
+        } catch (RuntimeException $exception) {
+            throw new BadRequestHttpException($exception->getMessage());
+        }
     }
 
     public function uploadPreview(Request $request, string $type, string $name): Response
     {
-        return Factory::createFromType($type, $request)->preview($name);
+        try {
+            return Factory::createFromType($type, $request)->preview($name);
+        } catch (RuntimeException $exception) {
+            throw new BadRequestHttpException($exception->getMessage());
+        }
+
     }
 
     public function preview($bannerPublicId): Response
@@ -151,10 +162,15 @@ class CampaignsController extends Controller
             $bannerModel->creative_type = Banner::type($banner['type']);
 
             $fileName = $this->filename($banner['url']);
-            if ($banner['type'] === Banner::HTML_TYPE) {
-                $content = ZipUploader::content($fileName);
-            } else {
-                $content = ImageUploader::content($fileName);
+
+            try {
+                if ($banner['type'] === Banner::HTML_TYPE) {
+                    $content = ZipUploader::content($fileName);
+                } else {
+                    $content = ImageUploader::content($fileName);
+                }
+            } catch (RuntimeException $exception) {
+                continue;
             }
 
             $bannerModel->creative_contents = $content;
