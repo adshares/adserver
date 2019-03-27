@@ -53,7 +53,7 @@ final class TaxonomyFactory
                 function (array $item) {
                     return TaxonomyItemFactory::fromArray($item);
                 },
-                $taxonomy['items'] ?? $taxonomy['data']
+                $taxonomy['data']
             );
         } catch (ErrorException $e) {
             Log::info('This seems to be a newer version of Taxonomy.');
