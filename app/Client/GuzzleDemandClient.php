@@ -41,7 +41,6 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 use function GuzzleHttp\json_decode;
-use function in_array;
 use function json_encode;
 
 final class GuzzleDemandClient implements DemandClient
@@ -241,7 +240,7 @@ final class GuzzleDemandClient implements DemandClient
         ];
 
         foreach ($expectedKeys as $key) {
-            if (!in_array($key, $data, true)) {
+            if (!isset($data[$key])) {
                 Log::debug('Invalid info.json:'.json_encode($data));
 
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
