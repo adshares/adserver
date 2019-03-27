@@ -71,21 +71,16 @@ class InventoryImporter
         $this->classifyVerifier = $classifyVerifier;
     }
 
-    public function import(string $host): void
+    public function import(string $sourceHost, string $inventoryHost): void
     {
-        try {
-            $campaigns = $this->client->fetchAllInventory($host);
-        } catch (EmptyInventoryException $exception) {
-            return;
-        }
-
+        $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
         $bannersPublicIds = $this->getBannerIds($campaigns);
         $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersPublicIds);
 
         $this->transactionManager->begin();
 
         try {
-            $this->markedCampaignsAsDeletedService->execute($host);
+            $this->clearInventoryForHost($sourceHost);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -137,5 +132,10 @@ class InventoryImporter
                 }
             }
         }
+    }
+
+    public function clearInventoryForHost(string $host): void
+    {
+        $this->markedCampaignsAsDeletedService->execute($host);
     }
 }

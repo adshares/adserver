@@ -24,7 +24,7 @@ use Adshares\Adserver\Events\CreativeSha1;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -119,13 +119,7 @@ class Banner extends Model
 
     protected function toArrayExtras($array)
     {
-        if ($this->type === self::HTML_TYPE) {
-            $array['html'] = $this->creative_contents;
-        }
-
-        if ($this->type === self::IMAGE_TYPE) {
-            $array['image_url'] = ForceUrlProtocol::change(route('banner-preview', ['id' => $this->uuid]));
-        }
+        $array['url'] = (new SecureUrl(route('banner-preview', ['id' => $this->uuid])))->toString();
 
         return $array;
     }

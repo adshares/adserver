@@ -55,7 +55,7 @@ domReady(function() {
             if (data.click_url) {
                 for(var i=0;i<links.length;i++) {
                     links[i].href = data.click_url;
-                };
+                }
             }
         }
     };

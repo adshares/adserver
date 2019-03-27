@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Manager\ChartsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
 use Adshares\Adserver\Http\Controllers\Manager\NotificationsController;
@@ -36,7 +35,7 @@ Route::get('campaigns/count', [CampaignsController::class, 'count'])->name('app.
 Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])->name('app.campaigns.read');
 Route::post('campaigns', [CampaignsController::class, 'add'])->name('app.campaigns.add');
 Route::patch('campaigns/{campaign_id}', [CampaignsController::class, 'edit'])->name('app.campaigns.edit');
-Route::put('campaigns/{campaign_id}/status', [CampaignsController::class, 'changeStatus'])
+Route::put('campaigns/{campaign}/status', [CampaignsController::class, 'changeStatus'])
     ->name('app.campaigns.change_status');
 Route::put('campaigns/{campaign_id}/banner/{banner_id}/status', [CampaignsController::class, 'changeBannerStatus'])
     ->name('app.campaigns.change_banner_status');
@@ -50,11 +49,14 @@ Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, '
     ->name('app.campaigns.disable_classify');
 
 Route::post('sites', [SitesController::class, 'create'])->name('app.sites.add');
+Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])->name('app.sites.sizes');
 Route::get('sites/{site}', [SitesController::class, 'read'])->name('app.sites.read');
 Route::patch('sites/{site}', [SitesController::class, 'update'])->name('app.sites.edit');
 Route::delete('sites/{site}', [SitesController::class, 'delete'])->name('app.sites.delete');
 Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
+Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
+    ->name('app.sites.change_status');
 
 # only for admin
 Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');

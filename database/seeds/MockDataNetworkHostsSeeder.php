@@ -19,6 +19,7 @@
  */
 
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
 use Illuminate\Database\Seeder;
@@ -38,6 +39,7 @@ class MockDataNetworkHostsSeeder extends Seeder
             new Url('http://webserver/policies/privacy.html'),
             new Url('http://webserver/policies/terms.html'),
             new Url('http://webserver/adshares/inventory/list'),
+            new Email('mail@example.com'),
             'PUB', 'ADV'
         );
 

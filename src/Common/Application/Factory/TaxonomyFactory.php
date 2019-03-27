@@ -25,6 +25,9 @@ namespace Adshares\Common\Application\Factory;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Domain\ValueObject\SemVer;
 use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
+use Adshares\Common\Exception\RuntimeException;
+use ErrorException;
+use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_decode;
 
 final class TaxonomyFactory
@@ -37,11 +40,54 @@ final class TaxonomyFactory
     public static function fromArray(array $taxonomy): Taxonomy
     {
         $schema = Schema::fromString($taxonomy['$schema'] ?? 'urn:x-adshares:taxonomy');
-        $version = SemVer::fromString($taxonomy['version'] ?? $taxonomy['meta']['version']);
-        $items = array_map(function (array $item) {
-            return TaxonomyItemFactory::fromArray($item);
-        }, $taxonomy['items'] ?? $taxonomy['data']);
 
-        return new Taxonomy($schema, $version, ...$items);
+        $fallbackVersion = ($taxonomy['meta'] ?? false) ? $taxonomy['meta']['version'] : '0.0.0';
+        $version = SemVer::fromString($taxonomy['$version'] ?? $fallbackVersion);
+
+        if (!isset($taxonomy['data'])) {
+            throw new RuntimeException('Invalid Taxonomy: Missing "data" field.');
+        }
+
+        try {
+            $items = array_map(
+                function (array $item) {
+                    return TaxonomyItemFactory::fromArray($item);
+                },
+                $taxonomy['data']
+            );
+        } catch (ErrorException $e) {
+            Log::info('This seems to be a newer version of Taxonomy.');
+            $items = [];
+        }
+
+        $itemsUser = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['data']['user'] ?? []
+        );
+
+        $itemsSite = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['data']['site'] ?? []
+        );
+
+        $itemsDevice = array_map(
+            function (array $item) {
+                return TaxonomyItemFactory::fromArray($item);
+            },
+            $taxonomy['data']['device'] ?? []
+        );
+
+        return new Taxonomy(
+            $schema,
+            $version,
+            TaxonomyItemFactory::groupingItem('user', 'User', ...$itemsUser),
+            TaxonomyItemFactory::groupingItem('site', 'Site', ...$itemsSite),
+            TaxonomyItemFactory::groupingItem('device', 'Device', ...$itemsDevice),
+            ...$items
+        );
     }
 }

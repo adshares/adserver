@@ -43,7 +43,7 @@ function getDataURI(data, callback) {
             var reader = new FileReader();
             reader.onload = function (e) {
                 callback(reader.result);
-            }
+            };
             reader.readAsDataURL(data.blob);
         }
         return;
@@ -137,7 +137,7 @@ function createIframeFromData(data, domInsertCallback) {
 
                 doc_iframe.setAttribute('sandbox', "allow-scripts");
             }, 1);
-        }
+        };
 
         if (requestBlob && data instanceof Blob) // blob
         {
@@ -146,7 +146,7 @@ function createIframeFromData(data, domInsertCallback) {
             reader.onload = function (e) {
 
                 fn(reader.result);
-            }
+            };
 
             if (reader.readAsBinaryString)
                 reader.readAsBinaryString(data);
@@ -186,10 +186,10 @@ function createImageFromData(data, domInsertCallback) {
                 image = new Image();
                 image.src = data.originalUrl;
                 domInsertCallback(image);
-            }
+            };
             image.onload = function () {
                 domInsertCallback(image);
-            }
+            };
             image.src = dataUri;
         } else {
             image.src = dataUri;
@@ -227,7 +227,7 @@ function fetchURL(url, options) {
                     var pos = headers[i].indexOf(':');
                     this.__responseHeaders[headers[i].substring(0, pos)] = headers[i].substr(pos+1);
                 }
-            }
+            };
             xhr.getResponseHeader = function(header)
             {
                 return this.__responseHeaders[header];
@@ -262,12 +262,12 @@ function fetchURL(url, options) {
     var ok, fail;
     xhr.ontimeout = function (event) {
         fail && fail();
-    }
+    };
 
     xhr.then = function (onSuccess, onError) {
         ok = onSuccess;
         fail = onError;
-    }
+    };
 
     if (xdr) {
         xhr.onerror = xhr.ontimeout;
@@ -297,7 +297,7 @@ function fetchURL(url, options) {
     } else {
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4) {
-                var callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail
+                var callback = (xhr.status >= 200 && xhr.status < 400) ? ok : fail;
                 if (callback) {
                     var data;
                     if (options.binary) {
@@ -310,9 +310,9 @@ function fetchURL(url, options) {
                                        bytes: reader.result,
                                        type: xhr.response.type,
                                        blob: xhr.response
-                                    }
+                                    };
                                     callback && callback(data, xhr);
-                                }
+                                };
 
                                 if (reader.readAsBinaryString)
                                     reader.readAsBinaryString(xhr.response);

@@ -24,10 +24,13 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use function in_array;
 
 /**
  * @property string uuid
@@ -55,7 +58,11 @@ class Site extends Model
 
     public const STATUS_ACTIVE = 2;
 
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    public const ALLOWED_STATUSES = [
+        self::STATUS_DRAFT,
+        self::STATUS_INACTIVE,
+        self::STATUS_ACTIVE,
+    ];
 
     private const ZONE_STATUS = [
         Site::STATUS_DRAFT => Zone::STATUS_DRAFT,
@@ -143,9 +150,9 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $serverUrl = config('app.url');
+        $scriptUrl = (new SecureUrl(route('supply-find.js')))->toString();
 
-        return "<script src=\"$serverUrl/supply/find.js\" async></script>";
+        return "<script src=\"{$scriptUrl}\" async></script>";
     }
 
     public function setStatusAttribute($value): void
@@ -158,8 +165,22 @@ class Site extends Model
         );
     }
 
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
+    }
+
     public static function fetchByPublicId(string $publicId): ?self
     {
         return self::where('uuid', hex2bin($publicId))->first();
+    }
+
+    public function changeStatus(int $status): void
+    {
+        if (!in_array($status, self::ALLOWED_STATUSES, true)) {
+            throw new InvalidArgumentException("Invalid status: $status");
+        }
+
+        $this->status = $status;
     }
 }

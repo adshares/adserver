@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace Adshares\Supply\Domain\ValueObject\Exception;
 
-use RuntimeException;
+use Adshares\Common\Exception\RuntimeException;
 
 class InvalidCampaignDateException extends RuntimeException
 {
