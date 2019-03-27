@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\UpdateAdminSettings;
 use Adshares\Adserver\Http\Requests\UpdateRegulation;
+use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Regulation;
@@ -59,7 +60,7 @@ class AdminController extends Controller
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }
 
-    public function getLicense(): JsonResponse
+    public function getLicense(): LicenseResponse
     {
         try {
             $license = $this->licenseVault->read();
@@ -67,10 +68,7 @@ class AdminController extends Controller
             throw new NotFoundHttpException($exception->getMessage());
         }
 
-        $licenseArray = $license->toArray();
-        $licenseArray['detailsUrl'] = sprintf('%s/license/%s', config('app.license_url'), $licenseArray['id']);
-
-        return new JsonResponse($licenseArray);
+        return new LicenseResponse($license);
     }
 
     public function getTerms(): JsonResponse
