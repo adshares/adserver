@@ -44,11 +44,6 @@ final class TaxonomyFactory
         $fallbackVersion = ($taxonomy['meta'] ?? false) ? $taxonomy['meta']['version'] : '0.0.0';
         $version = SemVer::fromString($taxonomy['$version'] ?? $fallbackVersion);
 
-        if (!isset($taxonomy['data']) && isset($taxonomy['items'])) {
-            $taxonomy['data'] = $taxonomy['items'];
-            unset($taxonomy['items']);
-        }
-
         if (!isset($taxonomy['data'])) {
             throw new RuntimeException('Invalid Taxonomy: Missing "data" field.');
         }
