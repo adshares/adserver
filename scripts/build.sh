@@ -29,14 +29,7 @@ chmod a+rwX -R storage
 GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
 GIT_HASH="#"$(git rev-parse --short HEAD)
 
-export APP_VERSION=${APP_VERSION:-${GIT_TAG:-${GIT_HASH}}}
-
-GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
-GIT_HASH="#"$(git rev-parse --short HEAD)
-
 APP_VERSION=${APP_VERSION:-${GIT_TAG:-${GIT_HASH}}}
 
-{
-echo "APP_VERSION=$APP_VERSION"
-echo "ADSERVER_INFO_VERSION=$APP_VERSION"
-} | tee .env.from-build
+echo "APP_VERSION=$APP_VERSION" | tee .env.from-build
+

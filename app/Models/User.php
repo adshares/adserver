@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Common\Domain\ValueObject\Email;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -203,6 +204,12 @@ class User extends Authenticatable
         return (bool)$this->is_publisher;
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool)$this->is_admin;
+    }
+
+
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
@@ -211,5 +218,17 @@ class User extends Authenticatable
     public function getBalance(): int
     {
         return UserLedgerEntry::getBalanceByUserId($this->id);
+    }
+
+    public static function createAdmin(Email $email, string $name, string $password): void
+    {
+        $user = new self();
+        $user->name = $name;
+        $user->email = $email->toString();
+        $user->email_confirmed_at = time();
+        $user->password = $password;
+        $user->is_admin = 1;
+
+        $user->save();
     }
 }

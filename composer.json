@@ -2,9 +2,15 @@
     "require": {
         "php": "^7.2",
         "ext-gd": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-sodium": "*",
-        "ext-intl": "*",
+        "ext-fileinfo": "*",
+        "ext-openssl": "*",
+        "ext-apcu": "*",
+        "ext-zip": "*",
+        "ext-libxml": "*",
+        "ext-dom": "*",
         "adshares/ads-client": "^1",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
@@ -15,6 +21,7 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
+        "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^3"
     },
     "require-dev": {
@@ -36,6 +43,7 @@
             "database/factories"
         ],
         "psr-4": {
+            "Adshares\\Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",
             "Adshares\\": "src/"
         }

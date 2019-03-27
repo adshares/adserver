@@ -34,6 +34,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\Info;
@@ -102,6 +103,7 @@ class AdsProcessTxTest extends TestCase
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
             new Url('http://127.0.0.1'),
+            new Email('mail@example.com'),
             'PUB'
         );
 

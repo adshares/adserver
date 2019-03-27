@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use function apcu_fetch;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -52,6 +53,28 @@ class Config extends Model
     public const ADSELECT_PAYMENT_EXPORT_TIME = 'adselect-payment-export';
 
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
+
+    public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
+    public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
+    public const HOT_WALLET_ADDRESS = 'hotwallet-address';
+    public const HOT_WALLET_IS_ACTIVE = 'hotwallet-is-active';
+
+    public const ADSERVER_NAME = 'adserver-name';
+    public const TECHNICAL_EMAIL = 'technical-email';
+    public const SUPPORT_EMAIL = 'support-email';
+
+    private const ADMIN_SETTINGS = [
+        self::OPERATOR_TX_FEE,
+        self::OPERATOR_RX_FEE,
+        self::LICENCE_RX_FEE,
+        self::HOT_WALLET_MIN_VALUE,
+        self::HOT_WALLET_MAX_VALUE,
+        self::HOT_WALLET_ADDRESS,
+        self::HOT_WALLET_IS_ACTIVE,
+        self::ADSERVER_NAME,
+        self::TECHNICAL_EMAIL,
+        self::SUPPORT_EMAIL,
+    ];
 
     public $incrementing = false;
 
@@ -136,5 +159,38 @@ class Config extends Model
         }
 
         return (string)$config->value;
+    }
+
+    public static function fetchAdminSettings(): array
+    {
+        $data = self::whereIn('key', self::ADMIN_SETTINGS)->get();
+
+        return $data->pluck('value', 'key')->toArray();
+    }
+
+    public static function isHotWalletActive(): bool
+    {
+        $config = self::where('key', self::HOT_WALLET_IS_ACTIVE)->first();
+
+        if (null === $config) {
+            return false;
+        }
+
+        return (bool)$config->value;
+    }
+
+    public static function updateAdminSettings(array $settings): void
+    {
+        foreach ($settings as $key => $value) {
+            $config = self::where('key', $key)->first();
+
+            if (!$config) {
+                $config = new self();
+                $config->key = $key;
+            }
+
+            $config->value = $value;
+            $config->save();
+        }
     }
 }

@@ -23,7 +23,6 @@ namespace Adshares\Test\Supply\Application\Service;
 use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
 use Adshares\Supply\Application\Dto\Classification\Collection;
-use Adshares\Supply\Application\Dto\ClassifiedBanners;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -31,7 +30,6 @@ use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
 use Adshares\Supply\Application\Service\DemandClient;
-use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
@@ -45,33 +43,6 @@ final class InventoryImporterTest extends TestCase
         'B6454DBC67A94B108E3895700D570EF1' => null,
         'B6454DBC67A94B108E3895700D570EF2' => null,
     ];
-
-    public function testImportWhenDemandClientReturnsNoCampaigns(): void
-    {
-        $repository = $this->repositoryMock();
-        $demandClient = $this->clientMock();
-        $transactionManager = $this->transactionManagerMock();
-        $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
-        $classifierClient = $this->classifierClientMock();
-        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
-
-        $transactionManager
-            ->expects($this->never())
-            ->method('begin');
-
-        $inventoryImporter = new InventoryImporter(
-            $markCampaignAsDeletedService,
-            $repository,
-            $demandClient,
-            $classifierClient,
-            $signatureVerifier,
-            $transactionManager
-        );
-
-        $inventoryImporter->import('localhost:8101');
-
-        $this->doesNotPerformAssertions();
-    }
 
     public function testImportWhenDemandClientReturnsUnexpectedResponse(): void
     {
@@ -97,7 +68,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $this->doesNotPerformAssertions();
     }
@@ -174,7 +145,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();
@@ -213,7 +184,7 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101');
+        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();

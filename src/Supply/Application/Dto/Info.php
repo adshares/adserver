@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
@@ -49,20 +50,23 @@ final class Info
     /** @var array */
     private $capabilities;
 
-    /** @var string */
+    /** @var UrlInterface */
     private $panelUrl;
 
-    /** @var string */
+    /** @var UrlInterface */
     private $privacyUrl;
 
-    /** @var string */
+    /** @var UrlInterface */
     private $termsUrl;
 
-    /** @var string */
+    /** @var UrlInterface */
     private $inventoryUrl;
 
-    /** @var Url */
+    /** @var UrlInterface */
     private $serverUrl;
+
+    /** @var Email|null */
+    private $supportEmail;
 
     public function __construct(
         string $module,
@@ -73,6 +77,7 @@ final class Info
         UrlInterface $privacyUrl,
         UrlInterface $termsUrl,
         UrlInterface $inventoryUrl,
+        ?Email $supportEmail,
         string ...$capabilities
     ) {
         $this->validateCapabilities($capabilities);
@@ -86,6 +91,7 @@ final class Info
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
         $this->serverUrl = $serverUrl;
+        $this->supportEmail = $supportEmail;
     }
 
     public function validateCapabilities(array $values): void
@@ -100,6 +106,8 @@ final class Info
     /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
+        $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
+
         return new self(
             $data['module'] ?? $data['serviceType'],
             $data['name'],
@@ -109,13 +117,14 @@ final class Info
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
+            $email,
             ...$data['capabilities'] ?? $data['supported']
         );
     }
 
     public function toArray(): array
     {
-        return [
+        $data = [
             'module' => $this->module,
             'name' => $this->name,
             'version' => $this->version,
@@ -126,6 +135,12 @@ final class Info
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
         ];
+
+        if (null !== $this->supportEmail) {
+            $data['supportEmail'] = $this->supportEmail->toString();
+        }
+
+        return $data;
     }
 
     public function getTermsUrl(): string
