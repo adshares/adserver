@@ -20,23 +20,33 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\ViewModel;
+namespace Adshares\Adserver\Http\Response;
 
-use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Domain\ValueObject\License;
 use Illuminate\Contracts\Support\Arrayable;
 
-class OptionsSelector implements Arrayable
+class LicenseResponse implements Arrayable
 {
-    /** @var Selector */
-    private $selector;
+    /** @var License */
+    private $license;
 
-    public function __construct(Selector $selector)
-    {
-        $this->selector = $selector;
+    public function __construct(
+        License $license
+    ) {
+        $this->license = $license;
     }
 
     public function toArray(): array
     {
-        return $this->selector->toArrayRecursiveWithoutEmptyFields();
+        $licenseArray = $this->license->toArray();
+        $licenseArray['detailsUrl'] = sprintf('%s/license/%s', config('app.license_url'), $licenseArray['id']);
+
+        unset($licenseArray['paymentAddress']);
+        unset($licenseArray['paymentMessage']);
+        unset($licenseArray['fixedFee']);
+        unset($licenseArray['demandFee']);
+        unset($licenseArray['supplyFee']);
+
+        return $licenseArray;
     }
 }

@@ -5,12 +5,6 @@ source ${1}/_functions.sh --root
 TEMP_FILE="$(mktemp).txt"
 
 {
-test ${SKIP_BROADCAST:-0} -eq 0 && \
-    echo "0    */12 * * * php ${SERVICE_DIR}/artisan ads:broadcast-host            &> /dev/null"
-
-test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
-    echo "30   */6  * * * php ${SERVICE_DIR}/artisan ads:fetch-hosts               &> /dev/null"
-
     echo "*    *    * * * php ${SERVICE_DIR}/artisan ops:demand:inventory:import   &> /dev/null"
     echo "*    *    * * * php ${SERVICE_DIR}/artisan ops:adselect:inventory:export &> /dev/null"
 
@@ -34,6 +28,12 @@ test ${SKIP_COLD_WALLET:-0} -eq 0 && \
         echo "*/30 *    * * * php ${SERVICE_DIR}/artisan ops:wallet:transfer:cold      &> /dev/null"
         echo "*/30 *    * * * php ${SERVICE_DIR}/artisan ops:wallet:transfer:check     &> /dev/null"
     }
+
+test ${SKIP_BROADCAST:-0} -eq 0 && \
+    echo "0    */12 * * * php ${SERVICE_DIR}/artisan ads:broadcast-host            &> /dev/null"
+
+test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
+    echo "30   */6  * * * php ${SERVICE_DIR}/artisan ads:fetch-hosts               &> /dev/null"
 } | tee ${TEMP_FILE}
 
 crontab -u ${VENDOR_USER} ${TEMP_FILE}
