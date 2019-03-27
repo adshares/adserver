@@ -173,8 +173,9 @@ class CampaignsController extends Controller
                     'Banner (name: %s, type: %s) could not be added (%s).',
                     $banner['name'],
                     $banner['type'],
-                    $exception->getMessage())
-                );
+                    $exception->getMessage()
+                ));
+                
                 continue;
             }
 
