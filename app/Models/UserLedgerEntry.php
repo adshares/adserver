@@ -186,7 +186,7 @@ class UserLedgerEntry extends Model
         return self::blockedEntries()->where('user_id', $userId)->get();
     }
 
-    public static function blockedEntries()
+    private static function blockedEntries()
     {
         return self::where('status', self::STATUS_BLOCKED)
             ->where('type', self::TYPE_AD_EXPENSE);
