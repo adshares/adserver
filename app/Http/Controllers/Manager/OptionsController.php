@@ -38,16 +38,12 @@ class OptionsController extends Controller
 
     public function targeting(): JsonResponse
     {
-        $options = $this->optionsRepository->fetchTargetingOptions();
-
-        return self::json(new OptionsSelector($options));
+        return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()));
     }
 
     public function filtering(): JsonResponse
     {
-        $options = $this->optionsRepository->fetchFilteringOptions();
-
-        return self::json(new OptionsSelector($options));
+        return self::json(new OptionsSelector($this->optionsRepository->fetchFilteringOptions()));
     }
 
     public function languages(): JsonResponse
