@@ -170,6 +170,12 @@ class CampaignsController extends Controller
                     $content = ImageUploader::content($fileName);
                 }
             } catch (RuntimeException $exception) {
+                Log::debug(sprintf(
+                    'Banner (name: %s, type: %s) could not be added (%s).',
+                    $banner['name'],
+                    $banner['type'],
+                    $exception->getMessage())
+                );
                 continue;
             }
 
