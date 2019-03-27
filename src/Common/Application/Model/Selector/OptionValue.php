@@ -42,7 +42,7 @@ final class OptionValue
     {
         return [
             'label' => $this->label,
-            'value' => str_replace('-', '/', $this->value),
+            'value' => str_replace('-', '_', $this->value),
         ];
     }
 }

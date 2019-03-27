@@ -39,8 +39,8 @@ final class CampaignMapperTest extends TestCase
         string $dataName = ''
     ) {
         $this->campaignData = [
-            'id' => 1,
-            'uuid' => Uuid::v4(),
+            'id' => Uuid::v4(),
+            'demand_id' => Uuid::v4(),
             'publisher_id' => Uuid::v4(),
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),
@@ -56,7 +56,7 @@ final class CampaignMapperTest extends TestCase
             ],
             'banners' => [
                 [
-                    'uuid' => (string)Uuid::v4(),
+                    'id' => (string)Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -65,7 +65,7 @@ final class CampaignMapperTest extends TestCase
                     'height' => 90,
                 ],
                 [
-                    'uuid' => (string)Uuid::v4(),
+                    'id' => (string)Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -85,25 +85,27 @@ final class CampaignMapperTest extends TestCase
         parent::__construct($name, $data, $dataName);
     }
 
-    public function testMappignCampaign(): void
+    public function testMappingCampaign(): void
     {
         $expected = [
-            'campaign_id' => (string)$this->campaignData['uuid'],
+            'campaign_id' => (string)$this->campaignData['id'],
             'time_start' => $this->campaignData['date_start']->getTimestamp(),
             'time_end' => $this->campaignData['date_end']->getTimestamp(),
             'banners' => [
                 [
-                    'banner_id' => $this->campaignData['banners'][0]['uuid'],
+                    'banner_id' => $this->campaignData['banners'][0]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => 'image',
+                        'classification' => [],
                     ],
                 ],
                 [
-                    'banner_id' => $this->campaignData['banners'][1]['uuid'],
+                    'banner_id' => $this->campaignData['banners'][1]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => 'image',
+                        'classification' => [],
                     ],
                 ],
             ],
@@ -112,8 +114,8 @@ final class CampaignMapperTest extends TestCase
                 'adshares_address' => $this->campaignData['source_campaign']['address'],
             ],
             'filters' => [
-                'requires' => new stdClass(),
-                'excludes' => new stdClass(),
+                'require' => new stdClass(),
+                'exclude' => new stdClass(),
             ],
         ];
 
