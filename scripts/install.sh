@@ -76,8 +76,8 @@ else
 fi
 
 artisanCommand storage:link
-#artisanCommand ops:targeting-options:update
-#artisanCommand ops:filtering-options:update
+artisanCommand ops:targeting-options:update
+artisanCommand ops:filtering-options:update
 
 crontab -u ${INSTALLATION_USER} ./docker/cron/crontab-${VARIABLE_HOST}
 
