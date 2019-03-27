@@ -214,7 +214,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    private function getRedirectionUrlFromQuery(Request $request): ?string
+    private function getRedirectionUrlFromQuery(Request $request): string
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
@@ -222,6 +222,8 @@ class SupplyController extends Controller
 
             return $url;
         }
+
+        return '';
     }
 
     private function addQueryStringToUrl(Request $request, string $url): string
@@ -295,7 +297,8 @@ class SupplyController extends Controller
 
     private function validateEventRequest(Request $request): void
     {
-        if (!$request->query->has('ctx')
+        if (!$request->query->has('r')
+            || !$request->query->has('ctx')
             || !$request->query->has('cid')
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
