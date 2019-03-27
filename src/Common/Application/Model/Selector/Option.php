@@ -95,7 +95,7 @@ final class Option
 
     public function toArrayRecursiveWithoutEmptyFields(): array
     {
-        return array_filter(
+        return array_values(array_filter(
             [
                 'value_type' => $this->type,
                 'key' => $this->key,
@@ -106,7 +106,7 @@ final class Option
             ],
             function ($item) {
                 return !empty($item) || is_bool($item);
-            }
+            })
         );
     }
 
