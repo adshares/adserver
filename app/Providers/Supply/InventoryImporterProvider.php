@@ -47,7 +47,7 @@ class InventoryImporterProvider extends ServiceProvider
             function (Application $app) {
                 $campaignRepository = $app->make(CampaignRepository::class);
                 $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
-                $classifyPublicKey = config('app.classify_publisher_public_key');
+                $classifyPublicKey = config('app.classify_public_key');
 
                 return new InventoryImporter(
                     $markedCampaignsAsDeactivatedService,
