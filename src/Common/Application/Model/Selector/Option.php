@@ -86,9 +86,9 @@ final class Option
         return $this;
     }
 
-    public function withChildren(Selector $children): self
+    public function withSubSelector(Selector $subSelector): self
     {
-        $this->subSelector = $children;
+        $this->subSelector = $subSelector;
 
         return $this;
     }

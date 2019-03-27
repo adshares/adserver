@@ -166,7 +166,7 @@ final class Item
             $this->key,
             $this->label,
             false
-        ))->withChildren(new Selector(...$options));
+        ))->withSubSelector(new Selector(...$options));
     }
 
     public function withChildren(self...$children): self
