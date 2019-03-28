@@ -74,7 +74,7 @@ final class GuzzleAdUserClient implements AdUser
         try {
             $response = $this->client->post(
                 $path,
-                ['body' => $partialContext->adUserRequestBody()]
+                ['form_params' => $partialContext->adUserRequestBody()]
             );
 
             $context = json_decode((string)$response->getBody(), true);
