@@ -103,7 +103,7 @@ class SupplyController extends Controller
     {
         $params = [
             config('app.url'),
-            config('app.aduser_external_location'),
+            config('app.aduser_base_url'),
             '.'.config('app.adserver_id'),
         ];
 
@@ -329,7 +329,7 @@ class SupplyController extends Controller
 
         $adUserUrl = sprintf(
             '%s/register/%s/%s/%s.htm',
-            config('app.aduser_external_location'),
+            config('app.aduser_base_url'),
             urlencode(config('app.adserver_id')),
             $trackingId,
             $impressionId

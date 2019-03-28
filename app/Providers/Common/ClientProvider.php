@@ -92,7 +92,7 @@ final class ClientProvider extends ServiceProvider
                 return new GuzzleAdUserClient(new Client(
                     [
                         'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                        'base_uri' => config('app.aduser_internal_location'),
+                        'base_uri' => config('app.aduser_base_url'),
                         'timeout' => 1,
                     ]
                 ));
