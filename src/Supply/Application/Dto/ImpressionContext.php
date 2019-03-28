@@ -55,6 +55,15 @@ final class ImpressionContext
         return $new;
     }
 
+    public function toarray(): array
+    {
+        [
+            'site' => $this->site,
+            'device' => $this->device,
+            'user' => $this->user,
+        ];
+    }
+
     public function adUserRequestBody(): array
     {
         return [
