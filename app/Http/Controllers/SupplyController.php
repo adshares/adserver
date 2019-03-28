@@ -88,15 +88,13 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
-        $userContext = $contextProvider->getUserContext($partialImpressionContext);
+        $zones = Utils::decodeZones($data)['zones'];
+        $context = $this->getContext($request, $contextProvider, $data, $tid);
 
-        $banners = $bannerFinder->findBanners(
-            Utils::decodeZones($data)['zones'],
-            $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray())
-        );
-
-        return self::json($banners);
+        return self::json($bannerFinder->findBanners(
+            $zones,
+            $context
+        ));
     }
 
     public function findScript(Request $request): StreamedResponse
@@ -190,9 +188,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = $this->getContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -273,9 +269,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = $this->getContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -377,5 +371,18 @@ class SupplyController extends Controller
             'supply/why',
             $data
         );
+    }
+
+    private function getContext(
+        Request $request,
+        AdUser $contextProvider,
+        string $data = null,
+        string $tid = null
+    ): ImpressionContext {
+        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $userContext = $contextProvider->getUserContext($partialImpressionContext);
+        $context = $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+
+        return $context;
     }
 }
