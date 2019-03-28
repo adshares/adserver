@@ -91,7 +91,7 @@ return [
 
     'adpanel_url' => env('ADPANEL_URL'),
     'adserver_secret' => env('APP_KEY'),
-    'adserver_id' => env('ADSERVER_ID', 'a-name-that-does-not-collide'),
+    'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
     'terms_url' => $appUrl.'/policies/terms.html',
     'privacy_url' => $appUrl.'/policies/privacy.html',
@@ -109,11 +109,11 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
-    'classify_public_key' => env('CLASSIFY_PUBLIC_KEY',''),
+    'classify_public_key' => env('CLASSIFY_PUBLIC_KEY', ''),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'default_classify_namespace'),
-    'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY',''),
+    'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY', ''),
     'license_url' => env('ADSHARES_LICENSE_SERVER_URL'),
-    'license_key' => env('ADSHARES_LICENSE_SERVER_KEY'),
+    'license_key' => env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')),
     'license_id' => substr(env('ADSHARES_LICENSE_SERVER_KEY'), 0, 10),
 
     /*
