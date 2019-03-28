@@ -57,7 +57,7 @@ final class ImpressionContext
 
     public function toArray(): array
     {
-        [
+        return [
             'site' => $this->site,
             'device' => $this->device,
             'user' => $this->user,
