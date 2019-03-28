@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use DateTime;
 use Illuminate\Http\Request;
@@ -382,5 +383,18 @@ class Utils
         }
 
         return $context['page']['zone'];
+    }
+
+    public static function getFullContext(
+        Request $request,
+        AdUser $contextProvider,
+        string $data = null,
+        string $tid = null
+    ): ImpressionContext {
+        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $userContext = $contextProvider->getUserContext($partialImpressionContext);
+        $context = $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+
+        return $context;
     }
 }

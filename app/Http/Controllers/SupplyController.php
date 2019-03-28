@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
@@ -89,7 +88,7 @@ class SupplyController extends Controller
         }
 
         $zones = Utils::decodeZones($data)['zones'];
-        $context = $this->getFullContext($request, $contextProvider, $data, $tid);
+        $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
         return self::json($bannerFinder->findBanners(
             $zones,
@@ -188,7 +187,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = $this->getFullContext($request, $contextProvider);
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -269,7 +268,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = $this->getFullContext($request, $contextProvider);
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -371,18 +370,5 @@ class SupplyController extends Controller
             'supply/why',
             $data
         );
-    }
-
-    private function getFullContext(
-        Request $request,
-        AdUser $contextProvider,
-        string $data = null,
-        string $tid = null
-    ): ImpressionContext {
-        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
-        $userContext = $contextProvider->getUserContext($partialImpressionContext);
-        $context = $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
-
-        return $context;
     }
 }
