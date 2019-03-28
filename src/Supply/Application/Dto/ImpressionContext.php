@@ -30,8 +30,6 @@ use stdClass;
 
 final class ImpressionContext
 {
-    private const ACCIO = 'accio:';
-
     /** @var array */
     private $site;
 

@@ -72,7 +72,10 @@ final class GuzzleAdUserClient implements AdUser
         );
 
         try {
-            $response = $this->client->post($path, ['body' => $partialContext->adUserRequestBody()]);
+            $response = $this->client->post(
+                $path,
+                ['body' => $partialContext->adUserRequestBody()]
+            );
 
             $context = json_decode((string)$response->getBody(), true);
 
