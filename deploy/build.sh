@@ -16,9 +16,10 @@ composer install --no-dev
 yarn install
 yarn run prod
 
+artisanCommand config:cache || rm bootstrap/cache/config.php
+
 artisanCommand key:generate
 artisanCommand storage:link
-artisanCommand config:cache
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then

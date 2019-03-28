@@ -30,7 +30,6 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Infrastructure\Service\SodiumCompatClassifyVerifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
-use function var_dump;
 
 class InventoryImporterProvider extends ServiceProvider
 {
@@ -47,8 +46,7 @@ class InventoryImporterProvider extends ServiceProvider
             InventoryImporter::class,
             function (Application $app) {
                 $publicKey = config('app.classify_public_key');
-                var_dump($publicKey);
-                die;
+
                 return new InventoryImporter(
                     new MarkedCampaignsAsDeleted($app->make(CampaignRepository::class)),
                     $app->make(CampaignRepository::class),
