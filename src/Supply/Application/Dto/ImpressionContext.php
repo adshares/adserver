@@ -53,6 +53,7 @@ final class ImpressionContext
         return [
             'site' => $this->site,
             'device' => $this->device,
+            'headers' => $this->device['headers'] ?? [],
         ];
     }
 
@@ -62,11 +63,11 @@ final class ImpressionContext
 
         foreach ($zones as $requestId => $zone) {
             $params[] = [
-                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
+                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords'] ?? []),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->user['uid'],
+                'user_id' => $this->user['uid'] ?? '',
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }

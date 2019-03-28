@@ -62,7 +62,7 @@ class SupplyController extends Controller
         } elseif ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
         } elseif ('POST' === $request->getRealMethod()) {
-            $data = $request->getContent();
+            $data = (string)$request->getContent();
         } elseif ('OPTIONS' === $request->getRealMethod()) {
             $response->setStatusCode(Response::HTTP_NO_CONTENT);
             $response->headers->set('Access-Control-Max-Age', 1728000);
@@ -88,7 +88,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request, $data);
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
 
@@ -190,7 +190,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request);
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
@@ -273,7 +273,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
+        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request);
         $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
         $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
 
