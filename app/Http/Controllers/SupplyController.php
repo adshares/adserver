@@ -200,7 +200,7 @@ class SupplyController extends Controller
             $payFrom,
             $clientIpAddress,
             $requestHeaders,
-            $context->toarray(),
+            $context,
             NetworkEventLog::TYPE_CLICK
         );
 
@@ -281,7 +281,7 @@ class SupplyController extends Controller
             $payFrom,
             $clientIpAddress,
             $requestHeaders,
-            $context->toarray(),
+            $context,
             NetworkEventLog::TYPE_VIEW
         );
 

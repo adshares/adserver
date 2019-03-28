@@ -55,7 +55,7 @@ final class ImpressionContext
         return $new;
     }
 
-    public function toarray(): array
+    public function toArray(): array
     {
         [
             'site' => $this->site,
