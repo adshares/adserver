@@ -88,13 +88,13 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContextArray($request, $data);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
+        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
-        $zones = Utils::decodeZones($data)['zones'];
-
-        $banners = $bannerFinder->findBanners($zones, $context);
+        $banners = $bannerFinder->findBanners(
+            Utils::decodeZones($data)['zones'],
+            $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray())
+        );
 
         return self::json($banners);
     }

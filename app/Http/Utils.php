@@ -49,11 +49,14 @@ class Utils
 
     public const ENV_PROD = 'production';
 
-    public static function getImpressionContext(Request $request, $contextStr = null): ImpressionContext
-    {
+    public static function getPartialImpressionContext(
+        Request $request,
+        $contextStr = null,
+        $tid = null
+    ): ImpressionContext {
         $context = self::getImpressionContextArray($request, $contextStr);
 
-        return new ImpressionContext($context['site'], $context['device'], []);
+        return new ImpressionContext($context['site'], $context['device'], $tid ? ['uid' => $tid] : []);
     }
 
     public static function getImpressionContextArray(Request $request, $contextStr = null): array

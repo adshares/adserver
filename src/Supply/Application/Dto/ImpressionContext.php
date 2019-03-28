@@ -48,11 +48,21 @@ final class ImpressionContext
         $this->user = $user;
     }
 
+    public function withUserDataReplacedBy(array $userData): self
+    {
+        $new = clone $this;
+
+        $new->user = $userData;
+
+        return $new;
+    }
+
     public function adUserRequestBody(): array
     {
         return [
             'site' => $this->site,
             'device' => $this->device,
+            //BC with AdUser
             'headers' => $this->device['headers'] ?? [],
         ];
     }
