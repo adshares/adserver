@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source ${1}/_functions.sh --vendor
-[[ -z ${2:-""} ]] || cd $2
+# Usage: build.sh [<location-of-functions-file-to-include> [<work-dir>]]
+[[ -z ${1:-""} ]] && set -eu || source ${1}/_functions.sh --vendor
+cd ${2:-"."}
 
 export APP_VERSION=$(versionFromGit)
 
