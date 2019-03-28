@@ -81,7 +81,7 @@ final class GuzzleAdUserClient implements AdUser
             $context = json_decode((string)$response->getBody(), true);
 
             Log::debug(sprintf(
-                '{"url": "%s", "path": "%s", "request": "%s", "response": "%s"}',
+                '{"url": "%s", "path": "%s", "request": %s, "response": %s}',
                 (string)$this->client->getConfig('base_uri'),
                 $path,
                 (string)json_encode($partialContext->adUserRequestBody()),
