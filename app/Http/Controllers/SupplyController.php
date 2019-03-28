@@ -89,7 +89,7 @@ class SupplyController extends Controller
         }
 
         $zones = Utils::decodeZones($data)['zones'];
-        $context = $this->getContext($request, $contextProvider, $data, $tid);
+        $context = $this->getFullContext($request, $contextProvider, $data, $tid);
 
         return self::json($bannerFinder->findBanners(
             $zones,
@@ -188,7 +188,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = $this->getContext($request, $contextProvider);
+        $context = $this->getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -269,7 +269,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = $this->getContext($request, $contextProvider);
+        $context = $this->getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -373,7 +373,7 @@ class SupplyController extends Controller
         );
     }
 
-    private function getContext(
+    private function getFullContext(
         Request $request,
         AdUser $contextProvider,
         string $data = null,
