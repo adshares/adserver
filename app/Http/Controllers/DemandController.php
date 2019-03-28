@@ -45,6 +45,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function json_decode;
 
 /**
  * API commands used to serve banners and log relevant events.
@@ -345,10 +346,12 @@ class DemandController extends Controller
         $response->send();
 
         $context = Utils::urlSafeBase64Decode($request->query->get('k'));
+        $decodedContext = json_decode($context);
 
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $context;
+            $event->domain = $decodedContext->url ?? null;
             $event->save();
         } catch (ModelNotFoundException $e) {
             Log::warning($e->getMessage());
