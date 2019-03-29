@@ -67,10 +67,9 @@ final class ImpressionContext
     public function adUserRequestBody(): array
     {
         return [
-            'site' => $this->site,
-            'device' => $this->device,
-            //BC with AdUser
             'headers' => $this->device['headers'] ?? [],
+            'tags' => [],
+            'url' => '',
         ];
     }
 
