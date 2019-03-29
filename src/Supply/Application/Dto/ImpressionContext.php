@@ -132,6 +132,9 @@ final class ImpressionContext
             $this->device['headers'] ?? []
         );
 
+        //@deprecated Remove when AdUser upgraded
+        $headers['User-Agent'] = $this->device['ua'] ?? '';
+
         return $headers;
     }
 }
