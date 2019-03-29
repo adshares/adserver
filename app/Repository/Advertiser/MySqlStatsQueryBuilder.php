@@ -53,19 +53,20 @@ SQL;
 
     private const STATS_QUERY = <<<SQL
 SELECT
-  SUM(IF(e.event_type = 'click', 1, 0))                                                                   AS clicks,
-  SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
-  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                         AS cpc,
-  IFNULL(AVG(IF(e.event_type = 'view', e.event_value, NULL)), 0)*1000                                     AS cpm,
-  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                            AS cost
+  SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0))                                              AS clicks,
+  SUM(IF(e.event_type = 'view', 1, 0))                                                                        AS views,
+  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,
+  IFNULL(AVG(IF(e.event_type = 'click', e.event_value, NULL)), 0)                                             AS cpc,
+  IFNULL(AVG(IF(e.event_type = 'view', e.event_value, NULL)), 0)*1000                                         AS cpm,
+  SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0))                                                AS cost
   #campaignIdCol
   #bannerIdCol
+  #domainCol
 FROM event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.advertiser_id = :advertiserId
   #campaignIdWhereClause
-#campaignIdGroupBy #bannerIdGroupBy
+#campaignIdGroupBy #bannerIdGroupBy #domainGroupBy
 #having
 SQL;
 
@@ -153,6 +154,13 @@ SQL;
 
     public function build(): string
     {
+        $pattern = [
+            '#domainCol',
+            '#domainGroupBy',
+        ];
+
+        $this->query = str_replace($pattern, '', $this->query);
+
         return $this->query;
     }
 
@@ -274,6 +282,15 @@ SQL;
                 [$campaignIdCol, $campaignIdGroupBy, $having],
                 $this->query
             );
+
+        return $this;
+    }
+
+    public function appendDomainGroupBy(): self
+    {
+        $domainCol = ', e.domain AS domain';
+        $domainGroupBy = ', e.domain';
+        $this->query = str_replace(['#domainCol', '#domainGroupBy'], [$domainCol, $domainGroupBy], $this->query);
 
         return $this;
     }

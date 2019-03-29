@@ -53,19 +53,20 @@ SQL;
 
     private const STATS_QUERY = <<<SQL
 SELECT
-  SUM(IF(e.event_type = 'click', 1, 0))                                                                   AS clicks,
-  SUM(IF(e.event_type = 'view', 1, 0))                                                                    AS views,
-  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked) THEN 1 ELSE 0 END), 0) AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                         AS rpc,
-  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                     AS rpm,
-  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                            AS revenue
+  SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0))                                              AS clicks,
+  SUM(IF(e.event_type = 'view', 1, 0))                                                                        AS views,
+  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,
+  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                             AS rpc,
+  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                         AS rpm,
+  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                                AS revenue
   #siteIdCol
   #zoneIdCol
+  #domainCol
 FROM network_event_logs e
 WHERE e.created_at BETWEEN :dateStart AND :dateEnd
   AND e.publisher_id = :publisherId
   #siteIdWhereClause
-#siteIdGroupBy #zoneIdGroupBy
+#siteIdGroupBy #zoneIdGroupBy #domainGroupBy
 #having
 SQL;
 
@@ -153,6 +154,12 @@ SQL;
 
     public function build(): string
     {
+        $pattern = [
+            '#domainCol',
+            '#domainGroupBy',
+        ];
+
+        $this->query = str_replace($pattern, '', $this->query);
         return $this->query;
     }
 
@@ -273,6 +280,15 @@ SQL;
                 [$siteIdCol, $siteIdGroupBy, $having],
                 $this->query
             );
+
+        return $this;
+    }
+
+    public function appendDomainGroupBy(): self
+    {
+        $domainCol = ', e.domain AS domain';
+        $domainGroupBy = ', e.domain';
+        $this->query = str_replace(['#domainCol', '#domainGroupBy'], [$domainCol, $domainGroupBy], $this->query);
 
         return $this;
     }

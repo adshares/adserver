@@ -219,6 +219,42 @@ class MySqlStatsRepository implements StatsRepository
         return new Total($calculation, $siteId);
     }
 
+    public function fetchStatsToReport(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): DataCollection {
+        $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendSiteIdWhereClause($siteId)
+            ->appendSiteIdGroupBy(true)
+            ->appendZoneIdGroupBy($siteId)
+            ->appendDomainGroupBy()
+            ->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = [];
+        foreach ($queryResult as $row) {
+            $calculation = new Calculation(
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->rpc,
+                (float)$row->rpm,
+                (int)$row->revenue,
+                $row->domain
+            );
+
+            $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
+        }
+
+        return new DataCollection($result);
+    }
+
     private function fetch(
         string $type,
         string $publisherId,

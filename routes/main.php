@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/',
@@ -34,3 +35,5 @@ Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'upload
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
+
+Route::get('/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
