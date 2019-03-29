@@ -21,11 +21,6 @@ var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
-if(window['serverOrigin:' + serverOrigin]) {
-    return;
-}
-window['serverOrigin:' + serverOrigin] = 1;
-
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -207,9 +202,42 @@ function isRendered(domObj) {
     return true;
 }
 
-function getBoundRect(el) {
+function isNumber(x)
+{
+    return !isNaN(1*x);
+}
+
+var DocElem = function( property )
+{
+    var t
+    return ((t = document.documentElement) || (t = document.body.parentNode)) && isNumber( t[property] ) ? t : document.body
+}
+
+var viewSize = function ()
+{
+    var doc = DocElem( 'clientWidth' ),
+        body = document.body,
+        w, h
+    return isNumber( document.clientWidth ) ? { w : document.clientWidth, h : document.clientHeight } :
+        doc === body
+        || (w = Math.max( doc.clientWidth, body.clientWidth )) > self.innerWidth
+        || (h = Math.max( doc.clientHeight, body.clientHeight )) > self.innerHeight ? { w : body.clientWidth, h : body.clientHeight } :
+            { w : w, h : h }
+}
+
+function getBoundRect(el, overflow) {
     var left = 0, top = 0;
     var width = el.offsetWidth, height = el.offsetHeight;
+
+    if(overflow) {
+        var css = window.getComputedStyle(el);
+        if (css.overflowX == 'visible') {
+            width = 100000;
+        }
+        if (css.overflowY == 'visible') {
+            height = 100000;
+        }
+    }
 
     do {
         left += el.offsetLeft - el.scrollLeft;
@@ -238,7 +266,7 @@ var isVisible = function (el) {
         width = rect.width,
         el = el.parentNode;
     while (el != document.body) {
-        rect = getBoundRect(el);
+        rect = getBoundRect(el, true);
         if (top <= rect.bottom === false)
             return false;
         if (left <= rect.right === false)
@@ -250,10 +278,12 @@ var isVisible = function (el) {
             return false;
         el = el.parentNode;
     }
+
+    var viewsize = viewSize();
     // Check its within the document viewport
-    return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
+    return top <= viewsize.h
         && top > -height
-        && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
+        && left <= viewsize.w
         && left > -width;
 };
 
@@ -341,6 +371,10 @@ domReady(function () {
 
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
+        if(tag.__dwmth) {
+            continue;
+        }
+        tag.__dwmth = 1;
         param = {};
         param.width = parseInt(tag.offsetWidth) || parseInt(tag.style.width);
         param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height);
