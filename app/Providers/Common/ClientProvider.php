@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\DummyExchangeRateExternalProvider;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
@@ -31,12 +32,17 @@ use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
+use Adshares\Adserver\Repository\Common\ExchangeRateRepositoryImpl;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
+use Adshares\Common\Application\Service\ExchangeRateProvider;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -141,6 +147,30 @@ final class ClientProvider extends ServiceProvider
                         ]
                     ),
                     (string)config('app.license_id')
+                );
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateExternalProvider::class,
+            function () {
+                return new DummyExchangeRateExternalProvider();
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () {
+                return new ExchangeRateRepositoryImpl();
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateProvider::class,
+            function (Application $app) {
+                return new ExchangeRateReader(
+                    $app->make(ExchangeRateRepository::class),
+                    $app->make(ExchangeRateExternalProvider::class)
                 );
             }
         );

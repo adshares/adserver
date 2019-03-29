@@ -1,0 +1,41 @@
+<?php
+/**
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
+declare(strict_types = 1);
+
+namespace Adshares\Adserver\Client;
+
+use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
+use DateTime;
+
+class DummyExchangeRateExternalProvider implements ExchangeRateExternalProvider
+{
+    private const STABLE_RATE = '0.3333';
+
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
+    {
+        // TODO replace with $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime); when PR #556 will be merged
+        $date = clone $dateTime;
+        $date->setTime((int)$date->format("H"), 0, 0);
+
+        return new FetchedExchangeRate($date, self::STABLE_RATE, $currency);
+    }
+}
