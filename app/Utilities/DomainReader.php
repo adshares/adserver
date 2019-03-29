@@ -23,13 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Utilities;
 
 use function parse_url;
+use const PHP_URL_HOST;
 
 class DomainReader
 {
     public static function domain(string $url): string
     {
-        $parsed = parse_url($url);
-
-        return $parsed['host'];
+        return parse_url($url, PHP_URL_HOST);
     }
 }
