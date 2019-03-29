@@ -76,7 +76,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
 
-    banner.adsharesTrackAccess = [];
+    banner.dwmthACL = [];
     if (element.tagName == 'IFRAME') {
 
         prepareIframe(element);
@@ -89,11 +89,11 @@ var prepareElement = function (context, banner, element, contextParam) {
                 } else {
                     data = event.data;
                 }
-                if (data.adsharesLoad) {
-                    var msg = {adsharesLoad: 1, data: context};
+                if (data.dwmthLoad) {
+                    var msg = {dwmthLoad: 1, data: context};
 
                     event.source.postMessage(isString ? JSON.stringify(msg) : msg, '*');
-                } else if (data.adsharesClick) {
+                } else if (data.dwmthClick) {
                     if (document.activeElement != element) {
                         console.log('click without mouse interaction');
                         return;
@@ -112,7 +112,7 @@ var prepareElement = function (context, banner, element, contextParam) {
             }
 
             var has_access = event.source === element.contentWindow;
-            has_access || banner.adsharesTrackAccess.forEach(function(win) {
+            has_access || banner.dwmthACL.forEach(function(win) {
                 if(win === event.source) {
                     has_access = true;
                 }
@@ -125,15 +125,15 @@ var prepareElement = function (context, banner, element, contextParam) {
                 } else {
                     data = event.data;
                 }
-                if (data.adsharesTrack) {
-                    data.adsharesTrack.forEach(function (request) {
-                        if(banner.adsharesTrackAccess.length >= 5) return;
+                if (data.dwmthTrack) {
+                    data.dwmthTrack.forEach(function (request) {
+                        if(banner.dwmthACL.length >= 5) return;
                         if(request.type == 'iframe') {
                             var iframe = addTrackingIframe(request.url, div);
-                            banner.adsharesTrackAccess.push(iframe.contentWindow);
+                            banner.dwmthACL.push(iframe.contentWindow);
                         } else if(request.type == 'img') {
                             addTrackingImage(request.url, div);
-                            banner.adsharesTrackAccess.push('img');
+                            banner.dwmthACL.push('img');
                         }
 
                     });
@@ -487,7 +487,7 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                banner.adsharesTrackAccess.push(addTrackingIframe(context.view_url, element).contentWindow);
+                banner.adsharesACL.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
