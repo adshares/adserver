@@ -40,10 +40,6 @@ class Utils
 
     private const ZONE_GLUE = "\n";
 
-    private const VALUE_MIN = "\x00";
-
-    private const VALUE_MAX = "\xFF";
-
     private const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public const ENV_DEV = 'local';
@@ -393,8 +389,7 @@ class Utils
     ): ImpressionContext {
         $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($partialImpressionContext);
-        $context = $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
 
-        return $context;
+        return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 }

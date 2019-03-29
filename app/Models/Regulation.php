@@ -35,13 +35,17 @@ class Regulation extends Model
 
     public const TYPE_PRIVACY_POLICY = 'privacy policy';
 
+    private const FIELD_CONTENT = 'content';
+
+    private const FIELD_TYPE = 'type';
+
     protected $fillable = [
-        'type',
-        'content',
+        self::FIELD_TYPE,
+        self::FIELD_CONTENT,
     ];
 
     protected $visible = [
-        'content',
+        self::FIELD_CONTENT,
     ];
 
     private static function construct(string $type, string $content): self
@@ -49,9 +53,9 @@ class Regulation extends Model
         DB::beginTransaction();
 
         try {
-            self::where('type', $type)->delete();
+            self::where(self::FIELD_TYPE, $type)->delete();
 
-            $regulation = new self(['type' => $type, 'content' => $content]);
+            $regulation = new self([self::FIELD_TYPE => $type, self::FIELD_CONTENT => $content]);
             $regulation->save();
         } catch (QueryException $queryException) {
             DB::rollBack();
@@ -66,7 +70,7 @@ class Regulation extends Model
 
     private static function fetch(string $type): self
     {
-        return self::where('type', $type)->firstOrFail();
+        return self::where(self::FIELD_TYPE, $type)->firstOrFail();
     }
 
     public static function addTerms(string $terms): self
