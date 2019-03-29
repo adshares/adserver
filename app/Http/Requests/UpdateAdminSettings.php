@@ -10,6 +10,33 @@ use Adshares\Common\Domain\ValueObject\Email;
 
 class UpdateAdminSettings extends FormRequest
 {
+    private const FIELD_HOT_WALLET_IS_ACTIVE = 'hotwallet_is_active';
+
+    private const FIELD_HOT_WALLET_MAX_VALUE = 'hotwallet_max_value';
+
+    private const FIELD_HOT_WALLET_MIN_VALUE = 'hotwallet_min_value';
+
+    private const FIELD_HOT_WALLET_ADDRESS = 'hotwallet_address';
+
+    private const FIELD_ADSERVER_NAME = 'adserver_name';
+
+    private const FIELD_TECHNICAL_EMAIL = 'technical_email';
+
+    private const FIELD_SUPPORT_EMAIL = 'support_email';
+
+    private const FIELD_ADVERTISER_COMMISSION = 'advertiser_commission';
+
+    private const FIELD_PUBLISHER_COMMISSION = 'publisher_commission';
+
+    private const SETTINGS = 'settings';
+
+    private const PREFIX_SETTINGS = self::SETTINGS.'.';
+
+    private const RULE_REQUIRED_IF_HOT_WALLET_IS_ACTIVE = 'required_if:'
+    .self::PREFIX_SETTINGS
+    .self::FIELD_HOT_WALLET_IS_ACTIVE
+    .',1';
+
     /**
      * Prepare the data for validation.
      *
@@ -18,14 +45,18 @@ class UpdateAdminSettings extends FormRequest
     protected function prepareForValidation(): void
     {
         $input = $this->all();
-        $settings = $input['settings'];
-        $isHotWalletActive = (bool)$settings['hotwallet_is_active'];
+        $settings = $input[self::SETTINGS];
+        $isHotWalletActive = (bool)$settings[self::FIELD_HOT_WALLET_IS_ACTIVE];
 
         if ($isHotWalletActive === false) {
-            unset($settings['hotwallet_min_value'], $settings['hotwallet_max_value'], $settings['hotwallet_address']);
+            unset(
+                $settings[self::FIELD_HOT_WALLET_MIN_VALUE],
+                $settings[self::FIELD_HOT_WALLET_MAX_VALUE],
+                $settings[self::FIELD_HOT_WALLET_ADDRESS]
+            );
         }
 
-        $this->replace(['settings' => $settings]);
+        $this->replace([self::SETTINGS => $settings]);
     }
 
     /**
@@ -38,61 +69,64 @@ class UpdateAdminSettings extends FormRequest
         $blacklistedAccountIds = [new AccountId(config('app.adshares_address'))];
 
         return [
-            'settings.hotwallet_is_active' => 'required|boolean',
-            'settings.hotwallet_min_value' => [
-                'required_if:settings.hotwallet_is_active,1',
+            self::PREFIX_SETTINGS.self::FIELD_HOT_WALLET_IS_ACTIVE => 'required|boolean',
+            self::PREFIX_SETTINGS.self::FIELD_HOT_WALLET_MIN_VALUE => [
+                self::RULE_REQUIRED_IF_HOT_WALLET_IS_ACTIVE,
                 'integer',
                 'min:0',
                 'max:100000000000000000',
             ],
-            'settings.hotwallet_max_value' => [
-                'required_if:settings.hotwallet_is_active,1',
+            self::PREFIX_SETTINGS.self::FIELD_HOT_WALLET_MAX_VALUE => [
+                self::RULE_REQUIRED_IF_HOT_WALLET_IS_ACTIVE,
                 'integer',
                 'min:1',
                 'max:100000000000000000',
                 'gt:settings.hotwallet_min_value',
             ],
-            'settings.hotwallet_address' => [
-                'required_if:settings.hotwallet_is_active,1',
+            self::PREFIX_SETTINGS.self::FIELD_HOT_WALLET_ADDRESS => [
+                self::RULE_REQUIRED_IF_HOT_WALLET_IS_ACTIVE,
                 new AccountIdRule($blacklistedAccountIds),
             ],
-            'settings.adserver_name' => 'required|string|max:255',
-            'settings.technical_email' => 'required|email|max:255',
-            'settings.support_email' => 'required|email|max:255',
-            'settings.advertiser_commission' => 'numeric|between:0,1|nullable',
-            'settings.publisher_commission' => 'numeric|between:0,1|nullable',
+            self::PREFIX_SETTINGS.self::FIELD_ADSERVER_NAME => 'required|string|max:255',
+            self::PREFIX_SETTINGS.self::FIELD_TECHNICAL_EMAIL => 'required|email|max:255',
+            self::PREFIX_SETTINGS.self::FIELD_SUPPORT_EMAIL => 'required|email|max:255',
+            self::PREFIX_SETTINGS.self::FIELD_ADVERTISER_COMMISSION => 'numeric|between:0,1|nullable',
+            self::PREFIX_SETTINGS.self::FIELD_PUBLISHER_COMMISSION => 'numeric|between:0,1|nullable',
         ];
     }
 
     public function toConfigFormat(): array
     {
-        $values = $this->validated()['settings'];
+        $values = $this->validated()[self::SETTINGS];
 
         $data = [
-            Config::HOT_WALLET_IS_ACTIVE => (int)$values['hotwallet_is_active'],
-            Config::ADSERVER_NAME => (string)$values['adserver_name'],
-            Config::TECHNICAL_EMAIL => (new Email($values['technical_email']))->toString(),
-            Config::SUPPORT_EMAIL => (new Email($values['support_email']))->toString(),
+            Config::HOT_WALLET_IS_ACTIVE => (int)$values[self::FIELD_HOT_WALLET_IS_ACTIVE],
+            Config::ADSERVER_NAME => (string)$values[self::FIELD_ADSERVER_NAME],
+            Config::TECHNICAL_EMAIL => (new Email($values[self::FIELD_TECHNICAL_EMAIL]))->toString(),
+            Config::SUPPORT_EMAIL => (new Email($values[self::FIELD_SUPPORT_EMAIL]))->toString(),
         ];
 
-        if (isset($values['hotwallet_min_value'])) {
-            $data[Config::HOT_WALLET_MIN_VALUE] = (int)$values['hotwallet_min_value'];
+        if (isset($values[self::FIELD_HOT_WALLET_MIN_VALUE])) {
+            $data[Config::HOT_WALLET_MIN_VALUE] = (int)$values[self::FIELD_HOT_WALLET_MIN_VALUE];
         }
 
-        if (isset($values['hotwallet_max_value'])) {
-            $data[Config::HOT_WALLET_MAX_VALUE] = (int)$values['hotwallet_max_value'];
+        if (isset($values[self::FIELD_HOT_WALLET_MAX_VALUE])) {
+            $data[Config::HOT_WALLET_MAX_VALUE] = (int)$values[self::FIELD_HOT_WALLET_MAX_VALUE];
         }
 
-        if (isset($values['hotwallet_address'])) {
-            $data[Config::HOT_WALLET_ADDRESS] = (new AccountId((string)$values['hotwallet_address']))->toString();
+        if (isset($values[self::FIELD_HOT_WALLET_ADDRESS])) {
+            $data[Config::HOT_WALLET_ADDRESS] =
+                (new AccountId((string)$values[self::FIELD_HOT_WALLET_ADDRESS]))->toString();
         }
 
-        if (isset($values['advertiser_commission'])) {
-            $data[Config::OPERATOR_TX_FEE] = (new Commission((float)$values['advertiser_commission']))->getValue();
+        if (isset($values[self::FIELD_ADVERTISER_COMMISSION])) {
+            $data[Config::OPERATOR_TX_FEE] =
+                (new Commission((float)$values[self::FIELD_ADVERTISER_COMMISSION]))->getValue();
         }
 
-        if (isset($values['publisher_commission'])) {
-            $data[Config::OPERATOR_RX_FEE] = (new Commission((float)$values['publisher_commission']))->getValue();
+        if (isset($values[self::FIELD_PUBLISHER_COMMISSION])) {
+            $data[Config::OPERATOR_RX_FEE] =
+                (new Commission((float)$values[self::FIELD_PUBLISHER_COMMISSION]))->getValue();
         }
 
         return $data;
