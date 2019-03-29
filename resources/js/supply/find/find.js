@@ -120,8 +120,8 @@ var prepareElement = function (context, banner, element, contextParam) {
                 } else {
                     data = event.data;
                 }
-                if (data.dwmthTrack) {
-                    data.dwmthTrack.forEach(function (request) {
+                if (data.insertElem) {
+                    data.insertElem.forEach(function (request) {
                         if(banner.dwmthACL.length >= 5) return;
                         if(request.type == 'iframe') {
                             var iframe = addTrackingIframe(request.url, div);
