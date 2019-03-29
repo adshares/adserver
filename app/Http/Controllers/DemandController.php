@@ -242,7 +242,7 @@ class DemandController extends Controller
             $payTo,
             $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
         );
@@ -317,7 +317,7 @@ class DemandController extends Controller
             $payTo,
             $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
         );
