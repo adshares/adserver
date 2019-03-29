@@ -113,7 +113,7 @@ var prepareElement = function (context, banner, element, contextParam) {
 
             var has_access = event.source === element.contentWindow;
             has_access || banner.dwmthACL.forEach(function(win) {
-                if(win === event.source) {
+                if(win && (win === event.source)) {
                     has_access = true;
                 }
             });
@@ -133,7 +133,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                             banner.dwmthACL.push(iframe.contentWindow);
                         } else if(request.type == 'img') {
                             addTrackingImage(request.url, div);
-                            banner.dwmthACL.push('img');
+                            banner.dwmthACL.push(null);
                         }
 
                     });
