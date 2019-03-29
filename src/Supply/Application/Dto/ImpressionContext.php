@@ -27,6 +27,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use stdClass;
+use function array_pop;
 
 final class ImpressionContext
 {
@@ -67,10 +68,9 @@ final class ImpressionContext
     public function adUserRequestBody(): array
     {
         return [
-            'site' => $this->site,
-            'device' => $this->device,
-            //BC with AdUser
-            'headers' => $this->device['headers'] ?? [],
+            'url' => $this->site['page'] ?? [],
+            'tags' => $this->site['keywords'] ?? [],
+            'headers' => $this->headers(),
         ];
     }
 
@@ -121,5 +121,17 @@ final class ImpressionContext
             'device' => $this->device,
             'user' => $this->user,
         ];
+    }
+
+    private function headers(): array
+    {
+        $headers = array_map(
+            function ($items) {
+                return array_pop($items) ?? $items;
+            },
+            $this->device['headers'] ?? []
+        );
+
+        return $headers;
     }
 }
