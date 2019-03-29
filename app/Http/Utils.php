@@ -393,8 +393,7 @@ class Utils
     ): ImpressionContext {
         $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($partialImpressionContext);
-        $context = $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
 
-        return $context;
+        return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 }
