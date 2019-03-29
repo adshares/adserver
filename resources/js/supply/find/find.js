@@ -487,7 +487,7 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                banner.adsharesACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                banner.dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
