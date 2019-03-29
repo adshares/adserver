@@ -17,7 +17,7 @@ composer install --no-dev
 yarn install
 yarn run prod
 
-rm bootstrap/cache/config.php
+rm -f bootstrap/cache/config.php
 artisanCommand config:cache
 
 artisanCommand key:generate
