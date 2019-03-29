@@ -182,7 +182,7 @@ class NetworkEventLog extends Model
 
         $banner = Banner::fetchBanner($bannerId);
         $landingUrl = $banner->campaign->landing_url ?? null;
-        $domain = isset($landingUrl) ? DomainReader::domain($landingUrl) : null;
+        $domain = $landingUrl ? DomainReader::domain($landingUrl) : null;
 
         $log = new self();
         $log->case_id = $caseId;
