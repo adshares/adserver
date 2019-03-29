@@ -492,8 +492,8 @@ var fetchBanner = function (banner, context) {
         };
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
-                if (hash === null || hash == banner.creative_sha1) {
-                    if(hash === null) {
+                if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
+                    if(hash === 'NO_SUPPORT') {
                         console.log('warning: hash not checked');
                     }
                     fn();

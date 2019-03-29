@@ -14,10 +14,10 @@ var sha1 = function (data, callback) {
         crypto.subtle.digest('SHA-1', data).then(function(hash) {
             callback(hex(hash));
         }).catch(function(error) {
-            callback(null);
+            callback('NO_SUPPORT');
         });
     } catch(e) {
-        callback(null);
+        callback('NO_SUPPORT');
     }
 
     running.shift();
