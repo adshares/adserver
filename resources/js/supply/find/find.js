@@ -113,7 +113,7 @@ var prepareElement = function (context, banner, element, contextParam) {
 
             var has_access = event.source === element.contentWindow;
             has_access || banner.dwmthACL.forEach(function(win) {
-                if(win === event.source) {
+                if(win && (win === event.source)) {
                     has_access = true;
                 }
             });
@@ -133,7 +133,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                             banner.dwmthACL.push(iframe.contentWindow);
                         } else if(request.type == 'img') {
                             addTrackingImage(request.url, div);
-                            banner.dwmthACL.push('img');
+                            banner.dwmthACL.push(null);
                         }
 
                     });
@@ -487,12 +487,15 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                banner.adsharesACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                banner.dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
-                if (hash == banner.creative_sha1) {
+                if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
+                    if(hash === 'NO_SUPPORT') {
+                        console.log('warning: hash not checked');
+                    }
                     fn();
                 } else {
                     console.log('hash error', banner, hash);
