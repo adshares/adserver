@@ -22,17 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use stdClass;
-use function array_filter;
-use function GuzzleHttp\json_encode;
 
 final class ImpressionContext
 {
-    private const ACCIO = 'accio:';
-
     /** @var array */
     private $site;
 
@@ -44,71 +41,36 @@ final class ImpressionContext
 
     public function __construct(array $site, array $device, array $user)
     {
-        if (config('app.env') === Utils::ENV_DEV) {
-            [$user, $site] = $this->accioFilter($user, $site);
-        }
-
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
     }
 
-    /** @deprecated
-     * @param array $user
-     * @param array $site
-     *
-     * @return array
-     */
-    private function accioFilter(array $user, array $site): array
+    public function withUserDataReplacedBy(array $userData): self
     {
-        if (!isset($site['keywords'])) {
-            return [$user, $site];
-        }
+        $new = clone $this;
 
-        $userKeywords = array_filter(
-            $site['keywords'],
-            function (string $keyword) {
-                return stripos($keyword, self::ACCIO) === 0;
-            }
-        );
+        $new->user = $userData;
 
-        if (!isset($user['keywords']['interest'])) {
-            $user['keywords']['interest'] = [];
-        }
-
-        foreach ($userKeywords as $keyword) {
-            $user['keywords']['interest'][] = str_replace(self::ACCIO, '', $keyword);
-        }
-
-        $site['keywords'] = array_filter(
-            $site['keywords'],
-            function (string $keyword) {
-                return stripos($keyword, self::ACCIO) !== 0;
-            }
-        );
-
-        return [$user, $site];
+        return $new;
     }
 
-    public function adUserRequestBody(): string
-    {
-        $uid = config('app.adserver_id').'_'.$this->user['uid'];
-
-        return $this->toJson($uid);
-    }
-
-    private function toJson(string $uid): string
-    {
-        return json_encode($this->toArray($uid));
-    }
-
-    public function toArray(string $uid = null): array
+    public function toArray(): array
     {
         return [
-            'domain' => $this->site['domain'],
-            'ip' => $this->device['ip'],
-            'ua' => $this->device['ua'],
-            'uid' => $uid ?? $this->userId(),
+            'site' => $this->site,
+            'device' => $this->device,
+            'user' => $this->user,
+        ];
+    }
+
+    public function adUserRequestBody(): array
+    {
+        return [
+            'site' => $this->site,
+            'device' => $this->device,
+            //BC with AdUser
+            'headers' => $this->device['headers'] ?? [],
         ];
     }
 
@@ -118,11 +80,11 @@ final class ImpressionContext
 
         foreach ($zones as $requestId => $zone) {
             $params[] = [
-                'keywords' => $this->user['keywords'],
+                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords'] ?? []),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->user['uid'],
+                'user_id' => $this->user['uid'] ?? '',
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }

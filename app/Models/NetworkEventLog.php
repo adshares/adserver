@@ -26,6 +26,8 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
+use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -169,7 +171,7 @@ class NetworkEventLog extends Model
         string $payFrom,
         $ip,
         $headers,
-        array $context,
+        ImpressionContext $context,
         $type
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
@@ -179,7 +181,8 @@ class NetworkEventLog extends Model
         }
 
         $banner = Banner::fetchBanner($bannerId);
-        $domain = $banner->campaign->landing_url ?? null;
+        $landingUrl = $banner->campaign->landing_url ?? null;
+        $domain = $landingUrl ? DomainReader::domain($landingUrl) : null;
 
         $log = new self();
         $log->case_id = $caseId;
@@ -193,7 +196,7 @@ class NetworkEventLog extends Model
         $log->ip = $ip;
         $log->headers = $headers;
         $log->event_type = $type;
-        $log->context = $context;
+        $log->context = $context->toArray();
         $log->domain = $domain;
         $log->save();
     }

@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
@@ -242,7 +243,7 @@ class DemandController extends Controller
             $payTo,
             $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
         );
@@ -317,7 +318,7 @@ class DemandController extends Controller
             $payTo,
             $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
         );
@@ -351,7 +352,7 @@ class DemandController extends Controller
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $context;
-            $event->domain = $decodedContext->url ?? null;
+            $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
             $event->save();
         } catch (ModelNotFoundException $e) {
             Log::warning($e->getMessage());
