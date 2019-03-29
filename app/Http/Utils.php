@@ -21,10 +21,10 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use DateTime;
 use Illuminate\Http\Request;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use function is_string;
