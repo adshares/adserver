@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -180,7 +181,8 @@ class NetworkEventLog extends Model
         }
 
         $banner = Banner::fetchBanner($bannerId);
-        $domain = $banner->campaign->landing_url ?? null;
+        $landingUrl = $banner->campaign->landing_url ?? null;
+        $domain = isset($landingUrl) ? DomainReader::domain($landingUrl) : null;
 
         $log = new self();
         $log->case_id = $caseId;
