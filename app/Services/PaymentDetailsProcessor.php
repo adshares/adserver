@@ -55,10 +55,7 @@ class PaymentDetailsProcessor
     {
         $amountReceived = $this->getPaymentAmount($adsPaymentId);
 
-        $licenceAccount = Config::getLicenceAccount();
-        if ($licenceAccount === null) {
-            throw new MissingInitialConfigurationException('No config entry for licence account.');
-        }
+        $licenseAccount = $this->licenseFeeReader->getAddress()->toString();
 
         $licenceFee = $this->licenseFeeReader->getFee(Config::LICENCE_RX_FEE);
         if ($licenceFee === null) {
@@ -114,7 +111,7 @@ class PaymentDetailsProcessor
             }
 
             NetworkPayment::registerNetworkPayment(
-                $licenceAccount,
+                $licenseAccount,
                 $this->adServerAddress,
                 $totalLicenceFee,
                 $adsPaymentId

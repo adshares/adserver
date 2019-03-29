@@ -59,6 +59,7 @@ class DemandPreparePayments extends Command
             return;
         }
 
+        $licenseAccountAddress = $this->licenseFeeReader->getAddress();
         $demandFee = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
         $groupedEvents = $events->each(function (EventLog $entry) use ($demandFee) {
             $entry->licence_fee = (int)floor($entry->event_value * $demandFee);
@@ -91,7 +92,7 @@ class DemandPreparePayments extends Command
         });
 
         $licencePayment = new Payment([
-            'account_address' => Config::fetch(Config::LICENCE_ACCOUNT),
+            'account_address' => $licenseAccountAddress,
             'state' => Payment::STATE_NEW,
             'completed' => 0,
             'fee' => $payments->sum(function (Payment $payment) {
