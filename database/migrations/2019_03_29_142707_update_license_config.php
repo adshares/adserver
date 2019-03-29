@@ -21,7 +21,7 @@
 use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
 
-class UpdateLicenseAddress extends Migration
+class UpdateLicenseConfig extends Migration
 {
     private const CE_LICENSE_ACCOUNT = '0001-00000024-FF89';
 
@@ -33,6 +33,22 @@ class UpdateLicenseAddress extends Migration
             ],
             [
                 'value' => self::CE_LICENSE_ACCOUNT,
+            ]
+        );
+        Config::updateOrCreate(
+            [
+                'key' => Config::LICENCE_TX_FEE,
+            ],
+            [
+                'value' => '0.01',
+            ]
+        );
+        Config::updateOrCreate(
+            [
+                'key' => Config::LICENCE_RX_FEE,
+            ],
+            [
+                'value' => '0.01',
             ]
         );
     }
