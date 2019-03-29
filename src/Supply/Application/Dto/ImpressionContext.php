@@ -27,7 +27,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use stdClass;
-use function array_pop;
+use function array_shift;
 
 final class ImpressionContext
 {
@@ -127,7 +127,7 @@ final class ImpressionContext
     {
         $headers = array_map(
             function ($items) {
-                return array_pop($items) ?? $items;
+                return array_shift($items) ?? $items;
             },
             $this->device['headers'] ?? []
         );
