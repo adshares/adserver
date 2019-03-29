@@ -111,9 +111,9 @@ var prepareElement = function (context, banner, element, contextParam) {
                 }
             }
 
-            var has_access = event.source == element.contentWindow;
+            var has_access = event.source === element.contentWindow;
             has_access || banner.adsharesTrackAccess.forEach(function(win) {
-                if(win == event.source) {
+                if(win === event.source) {
                     has_access = true;
                 }
             });
@@ -430,7 +430,7 @@ var addTrackingIframe = function (url, element) {
     element.parentNode.insertBefore(iframe, element);
     setTimeout(function() {
         iframe.parentElement.removeChild(iframe);
-    }, 3000);
+    }, 10000);
     return iframe;
 };
 

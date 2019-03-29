@@ -62,6 +62,11 @@ class FetchLicenseCommand extends Command
             $this->licenseDecoder->decode($encodedLicense->toString());
             $this->licenseVault->store($encodedLicense->toString());
         } catch (UnexpectedClientResponseException|RuntimeException $exception) {
+            if (config('app.license_id') === '') {
+                $this->info('No license key');
+                exit(1);
+            }
+
             $this->error($exception->getMessage());
             return;
         }

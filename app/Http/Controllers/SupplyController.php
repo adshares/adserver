@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
@@ -62,7 +61,7 @@ class SupplyController extends Controller
         } elseif ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
         } elseif ('POST' === $request->getRealMethod()) {
-            $data = $request->getContent();
+            $data = (string)$request->getContent();
         } elseif ('OPTIONS' === $request->getRealMethod()) {
             $response->setStatusCode(Response::HTTP_NO_CONTENT);
             $response->headers->set('Access-Control-Max-Age', 1728000);
@@ -88,15 +87,13 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
-
         $zones = Utils::decodeZones($data)['zones'];
+        $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        $banners = $bannerFinder->findBanners($zones, $context);
-
-        return self::json($banners);
+        return self::json($bannerFinder->findBanners(
+            $zones,
+            $context
+        ));
     }
 
     public function findScript(Request $request): StreamedResponse
@@ -190,9 +187,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -273,9 +268,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,

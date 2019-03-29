@@ -33,6 +33,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_decode;
+use function GuzzleHttp\json_encode;
 use function sprintf;
 
 final class GuzzleAdUserClient implements AdUser
@@ -72,13 +73,18 @@ final class GuzzleAdUserClient implements AdUser
         );
 
         try {
-            $response = $this->client->get($path);
+            $response = $this->client->post(
+                $path,
+                ['form_params' => $partialContext->adUserRequestBody()]
+            );
+
             $context = json_decode((string)$response->getBody(), true);
 
             Log::debug(sprintf(
-                '{"url": "%s", "path": "%s",  "response": "%s"}',
+                '{"url": "%s", "path": "%s", "request": %s, "response": %s}',
                 (string)$this->client->getConfig('base_uri'),
                 $path,
+                (string)json_encode($partialContext->adUserRequestBody()),
                 (string)$response->getBody()
             ));
 
