@@ -23,11 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
 use RuntimeException;
+use function sprintf;
 
-class MySqlStatsQueryBuilder
+class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 {
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
@@ -40,61 +42,23 @@ class MySqlStatsQueryBuilder
         StatsRepository::STATS_SUM_TYPE,
     ];
 
-    private const CHART_QUERY = <<<SQL
-SELECT #selectedCols #resolutionCols
-FROM network_event_logs e
-WHERE e.created_at BETWEEN :dateStart AND :dateEnd
-  AND e.publisher_id = :publisherId
-  #zoneIdWhereClause
-  #siteIdWhereClause 
-  #eventTypeWhereClause
-#resolutionGroupBy
-SQL;
+    private const QUERY = 'SELECT #columns FROM network_event_logs e #where #groupBy #having';
 
-    private const STATS_QUERY = <<<SQL
-SELECT
-  SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0))                                              AS clicks,
-  SUM(IF(e.event_type = 'view', 1, 0))                                                                        AS views,
-  IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,
-  IFNULL(AVG(IF(e.event_type = 'click', e.paid_amount, NULL)), 0)                                             AS rpc,
-  IFNULL(AVG(IF(e.event_type = 'view', e.paid_amount, NULL)), 0)*1000                                         AS rpm,
-  SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0))                                                AS revenue
-  #siteIdCol
-  #zoneIdCol
-  #domainCol
-FROM network_event_logs e
-WHERE e.created_at BETWEEN :dateStart AND :dateEnd
-  AND e.publisher_id = :publisherId
-  #siteIdWhereClause
-#siteIdGroupBy #zoneIdGroupBy #domainGroupBy
-#having
-SQL;
-
-    /**
-     * @var string
-     */
-    private $query;
 
     public function __construct(string $type)
-    {
-        $query = $this->chooseQuery($type);
-        $query = $this->conditionallyReplaceSelectedColumns($type, $query);
-        $query = $this->conditionallyReplaceEventType($type, $query);
-
-        $this->query = $query;
-    }
-
-    private function chooseQuery(string $type): string
     {
         if (!self::isTypeAllowed($type)) {
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
+        $this->query = self::QUERY;
+
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
-            return self::STATS_QUERY;
+            $this->baseStatsColumns();
         }
 
-        return self::CHART_QUERY;
+        $this->conditionallyReplaceSelectedColumns($type);
+        $this->conditionallyReplaceEventType($type);
     }
 
     private static function isTypeAllowed(string $type): bool
@@ -102,81 +66,73 @@ SQL;
         return in_array($type, self::ALLOWED_TYPES, true);
     }
 
-    private function conditionallyReplaceSelectedColumns(string $type, string $query): string
+    private function conditionallyReplaceSelectedColumns(string $type): void
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
             case StatsRepository::CLICK_TYPE:
-                $query = str_replace('#selectedCols', 'COUNT(e.created_at) AS c', $query);
+                $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::RPC_TYPE:
-                $query = str_replace('#selectedCols', 'COALESCE(AVG(e.paid_amount), 0) AS c', $query);
+                $this->column('COALESCE(AVG(e.paid_amount), 0) AS c');
                 break;
             case StatsRepository::RPM_TYPE:
-                $query = str_replace('#selectedCols', 'COALESCE(AVG(e.paid_amount), 0)*1000 AS c', $query);
+                $this->column('COALESCE(AVG(e.paid_amount), 0)*1000 AS c');
                 break;
             case StatsRepository::SUM_TYPE:
-                $query = str_replace('#selectedCols', 'COALESCE(SUM(e.paid_amount), 0) AS c', $query);
+                $this->column('COALESCE(SUM(e.paid_amount), 0) AS c');
                 break;
             case StatsRepository::CTR_TYPE:
-                $query = str_replace('#selectedCols', 'COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c', $query);
-                break;
-            default:
+                $this->column('COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c');
                 break;
         }
-
-        return $query;
     }
 
-    private function conditionallyReplaceEventType(string $type, string $query): string
+    private function conditionallyReplaceEventType(string $type): void
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
             case StatsRepository::RPM_TYPE:
             case StatsRepository::CTR_TYPE:
-                $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_VIEW);
-                $query = str_replace('#eventTypeWhereClause', $str, $query);
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
             case StatsRepository::RPC_TYPE:
-                $str = sprintf("AND e.event_type = '%s'", EventLog::TYPE_CLICK);
-                $query = str_replace('#eventTypeWhereClause', $str, $query);
-                break;
-            case StatsRepository::SUM_TYPE:
-                $query = str_replace('#eventTypeWhereClause', '', $query);
-                break;
-            default:
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_CLICK));
                 break;
         }
-
-        return $query;
     }
 
-    public function build(): string
+    private function baseStatsColumns(): void
     {
-        $pattern = [
-            '#domainCol',
-            '#domainGroupBy',
-        ];
-
-        $this->query = str_replace($pattern, '', $this->query);
-        return $this->query;
+        $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
+        $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
+        $this->column(
+            'IFNULL(AVG(CASE WHEN (e.event_type <> \'view\') THEN NULL WHEN (e.is_view_clicked = 1) '
+                    .'THEN 1 ELSE 0 END), 0) AS ctr'
+        );
+        $this->column('IFNULL(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL)), 0) AS rpc');
+        $this->column('IFNULL(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL)), 0)*1000 AS rpm');
+        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.paid_amount, 0)) AS revenue');
     }
 
     public function setPublisherId(string $publisherId): self
     {
-        $this->query = str_replace([':publisherId'], ['0x'.$publisherId], $this->query);
+        $this->where(sprintf('e.publisher_id = 0x%s', $publisherId));
 
         return $this;
     }
 
     public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
     {
-        $str = "'".$this->convertDateTimeToMySqlDate($dateStart)."'";
-        $this->query = str_replace([':dateStart'], [$str], $this->query);
+        $start = $this->convertDateTimeToMySqlDate($dateStart);
+        $end = $this->convertDateTimeToMySqlDate($dateEnd);
 
-        $str = "'".$this->convertDateTimeToMySqlDate($dateEnd)."'";
-        $this->query = str_replace([':dateEnd'], [$str], $this->query);
+        $this->where(sprintf(
+            'e.created_at BETWEEN \'%s\' AND \'%s\'',
+            $start,
+            $end
+        ));
 
         return $this;
     }
@@ -190,105 +146,83 @@ SQL;
     {
         switch ($resolution) {
             case StatsRepository::HOUR_RESOLUTION:
-                $cols =
-                    ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, '
-                    .'DAY(e.created_at) AS d, HOUR(e.created_at) AS h';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at), HOUR(e.created_at)';
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
+                $this->groupBy('DAY(e.created_at)');
+                $this->groupBy('HOUR(e.created_at)');
                 break;
             case StatsRepository::DAY_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m, DAY(e.created_at) AS d';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at), DAY(e.created_at)';
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->column('DAY(e.created_at) AS d');
+
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
+                $this->groupBy('DAY(e.created_at)');
                 break;
             case StatsRepository::WEEK_RESOLUTION:
-                $cols = ', YEARWEEK(e.created_at, 3) as yw';
-                $groupBy = 'GROUP BY YEARWEEK(e.created_at, 3)';
+                $this->column('YEARWEEK(e.created_at, 3) as yw');
+                $this->groupBy('YEARWEEK(e.created_at, 3)');
                 break;
             case StatsRepository::MONTH_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, MONTH(e.created_at) as m';
-                $groupBy = 'GROUP BY YEAR(e.created_at), MONTH(e.created_at)';
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
                 break;
             case StatsRepository::QUARTER_RESOLUTION:
-                $cols = ', YEAR(e.created_at) AS y, QUARTER(e.created_at) as q';
-                $groupBy = 'GROUP BY YEAR(e.created_at), QUARTER(e.created_at)';
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('QUARTER(e.created_at) as q');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('QUARTER(e.created_at)');
                 break;
             case StatsRepository::YEAR_RESOLUTION:
             default:
-                $cols = ', YEAR(e.created_at) AS y';
-                $groupBy = 'GROUP BY YEAR(e.created_at)';
+                $this->column('YEAR(e.created_at) AS y');
+                $this->groupBy('YEAR(e.created_at)');
                 break;
         }
 
-        $this->query = str_replace(['#resolutionCols', '#resolutionGroupBy'], [$cols, $groupBy], $this->query);
+        return $this;
+    }
+
+    public function appendSiteIdWhereClause(string $siteId = null): self
+    {
+        $this->where(sprintf('e.site_id = 0x%s', $siteId));
 
         return $this;
     }
 
-    public function appendSiteIdWhereClause(?string $siteId = null): self
+    public function appendZoneIdWhereClause(string $zoneId = null): self
     {
-        if ($siteId === null) {
-            $siteIdWhereClause = '';
-        } else {
-            $siteIdWhereClause = sprintf('AND e.site_id = 0x%s', $siteId);
-        }
-
-        $this->query = str_replace(['#siteIdWhereClause'], [$siteIdWhereClause], $this->query);
+        $this->where(sprintf('e.zone_id = 0x%s', $zoneId));
 
         return $this;
     }
 
-    public function appendZoneIdWhereClause(?string $zoneId = null): self
+    public function appendZoneIdGroupBy(): self
     {
-        if ($zoneId === null) {
-            $zoneIdWhereClause = '';
-        } else {
-            $zoneIdWhereClause = sprintf('AND e.zone_id = 0x%s', $zoneId);
-        }
-
-        $this->query = str_replace(['#zoneIdWhereClause'], [$zoneIdWhereClause], $this->query);
+        $this->column('e.zone_id AS zone_id');
+        $this->groupBy('e.zone_id');
 
         return $this;
     }
 
-    public function appendZoneIdGroupBy(?string $siteId = null): self
+    public function appendSiteIdGroupBy(): self
     {
-        if ($siteId === null) {
-            $zoneIdCol = '';
-            $zoneIdGroupBy = '';
-        } else {
-            $zoneIdCol = ', e.zone_id AS zone_id';
-            $zoneIdGroupBy = ', e.zone_id';
-        }
-        $this->query = str_replace(['#zoneIdCol', '#zoneIdGroupBy'], [$zoneIdCol, $zoneIdGroupBy], $this->query);
-
-        return $this;
-    }
-
-    public function appendSiteIdGroupBy(bool $appendSiteIdGroupBy): self
-    {
-        if ($appendSiteIdGroupBy) {
-            $siteIdCol = ', e.site_id AS site_id';
-            $siteIdGroupBy = 'GROUP BY e.site_id';
-            $having = 'HAVING clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0';
-        } else {
-            $siteIdCol = '';
-            $siteIdGroupBy = '';
-            $having = '';
-        }
-        $this->query =
-            str_replace(
-                ['#siteIdCol', '#siteIdGroupBy', '#having'],
-                [$siteIdCol, $siteIdGroupBy, $having],
-                $this->query
-            );
+        $this->column('e.site_id AS site_id');
+        $this->groupBy('e.site_id');
+        $this->having('clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0');
 
         return $this;
     }
 
     public function appendDomainGroupBy(): self
     {
-        $domainCol = ', e.domain AS domain';
-        $domainGroupBy = ', e.domain';
-        $this->query = str_replace(['#domainCol', '#domainGroupBy'], [$domainCol, $domainGroupBy], $this->query);
+        $this->column('e.domain AS domain');
+        $this->groupBy('e.domain');
 
         return $this;
     }
