@@ -25,7 +25,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -36,12 +36,12 @@ class DemandPreparePayments extends Command
 
     protected $signature = 'ops:demand:payments:prepare';
 
-    /** @var LicenseFeeReader */
-    private $licenseFeeReader;
+    /** @var LicenseReader */
+    private $licenseReader;
 
-    public function __construct(LicenseFeeReader $licenseFeeReader)
+    public function __construct(LicenseReader $licenseReader)
     {
-        $this->licenseFeeReader = $licenseFeeReader;
+        $this->licenseReader = $licenseReader;
 
         parent::__construct();
     }
@@ -59,8 +59,8 @@ class DemandPreparePayments extends Command
             return;
         }
 
-        $licenseAccountAddress = $this->licenseFeeReader->getAddress()->toString();
-        $demandLicenseFeeCoefficient = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
+        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $demandOperatorFeeCoefficient = Config::getFee(Config::OPERATOR_TX_FEE);
         $groupedEvents = $events->each(
             function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {

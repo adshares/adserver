@@ -28,7 +28,7 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use function apcu_fetch;
 
-class LicenseFeeReader
+class LicenseReader
 {
     /** @var LicenseVault */
     private $licenseVault;
