@@ -59,18 +59,21 @@ class DemandPreparePayments extends Command
             return;
         }
 
-        $licenseAccountAddress = $this->licenseFeeReader->getAddress();
-        $demandFee = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
-        $groupedEvents = $events->each(function (EventLog $entry) use ($demandFee) {
-            $licenseFee = (int)floor($entry->event_value * $demandFee);
-            $entry->licence_fee = $licenseFee;
+        $licenseAccountAddress = $this->licenseFeeReader->getAddress()->toString();
+        $demandLicenseFeeCoefficient = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
+        $demandOperatorFeeCoefficient = Config::getFee(Config::OPERATOR_TX_FEE);
+        $groupedEvents = $events->each(
+            function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
+                $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
+                $entry->licence_fee = $licenseFee;
 
-            $amountAfterFee = $entry->event_value - $licenseFee;
-            $operatorFee = (int)floor($amountAfterFee * Config::fetch(Config::OPERATOR_TX_FEE));
-            $entry->operator_fee = $operatorFee;
+                $amountAfterFee = $entry->event_value - $licenseFee;
+                $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);
+                $entry->operator_fee = $operatorFee;
 
-            $entry->paid_amount = $amountAfterFee - $operatorFee;
-        })->groupBy('pay_to');
+                $entry->paid_amount = $amountAfterFee - $operatorFee;
+            }
+        )->groupBy('pay_to');
 
         $this->info('In that, there are '.count($groupedEvents).' recipients,');
 
