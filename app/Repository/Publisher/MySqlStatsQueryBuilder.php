@@ -44,7 +44,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private const QUERY = 'SELECT #columns FROM network_event_logs e #where #groupBy #having';
 
-
     public function __construct(string $type)
     {
         if (!self::isTypeAllowed($type)) {
