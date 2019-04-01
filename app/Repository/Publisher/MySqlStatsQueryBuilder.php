@@ -52,13 +52,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         }
 
         $this->query = self::QUERY;
+        $this->selectBaseColumns($type);
+        $this->appendEventType($type);
 
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
-            $this->baseStatsColumns();
+            $this->selectBaseStatsColumns();
         }
-
-        $this->conditionallyReplaceSelectedColumns($type);
-        $this->conditionallyReplaceEventType($type);
     }
 
     private static function isTypeAllowed(string $type): bool
@@ -66,7 +65,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return in_array($type, self::ALLOWED_TYPES, true);
     }
 
-    private function conditionallyReplaceSelectedColumns(string $type): void
+    private function selectBaseColumns(string $type): void
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
@@ -88,7 +87,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         }
     }
 
-    private function conditionallyReplaceEventType(string $type): void
+    private function appendEventType(string $type): void
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
@@ -103,7 +102,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         }
     }
 
-    private function baseStatsColumns(): void
+    private function selectBaseStatsColumns(): void
     {
         $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
         $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
@@ -125,13 +124,10 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
     {
-        $start = $this->convertDateTimeToMySqlDate($dateStart);
-        $end = $this->convertDateTimeToMySqlDate($dateEnd);
-
         $this->where(sprintf(
             'e.created_at BETWEEN \'%s\' AND \'%s\'',
-            $start,
-            $end
+            $this->convertDateTimeToMySqlDate($dateStart),
+            $this->convertDateTimeToMySqlDate($dateEnd)
         ));
 
         return $this;
