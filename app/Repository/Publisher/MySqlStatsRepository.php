@@ -240,8 +240,7 @@ class MySqlStatsRepository implements StatsRepository
             ->appendZoneIdGroupBy();
 
         if ($siteId) {
-            $queryBuilder
-                ->appendSiteIdWhereClause($siteId);
+            $queryBuilder->appendSiteIdWhereClause($siteId);
         }
 
         $query = $queryBuilder->build();
