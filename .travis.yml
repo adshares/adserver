@@ -17,14 +17,11 @@ jobs:
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
+        - sonar-scanner
 
     - if: type = push
       script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
-
-    - if: type = push
-      script:
-        - sonar-scanner
 
 #    - if: type = pull_request
 #      script:
