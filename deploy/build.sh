@@ -11,6 +11,7 @@ function artisanCommand {
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
+mkdir -pm 777 ${ADSHARES_WORKINGDIR}
 
 composer install --no-dev
 
