@@ -40,8 +40,6 @@ class License
     private $owner;
     /** @var AccountId */
     private $paymentAddress;
-    /** @var string */
-    private $paymentMessage;
     /** @var Commission */
     private $fixedFee;
     /** @var Commission */
@@ -57,7 +55,6 @@ class License
         DateTime $dateEnd,
         string $owner,
         AccountId $paymentAddress,
-        string $paymentMessage,
         Commission $fixedFee,
         Commission $demandFee,
         Commission $supplyFee
@@ -69,7 +66,6 @@ class License
         $this->dateEnd = $dateEnd;
         $this->owner = $owner;
         $this->paymentAddress = $paymentAddress;
-        $this->paymentMessage = $paymentMessage;
         $this->fixedFee = $fixedFee;
         $this->demandFee = $demandFee;
         $this->supplyFee = $supplyFee;
@@ -85,7 +81,6 @@ class License
             'dateEnd' => $this->dateEnd->format(DateTime::ATOM),
             'owner' => $this->owner,
             'paymentAddress' => $this->paymentAddress->toString(),
-            'paymentMessage' => $this->paymentMessage,
             'fixedFee' => $this->fixedFee->getValue(),
             'demandFee' => $this->demandFee->getValue(),
             'supplyFee' => $this->supplyFee->getValue(),
@@ -100,5 +95,10 @@ class License
     public function getSupplyFee(): float
     {
         return $this->supplyFee->getValue();
+    }
+
+    public function getPaymentAddress(): AccountId
+    {
+        return $this->paymentAddress;
     }
 }
