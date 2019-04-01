@@ -16,9 +16,6 @@ jobs:
     - if: type = push
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
-
-    - if: type = push
-      script:
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
 
     - if: type = push
@@ -37,7 +34,6 @@ jobs:
 #        # Run build script
 #        - in_docker /bin/bash scripts/build.sh"
 
-# After a build, send email notification with the build results
 notifications:
   email: false
   slack:
