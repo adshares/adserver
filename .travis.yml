@@ -13,7 +13,8 @@ env:
 install: composer install
 jobs:
   include:
-    - if: type = push
+    - stage: Static Code Analysis
+      if: type = push
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
