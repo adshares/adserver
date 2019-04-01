@@ -452,4 +452,13 @@ class MySqlStatsRepository implements StatsRepository
 
         return $result;
     }
+
+    public function fetchStatsToReport(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): DataCollection {
+        // TODO: Implement fetchStatsToReport() method.
+    }
 }
