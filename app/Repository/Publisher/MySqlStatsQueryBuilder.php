@@ -97,7 +97,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::CLICK_TYPE:
             case StatsRepository::RPC_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_CLICK));
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
         }
     }
