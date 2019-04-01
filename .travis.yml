@@ -1,79 +1,40 @@
-#language: php
-#php:
-#  - 7.2
-#sudo: required
-#cache:
-#  directories:
-#    - $HOME/.composer/cache/files
-
-sudo: required
-language: jvm
-jdk: openjdk9
-
-services:
-  - docker
+language: php
+php:
+  - 7.2
+cache:
+  directories:
+    - $HOME/.composer/cache/files
 
 env:
   global:
-    - DOCKER_IMAGE=awlodarkiewicz/devops:adserver
-    - HOST_PATH=/home/travis/build/adshares/adserver
-    - BUILD_PATH=/build/adserver
-    - BUILD_NAME=adserver_build
-    - MYSQL_ROOT_PASSWORD=root
     - APP_ENV=testing
     - APP_DEBUG=true
 
-stages:
-  - code test and quality
-  - build and install
-
-before_script:
-  # Enable aliases for non-interactive shells
-  - shopt -s expand_aliases
-  # Set alias - please note the missing quote you need to append.
-  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
-  ## Setup test environment
-  # Run docker container
-  - time docker network create -d bridge test-network
-  - time docker pull $DOCKER_IMAGE
-  - >
-    time docker run -d
-    --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-    --network=test-network
-    -e TRAVIS=true
-    -e APP_ENV=${APP_ENV}
-    -e APP_DEBUG=${APP_DEBUG}
-    -e INSTALLATION_PATH=/var/www/adserver
-    -e DB_HOST=mysql.dock
-    -e DB_USERNAME=adserver
-    -e DB_DATABASE=adserver
-    -e DB_PASSWORD=adserver
-    --env-file=$HOST_PATH/.env.testing
-    --name $BUILD_NAME
-    $DOCKER_IMAGE
-    sleep infinity
-
-after_script:
-  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
-
+install: composer install
 jobs:
   include:
     - if: type = push
-      install: composer install
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
+
+    - if: type = push
+      script:
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
 
     - if: type = push
       script:
-        # Run build script
-        - in_docker /bin/bash scripts/pre-build.sh"
+        - vendor/bin/phpunit --testsuite Console,Http,Unit
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-
-        # PHP unit tests
-        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
+#    - if: type = push
+#      script:
+#        # Run build script
+#        - in_docker /bin/bash scripts/pre-build.sh"
+#
+#        # Run build script
+#        - in_docker /bin/bash scripts/build.sh"
+#
+#        # PHP unit tests
+#        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
 
     - if: type = pull_request
       script:
