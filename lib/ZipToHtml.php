@@ -188,7 +188,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
@@ -214,7 +216,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
@@ -239,7 +243,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
 
@@ -267,7 +273,9 @@ MYSCRIPT;
                     if ($scheme === 'data') {
                         return $href . $match[2] . ($match[3] ?? '');
                     } else {
-                        throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                        throw new \RuntimeException(
+                            sprintf("Only local assets and data uri allowed (found %s)", $href)
+                        );
                     }
                 }
                 $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
