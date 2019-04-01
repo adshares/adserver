@@ -317,7 +317,7 @@ class StatsController extends Controller
 
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
 
-        $csv = function() use ($data) {
+        $csv = function () use ($data) {
             $this->generateCSVFile($data);
         };
 
