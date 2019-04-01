@@ -26,11 +26,12 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
-use RuntimeException;
 use function sprintf;
 
 class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 {
+    protected const TABLE_NAME = 'network_event_logs e';
+
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
         StatsRepository::CLICK_TYPE,
@@ -42,26 +43,26 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::STATS_SUM_TYPE,
     ];
 
-    private const QUERY = 'SELECT #columns FROM network_event_logs e #where #groupBy #having';
-
     public function __construct(string $type)
     {
-        if (!self::isTypeAllowed($type)) {
-            throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
-        }
-
-        $this->query = self::QUERY;
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
 
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             $this->selectBaseStatsColumns();
         }
+
+        parent::__construct($type);
     }
 
-    private static function isTypeAllowed(string $type): bool
+    protected function isTypeAllowed(string $type): bool
     {
         return in_array($type, self::ALLOWED_TYPES, true);
+    }
+
+    protected function getTableName(): string
+    {
+        return self::TABLE_NAME;
     }
 
     private function selectBaseColumns(string $type): void

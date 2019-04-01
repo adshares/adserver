@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Common;
 
+use RuntimeException;
 use function implode;
 use function sprintf;
 use function str_replace;
@@ -29,12 +30,22 @@ use function str_replace;
 abstract class MySqlQueryBuilder
 {
     private const CONDITION_AND_TYPE = 'AND';
+    private const QUERY = 'SELECT #columns FROM #tableName #where #groupBy #having';
 
     protected $query = '';
-    protected $columns = [];
+    protected $selectedColumns = [];
     protected $whereConditions = [];
     protected $groupByColumns = [];
     protected $havingConditions = [];
+
+    public function __construct(string $type)
+    {
+        if (!$this->isTypeAllowed($type)) {
+            throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
+        }
+
+        $this->query = str_replace('#tableName', $this->getTableName(), self::QUERY);
+    }
 
     protected function where(string $condition, ?string $type = self::CONDITION_AND_TYPE): void
     {
@@ -57,12 +68,12 @@ abstract class MySqlQueryBuilder
 
     protected function column(string $column): void
     {
-        $this->columns[] = $column;
+        $this->selectedColumns[] = $column;
     }
 
     public function build(): string
     {
-        $additional = implode(',', $this->columns);
+        $additional = implode(',', $this->selectedColumns);
         $replacement = $additional ?: '';
         $this->query = str_replace('#columns', $replacement, $this->query);
 
@@ -81,4 +92,8 @@ abstract class MySqlQueryBuilder
 
         return $this->query;
     }
+
+    abstract protected function isTypeAllowed(string $type): bool;
+
+    abstract protected function getTableName(): string;
 }
