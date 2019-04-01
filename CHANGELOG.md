@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - AdUser integration
 - Build scripts
+- Handle ZIP files instead of HTML files
 - Network host updating: omit not active
 - Inventory export/import: accept active campaigns only
 - Hot wallet feature is turned off by default
