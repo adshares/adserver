@@ -53,70 +53,70 @@ class ImpressionContextTest extends TestCase
     {
         $json = <<<"JSON"
 {
-    "site": {
-        "domain": "localhost",
-        "inframe": "no",
-        "page": "http://localhost:8101/test-publisher/index.html",
-        "keywords": [
-            "lorem ipsum",
-            "lipsum",
-            "lorem",
-            "ipsum",
-            "text",
-            "generate",
-            "generator",
-            "facts",
-            "information",
-            "what"
-        ]
-    },
-    "device": {
-        "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36",
-        "ip": "89.231.24.58",
-        "ips": [
-            "89.231.24.58"
-        ],
-        "headers": {
-            "cookie": [
-                "__cfduid=d7b9dc5775589296a8badf6169665fe751548759430; tid=zz3wznfknWKiURFxyEwajaUoKT42rA"
-            ],
-            "accept-language": [
-                "en-US,en;q=0.9,pl;q=0.8"
-            ],
-            "accept-encoding": [
-                "gzip, deflate, br"
-            ],
-            "referer": [
-                "http://localhost:8101/test-publisher/index.html"
-            ],
-            "accept": [
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
-            ],
-            "user-agent": [
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36"
-            ],
-            "dnt": [
-                "1"
-            ],
-            "upgrade-insecure-requests": [
-                "1"
-            ],
-            "connection": [
-                "keep-alive"
-            ],
-            "host": [
-                "dev-server.e11.click"
-            ],
-            "content-length": [
-                ""
-            ],
-            "content-type": [
-                ""
-            ]
-        }
-    },
-    "user":{
-    }
+"site": {
+"domain": "localhost",
+"inframe": "no",
+"page": "http://localhost:8101/test-publisher/index.html",
+"keywords": [
+"lorem ipsum",
+"lipsum",
+"lorem",
+"ipsum",
+"text",
+"generate",
+"generator",
+"facts",
+"information",
+"what"
+]
+},
+"device": {
+"ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36",
+"ip": "89.231.24.58",
+"ips": [
+"89.231.24.58"
+],
+"headers": {
+"cookie": [
+"__cfduid=d7b9dc5775589296a8badf6169665fe751548759430; tid=zz3wznfknWKiURFxyEwajaUoKT42rA"
+],
+"accept-language": [
+"en-US,en;q=0.9,pl;q=0.8"
+],
+"accept-encoding": [
+"gzip, deflate, br"
+],
+"referer": [
+"http://localhost:8101/test-publisher/index.html"
+],
+"accept": [
+"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3"
+],
+"user-agent": [
+"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36"
+],
+"dnt": [
+"1"
+],
+"upgrade-insecure-requests": [
+"1"
+],
+"connection": [
+"keep-alive"
+],
+"host": [
+"dev-server.e11.click"
+],
+"content-length": [
+""
+],
+"content-type": [
+""
+]
+}
+},
+"user":{
+}
 }
 JSON;
 
