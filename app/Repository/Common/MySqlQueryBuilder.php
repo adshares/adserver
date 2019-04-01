@@ -30,6 +30,8 @@ use function str_replace;
 abstract class MySqlQueryBuilder
 {
     private const CONDITION_AND_TYPE = 'AND';
+    private const CONDITION_OR_TYPE = 'OR';
+
     private const QUERY = 'SELECT #columns FROM #tableName #where #groupBy #having';
 
     protected $query = '';
@@ -61,9 +63,13 @@ abstract class MySqlQueryBuilder
         $this->groupByColumns[] = $groupByItem;
     }
 
-    protected function having(string $conditionItem): void
+    protected function having(string $conditionItem, ?string $type = self::CONDITION_OR_TYPE): void
     {
-        $this->havingConditions[] = $conditionItem;
+        if (count($this->havingConditions) > 0) {
+            $this->havingConditions[] = sprintf('%s %s', $type, $conditionItem);
+        } else {
+            $this->havingConditions[] = $conditionItem;
+        }
     }
 
     protected function column(string $column): void
@@ -85,9 +91,8 @@ abstract class MySqlQueryBuilder
         $replacement = $additional ? 'GROUP BY '.$additional : '';
         $this->query = str_replace('#groupBy', $replacement, $this->query);
 
-        $additional = implode(',', $this->havingConditions);
+        $additional = implode(' ', $this->havingConditions);
         $replacement = $additional ? 'HAVING '.$additional : '';
-
         $this->query = str_replace('#having', $replacement, $this->query);
 
         return $this->query;

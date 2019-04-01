@@ -210,7 +210,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->column('e.site_id AS site_id');
         $this->groupBy('e.site_id');
-        $this->having('clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0');
+        $this->having('clicks>0');
+        $this->having('views>0');
+        $this->having('ctr>0');
+        $this->having('rpc>0');
+        $this->having('rpm>0');
+        $this->having('revenue>0');
 
         return $this;
     }

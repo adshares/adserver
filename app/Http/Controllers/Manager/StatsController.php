@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\Stats\PublisherReportResponse;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
@@ -40,12 +41,10 @@ use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use Closure;
 use DateTime;
-use function fputcsv;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
-use function rewind;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -291,7 +290,7 @@ class StatsController extends Controller
         Request $request,
         string $dateStart,
         string $dateEnd
-    ) {
+    ): StreamedResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
         $siteId = $this->getSiteIdFromRequest($request);
@@ -317,62 +316,8 @@ class StatsController extends Controller
 
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
 
-        $csv = function () use ($data) {
-            $this->generateCSVFile($data);
-        };
-
-        $headers = [
-            'Content-type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename=file.csv',
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
-
-        return Response::stream($csv, 200, $headers);
+        return (new PublisherReportResponse($data))->response();
     }
-
-    private function generateCSVFile(array $data): void
-    {
-        $fp = fopen('php://output', 'wb');
-
-        $columns = [
-            'Domain',
-            'Site Id',
-//            'Site Name',
-            'Zone Id',
-//            'Zone Name',
-            'Clicks',
-            'Impressions',
-            'Ctr',
-            'AverageRpc',
-            'AverageRpm',
-            'Revenue',
-        ];
-
-        fputcsv($fp, $columns);
-
-        foreach ($data as $item) {
-            $line = [
-                $item['domain'] ?? 'None',
-                $item['siteId'],
-//                $item['siteName'],
-                $item['zoneId'] ?? 'None',
-//                $item['zoneName'] ?? 'None',
-                $item['clicks'],
-                $item['impressions'],
-                $item['ctr'],
-                $item['averageRpc'],
-                $item['averageRpm'],
-                $item['revenue'],
-            ];
-
-            fputcsv($fp, $line);
-        }
-
-        fclose($fp);
-    }
-
 
     public function publisherStatsWithTotal(
         Request $request,
