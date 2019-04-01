@@ -25,21 +25,17 @@ jobs:
       script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
 
-#    - if: type = push
+    - if: type = push
+      script:
+        - sonar-scanner
+
+#    - if: type = pull_request
 #      script:
 #        # Run build script
 #        - in_docker /bin/bash scripts/pre-build.sh"
 #
 #        # Run build script
 #        - in_docker /bin/bash scripts/build.sh"
-#
-#        # PHP unit tests
-#        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
-
-    - if: type = pull_request
-      script:
-        # SonarQube
-        - sonar-scanner
 
 # After a build, send email notification with the build results
 notifications:
