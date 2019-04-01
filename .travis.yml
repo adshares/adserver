@@ -25,6 +25,11 @@ jobs:
       script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
 
+    - stage: Code Quality
+      if: type = push
+      script:
+        - sonar-scanner
+
 #    - if: type = pull_request
 #      script:
 #        # Run build script
