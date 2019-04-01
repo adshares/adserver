@@ -1,89 +1,36 @@
-#language: php
-#php:
-#  - 7.2
-#sudo: required
-#cache:
-#  directories:
-#    - $HOME/.composer/cache/files
-
-sudo: required
-language: jvm
-jdk: openjdk9
-
-services:
-  - docker
+language: php
+php:
+  - 7.2
+cache:
+  directories:
+    - $HOME/.composer/cache/files
 
 env:
   global:
-    - DOCKER_IMAGE=awlodarkiewicz/devops:adserver
-    - HOST_PATH=/home/travis/build/adshares/adserver
-    - BUILD_PATH=/build/adserver
-    - BUILD_NAME=adserver_build
-    - MYSQL_ROOT_PASSWORD=root
-    - APP_ENV=dev
+    - APP_ENV=testing
     - APP_DEBUG=true
 
-stages:
-  - code test and quality
-  - build and install
-
-before_script:
-  # Enable aliases for non-interactive shells
-  - shopt -s expand_aliases
-  # Set alias - please note the missing quote you need to append.
-  - alias in_docker='docker exec $BUILD_NAME /bin/bash -c "cd $BUILD_PATH && time'
-  ## Setup test environment
-  # Run docker container
-  - time docker network create -d bridge test-network
-  - time docker pull $DOCKER_IMAGE
-  - >
-    time docker run -d
-    --mount type=bind,src=$HOST_PATH,dst=$BUILD_PATH
-    --network=test-network
-    -e TRAVIS=true
-    -e APP_ENV=${APP_ENV}
-    -e APP_DEBUG=${APP_DEBUG}
-    -e INSTALLATION_PATH=/var/www/adserver
-    -e DB_HOST=mysql.dock
-    -e DB_USERNAME=adserver
-    -e DB_DATABASE=adserver
-    -e DB_PASSWORD=adserver
-    --env-file=$HOST_PATH/.env.testing
-    --name $BUILD_NAME
-    $DOCKER_IMAGE
-    sleep infinity
-
-after_script:
-  - docker stop $BUILD_NAME && docker rm $BUILD_NAME
-
+install: composer install
 jobs:
   include:
-    - stage: Tests
-      if: type = push
+    - if: type = push
       script:
-        # Run build script
-        - in_docker /bin/bash scripts/pre-build.sh"
+        - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
+        - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
+        - vendor/bin/phpunit --testsuite Console,Http,Unit
 
-        # Run build script
-        - in_docker /bin/bash scripts/build.sh"
-
-        ## Test tasks
-        # PHP Lint: check syntax errors in all PHP files
-        - in_docker ./vendor/bin/parallel-lint --no-colors --blame --exclude vendor ."
-
-        # PHP_CodeSniffer: check PHP compatibility
-        - in_docker ./vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests"
-
-        # PHP unit tests
-        - in_docker ./vendor/bin/phpunit --testsuite Console,Http,Unit"
-
-    - stage: Code Quality
-      if: type = pull_request
+    - if: type = push
       script:
-        # SonarQube
         - sonar-scanner
 
-# After a build, send email notification with the build results
+#    - if: type = pull_request
+#      script:
+#        # Run build script
+#        - in_docker /bin/bash scripts/pre-build.sh"
+#
+#        # Run build script
+#        - in_docker /bin/bash scripts/build.sh"
+
 notifications:
   email: false
   slack:

@@ -27,25 +27,49 @@ use Illuminate\Database\Seeder;
 class MockDataSitesSeeder extends Seeder
 {
     private $zones = [
-        'top' => [
+        'Leaderboard' => [
             'width' => 728,
             'height' => 90,
         ],
-        'left' => [
+        'Wide Skycraper' => [
             'width' => 160,
             'height' => 600,
         ],
-        'right' => [
+        'Large Rectangle' => [
+            'width' => 336,
+            'height' => 280,
+        ],
+        'Half Page' => [
             'width' => 300,
             'height' => 600,
         ],
-        'mid' => [
-            'width' => 750,
-            'height' => 300,
+        'Large Mobile' => [
+            'width' => 320,
+            'height' => 100,
         ],
-        'bottom' => [
+        'Leaderboard 2' => [
             'width' => 728,
             'height' => 90,
+        ],
+        'Leaderboard 3' => [
+            'width' => 728,
+            'height' => 90,
+        ],
+        'Large Rectangle 2' => [
+            'width' => 336,
+            'height' => 280,
+        ],
+        'Large Mobile 2' => [
+            'width' => 320,
+            'height' => 100,
+        ],
+        'Large Mobile 3' => [
+            'width' => 320,
+            'height' => 100,
+        ],
+        'Wide Skyscraper 2' => [
+            'width' => 160,
+            'height' => 600,
         ],
     ];
 
@@ -91,7 +115,7 @@ class MockDataSitesSeeder extends Seeder
 
                 foreach ($zones as $zoneNames => $zone) {
                     factory(Zone::class)->create([
-                        'uuid' => $zone['uuid'],
+                        'uuid' => $zone['uuid'] ?? null,
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,
                         'width' => $zone['width'],
@@ -101,6 +125,7 @@ class MockDataSitesSeeder extends Seeder
 
                 $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
             }
+
         }
         DB::commit();
 

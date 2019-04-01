@@ -32,3 +32,5 @@ phpunit.xml
 
 # temporary files
 *_in_progress
+
+/storage/

@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,7 +51,7 @@ class NetworkHost extends Model
 {
     use AutomateMutators;
 
-    private const MAX_FAILED_CONNECTION = 3;
+    private const FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED = 10;
 
     /**
      * @var array
@@ -101,7 +102,12 @@ class NetworkHost extends Model
 
     public static function fetchHosts(): Collection
     {
-        return self::where('failed_connection', '<', self::MAX_FAILED_CONNECTION)->get();
+        return self::where(
+            'failed_connection',
+            '<',
+            self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED
+        )
+            ->get();
     }
 
     public function connectionSuccessful(): void
@@ -114,8 +120,15 @@ class NetworkHost extends Model
 
     public function connectionFailed(): void
     {
-        ++$this->failed_connection;
-        $this->update();
+        if ($this->failed_connection < self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED) {
+            ++$this->failed_connection;
+            $this->update();
+        }
+    }
+
+    public function isInventoryToBeRemoved(): bool
+    {
+        return $this->failed_connection >= self::FAILED_CONNECTION_NUMBER_WHEN_INVENTORY_MUST_BE_REMOVED;
     }
 
     public function getInfoAttribute(): Info
@@ -135,6 +148,7 @@ class NetworkHost extends Model
             new NullUrl(),
             new NullUrl(),
             new SecureUrl($this->attributes['host'].'/adshares/inventory/list'),
+            null,
             Info::CAPABILITY_ADVERTISER
         );
     }
@@ -142,5 +156,20 @@ class NetworkHost extends Model
     public function setInfoAttribute(Info $info): void
     {
         $this->attributes['info'] = json_encode($info->toArray());
+    }
+
+    public static function findNonExistentHosts(): array
+    {
+        $self = new self();
+
+        $query = $self
+            ->select(['network_campaigns.source_host as host'])
+            ->rightJoin('network_campaigns', function ($join) {
+                $join->on('network_hosts.host', '=', 'network_campaigns.source_host');
+            })
+            ->where('network_hosts.host', null)
+            ->where('network_campaigns.status', '=', Status::STATUS_ACTIVE);
+
+        return $query->get()->pluck('host')->toArray();
     }
 }

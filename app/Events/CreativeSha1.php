@@ -35,7 +35,7 @@ class CreativeSha1
      */
     public function __construct(\Adshares\Adserver\Models\Banner $model)
     {
-        if ($model->creative_type == Banner::type(Banner::HTML_TYPE)) {
+        if ($model->creative_type === Banner::type(Banner::HTML_TYPE)) {
             $model->creative_contents = $this->injectScriptAndCSP($model->creative_contents);
         }
 
@@ -47,8 +47,7 @@ class CreativeSha1
         $jsPath = public_path('-/banner.js');
         $jsCode = file_get_contents($jsPath);
 
-        $doc = new \DOMDocument();
-        $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        $doc = $this->loadHtml($html);
 
         $xpath = new \DOMXPath($doc);
         [$html] = $xpath->query('//html');
@@ -81,5 +80,17 @@ class CreativeSha1
         $body->insertBefore($banner_script, $body->firstChild);
 
         return $doc->saveHTML();
+    }
+
+    private function loadHtml(string $html)
+    {
+        $doc = new \DOMDocument();
+        $old = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+
+        libxml_use_internal_errors($old);
+
+        return $doc;
     }
 }

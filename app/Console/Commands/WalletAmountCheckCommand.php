@@ -55,6 +55,13 @@ class WalletAmountCheckCommand extends Command
     public function handle(): void
     {
         $this->info('[Wallet] Start command '.$this->signature);
+
+        if (!Config::isHotWalletActive()) {
+            $this->info('[Wallet] Hot wallet feature is disabled.');
+
+            return;
+        }
+
         $waitingPayments = UserLedgerEntry::waitingPayments();
 
         $transferValue = $this->hotWalletCheckerService->calculateTransferValue($waitingPayments);

@@ -31,7 +31,9 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -56,11 +58,17 @@ class DemandController extends Controller
 
     /** @var CampaignRepository */
     private $campaignRepository;
+    /** @var LicenseReader */
+    private $licenseReader;
 
-    public function __construct(PaymentDetailsVerify $paymentDetailsVerify, CampaignRepository $campaignRepository)
-    {
+    public function __construct(
+        PaymentDetailsVerify $paymentDetailsVerify,
+        CampaignRepository $campaignRepository,
+        LicenseReader $licenseReader
+    ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
+        $this->licenseReader = $licenseReader;
     }
 
     public function serve(Request $request, $id)
@@ -205,13 +213,13 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -225,15 +233,15 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
         );
@@ -245,20 +253,21 @@ class DemandController extends Controller
 
     public function view(Request $request, string $bannerId)
     {
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $this->validateEventRequest($request);
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $keywords = $context['page']['keywords'];
+        $keywords = $context['page']['keywords'] ?? '';
 
-        $adUserEndpoint = config('app.aduser_external_location');
+        $adUserEndpoint = config('app.aduser_base_url');
         $response = new Response();
 
         if ($adUserEndpoint) {
@@ -284,8 +293,8 @@ class DemandController extends Controller
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => route('banner-context', ['id' => $eventId]),
-                'view_script_url' => url('-/view.js'),
+                'log_url' => (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString(),
+                'view_script_url' => (new SecureUrl(url('-/view.js')))->toString(),
                 'aduser_url' => $adUserUrl,
             ]
         ));
@@ -299,20 +308,31 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
         );
 
         return $response;
+    }
+
+    private function validateEventRequest(Request $request): void
+    {
+        if (!$request->query->has('ctx')
+            || !$request->query->has('cid')
+            || !$request->query->has('pto')
+            || !$request->query->has('pid')
+        ) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
     }
 
     public function context(Request $request, string $eventId): Response
@@ -371,7 +391,7 @@ class DemandController extends Controller
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee = Config::getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];

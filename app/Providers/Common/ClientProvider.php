@@ -26,6 +26,7 @@ use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
+use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
@@ -34,14 +35,16 @@ use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 use GuzzleHttp\Client;
-use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 final class ClientProvider extends ServiceProvider
@@ -67,7 +70,7 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             AdSelect::class,
-            function () {
+            function (Application $app) {
                 return new JsonRpcAdSelectClient(
                     new JsonRpc(
                         new Client(
@@ -77,7 +80,8 @@ final class ClientProvider extends ServiceProvider
                                 'timeout' => 4,
                             ]
                         )
-                    )
+                    ),
+                    $app->make(CampaignRepository::class)
                 );
             }
         );
@@ -85,15 +89,13 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             AdUser::class,
             function () {
-                return new GuzzleAdUserClient(
-                    new Client(
-                        [
-                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.aduser_internal_location'),
-                            'timeout' => 1,
-                        ]
-                    )
-                );
+                return new GuzzleAdUserClient(new Client(
+                    [
+                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                        'base_uri' => config('app.aduser_base_url'),
+                        'timeout' => 1,
+                    ]
+                ));
             }
         );
 
@@ -108,6 +110,7 @@ final class ClientProvider extends ServiceProvider
             DemandClient::class,
             function (Application $app) {
                 $timeoutForDemandService = 5;
+
                 return new GuzzleDemandClient($app->make(SignatureVerifier::class), $timeoutForDemandService);
             }
         );
@@ -123,6 +126,22 @@ final class ClientProvider extends ServiceProvider
             BannerClassifier::class,
             function (Application $app) {
                 return new LocalPublisherBannerClassifier($app->make(ClassifierInterface::class));
+            }
+        );
+
+        $this->app->bind(
+            LicenseProvider::class,
+            function () {
+                return new GuzzleLicenseClient(
+                    new Client(
+                        [
+                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                            'base_uri' => config('app.license_url'),
+                            'timeout' => 5,
+                        ]
+                    ),
+                    (string)config('app.license_id')
+                );
             }
         );
     }

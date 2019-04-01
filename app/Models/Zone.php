@@ -46,7 +46,7 @@ class Zone extends Model
 <div class="{{selectorClass}}"
     data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
-    style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto"></div>
+    style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
 HTML;
 
     use SoftDeletes;
@@ -203,7 +203,7 @@ HTML;
             '{{zoneId}}' => $this->uuid,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,
-            '{{selectorClass}}' => config('app.website_banner_class'),
+            '{{selectorClass}}' => config('app.adserver_id'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);
@@ -255,7 +255,7 @@ HTML;
         if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
             $this->setSizeAttribute(
                 [
-                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
                 ]
             );
         }
@@ -267,9 +267,14 @@ HTML;
         if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
             $this->setSizeAttribute(
                 [
-                    'label' => Simulator::findLabelBySize("{$this->attributes['width']}x{$this->attributes['height']}"),
+                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
                 ]
             );
         }
+    }
+
+    public function getSizeAsString(): string
+    {
+        return "{$this->attributes['width']}x{$this->attributes['height']}";
     }
 }

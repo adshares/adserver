@@ -20,13 +20,17 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\JoinClause;
 use function array_map;
 use function hex2bin;
 
@@ -36,6 +40,46 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
+    public const TYPE_HTML = 'html';
+
+    public const TYPE_IMAGE = 'image';
+
+    public const ALLOWED_TYPES = [self::TYPE_IMAGE, self::TYPE_HTML];
+
+    private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
+
+    private const NETWORK_BANNERS_COLUMN_SERVE_URL = 'network_banners.serve_url';
+
+    private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
+
+    private const NETWORK_BANNERS_COLUMN_WIDTH = 'network_banners.width';
+
+    private const NETWORK_BANNERS_COLUMN_HEIGHT = 'network_banners.height';
+
+    private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
+
+    private const NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID = 'network_banners.network_campaign_id';
+
+    private const CLASSIFICATIONS_COLUMN_BANNER_ID = 'classifications.banner_id';
+
+    private const CLASSIFICATIONS_COLUMN_STATUS = 'classifications.status';
+
+    private const CLASSIFICATIONS_COLUMN_SITE_ID = 'classifications.site_id';
+
+    private const CLASSIFICATIONS_COLUMN_USER_ID = 'classifications.user_id';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_ID = 'network_campaigns.id';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_LANDING_URL = 'network_campaigns.landing_url';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST = 'network_campaigns.source_host';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_BUDGET = 'network_campaigns.budget';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPM = 'network_campaigns.max_cpm';
+
+    private const NETWORK_CAMPAIGNS_COLUMN_MAX_CPC = 'network_campaigns.max_cpc';
+
     use AutomateMutators;
     use BinHex;
 
@@ -94,35 +138,209 @@ class NetworkBanner extends Model
         return self::where('uuid', hex2bin($bannerId))->first();
     }
 
-    public static function fetch(int $limit, int $offset)
+    public static function fetch(int $limit, int $offset): Collection
     {
-        $query =
-            self::where('network_banners.status', Status::STATUS_ACTIVE)->skip($offset)->take($limit)->orderBy(
-                'network_banners.id',
-                'desc'
-            );
-        $query->join('network_campaigns', 'network_banners.network_campaign_id', '=', 'network_campaigns.id');
-        $query->select(
-            'network_banners.id',
-            'network_banners.serve_url',
-            'network_banners.type',
-            'network_banners.width',
-            'network_banners.height',
-            'network_campaigns.source_host',
-            'network_campaigns.budget',
-            'network_campaigns.max_cpm',
-            'network_campaigns.max_cpc'
-        );
+        $query = self::queryBannersWithCampaign();
 
-        return $query->get();
+        return self::queryPaging($query, $limit, $offset)->get();
+    }
+
+    public static function fetchByFilter(NetworkBannerFilter $networkBannerFilter, int $limit, int $offset): Collection
+    {
+        $query = self::queryByFilter($networkBannerFilter);
+
+
+        return self::queryPaging($query, $limit, $offset)->get();
+    }
+
+    public static function fetchCountByFilter(NetworkBannerFilter $networkBannerFilter): int
+    {
+        $query = self::queryByFilter($networkBannerFilter);
+
+        return $query->count();
+    }
+
+    private static function fetchAll(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        return self::queryBannersWithCampaign($networkBannerFilter);
+    }
+
+    private static function fetchApproved(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+
+        return self::queryJoinWithUserClassification($query, $userId, $siteId)->where(
+            self::CLASSIFICATIONS_COLUMN_STATUS,
+            Classification::STATUS_APPROVED
+        );
+    }
+
+    public static function fetchRejected(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+
+        return self::queryJoinWithUserClassification($query, $userId, $siteId)->where(
+            self::CLASSIFICATIONS_COLUMN_STATUS,
+            Classification::STATUS_REJECTED
+        );
+    }
+
+    public static function fetchUnclassified(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $userId = $networkBannerFilter->getUserId();
+        $siteId = $networkBannerFilter->getSiteId();
+
+        $query = self::queryBannersWithCampaign($networkBannerFilter);
+        $query->leftJoin(
+            'classifications',
+            function (JoinClause $join) use ($userId, $siteId) {
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)->where(
+                    [
+                        self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
+                        self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
+                    ]
+                );
+            }
+        )->whereNull(self::CLASSIFICATIONS_COLUMN_BANNER_ID);
+
+        return $query;
     }
 
     public static function fetchCount(): int
     {
-        return self::where('network_banners.status', Status::STATUS_ACTIVE)->count();
+        return self::where(self::NETWORK_BANNERS_COLUMN_STATUS, Status::STATUS_ACTIVE)->count();
     }
 
-    public static function findIdsByUuids(array $publicUuids)
+    private static function queryByFilter(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $query = self::getBaseQuery($networkBannerFilter);
+
+        if (null !== $networkBannerFilter->getSiteId()) {
+            $userId = $networkBannerFilter->getUserId();
+            $query = self::querySkipRejectedGlobally($query, $userId);
+        }
+
+        return $query;
+    }
+
+    private static function getBaseQuery(NetworkBannerFilter $networkBannerFilter): Builder
+    {
+        $query = null;
+
+        if ($networkBannerFilter->isApproved()) {
+            $query = self::fetchApproved($networkBannerFilter);
+        }
+
+        if ($networkBannerFilter->isRejected()) {
+            $query = self::fetchRejected($networkBannerFilter);
+        }
+
+        if ($networkBannerFilter->isUnclassified()) {
+            $query = self::fetchUnclassified($networkBannerFilter);
+        }
+
+        if ($query) {
+            return $query;
+        }
+
+        return self::fetchAll($networkBannerFilter);
+    }
+
+    private static function queryPaging(Builder $query, int $limit, int $offset): Builder
+    {
+        return $query->skip($offset)->take($limit);
+    }
+
+    private static function queryBannersWithCampaign(?NetworkBannerFilter $networkBannerFilter = null): Builder
+    {
+        $whereClause = [];
+        $whereClause[] = [self::NETWORK_BANNERS_COLUMN_STATUS, '=', Status::STATUS_ACTIVE];
+        if (null !== $networkBannerFilter) {
+            $type = $networkBannerFilter->getType();
+
+            if (null !== $type) {
+                $whereClause[] = [self::NETWORK_BANNERS_COLUMN_TYPE, '=', $type];
+            }
+        }
+
+        $query = self::where($whereClause)->orderBy(
+            self::NETWORK_BANNERS_COLUMN_ID,
+            'desc'
+        );
+
+        if (null !== $networkBannerFilter) {
+            $sizes = $networkBannerFilter->getSizes();
+
+            if ($sizes) {
+                $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
+                $query->whereIn($concatSizeExpression, $sizes);
+            }
+        }
+
+        $query->join(
+            'network_campaigns',
+            self::NETWORK_BANNERS_COLUMN_NETWORK_CAMPAIGN_ID,
+            '=',
+            self::NETWORK_CAMPAIGNS_COLUMN_ID
+        );
+        $query->select(
+            self::NETWORK_BANNERS_COLUMN_ID,
+            self::NETWORK_BANNERS_COLUMN_SERVE_URL,
+            self::NETWORK_BANNERS_COLUMN_TYPE,
+            self::NETWORK_BANNERS_COLUMN_WIDTH,
+            self::NETWORK_BANNERS_COLUMN_HEIGHT,
+            self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
+            self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
+            self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,
+            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPM,
+            self::NETWORK_CAMPAIGNS_COLUMN_MAX_CPC
+        );
+
+        return $query;
+    }
+
+    private static function queryJoinWithUserClassification(Builder $query, int $userId, ?int $siteId): Builder
+    {
+        return $query->join(
+            'classifications',
+            function (JoinClause $join) use ($userId, $siteId) {
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', self::CLASSIFICATIONS_COLUMN_BANNER_ID)->where(
+                    [
+                        self::CLASSIFICATIONS_COLUMN_USER_ID => $userId,
+                        self::CLASSIFICATIONS_COLUMN_SITE_ID => $siteId,
+                    ]
+                );
+            }
+        );
+    }
+
+    private static function querySkipRejectedGlobally(Builder $query, int $userId): Builder
+    {
+        return $query->leftJoin(
+            'classifications as classification_global_reject',
+            function (JoinClause $join) use ($userId) {
+                $join->on(self::NETWORK_BANNERS_COLUMN_ID, '=', 'classification_global_reject.banner_id')->where(
+                    [
+                        'classification_global_reject.user_id' => $userId,
+                        'classification_global_reject.site_id' => null,
+                    ]
+                );
+            }
+        )->where(
+            function (Builder $whereClause) {
+                $whereClause->where('classification_global_reject.status', Classification::STATUS_APPROVED)
+                    ->orWhereNull('classification_global_reject.status');
+            }
+        );
+    }
+
+    public static function findIdsByUuids(array $publicUuids): array
     {
         $binPublicIds = array_map(
             function (string $item) {
@@ -131,9 +349,7 @@ class NetworkBanner extends Model
             $publicUuids
         );
 
-        $banners = self::whereIn('uuid', $binPublicIds)
-            ->select('id', 'uuid')
-            ->get();
+        $banners = self::whereIn('uuid', $binPublicIds)->select('id', 'uuid')->get();
 
         $ids = [];
 
@@ -142,17 +358,6 @@ class NetworkBanner extends Model
         }
 
         return $ids;
-    }
-
-    public function getAdSelectArray(): array
-    {
-        return [
-            'banner_id' => $this->uuid,
-            'banner_size' => $this->width.'x'.$this->height,
-            'keywords' => [
-                'type' => $this->type,
-            ],
-        ];
     }
 
     public function campaign(): BelongsTo

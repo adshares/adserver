@@ -23,7 +23,7 @@ domReady(function() {
 
     var handler = function(e) {
         var msg = {
-            adsharesClick : 1
+            dwmthClick : 1
         };
         target.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
         e.preventDefault();
@@ -49,20 +49,20 @@ domReady(function() {
         } else {
             msg = event.data;
         }
-        if (msg.adsharesLoad) {
+        if (msg.dwmthLoad) {
             var data = msg.data;
 
             if (data.click_url) {
                 for(var i=0;i<links.length;i++) {
                     links[i].href = data.click_url;
-                };
+                }
             }
         }
     };
     window.addEventListener ? addEventListener('message', fn) : attachEvent(
         'onmessage', fn);
     msg = {
-        adsharesLoad : 1
+        dwmthLoad : 1
     };
     target.postMessage(onlyStrings ? JSON.stringify(msg) : msg , '*');
 });

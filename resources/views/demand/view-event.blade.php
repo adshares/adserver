@@ -7,7 +7,7 @@
             demandLogContext('{{ $log_url }}');
             @isset($aduser_url)
             parent.postMessage({
-                'adsharesTrack': [
+                'insertElem': [
                     {'type': 'iframe', 'url': '{{ $aduser_url }}'}
                 ]
             }, '*');

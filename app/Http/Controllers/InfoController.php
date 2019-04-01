@@ -24,11 +24,27 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
+use Adshares\Adserver\Models\Regulation;
+use Illuminate\View\View;
 
 class InfoController extends Controller
 {
     public function info(): InfoResponse
     {
         return InfoResponse::defaults();
+    }
+
+    public function privacyPolicy(): View
+    {
+        $data = Regulation::fetchPrivacyPolicy()->toArray();
+
+        return view('info/policy', $data);
+    }
+
+    public function terms(): View
+    {
+        $data = Regulation::fetchTerms()->toArray();
+
+        return view('info/policy', $data);
     }
 }

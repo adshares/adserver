@@ -22,10 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Model\Selector;
 
+use function str_replace;
+
 final class OptionValue
 {
     /** @var string */
     private $label;
+
     /** @var string */
     private $value;
 
@@ -39,7 +42,7 @@ final class OptionValue
     {
         return [
             'label' => $this->label,
-            'value' => $this->value,
+            'value' => str_replace('-', '_', $this->value),
         ];
     }
 }

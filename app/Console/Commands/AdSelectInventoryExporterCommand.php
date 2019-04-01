@@ -60,7 +60,7 @@ class AdSelectInventoryExporterCommand extends Command
         // $from = Config::fetchAdSelectInventoryExportTime();
 
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
-        $deletedCampaigns = $this->campaignRepository->fetchDeletedCampaigns();
+        $deletedCampaigns = $this->campaignRepository->fetchCampaignsToDelete();
 
         $this->info(sprintf(
             'Found %s campaign to add or update, %s campaign to delete.',
