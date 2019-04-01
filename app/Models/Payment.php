@@ -123,7 +123,7 @@ class Payment extends Model
 
     public function transferableAmount(): int
     {
-        return $this->netAmount() ?? $this->fee;
+        return $this->netAmount() ?? $this->fee ?? 0;
     }
 
     public function netAmount(): ?int
