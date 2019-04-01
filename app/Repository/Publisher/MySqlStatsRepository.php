@@ -236,12 +236,12 @@ class MySqlStatsRepository implements StatsRepository
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
-            ->appendSiteIdGroupBy();
+            ->appendSiteIdGroupBy()
+            ->appendZoneIdGroupBy();
 
         if ($siteId) {
             $queryBuilder
-                ->appendSiteIdWhereClause($siteId)
-                ->appendZoneIdGroupBy();
+                ->appendSiteIdWhereClause($siteId);
         }
 
         $query = $queryBuilder->build();
@@ -260,7 +260,7 @@ class MySqlStatsRepository implements StatsRepository
                 $row->domain
             );
 
-            $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
+            $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;
             $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
         }
 

@@ -50,8 +50,8 @@ class PublisherReportResponse extends ReportResponse
                 return [
                     $item['siteId'],
                     $item['siteName'],
-                    $item['zoneId'] ?? '',
-                    $item['zoneName'] ?? '',
+                    $item['zoneId'],
+                    $item['zoneName'],
                     $item['domain'] ?? '',
                     $item['revenue'],
                     $item['clicks'],
@@ -60,7 +60,8 @@ class PublisherReportResponse extends ReportResponse
                     $item['averageRpc'],
                     $item['averageRpm'],
                 ];
-            }, $this->data
+            },
+            $this->data
         );
     }
 }
