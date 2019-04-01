@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
+use Adshares\Ads\Util\AdsConverter;
+
 class PublisherReportResponse extends ReportResponse
 {
     private const PUBLISHER_COLUMNS = [
@@ -53,12 +55,12 @@ class PublisherReportResponse extends ReportResponse
                     $item['zoneId'],
                     $item['zoneName'],
                     $item['domain'] ?? '',
-                    $item['revenue'],
+                    AdsConverter::clicksToAds($item['revenue']),
                     $item['clicks'],
                     $item['impressions'],
                     $item['ctr'],
-                    $item['averageRpc'],
-                    $item['averageRpm'],
+                    AdsConverter::clicksToAds($item['averageRpc']),
+                    AdsConverter::clicksToAds($item['averageRpm']),
                 ];
             },
             $this->data
