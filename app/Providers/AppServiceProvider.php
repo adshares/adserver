@@ -25,7 +25,7 @@ use Adshares\Ads\Driver\CliDriver;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Infrastructure\Service\LicenseDecoderV1;
-use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Common\Infrastructure\Service\LicenseVaultFilesystem;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
@@ -118,9 +118,9 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            LicenseFeeReader::class,
+            LicenseReader::class,
             function (Application $app) {
-                return new LicenseFeeReader($app->make(LicenseVault::class));
+                return new LicenseReader($app->make(LicenseVault::class));
             }
         );
     }
