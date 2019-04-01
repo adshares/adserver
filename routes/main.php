@@ -35,5 +35,3 @@ Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'upload
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
-
-Route::get('/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
