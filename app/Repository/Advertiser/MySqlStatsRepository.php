@@ -223,42 +223,6 @@ class MySqlStatsRepository implements StatsRepository
         return new Total($calculation, $campaignId);
     }
 
-    public function fetchStatsToReport(
-        string $advertiserId,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        ?string $campaignId = null
-    ): DataCollection {
-        $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
-            ->setAdvertiserId($advertiserId)
-            ->setDateRange($dateStart, $dateEnd)
-            ->appendCampaignIdWhereClause($campaignId)
-            ->appendCampaignIdGroupBy(true)
-            ->appendBannerIdGroupBy($campaignId)
-            ->appendDomainGroupBy()
-            ->build();
-
-        $queryResult = $this->executeQuery($query, $dateStart);
-
-        $result = [];
-        foreach ($queryResult as $row) {
-            $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
-                (float)$row->ctr,
-                (float)$row->cpc,
-                (float)$row->cpm,
-                (int)$row->cost,
-                $row->domain
-            );
-
-            $bid = ($campaignId !== null) ? bin2hex($row->bid) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->cid), $bid);
-        }
-
-        return new DataCollection($result);
-    }
-
     private function fetch(
         string $type,
         string $advertiserId,
