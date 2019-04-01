@@ -20,7 +20,8 @@ jobs:
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
         - sonar-scanner
 
-    - if: type = push
+    - stage: Unit Testing
+      if: type = push
       script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
 
