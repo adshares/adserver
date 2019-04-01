@@ -13,16 +13,11 @@ env:
 install: composer install
 jobs:
   include:
-    - stage: static code analysis
+    - stage: static code analysis and unit tests
       if: type = push
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
-        - sonar-scanner
-
-    - stage: unit testing
-      if: type = push
-      script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
 
     - stage: code quality checks
