@@ -25,36 +25,42 @@ namespace Adshares\Adserver\Http\Response\Stats;
 class PublisherReportResponse extends ReportResponse
 {
     private const PUBLISHER_COLUMNS = [
-        'Domain',
         'Site Id',
+        'Site Name',
         'Zone Id',
+        'Zone Name',
+        'Target Domain',
+        'Revenue',
         'Clicks',
-        'Impressions',
+        'Views',
         'Ctr',
         'AverageRpc',
         'AverageRpm',
-        'Revenue',
     ];
 
     protected function columns(): array
     {
-       return self::PUBLISHER_COLUMNS;
+        return self::PUBLISHER_COLUMNS;
     }
 
     protected function rows(): array
     {
-        return array_map(static function($item) {
-            return [
-                $item['domain'] ?? 'None',
-                $item['siteId'],
-                $item['zoneId'] ?? 'None',
-                $item['clicks'],
-                $item['impressions'],
-                $item['ctr'],
-                $item['averageRpc'],
-                $item['averageRpm'],
-                $item['revenue'],
-            ];
-        }, $this->data);
+        return array_map(
+            static function ($item) {
+                return [
+                    $item['siteId'],
+                    $item['siteName'],
+                    $item['zoneId'] ?? '',
+                    $item['zoneName'] ?? '',
+                    $item['domain'] ?? '',
+                    $item['revenue'],
+                    $item['clicks'],
+                    $item['impressions'],
+                    $item['ctr'],
+                    $item['averageRpc'],
+                    $item['averageRpm'],
+                ];
+            }, $this->data
+        );
     }
 }
