@@ -20,7 +20,6 @@
 
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
-use Adshares\Adserver\Http\Controllers\Manager\StatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/',
