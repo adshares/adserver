@@ -92,7 +92,6 @@ class AdsFetchHosts extends Command
         }
         $progressBar->finish();
 
-        $this->info('');
         $this->info('Finished command '.$this->signature);
     }
 
