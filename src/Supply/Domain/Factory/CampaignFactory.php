@@ -59,7 +59,6 @@ class CampaignFactory
         $campaign = new Campaign(
             $data['id'] ?? Uuid::v4(),
             $data['demand_id'],
-            $data['publisher_id'],
             $data['landing_url'],
             new CampaignDate($data['date_start'], $data['date_end'], $data['created_at'], $data['updated_at']),
             $banners,
