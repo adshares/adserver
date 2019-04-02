@@ -1,3 +1,5 @@
+git:
+  depth: false
 language: php
 php:
   - 7.2
@@ -13,23 +15,14 @@ env:
 install: composer install
 jobs:
   include:
+    - script:
+        - sonar-scanner
+
     - if: type = push
       script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
         - vendor/bin/phpunit --testsuite Console,Http,Unit
-
-    - if: type = push
-      script:
-        - sonar-scanner
-
-#    - if: type = pull_request
-#      script:
-#        # Run build script
-#        - in_docker /bin/bash scripts/pre-build.sh"
-#
-#        # Run build script
-#        - in_docker /bin/bash scripts/build.sh"
 
 notifications:
   email: false
