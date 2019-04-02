@@ -46,6 +46,7 @@ class AdPayEventExportCommand extends Command
         $dateNow = new DateTime();
 
         $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
+        $this->info('Found '.count($createdEvents).' events to export.');
         if (count($createdEvents) > 0) {
             foreach ($createdEvents as $event) {
                 /** @var $event EventLog */
@@ -61,6 +62,6 @@ class AdPayEventExportCommand extends Command
 
         Config::updateDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME, $dateNow);
 
-        $this->info('Finish command '.$this->signature.' with '.count($createdEvents).' sent events.');
+        $this->info('Finish command '.$this->signature);
     }
 }
