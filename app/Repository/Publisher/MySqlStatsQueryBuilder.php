@@ -108,8 +108,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
         $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
         $this->column(
-            'IFNULL(AVG(CASE WHEN (e.event_type <> \'view\') THEN NULL WHEN (e.is_view_clicked = 1) '
-                    .'THEN 1 ELSE 0 END), 0) AS ctr'
+            'IFNULL(AVG(CASE '
+                    .'WHEN (e.event_type <> \'view\') THEN NULL '
+                    .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
         );
         $this->column('IFNULL(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL)), 0) AS rpc');
         $this->column('IFNULL(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL)), 0)*1000 AS rpm');
@@ -185,14 +186,14 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function appendSiteIdWhereClause(string $siteId = null): self
+    public function appendSiteIdWhereClause(string $siteId): self
     {
         $this->where(sprintf('e.site_id = 0x%s', $siteId));
 
         return $this;
     }
 
-    public function appendZoneIdWhereClause(string $zoneId = null): self
+    public function appendZoneIdWhereClause(string $zoneId): self
     {
         $this->where(sprintf('e.zone_id = 0x%s', $zoneId));
 
