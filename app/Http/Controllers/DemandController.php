@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -424,7 +423,6 @@ class DemandController extends Controller
 
             $campaigns[] = [
                 'id' => $campaign->uuid,
-                'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
                 'date_end' => $campaign->time_end,
