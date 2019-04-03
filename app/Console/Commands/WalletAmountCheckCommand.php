@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Ads\Util\AdsConverter;
+use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Mail\WalletFundsEmail;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -29,14 +31,13 @@ use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Adshares\Adserver\Console\LineFormatterTrait;
 use const DATE_ATOM;
 
 class WalletAmountCheckCommand extends Command
 {
     use LineFormatterTrait;
 
-    private const SEND_EMAIL_MIN_INTERVAL = 600;
+    private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 600;
 
     protected $signature = 'ops:wallet:transfer:check';
 
@@ -74,15 +75,16 @@ class WalletAmountCheckCommand extends Command
 
         if ($this->shouldEmailBeSent()) {
             $email = config('app.adshares_operator_email');
+            $transferValueInAds = (string)number_format((float)AdsConverter::clicksToAds($transferValue), 4, '.', '');
 
             Mail::to($email)->queue(
-                new WalletFundsEmail($transferValue, (string)config('app.adshares_address'))
+                new WalletFundsEmail($transferValueInAds, (string)config('app.adshares_address'))
             );
 
             $message = sprintf(
-                '[Wallet] Email has been sent to %s to transfer %s clicks from Cold (%s) to Hot Wallet (%s).',
+                '[Wallet] Email has been sent to %s to transfer %s ADS from Cold (%s) to Hot Wallet (%s).',
                 $email,
-                $transferValue,
+                $transferValueInAds,
                 config('app.adshares_wallet_cold_address'),
                 config('app.adshares_address')
             );
@@ -107,7 +109,8 @@ class WalletAmountCheckCommand extends Command
         }
 
         $lastEmailTime = DateTime::createFromFormat(DATE_ATOM, $date);
-        $dateUntilEmailIsSent = $lastEmailTime->modify(sprintf('%d second', self::SEND_EMAIL_MIN_INTERVAL));
+        $dateUntilEmailIsSent =
+            $lastEmailTime->modify(sprintf('%d second', self::SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS));
 
         return $dateUntilEmailIsSent < $now;
     }
