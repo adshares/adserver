@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Models\UserLedgerEntry;
 
 class WalletFundsChecker
 {
@@ -49,7 +50,8 @@ class WalletFundsChecker
         $adsOperatorBalance = $this->fetchOperatorBalance();
         $actualOperatorBalance = $adsOperatorBalance - $waitingPaymentsAmount;
 
-        if ($actualOperatorBalance < $this->minAmount) {
+        $allUsersBalance = UserLedgerEntry::getBalanceForAllUsers();
+        if ($actualOperatorBalance < min($this->minAmount, $allUsersBalance)) {
             return $limit - $actualOperatorBalance;
         }
 
