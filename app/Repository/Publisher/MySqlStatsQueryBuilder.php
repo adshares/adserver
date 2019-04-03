@@ -73,10 +73,10 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::RPC_TYPE:
-                $this->column('COALESCE(AVG(e.paid_amount), 0) AS c');
+                $this->column('COALESCE(ROUND(AVG(e.paid_amount)), 0) AS c');
                 break;
             case StatsRepository::RPM_TYPE:
-                $this->column('COALESCE(AVG(e.paid_amount), 0)*1000 AS c');
+                $this->column('COALESCE(ROUND(AVG(e.paid_amount)), 0)*1000 AS c');
                 break;
             case StatsRepository::SUM_TYPE:
                 $this->column('COALESCE(SUM(e.paid_amount), 0) AS c');
@@ -112,8 +112,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                     .'WHEN (e.event_type <> \'view\') THEN NULL '
                     .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
         );
-        $this->column('IFNULL(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL)), 0) AS rpc');
-        $this->column('IFNULL(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL)), 0)*1000 AS rpm');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL))), 0) AS rpc');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL))), 0)*1000 AS rpm');
         $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.paid_amount, 0)) AS revenue');
     }
 
