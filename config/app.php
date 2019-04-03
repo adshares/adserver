@@ -114,7 +114,7 @@ return [
     'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY', ''),
     'license_url' => env('ADSHARES_LICENSE_SERVER_URL'),
     'license_key' => env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')),
-    'license_id' => substr(env('ADSHARES_LICENSE_SERVER_KEY'), 0, 10),
+    'license_id' => substr(env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')), 0, 10),
 
     /*
     |--------------------------------------------------------------------------
