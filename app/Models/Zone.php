@@ -44,9 +44,8 @@ class Zone extends Model
 {
     private const CODE_TEMPLATE = <<<HTML
 <div class="{{selectorClass}}"
-    data-pub="{{publisherId}}" 
     data-zone="{{zoneId}}" 
-    style="width:{{width}}px;height:{{height}}px;display: block;margin: 0 auto"></div>
+    style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
 HTML;
 
     use SoftDeletes;
@@ -199,7 +198,6 @@ HTML;
     public function getCodeAttribute()
     {
         $replaceArr = [
-            '{{publisherId}}' => $this->publisher_id ?? 0,
             '{{zoneId}}' => $this->uuid,
             '{{width}}' => $this->width,
             '{{height}}' => $this->height,

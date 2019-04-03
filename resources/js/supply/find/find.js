@@ -21,11 +21,6 @@ var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
-if(window['serverOrigin:' + serverOrigin]) {
-    return;
-}
-window['serverOrigin:' + serverOrigin] = 1;
-
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -76,7 +71,7 @@ var prepareElement = function (context, banner, element, contextParam) {
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
 
-    banner.adsharesTrackAccess = [];
+    banner.dwmthACL = [];
     if (element.tagName == 'IFRAME') {
 
         prepareIframe(element);
@@ -89,11 +84,11 @@ var prepareElement = function (context, banner, element, contextParam) {
                 } else {
                     data = event.data;
                 }
-                if (data.adsharesLoad) {
-                    var msg = {adsharesLoad: 1, data: context};
+                if (data.dwmthLoad) {
+                    var msg = {dwmthLoad: 1, data: context};
 
                     event.source.postMessage(isString ? JSON.stringify(msg) : msg, '*');
-                } else if (data.adsharesClick) {
+                } else if (data.dwmthClick) {
                     if (document.activeElement != element) {
                         console.log('click without mouse interaction');
                         return;
@@ -112,8 +107,8 @@ var prepareElement = function (context, banner, element, contextParam) {
             }
 
             var has_access = event.source === element.contentWindow;
-            has_access || banner.adsharesTrackAccess.forEach(function(win) {
-                if(win === event.source) {
+            has_access || banner.dwmthACL.forEach(function(win) {
+                if(win && (win === event.source)) {
                     has_access = true;
                 }
             });
@@ -125,15 +120,15 @@ var prepareElement = function (context, banner, element, contextParam) {
                 } else {
                     data = event.data;
                 }
-                if (data.adsharesTrack) {
-                    data.adsharesTrack.forEach(function (request) {
-                        if(banner.adsharesTrackAccess.length >= 5) return;
+                if (data.insertElem) {
+                    data.insertElem.forEach(function (request) {
+                        if(banner.dwmthACL.length >= 5) return;
                         if(request.type == 'iframe') {
                             var iframe = addTrackingIframe(request.url, div);
-                            banner.adsharesTrackAccess.push(iframe.contentWindow);
+                            banner.dwmthACL.push(iframe.contentWindow);
                         } else if(request.type == 'img') {
                             addTrackingImage(request.url, div);
-                            banner.adsharesTrackAccess.push('img');
+                            banner.dwmthACL.push(null);
                         }
 
                     });
@@ -207,9 +202,42 @@ function isRendered(domObj) {
     return true;
 }
 
-function getBoundRect(el) {
+function isNumber(x)
+{
+    return !isNaN(1*x);
+}
+
+var DocElem = function( property )
+{
+    var t
+    return ((t = document.documentElement) || (t = document.body.parentNode)) && isNumber( t[property] ) ? t : document.body
+}
+
+var viewSize = function ()
+{
+    var doc = DocElem( 'clientWidth' ),
+        body = document.body,
+        w, h
+    return isNumber( document.clientWidth ) ? { w : document.clientWidth, h : document.clientHeight } :
+        doc === body
+        || (w = Math.max( doc.clientWidth, body.clientWidth )) > self.innerWidth
+        || (h = Math.max( doc.clientHeight, body.clientHeight )) > self.innerHeight ? { w : body.clientWidth, h : body.clientHeight } :
+            { w : w, h : h }
+}
+
+function getBoundRect(el, overflow) {
     var left = 0, top = 0;
     var width = el.offsetWidth, height = el.offsetHeight;
+
+    if(overflow) {
+        var css = window.getComputedStyle(el);
+        if (css.overflowX == 'visible') {
+            width = 100000;
+        }
+        if (css.overflowY == 'visible') {
+            height = 100000;
+        }
+    }
 
     do {
         left += el.offsetLeft - el.scrollLeft;
@@ -238,7 +266,7 @@ var isVisible = function (el) {
         width = rect.width,
         el = el.parentNode;
     while (el != document.body) {
-        rect = getBoundRect(el);
+        rect = getBoundRect(el, true);
         if (top <= rect.bottom === false)
             return false;
         if (left <= rect.right === false)
@@ -250,10 +278,12 @@ var isVisible = function (el) {
             return false;
         el = el.parentNode;
     }
+
+    var viewsize = viewSize();
     // Check its within the document viewport
-    return top <= Math.max(document.documentElement.clientHeight, window.innerHeight ? window.innerHeight : 0)
+    return top <= viewsize.h
         && top > -height
-        && left <= Math.max(document.documentElement.clientWidth, window.innerWidth ? window.innerWidth : 0)
+        && left <= viewsize.w
         && left > -width;
 };
 
@@ -341,6 +371,10 @@ domReady(function () {
 
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
+        if(tag.__dwmth) {
+            continue;
+        }
+        tag.__dwmth = 1;
         param = {};
         param.width = parseInt(tag.offsetWidth) || parseInt(tag.style.width);
         param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height);
@@ -487,12 +521,15 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                banner.adsharesTrackAccess.push(addTrackingIframe(context.view_url, element).contentWindow);
+                banner.dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
-                if (hash == banner.creative_sha1) {
+                if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
+                    if(hash === 'NO_SUPPORT') {
+                        console.log('warning: hash not checked');
+                    }
                     fn();
                 } else {
                     console.log('hash error', banner, hash);

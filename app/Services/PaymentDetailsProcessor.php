@@ -28,20 +28,20 @@ use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
-use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Exception;
 
 class PaymentDetailsProcessor
 {
     /** @var string */
     private $adServerAddress;
-    /** @var LicenseFeeReader */
-    private $licenseFeeReader;
+    /** @var LicenseReader */
+    private $licenseReader;
 
-    public function __construct(LicenseFeeReader $licenseFeeReader)
+    public function __construct(LicenseReader $licenseReader)
     {
         $this->adServerAddress = (string)config('app.adshares_address');
-        $this->licenseFeeReader = $licenseFeeReader;
+        $this->licenseReader = $licenseReader;
     }
 
     /**
@@ -55,12 +55,9 @@ class PaymentDetailsProcessor
     {
         $amountReceived = $this->getPaymentAmount($adsPaymentId);
 
-        $licenceAccount = Config::getLicenceAccount();
-        if ($licenceAccount === null) {
-            throw new MissingInitialConfigurationException('No config entry for licence account.');
-        }
+        $licenseAccount = $this->licenseReader->getAddress()->toString();
 
-        $licenceFee = $this->licenseFeeReader->getFee(Config::LICENCE_RX_FEE);
+        $licenceFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
         if ($licenceFee === null) {
             throw new MissingInitialConfigurationException('No config entry for licence fee.');
         }
@@ -114,7 +111,7 @@ class PaymentDetailsProcessor
             }
 
             NetworkPayment::registerNetworkPayment(
-                $licenceAccount,
+                $licenseAccount,
                 $this->adServerAddress,
                 $totalLicenceFee,
                 $adsPaymentId

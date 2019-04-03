@@ -28,13 +28,12 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -60,17 +59,17 @@ class DemandController extends Controller
 
     /** @var CampaignRepository */
     private $campaignRepository;
-    /** @var LicenseFeeReader */
-    private $licenseFeeReader;
+    /** @var LicenseReader */
+    private $licenseReader;
 
     public function __construct(
         PaymentDetailsVerify $paymentDetailsVerify,
         CampaignRepository $campaignRepository,
-        LicenseFeeReader $licenseFeeReader
+        LicenseReader $licenseReader
     ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
-        $this->licenseFeeReader = $licenseFeeReader;
+        $this->licenseReader = $licenseReader;
     }
 
     public function serve(Request $request, $id)
@@ -395,7 +394,7 @@ class DemandController extends Controller
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee = $this->licenseFeeReader->getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
@@ -424,7 +423,6 @@ class DemandController extends Controller
 
             $campaigns[] = [
                 'id' => $campaign->uuid,
-                'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
                 'date_end' => $campaign->time_end,

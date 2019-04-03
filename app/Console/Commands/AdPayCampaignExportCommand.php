@@ -41,32 +41,24 @@ class AdPayCampaignExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $configDate = Config::where('key', Config::ADPAY_CAMPAIGN_EXPORT_TIME)->first();
-        if (null === $configDate) {
-            $configDate = new Config();
-            $configDate->key = Config::ADPAY_CAMPAIGN_EXPORT_TIME;
-
-            $dateFrom = new DateTime('@0');
-        } else {
-            $dateFrom = DateTime::createFromFormat(DATE_ATOM, $configDate->value);
-        }
-
+        $dateFrom = Config::fetchDateTimeByKey(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
         $dateNow = new DateTime();
 
         $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->get();
+        $this->info('Found '.count($updatedCampaigns).' updated campaigns to export.');
         if (count($updatedCampaigns) > 0) {
             $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
             $adPay->updateCampaign($campaigns);
         }
 
         $deletedCampaigns = Campaign::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
+        $this->info('Found '.count($deletedCampaigns).' deleted campaigns to export.');
         if (count($deletedCampaigns) > 0) {
             $campaignIds = DemandCampaignMapper::mapCampaignCollectionToCampaignIds($deletedCampaigns);
             $adPay->deleteCampaign($campaignIds);
         }
 
-        $configDate->value = $dateNow->format(DATE_ATOM);
-        $configDate->save();
+        Config::updateDateTimeByKey(Config::ADPAY_CAMPAIGN_EXPORT_TIME, $dateNow);
 
         $this->info('Finish command '.$this->signature);
     }

@@ -24,10 +24,11 @@ namespace Adshares\Common\Infrastructure\Service;
 
 use Adshares\Adserver\Models\Config;
 use Adshares\Common\Application\Service\LicenseVault;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\RuntimeException;
 use function apcu_fetch;
 
-class LicenseFeeReader
+class LicenseReader
 {
     /** @var LicenseVault */
     private $licenseVault;
@@ -35,6 +36,27 @@ class LicenseFeeReader
     public function __construct(LicenseVault $licenseVault)
     {
         $this->licenseVault = $licenseVault;
+    }
+
+    public function getAddress(): AccountId
+    {
+        $value = apcu_fetch(Config::LICENCE_ACCOUNT);
+
+        if ($value) {
+            return new AccountId($value);
+        }
+
+        try {
+            $license = $this->licenseVault->read();
+        } catch (RuntimeException $exception) {
+            return new AccountId(Config::getLicenceAccount());
+        }
+
+        $value = $license->getPaymentAddress();
+
+        apcu_store(Config::LICENCE_ACCOUNT, $value->toString());
+
+        return $value;
     }
 
     public function getFee(string $type): float

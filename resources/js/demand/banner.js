@@ -23,7 +23,7 @@ domReady(function() {
 
     var handler = function(e) {
         var msg = {
-            adsharesClick : 1
+            dwmthClick : 1
         };
         target.postMessage(onlyStrings ? JSON.stringify(msg) : msg, '*');
         e.preventDefault();
@@ -49,7 +49,7 @@ domReady(function() {
         } else {
             msg = event.data;
         }
-        if (msg.adsharesLoad) {
+        if (msg.dwmthLoad) {
             var data = msg.data;
 
             if (data.click_url) {
@@ -62,7 +62,7 @@ domReady(function() {
     window.addEventListener ? addEventListener('message', fn) : attachEvent(
         'onmessage', fn);
     msg = {
-        adsharesLoad : 1
+        dwmthLoad : 1
     };
     target.postMessage(onlyStrings ? JSON.stringify(msg) : msg , '*');
 });
