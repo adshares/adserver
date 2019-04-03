@@ -35,9 +35,6 @@ final class Campaign
     /** @var Id */
     private $id;
 
-    /** @var int */
-    private $publisherId;
-
     /** @var string */
     private $landingUrl;
 
@@ -68,7 +65,6 @@ final class Campaign
     public function __construct(
         Id $id,
         Id $demandCampaignId,
-        Id $publisherId,
         string $landingUrl,
         CampaignDate $campaignDate,
         array $banners,
@@ -80,7 +76,6 @@ final class Campaign
     ) {
         $this->id = $id;
         $this->demandCampaignId = $demandCampaignId;
-        $this->publisherId = $publisherId;
         $this->landingUrl = $landingUrl;
         $this->budget = $budget;
         $this->sourceCampaign = $sourceCampaign;
@@ -116,7 +111,6 @@ final class Campaign
         return [
             'id' => (string)$this->id,
             'demand_campaign_id' => (string)$this->demandCampaignId,
-            'publisher_id' => (string)$this->publisherId,
             'landing_url' => $this->landingUrl,
             'max_cpc' => $this->budget->getMaxCpc(),
             'max_cpm' => $this->budget->getMaxCpm(),
@@ -154,11 +148,6 @@ final class Campaign
     public function getId(): string
     {
         return (string)$this->id;
-    }
-
-    public function getPublisherId(): string
-    {
-        return (string)$this->publisherId;
     }
 
     public function getDemandCampaignId(): string

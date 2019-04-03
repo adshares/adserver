@@ -86,7 +86,7 @@ class Utils
 
         $zones = explode(self::ZONE_GLUE, $zonesStr);
         $fields = explode(self::VALUE_GLUE, array_shift($zones));
-        //         return $fields;
+
         $data = [];
 
         foreach ($zones as $zoneStr) {

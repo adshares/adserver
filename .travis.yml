@@ -18,8 +18,7 @@ jobs:
     - script:
         - sonar-scanner
 
-    - if: type = push
-      script:
+    - script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
         - vendor/bin/phpunit --testsuite Console,Http,Unit
