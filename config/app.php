@@ -112,7 +112,7 @@ return [
     'classify_public_key' => env('CLASSIFY_PUBLIC_KEY', ''),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'default_classify_namespace'),
     'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY', ''),
-    'license_url' => env('ADSHARES_LICENSE_SERVER_URL','https://account.adshares.pl'),
+    'license_url' => env('ADSHARES_LICENSE_SERVER_URL', 'https://account.adshares.pl'),
     'license_key' => env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')),
     'license_id' => substr(env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')), 0, 10),
 
