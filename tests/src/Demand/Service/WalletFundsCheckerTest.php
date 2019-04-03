@@ -37,6 +37,7 @@ class WalletFundsCheckerTest extends TestCase
         // limit = ($max + $min) / 2 = 60
         $hotWalletValue = 5;
         $waitingPayments = 8;
+        $allUsersBalance = 20;
 
         $service = new WalletFundsChecker(
             $min,
@@ -44,7 +45,7 @@ class WalletFundsCheckerTest extends TestCase
             $this->createAdsClientMock($hotWalletValue)
         );
 
-        $transferValue = $service->calculateTransferValue($waitingPayments);
+        $transferValue = $service->calculateTransferValue($waitingPayments, $allUsersBalance);
 
         $this->assertEquals(60 + 8 - 5, $transferValue);
     }
@@ -55,6 +56,7 @@ class WalletFundsCheckerTest extends TestCase
         $max = 100;
         $hotWalletValue = 20;
         $waitingPayments = 15;
+        $allUsersBalance = 20;
 
         $service = new WalletFundsChecker(
             $min,
@@ -62,9 +64,47 @@ class WalletFundsCheckerTest extends TestCase
             $this->createAdsClientMock($hotWalletValue)
         );
 
-        $transferValue = $service->calculateTransferValue($waitingPayments);
+        $transferValue = $service->calculateTransferValue($waitingPayments, $allUsersBalance);
 
         $this->assertEquals(55, $transferValue);
+    }
+
+    public function testTransferWhenOperatorBalanceIsLowerThanUsersBalance():void
+    {
+        $min = 20;
+        $max = 100;
+        $hotWalletValue = 5;
+        $waitingPayments = 15;
+        $allUsersBalance = 10;
+
+        $service = new WalletFundsChecker(
+            $min,
+            $max,
+            $this->createAdsClientMock($hotWalletValue)
+        );
+
+        $transferValue = $service->calculateTransferValue($waitingPayments, $allUsersBalance);
+
+        $this->assertEquals(70, $transferValue);
+    }
+
+    public function testTransferWhenOperatorBalanceIsGreaterThanUsersBalance():void
+    {
+        $min = 20;
+        $max = 100;
+        $hotWalletValue = 10;
+        $waitingPayments = 0;
+        $allUsersBalance = 5;
+
+        $service = new WalletFundsChecker(
+            $min,
+            $max,
+            $this->createAdsClientMock($hotWalletValue)
+        );
+
+        $transferValue = $service->calculateTransferValue($waitingPayments, $allUsersBalance);
+
+        $this->assertEquals(0, $transferValue);
     }
 
     private function createAdsClientMock(int $hotWalletValue)

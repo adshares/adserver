@@ -23,7 +23,6 @@ namespace Adshares\Test\Supply\Domain\Factory;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Factory\Exception\InvalidCampaignArgumentException;
-use Adshares\Supply\Domain\Model\Campaign;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 
@@ -109,6 +108,5 @@ final class CampaignFactoryTest extends TestCase
         $instance = CampaignFactory::createFromArray($this->data);
 
         $this->assertEquals($this->data['id'], $instance->getId());
-        $this->assertEquals($this->data['publisher_id'], $instance->getPublisherId());
     }
 }

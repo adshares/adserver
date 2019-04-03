@@ -64,8 +64,9 @@ class WalletAmountCheckCommand extends Command
         }
 
         $waitingPayments = UserLedgerEntry::waitingPayments();
+        $allUsersBalance = UserLedgerEntry::getBalanceForAllUsers();
 
-        $transferValue = $this->hotWalletCheckerService->calculateTransferValue($waitingPayments);
+        $transferValue = $this->hotWalletCheckerService->calculateTransferValue($waitingPayments, $allUsersBalance);
 
         if (0 === $transferValue) {
             $this->info('[Wallet] No need to transfer clicks from Cold Wallet.');
