@@ -158,11 +158,18 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $query = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->setPublisherId($publisherId)->setDateRange(
-            $dateStart,
-            $dateEnd
-        )->appendSiteIdWhereClause($siteId)->appendSiteIdGroupBy(true)->appendZoneIdGroupBy($siteId)->build();
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendSiteIdGroupBy();
 
+        if ($siteId) {
+            $queryBuilder
+                ->appendSiteIdWhereClause($siteId)
+                ->appendZoneIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
 
         $result = [];
@@ -189,17 +196,17 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $query =
-            (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))->setPublisherId($publisherId)
-                ->setDateRange(
-                    $dateStart,
-                    $dateEnd
-                )
-                ->appendSiteIdWhereClause($siteId)
-                ->appendSiteIdGroupBy($siteId !== null)
-                ->appendZoneIdGroupBy(null)
-                ->build();
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))
+                ->setPublisherId($publisherId)
+                ->setDateRange($dateStart, $dateEnd);
 
+        if ($siteId) {
+            $queryBuilder
+                ->appendSiteIdWhereClause($siteId)
+                ->appendSiteIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
 
         if (!empty($queryResult)) {
@@ -219,6 +226,46 @@ class MySqlStatsRepository implements StatsRepository
         return new Total($calculation, $siteId);
     }
 
+    public function fetchStatsToReport(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): DataCollection {
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendDomainGroupBy()
+            ->appendSiteIdGroupBy()
+            ->appendZoneIdGroupBy();
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId);
+        }
+
+        $query = $queryBuilder->build();
+
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        $result = [];
+        foreach ($queryResult as $row) {
+            $calculation = new Calculation(
+                (int)$row->clicks,
+                (int)$row->views,
+                (float)$row->ctr,
+                (float)$row->rpc,
+                (float)$row->rpm,
+                (int)$row->revenue,
+                $row->domain
+            );
+
+            $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
+        }
+
+        return new DataCollection($result);
+    }
+
     private function fetch(
         string $type,
         string $publisherId,
@@ -228,13 +275,20 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId,
         ?string $zoneId = null
     ): array {
-        $query = (new MySqlStatsQueryBuilder($type))->setPublisherId($publisherId)->setDateRange(
-            $dateStart,
-            $dateEnd
-        )->appendResolution($resolution)->appendSiteIdWhereClause($siteId)->appendZoneIdWhereClause(
-            $zoneId
-        )->build();
+        $queryBuilder = (new MySqlStatsQueryBuilder($type))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendResolution($resolution);
 
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId);
+        }
+
+        if ($zoneId) {
+            $queryBuilder->appendZoneIdWhereClause($zoneId);
+        }
+
+        $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
 
         $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);

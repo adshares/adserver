@@ -193,4 +193,13 @@ class DummyStatsRepository implements StatsRepository
 
         return new Total($calculation);
     }
+
+    public function fetchStatsToReport(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): DataCollection {
+        // TODO: Implement fetchStatsToReport() method.
+    }
 }

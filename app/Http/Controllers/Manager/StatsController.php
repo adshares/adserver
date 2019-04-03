@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Response\Stats\PublisherReportResponse;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
@@ -43,6 +44,7 @@ use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -284,6 +286,39 @@ class StatsController extends Controller
         return new JsonResponse($data);
     }
 
+    public function publisherReport(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): StreamedResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $siteId = $this->getSiteIdFromRequest($request);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsPublisher($user);
+
+        try {
+            $input = new PublisherStatsInput(
+                $user->uuid,
+                $from,
+                $to,
+                $siteId
+            );
+        } catch (PublisherInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->publisherStatsDataProvider->fetchReportData($input);
+
+        $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
+
+        return (new PublisherReportResponse($data))->response();
+    }
+
     public function publisherStatsWithTotal(
         Request $request,
         string $dateStart,
@@ -323,21 +358,25 @@ class StatsController extends Controller
         if (isset($item['campaignId'])) {
             $campaign = Campaign::fetchByUuid($item['campaignId']);
             $item['campaignId'] = $campaign->id ?? null;
+            $campaign['campaignName'] = $campaign->name ?? null;
         }
 
         if (isset($item['bannerId'])) {
             $banner = Banner::fetchBanner($item['bannerId']);
             $item['bannerId'] = $banner->id ?? null;
+            $item['bannerName'] = $banner->name ?? null;
         }
 
         if (isset($item['siteId'])) {
             $site = Site::fetchByPublicId($item['siteId']);
             $item['siteId'] = $site->id ?? null;
+            $item['siteName'] = $site->name ?? null;
         }
 
         if (isset($item['zoneId'])) {
             $zone = Zone::fetchByPublicId($item['zoneId']);
             $item['zoneId'] = $zone->id ?? null;
+            $item['zoneName'] = $zone->name ?? null;
         }
 
         return $item;
