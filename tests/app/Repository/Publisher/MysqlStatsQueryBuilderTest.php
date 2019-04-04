@@ -44,6 +44,6 @@ SUM(IF(e.event_type IN ('click', 'view'), e.paid_amount, 0)) AS revenue,e.site_i
 GROUP BY e.site_id HAVING clicks>0 OR views>0 OR ctr>0 OR rpc>0 OR rpm>0 OR revenue>0
 SQL;
 
-        $this->assertEquals(str_replace('\n', '', $expect),$expect, $query);
+        $this->assertEquals(str_replace('\n', '', $expect), $expect, $query);
     }
 }

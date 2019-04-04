@@ -45,6 +45,6 @@ SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0)) AS cost,e.campaign_
 GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0
 SQL;
 
-        $this->assertEquals(str_replace('\n', '', $expect),$expect, $query);
+        $this->assertEquals(str_replace('\n', '', $expect), $expect, $query);
     }
 }
