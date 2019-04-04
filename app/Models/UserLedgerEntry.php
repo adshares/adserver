@@ -100,6 +100,8 @@ class UserLedgerEntry extends Model
 
     protected $casts = [
         'amount' => 'int',
+        'status' => 'int',
+        'user_id' => 'int',
     ];
 
     public static function waitingPayments(): int
