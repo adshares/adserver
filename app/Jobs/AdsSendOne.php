@@ -96,6 +96,8 @@ class AdsSendOne implements ShouldQueue
         if (UserLedgerEntry::getBalanceByUserId($this->userLedger->user_id) < $this->amount) {
             $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
             $this->userLedger->save();
+
+            return;
         }
 
         $command = new SendOneCommand($this->addressTo, $this->amount, $this->message);
