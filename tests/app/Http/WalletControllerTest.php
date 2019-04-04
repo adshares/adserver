@@ -171,12 +171,11 @@ class WalletControllerTest extends TestCase
 
         self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
 
-        $response2 = $this->delete(
-            sprintf('/api/wallet/reject-withdrawal/%d', $userLedgerEntry->id)
-        );
+        $this->delete(
+            sprintf('/api/wallet/cancel-withdrawal/%d', $userLedgerEntry->id)
+        )->assertStatus(Response::HTTP_OK);
 
-        $response2->assertStatus(Response::HTTP_OK);
-        self::assertSame(UserLedgerEntry::STATUS_REJECTED, UserLedgerEntry::find($userLedgerEntry->id)->status);
+        self::assertSame(UserLedgerEntry::STATUS_CANCELED, UserLedgerEntry::find($userLedgerEntry->id)->status);
     }
 
     private function generateUserIncome(int $userId, int $amount): void
@@ -261,24 +260,24 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testWithdrawInsufficientFunds(): void
     {
         $user = factory(User::class)->create();
-        $this->generateUserIncome($user->id, 200000000000);
+        $amount = 20 * (10 ** 11);
+        $this->generateUserIncome($user->id, $amount);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 200000000001,
+                'amount' => $amount + 1,
                 'to' => '0001-00000000-XXXX',
             ]
         );
 
-        // balance check was moved to job, so controller returns success
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDepositInfo(): void
