@@ -280,6 +280,21 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
+    public function testWithdrawInvalidAmount(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => -10,
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
     public function testDepositInfo(): void
     {
         $user = factory(User::class)->create();
