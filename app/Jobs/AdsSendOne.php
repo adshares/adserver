@@ -93,15 +93,22 @@ class AdsSendOne implements ShouldQueue
             return;
         }
 
+        if (UserLedgerEntry::getBalanceByUserId($this->userLedger->user_id) < $this->amount) {
+            $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
+            $this->userLedger->save();
+
+            return;
+        }
+
         $command = new SendOneCommand($this->addressTo, $this->amount, $this->message);
 
         try {
             $response = $adsClient->runTransaction($command);
         } catch (CommandException $exception) {
             if ($exception->getCode() === CommandError::LOW_BALANCE) {
-                $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s). ';
-                $message .= 'Operator does not have enough money. Will be tried again later.';
-                Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? '\'\''));
+                $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
+                $message .= ' Operator does not have enough money. Will be tried again later.';
+                Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? ''));
 
                 self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
                     ->delay(self::QUEUE_TRY_AGAIN_INTERVAL);
@@ -113,18 +120,25 @@ class AdsSendOne implements ShouldQueue
 
             Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message));
 
+            $this->userLedger->status = UserLedgerEntry::STATUS_NET_ERROR;
+
+            $this->userLedger->save();
+
             return;
         }
 
         $txid = $response->getTx()->getId();
 
-        if (AdsValidator::isTransactionIdValid($txid)) {
-            // TODO move to queue (or service in general) to assure user ledger entry update
-            $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
-            $this->userLedger->txid = $txid;
+        if (!$txid || !AdsValidator::isTransactionIdValid($txid)) {
+            $this->userLedger->status = UserLedgerEntry::STATUS_SYS_ERROR;
             $this->userLedger->save();
-        } else {
+
             throw new JobException("Invalid txid: ${txid}");
         }
+
+        $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
+        $this->userLedger->txid = $txid;
+
+        $this->userLedger->save();
     }
 }
