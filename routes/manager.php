@@ -92,6 +92,7 @@ Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class,
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
 
 Route::get('sites/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
+Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
 
 Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
 Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);

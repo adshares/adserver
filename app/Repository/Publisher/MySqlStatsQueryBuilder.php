@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Publisher;
 
-use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
@@ -93,11 +93,11 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::VIEW_TYPE:
             case StatsRepository::RPM_TYPE:
             case StatsRepository::CTR_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
             case StatsRepository::RPC_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
         }
