@@ -30,7 +30,7 @@ use PHPUnit\Framework\TestCase;
 
 class WalletFundsCheckerTest extends TestCase
 {
-    public function testTransferWhenHotWalletIncludingPaymentsWaitingIsLowerThanMin():void
+    public function testTransferWhenHotWalletIncludingPaymentsWaitingIsLowerThanMin(): void
     {
         $min = 20;
         $max = 100;
@@ -50,7 +50,7 @@ class WalletFundsCheckerTest extends TestCase
         $this->assertEquals(60 + 8 - 5, $transferValue);
     }
 
-    public function testTransferWhenHotWalletIncludingPaymentsWaitingIsGreaterThanMin():void
+    public function testTransferWhenHotWalletIncludingPaymentsWaitingIsGreaterThanMin(): void
     {
         $min = 20;
         $max = 100;
