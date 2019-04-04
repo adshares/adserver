@@ -149,6 +149,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::HOUR_RESOLUTION:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->column('MONTH(e.created_at) as m');
+                $this->column('DAY(e.created_at) AS d');
+                $this->column('HOUR(e.created_at) AS h');
                 $this->groupBy('YEAR(e.created_at)');
                 $this->groupBy('MONTH(e.created_at)');
                 $this->groupBy('DAY(e.created_at)');
