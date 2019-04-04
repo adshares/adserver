@@ -29,6 +29,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use function sprintf;
 
 class WalletControllerTest extends TestCase
 {
@@ -103,7 +104,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testWithdraw(): void
+    public function testWithdrawApprovalMail(): void
     {
         Mail::fake();
 
@@ -121,11 +122,61 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        self::assertCount(1, Token::all());
-
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $tokens = Token::all();
+        self::assertCount(1, $tokens);
         Mail::assertQueued(WithdrawalApproval::class, 1);
 
+        $firstToken = $tokens->first();
+        $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
+
+        self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
+
+        $response2 = $this->postJson(
+            '/api/wallet/confirm-withdrawal',
+            [
+                'token' => $firstToken->uuid,
+            ]
+        );
+
+        $response2->assertStatus(Response::HTTP_OK);
+        self::assertSame(UserLedgerEntry::STATUS_PENDING, UserLedgerEntry::find($userLedgerEntry->id)->status);
+    }
+
+    public function testWithdrawReject(): void
+    {
+        Mail::fake();
+
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+
+        $this->actingAs($user, 'api');
+
+        $amount = 100000000000;
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => $amount,
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
         $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $tokens = Token::all();
+        self::assertCount(1, $tokens);
+        Mail::assertQueued(WithdrawalApproval::class, 1);
+
+        $firstToken = $tokens->first();
+        $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
+
+        self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
+
+        $response2 = $this->delete(
+            sprintf('/api/wallet/reject-withdrawal/%d', $userLedgerEntry->id)
+        );
+
+        $response2->assertStatus(Response::HTTP_OK);
+        self::assertSame(UserLedgerEntry::STATUS_REJECTED, UserLedgerEntry::find($userLedgerEntry->id)->status);
     }
 
     private function generateUserIncome(int $userId, int $amount): void

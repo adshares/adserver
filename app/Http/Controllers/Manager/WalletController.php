@@ -126,12 +126,11 @@ class WalletController extends Controller
 
         DB::beginTransaction();
 
-        if (false === $token = Token::check($request->input('token'))) {
-            return self::json([], Response::HTTP_NOT_FOUND);
-        }
+        $token = Token::check($request->input('token'));
+        if (false === $token || Auth::user()->id !== (int)$token['user_id']) {
+            DB::rollBack();
 
-        if (Auth::user()->id !== $token['user_id']) {
-            return self::json([], Response::HTTP_BAD_REQUEST);
+            return self::json([], Response::HTTP_NOT_FOUND);
         }
 
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
@@ -149,10 +148,22 @@ class WalletController extends Controller
             $userLedgerEntry,
             $token['payload']['request']['to'],
             $token['payload']['request']['amount'],
-            $token['payload']['request']['memo']
+            $token['payload']['request']['memo'] ?? ''
         );
 
         DB::commit();
+
+        return self::json();
+    }
+
+    public function rejectWithdrawal(UserLedgerEntry $entry): JsonResponse
+    {
+        if (Auth::user()->id !== $entry->user_id) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->status = UserLedgerEntry::STATUS_REJECTED;
+        $entry->save();
 
         return self::json();
     }
