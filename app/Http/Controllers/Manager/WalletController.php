@@ -156,13 +156,13 @@ class WalletController extends Controller
         return self::json();
     }
 
-    public function rejectWithdrawal(UserLedgerEntry $entry): JsonResponse
+    public function cancelWithdrawal(UserLedgerEntry $entry): JsonResponse
     {
         if (Auth::user()->id !== $entry->user_id) {
             return self::json([], Response::HTTP_NOT_FOUND);
         }
 
-        $entry->status = UserLedgerEntry::STATUS_REJECTED;
+        $entry->status = UserLedgerEntry::STATUS_CANCELED;
         $entry->save();
 
         return self::json();
@@ -193,6 +193,10 @@ class WalletController extends Controller
         $total = $amount + $fee;
 
         $user = Auth::user();
+
+        if (UserLedgerEntry::getBalanceByUserId($user->id) < $total) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
