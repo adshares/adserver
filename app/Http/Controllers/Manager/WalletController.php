@@ -283,6 +283,7 @@ class WalletController extends Controller
                     'date' => $date,
                     'address' => $address,
                     'txid' => $txid,
+                    'id' => $ledgerItem->id,
                 ];
             }
         }

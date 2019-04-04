@@ -110,6 +110,7 @@ class UserLedgerEntry extends Model
     ];
 
     protected $casts = [
+        'id' => 'int',
         'amount' => 'int',
         'status' => 'int',
         'user_id' => 'int',
