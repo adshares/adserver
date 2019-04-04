@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Repository\Advertiser;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsQueryBuilder;
 use PHPUnit\Framework\TestCase;
+use function str_replace;
 
 final class MysqlStatsQueryBuilderTest extends TestCase
 {
@@ -35,9 +36,15 @@ final class MysqlStatsQueryBuilderTest extends TestCase
         $query = $class->build();
 
         $expect = <<<SQL
-SELECT SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)) AS clicks,SUM(IF(e.event_type = 'view', 1, 0)) AS views,IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,IFNULL(ROUND(AVG(IF(e.event_type = 'click', e.event_value, NULL))), 0) AS cpc,IFNULL(ROUND(AVG(IF(e.event_type = 'view', e.event_value, NULL))), 0)*1000 AS cpm,SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0)) AS cost,e.campaign_id AS campaign_id FROM event_logs e  GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0
+SELECT SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)) AS clicks,
+       SUM(IF(e.event_type = 'view', 1, 0)) AS views,
+       IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,
+       IFNULL(ROUND(AVG(IF(e.event_type = 'click', e.event_value, NULL))), 0) AS cpc,
+       IFNULL(ROUND(AVG(IF(e.event_type = 'view', e.event_value, NULL))), 0)*1000 AS cpm,
+       SUM(IF(e.event_type IN ('click', 'view'), e.event_value, 0)) AS cost,e.campaign_id AS campaign_id FROM event_logs e  
+       GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0
 SQL;
 
-        $this->assertEquals($expect, $query);
+        $this->assertEquals(str_replace('\n', '', $expect),$expect, $query);
     }
 }
