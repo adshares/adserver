@@ -88,7 +88,7 @@ class WalletFundsCheckerTest extends TestCase
         $this->assertEquals(70, $transferValue);
     }
 
-    public function testTransferWhenOperatorBalanceIsGreaterThanUsersBalance():void
+    public function testTransferWhenOperatorBalanceIsGreaterThanUsersBalance(): void
     {
         $min = 20;
         $max = 100;
