@@ -37,7 +37,7 @@ class WalletAmountCheckCommand extends Command
 {
     use LineFormatterTrait;
 
-    private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 600;
+    private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 1800;
 
     protected $signature = 'ops:wallet:transfer:check';
 
