@@ -48,6 +48,12 @@ class UserLedgerEntry extends Model
 
     public const STATUS_AWAITING_APPROVAL = 5;
 
+    public const STATUS_CANCELED = 6;
+
+    public const STATUS_SYS_ERROR = 126;
+
+    public const STATUS_NET_ERROR = 127;
+
     public const TYPE_UNKNOWN = 0;
 
     public const TYPE_DEPOSIT = 1;
@@ -65,6 +71,9 @@ class UserLedgerEntry extends Model
         self::STATUS_PENDING,
         self::STATUS_BLOCKED,
         self::STATUS_AWAITING_APPROVAL,
+        self::STATUS_CANCELED,
+        self::STATUS_SYS_ERROR,
+        self::STATUS_NET_ERROR,
     ];
 
     public const ALLOWED_TYPE_LIST = [
@@ -90,6 +99,8 @@ class UserLedgerEntry extends Model
         self::STATUS_PENDING,
         self::STATUS_BLOCKED,
         self::STATUS_AWAITING_APPROVAL,
+        self::STATUS_SYS_ERROR,
+        self::STATUS_NET_ERROR,
     ];
 
     protected $dates = [
@@ -99,7 +110,10 @@ class UserLedgerEntry extends Model
     ];
 
     protected $casts = [
+        'id' => 'int',
         'amount' => 'int',
+        'status' => 'int',
+        'user_id' => 'int',
     ];
 
     public static function waitingPayments(): int
