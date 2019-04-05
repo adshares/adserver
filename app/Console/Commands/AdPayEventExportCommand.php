@@ -42,14 +42,15 @@ class AdPayEventExportCommand extends Command
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        $this->info('Start command '.$this->signature);
+        $this->info('[AdPayEventExport] Start command '.$this->signature);
+        $timeStart = microtime(true);
 
         do {
             $eventId = Config::fetchAdPayLastExportedEventId();
             $eventsToExport =
                 EventLog::where('id', '>', $eventId)->orderBy('id')->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)->get();
 
-            $this->info('Found '.count($eventsToExport).' events to export.');
+            $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
@@ -61,7 +62,9 @@ class AdPayEventExportCommand extends Command
             }
         } while(self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
-        $this->info('Finish command '.$this->signature);
+        $this->info('[AdPayEventExport] Finish command '.$this->signature);
+        $executionTime = microtime(true) - $timeStart;
+        $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
     }
 
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
