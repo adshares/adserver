@@ -38,25 +38,28 @@ class AdPayEventExportCommand extends Command
 
     protected $description = 'Exports event data to AdPay';
 
+    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
+
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
         $this->info('Start command '.$this->signature);
 
-        $eventId = Config::fetchAdPayLastExportedEventId();
+        do {
+            $eventId = Config::fetchAdPayLastExportedEventId();
+            $eventsToExport =
+                EventLog::where('id', '>', $eventId)->orderBy('id')->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)->get();
 
-        $eventsToExport =
-            EventLog::where('id', '>', $eventId)->orderBy('id')->get();
+            $this->info('Found '.count($eventsToExport).' events to export.');
+            if (count($eventsToExport) > 0) {
+                $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
-        $this->info('Found '.count($eventsToExport).' events to export.');
-        if (count($eventsToExport) > 0) {
-            $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+                $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
+                $adPay->addEvents($events);
 
-            $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
-            $adPay->addEvents($events);
-
-            $lastExportedEventId = $eventsToExport->last()->id;
-            Config::updateAdPayLastExportedEventId($lastExportedEventId);
-        }
+                $lastExportedEventId = $eventsToExport->last()->id;
+                Config::updateAdPayLastExportedEventId($lastExportedEventId);
+            }
+        } while(self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
         $this->info('Finish command '.$this->signature);
     }
