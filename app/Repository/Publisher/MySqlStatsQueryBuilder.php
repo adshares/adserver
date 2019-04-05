@@ -105,6 +105,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         }
     }
 
+    private function withoutRemovedCampaigns(): void
+    {
+        $this->join('sites s', 's.uuid = e.site_id');
+        $this->where('s.deleted_at is null');
+    }
+
     private function selectBaseStatsColumns(): void
     {
         $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');

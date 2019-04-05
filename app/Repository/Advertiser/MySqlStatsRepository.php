@@ -282,9 +282,6 @@ class MySqlStatsRepository implements StatsRepository
             ->setDateRange($dateStart, $dateEnd)
             ->appendResolution($resolution);
 
-
-        $query = $queryBuilder->build();
-
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId);
         }
@@ -292,6 +289,8 @@ class MySqlStatsRepository implements StatsRepository
         if ($bannerId) {
             $queryBuilder->appendBannerIdWhereClause($bannerId);
         }
+
+        $query = $queryBuilder->build();
 
         $queryResult = $this->executeQuery($query, $dateStart);
 
