@@ -11,6 +11,7 @@ function artisanCommand {
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
+mkdir -pm 777 storage/framework/views
 
 composer install --no-dev
 

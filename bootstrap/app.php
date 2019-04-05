@@ -59,11 +59,6 @@ $app->singleton(
     Adshares\Adserver\Exceptions\Handler::class
 );
 
-$externalStoragePath = config('app.external_storage_path');
-if ($externalStoragePath) {
-    $app->useStoragePath($externalStoragePath);
-}
-
 /*
 |--------------------------------------------------------------------------
 | Return The Application
