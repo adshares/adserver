@@ -67,6 +67,10 @@ class AdPayEventExportCommand extends Command
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
     {
         foreach ($eventsToExport as $event) {
+            if (null !== $event->human_score && null !== $event->our_userdata) {
+                continue;
+            }
+
             /** @var $event EventLog */
             $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
             $event->human_score = $userContext['human_score'];
