@@ -220,6 +220,16 @@ class User extends Authenticatable
         return UserLedgerEntry::getBalanceByUserId($this->id);
     }
 
+    public function getWalletBalance(): int
+    {
+        return UserLedgerEntry::getWalletBalanceByUserId($this->id);
+    }
+
+    public function getBonusBalance(): int
+    {
+        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+    }
+
     public static function createAdmin(Email $email, string $name, string $password): void
     {
         $user = new self();

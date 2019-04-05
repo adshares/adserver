@@ -135,16 +135,7 @@ class AdPayGetPayments extends Command
             });
 
             if ($totalEventValue > 0) {
-                $userLedgerEntry = UserLedgerEntry::construct(
-                    $user->id,
-                    -$totalEventValue,
-                    UserLedgerEntry::STATUS_ACCEPTED,
-                    UserLedgerEntry::TYPE_AD_EXPENSE
-                );
-
-                $userLedgerEntry->save();
-
-                return $userLedgerEntry;
+                return UserLedgerEntry::processAdExpense($user->id, $totalEventValue);
             }
 
             return false;

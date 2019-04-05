@@ -93,7 +93,7 @@ class WalletController extends Controller
         if (null === $amount) {
             //calculate max available amount
             $userId = Auth::user()->id;
-            $balance = UserLedgerEntry::getBalanceByUserId($userId);
+            $balance = UserLedgerEntry::getWalletBalanceByUserId($userId);
             $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
@@ -195,7 +195,7 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
-        if (UserLedgerEntry::getBalanceByUserId($user->id) < $total) {
+        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
