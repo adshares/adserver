@@ -27,8 +27,8 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Demand\Application\Service\AdPay;
-use DateTime;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdPayEventExportCommand extends Command
 {
@@ -42,26 +42,33 @@ class AdPayEventExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $dateFrom = Config::fetchDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME);
-        $dateNow = new DateTime();
+        $eventId = Config::fetchAdPayLastExportedEventId();
 
-        $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
-        $this->info('Found '.count($createdEvents).' events to export.');
-        if (count($createdEvents) > 0) {
-            foreach ($createdEvents as $event) {
-                /** @var $event EventLog */
-                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
-                $event->human_score = $userContext['human_score'];
-                $event->our_userdata = $userContext['keywords'];
-                $event->save();
-            }
+        $eventsToExport =
+            EventLog::where('id', '>', $eventId)->orderBy('id')->get();
 
-            $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
+        $this->info('Found '.count($eventsToExport).' events to export.');
+        if (count($eventsToExport) > 0) {
+            $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+
+            $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
             $adPay->addEvents($events);
+
+            $lastExportedEventId = $eventsToExport->last()->id;
+            Config::updateAdPayLastExportedEventId($lastExportedEventId);
         }
 
-        Config::updateDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME, $dateNow);
-
         $this->info('Finish command '.$this->signature);
+    }
+
+    private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
+    {
+        foreach ($eventsToExport as $event) {
+            /** @var $event EventLog */
+            $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
+            $event->human_score = $userContext['human_score'];
+            $event->our_userdata = $userContext['keywords'];
+            $event->save();
+        }
     }
 }
