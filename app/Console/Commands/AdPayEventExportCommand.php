@@ -34,13 +34,13 @@ class AdPayEventExportCommand extends Command
 {
     use LineFormatterTrait;
 
+    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
+
     protected $signature = 'ops:adpay:event:export
                             {--F|event-id-first= : id of first event to export}
                             {--L|event-id-last=  : id of last event to export}';
 
     protected $description = 'Exports event data to AdPay';
-
-    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
