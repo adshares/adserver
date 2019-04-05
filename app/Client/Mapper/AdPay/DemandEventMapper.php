@@ -31,7 +31,7 @@ class DemandEventMapper
 {
     public static function mapEventCollectionToEventArray(Collection $events): array
     {
-        $eventsArray = $events->map(
+        return $events->map(
             function (EventLog $event) {
                 $eventArray = $event->toArray();
 
@@ -63,8 +63,6 @@ class DemandEventMapper
                 return $mapped;
             }
         )->toArray();
-
-        return $eventsArray;
     }
 
     private static function processTheirKeywords($keywords)
