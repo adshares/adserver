@@ -34,7 +34,9 @@ class AdPayEventExportCommand extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:adpay:event:export';
+    protected $signature = 'ops:adpay:event:export
+                            {--F|event-id-first= : id of first event to export}
+                            {--L|event-id-last=  : id of last event to export}';
 
     protected $description = 'Exports event data to AdPay';
 
@@ -42,13 +44,19 @@ class AdPayEventExportCommand extends Command
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        $this->info('[AdPayEventExport] Start command '.$this->signature);
         $timeStart = microtime(true);
+        $this->info('[AdPayEventExport] Start command '.$this->signature);
+
+        $inputEventIdFirst = $this->option('event-id-first');
+        $inputEventIdLast = $this->option('event-id-last');
+
+        $isManualMode = is_numeric($inputEventIdFirst);
+
+        $eventIdFirst = $isManualMode ? (int)$inputEventIdFirst : Config::fetchAdPayLastExportedEventId() + 1;
+        $eventIdLast = ($isManualMode && is_numeric($inputEventIdLast)) ? (int)$inputEventIdLast : null;
 
         do {
-            $eventId = Config::fetchAdPayLastExportedEventId();
-            $eventsToExport =
-                EventLog::where('id', '>', $eventId)->orderBy('id')->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)->get();
+            $eventsToExport = $this->fetchEventsToExport($eventIdFirst, $eventIdLast);
 
             $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
             if (count($eventsToExport) > 0) {
@@ -57,14 +65,27 @@ class AdPayEventExportCommand extends Command
                 $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
                 $adPay->addEvents($events);
 
-                $lastExportedEventId = $eventsToExport->last()->id;
-                Config::updateAdPayLastExportedEventId($lastExportedEventId);
+                $eventIdLastExported = $eventsToExport->last()->id;
+                if (!$isManualMode) {
+                    Config::updateAdPayLastExportedEventId($eventIdLastExported);
+                }
+                $eventIdFirst = $eventIdLastExported + 1;
             }
-        } while(self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
+        } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
         $this->info('[AdPayEventExport] Finish command '.$this->signature);
         $executionTime = microtime(true) - $timeStart;
         $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
+    }
+
+    private function fetchEventsToExport(int $eventIdFirst, ?int $eventIdLast): Collection
+    {
+        $query = EventLog::where('id', '>=', $eventIdFirst);
+        if (null !== $eventIdLast) {
+            $query->where('id', '<=', $eventIdLast);
+        }
+
+        return $query->orderBy('id')->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)->get();
     }
 
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
