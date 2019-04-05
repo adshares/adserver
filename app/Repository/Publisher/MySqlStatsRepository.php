@@ -178,8 +178,8 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->rpc,
-                (float)$row->rpm,
+                (int)$row->rpc,
+                (int)$row->rpm,
                 (int)$row->revenue
             );
 
@@ -215,8 +215,8 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->rpc,
-                (float)$row->rpm,
+                (int)$row->rpc,
+                (int)$row->rpm,
                 (int)$row->revenue
             );
         } else {
@@ -253,8 +253,8 @@ class MySqlStatsRepository implements StatsRepository
                 (int)$row->clicks,
                 (int)$row->views,
                 (float)$row->ctr,
-                (float)$row->rpc,
-                (float)$row->rpm,
+                (int)$row->rpc,
+                (int)$row->rpm,
                 (int)$row->revenue,
                 $row->domain
             );

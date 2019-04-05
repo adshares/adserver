@@ -33,10 +33,10 @@ class Calculation
     /** @var float */
     private $ctr;
 
-    /** @var float */
+    /** @var int */
     private $averageRpc;
 
-    /** @var float */
+    /** @var int */
     private $averageRpm;
 
     /** @var int */
@@ -49,8 +49,8 @@ class Calculation
         int $clicks,
         int $impressions,
         float $ctr,
-        float $averageRpc,
-        float $averageRpm,
+        int $averageRpc,
+        int $averageRpm,
         int $revenue,
         ?string $domain = null
     ) {
