@@ -32,7 +32,6 @@ use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -271,7 +270,7 @@ class WalletController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
-                $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+                $date = $ledgerItem->created_at->format(DATE_ATOM);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
                 $txid = $this->getUserLedgerEntryTxid($ledgerItem);

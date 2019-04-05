@@ -195,4 +195,13 @@ class DummyStatsRepository implements StatsRepository
 
         return $data;
     }
+
+    public function fetchStatsToReport(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): DataCollection {
+        // TODO: Implement fetchStatsToReport() method.
+    }
 }

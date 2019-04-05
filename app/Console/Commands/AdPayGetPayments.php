@@ -55,7 +55,7 @@ class AdPayGetPayments extends Command
 
         $calculations = collect($adPay->getPayments($timestamp, (bool)$this->option('force')));
 
-        Log::info('Found '.count($calculations).' calculations.');
+        $this->info('Found '.count($calculations).' calculations.');
 
         $eventIds = $calculations->map(function (array $amount) {
             return hex2bin($amount['event_id']);
@@ -65,7 +65,7 @@ class AdPayGetPayments extends Command
             ->whereNull('event_value')
             ->get();
 
-        Log::info('Found '.count($unpaidEvents).' entries to update.');
+        $this->info('Found '.count($unpaidEvents).' entries to update.');
 
         $unpaidEvents->each(function (EventLog $entry) use ($calculations) {
             $calculation = $calculations->firstWhere('event_id', $entry->event_id);
@@ -143,6 +143,6 @@ class AdPayGetPayments extends Command
 
         DB::commit();
 
-        Log::info('Created '.count($unpaidLedgerEntries).' Ledger Entries.');
+        $this->info('Created '.count($unpaidLedgerEntries).' Ledger Entries.');
     }
 }

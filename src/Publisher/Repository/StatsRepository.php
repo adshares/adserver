@@ -106,4 +106,11 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total;
+
+    public function fetchStatsToReport(
+        string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): DataCollection;
 }
