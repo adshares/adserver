@@ -229,13 +229,13 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        string $publisherId,
+        string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
-            ->setAdvertiserId($publisherId)
+            ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
