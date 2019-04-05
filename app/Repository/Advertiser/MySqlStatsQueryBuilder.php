@@ -48,6 +48,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
+        $this->withoutRemovedCampaigns();
 
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             $this->selectBaseStatsColumns();
@@ -104,6 +105,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_CLICK));
                 break;
         }
+    }
+
+    private function withoutRemovedCampaigns(): void
+    {
+        $this->join('campaigns c', 'c.uuid = e.campaign_id');
+        $this->where('c.deleted_at is null');
     }
 
     private function selectBaseStatsColumns(): void

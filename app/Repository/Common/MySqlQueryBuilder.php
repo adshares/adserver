@@ -32,13 +32,14 @@ abstract class MySqlQueryBuilder
     private const CONDITION_AND_TYPE = 'AND';
     private const CONDITION_OR_TYPE = 'OR';
 
-    private const QUERY = 'SELECT #columns FROM #tableName #where #groupBy #having';
+    private const QUERY = 'SELECT #columns FROM #tableName #join #where #groupBy #having';
 
     protected $query = '';
     protected $selectedColumns = [];
     protected $whereConditions = [];
     protected $groupByColumns = [];
     protected $havingConditions = [];
+    protected $joins = [];
 
     public function __construct(string $type)
     {
@@ -49,7 +50,7 @@ abstract class MySqlQueryBuilder
         $this->query = str_replace('#tableName', $this->getTableName(), self::QUERY);
     }
 
-    protected function where(string $condition, ?string $type = self::CONDITION_AND_TYPE): void
+    protected function where(string $condition, string $type = self::CONDITION_AND_TYPE): void
     {
         if (count($this->whereConditions) > 0) {
             $this->whereConditions[] = sprintf('%s %s', $type, $condition);
@@ -70,6 +71,12 @@ abstract class MySqlQueryBuilder
         } else {
             $this->havingConditions[] = $conditionItem;
         }
+    }
+
+    protected function join(string $tableName, string $condition, string $type = 'INNER'): void
+    {
+
+        $this->joins[] = sprintf('%s JOIN %s ON %s', $type, $tableName, $condition);
     }
 
     protected function column(string $column): void
@@ -94,6 +101,11 @@ abstract class MySqlQueryBuilder
         $additional = implode(' ', $this->havingConditions);
         $replacement = $additional ? 'HAVING '.$additional : '';
         $this->query = str_replace('#having', $replacement, $this->query);
+
+        $additional = implode(' ', $this->joins);
+        $replacement = $additional ?: '';
+        $this->query = str_replace('#join', $replacement, $this->query);
+
 
         return $this->query;
     }
