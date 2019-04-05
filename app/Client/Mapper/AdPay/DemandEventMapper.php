@@ -31,7 +31,7 @@ class DemandEventMapper
 {
     public static function mapEventCollectionToEventArray(Collection $events): array
     {
-        $eventArray = $events->map(
+        $eventsArray = $events->map(
             function (EventLog $event) {
                 $eventArray = $event->toArray();
 
@@ -48,7 +48,7 @@ class DemandEventMapper
                     'timestamp' => $timestamp,
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
-                    'human_score' => $eventArray['human_score'] ?? 0.5,
+                    'human_score' => (float)$eventArray['human_score'] ?? 0.5,
                     'user_id' => $eventArray['user_id'],
                 ];
 
@@ -64,7 +64,7 @@ class DemandEventMapper
             }
         )->toArray();
 
-        return $eventArray;
+        return $eventsArray;
     }
 
     private static function processTheirKeywords($keywords)
