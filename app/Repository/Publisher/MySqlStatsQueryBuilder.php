@@ -47,6 +47,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
+        $this->withoutRemovedSites();
 
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             $this->selectBaseStatsColumns();
@@ -105,7 +106,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         }
     }
 
-    private function withoutRemovedCampaigns(): void
+    private function withoutRemovedSites(): void
     {
         $this->join('sites s', 's.uuid = e.site_id');
         $this->where('s.deleted_at is null');
