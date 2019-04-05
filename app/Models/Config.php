@@ -162,7 +162,6 @@ class Config extends Model
 
     public static function isHotWalletActive(): bool
     {
-        return true;
         $config = self::where('key', self::HOT_WALLET_IS_ACTIVE)->first();
 
         if (null === $config) {
