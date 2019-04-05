@@ -50,7 +50,6 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $campaignId
         );
-      
         return new ChartResult($result);
     }
 
