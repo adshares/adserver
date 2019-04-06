@@ -157,24 +157,33 @@ function createIframeFromData(data, domInsertCallback) {
         }
 
     } else {
-        iframe.setAttribute('sandbox', "allow-scripts");
-        var blob = new Blob(['<html>' +
-        '<head>' +
-        '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
-        '<body>' +
-        '<script>' + proxyScript +  '</script>' +
-        '<iframe id="frame" src="about:blank" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
-        '</body>' +
-        '</html>'], {'type': 'text/html'});
+        iframe.setAttribute('sandbox', "allow-scripts" + (isFirefox ? "" : " allow-same-origin"));
 
-        getDataURI({blob: blob}, function(dataUri) {
-            iframe.src = dataUri;
+        var fn = function(frame_src) {
+            var blob = new Blob(['<html>' +
+            '<head>' +
+            '<meta http-equiv="Content-Security-Policy" content="frame-src blob:; child-src blob:"></head>' +
+            '<body>' +
+            '<script>' + proxyScript + '</script>' +
+            '<iframe id="frame" src="' + frame_src + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
+            '</body>' +
+            '</html>'], {'type': 'text/html'});
 
-            iframe.onload = function() {
-                iframe.contentWindow.postMessage(data, '*');
-            };
-            domInsertCallback(iframe);
-        });
+            getDataURI({blob: blob}, function (dataUri) {
+                iframe.src = dataUri;
+
+                iframe.onload = function () {
+                    iframe.contentWindow.postMessage(data, '*');
+                };
+                domInsertCallback(iframe);
+            });
+        };
+
+        if(isFirefox) {
+            fn('about:blank');
+        } else {
+            getDataURI(data, fn);
+        }
     }
 }
 
