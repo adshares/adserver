@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
@@ -248,6 +249,11 @@ class UserLedgerEntry extends Model
         self::where('status', self::STATUS_PROCESSING)
             ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE])
             ->delete();
+    }
+
+    public static function fetchBlockedEntriesByUserId(int $userId): Collection
+    {
+        return self::blockedEntries()->where('user_id', $userId)->get();
     }
 
     private static function blockedEntries()
