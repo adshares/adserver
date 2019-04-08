@@ -72,14 +72,15 @@ class CampaignFactory
         foreach ($arrayBanners as $banner) {
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
-            $id = isset($banner['id']) ? Uuid::fromString($banner['id']) : Uuid::v4();
+            $demandBannerId = $banner['demand_banner_id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
             $classification = $banner['classification'] ?? [];
 
             $banners[] = new Banner(
                 $campaign,
-                $id,
+                $data['id'] ?? Uuid::v4(),
+                $demandBannerId,
                 $bannerUrl,
                 $banner['type'],
                 $size,
