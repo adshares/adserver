@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Infrastructure\Service;
 
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
@@ -33,8 +34,6 @@ use Illuminate\Support\Facades\Log;
 
 class ExchangeRateReader implements ExchangeRateProvider
 {
-    private const MAX_ACCEPTABLE_CACHE_INTERVAL_IN_MINUTES = 60;
-
     private const MAX_ACCEPTABLE_INTERVAL_IN_HOURS = 24;
 
     /** @var ExchangeRateRepository */
@@ -56,7 +55,7 @@ class ExchangeRateReader implements ExchangeRateProvider
         try {
             $exchangeRateRepository = $this->exchangeRateRepository->fetchExchangeRate($dateTime, $currency);
 
-            if ($this->isCacheAcceptable($exchangeRateRepository)) {
+            if (DateUtils::areTheSameHour($exchangeRateRepository->getDateTime(), $dateTime)) {
                 return $exchangeRateRepository;
             }
         } catch (ExchangeRateNotAvailableException $exception) {
@@ -101,14 +100,6 @@ class ExchangeRateReader implements ExchangeRateProvider
         }
 
         throw new ExchangeRateNotAvailableException();
-    }
-
-    private function isCacheAcceptable(FetchedExchangeRate $exchangeRate): bool
-    {
-        $oldestAcceptableDateTime =
-            (new DateTime())->modify(sprintf('-%d minutes', self::MAX_ACCEPTABLE_CACHE_INTERVAL_IN_MINUTES));
-
-        return $exchangeRate->getDateTime() >= $oldestAcceptableDateTime;
     }
 
     private function isExchangeRateAcceptable(FetchedExchangeRate $exchangeRate): bool
