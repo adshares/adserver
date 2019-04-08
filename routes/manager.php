@@ -81,6 +81,8 @@ Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
 Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
     ->name('wallet.confirm-withdrawal');
+Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
+    ->name('wallet.cancel-withdrawal');
 
 
 // statistics
