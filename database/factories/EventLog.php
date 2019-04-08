@@ -50,7 +50,8 @@ $factory->define(
             'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'pay_to' => $faker->randomElement($addresses),
             'reason' => 0,
-            'headers' => <<<JSON
+            'headers' => json_decode(
+                <<<JSON
 {
     "host": [
         "{$faker->ipv4}"
@@ -81,10 +82,12 @@ $factory->define(
     ],
     "accept-language": [
         "pl,en-US;q=0.7,en;q=0.3"
-    ],
+    ]
 }
 JSON
-            ,
+                ,
+                true
+            ),
         ];
     }
 );

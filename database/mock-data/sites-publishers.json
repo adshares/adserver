@@ -6,74 +6,70 @@
         "name": "tea site",
         "status": 2,
         "zones": {
-          "left": {
+          "Leaderboard": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD1",
-            "width": 160,
-            "height": 600
+            "width": 728,
+            "height": 90
           },
-          "right": {
+          "Wide Skycraper": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD2",
             "width": 160,
             "height": 600
           },
-          "center": {
+          "Large Rectangle": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD3",
-            "width": 970,
+            "width": 336,
+            "height": 280
+          },
+          "Half Page": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD4",
+            "width": 300,
+            "height": 600
+          },
+          "Large Mobile": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD5",
+            "width": 320,
+            "height": 100
+          },
+          "Leaderboard 2": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD6",
+            "width": 728,
             "height": 90
+          },
+          "Leaderboard 3": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD7",
+            "width": 728,
+            "height": 90
+          },
+          "Large Rectangle 2": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD8",
+            "width": 336,
+            "height": 280
+          },
+          "Large Mobile 2": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACD9",
+            "width": 320,
+            "height": 100
+          },
+          "Large Mobile 3": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACDA",
+            "width": 320,
+            "height": 100
+          },
+          "Wide Skyscraper 2": {
+            "uuid": "950A658CACB246F8A142EFB722A2ACDB",
+            "width": 160,
+            "height": 600
           }
         }
       },
       {
         "name": "travel site",
-        "status": 2,
-        "zones": {
-          "left": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD4",
-            "width": 160,
-            "height": 600
-          },
-          "right": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD5",
-            "width": 160,
-            "height": 600
-          },
-          "center": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD6",
-            "width": 970,
-            "height": 90
-          },
-          "center-mobile": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD7",
-            "width": 320,
-            "height": 50
-          }
-        }
+        "status": 2
       },
       {
         "name": "veterinarian site",
-        "status": 2,
-        "zones": {
-          "left": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD8",
-            "width": 160,
-            "height": 600
-          },
-          "right": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACD9",
-            "width": 160,
-            "height": 600
-          },
-          "center": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACDA",
-            "width": 970,
-            "height": 90
-          },
-          "center-mobile": {
-            "uuid": "950A658CACB246F8A142EFB722A2ACDB",
-            "width": 320,
-            "height": 50
-          }
-        }
+        "status": 2
       }
     ]
   }

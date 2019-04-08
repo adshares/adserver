@@ -32,7 +32,6 @@ use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -93,7 +92,7 @@ class WalletController extends Controller
         if (null === $amount) {
             //calculate max available amount
             $userId = Auth::user()->id;
-            $balance = UserLedgerEntry::getBalanceByUserId($userId);
+            $balance = UserLedgerEntry::getWalletBalanceByUserId($userId);
             $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
@@ -127,12 +126,11 @@ class WalletController extends Controller
 
         DB::beginTransaction();
 
-        if (false === $token = Token::check($request->input('token'))) {
-            return self::json([], Response::HTTP_NOT_FOUND);
-        }
+        $token = Token::check($request->input('token'));
+        if (false === $token || Auth::user()->id !== (int)$token['user_id']) {
+            DB::rollBack();
 
-        if (Auth::user()->id !== $token['user_id']) {
-            return self::json([], Response::HTTP_BAD_REQUEST);
+            return self::json([], Response::HTTP_NOT_FOUND);
         }
 
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
@@ -150,10 +148,22 @@ class WalletController extends Controller
             $userLedgerEntry,
             $token['payload']['request']['to'],
             $token['payload']['request']['amount'],
-            $token['payload']['request']['memo']
+            $token['payload']['request']['memo'] ?? ''
         );
 
         DB::commit();
+
+        return self::json();
+    }
+
+    public function cancelWithdrawal(UserLedgerEntry $entry): JsonResponse
+    {
+        if (Auth::user()->id !== $entry->user_id) {
+            return self::json([], Response::HTTP_NOT_FOUND);
+        }
+
+        $entry->status = UserLedgerEntry::STATUS_CANCELED;
+        $entry->save();
 
         return self::json();
     }
@@ -184,6 +194,10 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
+        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         $ledgerEntry = UserLedgerEntry::construct(
             $user->id,
             -$total,
@@ -206,7 +220,7 @@ class WalletController extends Controller
 
         Mail::to($user)->queue(
             new WithdrawalApproval(
-                config('app.adpanel_base_url')."/auth/withdrawal-confirmation/$token",
+                config('app.adpanel_url')."/auth/withdrawal-confirmation/$token",
                 $amount,
                 $fee,
                 $addressTo->toString()
@@ -256,7 +270,7 @@ class WalletController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
-                $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+                $date = $ledgerItem->created_at->format(DATE_ATOM);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
                 $txid = $this->getUserLedgerEntryTxid($ledgerItem);
@@ -269,6 +283,7 @@ class WalletController extends Controller
                     'date' => $date,
                     'address' => $address,
                     'txid' => $txid,
+                    'id' => $ledgerItem->id,
                 ];
             }
         }

@@ -22,41 +22,54 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
+use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function json_decode;
 
 /**
  * API commands used to serve banners and log relevant events.
  */
 class DemandController extends Controller
 {
+    private const CONTENT_TYPE = 'Content-Type';
+
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
     /** @var CampaignRepository */
     private $campaignRepository;
+    /** @var LicenseReader */
+    private $licenseReader;
 
-    public function __construct(PaymentDetailsVerify $paymentDetailsVerify, CampaignRepository $campaignRepository)
-    {
+    public function __construct(
+        PaymentDetailsVerify $paymentDetailsVerify,
+        CampaignRepository $campaignRepository,
+        LicenseReader $licenseReader
+    ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
+        $this->licenseReader = $licenseReader;
     }
 
     public function serve(Request $request, $id)
@@ -137,7 +150,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Cid', $caseId);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set('Content-Type', ($isIECompat ? 'text/base64,' : '').$mime);
+            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
         }
 
         return $response;
@@ -173,7 +186,7 @@ class DemandController extends Controller
             }
         );
 
-        $response->headers->set('Content-Type', 'text/javascript');
+        $response->headers->set(self::CONTENT_TYPE, 'text/javascript');
 
         $response->setCache(
             [
@@ -201,13 +214,13 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -221,15 +234,15 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
         );
@@ -241,45 +254,51 @@ class DemandController extends Controller
 
     public function view(Request $request, string $bannerId)
     {
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $this->validateEventRequest($request);
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
         $context = Utils::decodeZones($request->query->get('ctx'));
-        $keywords = $context['page']['keywords'];
+        $keywords = $context['page']['keywords'] ?? '';
 
-        $adUserEndpoint = config('app.aduser_external_location');
-        $response = new SymfonyResponse();
+        $adUserEndpoint = config('app.aduser_base_url');
+        $response = new Response();
 
         if ($adUserEndpoint) {
-            $impressionId = $request->query->get('iid') ?: Utils::createTrackingId($this->getParameter('secret'));
-
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
                 config('app.adserver_secret'),
                 $request,
                 $response,
                 '',
-                new DateTime(),
-                $impressionId
+                new DateTime()
             );
 
             $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.gif',
+                '%s/register/%s/%s/%s.htm',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $demandTrackingId,
-                $impressionId
+                Utils::urlSafeBase64Encode(random_bytes(8))
             );
-
-            $response->headers->set('Location', $adUserUrl);
+        } else {
+            $adUserUrl = null;
         }
 
+        $response->setContent(view(
+            'demand/view-event',
+            [
+                'log_url' => (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString(),
+                'view_script_url' => (new SecureUrl(url('-/view.js')))->toString(),
+                'aduser_url' => $adUserUrl,
+            ]
+        ));
         $response->send();
 
         $banner = $this->getBanner($bannerId);
@@ -290,18 +309,53 @@ class DemandController extends Controller
             $caseId,
             $eventId,
             $bannerId,
-            $context['page']['zone'],
+            $context['page']['zone'] ?? null,
             $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
-            Utils::getImpressionContext($request),
+            Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
         );
+
+        return $response;
+    }
+
+    private function validateEventRequest(Request $request): void
+    {
+        if (!$request->query->has('ctx')
+            || !$request->query->has('cid')
+            || !$request->query->has('pto')
+            || !$request->query->has('pid')
+        ) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
+    }
+
+    public function context(Request $request, string $eventId): Response
+    {
+        $response = new Response();
+
+        //transparent 1px gif
+        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
+        $response->headers->set(self::CONTENT_TYPE, 'image/gif');
+        $response->send();
+
+        $context = Utils::urlSafeBase64Decode($request->query->get('k'));
+        $decodedContext = json_decode($context);
+
+        try {
+            $event = EventLog::fetchOneByEventId($eventId);
+            $event->our_context = $decodedContext;
+            $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            $event->save();
+        } catch (ModelNotFoundException $e) {
+            Log::warning($e->getMessage());
+        }
 
         return $response;
     }
@@ -311,7 +365,7 @@ class DemandController extends Controller
         string $accountAddress,
         string $date,
         string $signature
-    ): JsonResponse {
+    ): PaymentDetailsResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
         $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
@@ -335,34 +389,12 @@ class DemandController extends Controller
             );
         }
 
-        $ids = $payments->map(
-            function ($payment) {
-                return $payment->id;
-            }
-        )->toArray();
-
-        $events = EventLog::fetchEvents($ids);
-
-        $results = [];
-
-        foreach ($events as $event) {
-            $data = $event->toArray();
-            $results[] = [
-                'event_id' => $data['event_id'],
-                'event_type' => $data['event_type'],
-                'banner_id' => $data['banner_id'],
-                'zone_id' => $data['zone_id'],
-                'publisher_id' => $data['publisher_id'],
-                'event_value' => $data['paid_amount'],
-            ];
-        }
-
-        return new JsonResponse($results);
+        return new PaymentDetailsResponse(EventLog::fetchEvents($payments->pluck('id')));
     }
 
     public function inventoryList(Request $request): JsonResponse
     {
-        $licenceTxFee =  Config::getFee(Config::LICENCE_TX_FEE);
+        $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
@@ -391,7 +423,6 @@ class DemandController extends Controller
 
             $campaigns[] = [
                 'id' => $campaign->uuid,
-                'publisher_id' => User::find($campaign->user_id)->uuid,
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
                 'date_end' => $campaign->time_end,
@@ -407,7 +438,7 @@ class DemandController extends Controller
             ];
         }
 
-        return Response::json($campaigns, SymfonyResponse::HTTP_OK);
+        return self::json($campaigns, Response::HTTP_OK);
     }
 
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int

@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Publisher\Service;
 
 use Adshares\Publisher\Dto\Input\StatsInput;
+use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 use Adshares\Publisher\Dto\Result\StatsResult;
 use Adshares\Publisher\Repository\StatsRepository;
 
@@ -53,5 +54,15 @@ class StatsDataProvider
         );
 
         return new StatsResult($total, $data);
+    }
+
+    public function fetchReportData(StatsInput $input): DataCollection
+    {
+        return $this->repository->fetchStatsToReport(
+            $input->getPublisherId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getSiteId()
+        );
     }
 }

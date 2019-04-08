@@ -18,10 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Illuminate\Support\Facades\Route;
 use Adshares\Adserver\Http\Controllers\InfoController;
+use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () { return ''; })->name('login');
+Route::get('/',
+    function () {
+        return '';
+    })->name('login');
 
 # API INFO
 Route::get('/info', [InfoController::class, 'info']);
+Route::get('/info.json', [InfoController::class, 'info'])->name('app.infoEndpoint');
+Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])->name('app.campaigns.upload_preview');
+
+Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
+Route::get('/policies/terms.html', [InfoController::class, 'terms']);

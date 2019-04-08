@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
@@ -52,13 +53,17 @@ class ClassifierController extends Controller
     {
         $limit = (int)$request->get('limit', 20);
         $offset = (int)$request->get('offset', 0);
-        $banners = NetworkBanner::fetch($limit, $offset);
+        $userId = Auth::user()->id;
+
+        $networkBannerFilter = new NetworkBannerFilter($request, $userId, $siteId);
+        $banners = NetworkBanner::fetchByFilter($networkBannerFilter, $limit, $offset);
+
         $bannerIds = $this->getIdsFromBanners($banners);
         $classifications = Classification::fetchByBannerIds($bannerIds);
 
         $items = (new ClassifierResponse($banners, $classifications, $siteId))->toArray();
         $count = count($items);
-        $totalCount = NetworkBanner::fetchCount();
+        $totalCount = NetworkBanner::fetchCountByFilter($networkBannerFilter);
 
         $response = [];
         $response['limit'] = $limit;

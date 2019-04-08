@@ -22,13 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
-use Adshares\Adserver\Http\Utils;
-use InvalidArgumentException;
 use function array_merge;
-use function config;
-use function sprintf;
-use function str_replace;
-use function strpos;
 
 final class UserContext
 {
@@ -46,37 +40,27 @@ final class UserContext
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
         $this->userId = $userId;
-
-        $this->failIfInvalid();
     }
 
-    private function failIfInvalid(): void
+    public static function fromAdUserArray(array $context, string $userId): self
     {
-        if (!Utils::validTrackingId($this->userId, config('app.adserver_secret'))) {
-            throw new InvalidArgumentException(sprintf('Invalid trackingId (%s)', $this->userId));
-        }
-    }
-
-    public static function fromAdUserArray(array $context): self
-    {
-        if (strpos($context['uid'], config('app.adserver_id')) === 0) {
-            $context['uid'] = str_replace(config('app.adserver_id').'_', '', $context['uid']);
-        }
-
-        foreach ($context['keywords'] as $key => $value) {
-            $context['keywords'][$key] = [$value];
+        foreach ($context['keywords'] ?? [] as $key => $value) {
+            $context['keywords'][$key] = is_array($value) ? $value : [$value];
         }
 
         return new self(
-            $context['keywords'],
+            $context['keywords'] ?? [],
             (float)$context['human_score'],
-            $context['uid']
+            $userId
         );
     }
 
     public function toAdSelectPartialArray(): array
     {
-        $keywords = array_merge($this->keywords, ['human_score' => [$this->humanScore]]);
+        $keywords = array_merge(
+            $this->keywords,
+            ['human_score' => [$this->humanScore]]
+        );
 
         return [
             'uid' => $this->userId,
@@ -86,6 +70,10 @@ final class UserContext
 
     public function toArray(): array
     {
-        return ['uid' => $this->userId, 'keywords' => $this->keywords, 'human_score' => $this->humanScore];
+        return [
+            'uid' => $this->userId,
+            'keywords' => $this->keywords,
+            'human_score' => $this->humanScore,
+        ];
     }
 }

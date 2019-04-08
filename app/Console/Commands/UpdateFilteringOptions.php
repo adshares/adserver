@@ -35,5 +35,7 @@ class UpdateFilteringOptions extends Command
         $this->info('Start command '.$this->signature);
 
         $service->import();
+
+        $this->info('Finish command '.$this->signature);
     }
 }

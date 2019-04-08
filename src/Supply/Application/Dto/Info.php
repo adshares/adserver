@@ -22,89 +22,154 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
-use RuntimeException;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\UrlInterface;
 
-class Info
+final class Info
 {
-    private const SUPPORTED_PUBLISHER = 'PUB';
-    private const SUPPORTED_ADVERTISER = 'ADV';
+    public const CAPABILITY_PUBLISHER = 'PUB';
 
-    private const AVAILABLE_SUPPORTED_VALUES = [self::SUPPORTED_PUBLISHER, self::SUPPORTED_ADVERTISER];
+    public const CAPABILITY_ADVERTISER = 'ADV';
+
+    private const AVAILABLE_CAPABILITY_VALUES = [
+        self::CAPABILITY_PUBLISHER,
+        self::CAPABILITY_ADVERTISER,
+    ];
 
     /** @var string */
-    private $serviceType;
+    private $module;
+
     /** @var string */
     private $name;
+
     /** @var string */
     private $version;
+
     /** @var array */
-    private $supported;
-    /** @var string */
+    private $capabilities;
+
+    /** @var UrlInterface */
     private $panelUrl;
-    /** @var string */
+
+    /** @var UrlInterface */
     private $privacyUrl;
-    /** @var string */
+
+    /** @var UrlInterface */
     private $termsUrl;
-    /** @var string */
+
+    /** @var UrlInterface */
     private $inventoryUrl;
 
+    /** @var UrlInterface */
+    private $serverUrl;
+
+    /** @var Email|null */
+    private $supportEmail;
+
     public function __construct(
-        string $serviceType,
+        string $module,
         string $name,
         string $version,
-        array $supported,
-        Url $panelUrl,
-        Url $privacyUrl,
-        Url $termsUrl,
-        Url $inventoryUrl
+        UrlInterface $serverUrl,
+        UrlInterface $panelUrl,
+        UrlInterface $privacyUrl,
+        UrlInterface $termsUrl,
+        UrlInterface $inventoryUrl,
+        ?Email $supportEmail,
+        string ...$capabilities
     ) {
-        $this->validateSupportedValue($supported);
+        $this->validateCapabilities($capabilities);
 
-        $this->serviceType = $serviceType;
+        $this->module = $module;
         $this->name = $name;
         $this->version = $version;
-        $this->supported = $supported;
+        $this->capabilities = $capabilities;
         $this->panelUrl = $panelUrl;
         $this->privacyUrl = $privacyUrl;
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
+        $this->serverUrl = $serverUrl;
+        $this->supportEmail = $supportEmail;
     }
 
-    public function validateSupportedValue(array $values): void
+    public function validateCapabilities(array $values): void
     {
         foreach ($values as $value) {
-            if (!in_array($value, self::AVAILABLE_SUPPORTED_VALUES, true)) {
+            if (!in_array($value, self::AVAILABLE_CAPABILITY_VALUES, true)) {
                 throw new RuntimeException(sprintf('Given supported value %s is not correct.', $value));
             }
         }
     }
 
+    /** @deprecated Use object casting in NetworkHosts model */
     public static function fromArray(array $data): self
     {
+        $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
+
         return new self(
-            $data['serviceType'],
+            $data['module'] ?? $data['serviceType'],
             $data['name'],
-            $data['version'],
-            $data['supported'],
+            $data['version'] ?? $data['softwareVersion'],
+            new Url($data['serverUrl']),
             new Url($data['panelUrl']),
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
-            new Url($data['inventoryUrl'])
+            new Url($data['inventoryUrl']),
+            $email,
+            ...$data['capabilities'] ?? $data['supported']
         );
     }
 
     public function toArray(): array
     {
-        return [
-            'serviceType' => $this->serviceType,
+        $data = [
+            'module' => $this->module,
             'name' => $this->name,
             'version' => $this->version,
-            'supported' => $this->supported,
+            'capabilities' => $this->capabilities,
+            'serverUrl' => $this->serverUrl->toString(),
             'panelUrl' => $this->panelUrl->toString(),
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
         ];
+
+        if (null !== $this->supportEmail) {
+            $data['supportEmail'] = $this->supportEmail->toString();
+        }
+
+        return $data;
+    }
+
+    public function getTermsUrl(): string
+    {
+        return $this->termsUrl->toString();
+    }
+
+    public function getPrivacyUrl(): string
+    {
+        return $this->privacyUrl->toString();
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getPanelUrl(): string
+    {
+        return $this->panelUrl->toString();
+    }
+
+    public function getServerUrl(): string
+    {
+        return $this->serverUrl->toString();
+    }
+
+    public function getInventoryUrl(): string
+    {
+        return $this->inventoryUrl->toString();
     }
 }

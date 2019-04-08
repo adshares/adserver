@@ -22,77 +22,7 @@
 
 AdServer is the core software behind the ecosystem.
 
-## Prerequisites
- - A clean Ubuntu/Bionic install
- - You are logged in as a user with `sudo` privileges
- - You have mail server ready somewhere (use something like [MailHog](https://github.com/mailhog/MailHog) for local testing)
- 
-## Quick Start (on Ubuntu 18.04)
-
-### Get source code
-```bash
-git clone https://github.com/adshares/adserver.git
-```
-### Prepare environment
-Install all required software and copy all the below-mentioned scripts and configs to `/opt/adshares/.deployment-scripts`.
-```bash
-sudo adserver/deployment/bootstrap.sh
-```
-> The script above creates such a separate `adshares` user (without sudo privileges) to be the owner of all the installed services.
-
-Note that there are many environment variables you can override to tweak the behavior of the scripts (just inspect the scripts and configs to see what is being used).
-The variables are set to reasonable defaults. Adjust them to your needs :)
-
-> The one-liners use `sudo` to run the scripts as the `adshares` user. You can omit `sudo --login --user adshares` if you want to run them as the current user.
-
-# Install helper services
-```bash
-sudo --login --user adshares /opt/adshares/.deployment-scripts/10-aduser.sh
-sudo --login --user adshares INSTALL_BROWSCAP_DATA=1 /opt/adshares/.deployment-scripts/11-aduser_browscap.sh
-sudo --login --user adshares INSTALL_GEOLITE_DATA=1 /opt/adshares/.deployment-scripts/12-aduser_geolite.sh
-
-sudo --login --user adshares /opt/adshares/.deployment-scripts/20-adselect.sh
-sudo --login --user adshares /opt/adshares/.deployment-scripts/30-adpay.sh
-```
-Copy configs and start standalone services
-```bash
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/aduser*.conf /etc/supervisor/conf.d
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adselect*.conf /etc/supervisor/conf.d
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adpay*.conf /etc/supervisor/conf.d
-sudo service supervisor restart
-```
-The services are now listening to requests on `800x` ports on `localhost`:
-- AdUser: `8010`
-- AdSelect: `8011`
-- AdPay: `8012`
-
-Install AdServer (with workers)
-```bash
-sudo --login --user adshares DB_MIGRATE=1 DB_SEED=1 /opt/adshares/.deployment-scripts/40-adserver.sh
-sudo --login --user adshares /opt/adshares/.deployment-scripts/41-adserver_worker.sh
-
-sudo cp -rf /opt/adshares/.deployment-scripts/supervisor/conf.d/adserver*.conf /etc/supervisor/conf.d
-sudo service supervisor restart
-```
-Build static version of AdPanel
-```bash
-sudo --login --user adshares /opt/adshares/.deployment-scripts/50-adpanel.sh
-```
-
-### Start public web services
-
-Reconfigure Nginx
-```bash
-sudo cp -rf /opt/adshares/.deployment-scripts/nginx/conf.d/*.conf /etc/nginx/conf.d
-sudo service nginx reload
-```
-
-Publicly accessible services now listen on all interfaces on three new ports:
-- AdServer - the API server on port `8001` 
-- AdPanel - the system's user interface on port `8002`
-- AdUser - the visible part of the tracking service on port `8003`
-
-> If you installed all the stuff locally just point your browser to http://localhost:8002.
+For **Quick Start** see [INSTALLER](https://github.com/adshares/installer) Project.
 
 ## Documentation
 
@@ -109,6 +39,7 @@ Publicly accessible services now listen on all interfaces on three new ports:
 - [AdPay](https://github.com/adshares/adpay)
 - [AdPanel](https://github.com/adshares/adpanel)
 - [ADS](https://github.com/adshares/ads)
+- [INSTALLER](https://github.com/adshares/installer)
 
 ## License
 

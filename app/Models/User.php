@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Common\Domain\ValueObject\Email;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -136,22 +137,14 @@ class User extends Authenticatable
 
     public function getAdserverWalletAttribute(): array
     {
-        return UserLedgerEntry::queryForEntriesRelevantForBalanceByUserId($this->id)
-            ->get()
-            ->reduce(function (?array $previous, UserLedgerEntry $current) {
-                return [
-                    'total_funds' => $current->amount + ($previous['total_funds'] ?? 0),
-                    'total_funds_in_currency' => 0,
-                    'total_funds_change' => 0,
-                    'last_payment_at' => (string)$current->created_at,
-                ];
-            })
-            ?: [
-                'total_funds' => 0,
-                'total_funds_in_currency' => 0,
-                'total_funds_change' => 0,
-                'last_payment_at' => 0,
-            ];
+        return [
+            'total_funds' => $this->getBalance(),
+            'wallet_balance' => $this->getWalletBalance(),
+            'bonus_balance' => $this->getBonusBalance(),
+            'total_funds_in_currency' => 0,
+            'total_funds_change' => 0,
+            'last_payment_at' => 0,
+        ];
     }
 
     public function setPasswordAttribute($value): void
@@ -203,6 +196,11 @@ class User extends Authenticatable
         return (bool)$this->is_publisher;
     }
 
+    public function isAdmin(): bool
+    {
+        return (bool)$this->is_admin;
+    }
+
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
@@ -211,5 +209,27 @@ class User extends Authenticatable
     public function getBalance(): int
     {
         return UserLedgerEntry::getBalanceByUserId($this->id);
+    }
+
+    public function getWalletBalance(): int
+    {
+        return UserLedgerEntry::getWalletBalanceByUserId($this->id);
+    }
+
+    public function getBonusBalance(): int
+    {
+        return UserLedgerEntry::getBonusBalanceByUserId($this->id);
+    }
+
+    public static function createAdmin(Email $email, string $name, string $password): void
+    {
+        $user = new self();
+        $user->name = $name;
+        $user->email = $email->toString();
+        $user->email_confirmed_at = time();
+        $user->password = $password;
+        $user->is_admin = 1;
+
+        $user->save();
     }
 }

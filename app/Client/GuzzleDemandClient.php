@@ -23,8 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
+use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -32,25 +34,24 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
-use DomainException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use function GuzzleHttp\json_decode;
+use function json_encode;
 
 final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const ALL_INVENTORY_ENDPOINT = '/adshares/inventory/list';
-
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
 
     /** @var SignatureVerifier */
     private $signatureVerifier;
+
     /** @var int */
     private $timeout;
 
@@ -60,15 +61,15 @@ final class GuzzleDemandClient implements DemandClient
         $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $inventoryHost): CampaignCollection
+    public function fetchAllInventory(string $sourceHost, string $inventoryUrl): CampaignCollection
     {
-        $client = new Client($this->requestParameters($inventoryHost));
+        $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get(self::ALL_INVENTORY_ENDPOINT);
+            $response = $client->get($inventoryUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s host (%s).', $inventoryHost, $exception->getMessage()),
+                sprintf('Could not connect to %s host (%s).', $sourceHost, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -83,8 +84,12 @@ final class GuzzleDemandClient implements DemandClient
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
-            $campaign = CampaignFactory::createFromArray($this->processData($data, $inventoryHost));
-            $campaignsCollection->add($campaign);
+            try {
+                $campaign = CampaignFactory::createFromArray($this->processData($data, $sourceHost));
+                $campaignsCollection->add($campaign);
+            } catch (RuntimeException $exception) {
+                Log::info(sprintf('[Inventory Importer] %s', $exception->getMessage()));
+            }
         }
 
         return $campaignsCollection;
@@ -133,15 +138,15 @@ final class GuzzleDemandClient implements DemandClient
         return $this->createDecodedResponseFromBody($body);
     }
 
-    public function fetchInfo(string $infoUrl): Info
+    public function fetchInfo(UrlInterface $infoUrl): Info
     {
         $client = new Client($this->requestParameters());
 
         try {
-            $response = $client->get($infoUrl);
+            $response = $client->get((string)$infoUrl);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
-                sprintf('Could not connect to %s (%s).', $infoUrl, $exception->getMessage()),
+                sprintf('Could not connect to %s (%s).', (string)$infoUrl, $exception->getMessage()),
                 $exception->getCode(),
                 $exception
             );
@@ -151,21 +156,11 @@ final class GuzzleDemandClient implements DemandClient
         $body = (string)$response->getBody();
 
         $this->validateResponse($statusCode, $body);
-
         $data = $this->createDecodedResponseFromBody($body);
 
-        $this->validateInfoResponse($data);
+        $this->validateFetchInfoResponse($data);
 
-        return new Info(
-            $data['serviceType'],
-            $data['name'],
-            $data['softwareVersion'],
-            $data['supported'],
-            new Url($data['panelUrl']),
-            new Url($data['privacyUrl']),
-            new Url($data['termsUrl']),
-            new Url($data['inventoryUrl'])
-        );
+        return Info::fromArray($data);
     }
 
     private function requestParameters(?string $baseUrl = null): array
@@ -185,17 +180,6 @@ final class GuzzleDemandClient implements DemandClient
         return $params;
     }
 
-    private function createDecodedResponseFromBody(string $body): array
-    {
-        try {
-            $decoded = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new DomainRuntimeException('Invalid json data.');
-        }
-
-        return $decoded;
-    }
-
     private function validateResponse(int $statusCode, string $body): void
     {
         if ($statusCode !== Response::HTTP_OK) {
@@ -207,15 +191,25 @@ final class GuzzleDemandClient implements DemandClient
         }
     }
 
-    private function processData(array $data, string $inventoryHost): array
+    private function createDecodedResponseFromBody(string $body): array
+    {
+        try {
+            $decoded = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new DomainRuntimeException('Invalid json data.');
+        }
+
+        return $decoded;
+    }
+
+    private function processData(array $data, string $sourceHost): array
     {
         $data['demand_id'] = Uuid::fromString($data['id']);
-        $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
         $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
 
         $data['source_campaign'] = [
-            'host' => $inventoryHost,
+            'host' => $sourceHost,
             'address' => $data['address'],
             'version' => self::VERSION,
             'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
@@ -233,27 +227,35 @@ final class GuzzleDemandClient implements DemandClient
         return $data;
     }
 
-    private function validateInfoResponse(array $data): void
+    public function validateFetchInfoResponse(array $data): void
     {
-        $type = $data['serviceType'] ?? null;
-        $name = $data['name'] ?? null;
-        $version = $data['softwareVersion'] ?? null;
-        $supported = $data['supported'] ?? null;
-        $panelUrl = $data['panelUrl'] ?? null;
-        $privacyUrl = $data['privacyUrl'] ?? null;
-        $termsUrl = $data['termsUrl'] ?? null;
-        $inventoryUrl = $data['inventoryUrl'] ?? null;
+        $expectedKeys = [
+            'name',
+            'serverUrl',
+            'panelUrl',
+            'privacyUrl',
+            'termsUrl',
+            'inventoryUrl',
+        ];
 
-        if (!$type
-            || !$name
-            || !$version
-            || !$supported
-            || !$panelUrl
-            || !$privacyUrl
-            || !$termsUrl
-            || !$inventoryUrl
-        ) {
-            throw new DomainRuntimeException('Wrong info data format.');
+        foreach ($expectedKeys as $key) {
+            if (!isset($data[$key])) {
+                Log::debug('Invalid info.json:'.json_encode($data));
+
+                throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
+            }
+        }
+
+        if (!isset($data['version']) && !isset($data['softwareVersion'])) {
+            throw new UnexpectedClientResponseException('Field `version` (deprecated: `softwareVersion`) is required.');
+        }
+
+        if (!isset($data['module']) && !isset($data['serviceType'])) {
+            throw new UnexpectedClientResponseException('Field `module` (deprecated: `serviceType`) is required.');
+        }
+
+        if (!isset($data['capabilities']) && !isset($data['supported'])) {
+            throw new UnexpectedClientResponseException('Field `capabilities` (deprecated: `supported`) is required.');
         }
     }
 }

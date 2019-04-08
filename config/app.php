@@ -18,58 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+$appUrl = env('APP_URL', 'http://localhost');
+
+$appEnv = env('APP_ENV', 'production');
+
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Application Name
-    |--------------------------------------------------------------------------
-    |
-    | This value is the name of your application. This value is used when the
-    | framework needs to place the application's name in a notification or
-    | any other location as required by the application or its packages.
-    |
-    */
-
-    'name' => env('APP_NAME', 'Adserver'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application Environment
-    |--------------------------------------------------------------------------
-    |
-    | This value determines the "environment" your application is currently
-    | running in. This may determine how you prefer to configure various
-    | services your application utilizes. Set this in your ".env" file.
-    |
-    */
-
-    'env' => env('APP_ENV', 'production'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application Debug Mode
-    |--------------------------------------------------------------------------
-    |
-    | When your application is in debug mode, detailed error messages with
-    | stack traces will be shown on every error that occurs within your
-    | application. If disabled, a simple generic error page is shown.
-    |
-    */
-
+    'name' => env('APP_NAME', 'AdServer'),
+    'version' => env('APP_VERSION', '#'),
+    'env' => $appEnv,
+    'url' => $appUrl,
     'debug' => env('APP_DEBUG', false),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Application URL
-    |--------------------------------------------------------------------------
-    |
-    | This URL is used by the console to properly generate URLs when using
-    | the Artisan command line tool. You should set this to the root of
-    | your application so that it is used when running Artisan tasks.
-    |
-    */
-
-    'url' => env('APP_URL', 'http://server.ads'),
 
     /*
     |--------------------------------------------------------------------------
@@ -131,20 +89,12 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'adserver_host' => env('ADSERVER_HOST'),
-    'adserver_info_url' => env('ADSERVER_INFO_URL'),
-    'adpanel_base_url' => env('ADPANEL_URL'),
-    'adserver_secret' => env('ADSERVER_SECRET'),
-    'adserver_id' => env('ADSERVER_ID'),
-    'adserver_banner_host' => env('ADSERVER_BANNER_HOST'),
-    'adserver_info_type' => env('ADSERVER_INFO_TYPE'),
-    'adserver_info_name' => env('ADSERVER_INFO_NAME'),
-    'adserver_info_panel_url' => env('ADSERVER_INFO_PANEL_URL'),
-    'adserver_info_terms_url' => env('ADSERVER_INFO_TERMS_URL'),
-    'adserver_info_privacy_url' => env('ADSERVER_INFO_PRIVACY_URL'),
-    'adserver_info_version' => env('ADSERVER_INFO_VERSION'),
-    'adserver_info_publisher' => env('ADSERVER_INFO_PUBLISHER'),
-    'adserver_info_advertiser' => env('ADSERVER_INFO_ADVERTISER'),
+    'adpanel_url' => env('ADPANEL_URL'),
+    'adserver_secret' => env('APP_KEY'),
+    'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
+    'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
+    'terms_url' => $appUrl.'/policies/terms.html',
+    'privacy_url' => $appUrl.'/policies/privacy.html',
     'adshares_address' => env('ADSHARES_ADDRESS'),
     'adshares_wallet_cold_address' => env('ADSHARES_WALLET_COLD_ADDRESS'),
     'adshares_wallet_min_amount' => env('ADSHARES_WALLET_MIN_AMOUNT'),
@@ -155,18 +105,16 @@ return [
     'adshares_secret' => env('ADSHARES_SECRET'),
     'adshares_command' => env('ADSHARES_COMMAND'),
     'adshares_workingdir' => env('ADSHARES_WORKINGDIR'),
-
-    'aduser_external_location' => env('ADUSER_EXTERNAL_LOCATION'),
-    'aduser_internal_location' => env('ADUSER_INTERNAL_LOCATION'),
+    'aduser_base_url' => env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION'))),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-    'website_banner_class' => env('WEBSITE_BANNER_CLASS', 'a-name-that-does-not-collide'),
-    'banner_force_https' => (bool) env('BANNER_FORCE_HTTPS', true),
-    'classify_publisher_uri' => env('CLASSIFY_PUBLISHER_URI'),
-    'classify_publisher_public_key' => env('CLASSIFY_PUBLISHER_PUBLIC_KEY'),
-    'classify_namespace' => (string)env('CLASSIFY_NAMESPACE'),
-    'classify_secret' => (string)env('CLASSIFY_SECRET'),
-
+    'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
+    'classify_public_key' => env('CLASSIFY_PUBLIC_KEY', ''),
+    'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'default_classify_namespace'),
+    'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY', ''),
+    'license_url' => env('ADSHARES_LICENSE_SERVER_URL', 'https://account.adshares.pl'),
+    'license_key' => env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')),
+    'license_id' => substr(env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')), 0, 10),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
@@ -203,7 +151,6 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-
 
         /*
          * Application Service Providers...

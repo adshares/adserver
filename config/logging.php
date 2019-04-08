@@ -56,14 +56,14 @@ return [
         'single' => [
             'driver' => 'single',
             'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
-            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/adserver.log'),
+            'path' => env('LOG_FILE_PATH', storage_path('logs/adserver.log')),
             'level' => env('LOG_LEVEL', 'warning'),
         ],
 
         'daily' => [
             'driver' => 'daily',
             'tap' => [Adshares\Adserver\Logging\CustomizeFormatter::class],
-            'path' => env('LOG_FILE_PATH', env('EXTERNAL_STORAGE_PATH', storage_path()).'/logs/adserver.log'),
+            'path' => env('LOG_FILE_PATH', storage_path('logs/adserver.log')),
             'level' => env('LOG_LEVEL', 'warning'),
             'days' => 7,
         ],
@@ -73,7 +73,7 @@ return [
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
             'username' => env('APP_NAME', 'AdServer'),
             'emoji' => env('LOG_SLACK_EMOJI', ':-1:'),
-            'level' => env('LOG_LEVEL', 'warning'),
+            'level' => env('LOG_SLACK_LEVEL', env('LOG_LEVEL', 'warning')),
         ],
 
         'syslog' => [

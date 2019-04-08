@@ -29,6 +29,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use function sprintf;
 
 class WalletControllerTest extends TestCase
 {
@@ -103,7 +104,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
-    public function testWithdraw(): void
+    public function testWithdrawApprovalMail(): void
     {
         Mail::fake();
 
@@ -121,11 +122,60 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        self::assertCount(1, Token::all());
-
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $tokens = Token::all();
+        self::assertCount(1, $tokens);
         Mail::assertQueued(WithdrawalApproval::class, 1);
 
+        $firstToken = $tokens->first();
+        $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
+
+        self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
+
+        $response2 = $this->postJson(
+            '/api/wallet/confirm-withdrawal',
+            [
+                'token' => $firstToken->uuid,
+            ]
+        );
+
+        $response2->assertStatus(Response::HTTP_OK);
+        self::assertSame(UserLedgerEntry::STATUS_PENDING, UserLedgerEntry::find($userLedgerEntry->id)->status);
+    }
+
+    public function testWithdrawReject(): void
+    {
+        Mail::fake();
+
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+
+        $this->actingAs($user, 'api');
+
+        $amount = 100000000000;
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => $amount,
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
         $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $tokens = Token::all();
+        self::assertCount(1, $tokens);
+        Mail::assertQueued(WithdrawalApproval::class, 1);
+
+        $firstToken = $tokens->first();
+        $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
+
+        self::assertSame(UserLedgerEntry::STATUS_AWAITING_APPROVAL, $userLedgerEntry->status);
+
+        $this->delete(
+            sprintf('/api/wallet/cancel-withdrawal/%d', $userLedgerEntry->id)
+        )->assertStatus(Response::HTTP_OK);
+
+        self::assertSame(UserLedgerEntry::STATUS_CANCELED, UserLedgerEntry::find($userLedgerEntry->id)->status);
     }
 
     private function generateUserIncome(int $userId, int $amount): void
@@ -210,24 +260,39 @@ class WalletControllerTest extends TestCase
             ]
         );
 
-        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testWithdrawInsufficientFunds(): void
     {
         $user = factory(User::class)->create();
-        $this->generateUserIncome($user->id, 200000000000);
+        $amount = 20 * (10 ** 11);
+        $this->generateUserIncome($user->id, $amount);
         $this->actingAs($user, 'api');
         $response = $this->postJson(
             '/api/wallet/withdraw',
             [
-                'amount' => 200000000001,
+                'amount' => $amount + 1,
                 'to' => '0001-00000000-XXXX',
             ]
         );
 
-        // balance check was moved to job, so controller returns success
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testWithdrawInvalidAmount(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $response = $this->postJson(
+            '/api/wallet/withdraw',
+            [
+                'amount' => -10,
+                'to' => '0001-00000000-XXXX',
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testDepositInfo(): void
@@ -273,7 +338,7 @@ class WalletControllerTest extends TestCase
                         'amount' => $amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => '0001:0000000A:0001',
                     ],
@@ -281,7 +346,7 @@ class WalletControllerTest extends TestCase
                         'amount' => -$amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => null,
                     ],
@@ -329,7 +394,7 @@ class WalletControllerTest extends TestCase
                         'amount' => $amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => '0001:0000000A:0001',
                     ],
@@ -368,7 +433,7 @@ class WalletControllerTest extends TestCase
                         'amount' => -$amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => null,
                     ],

@@ -23,36 +23,28 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Adshares\Adserver\Http\Response\InfoResponse;
+use Adshares\Adserver\Models\Regulation;
+use Illuminate\View\View;
 
 class InfoController extends Controller
 {
-    public function info(): JsonResponse
+    public function info(): InfoResponse
     {
-        $isAdvertiser = (bool)config('app.adserver_info_advertiser');
-        $isPublisher = (bool)config('app.adserver_info_publisher');
+        return InfoResponse::defaults();
+    }
 
-        $supported = [];
+    public function privacyPolicy(): View
+    {
+        $data = Regulation::fetchPrivacyPolicy()->toArray();
 
-        if ($isAdvertiser) {
-            $supported[] = 'ADV';
-        }
+        return view('info/policy', $data);
+    }
 
-        if ($isPublisher) {
-            $supported[] = 'PUB';
-        }
+    public function terms(): View
+    {
+        $data = Regulation::fetchTerms()->toArray();
 
-        $data = [
-            'serviceType' => config('app.adserver_info_type'),
-            'name' => config('app.adserver_info_name'),
-            'softwareVersion' => config('app.adserver_info_version'),
-            'supported' => $supported,
-            'panelUrl' => config('app.adserver_info_panel_url'),
-            'privacyUrl' => config('app.adserver_info_privacy_url'),
-            'termsUrl' => config('app.adserver_info_terms_url'),
-            'inventoryUrl' => route('demand-inventory'),
-        ];
-
-        return new JsonResponse($data);
+        return view('info/policy', $data);
     }
 }

@@ -25,9 +25,11 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use function hex2bin;
 
@@ -58,6 +60,7 @@ use function hex2bin;
  * @property int payment_id
  * @property int reason
  * @property int is_view_clicked
+ * @property string domain
  * @mixin Builder
  */
 class EventLog extends Model
@@ -102,6 +105,7 @@ class EventLog extends Model
         'payment_id',
         'reason',
         'is_view_clicked',
+        'domain',
     ];
 
     /**
@@ -145,7 +149,7 @@ class EventLog extends Model
         return $query->get();
     }
 
-    public static function fetchEvents(array $paymentIds): Collection
+    public static function fetchEvents(Arrayable $paymentIds): Collection
     {
         return self::whereIn('payment_id', $paymentIds)
             ->get();
@@ -155,7 +159,7 @@ class EventLog extends Model
         string $caseId,
         string $eventId,
         string $bannerId,
-        string $zoneId,
+        ?string $zoneId,
         string $trackingId,
         string $publisherId,
         string $campaignId,
@@ -188,7 +192,28 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
+
+        if ($type === self::TYPE_CLICK) {
+            $viewEvent = self::where('case_id', hex2bin($caseId))
+                ->where('event_type', self::TYPE_VIEW)
+                ->first();
+
+            $log->domain = $viewEvent->domain ?? null;
+        }
+
         $log->save();
+    }
+
+    public static function fetchOneByEventId(string $eventId): self
+    {
+        $event = self::where('event_id', hex2bin($eventId))->first();
+
+        if (!$event) {
+            throw (new ModelNotFoundException('Model not found'))
+                ->setModel(self::class, [$eventId]);
+        }
+
+        return $event;
     }
 
     public function payment(): BelongsTo
@@ -196,7 +221,7 @@ class EventLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function createImpressionContext(): ImpressionContext
+    public function impressionContext(): ImpressionContext
     {
         // TODO input data should be validated - currently ErrorException could be thrown
 

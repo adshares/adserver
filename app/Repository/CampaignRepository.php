@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
+use DateTime;
 
 class CampaignRepository
 {
@@ -32,7 +33,16 @@ class CampaignRepository
 
     public function fetchActiveCampaigns()
     {
-        return Campaign::where('status', Campaign::STATUS_ACTIVE)->get();
+        $query = Campaign::where('status', Campaign::STATUS_ACTIVE);
+
+        $query->where(
+            function ($q) {
+                $q->where('time_end', '>', new DateTime())
+                    ->orWhere('time_end', null);
+            }
+        );
+
+        return $query->get();
     }
 
     public function fetchCampaignById(int $campaignId): Campaign

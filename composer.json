@@ -2,18 +2,27 @@
     "require": {
         "php": "^7.2",
         "ext-gd": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-sodium": "*",
+        "ext-fileinfo": "*",
+        "ext-openssl": "*",
+        "ext-apcu": "*",
+        "ext-zip": "*",
+        "ext-libxml": "*",
+        "ext-dom": "*",
         "adshares/ads-client": "^1",
+        "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
         "doctrine/collections": " v1.5",
+        "doctrine/dbal": "^2.9",
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "^6.3",
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
-        "ramsey/uuid": "^3",
-        "aws/aws-sdk-php": "~3.0"
+        "ralouphie/mimey": "^2.1",
+        "ramsey/uuid": "^3"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
@@ -34,6 +43,7 @@
             "database/factories"
         ],
         "psr-4": {
+            "Adshares\\Lib\\": "lib/",
             "Adshares\\Adserver\\": "app/",
             "Adshares\\": "src/"
         }
@@ -52,15 +62,10 @@
     },
     "scripts": {
         "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.dist', '.env');\"",
             "@php artisan key:generate"
         ],
         "post-autoload-dump": [
-          "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-          "@php artisan package:discover"
-        ],
-        "install-codestandards": [
-            "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
         ]
     },
     "config": {

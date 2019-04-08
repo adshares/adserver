@@ -28,13 +28,12 @@ use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Illuminate\Console\Command;
-use function parse_url;
-use function strlen;
-use function substr;
+use Illuminate\Support\Facades\Log;
 
 class AdsFetchHosts extends Command
 {
@@ -126,15 +125,14 @@ class AdsFetchHosts extends Command
             $broadcastArray = $resp->getBroadcast();
 
             foreach ($broadcastArray as $broadcast) {
-                /** @var $broadcast Broadcast */
                 $this->handleBroadcast($broadcast);
             }
         } catch (CommandException $ce) {
             $code = $ce->getCode();
             if (CommandError::BROADCAST_NOT_READY === $code) {
-                $this->info("Error $code: Broadcast not ready for block $blockId");
+                Log::warning("Error $code: Broadcast not ready for block $blockId");
             } else {
-                $this->info("Error $code: Unexpected error for block $blockId");
+                Log::error("Error $code: Unexpected error for block $blockId");
             }
         }
     }
@@ -144,65 +142,23 @@ class AdsFetchHosts extends Command
      */
     private function handleBroadcast(Broadcast $broadcast): void
     {
-        $message = urldecode($this->hexToStr($broadcast->getMessage()));
-
-        if (substr($message, 0, strlen(AdsBroadcastHost::BROADCAST_PREFIX))
-            !== AdsBroadcastHost::BROADCAST_PREFIX) {
-            return;
-        }
-
-        $message = trim(substr($message, strlen(AdsBroadcastHost::BROADCAST_PREFIX)));
-
-        // TODO check if message is valid host
-        if (empty($message)) {
-            return;
-        }
-
         $address = $broadcast->getAddress();
         $time = $broadcast->getTime();
 
-        $info = null;
-        $infoUrl = $this->prepareInfoUrl($message);
-
         try {
-            $info = $this->client->fetchInfo($infoUrl);
-        } catch (UnexpectedClientResponseException $exception) {
-            $this->info(sprintf('Demand server `%s` does not support `/info` endpoint.', $infoUrl));
-        } catch (DomainRuntimeException $exception) {
-            $this->error(sprintf(
-                'Could not import info data (%s) from server `%s`.',
-                $exception->getMessage(),
-                $infoUrl
-            ));
+            $url = BroadcastableUrl::fromHex($broadcast->getMessage());
+            Log::debug("Fetching {$url->toString()}");
+
+            $info = $this->client->fetchInfo($url);
+
+            Log::debug("Got {$url->toString()}");
+
+            $host = NetworkHost::registerHost($address, $info, $time);
+
+            Log::debug("Stored {$url->toString()} as #{$host->id}");
+        } catch (RuntimeException|UnexpectedClientResponseException $exception) {
+            $url = $url ?? '';
+            Log::debug("[$url] {$exception->getMessage()}");
         }
-
-        NetworkHost::registerHost($address, $message, $info, $time);
-    }
-
-    /**
-     * @param string $hex
-     *
-     * @return string
-     */
-    private function hexToStr(string $hex): string
-    {
-        $string = '';
-        for ($i = 0; $i < strlen($hex) - 1; $i += 2) {
-            $string .= chr(hexdec($hex[$i].$hex[$i + 1]));
-        }
-
-        return $string;
-    }
-
-    private function prepareInfoUrl(string $hostUrl): string
-    {
-        $parsedUrl = parse_url($hostUrl);
-        $path = $parsedUrl['path'] ?? '';
-
-        if ($path === '/info') {
-            return $hostUrl;
-        }
-
-        return $hostUrl.'/info';
     }
 }

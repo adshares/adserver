@@ -35,8 +35,8 @@ final class TargetingMapperTest extends TestCase
             []
         );
 
-        $this->assertEquals(new stdClass(), $mapped['requires']);
-        $this->assertEquals(new stdClass(), $mapped['excludes']);
+        $this->assertEquals(new stdClass(), $mapped['require']);
+        $this->assertEquals(new stdClass(), $mapped['exclude']);
     }
 
     public function testWhenTargetingIsNotEmpty()
@@ -62,6 +62,7 @@ final class TargetingMapperTest extends TestCase
                 'os' => [
                     'Linux',
                     'Windows',
+                    'Apple_OS',
                 ]
             ]
         ];
@@ -89,7 +90,7 @@ final class TargetingMapperTest extends TestCase
             'site:lang' => ['en', 'pl'],
             'site:title:subtitle' => ['title-subtitle'],
             'user:gender' => ['male'],
-            'device:os' => ['Linux', 'Windows'],
+            'device:os' => ['Linux', 'Windows','Apple_OS'],
         ];
 
         $expectedExcludes = [
@@ -97,7 +98,7 @@ final class TargetingMapperTest extends TestCase
           'user:lang' => ['it'],
         ];
 
-        $this->assertEquals($expectedExcludes, $mapped['excludes']);
-        $this->assertEquals($expectedRequires, $mapped['requires']);
+        $this->assertEquals($expectedExcludes, $mapped['exclude']);
+        $this->assertEquals($expectedRequires, $mapped['require']);
     }
 }

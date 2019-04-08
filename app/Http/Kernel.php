@@ -21,9 +21,11 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
+use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
 use Adshares\Adserver\Http\Middleware\TrustProxies;
+use Adshares\Adserver\Utilities\DatabaseConfigReader;
 use Barryvdh\Cors\HandleCors;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -38,19 +40,23 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
     private const GUEST = 'guest';
+    private const ADMIN = 'admin';
+    public const ADMIN_ACCESS = 'only-admin-users';
     public const USER_ACCESS = 'only-authenticated-users';
     public const GUEST_ACCESS = 'only-guest-users';
     public const JSON_API = 'api';
     public const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
-        #pre
         CheckForMaintenanceMode::class,
         TrustProxies::class,
         HandleCors::class,
     ];
 
     protected $middlewareGroups = [
+        self::ADMIN_ACCESS => [
+            self::ADMIN.':api',
+        ],
         self::USER_ACCESS => [
             self::AUTH.':api',
         ],
@@ -72,6 +78,13 @@ class Kernel extends HttpKernel
     protected $routeMiddleware = [
         self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
+        self::ADMIN => RequireAdminAccess::class,
         self::SNAKE_CASING => SnakizeRequest::class,
     ];
+
+    public function bootstrap()
+    {
+        parent::bootstrap();
+        DatabaseConfigReader::overwriteAdministrationConfig();
+    }
 }

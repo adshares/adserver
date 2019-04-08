@@ -24,15 +24,16 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
-use Adshares\Adserver\Utilities\ForceUrlProtocol;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -60,7 +61,7 @@ class SupplyController extends Controller
         } elseif ('GET' === $request->getRealMethod()) {
             $data = $request->getQueryString();
         } elseif ('POST' === $request->getRealMethod()) {
-            $data = $request->getContent();
+            $data = (string)$request->getContent();
         } elseif ('OPTIONS' === $request->getRealMethod()) {
             $response->setStatusCode(Response::HTTP_NO_CONTENT);
             $response->headers->set('Access-Control-Max-Age', 1728000);
@@ -86,23 +87,21 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request, $data);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray());
-
         $zones = Utils::decodeZones($data)['zones'];
+        $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        $banners = $bannerFinder->findBanners($zones, $context);
-
-        return self::json($banners);
+        return self::json($bannerFinder->findBanners(
+            $zones,
+            $context
+        ));
     }
 
     public function findScript(Request $request): StreamedResponse
     {
         $params = [
-            config('app.adserver_host'),
-            config('app.aduser_external_location'),
-            '.'.config('app.website_banner_class'),
+            config('app.url'),
+            config('app.aduser_base_url'),
+            '.'.config('app.adserver_id'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -152,10 +151,11 @@ class SupplyController extends Controller
         AdUser $contextProvider,
         string $bannerId
     ): RedirectResponse {
-        if ($request->query->get('r')) {
-            $url = Utils::urlSafeBase64Decode($request->query->get('r'));
-            $request->query->remove('r');
-        } else {
+        $this->validateEventRequest($request);
+
+        $url = $this->getRedirectionUrlFromQuery($request);
+
+        if (!$url) {
             $banner = NetworkBanner::where('uuid', hex2bin($bannerId))->first();
 
             if (!$banner) {
@@ -165,30 +165,18 @@ class SupplyController extends Controller
             $url = $banner->click_url;
         }
 
-        $qString = http_build_query($request->query->all());
-        if ($qString) {
-            $qPos = strpos($url, '?');
+        $url = $this->addQueryStringToUrl($request, $url);
 
-            if (false === $qPos) {
-                $url .= '?'.$qString;
-            } elseif ($qPos == strlen($url) - 1) {
-                $url .= $qString;
-            } else {
-                $url .= '&'.$qString;
-            }
-        }
-
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $tid = $request->cookies->get('tid');
-        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = $context['page']['zone'];
+        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
 
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
@@ -199,9 +187,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -212,7 +198,7 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_CLICK
@@ -223,37 +209,55 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
+    private function getRedirectionUrlFromQuery(Request $request): string
     {
         if ($request->query->get('r')) {
             $url = Utils::urlSafeBase64Decode($request->query->get('r'));
             $request->query->remove('r');
+
+            return $url;
         }
 
+        return '';
+    }
+
+    private function addQueryStringToUrl(Request $request, string $url): string
+    {
         $qString = http_build_query($request->query->all());
         if ($qString) {
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
                 $url .= '?'.$qString;
-            } elseif ($qPos == strlen($url) - 1) {
+            } elseif ($qPos === strlen($url) - 1) {
                 $url .= $qString;
             } else {
                 $url .= '&'.$qString;
             }
         }
 
-        $logIp = bin2hex(inet_pton($request->getClientIp()));
+        return $url;
+    }
+
+    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
+    {
+        $this->validateEventRequest($request);
+
+        $url = $this->getRedirectionUrlFromQuery($request);
+        if ($url) {
+            $url = $this->addQueryStringToUrl($request, $url);
+        }
+
+        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        $trackingId = Utils::getRawTrackingId($tid) ?: $logIp;
+        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = $context['page']['zone'];
+        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
@@ -264,9 +268,7 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        ['site' => $site, 'device' => $device] = Utils::getImpressionContext($request);
-        $userContext = $contextProvider->getUserContext(new ImpressionContext($site, $device, ['uid' => $tid]));
-        $context = (new ImpressionContext($site, $device, $userContext->toAdSelectPartialArray()))->eventContext();
+        $context = Utils::getFullContext($request, $contextProvider);
 
         NetworkEventLog::create(
             $caseId,
@@ -277,13 +279,23 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $logIp,
+            $clientIpAddress,
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_VIEW
         );
 
         return $response;
+    }
+
+    private function validateEventRequest(Request $request): void
+    {
+        if (!$request->query->has('r')
+            || !$request->query->has('ctx')
+            || !$request->query->has('cid')
+        ) {
+            throw new BadRequestHttpException('Invalid parameters.');
+        }
     }
 
     /**
@@ -309,15 +321,54 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.gif',
-            config('app.aduser_external_location'),
+            '%s/register/%s/%s/%s.htm',
+            config('app.aduser_base_url'),
             urlencode(config('app.adserver_id')),
             $trackingId,
             $impressionId
         );
 
-        $response->headers->set('Location', ForceUrlProtocol::change($adUserUrl));
+        $response->headers->set('Location', SecureUrl::change($adUserUrl));
 
         return $response;
+    }
+
+    public function why(Request $request): View
+    {
+        $bannerId = $request->query->get('bid');
+
+        $banner = NetworkBanner::fetchByPublicId($bannerId);
+        $campaign = $banner->campaign()->first();
+        $networkHost = NetworkHost::fetchByHost($campaign->source_host);
+
+        $info = $networkHost->info ?? null;
+
+        $data = [
+            'url' => $banner->serve_url,
+            'supplyName' => config('app.adserver_info_name'),
+            'supplyTermsUrl' => config('app.terms_url'),
+            'supplyPrivacyUrl' => config('app.privacy_url'),
+            'supplyPanelUrl' => config('app.adpanel_url'),
+            'demand' => false,
+            'bannerType' => $banner->type,
+        ];
+
+        if ($info) {
+            $data = array_merge(
+                $data,
+                [
+                    'demand' => true,
+                    'demandName' => $info->getName(),
+                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
+                    'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
+                    'demandPanelUrl' => $info->getPanelUrl(),
+                ]
+            );
+        }
+
+        return view(
+            'supply/why',
+            $data
+        );
     }
 }

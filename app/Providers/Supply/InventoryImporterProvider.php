@@ -26,6 +26,7 @@ use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Adshares\Supply\Application\Service\MarkedCampaignsAsDeleted;
+use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Infrastructure\Service\SodiumCompatClassifyVerifier;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -35,18 +36,23 @@ class InventoryImporterProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(
+            CampaignRepository::class,
+            function () {
+                return new NetworkCampaignRepository();
+            }
+        );
+
+        $this->app->bind(
             InventoryImporter::class,
             function (Application $app) {
-                $campaignRepository = new NetworkCampaignRepository();
-                $markedCampaignsAsDeactivatedService = new MarkedCampaignsAsDeleted($campaignRepository);
-                $classifyPublicKey = config('app.classify_publisher_public_key');
+                $publicKey = config('app.classify_public_key');
 
                 return new InventoryImporter(
-                    $markedCampaignsAsDeactivatedService,
-                    $campaignRepository,
+                    new MarkedCampaignsAsDeleted($app->make(CampaignRepository::class)),
+                    $app->make(CampaignRepository::class),
                     $app->make(DemandClient::class),
                     $app->make(BannerClassifier::class),
-                    new SodiumCompatClassifyVerifier($classifyPublicKey),
+                    new SodiumCompatClassifyVerifier($publicKey),
                     new EloquentTransactionManager()
                 );
             }
