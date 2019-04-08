@@ -27,12 +27,14 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Demand\Application\Service\AdPay;
-use DateTime;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 
 class AdPayEventExportCommand extends Command
 {
     use LineFormatterTrait;
+
+    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
     protected $signature = 'ops:adpay:event:export';
 
@@ -40,28 +42,52 @@ class AdPayEventExportCommand extends Command
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        $this->info('Start command '.$this->signature);
+        $timeStart = microtime(true);
+        $this->info('[AdPayEventExport] Start command '.$this->signature);
 
-        $dateFrom = Config::fetchDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME);
-        $dateNow = new DateTime();
+        $eventIdFirst = Config::fetchAdPayLastExportedEventId() + 1;
 
-        $createdEvents = EventLog::where('created_at', '>=', $dateFrom)->get();
-        $this->info('Found '.count($createdEvents).' events to export.');
-        if (count($createdEvents) > 0) {
-            foreach ($createdEvents as $event) {
-                /** @var $event EventLog */
-                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
-                $event->human_score = $userContext['human_score'];
-                $event->our_userdata = $userContext['keywords'];
-                $event->save();
+        do {
+            $eventsToExport = $this->fetchEventsToExport($eventIdFirst);
+
+            $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
+            if (count($eventsToExport) > 0) {
+                $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+
+                $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
+                $adPay->addEvents($events);
+
+                $eventIdLastExported = $eventsToExport->last()->id;
+                Config::updateAdPayLastExportedEventId($eventIdLastExported);
+                $eventIdFirst = $eventIdLastExported + 1;
+            }
+        } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
+
+        $this->info('[AdPayEventExport] Finish command '.$this->signature);
+        $executionTime = microtime(true) - $timeStart;
+        $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
+    }
+
+    private function fetchEventsToExport(int $eventIdFirst): Collection
+    {
+        return EventLog::where('id', '>=', $eventIdFirst)
+            ->orderBy('id')
+            ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
+            ->get();
+    }
+
+    private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
+    {
+        foreach ($eventsToExport as $event) {
+            if (null !== $event->human_score && null !== $event->our_userdata) {
+                continue;
             }
 
-            $events = DemandEventMapper::mapEventCollectionToEventArray($createdEvents);
-            $adPay->addEvents($events);
+            /** @var $event EventLog */
+            $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
+            $event->human_score = $userContext['human_score'];
+            $event->our_userdata = $userContext['keywords'];
+            $event->save();
         }
-
-        Config::updateDateTimeByKey(Config::ADPAY_EVENT_EXPORT_TIME, $dateNow);
-
-        $this->info('Finish command '.$this->signature);
     }
 }
