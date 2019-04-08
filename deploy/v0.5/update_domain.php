@@ -26,23 +26,55 @@ $databaseName = getenv('DB_DATABASE');
 $databaseUsername = getenv('DB_USERNAME');
 $databasePassword = getenv('DB_PASSWORD');
 
+
+
+$updateSqlNetworkEventLogs = 'update network_event_logs nel 
+    SET domain = (
+    select SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(landing_url, \'/\', 3), \'://\', -1), \'/\', 1), \'?\', 1)
+    from network_campaigns nc
+             join network_banners nb on nc.id = nb.network_campaign_id
+    where nb.uuid = nel.banner_id
+)
+where nel.domain is null;
+';
+
+
 $rows = null;
-$querySql =
+$querySqlEventLogs =
     'SELECT id, our_context, their_context, domain from event_logs 
     WHERE event_type in (\'click\', \'view\') AND domain IS NULL LIMIT %d OFFSET %d';
 
-$updateSql = 'UPDATE event_logs SET domain=? WHERE id=?';
+$updateSqlEventLogs = 'UPDATE event_logs SET domain=? WHERE id=?';
 $dsn = sprintf('mysql:host=%s;dbname=%s', $databaseHost, $databaseName);
 
-$dbh = new PDO($dsn, $databaseUsername, $databasePassword);
+try {
+    $dbh = new PDO($dsn, $databaseUsername, $databasePassword);
+} catch (PDOException $exception) {
+    print($exception->getMessage()."\n");
+    exit;
+}
+
+
+
+print("Updating `network_event_logs`\n");
+$dbh->prepare($updateSqlNetworkEventLogs)->execute();
+print("`network_event_logs` has been updated\n\n");
+
+print("Updating `event_logs`\n");
 $i = 1;
 do {
     $dbh->beginTransaction();
     try {
-        $sth = $dbh->query(sprintf($querySql, $limit, 0));
+        $sth = $dbh->query(sprintf($querySqlEventLogs, $limit, 0));
         $rows = $sth->fetchAll();
 
-        print("LIMIT: ".$limit."\t PACK: ".$i++."\n");
+        if (count($rows) === 0) {
+            print("Nothing to do.\n");
+            break;
+        }
+
+        print("LIMIT: $limit \t PACK: $i \n");
+        $i++;
 
         foreach ($rows as $row) {
             $id = $row['id'];
@@ -66,7 +98,7 @@ do {
                 }
             }
 
-            $dbh->prepare($updateSql)->execute([$domain, $id]);
+            $dbh->prepare($updateSqlEventLogs)->execute([$domain, $id]);
         }
         $dbh->commit();
     } catch (Exception $exception) {
@@ -74,3 +106,4 @@ do {
         print($exception->getMessage());
     }
 } while (count($rows) === $limit);
+print("`event_logs` has been updated\n\n");
