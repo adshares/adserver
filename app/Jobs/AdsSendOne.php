@@ -93,7 +93,7 @@ class AdsSendOne implements ShouldQueue
             return;
         }
 
-        if (UserLedgerEntry::getBalanceByUserId($this->userLedger->user_id) < $this->amount) {
+        if (UserLedgerEntry::getWalletBalanceByUserId($this->userLedger->user_id) < 0) {
             $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
             $this->userLedger->save();
 

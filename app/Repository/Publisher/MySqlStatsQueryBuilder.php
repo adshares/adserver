@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Publisher;
 
-use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
@@ -47,6 +47,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
+        $this->withoutRemovedSites();
 
         if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
             $this->selectBaseStatsColumns();
@@ -73,10 +74,10 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::RPC_TYPE:
-                $this->column('COALESCE(AVG(e.paid_amount), 0) AS c');
+                $this->column('COALESCE(ROUND(AVG(e.paid_amount)), 0) AS c');
                 break;
             case StatsRepository::RPM_TYPE:
-                $this->column('COALESCE(AVG(e.paid_amount), 0)*1000 AS c');
+                $this->column('COALESCE(ROUND(AVG(e.paid_amount)), 0)*1000 AS c');
                 break;
             case StatsRepository::SUM_TYPE:
                 $this->column('COALESCE(SUM(e.paid_amount), 0) AS c');
@@ -93,14 +94,22 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::VIEW_TYPE:
             case StatsRepository::RPM_TYPE:
             case StatsRepository::CTR_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
-            case StatsRepository::RPC_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
+            case StatsRepository::RPC_TYPE:
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_CLICK));
+                break;
         }
+    }
+
+    private function withoutRemovedSites(): void
+    {
+        $this->join('sites s', 's.uuid = e.site_id');
+        $this->where('s.deleted_at is null');
     }
 
     private function selectBaseStatsColumns(): void
@@ -112,8 +121,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                     .'WHEN (e.event_type <> \'view\') THEN NULL '
                     .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
         );
-        $this->column('IFNULL(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL)), 0) AS rpc');
-        $this->column('IFNULL(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL)), 0)*1000 AS rpm');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.paid_amount, NULL))), 0) AS rpc');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.paid_amount, NULL))), 0)*1000 AS rpm');
         $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.paid_amount, 0)) AS revenue');
     }
 

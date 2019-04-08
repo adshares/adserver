@@ -193,6 +193,14 @@ class EventLog extends Model
         $log->their_userdata = $userData;
         $log->event_type = $type;
 
+        if ($type === self::TYPE_CLICK) {
+            $viewEvent = self::where('case_id', hex2bin($caseId))
+                ->where('event_type', self::TYPE_VIEW)
+                ->first();
+
+            $log->domain = $viewEvent->domain ?? null;
+        }
+
         $log->save();
     }
 
