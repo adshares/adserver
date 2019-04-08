@@ -25,18 +25,37 @@ namespace Adshares\Adserver\Client;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdClassify;
-use function base_path;
-use function file_get_contents;
 use function GuzzleHttp\json_decode;
 
 final class DummyAdClassifyClient implements AdClassify
 {
     public function fetchFilteringOptions(): Taxonomy
     {
-        $path = base_path('docs/schemas/taxonomy/v0.1/filtering-example.json');
-        $var = file_get_contents($path);
-        $taxonomy = json_decode($var, true);
+        return TaxonomyFactory::fromArray(json_decode($this->getData(), true));
+    }
 
-        return TaxonomyFactory::fromArray($taxonomy);
+    private function getData(): string
+    {
+        return <<<JSON
+{
+  "data": [
+    {
+      "type": "dict",
+      "label": "Content Type",
+      "key": "type",
+      "list": [
+        {
+          "label": "HTML",
+          "value": "html"
+        },
+        {
+          "label": "Image",
+          "value": "image"
+        }
+      ]
+    }
+  ]
+}
+JSON;
     }
 }

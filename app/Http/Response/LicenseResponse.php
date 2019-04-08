@@ -42,7 +42,6 @@ class LicenseResponse implements Arrayable
         $licenseArray['detailsUrl'] = sprintf('%s/license/%s', config('app.license_url'), $licenseArray['id']);
 
         unset($licenseArray['paymentAddress']);
-        unset($licenseArray['paymentMessage']);
         unset($licenseArray['fixedFee']);
         unset($licenseArray['demandFee']);
         unset($licenseArray['supplyFee']);

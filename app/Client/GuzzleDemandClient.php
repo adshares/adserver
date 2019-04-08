@@ -24,8 +24,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -33,15 +33,15 @@ use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use Illuminate\Support\Facades\Log;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
-use function in_array;
 use function GuzzleHttp\json_decode;
+use function json_encode;
 
 final class GuzzleDemandClient implements DemandClient
 {
@@ -205,7 +205,6 @@ final class GuzzleDemandClient implements DemandClient
     private function processData(array $data, string $sourceHost): array
     {
         $data['demand_id'] = Uuid::fromString($data['id']);
-        $data['publisher_id'] = Uuid::fromString($data['publisher_id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
         $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
 
@@ -228,7 +227,7 @@ final class GuzzleDemandClient implements DemandClient
         return $data;
     }
 
-    public function validateFetchInfoResponse(array $data): bool
+    public function validateFetchInfoResponse(array $data): void
     {
         $expectedKeys = [
             'name',
@@ -240,7 +239,9 @@ final class GuzzleDemandClient implements DemandClient
         ];
 
         foreach ($expectedKeys as $key) {
-            if (!in_array($key, $data, true)) {
+            if (!isset($data[$key])) {
+                Log::debug('Invalid info.json:'.json_encode($data));
+
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
         }

@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
+use Adshares\Adserver\Models\UserLedgerEntry;
 
 class WalletFundsChecker
 {
@@ -42,14 +43,14 @@ class WalletFundsChecker
         $this->adsClient = $adsClient;
     }
 
-    public function calculateTransferValue(int $waitingPaymentsAmount): int
+    public function calculateTransferValue(int $waitingPaymentsAmount, int $allUsersBalance): int
     {
         $waitingPaymentsAmount = (int)abs($waitingPaymentsAmount);
         $limit = $this->calculateLimitValue();
         $adsOperatorBalance = $this->fetchOperatorBalance();
         $actualOperatorBalance = $adsOperatorBalance - $waitingPaymentsAmount;
 
-        if ($actualOperatorBalance < $this->minAmount) {
+        if ($actualOperatorBalance < min($this->minAmount, $allUsersBalance)) {
             return $limit - $actualOperatorBalance;
         }
 

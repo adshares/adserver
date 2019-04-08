@@ -60,6 +60,7 @@ use function hex2bin;
  * @property int payment_id
  * @property int reason
  * @property int is_view_clicked
+ * @property string domain
  * @mixin Builder
  */
 class EventLog extends Model
@@ -104,6 +105,7 @@ class EventLog extends Model
         'payment_id',
         'reason',
         'is_view_clicked',
+        'domain',
     ];
 
     /**
@@ -190,6 +192,15 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
+
+        if ($type === self::TYPE_CLICK) {
+            $viewEvent = self::where('case_id', hex2bin($caseId))
+                ->where('event_type', self::TYPE_VIEW)
+                ->first();
+
+            $log->domain = $viewEvent->domain ?? null;
+        }
+
         $log->save();
     }
 

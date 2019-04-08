@@ -26,7 +26,7 @@ rm -rf ${INSTALLATION_PATH}/node_modules
 
 mkdir -pm 777 ${ADSHARES_WORKINGDIR}
 mkdir -pm 777 ${INSTALLATION_PATH}/storage
-mkdir -pm 777 ${EXTERNAL_STORAGE_PATH:-/opt/adshares/adserver-storage}
+mkdir -pm 777 ${INSTALLATION_PATH}/storage/framework/views
 
 chown -R ${INSTALLATION_USER} ${INSTALLATION_PATH}
 cd ${INSTALLATION_PATH}
@@ -42,7 +42,6 @@ if [[ ${DO_RESET} == "yes" ]]
 then
     supervisorctl stop adselect${DEPLOYMENT_SUFFIX}
     supervisorctl stop adpay${DEPLOYMENT_SUFFIX}
-#    supervisorctl stop aduser${DEPLOYMENT_SUFFIX}
 
     if [[ "${BUILD_BRANCH:-master}" == "master" ]]
     then
@@ -54,11 +53,9 @@ then
 
     mongo --eval 'db.dropDatabase()' adselect${DEPLOYMENT_SUFFIX}
     mongo --eval 'db.dropDatabase()' adpay${DEPLOYMENT_SUFFIX}
-#    mongo --eval 'db.dropDatabase()' aduser${DEPLOYMENT_SUFFIX}
 
     supervisorctl start adselect${DEPLOYMENT_SUFFIX}
     supervisorctl start adpay${DEPLOYMENT_SUFFIX}
-#    supervisorctl start aduser${DEPLOYMENT_SUFFIX}
 
 elif [[ ${DO_RESET} == "both" ]]
 then

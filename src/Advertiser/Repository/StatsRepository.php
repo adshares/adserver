@@ -106,4 +106,11 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total;
+
+    public function fetchStatsToReport(
+        string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): DataCollection;
 }

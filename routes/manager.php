@@ -81,6 +81,8 @@ Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
 Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
     ->name('wallet.confirm-withdrawal');
+Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
+    ->name('wallet.cancel-withdrawal');
 
 
 // statistics
@@ -90,6 +92,9 @@ Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::c
 Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
+
+Route::get('sites/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
+Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
 
 Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
 Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);

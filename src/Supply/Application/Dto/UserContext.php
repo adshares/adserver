@@ -44,12 +44,12 @@ final class UserContext
 
     public static function fromAdUserArray(array $context, string $userId): self
     {
-        foreach ($context['keywords'] as $key => $value) {
+        foreach ($context['keywords'] ?? [] as $key => $value) {
             $context['keywords'][$key] = is_array($value) ? $value : [$value];
         }
 
         return new self(
-            $context['keywords'],
+            $context['keywords'] ?? [],
             (float)$context['human_score'],
             $userId
         );

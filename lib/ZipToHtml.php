@@ -50,12 +50,27 @@ class ZipToHtml
     
     }
     
-
     var refs = document.querySelectorAll('[data-asset-src]');
     for(var i=0;i<refs.length;i++) {
         var org = document.querySelector('[data-asset-org="' + refs[i].getAttribute('data-asset-src') + '"]');
         if(org) {
             refs[i].setAttribute('src', org.getAttribute('src'));
+        }
+    }
+    
+    var refs = document.querySelectorAll('img[srcset], source[srcset]');
+    for(var i=0;i<refs.length;i++) {
+        var any_found = false;
+        var newsrcset = refs[i].getAttribute('srcset').replace(/asset-src:([^,\s]+)/g, function(match, href) {
+            any_found = true;
+            var uri = 'null'; var org = document.querySelector('[data-asset-org="' + href + '"]');
+            if(org) {
+                uri = org.getAttribute('src') || org.getAttribute('data-src');
+            } 
+            return uri;
+        })
+        if(any_found) {
+            refs[i].setAttribute('srcset', newsrcset);
         }
     }
 })();
@@ -87,7 +102,9 @@ MYSCRIPT;
         if ($zipped_size >= self::MAX_ZIPPED_SIZE) {
             throw new \RuntimeException(
                 sprintf(
-                    "Zip file max size exceeded (%d KB > %d KB)  ", $zipped_size / 1024, self::MAX_ZIPPED_SIZE / 1024
+                    "Zip file max size exceeded (%d KB > %d KB)  ",
+                    $zipped_size / 1024,
+                    self::MAX_ZIPPED_SIZE / 1024
                 )
             );
         }
@@ -104,17 +121,20 @@ MYSCRIPT;
                 if ($unzipped_size >= self::MAX_UNZIPPED_SIZE) {
                     throw new \RuntimeException(
                         sprintf(
-                            "Zip file max uncompressed size exceeded (%d KB > %d KB)", $unzipped_size / 1024,
+                            "Zip file max uncompressed size exceeded (%d KB > %d KB)",
+                            $unzipped_size / 1024,
                             self::MAX_UNZIPPED_SIZE / 1024
                         )
                     );
                 }
 
                 $name = \zip_entry_name($zip_entry);
+                if (preg_match("#(/|^)(__|\.)#", $name)) {
+                    continue;
+                }
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
                 if ($size > 0 && \zip_entry_open($zip, $zip_entry, "r")) {
-
                     if ($ext === 'html' || $ext === 'htm') {
                         if ($this->html_file) {
                             throw new \RuntimeException("Zip file must contain only one html file");
@@ -133,7 +153,6 @@ MYSCRIPT;
 
                     \zip_entry_close($zip_entry);
                 }
-
             }
 
             \zip_close($zip);
@@ -169,7 +188,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
@@ -195,7 +216,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
@@ -220,7 +243,9 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(sprintf("Only local assets and data uri allowed (found %s)", $href));
+                    throw new \RuntimeException(
+                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                    );
                 }
             }
 
@@ -233,11 +258,40 @@ MYSCRIPT;
                     $this->assets[$file]['used'] = true;
                     $tag->setAttribute('data-asset-org', $file);
                     $tag->setAttribute('src', $this->getAssetDataUri($this->assets[$file]));
-
                 }
             } else {
                 $tag->removeAttribute('src');
             }
+        }
+
+        $media = $xpath->query("//img[@srcset]|//source[@srcset]");
+        foreach ($media as $tag) {
+            $newsrcset = preg_replace_callback('/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/', function ($match) {
+                $href = $match[1];
+                $scheme = parse_url($href, PHP_URL_SCHEME);
+                if ($scheme) {
+                    if ($scheme === 'data') {
+                        return $href . $match[2] . ($match[3] ?? '');
+                    } else {
+                        throw new \RuntimeException(
+                            sprintf("Only local assets and data uri allowed (found %s)", $href)
+                        );
+                    }
+                }
+                $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+                if (isset($this->assets[$file])) {
+                    if (isset($this->assets[$file]['used'])) {
+                        return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
+                    } else {
+                        $this->assets[$file]['used'] = true;
+                        return $this->getAssetDataUri($this->assets[$file]) . $match[2] . ($match[3] ?? '');
+                    }
+                } else {
+                    return '';
+                }
+            }, $tag->getAttribute('srcset'));
+
+            $tag->setAttribute('srcset', $newsrcset);
         }
 
         $media = $xpath->query("//video|//audio");
@@ -302,20 +356,22 @@ MYSCRIPT;
         $uri_chars = preg_quote('-._~:/?#[]@!$&\'()*+,;=', '#');
 
         return preg_replace_callback(
-            '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im', function ($match) use ($basedir) {
-            $scheme = parse_url($match[1], PHP_URL_SCHEME);
-            if ($scheme) {
-                if ($scheme === 'data') {
-                    return $match[0];
-                } else {
-                    throw new \RuntimeException(
-                        sprintf("Only local assets and data uri allowed (found %s)", $match[1])
-                    );
+            '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im',
+            function ($match) use ($basedir) {
+                $scheme = parse_url($match[1], PHP_URL_SCHEME);
+                if ($scheme) {
+                    if ($scheme === 'data') {
+                        return $match[0];
+                    } else {
+                        throw new \RuntimeException(
+                            sprintf("Only local assets and data uri allowed (found %s)", $match[1])
+                        );
+                    }
                 }
-            }
 
-            return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$match[1]).'}*/';
-        }, $css_text
+                return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$match[1]).'}*/';
+            },
+            $css_text
         );
     }
 

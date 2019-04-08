@@ -139,24 +139,16 @@ class Config extends Model
         $config->save();
     }
 
-    public static function getFee(string $feeType): ?float
+    public static function getFee(string $feeType): float
     {
-        $config = self::where('key', $feeType)->first();
-
-        if ($config === null) {
-            return null;
-        }
+        $config = self::where('key', $feeType)->firstOrFail();
 
         return (float)$config->value;
     }
 
-    public static function getLicenceAccount(): ?string
+    public static function getLicenceAccount(): string
     {
-        $config = self::where('key', self::LICENCE_ACCOUNT)->first();
-
-        if ($config === null) {
-            return null;
-        }
+        $config = self::where('key', self::LICENCE_ACCOUNT)->firstOrFail();
 
         return (string)$config->value;
     }

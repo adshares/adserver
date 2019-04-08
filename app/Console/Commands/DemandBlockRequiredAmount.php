@@ -44,11 +44,12 @@ class DemandBlockRequiredAmount extends Command
         UserLedgerEntry::pushBlockedToProcessing();
 
         $blockade = Campaign::fetchRequiredBudgetsPerUser();
+        $this->info('Attempt to create '.count($blockade).' blockades.');
         $this->blockAmountOrSuspendCampaigns($blockade);
 
         DB::commit();
 
-        Log::info('Created '.count($blockade).' new blocking Ledger entries.');
+        $this->info('Created '.count($blockade).' new blocking Ledger entries.');
     }
 
     private function blockAmountOrSuspendCampaigns(Collection $blockade): void

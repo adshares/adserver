@@ -88,16 +88,8 @@ class CreativeSha1
         $old = libxml_use_internal_errors(true);
         libxml_clear_errors();
         $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-        $errors = libxml_get_errors();
-        libxml_use_internal_errors($old);
 
-        $re = '#Tag (article|aside|audio|bdi|canvas|data|datalist|figcaption|figure|footer|header|keygen|main|mark'
-            . '|meter|nav|output|progress|rb|rp|rt|rtc|ruby|section|source|template|time|track|video|wbr) invalid#';
-        foreach ($errors as $error) {
-            if (!preg_match($re, $error->message)) {
-                trigger_error(__METHOD__ . ": $error->message on line $error->line.", E_USER_WARNING);
-            }
-        }
+        libxml_use_internal_errors($old);
 
         return $doc;
     }

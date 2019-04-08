@@ -28,20 +28,23 @@ use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
-use Adshares\Common\Infrastructure\Service\LicenseFeeReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 
 class PaymentDetailsProcessor
 {
     /** @var string */
     private $adServerAddress;
-    /** @var LicenseFeeReader */
-    private $licenseFeeReader;
 
-    public function __construct(LicenseFeeReader $licenseFeeReader)
+    /** @var LicenseReader */
+    private $licenseReader;
+
+    public function __construct(LicenseReader $licenseReader)
     {
         $this->adServerAddress = (string)config('app.adshares_address');
-        $this->licenseFeeReader = $licenseFeeReader;
+        $this->licenseReader = $licenseReader;
     }
 
     /**
@@ -55,14 +58,16 @@ class PaymentDetailsProcessor
     {
         $amountReceived = $this->getPaymentAmount($adsPaymentId);
 
-        $licenceAccount = Config::getLicenceAccount();
-        if ($licenceAccount === null) {
-            throw new MissingInitialConfigurationException('No config entry for licence account.');
+        try {
+            $licenseAccount = $this->licenseReader->getAddress()->toString();
+        } catch (ModelNotFoundException $modelNotFoundException) {
+            throw new MissingInitialConfigurationException('No config entry for license account.');
         }
 
-        $licenceFee = $this->licenseFeeReader->getFee(Config::LICENCE_RX_FEE);
-        if ($licenceFee === null) {
-            throw new MissingInitialConfigurationException('No config entry for licence fee.');
+        try {
+            $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
+        } catch (ModelNotFoundException $modelNotFoundException) {
+            throw new MissingInitialConfigurationException('No config entry for license fee.');
         }
 
         $operatorFee = Config::getFee(Config::OPERATOR_RX_FEE);
@@ -72,12 +77,13 @@ class PaymentDetailsProcessor
 
         $paymentDetails = $this->getPaymentDetailsWhichExistInDb($paymentDetails);
         if (count($paymentDetails) === 0) {
-            // TODO log that none of received events exist in DB
+            Log::warning('[PaymentDetailsProcessor] None of received events exist in DB');
+
             return;
         }
 
         $totalWeight = $this->getPaymentDetailsTotalWeight($paymentDetails);
-        $feeCalculator = new PaymentDetailsFeeCalculator($amountReceived, $totalWeight, $licenceFee, $operatorFee);
+        $feeCalculator = new PaymentDetailsFeeCalculator($amountReceived, $totalWeight, $licenseFee, $operatorFee);
         foreach ($paymentDetails as $key => $paymentDetail) {
             $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
             $paymentDetail['event_value'] = $calculatedFees['event_value'];
@@ -114,7 +120,7 @@ class PaymentDetailsProcessor
             }
 
             NetworkPayment::registerNetworkPayment(
-                $licenceAccount,
+                $licenseAccount,
                 $this->adServerAddress,
                 $totalLicenceFee,
                 $adsPaymentId
@@ -126,7 +132,6 @@ class PaymentDetailsProcessor
 
             throw $e;
         }
-
         // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
     }
 
@@ -146,7 +151,12 @@ class PaymentDetailsProcessor
                 continue;
             }
 
-            // TODO log null $event - it means that Demand Server sent event which cannot be found in Supply DB
+            Log::warning(
+                sprintf(
+                    '[PaymentDetailsProcessor] Demand Server sent event_id (%s) which cannot be found in Supply DB',
+                    $eventId
+                )
+            );
 
             unset($paymentDetails[$key]);
         }

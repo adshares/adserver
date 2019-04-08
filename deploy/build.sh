@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-source ${1}/_functions.sh --vendor
-[[ -z ${2:-""} ]] || cd $2
+# Usage: build.sh [<location-of-functions-file-to-include> [<work-dir>]]
+[[ -z ${1:-""} ]] && set -eu || source ${1}/_functions.sh --vendor
+cd ${2:-"."}
 
 export APP_VERSION=$(versionFromGit)
 
@@ -10,15 +11,18 @@ function artisanCommand {
 
 mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
+mkdir -pm 777 storage/framework/views
 
 composer install --no-dev
 
 yarn install
 yarn run prod
 
+rm -f bootstrap/cache/config.php
+artisanCommand config:cache
+
 artisanCommand key:generate
 artisanCommand storage:link
-artisanCommand config:cache
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then

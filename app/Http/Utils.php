@@ -20,12 +20,12 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use DateTime;
-use Doctrine\Common\Cache\FilesystemCache;
+use Illuminate\Http\Request;
 use RuntimeException;
-use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\HttpFoundation\Cookie;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use function is_string;
 
@@ -34,26 +34,29 @@ use function is_string;
  */
 class Utils
 {
-    // not yet reviewed
-    // TODO: remove $container
+    private const VALUE_GLUE = "\t";
 
-    const VALUE_GLUE = "\t";
+    private const PROP_GLUE = "\r";
 
-    const PROP_GLUE = "\r";
+    private const ZONE_GLUE = "\n";
 
-    const ZONE_GLUE = "\n";
-
-    const VALUE_MIN = "\x00";
-
-    const VALUE_MAX = "\xFF";
-
-    const NUMERIC_PAD_FORMAT = "%'08.2f";
+    private const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public const ENV_DEV = 'local';
 
     public const ENV_PROD = 'production';
 
-    public static function getImpressionContext(Request $request, $contextStr = null)
+    public static function getPartialImpressionContext(
+        Request $request,
+        $contextStr = null,
+        $tid = null
+    ): ImpressionContext {
+        $context = self::getImpressionContextArray($request, $contextStr);
+
+        return new ImpressionContext($context['site'], $context['device'], $tid ? ['uid' => $tid] : []);
+    }
+
+    public static function getImpressionContextArray(Request $request, $contextStr = null): array
     {
         $contextStr = $contextStr ?: $request->query->get('ctx');
         if ($contextStr) {
@@ -77,13 +80,13 @@ class Utils
         ];
     }
 
-    public static function decodeZones($zonesStr)
+    public static function decodeZones($zonesStr): array
     {
         $zonesStr = self::urlSafeBase64Decode($zonesStr);
 
         $zones = explode(self::ZONE_GLUE, $zonesStr);
         $fields = explode(self::VALUE_GLUE, array_shift($zones));
-        //         return $fields;
+
         $data = [];
 
         foreach ($zones as $zoneStr) {
@@ -123,7 +126,7 @@ class Utils
         );
     }
 
-    public static function getSiteContext(Request $request, $context)
+    public static function getSiteContext(Request $request, $context): array
     {
         $site = [];
 
@@ -150,106 +153,13 @@ class Utils
         return $site;
     }
 
-    public static function getDeviceContext(Request $request, $context)
-    {
-        $device = [];
-        if ($context && isset($context['page'])) {
-            $page = $context['page'];
-
-            $device['w'] = $page['width'] ?? null;
-            $device['h'] = $page['height'] ?? null;
-        }
-
-        $logger = LoggerHelper::createDefaultLogger(new NullOutput());
-
-        $fileCache = new FilesystemCache(storage_path('framework/cache/browscap'));
-        $cache = new SimpleCacheAdapter($fileCache);
-
-        $browscap = new \BrowscapPHP\Browscap($cache, $logger);
-
-        $browser = $browscap->getBrowser();
-
-        $locale = locale_accept_from_http($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'en');
-        if ($locale) {
-            $device['language'] = $locale;
-        }
-
-        $device['browser'] = $browser->browser;
-        $device['browserv'] = $browser->version > 0 ? $browser->version : null;
-
-        $device['input'] = $browser->device_pointing_method ?? null;
-
-        $device['os'] = $browser->platform;
-
-        if (is_numeric($browser->platform_version)) {
-            $device['osv'] = $browser->platform_version;
-        } elseif (preg_match('/(.*?)([0-9\.]+)/', $browser->platform, $match)) {
-            $device['os'] = $match[1];
-            $device['osv'] = $match[2];
-        } else {
-            $device['osv'] = $browser->platform;
-        }
-
-        if (true === $browser->ismobiledevice) {
-            $device['type'] = 'mobile';
-        } elseif (true === $browser->istablet) {
-            $device['type'] = 'tablet';
-        } elseif (true === $browser->issyndicationreader) {
-            $device['type'] = 'syndicationreader';
-        } elseif (true === $browser->crawler) {
-            $device['type'] = 'crawler';
-        } elseif (true === $browser->isfake) {
-            $device['type'] = 'fake';
-        } else {
-            $device['type'] = 'desktop';
-        }
-
-        foreach ($device as $key => &$value) {
-            if ('false' === $value || 'unknown' === $value || null === $value || false === $value) {
-                unset($device[$key]);
-            }
-            if (is_string($value)) {
-                $value = strtolower($value);
-            }
-        }
-
-        $geo = self::getGeoData('128.65.210.8');
-        if ($geo) {
-            $device['geo'] = $geo;
-        }
-
-        return $device;
-    }
-
-    private static function getGeoData($clientIp)
-    {
-        $geo = [];
-        if (function_exists('geoip_record_by_name')) {
-            @$data = \geoip_record_by_name($clientIp);
-            if ($data) {
-                foreach ($data as $key => $value) {
-                    if ($value) {
-                        $geo[$key] = $value;
-                    }
-                }
-            } else {
-                @$data = \geoip_country_code_by_name($clientIp);
-                if ($data) {
-                    $geo['country_code'] = $data;
-                }
-            }
-        }
-
-        return $geo;
-    }
-
-    public static function addUrlParameter($url, $name, $value)
+    public static function addUrlParameter($url, $name, $value): ?string
     {
         $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');
-        if (false == $qPos) {
+        if (false === $qPos) {
             return $url.'?'.$param;
-        } elseif ($qPos == strlen($url) - 1) {
+        } elseif ($qPos === strlen($url) - 1) {
             return $url.$param;
         } else {
             return $url.'&'.$param;
@@ -469,5 +379,17 @@ class Utils
         }
 
         return $context['page']['zone'];
+    }
+
+    public static function getFullContext(
+        Request $request,
+        AdUser $contextProvider,
+        string $data = null,
+        string $tid = null
+    ): ImpressionContext {
+        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $userContext = $contextProvider->getUserContext($partialImpressionContext);
+
+        return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 }

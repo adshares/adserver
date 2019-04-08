@@ -80,7 +80,6 @@ class LicenseDecoderV1 implements LicenseDecoder
             DateTime::createFromFormat(DateTime::ATOM, $data['endDate']),
             $data['owner'],
             new AccountId($data['paymentAddress']),
-            $data['paymentMessage'],
             new Commission($data['fixedFee']),
             new Commission($data['demandFee']),
             new Commission($data['supplyFee'])
