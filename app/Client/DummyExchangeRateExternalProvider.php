@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use DateTime;
@@ -32,9 +33,7 @@ class DummyExchangeRateExternalProvider implements ExchangeRateExternalProvider
 
     public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
     {
-        // TODO replace with $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime); when PR #556 will be merged
-        $date = clone $dateTime;
-        $date->setTime((int)$date->format("H"), 0, 0);
+        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
 
         return new FetchedExchangeRate($date, self::STABLE_RATE, $currency);
     }
