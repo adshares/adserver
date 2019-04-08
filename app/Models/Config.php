@@ -44,7 +44,7 @@ class Config extends Model
 
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
-    public const ADPAY_EVENT_EXPORT_TIME = 'adpay-event-export';
+    public const ADPAY_LAST_EXPORTED_EVENT_ID = 'adpay-last-exported-event-id';
 
     private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
@@ -184,5 +184,29 @@ class Config extends Model
             $config->value = $value;
             $config->save();
         }
+    }
+
+    public static function fetchAdPayLastExportedEventId(): int
+    {
+        $id = self::where('key', self::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
+        
+        if (!$id) {
+            return 0;
+        }
+        
+        return (int)$id->value;
+    }
+
+    public static function updateAdPayLastExportedEventId(int $id): void
+    {
+        $config = self::where('key', self::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
+
+        if (!$config) {
+            $config = new self();
+            $config->key = self::ADPAY_LAST_EXPORTED_EVENT_ID;
+        }
+
+        $config->value = $id;
+        $config->save();
     }
 }
