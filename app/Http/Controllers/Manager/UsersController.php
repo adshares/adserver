@@ -35,8 +35,11 @@ use Illuminate\Support\Facades\Validator;
 class UsersController extends Controller
 {
     protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
+
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes
+
     protected $email_change_token_time = 60 * 60; // 1 hour
+
     protected $email_new_change_resend_limit = 5 * 60; // 1 minute
 
     /**
@@ -64,6 +67,11 @@ class UsersController extends Controller
 
         return self::json($user->toArray(), Response::HTTP_CREATED)
             ->header('Location', route('app.users.read', ['user_id' => $user->id]));
+    }
+
+    public function browse()
+    {
+        return User::all();
     }
 
     public function edit(Request $request)
