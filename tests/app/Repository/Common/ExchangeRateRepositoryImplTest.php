@@ -48,7 +48,7 @@ final class ExchangeRateRepositoryImplTest extends TestCase
         $dateTime = new DateTime();
         $dateTime->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'));
 
-        $exchangeRate = new FetchedExchangeRate($dateTime, '1.3');
+        $exchangeRate = new FetchedExchangeRate($dateTime, '1.3', 'USD');
         $exchangeRateRepository->storeExchangeRate($exchangeRate);
         $exchangeRateFromRepository = $exchangeRateRepository->fetchExchangeRate(new DateTime());
 
