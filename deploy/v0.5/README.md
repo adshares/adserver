@@ -1,4 +1,4 @@
-To run the migration's script please set the following environment variables:
+To run the migration script please set the following environments' variables:
 - DB_HOST
 - DB_PORT
 - DB_USERNAME
