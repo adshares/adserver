@@ -30,6 +30,7 @@ class ExchangeRate extends Model
         $exchangeRate = new self();
         $exchangeRate->valid_at = $fetchedExchangeRate->getDateTime();
         $exchangeRate->value = $fetchedExchangeRate->getValue();
+        $exchangeRate->currency = $fetchedExchangeRate->getCurrency();
 
         return $exchangeRate;
     }
