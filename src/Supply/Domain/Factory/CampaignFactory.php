@@ -103,7 +103,6 @@ class CampaignFactory
             'budget',
             'max_cpc',
             'max_cpm',
-            'publisher_id',
             'landing_url',
             'date_start',
             'date_end',
