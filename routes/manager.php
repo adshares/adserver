@@ -26,7 +26,6 @@ use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
-use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -57,14 +56,6 @@ Route::get('sites', [SitesController::class, 'list'])->name('app.sites.browse');
 Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.count');
 Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
     ->name('app.sites.change_status');
-
-# only for admin
-Route::get('users', [UsersController::class, 'browse'])->name('app.users.browse');
-//Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
-//Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
-//Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
-//Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
-//Route::delete('users/{user_id}', [UsersController::class, 'delete'])->name('app.users.delete');
 
 # actions
 Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
