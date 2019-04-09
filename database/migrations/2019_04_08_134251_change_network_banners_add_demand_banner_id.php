@@ -34,7 +34,7 @@ class ChangeNetworkBannersAddDemandBannerId extends Migration
         Schema::table(
             'network_banners',
             static function (Blueprint $table) {
-                $table->binary('demand_banner_id', 16)->after('id')->nullable();
+                $table->binary('demand_banner_id', 16)->after('uuid')->nullable();
             }
         );
 
