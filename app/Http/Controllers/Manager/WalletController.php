@@ -114,6 +114,7 @@ class WalletController extends Controller
     private function getAdServerAdsAddress(): AccountId
     {
         try {
+            $var=config();
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());

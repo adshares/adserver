@@ -327,32 +327,36 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history');
 
-        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
-            [
-                'limit' => 10,
-                'offset' => 0,
-                'itemsCount' => 2,
-                'itemsCountAll' => 2,
-                'items' => [
-                    [
-                        'amount' => $amountInClicks,
-                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => '2018-10-24T15:00:49+00:00',
-                        'address' => '0001-00000000-XXXX',
-                        'txid' => '0001:0000000A:0001',
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson(
+                [
+                    'limit' => 10,
+                    'offset' => 0,
+                    'itemsCount' => 2,
+                    'itemsCountAll' => 2,
+                    'items' => [
+                        [
+                            'amount' => $amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => '0001:0000000A:0001',
+                            'id' => 1,
+                        ],
+                        [
+                            'amount' => -$amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => null,
+                            'id' => 2,
+
+                        ],
                     ],
-                    [
-                        'amount' => -$amountInClicks,
-                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => '2018-10-24T15:00:49+00:00',
-                        'address' => '0001-00000000-XXXX',
-                        'txid' => null,
-                    ],
-                ],
-            ]
-        );
+                ]
+            );
     }
 
     private function initUserLedger($userId, $amountInClicks): void
@@ -397,6 +401,7 @@ class WalletControllerTest extends TestCase
                         'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => '0001:0000000A:0001',
+                        'id' => 1,
                     ],
                 ],
             ]
@@ -436,6 +441,7 @@ class WalletControllerTest extends TestCase
                         'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => null,
+                        'id' => 2,
                     ],
                 ],
             ]
