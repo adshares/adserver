@@ -67,9 +67,9 @@ class SupplySendPayments extends Command
 
                     $payment->tx_id = $response->getTx()->getId();
                     $payment->tx_time = $response->getTx()->getTime()->getTimestamp();
-                    $payment->processed = '1';
-                    $payment->save();
                 }
+                $payment->processed = '1';
+                $payment->save();
 
                 DB::commit();
             } catch (CommandException $exception) {
