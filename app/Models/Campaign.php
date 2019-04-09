@@ -274,7 +274,7 @@ class Campaign extends Model
         $userLedgerEntry = UserLedgerEntry::fetchBlockedEntriesByUserId($this->user_id)->first();
         if (null === $userLedgerEntry) {
             if ($status === self::STATUS_ACTIVE) {
-                UserLedgerEntry::block(UserLedgerEntry::TYPE_AD_EXPENSE, $this->user_id, $budgetForCurrentDateTime);
+                UserLedgerEntry::blockAdExpense($this->user_id, $budgetForCurrentDateTime);
             } else {
                 Log::error(
                     sprintf(
