@@ -174,4 +174,9 @@ final class Campaign
     {
         return $this->targetingExcludes;
     }
+
+    public function getSourceHost(): string
+    {
+        return $this->sourceCampaign->getHost();
+    }
 }

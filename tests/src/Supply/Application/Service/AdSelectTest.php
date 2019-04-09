@@ -25,10 +25,10 @@ namespace Adshares\Tests\Supply\Application\Service;
 use Adshares\Adserver\Client\DummyAdSelectClient;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\BannerFinder;
+use Adshares\Supply\Application\Service\AdSelect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class BannerFinderClientTest extends TestCase
+class AdSelectTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -36,12 +36,12 @@ class BannerFinderClientTest extends TestCase
     {
         $this->markTestIncomplete('Create banners for selection');
 
-        $this->app->bind(BannerFinder::class, function () {
+        $this->app->bind(AdSelect::class, function () {
             return new DummyAdSelectClient();
         });
 
-        $finder = $this->app->make(BannerFinder::class);
-        $banners = $finder->findBanners(new ImpressionContext([], [], []));
+        $finder = $this->app->make(AdSelect::class);
+        $banners = $finder->findBanners([], new ImpressionContext([], [], []));
 
         self::assertGreaterThan(0, count($banners));
     }

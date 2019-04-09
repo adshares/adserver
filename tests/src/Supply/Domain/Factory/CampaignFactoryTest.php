@@ -50,6 +50,7 @@ final class CampaignFactoryTest extends TestCase
             ],
             'banners' => [
                 [
+                    'demand_banner_id' => Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -58,6 +59,7 @@ final class CampaignFactoryTest extends TestCase
                     'height' => 90,
                 ],
                 [
+                    'demand_banner_id' => Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -66,6 +68,7 @@ final class CampaignFactoryTest extends TestCase
                     'height' => 90,
                 ],
                 [
+                    'demand_banner_id' => Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',

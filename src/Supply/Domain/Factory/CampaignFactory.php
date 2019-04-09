@@ -34,6 +34,7 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 use function array_key_exists;
+use function sprintf;
 
 class CampaignFactory
 {
@@ -70,16 +71,19 @@ class CampaignFactory
         );
 
         foreach ($arrayBanners as $banner) {
+            self::validateBanner($banner);
+
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
             $size = new Size($banner['width'], $banner['height']);
-            $id = isset($banner['id']) ? Uuid::fromString($banner['id']) : Uuid::v4();
+            $demandBannerId = $banner['demand_banner_id'] ?? $banner['id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
             $classification = $banner['classification'] ?? [];
 
             $banners[] = new Banner(
                 $campaign,
-                $id,
+                $banner['id'] ?? Uuid::v4(),
+                $demandBannerId,
                 $bannerUrl,
                 $banner['type'],
                 $size,
@@ -133,10 +137,35 @@ class CampaignFactory
 
             if (!array_key_exists($value, $data)) {
                 throw new InvalidCampaignArgumentException(sprintf(
-                    '%s field is missing. THe field is required.',
+                    '%s field is missing. The field is required.',
                     $value
                 ));
             }
+        }
+    }
+
+    public static function validateBanner(array $data): void
+    {
+        $requiredFields = [
+            'serve_url',
+            'click_url',
+            'view_url',
+            'width',
+            'height',
+            'type'
+        ];
+
+        foreach ($requiredFields as $requiredField) {
+            if (!array_key_exists($requiredField, $data)) {
+                throw new InvalidCampaignArgumentException(sprintf(
+                    'Banner %s field is missing. The field is required.',
+                    $requiredField
+                ));
+            }
+        }
+
+        if (!array_key_exists('demand_banner_id', $data) && !array_key_exists('id', $data)) {
+            throw new InvalidCampaignArgumentException('Banner id field is missing. The field is required.');
         }
     }
 }

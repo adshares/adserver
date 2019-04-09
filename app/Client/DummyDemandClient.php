@@ -54,6 +54,7 @@ final class DummyDemandClient implements DemandClient
                 ],
                 'banners' => [
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
@@ -62,6 +63,7 @@ final class DummyDemandClient implements DemandClient
                         'height' => 90,
                     ],
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
@@ -70,6 +72,7 @@ final class DummyDemandClient implements DemandClient
                         'height' => 90,
                     ],
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
@@ -106,6 +109,7 @@ final class DummyDemandClient implements DemandClient
                 ],
                 'banners' => [
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
@@ -114,6 +118,7 @@ final class DummyDemandClient implements DemandClient
                         'height' => 90,
                     ],
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
@@ -122,6 +127,7 @@ final class DummyDemandClient implements DemandClient
                         'height' => 90,
                     ],
                     [
+                        'demand_banner_id' => Uuid::v4(),
                         'serve_url' => 'http://localhost:8101/serve/1',
                         'click_url' => 'http://localhost:8101/click/1',
                         'view_url' => 'http://localhost:8101/view/1',
