@@ -90,7 +90,7 @@ class NetworkBanner extends Model
      */
     protected $fillable = [
         'uuid',
-        'demand_campaign_id',
+        'demand_banner_id',
         'network_campaign_id',
         'source_created_at',
         'source_updated_at',

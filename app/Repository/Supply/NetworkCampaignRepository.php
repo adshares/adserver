@@ -72,7 +72,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $uuid = $campaignArray['id'];
         unset($campaignArray['id']);
 
-        $networkCampaign = $this->fetchCampaignByDemandId($campaign);
+        $networkCampaign = $this->fetchCampaignByDemand($campaign);
 
         if (!$networkCampaign) {
             $networkCampaign = new NetworkCampaign();
@@ -95,7 +95,8 @@ class NetworkCampaignRepository implements CampaignRepository
 
             unset($banner['id']);
 
-            $networkBanner = NetworkBanner::where(self::BANNER_UUID_FIELD, hex2bin($domainBanner->getId()))->first();
+            $networkBanner = NetworkBanner::where('demand_banner_id', hex2bin($domainBanner->getDemandBannerId()))
+                ->where('network_campaign_id', $networkCampaign->id)->first();
 
             if (!$networkBanner) {
                 $networkBanner = new NetworkBanner();
@@ -109,9 +110,11 @@ class NetworkCampaignRepository implements CampaignRepository
         $networkCampaign->banners()->saveMany($networkBanners);
     }
 
-    private function fetchCampaignByDemandId(Campaign $campaign): ?NetworkCampaign
+    private function fetchCampaignByDemand(Campaign $campaign): ?NetworkCampaign
     {
-        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))->first();
+        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))
+            ->where('source_host', $campaign->getSourceHost())
+            ->first();
     }
 
     public function fetchActiveCampaigns(): CampaignCollection

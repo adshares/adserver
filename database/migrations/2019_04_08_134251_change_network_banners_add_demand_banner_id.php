@@ -34,15 +34,15 @@ class ChangeNetworkBannersAddDemandBannerId extends Migration
         Schema::table(
             'network_banners',
             static function (Blueprint $table) {
-                $table->binary('demand_banner_id', 16)->after('id');
+                $table->binary('demand_banner_id', 16)->after('id')->nullable();
             }
         );
 
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE network_banners MODIFY demand_banner_id varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE network_banners MODIFY demand_banner_id varbinary(16)');
         }
 
-        DB::update('update network_banners set demand_banner_id = uuid where demand_banner_id is null');
+        DB::update('update network_banners set demand_banner_id = uuid');
     }
 
     /**

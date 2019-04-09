@@ -31,10 +31,10 @@ use Adshares\Supply\Domain\ValueObject\Status;
 
 final class Banner
 {
-    const HTML_TYPE = 'html';
-    const IMAGE_TYPE = 'image';
+    private const HTML_TYPE = 'html';
+    private const IMAGE_TYPE = 'image';
 
-    const SUPPORTED_TYPES = [
+    private const SUPPORTED_TYPES = [
         self::HTML_TYPE,
         self::IMAGE_TYPE,
     ];
