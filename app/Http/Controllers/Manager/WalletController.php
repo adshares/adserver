@@ -114,14 +114,13 @@ class WalletController extends Controller
     private function getAdServerAdsAddress(): AccountId
     {
         try {
-            $var=config();
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
         }
     }
 
-    public function approveWithdrawal(Request $request): JsonResponse
+    public function confirmWithdrawal(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['token' => 'required'])->validate();
 
@@ -137,8 +136,6 @@ class WalletController extends Controller
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
         if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
-            DB::rollBack();
-
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 

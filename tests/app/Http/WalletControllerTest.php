@@ -29,6 +29,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use function sprintf;
 
 class WalletControllerTest extends TestCase
@@ -107,6 +108,7 @@ class WalletControllerTest extends TestCase
     public function testWithdrawApprovalMail(): void
     {
         Mail::fake();
+        Queue::fake();
 
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
@@ -239,23 +241,6 @@ class WalletControllerTest extends TestCase
             [
                 'amount' => 100000000000,
                 'memo' => 'hello',// invalid memo
-                'to' => '0001-00000000-XXXX',
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    public function testWithdrawInvalidAdServerAddress(): void
-    {
-        Config::set('app.adshares_address', '');//invalid ASD address set for AdServer
-        $user = factory(User::class)->create();
-        $this->generateUserIncome($user->id, 200000000000);
-        $this->actingAs($user, 'api');
-        $response = $this->postJson(
-            '/api/wallet/withdraw',
-            [
-                'amount' => 100000000000,
                 'to' => '0001-00000000-XXXX',
             ]
         );

@@ -170,7 +170,6 @@ class NetworkCampaignRepository implements CampaignRepository
             [
                 'id' => Uuid::fromString($networkCampaign->uuid),
                 'demand_id' => Uuid::fromString($networkCampaign->demand_campaign_id),
-                'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
                 'landing_url' => $networkCampaign->landing_url,
                 'date_start' => $networkCampaign->date_start,
                 'date_end' => $networkCampaign->date_end,

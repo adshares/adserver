@@ -72,7 +72,7 @@ Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdraw
 Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
-Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
+Route::post('wallet/confirm-withdrawal', [WalletController::class, 'confirmWithdrawal'])
     ->name('wallet.confirm-withdrawal');
 Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
     ->name('wallet.cancel-withdrawal');

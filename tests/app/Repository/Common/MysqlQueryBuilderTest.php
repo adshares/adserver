@@ -65,7 +65,7 @@ final class MysqlQueryBuilderTest extends TestCase
         $this->mysqlBuilder->run();
         $query = $this->mysqlBuilder->build();
 
-        $expected = 'SELECT a,b,c FROM table_name t WHERE t.a > 1 AND t.b < 10 GROUP BY t.c HAVING t.c';
+        $expected = 'SELECT a,b,c FROM table_name t  WHERE t.a > 1 AND t.b < 10 GROUP BY t.c HAVING t.c';
         $this->assertEquals($expected, $query);
     }
 }
