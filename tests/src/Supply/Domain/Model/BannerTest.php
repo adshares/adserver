@@ -57,7 +57,6 @@ final class BannerTest extends TestCase
         $campaign = new Campaign(
             Uuid::v4(),
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
-            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
@@ -81,7 +80,6 @@ final class BannerTest extends TestCase
         $campaign = new Campaign(
             $campaignId,
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
-            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
@@ -179,7 +177,6 @@ final class BannerTest extends TestCase
         $campaign = new Campaign(
             $campaignId,
             UUid::fromString('4a27f6a938254573abe47810a0b03748'),
-            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],

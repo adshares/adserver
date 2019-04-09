@@ -29,6 +29,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 use function sprintf;
 
 class WalletControllerTest extends TestCase
@@ -107,6 +108,7 @@ class WalletControllerTest extends TestCase
     public function testWithdrawApprovalMail(): void
     {
         Mail::fake();
+        Queue::fake();
 
         $user = factory(User::class)->create();
         $this->generateUserIncome($user->id, 200000000000);
@@ -246,23 +248,6 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
-    public function testWithdrawInvalidAdServerAddress(): void
-    {
-        Config::set('app.adshares_address', '');//invalid ASD address set for AdServer
-        $user = factory(User::class)->create();
-        $this->generateUserIncome($user->id, 200000000000);
-        $this->actingAs($user, 'api');
-        $response = $this->postJson(
-            '/api/wallet/withdraw',
-            [
-                'amount' => 100000000000,
-                'to' => '0001-00000000-XXXX',
-            ]
-        );
-
-        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
     public function testWithdrawInsufficientFunds(): void
     {
         $user = factory(User::class)->create();
@@ -327,32 +312,36 @@ class WalletControllerTest extends TestCase
         $this->actingAs($user, 'api');
         $response = $this->getJson('/api/wallet/history');
 
-        $response->assertStatus(Response::HTTP_OK)->assertExactJson(
-            [
-                'limit' => 10,
-                'offset' => 0,
-                'itemsCount' => 2,
-                'itemsCountAll' => 2,
-                'items' => [
-                    [
-                        'amount' => $amountInClicks,
-                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                        'address' => '0001-00000000-XXXX',
-                        'txid' => '0001:0000000A:0001',
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson(
+                [
+                    'limit' => 10,
+                    'offset' => 0,
+                    'itemsCount' => 2,
+                    'itemsCountAll' => 2,
+                    'items' => [
+                        [
+                            'amount' => $amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => '0001:0000000A:0001',
+                            'id' => 1,
+                        ],
+                        [
+                            'amount' => -$amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => null,
+                            'id' => 2,
+
+                        ],
                     ],
-                    [
-                        'amount' => -$amountInClicks,
-                        'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
-                        'address' => '0001-00000000-XXXX',
-                        'txid' => null,
-                    ],
-                ],
-            ]
-        );
+                ]
+            );
     }
 
     private function initUserLedger($userId, $amountInClicks): void
@@ -394,9 +383,10 @@ class WalletControllerTest extends TestCase
                         'amount' => $amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => '0001:0000000A:0001',
+                        'id' => 1,
                     ],
                 ],
             ]
@@ -433,9 +423,10 @@ class WalletControllerTest extends TestCase
                         'amount' => -$amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
                         'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => 'Wed, 24 Oct 2018 15:00:49 GMT',
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
                         'txid' => null,
+                        'id' => 2,
                     ],
                 ],
             ]

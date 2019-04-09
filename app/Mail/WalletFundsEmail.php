@@ -33,12 +33,13 @@ class WalletFundsEmail extends Mailable
 
     private const SUBJECT = 'Not enough funds on your account';
 
+    /** @var string */
     private $transferValue;
 
     /** @var string */
     private $hotWalletAddress;
 
-    public function __construct($transferValue, string $hotWalletAddress)
+    public function __construct(string $transferValue, string $hotWalletAddress)
     {
         $this->transferValue = $transferValue;
         $this->hotWalletAddress = $hotWalletAddress;

@@ -26,7 +26,6 @@ use Adshares\Adserver\Http\Controllers\Manager\OptionsController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\SitesController;
 use Adshares\Adserver\Http\Controllers\Manager\StatsController;
-use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,12 +57,6 @@ Route::get('sites/count', [SitesController::class, 'count'])->name('app.sites.co
 Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
     ->name('app.sites.change_status');
 
-# only for admin
-Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
-Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
-Route::patch('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
-Route::delete('users/{user_id}', [UsersController::class, 'delete'])->name('app.users.delete');
-
 # actions
 Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
 Route::get('notifications', [NotificationsController::class, 'read']);
@@ -79,7 +72,7 @@ Route::post('calculate-withdrawal', [WalletController::class, 'calculateWithdraw
 Route::post('wallet/withdraw', [WalletController::class, 'withdraw']);
 Route::get('deposit-info', [WalletController::class, 'depositInfo']);
 Route::get('wallet/history', [WalletController::class, 'history']);
-Route::post('wallet/confirm-withdrawal', [WalletController::class, 'approveWithdrawal'])
+Route::post('wallet/confirm-withdrawal', [WalletController::class, 'confirmWithdrawal'])
     ->name('wallet.confirm-withdrawal');
 Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
     ->name('wallet.cancel-withdrawal');
@@ -92,6 +85,9 @@ Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::c
 Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}', [StatsController::class, 'publisherChart']);
 Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
 Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
+
+Route::get('sites/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
+Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
 
 Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);
 Route::patch('classifications/{site_id?}', [ClassifierController::class, 'add']);

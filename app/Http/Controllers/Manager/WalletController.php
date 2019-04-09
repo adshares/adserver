@@ -32,7 +32,6 @@ use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -93,7 +92,7 @@ class WalletController extends Controller
         if (null === $amount) {
             //calculate max available amount
             $userId = Auth::user()->id;
-            $balance = UserLedgerEntry::getBalanceByUserId($userId);
+            $balance = UserLedgerEntry::getWalletBalanceByUserId($userId);
             $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
@@ -121,7 +120,7 @@ class WalletController extends Controller
         }
     }
 
-    public function approveWithdrawal(Request $request): JsonResponse
+    public function confirmWithdrawal(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['token' => 'required'])->validate();
 
@@ -137,8 +136,6 @@ class WalletController extends Controller
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
         if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
-            DB::rollBack();
-
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 
@@ -195,7 +192,7 @@ class WalletController extends Controller
 
         $user = Auth::user();
 
-        if (UserLedgerEntry::getBalanceByUserId($user->id) < $total) {
+        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -271,7 +268,7 @@ class WalletController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
                 $amount = (int)$ledgerItem->amount;
-                $date = $ledgerItem->created_at->format(Carbon::RFC7231_FORMAT);
+                $date = $ledgerItem->created_at->format(DATE_ATOM);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
                 $txid = $this->getUserLedgerEntryTxid($ledgerItem);

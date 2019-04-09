@@ -24,13 +24,13 @@ namespace Adshares\Test\Supply\Domain\Model;
 
 use Adshares\Common\Domain\Adapter\ArrayCollection;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
-use PHPUnit\Framework\TestCase;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 
 final class CampaignTest extends TestCase
 {
@@ -47,7 +47,6 @@ final class CampaignTest extends TestCase
         $campaign = new Campaign(
             Uuid::v4(),
             UUid::v4(),
-            Uuid::v4(),
             'http://example.com',
             new CampaignDate(new DateTime(), (new DateTime())->modify('+1 hour'), new DateTime(), new DateTime()),
             [],
@@ -76,7 +75,6 @@ final class CampaignTest extends TestCase
         );
 
         $campaign = new Campaign(
-            Uuid::v4(),
             Uuid::v4(),
             Uuid::v4(),
             'http://example.com',
@@ -115,12 +113,10 @@ final class CampaignTest extends TestCase
 
         $id = Uuid::v4();
         $demandCampaignId = Uuid::v4();
-        $publisherId = Uuid::v4();
 
         $campaign = new Campaign(
             $id,
             $demandCampaignId,
-            $publisherId,
             'http://example.com',
             new CampaignDate($dateStart, $dateEnd, $createdAt, $updatedAt),
             [],
@@ -134,7 +130,6 @@ final class CampaignTest extends TestCase
         $expected = [
             'id' => $id,
             'demand_campaign_id' => $demandCampaignId,
-            'publisher_id' => $publisherId,
             'landing_url' => 'http://example.com',
             'max_cpc' => 100000000000,
             'max_cpm' => null,
@@ -158,7 +153,6 @@ final class CampaignTest extends TestCase
         $this->assertEquals([], $campaign->getTargetingExcludes());
         $this->assertEquals($dateStart, $campaign->getDateStart());
         $this->assertEquals($dateEnd, $campaign->getDateEnd());
-        $this->assertEquals($publisherId, $campaign->getPublisherId());
         $this->assertEquals($demandCampaignId, $campaign->getDemandCampaignId());
         $this->assertEquals($id, $campaign->getId());
         $this->assertEquals(Status::STATUS_ACTIVE, $campaign->getStatus());

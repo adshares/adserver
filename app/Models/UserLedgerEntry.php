@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use InvalidArgumentException;
@@ -64,6 +65,10 @@ class UserLedgerEntry extends Model
 
     public const TYPE_AD_EXPENSE = 4;
 
+    public const TYPE_BONUS_INCOME = 5;
+
+    public const TYPE_BONUS_EXPENSE = 6;
+
     public const ALLOWED_STATUS_LIST = [
         self::STATUS_ACCEPTED,
         self::STATUS_REJECTED,
@@ -82,16 +87,20 @@ class UserLedgerEntry extends Model
         self::TYPE_WITHDRAWAL,
         self::TYPE_AD_INCOME,
         self::TYPE_AD_EXPENSE,
+        self::TYPE_BONUS_INCOME,
+        self::TYPE_BONUS_EXPENSE,
     ];
 
     public const CREDIT_TYPES = [
         self::TYPE_DEPOSIT,
         self::TYPE_AD_INCOME,
+        self::TYPE_BONUS_INCOME,
     ];
 
     public const DEBIT_TYPES = [
-        self::TYPE_AD_EXPENSE,
         self::TYPE_WITHDRAWAL,
+        self::TYPE_AD_EXPENSE,
+        self::TYPE_BONUS_EXPENSE,
     ];
 
     private const AWAITING_PAYMENTS = [
@@ -138,9 +147,33 @@ class UserLedgerEntry extends Model
         })->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
     }
 
+    private static function queryForEntriesRelevantForWalletBalance()
+    {
+        return self::queryForEntriesRelevantForBalance()
+            ->whereNotIn('type', [self::TYPE_BONUS_INCOME, self::TYPE_BONUS_EXPENSE]);
+    }
+
+    private static function queryForEntriesRelevantForBonusBalance()
+    {
+        return self::queryForEntriesRelevantForBalance()
+            ->whereIn('type', [self::TYPE_BONUS_INCOME, self::TYPE_BONUS_EXPENSE]);
+    }
+
     public static function getBalanceForAllUsers(): int
     {
         return (int)self::queryForEntriesRelevantForBalance()
+            ->sum('amount');
+    }
+
+    public static function getWalletBalanceForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForWalletBalance()
+            ->sum('amount');
+    }
+
+    public static function getBonusBalanceForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForBonusBalance()
             ->sum('amount');
     }
 
@@ -150,9 +183,33 @@ class UserLedgerEntry extends Model
             ->sum('amount');
     }
 
+    public static function getWalletBalanceByUserId(int $userId): int
+    {
+        return (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
+            ->sum('amount');
+    }
+
+    public static function getBonusBalanceByUserId(int $userId): int
+    {
+        return (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
+            ->sum('amount');
+    }
+
     public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
     {
         return self::queryForEntriesRelevantForBalance()
+            ->where('user_id', $userId);
+    }
+
+    public static function queryForEntriesRelevantForWalletBalanceByUserId(int $userId): Builder
+    {
+        return self::queryForEntriesRelevantForWalletBalance()
+            ->where('user_id', $userId);
+    }
+
+    public static function queryForEntriesRelevantForBonusBalanceByUserId(int $userId): Builder
+    {
+        return self::queryForEntriesRelevantForBonusBalance()
             ->where('user_id', $userId);
     }
 
@@ -190,41 +247,69 @@ class UserLedgerEntry extends Model
     public static function removeProcessingExpenses(): void
     {
         self::where('status', self::STATUS_PROCESSING)
-            ->where('type', self::TYPE_AD_EXPENSE)
+            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE])
             ->delete();
+    }
+
+    public static function fetchBlockedEntriesByUserId(int $userId): Collection
+    {
+        return self::blockedEntries()->where('user_id', $userId)->get();
     }
 
     private static function blockedEntries()
     {
         return self::where('status', self::STATUS_BLOCKED)
-            ->where('type', self::TYPE_AD_EXPENSE);
+            ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE]);
     }
 
-    public static function block(int $type, int $userId, int $nonNegativeAmount): self
+    private static function addAdExpense(int $status, int $userId, int $amount): array
     {
-        if ($nonNegativeAmount < 0) {
+        if ($amount < 0) {
             throw new InvalidArgumentException(
-                sprintf('Amount needs to be non-negative - User [%s] - Type [%s].', $userId, $type)
+                sprintf('Amount needs to be non-negative - User [%s].', $userId)
             );
         }
 
-        $isDebit = in_array($type, self::DEBIT_TYPES, true);
-        if ($isDebit && self::getBalanceByUserId($userId) < $nonNegativeAmount) {
+        if (self::getBalanceByUserId($userId) < $amount) {
             throw new InvalidArgumentException(
-                sprintf('Insufficient funds for User [%s] when blocking Type [%s].', $userId, $type)
+                sprintf('Insufficient funds for User [%s] when adding ad expense.', $userId)
             );
         }
 
-        $obj = self::construct(
-            $userId,
-            $isDebit ? -$nonNegativeAmount : $nonNegativeAmount,
-            self::STATUS_BLOCKED,
-            $type
-        );
+        $entries = [];
+        $bonus = self::getBonusBalanceByUserId($userId);
+        if ($bonus > 0) {
+            $obj = self::construct(
+                $userId,
+                -min($bonus, $amount),
+                $status,
+                self::TYPE_BONUS_EXPENSE
+            );
+            $obj->save();
+            $entries[] = $obj;
+        }
+        if ($amount > $bonus) {
+            $obj = self::construct(
+                $userId,
+                -($amount - $bonus),
+                $status,
+                self::TYPE_AD_EXPENSE
+            );
+            $obj->save();
+            $entries[] = $obj;
+        }
 
-        $obj->save();
+        return $entries;
+    }
 
-        return $obj;
+    public static function blockAdExpense(int $userId, int $nonNegativeAmount): array
+    {
+        return self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+    }
+
+    public static function processAdExpense(int $userId, int $nonNegativeAmount): array
+    {
+        return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $nonNegativeAmount);
     }
 
     public function setStatusAttribute(int $status): void
