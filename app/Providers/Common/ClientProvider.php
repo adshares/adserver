@@ -42,7 +42,6 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
-use Adshares\Supply\Domain\Repository\CampaignRepository;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -70,7 +69,7 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             AdSelect::class,
-            function (Application $app) {
+            function () {
                 return new JsonRpcAdSelectClient(
                     new JsonRpc(
                         new Client(
@@ -80,8 +79,7 @@ final class ClientProvider extends ServiceProvider
                                 'timeout' => 4,
                             ]
                         )
-                    ),
-                    $app->make(CampaignRepository::class)
+                    )
                 );
             }
         );
