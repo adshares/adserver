@@ -16,12 +16,12 @@ install: composer install
 jobs:
   include:
     - script:
-        - sonar-scanner
-
-    - script:
         - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
+
+    - script:
         - vendor/bin/phpunit --testsuite Console,Http,Unit
+        - sonar-scanner
 
 notifications:
   email: false
