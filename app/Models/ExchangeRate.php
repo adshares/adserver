@@ -20,12 +20,12 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate as DomainExchangeRate;
 use Illuminate\Database\Eloquent\Model;
 
 class ExchangeRate extends Model
 {
-    public static function create(FetchedExchangeRate $fetchedExchangeRate): self
+    public static function create(DomainExchangeRate $fetchedExchangeRate): self
     {
         $exchangeRate = new self();
         $exchangeRate->valid_at = $fetchedExchangeRate->getDateTime();

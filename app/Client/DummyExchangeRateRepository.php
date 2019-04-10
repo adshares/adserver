@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
 
@@ -31,10 +31,10 @@ class DummyExchangeRateRepository implements ExchangeRateRepository
 {
     private const STABLE_RATE = '0.3333';
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate
     {
         $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
 
-        return new FetchedExchangeRate($date, self::STABLE_RATE, $currency);
+        return new ExchangeRate($date, self::STABLE_RATE, $currency);
     }
 }

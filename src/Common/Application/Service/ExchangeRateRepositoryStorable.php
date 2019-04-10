@@ -22,9 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 
 interface ExchangeRateRepositoryStorable extends ExchangeRateRepository
 {
-    public function storeExchangeRate(FetchedExchangeRate $fetchedExchangeRate);
+    public function storeExchangeRate(ExchangeRate $fetchedExchangeRate);
 }

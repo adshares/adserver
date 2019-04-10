@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Models\ExchangeRate;
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate as DomainExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
@@ -32,7 +32,7 @@ class EloquentExchangeRateRepository implements ExchangeRateRepositoryStorable
 {
     private const DATABASE_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): DomainExchangeRate
     {
         $exchangeRate =
             ExchangeRate::where('valid_at', '<=', $dateTime)
@@ -45,14 +45,14 @@ class EloquentExchangeRateRepository implements ExchangeRateRepositoryStorable
             throw new ExchangeRateNotAvailableException();
         }
 
-        return new FetchedExchangeRate(
+        return new DomainExchangeRate(
             DateTime::createFromFormat(self::DATABASE_DATETIME_FORMAT, $exchangeRate->valid_at),
             $exchangeRate->value,
             $exchangeRate->currency
         );
     }
 
-    public function storeExchangeRate(FetchedExchangeRate $fetchedExchangeRate)
+    public function storeExchangeRate(DomainExchangeRate $fetchedExchangeRate)
     {
         ExchangeRate::create($fetchedExchangeRate)->save();
     }

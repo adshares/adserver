@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Tests\Common\Infrastructure\Service;
 
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
@@ -61,7 +61,7 @@ class ExchangeRateReaderTest extends TestCase
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
 
-                return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
+                return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
 
@@ -86,7 +86,7 @@ class ExchangeRateReaderTest extends TestCase
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
         $repositoryRemote->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function () use ($exchangeRateValue, $exchangeRateDateTime) {
-                return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
+                return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
 
@@ -115,7 +115,7 @@ class ExchangeRateReaderTest extends TestCase
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
 
-                return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
+                return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
         $repositoryStorable->expects($this->never())->method('storeExchangeRate');
@@ -137,7 +137,7 @@ class ExchangeRateReaderTest extends TestCase
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
 
-                return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
+                return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
 
@@ -147,7 +147,7 @@ class ExchangeRateReaderTest extends TestCase
                 $exchangeRateValue = '1';
                 $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
-                return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
+                return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
         $repositoryStorable->expects($this->once())->method('storeExchangeRate');

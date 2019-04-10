@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Common\Infrastructure\Service;
 
 use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
@@ -49,7 +49,7 @@ class ExchangeRateReader
         $this->repositoryRemote = $repositoryRemote;
     }
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate
     {
         try {
             $exchangeRateFromStorage = $this->repositoryStorable->fetchExchangeRate($dateTime, $currency);
@@ -101,7 +101,7 @@ class ExchangeRateReader
         throw new ExchangeRateNotAvailableException();
     }
 
-    private function isExchangeRateAcceptable(FetchedExchangeRate $exchangeRate): bool
+    private function isExchangeRateAcceptable(ExchangeRate $exchangeRate): bool
     {
         $oldestAcceptableDateTime =
             (new DateTime())->modify(sprintf('-%d hours', self::MAX_ACCEPTABLE_INTERVAL_IN_HOURS));

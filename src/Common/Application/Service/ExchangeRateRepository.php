@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use DateTime;
 
@@ -32,9 +32,9 @@ interface ExchangeRateRepository
      * @param DateTime $dateTime
      * @param string $currency
      *
-     * @return FetchedExchangeRate
+     * @return ExchangeRate
      *
      * @throws ExchangeRateNotAvailableException
      */
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate;
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate;
 }

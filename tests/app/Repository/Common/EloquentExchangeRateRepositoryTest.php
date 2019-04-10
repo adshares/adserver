@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Tests\Repository\Common;
 
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,7 +48,7 @@ final class EloquentExchangeRateRepositoryTest extends TestCase
         $dateTime = new DateTime();
         $dateTime->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'));
 
-        $exchangeRate = new FetchedExchangeRate($dateTime, '1.3', 'USD');
+        $exchangeRate = new ExchangeRate($dateTime, '1.3', 'USD');
         $repository->storeExchangeRate($exchangeRate);
         $exchangeRateFromRepository = $repository->fetchExchangeRate(new DateTime());
 

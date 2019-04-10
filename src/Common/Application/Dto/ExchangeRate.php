@@ -24,7 +24,7 @@ namespace Adshares\Common\Application\Dto;
 
 use DateTime;
 
-class FetchedExchangeRate
+class ExchangeRate
 {
     /** @var DateTime */
     private $dateTime;
