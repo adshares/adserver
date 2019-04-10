@@ -29,28 +29,28 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-final class ExchangeRateRepositoryImplTest extends TestCase
+final class EloquentExchangeRateRepositoryTest extends TestCase
 {
     use RefreshDatabase;
 
     public function testExchangeRateRepositoryFetchWhileEmpty(): void
     {
-        $exchangeRateRepository = new EloquentExchangeRateRepository();
+        $repository = new EloquentExchangeRateRepository();
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $exchangeRateRepository->fetchExchangeRate(new DateTime());
+        $repository->fetchExchangeRate(new DateTime());
     }
 
     public function testExchangeRateRepositoryStoreAndFetch(): void
     {
-        $exchangeRateRepository = new EloquentExchangeRateRepository();
+        $repository = new EloquentExchangeRateRepository();
 
         $dateTime = new DateTime();
         $dateTime->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'));
 
         $exchangeRate = new FetchedExchangeRate($dateTime, '1.3', 'USD');
-        $exchangeRateRepository->storeExchangeRate($exchangeRate);
-        $exchangeRateFromRepository = $exchangeRateRepository->fetchExchangeRate(new DateTime());
+        $repository->storeExchangeRate($exchangeRate);
+        $exchangeRateFromRepository = $repository->fetchExchangeRate(new DateTime());
 
         $this->assertEquals($exchangeRate, $exchangeRateFromRepository);
     }

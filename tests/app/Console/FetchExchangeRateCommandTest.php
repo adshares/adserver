@@ -49,17 +49,17 @@ final class FetchExchangeRateCommandTest extends TestCase
         $this->artisan('ops:exchange-rate:fetch')->assertExitCode(0);
     }
 
-    public function testFetchExchangeRateProviderException(): void
+    public function testFetchExchangeRateRepositoryException(): void
     {
-        $mockExternalProvider = $this->createMock(ExchangeRateRepository::class);
-        $mockExternalProvider->expects($this->once())->method('fetchExchangeRate')->willThrowException(
+        $mockRepository = $this->createMock(ExchangeRateRepository::class);
+        $mockRepository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
 
         $this->app->bind(
             ExchangeRateRepository::class,
-            function () use ($mockExternalProvider) {
-                return $mockExternalProvider;
+            function () use ($mockRepository) {
+                return $mockRepository;
             }
         );
 
