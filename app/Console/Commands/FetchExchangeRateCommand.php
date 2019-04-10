@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
-use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
@@ -41,18 +41,18 @@ class FetchExchangeRateCommand extends Command
 
     protected $description = 'Fetch exchange rate';
 
-    /** @var ExchangeRateExternalProvider */
-    private $exchangeRateExternalProvider;
-
     /** @var ExchangeRateRepository */
-    private $exchangeRateRepository;
+    private $repository;
+
+    /** @var ExchangeRateRepositoryStorable */
+    private $repositoryStorable;
 
     public function __construct(
-        ExchangeRateExternalProvider $exchangeRateExternalProvider,
-        ExchangeRateRepository $exchangeRateRepository
+        ExchangeRateRepository $repository,
+        ExchangeRateRepositoryStorable $repositoryStorable
     ) {
-        $this->exchangeRateExternalProvider = $exchangeRateExternalProvider;
-        $this->exchangeRateRepository = $exchangeRateRepository;
+        $this->repository = $repository;
+        $this->repositoryStorable = $repositoryStorable;
 
         parent::__construct();
     }
@@ -61,11 +61,11 @@ class FetchExchangeRateCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $exchangeRate = $this->exchangeRateExternalProvider->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->repository->fetchExchangeRate(new DateTime());
         $this->info(sprintf('Exchange rate: %s', $exchangeRate->toString()));
 
         try {
-            $this->exchangeRateRepository->storeExchangeRate($exchangeRate);
+            $this->repositoryStorable->storeExchangeRate($exchangeRate);
         } catch (QueryException $queryException) {
             if (self::SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION === (int)$queryException->errorInfo[0]
                 && self::SQL_ERROR_CODE_DUPLICATE_ENTRY === (int)$queryException->errorInfo[1]) {

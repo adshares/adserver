@@ -20,21 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
-use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
 
-interface ExchangeRateExternalProvider
+class DummyExchangeRateRepository implements ExchangeRateRepository
 {
-    /**
-     * @param DateTime $dateTime
-     * @param string $currency
-     *
-     * @return FetchedExchangeRate
-     *
-     * @throws ExchangeRateNotAvailableException
-     */
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate;
+    private const STABLE_RATE = '0.3333';
+
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
+    {
+        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
+
+        return new FetchedExchangeRate($date, self::STABLE_RATE, $currency);
+    }
 }

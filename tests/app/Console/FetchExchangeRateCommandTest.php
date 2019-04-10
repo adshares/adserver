@@ -20,27 +20,27 @@
 
 namespace Adshares\Adserver\Tests\Console;
 
-use Adshares\Adserver\Client\DummyExchangeRateExternalProvider;
+use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 
 final class FetchExchangeRateCommandTest extends TestCase
 {
     public function testFetchExchangeRate(): void
     {
         $this->app->bind(
-            ExchangeRateExternalProvider::class,
+            ExchangeRateRepository::class,
             function () {
-                return new DummyExchangeRateExternalProvider();
+                return new DummyExchangeRateRepository();
             }
         );
-        $mockRepository = $this->createMock(ExchangeRateRepository::class);
+        $mockRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $mockRepository->expects($this->once())->method('storeExchangeRate');
 
         $this->app->bind(
-            ExchangeRateRepository::class,
+            ExchangeRateRepositoryStorable::class,
             function () use ($mockRepository) {
                 return $mockRepository;
             }
@@ -51,13 +51,13 @@ final class FetchExchangeRateCommandTest extends TestCase
 
     public function testFetchExchangeRateProviderException(): void
     {
-        $mockExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $mockExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $mockExternalProvider->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
 
         $this->app->bind(
-            ExchangeRateExternalProvider::class,
+            ExchangeRateRepository::class,
             function () use ($mockExternalProvider) {
                 return $mockExternalProvider;
             }

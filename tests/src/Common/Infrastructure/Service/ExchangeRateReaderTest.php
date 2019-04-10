@@ -25,8 +25,8 @@ namespace Adshares\Tests\Common\Infrastructure\Service;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 
@@ -34,12 +34,12 @@ class ExchangeRateReaderTest extends TestCase
 {
     public function testExchangeRateReaderEmptyRepositoryAndProviderFail(): void
     {
-        $exchangeRateExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $exchangeRateExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $exchangeRateExternalProvider->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
 
-        $exchangeRateRepository = $this->createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $exchangeRateRepository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
@@ -56,7 +56,7 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
-        $exchangeRateExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $exchangeRateExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $exchangeRateExternalProvider->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
@@ -65,7 +65,7 @@ class ExchangeRateReaderTest extends TestCase
             }
         );
 
-        $exchangeRateRepository = $this->createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $exchangeRateRepository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
@@ -83,14 +83,14 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateValue = '1';
         $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
-        $exchangeRateExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $exchangeRateExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $exchangeRateExternalProvider->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function () use ($exchangeRateValue, $exchangeRateDateTime) {
                 return new FetchedExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
             }
         );
 
-        $exchangeRateRepository = $this->createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $exchangeRateRepository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
             new ExchangeRateNotAvailableException()
         );
@@ -107,10 +107,10 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
-        $exchangeRateExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $exchangeRateExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $exchangeRateExternalProvider->expects($this->never())->method('fetchExchangeRate');
 
-        $exchangeRateRepository = $this->createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $exchangeRateRepository->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
@@ -132,7 +132,7 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
-        $exchangeRateExternalProvider = $this->createMock(ExchangeRateExternalProvider::class);
+        $exchangeRateExternalProvider = $this->createMock(ExchangeRateRepository::class);
         $exchangeRateExternalProvider->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function (DateTime $dateTime) use ($exchangeRateValue, &$exchangeRateDateTime) {
                 $exchangeRateDateTime = (clone $dateTime)->setTime((int)$dateTime->format('H'), 0);
@@ -141,7 +141,7 @@ class ExchangeRateReaderTest extends TestCase
             }
         );
 
-        $exchangeRateRepository = $this->createMock(ExchangeRateRepository::class);
+        $exchangeRateRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
         $exchangeRateRepository->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function () {
                 $exchangeRateValue = '1';

@@ -25,8 +25,8 @@ namespace Adshares\Common\Infrastructure\Service;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
@@ -35,34 +35,34 @@ class ExchangeRateReader
 {
     private const MAX_ACCEPTABLE_INTERVAL_IN_HOURS = 24;
 
-    /** @var ExchangeRateRepository */
-    private $exchangeRateRepository;
+    /** @var ExchangeRateRepositoryStorable */
+    private $repositoryStorable;
 
-    /** @var ExchangeRateExternalProvider */
-    private $externalExchangeRateProvider;
+    /** @var ExchangeRateRepository */
+    private $repository;
 
     public function __construct(
-        ExchangeRateRepository $exchangeRateRepository,
-        ExchangeRateExternalProvider $externalExchangeRateProvider
+        ExchangeRateRepositoryStorable $repositoryStorable,
+        ExchangeRateRepository $repository
     ) {
-        $this->exchangeRateRepository = $exchangeRateRepository;
-        $this->externalExchangeRateProvider = $externalExchangeRateProvider;
+        $this->repositoryStorable = $repositoryStorable;
+        $this->repository = $repository;
     }
 
     public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
     {
         try {
-            $exchangeRateRepository = $this->exchangeRateRepository->fetchExchangeRate($dateTime, $currency);
+            $exchangeRateFromStorage = $this->repositoryStorable->fetchExchangeRate($dateTime, $currency);
 
-            if (DateUtils::areTheSameHour($exchangeRateRepository->getDateTime(), $dateTime)) {
-                return $exchangeRateRepository;
+            if (DateUtils::areTheSameHour($exchangeRateFromStorage->getDateTime(), $dateTime)) {
+                return $exchangeRateFromStorage;
             }
         } catch (ExchangeRateNotAvailableException $exception) {
-            $exchangeRateRepository = null;
+            $exchangeRateFromStorage = null;
         }
 
         try {
-            $exchangeRateExternal = $this->externalExchangeRateProvider->fetchExchangeRate($dateTime, $currency);
+            $exchangeRateExternal = $this->repository->fetchExchangeRate($dateTime, $currency);
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::warning(
                 sprintf(
@@ -71,7 +71,7 @@ class ExchangeRateReader
                     $exception->getMessage()
                 )
             );
-            if (null === $exchangeRateRepository) {
+            if (null === $exchangeRateFromStorage) {
                 throw new ExchangeRateNotAvailableException();
             }
 
@@ -79,19 +79,19 @@ class ExchangeRateReader
         }
 
         if (null !== $exchangeRateExternal
-            && (null === $exchangeRateRepository
-                || $exchangeRateRepository->getDateTime() < $exchangeRateExternal->getDateTime())) {
+            && (null === $exchangeRateFromStorage
+                || $exchangeRateFromStorage->getDateTime() < $exchangeRateExternal->getDateTime())) {
             $exchangeRate = $exchangeRateExternal;
 
             try {
-                $this->exchangeRateRepository->storeExchangeRate($exchangeRateExternal);
+                $this->repositoryStorable->storeExchangeRate($exchangeRateExternal);
             } catch (QueryException $queryException) {
                 Log::error(
                     sprintf('[ExchangeRateReader] Not able to store exchange rate: %s', $queryException->getMessage())
                 );
             }
         } else {
-            $exchangeRate = $exchangeRateRepository;
+            $exchangeRate = $exchangeRateFromStorage;
         }
 
         if ($this->isExchangeRateAcceptable($exchangeRate)) {

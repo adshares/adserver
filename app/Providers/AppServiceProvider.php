@@ -22,8 +22,8 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -131,8 +131,8 @@ class AppServiceProvider extends ServiceProvider
             ExchangeRateReader::class,
             function (Application $app) {
                 return new ExchangeRateReader(
-                    $app->make(ExchangeRateRepository::class),
-                    $app->make(ExchangeRateExternalProvider::class)
+                    $app->make(ExchangeRateRepositoryStorable::class),
+                    $app->make(ExchangeRateRepository::class)
                 );
             }
         );
