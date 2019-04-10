@@ -30,10 +30,10 @@ class CreateExchangeRatesTable extends Migration
             'exchange_rates',
             function (Blueprint $table) {
                 $table->increments('id');
-                $table->timestamps();
-                $table->timestamp('valid_at')->nullable(false)->default('1970-01-01 00:00:01');
+                $table->timestamp('valid_at')->nullable(false);
                 $table->string('value')->nullable(false);
                 $table->char('currency', 3);
+                $table->timestamps();
 
                 $table->unique(['valid_at', 'currency']);
             }
