@@ -385,7 +385,7 @@ domReady(function () {
                 param[parts.join('-')] = tag.attributes[j].value;
             }
         }
-        if (param.zone && param.pub) {
+        if (param.zone) {
             params.push(param);
         }
     }
