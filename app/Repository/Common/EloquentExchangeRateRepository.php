@@ -54,6 +54,6 @@ class EloquentExchangeRateRepository implements ExchangeRateRepositoryStorable
 
     public function storeExchangeRate(DomainExchangeRate $fetchedExchangeRate)
     {
-        ExchangeRate::create($fetchedExchangeRate)->save();
+        (new ExchangeRate($fetchedExchangeRate->toArray()))->save();
     }
 }

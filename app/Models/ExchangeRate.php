@@ -25,13 +25,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExchangeRate extends Model
 {
-    public static function create(DomainExchangeRate $fetchedExchangeRate): self
-    {
-        $exchangeRate = new self();
-        $exchangeRate->valid_at = $fetchedExchangeRate->getDateTime();
-        $exchangeRate->value = $fetchedExchangeRate->getValue();
-        $exchangeRate->currency = $fetchedExchangeRate->getCurrency();
-
-        return $exchangeRate;
-    }
+    protected $fillable = [
+        'valid_at',
+        'value',
+        'currency',
+    ];
 }

@@ -23,8 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Common\Application\Dto;
 
 use DateTime;
+use Illuminate\Contracts\Support\Arrayable;
 
-class ExchangeRate
+class ExchangeRate implements Arrayable
 {
     /** @var DateTime */
     private $dateTime;
@@ -60,5 +61,14 @@ class ExchangeRate
     public function toString(): string
     {
         return sprintf('%s::%s::%s', $this->dateTime->format(DateTime::ATOM), $this->value, $this->currency);
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'valid_at' => $this->dateTime,
+            'value' => $this->value,
+            'currency' => $this->currency,
+        ];
     }
 }
