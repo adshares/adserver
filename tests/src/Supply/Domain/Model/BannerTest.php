@@ -32,19 +32,20 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
+use Exception;
 use PHPUnit\Framework\TestCase;
 use function uniqid;
 
 final class BannerTest extends TestCase
 {
-    const INVALID_TYPE = false;
-    const VALID_TYPE = true;
+    private const INVALID_TYPE = false;
+    protected const VALID_TYPE = true;
 
     /**
      * @param string $type
      * @param bool $valid
      *
-     * @throws \Exception
+     * @throws Exception
      *
      * @dataProvider dataProvider
      */
@@ -69,7 +70,16 @@ final class BannerTest extends TestCase
 
         $checksum = '';
         $bannerUrl = new BannerUrl('http://example.com', 'http://example.com', 'http://example.com');
-        $banner = new Banner($campaign, Uuid::v4(), $bannerUrl, $type, new Size(728, 90), $checksum, Status::active());
+        $banner = new Banner(
+            $campaign,
+            Uuid::v4(),
+            Uuid::v4(),
+            $bannerUrl,
+            $type,
+            new Size(728, 90),
+            $checksum,
+            Status::active()
+        );
 
         $this->assertEquals($type, $banner->getType());
     }
@@ -91,7 +101,8 @@ final class BannerTest extends TestCase
         );
 
         $bannerId = Uuid::v4();
-        $type = Banner::HTML_TYPE;
+        $demandBannerId = Uuid::v4();
+        $type = 'html';
         $checksum = uniqid('', true);
         $bannerUrl = new BannerUrl(
             'http://example.com/serve',
@@ -99,10 +110,20 @@ final class BannerTest extends TestCase
             'http://example.com/view'
         );
 
-        $banner = new Banner($campaign, $bannerId, $bannerUrl, $type, new Size(728, 90), $checksum, Status::active());
+        $banner = new Banner(
+            $campaign,
+            $bannerId,
+            $demandBannerId,
+            $bannerUrl,
+            $type,
+            new Size(728, 90),
+            $checksum,
+            Status::active()
+        );
 
         $expected = [
             'id' => $bannerId,
+            'demand_banner_id' => $demandBannerId,
             'type' => 'html',
             'size' => '728x90',
             'width' => 728,
@@ -118,6 +139,7 @@ final class BannerTest extends TestCase
         $this->assertEquals($expected, $banner->toArray());
         $this->assertEquals('html', $banner->getType());
         $this->assertEquals($bannerId, $banner->getId());
+        $this->assertEquals($demandBannerId, $banner->getDemandBannerId());
         $this->assertEquals(728, $banner->getWidth());
         $this->assertEquals(90, $banner->getHeight());
         $this->assertEquals('728x90', $banner->getSize());
@@ -196,6 +218,7 @@ final class BannerTest extends TestCase
         $banner = new Banner(
             $campaign,
             Uuid::v4(),
+            Uuid::v4(),
             $url,
             'image',
             new Size($width, $height),
@@ -206,7 +229,7 @@ final class BannerTest extends TestCase
         return $banner;
     }
 
-    public function dataProvider()
+    public function dataProvider(): array
     {
         return [
             ['unsupported_type', self::INVALID_TYPE],

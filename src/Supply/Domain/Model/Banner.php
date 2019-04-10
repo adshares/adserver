@@ -31,10 +31,10 @@ use Adshares\Supply\Domain\ValueObject\Status;
 
 final class Banner
 {
-    const HTML_TYPE = 'html';
-    const IMAGE_TYPE = 'image';
+    private const HTML_TYPE = 'html';
+    private const IMAGE_TYPE = 'image';
 
-    const SUPPORTED_TYPES = [
+    private const SUPPORTED_TYPES = [
         self::HTML_TYPE,
         self::IMAGE_TYPE,
     ];
@@ -63,9 +63,13 @@ final class Banner
     /** @var Classification[] */
     private $classification;
 
+    /** @var Id */
+    private $demandBannerId;
+
     public function __construct(
         Campaign $campaign,
         Id $id,
+        Id $demandBannerId,
         BannerUrl $bannerUrl,
         string $type,
         Size $size,
@@ -89,6 +93,7 @@ final class Banner
         $this->status = $status;
         $this->checksum = $checksum;
         $this->classification = $classification;
+        $this->demandBannerId = $demandBannerId;
     }
 
     public function activate(): void
@@ -130,6 +135,7 @@ final class Banner
 
         return [
             'id' => $this->getId(),
+            'demand_banner_id' => $this->getDemandBannerId(),
             'type' => $this->getType(),
             'size' => (string)$this->size,
             'width' => $this->size->getWidth(),
@@ -146,6 +152,11 @@ final class Banner
     public function getId(): string
     {
         return (string)$this->id;
+    }
+
+    public function getDemandBannerId(): string
+    {
+        return (string)$this->demandBannerId;
     }
 
     public function getType(): string

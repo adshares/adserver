@@ -90,6 +90,7 @@ class NetworkBanner extends Model
      */
     protected $fillable = [
         'uuid',
+        'demand_banner_id',
         'network_campaign_id',
         'source_created_at',
         'source_updated_at',
@@ -122,6 +123,7 @@ class NetworkBanner extends Model
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'checksum' => 'BinHex',
+        'demand_banner_id' => 'BinHex',
     ];
 
     protected $casts = [

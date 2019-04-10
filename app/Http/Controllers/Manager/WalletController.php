@@ -120,7 +120,7 @@ class WalletController extends Controller
         }
     }
 
-    public function approveWithdrawal(Request $request): JsonResponse
+    public function confirmWithdrawal(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['token' => 'required'])->validate();
 
@@ -136,8 +136,6 @@ class WalletController extends Controller
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
         if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
-            DB::rollBack();
-
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 

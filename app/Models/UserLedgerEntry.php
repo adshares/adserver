@@ -262,7 +262,7 @@ class UserLedgerEntry extends Model
             ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE]);
     }
 
-    private static function addAdExpense($status, int $userId, int $amount): array
+    private static function addAdExpense(int $status, int $userId, int $amount): array
     {
         if ($amount < 0) {
             throw new InvalidArgumentException(

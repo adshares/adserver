@@ -43,6 +43,7 @@ class NetworkCampaignRepository implements CampaignRepository
     private const BANNER_VIEW_URL_FIELD = 'view_url';
     private const BANNER_UUID_FIELD = 'uuid';
     private const BANNER_ID_FIELD = 'id';
+    private const BANNER_DEMAND_BANNER_ID_FIELD = 'demand_banner_id';
     private const BANNER_TYPE_FIELD = 'type';
     private const BANNER_WIDTH_FIELD = 'width';
     private const BANNER_HEIGHT_FIELD = 'height';
@@ -72,7 +73,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $uuid = $campaignArray['id'];
         unset($campaignArray['id']);
 
-        $networkCampaign = $this->fetchCampaignByDemandId($campaign);
+        $networkCampaign = $this->fetchCampaignByDemand($campaign);
 
         if (!$networkCampaign) {
             $networkCampaign = new NetworkCampaign();
@@ -95,7 +96,8 @@ class NetworkCampaignRepository implements CampaignRepository
 
             unset($banner['id']);
 
-            $networkBanner = NetworkBanner::where(self::BANNER_UUID_FIELD, hex2bin($domainBanner->getId()))->first();
+            $networkBanner = NetworkBanner::where('demand_banner_id', hex2bin($domainBanner->getDemandBannerId()))
+                ->where('network_campaign_id', $networkCampaign->id)->first();
 
             if (!$networkBanner) {
                 $networkBanner = new NetworkBanner();
@@ -109,9 +111,11 @@ class NetworkCampaignRepository implements CampaignRepository
         $networkCampaign->banners()->saveMany($networkBanners);
     }
 
-    private function fetchCampaignByDemandId(Campaign $campaign): ?NetworkCampaign
+    private function fetchCampaignByDemand(Campaign $campaign): ?NetworkCampaign
     {
-        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))->first();
+        return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))
+            ->where('source_host', $campaign->getSourceHost())
+            ->first();
     }
 
     public function fetchActiveCampaigns(): CampaignCollection
@@ -154,7 +158,8 @@ class NetworkCampaignRepository implements CampaignRepository
 
         foreach ($networkCampaign->fetchActiveBanners() as $networkBanner) {
             $banners[] = [
-                self::BANNER_ID_FIELD => $networkBanner->uuid,
+                self::BANNER_ID_FIELD => Uuid::fromString($networkBanner->uuid),
+                self::BANNER_DEMAND_BANNER_ID_FIELD => Uuid::fromString($networkBanner->demand_banner_id),
                 self::BANNER_SERVE_URL_FIELD => $networkBanner->serve_url,
                 self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
                 self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
@@ -170,7 +175,6 @@ class NetworkCampaignRepository implements CampaignRepository
             [
                 'id' => Uuid::fromString($networkCampaign->uuid),
                 'demand_id' => Uuid::fromString($networkCampaign->demand_campaign_id),
-                'publisher_id' => Uuid::fromString($networkCampaign->publisher_id),
                 'landing_url' => $networkCampaign->landing_url,
                 'date_start' => $networkCampaign->date_start,
                 'date_end' => $networkCampaign->date_end,

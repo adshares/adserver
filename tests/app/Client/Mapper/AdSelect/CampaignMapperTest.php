@@ -56,7 +56,8 @@ final class CampaignMapperTest extends TestCase
             ],
             'banners' => [
                 [
-                    'id' => (string)Uuid::v4(),
+                    'id' => Uuid::v4(),
+                    'demand_banner_id' => Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -65,7 +66,8 @@ final class CampaignMapperTest extends TestCase
                     'height' => 90,
                 ],
                 [
-                    'id' => (string)Uuid::v4(),
+                    'id' => Uuid::v4(),
+                    'demand_banner_id' => Uuid::v4(),
                     'serve_url' => 'http://localhost:8101/serve/1',
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
@@ -93,7 +95,7 @@ final class CampaignMapperTest extends TestCase
             'time_end' => $this->campaignData['date_end']->getTimestamp(),
             'banners' => [
                 [
-                    'banner_id' => $this->campaignData['banners'][0]['id'],
+                    'banner_id' => (string)$this->campaignData['banners'][0]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => 'image',
@@ -101,7 +103,7 @@ final class CampaignMapperTest extends TestCase
                     ],
                 ],
                 [
-                    'banner_id' => $this->campaignData['banners'][1]['id'],
+                    'banner_id' => (string)$this->campaignData['banners'][1]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => 'image',
@@ -120,6 +122,7 @@ final class CampaignMapperTest extends TestCase
         ];
 
         $campaign = CampaignFactory::createFromArray($this->campaignData);
+
         $this->assertEquals($expected, CampaignMapper::map($campaign)[0]);
     }
 }
