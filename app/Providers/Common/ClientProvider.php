@@ -38,11 +38,9 @@ use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
-use Adshares\Common\Application\Service\ExchangeRateProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
-use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -160,16 +158,6 @@ final class ClientProvider extends ServiceProvider
             ExchangeRateRepository::class,
             function () {
                 return new EloquentExchangeRateRepository();
-            }
-        );
-
-        $this->app->bind(
-            ExchangeRateProvider::class,
-            function (Application $app) {
-                return new ExchangeRateReader(
-                    $app->make(ExchangeRateRepository::class),
-                    $app->make(ExchangeRateExternalProvider::class)
-                );
             }
         );
     }

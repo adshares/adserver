@@ -22,6 +22,19 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Service;
 
-interface ExchangeRateExternalProvider extends ExchangeRateProvider
+use Adshares\Common\Application\Dto\FetchedExchangeRate;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use DateTime;
+
+interface ExchangeRateExternalProvider
 {
+    /**
+     * @param DateTime $dateTime
+     * @param string $currency
+     *
+     * @return FetchedExchangeRate
+     *
+     * @throws ExchangeRateNotAvailableException
+     */
+    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate;
 }

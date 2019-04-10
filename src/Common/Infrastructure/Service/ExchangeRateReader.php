@@ -26,13 +26,12 @@ use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateExternalProvider;
-use Adshares\Common\Application\Service\ExchangeRateProvider;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 
-class ExchangeRateReader implements ExchangeRateProvider
+class ExchangeRateReader
 {
     private const MAX_ACCEPTABLE_INTERVAL_IN_HOURS = 24;
 

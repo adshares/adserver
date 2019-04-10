@@ -24,7 +24,7 @@ namespace Adshares\Common\Application\Service;
 
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 
-interface ExchangeRateRepository extends ExchangeRateProvider
+interface ExchangeRateRepository extends ExchangeRateExternalProvider
 {
     public function storeExchangeRate(FetchedExchangeRate $fetchedExchangeRate);
 }
