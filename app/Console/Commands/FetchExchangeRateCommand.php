@@ -42,16 +42,16 @@ class FetchExchangeRateCommand extends Command
     protected $description = 'Fetch exchange rate';
 
     /** @var ExchangeRateRepository */
-    private $repository;
+    private $repositoryRemote;
 
     /** @var ExchangeRateRepositoryStorable */
     private $repositoryStorable;
 
     public function __construct(
-        ExchangeRateRepository $repository,
+        ExchangeRateRepository $repositoryRemote,
         ExchangeRateRepositoryStorable $repositoryStorable
     ) {
-        $this->repository = $repository;
+        $this->repositoryRemote = $repositoryRemote;
         $this->repositoryStorable = $repositoryStorable;
 
         parent::__construct();
@@ -61,7 +61,7 @@ class FetchExchangeRateCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $exchangeRate = $this->repository->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->repositoryRemote->fetchExchangeRate(new DateTime());
         $this->info(sprintf('Exchange rate: %s', $exchangeRate->toString()));
 
         try {

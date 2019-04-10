@@ -39,14 +39,14 @@ class ExchangeRateReader
     private $repositoryStorable;
 
     /** @var ExchangeRateRepository */
-    private $repository;
+    private $repositoryRemote;
 
     public function __construct(
         ExchangeRateRepositoryStorable $repositoryStorable,
-        ExchangeRateRepository $repository
+        ExchangeRateRepository $repositoryRemote
     ) {
         $this->repositoryStorable = $repositoryStorable;
-        $this->repository = $repository;
+        $this->repositoryRemote = $repositoryRemote;
     }
 
     public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate
@@ -62,7 +62,7 @@ class ExchangeRateReader
         }
 
         try {
-            $exchangeRateExternal = $this->repository->fetchExchangeRate($dateTime, $currency);
+            $exchangeRateRemote = $this->repositoryRemote->fetchExchangeRate($dateTime, $currency);
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::warning(
                 sprintf(
@@ -75,16 +75,16 @@ class ExchangeRateReader
                 throw new ExchangeRateNotAvailableException();
             }
 
-            $exchangeRateExternal = null;
+            $exchangeRateRemote = null;
         }
 
-        if (null !== $exchangeRateExternal
+        if (null !== $exchangeRateRemote
             && (null === $exchangeRateFromStorage
-                || $exchangeRateFromStorage->getDateTime() < $exchangeRateExternal->getDateTime())) {
-            $exchangeRate = $exchangeRateExternal;
+                || $exchangeRateFromStorage->getDateTime() < $exchangeRateRemote->getDateTime())) {
+            $exchangeRate = $exchangeRateRemote;
 
             try {
-                $this->repositoryStorable->storeExchangeRate($exchangeRateExternal);
+                $this->repositoryStorable->storeExchangeRate($exchangeRateRemote);
             } catch (QueryException $queryException) {
                 Log::error(
                     sprintf('[ExchangeRateReader] Not able to store exchange rate: %s', $queryException->getMessage())
