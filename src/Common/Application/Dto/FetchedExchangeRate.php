@@ -22,11 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto;
 
-use DateTime;
+use DateTimeInterface;
 
 class FetchedExchangeRate
 {
-    /** @var DateTime */
+    /** @var DateTimeInterface */
     private $dateTime;
 
     /** @var string */
@@ -35,14 +35,14 @@ class FetchedExchangeRate
     /** @var string */
     private $currency;
 
-    public function __construct(DateTime $dateTime, string $value, string $currency)
+    public function __construct(DateTimeInterface $dateTime, string $value, string $currency)
     {
         $this->dateTime = $dateTime;
         $this->value = $value;
         $this->currency = $currency;
     }
 
-    public function getDateTime(): DateTime
+    public function getDateTime(): DateTimeInterface
     {
         return $this->dateTime;
     }
@@ -59,6 +59,6 @@ class FetchedExchangeRate
 
     public function toString(): string
     {
-        return sprintf('%s::%s::%s', $this->dateTime->format(DateTime::ATOM), $this->value, $this->currency);
+        return sprintf('%s::%s::%s', $this->dateTime->format(DateTimeInterface::ATOM), $this->value, $this->currency);
     }
 }
