@@ -359,7 +359,7 @@ domReady(function () {
 
     aduserPixel(getImpressionId());
 
-    var tags = document.querySelectorAll(selectorClass + '[data-pub]');
+    var tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = tags.length;
 
     if (n == 0) {
