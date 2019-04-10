@@ -43,7 +43,7 @@ class InsertConfigAdpayEventLastExportedId extends Migration
 
         $date = DateTime::createFromFormat(DateTime::ATOM, $adpayEventExportTime->value);
         $event = DB::table('event_logs')->where('created_at', '<=', $date)->orderByDesc('id')->first();
-        DB::table('configs')->insert(
+        DB::table('configs')->updateOrInsert(
             [
                 'key' => Config::ADPAY_LAST_EXPORTED_EVENT_ID,
                 'value' => $event->id ?? 0,
