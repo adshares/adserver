@@ -33,7 +33,7 @@ interface ExchangeRateProvider
      * @param string $currency
      *
      * @return FetchedExchangeRate
-     * 
+     *
      * @throws ExchangeRateNotAvailableException
      */
     public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): FetchedExchangeRate;
