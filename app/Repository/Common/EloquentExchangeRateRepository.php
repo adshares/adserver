@@ -28,7 +28,7 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
 
-class ExchangeRateRepositoryImpl implements ExchangeRateRepository
+class EloquentExchangeRateRepository implements ExchangeRateRepository
 {
     private const DATABASE_DATETIME_FORMAT = 'Y-m-d H:i:s';
 

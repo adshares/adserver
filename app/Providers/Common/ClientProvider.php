@@ -32,7 +32,7 @@ use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
-use Adshares\Adserver\Repository\Common\ExchangeRateRepositoryImpl;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
@@ -161,7 +161,7 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             ExchangeRateRepository::class,
             function () {
-                return new ExchangeRateRepositoryImpl();
+                return new EloquentExchangeRateRepository();
             }
         );
 

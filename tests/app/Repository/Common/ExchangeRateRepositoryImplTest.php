@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Repository\Common;
 
-use Adshares\Adserver\Repository\Common\ExchangeRateRepositoryImpl;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\FetchedExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
@@ -35,7 +35,7 @@ final class ExchangeRateRepositoryImplTest extends TestCase
 
     public function testExchangeRateRepositoryFetchWhileEmpty(): void
     {
-        $exchangeRateRepository = new ExchangeRateRepositoryImpl();
+        $exchangeRateRepository = new EloquentExchangeRateRepository();
 
         $this->expectException(ExchangeRateNotAvailableException::class);
         $exchangeRateRepository->fetchExchangeRate(new DateTime());
@@ -43,7 +43,7 @@ final class ExchangeRateRepositoryImplTest extends TestCase
 
     public function testExchangeRateRepositoryStoreAndFetch(): void
     {
-        $exchangeRateRepository = new ExchangeRateRepositoryImpl();
+        $exchangeRateRepository = new EloquentExchangeRateRepository();
 
         $dateTime = new DateTime();
         $dateTime->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'));
