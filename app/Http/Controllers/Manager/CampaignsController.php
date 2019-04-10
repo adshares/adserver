@@ -150,7 +150,7 @@ class CampaignsController extends Controller
             $size = explode('x', Banner::size($banner['size']));
 
             if (!isset($size[0], $size[1])) {
-                throw new \RuntimeException('Banner size is required.');
+                throw new RuntimeException('Banner size is required.');
             }
 
             $bannerModel = new Banner();
@@ -243,7 +243,8 @@ class CampaignsController extends Controller
             $bannerFromInput = $banners->firstWhere('uuid', $banner->uuid);
 
             if ($bannerFromInput) {
-                $banner->name = $bannerFromInput['name'];
+                $banner->name = $bannerFromInput['name']
+                    ?? "{$bannerFromInput->creative_width}x{$bannerFromInput->creative_height}";
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(
@@ -267,7 +268,6 @@ class CampaignsController extends Controller
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
         }
-
 
         if ($status !== $campaign->status) {
             try {
