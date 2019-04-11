@@ -67,6 +67,9 @@ class Config extends Model
 
     public const SUPPORT_EMAIL = 'support-email';
 
+    public const BONUS_NEW_USERS_ENABLED = 'bonus-new-users-enabled';
+    public const BONUS_NEW_USERS_AMOUNT = 'bonus-new-users-amount';
+
     private const ADMIN_SETTINGS = [
         self::OPERATOR_TX_FEE,
         self::OPERATOR_RX_FEE,
@@ -78,6 +81,8 @@ class Config extends Model
         self::ADSERVER_NAME,
         self::TECHNICAL_EMAIL,
         self::SUPPORT_EMAIL,
+        self::BONUS_NEW_USERS_ENABLED,
+        self::BONUS_NEW_USERS_AMOUNT,
     ];
 
     public $incrementing = false;
