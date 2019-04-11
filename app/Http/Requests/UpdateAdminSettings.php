@@ -38,13 +38,21 @@ class UpdateAdminSettings extends FormRequest
         $settings['cold_wallet_min_value'] = $settings['cold_wallet_min_value'] ?? $settings['hotwallet_min_value'];
         $settings['cold_wallet_max_value'] = $settings['cold_wallet_max_value'] ?? $settings['hotwallet_max_value'];
         $settings['cold_wallet_address'] = $settings['cold_wallet_address'] ?? $settings['hotwallet_address'];
-        unset($settings['hotwallet_min_value'], $settings['hotwallet_max_value'], $settings['hotwallet_address']);
+        unset(
+            $settings['hotwallet_min_value'],
+            $settings['hotwallet_max_value'],
+            $settings['hotwallet_address']
+        );
         //TODO: ^^^
 
         $isHotWalletActive = (bool)$settings['cold_wallet_is_active'];
 
         if ($isHotWalletActive === false) {
-            unset($settings['cold_wallet_min_value'], $settings['cold_wallet_max_value'], $settings['cold_wallet_address']);
+            unset(
+                $settings['cold_wallet_min_value'],
+                $settings['cold_wallet_max_value'],
+                $settings['cold_wallet_address']
+            );
         }
 
         $this->replace(['settings' => $settings]);
