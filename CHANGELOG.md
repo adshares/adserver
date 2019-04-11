@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.2] - 2019-04-11
 ### Fixed
 - Cron jobs output
+### Changed
+- Headers sent to AdUser
 
 ## [0.5.1] - 2019-04-10
 ### Fixed
