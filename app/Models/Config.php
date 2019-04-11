@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use function apcu_fetch;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -55,12 +54,17 @@ class Config extends Model
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
 
     public const HOT_WALLET_MIN_VALUE = 'hotwallet-min-value';
+
     public const HOT_WALLET_MAX_VALUE = 'hotwallet-max-value';
-    public const HOT_WALLET_ADDRESS = 'hotwallet-address';
-    public const HOT_WALLET_IS_ACTIVE = 'hotwallet-is-active';
+
+    public const COLD_WALLET_ADDRESS = 'cold-wallet-address';
+
+    public const COLD_WALLET_IS_ACTIVE = 'cold-wallet-is-active';
 
     public const ADSERVER_NAME = 'adserver-name';
+
     public const TECHNICAL_EMAIL = 'technical-email';
+
     public const SUPPORT_EMAIL = 'support-email';
 
     private const ADMIN_SETTINGS = [
@@ -69,8 +73,8 @@ class Config extends Model
         self::LICENCE_RX_FEE,
         self::HOT_WALLET_MIN_VALUE,
         self::HOT_WALLET_MAX_VALUE,
-        self::HOT_WALLET_ADDRESS,
-        self::HOT_WALLET_IS_ACTIVE,
+        self::COLD_WALLET_ADDRESS,
+        self::COLD_WALLET_IS_ACTIVE,
         self::ADSERVER_NAME,
         self::TECHNICAL_EMAIL,
         self::SUPPORT_EMAIL,
@@ -160,9 +164,9 @@ class Config extends Model
         return $data->pluck('value', 'key')->toArray();
     }
 
-    public static function isHotWalletActive(): bool
+    public static function isColdWalletActive(): bool
     {
-        $config = self::where('key', self::HOT_WALLET_IS_ACTIVE)->first();
+        $config = self::where('key', self::COLD_WALLET_IS_ACTIVE)->first();
 
         if (null === $config) {
             return false;
@@ -189,11 +193,11 @@ class Config extends Model
     public static function fetchAdPayLastExportedEventId(): int
     {
         $id = self::where('key', self::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
-        
+
         if (!$id) {
             return 0;
         }
-        
+
         return (int)$id->value;
     }
 

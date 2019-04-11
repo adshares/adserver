@@ -26,14 +26,16 @@ class InsertConfigWalletDisable extends Migration
 {
     public function up(): void
     {
-        $isWalletConfig = DB::table('configs')->where('key', Config::HOT_WALLET_IS_ACTIVE)->count() > 0;
+        $isWalletConfig = DB::table('configs')
+                ->where('key', Config::COLD_WALLET_IS_ACTIVE)
+                ->count() > 0;
         if ($isWalletConfig) {
             return;
         }
 
         DB::table('configs')->insert(
             [
-                'key' => Config::HOT_WALLET_IS_ACTIVE,
+                'key' => Config::COLD_WALLET_IS_ACTIVE,
                 'value' => false,
                 'created_at' => new DateTime(),
             ]
@@ -45,7 +47,7 @@ class InsertConfigWalletDisable extends Migration
         DB::table('configs')->whereIn(
             'key',
             [
-                Config::HOT_WALLET_IS_ACTIVE,
+                Config::COLD_WALLET_IS_ACTIVE,
             ]
         )->delete();
     }
