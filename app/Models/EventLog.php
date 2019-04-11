@@ -241,7 +241,7 @@ class EventLog extends Model
 
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
-            ['ip' => $ip, 'user-agent' => $ua],
+            ['ip' => $ip, 'ua' => $ua],
             ['uid' => $this->findTid($cookies)]
         );
     }
