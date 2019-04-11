@@ -164,7 +164,7 @@ class Config extends Model
         return $data->pluck('value', 'key')->toArray();
     }
 
-    public static function isHotWalletActive(): bool
+    public static function isColdWalletActive(): bool
     {
         $config = self::where('key', self::COLD_WALLET_IS_ACTIVE)->first();
 
