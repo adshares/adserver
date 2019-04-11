@@ -240,8 +240,8 @@ class EventLog extends Model
         $cookies = explode(';', $cookieHeader);
 
         return new ImpressionContext(
-            ['domain' => $domain],
-            ['ip' => $ip, 'ua' => $ua],
+            ['domain' => $domain, 'page' => $domain],
+            ['ip' => $ip, 'user-agent' => $ua],
             ['uid' => $this->findTid($cookies)]
         );
     }

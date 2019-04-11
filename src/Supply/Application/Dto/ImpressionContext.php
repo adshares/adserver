@@ -68,7 +68,7 @@ final class ImpressionContext
     public function adUserRequestBody(): array
     {
         return [
-            'url' => $this->site['page'] ?? [],
+            'url' => $this->site['page'] ?? '',
             'tags' => $this->site['keywords'] ?? [],
             'headers' => $this->headers(),
         ];
@@ -114,15 +114,6 @@ final class ImpressionContext
         return ($this->user['uid'] ?? '') ?: Utils::createTrackingId((string)config('app.adserver_secret'));
     }
 
-    public function eventContext(): array
-    {
-        return [
-            'site' => $this->site,
-            'device' => $this->device,
-            'user' => $this->user,
-        ];
-    }
-
     private function headers(): array
     {
         $headers = array_map(
@@ -132,7 +123,6 @@ final class ImpressionContext
             $this->device['headers'] ?? []
         );
 
-        //@deprecated Remove when AdUser upgraded
         $headers['User-Agent'] = $this->device['ua'] ?? '';
 
         return $headers;
