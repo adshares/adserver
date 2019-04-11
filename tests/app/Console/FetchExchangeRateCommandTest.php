@@ -21,10 +21,10 @@
 namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Client\DummyExchangeRateRepository;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 
 final class FetchExchangeRateCommandTest extends TestCase
 {
@@ -36,11 +36,11 @@ final class FetchExchangeRateCommandTest extends TestCase
                 return new DummyExchangeRateRepository();
             }
         );
-        $mockRepository = $this->createMock(ExchangeRateRepositoryStorable::class);
+        $mockRepository = $this->createMock(EloquentExchangeRateRepository::class);
         $mockRepository->expects($this->once())->method('storeExchangeRate');
 
         $this->app->bind(
-            ExchangeRateRepositoryStorable::class,
+            EloquentExchangeRateRepository::class,
             function () use ($mockRepository) {
                 return $mockRepository;
             }

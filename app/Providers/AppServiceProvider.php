@@ -22,8 +22,12 @@ namespace Adshares\Adserver\Providers;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CliDriver;
+use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
+use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
+use Adshares\Adserver\Services\Adselect;
+use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -33,12 +37,8 @@ use Adshares\Common\Infrastructure\Service\LicenseVaultFilesystem;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
-use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
-use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
-use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
-use Adshares\Adserver\Services\Adselect;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\ServiceProvider;
 use Storage;
 
 class AppServiceProvider extends ServiceProvider
@@ -116,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
             LicenseVault::class,
             function (Application $app) {
                 $path = Storage::disk('local')->path('license.txt');
+
                 return new LicenseVaultFilesystem($path, $app->make(LicenseDecoder::class));
             }
         );
@@ -131,8 +132,7 @@ class AppServiceProvider extends ServiceProvider
             ExchangeRateReader::class,
             function (Application $app) {
                 return new ExchangeRateReader(
-                    $app->make(ExchangeRateRepositoryStorable::class),
-                    $app->make(ExchangeRateRepository::class)
+                    $app->make(EloquentExchangeRateRepository::class), $app->make(ExchangeRateRepository::class)
                 );
             }
         );

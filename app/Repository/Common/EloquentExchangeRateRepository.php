@@ -25,10 +25,9 @@ namespace Adshares\Adserver\Repository\Common;
 use Adshares\Adserver\Models\ExchangeRate;
 use Adshares\Common\Application\Dto\ExchangeRate as DomainExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
 
-class EloquentExchangeRateRepository implements ExchangeRateRepositoryStorable
+class EloquentExchangeRateRepository
 {
     private const DATABASE_DATETIME_FORMAT = 'Y-m-d H:i:s';
 

@@ -22,11 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Infrastructure\Service;
 
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
@@ -35,14 +35,14 @@ class ExchangeRateReader
 {
     private const MAX_ACCEPTABLE_INTERVAL_IN_HOURS = 24;
 
-    /** @var ExchangeRateRepositoryStorable */
+    /** @var EloquentExchangeRateRepository */
     private $repositoryStorable;
 
     /** @var ExchangeRateRepository */
     private $repositoryRemote;
 
     public function __construct(
-        ExchangeRateRepositoryStorable $repositoryStorable,
+        EloquentExchangeRateRepository $repositoryStorable,
         ExchangeRateRepository $repositoryRemote
     ) {
         $this->repositoryStorable = $repositoryStorable;

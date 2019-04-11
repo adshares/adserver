@@ -38,7 +38,6 @@ use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
@@ -155,7 +154,7 @@ final class ClientProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            ExchangeRateRepositoryStorable::class,
+            EloquentExchangeRateRepository::class,
             function () {
                 return new EloquentExchangeRateRepository();
             }

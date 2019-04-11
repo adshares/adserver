@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Common\Application\Service\ExchangeRateRepositoryStorable;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
@@ -41,18 +41,18 @@ class FetchExchangeRateCommand extends Command
 
     protected $description = 'Fetch exchange rate';
 
+    /** @var EloquentExchangeRateRepository */
+    private $repositoryStorable;
+
     /** @var ExchangeRateRepository */
     private $repositoryRemote;
 
-    /** @var ExchangeRateRepositoryStorable */
-    private $repositoryStorable;
-
     public function __construct(
-        ExchangeRateRepository $repositoryRemote,
-        ExchangeRateRepositoryStorable $repositoryStorable
+        EloquentExchangeRateRepository $repositoryStorable,
+        ExchangeRateRepository $repositoryRemote
     ) {
-        $this->repositoryRemote = $repositoryRemote;
         $this->repositoryStorable = $repositoryStorable;
+        $this->repositoryRemote = $repositoryRemote;
 
         parent::__construct();
     }
