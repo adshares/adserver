@@ -20,8 +20,8 @@
 
 namespace Adshares\Adserver\Utilities;
 
-use Config as SystemConfig;
 use Adshares\Adserver\Models\Config;
+use Config as SystemConfig;
 
 class DatabaseConfigReader
 {
@@ -30,7 +30,7 @@ class DatabaseConfigReader
         $settings = Config::fetchAdminSettings();
         $hotWalletMinValue = $settings[Config::HOT_WALLET_MIN_VALUE];
         $hotWalletMaxValue = $settings[Config::HOT_WALLET_MAX_VALUE];
-        $hotWalletAddress = $settings[Config::HOT_WALLET_ADDRESS] ?? '';
+        $hotWalletAddress = $settings[Config::COLD_WALLET_ADDRESS] ?? '';
         $serverName = $settings[Config::ADSERVER_NAME];
         $technicalEmail = $settings[Config::TECHNICAL_EMAIL];
         $supportEmail = $settings[Config::SUPPORT_EMAIL];

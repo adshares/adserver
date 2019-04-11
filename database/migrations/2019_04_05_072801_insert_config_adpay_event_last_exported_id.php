@@ -46,6 +46,8 @@ class InsertConfigAdpayEventLastExportedId extends Migration
         DB::table('configs')->updateOrInsert(
             [
                 'key' => Config::ADPAY_LAST_EXPORTED_EVENT_ID,
+            ],
+            [
                 'value' => $event->id ?? 0,
                 'created_at' => new DateTime(),
             ]
@@ -65,7 +67,8 @@ class InsertConfigAdpayEventLastExportedId extends Migration
         $event = DB::table('event_logs')->where('id', $id)->first();
 
         if ($event) {
-            $date = DateTime::createFromFormat(self::DATABASE_DATETIME_FORMAT, $event->created_at, new DateTimeZone('UTC'));
+            $date =
+                DateTime::createFromFormat(self::DATABASE_DATETIME_FORMAT, $event->created_at, new DateTimeZone('UTC'));
             DB::table('configs')->insert(
                 [
                     'key' => 'adpay-event-export',
