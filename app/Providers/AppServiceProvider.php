@@ -132,7 +132,8 @@ class AppServiceProvider extends ServiceProvider
             ExchangeRateReader::class,
             function (Application $app) {
                 return new ExchangeRateReader(
-                    $app->make(EloquentExchangeRateRepository::class), $app->make(ExchangeRateRepository::class)
+                    $app->make(EloquentExchangeRateRepository::class),
+                    $app->make(ExchangeRateRepository::class)
                 );
             }
         );
