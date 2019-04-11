@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function array_merge;
 use function in_array;
@@ -253,13 +254,18 @@ class UserLedgerEntry extends Model
 
     public static function fetchBlockedEntriesByUserId(int $userId): Collection
     {
-        return self::blockedEntries()->where('user_id', $userId)->get();
+        return self::blockedEntriesByUserId($userId)->get();
     }
 
-    private static function blockedEntries()
+    private static function blockedEntries(): Builder
     {
         return self::where('status', self::STATUS_BLOCKED)
             ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE]);
+    }
+
+    private static function blockedEntriesByUserId(int $userId): Builder
+    {
+        return self::blockedEntries()->where('user_id', $userId);
     }
 
     private static function addAdExpense(int $status, int $userId, int $amount): array
@@ -299,12 +305,21 @@ class UserLedgerEntry extends Model
             $entries[] = $obj;
         }
 
+        Log::info(sprintf('Blocked %d clicks', $amount));
+
         return $entries;
     }
 
     public static function blockAdExpense(int $userId, int $nonNegativeAmount): array
     {
         return self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+    }
+
+    public static function releaseBlockedAdExpense(int $userId): void
+    {
+        $blockedEntries = self::blockedEntriesByUserId($userId);
+        Log::info(sprintf('Release blocked %d clicks', (int)$blockedEntries->sum('budget')));
+        $blockedEntries->delete();
     }
 
     public static function processAdExpense(int $userId, int $nonNegativeAmount): array

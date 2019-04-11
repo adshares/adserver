@@ -181,6 +181,18 @@ class Campaign extends Model
         return $query->groupBy('user_id')->selectRaw('sum(budget) as sum, user_id')->pluck('sum', 'user_id');
     }
 
+    public static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): int
+    {
+        $query = self::where('status', self::STATUS_ACTIVE)->where(
+            function ($q) {
+                $dateTime = DateUtils::getDateTimeRoundedToCurrentHour();
+                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
+            }
+        );
+
+        return (int)$query->sum('budget');
+    }
+
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
@@ -272,34 +284,14 @@ class Campaign extends Model
             return;
         }
 
-        $userLedgerEntry = UserLedgerEntry::fetchBlockedEntriesByUserId($this->user_id)->first();
-        if (null === $userLedgerEntry) {
-            if ($status === self::STATUS_ACTIVE) {
-                UserLedgerEntry::blockAdExpense($this->user_id, $budgetForCurrentDateTime);
-            } else {
-                Log::error(
-                    sprintf(
-                        '[Campaign] Attempt to release non existing blockade for user_id (%d), campaign_id (%d).',
-                        $this->user_id,
-                        $this->id
-                    )
-                );
-            }
-
-            return;
-        }
-
         if ($status === self::STATUS_ACTIVE) {
-            $userLedgerEntry->amount = $userLedgerEntry->amount - $budgetForCurrentDateTime;
+            $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budgetForCurrentDateTime;
         } else {
-            $userLedgerEntry->amount = $userLedgerEntry->amount + $budgetForCurrentDateTime;
+            $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() - $budgetForCurrentDateTime;
         }
 
-        if (0 === $userLedgerEntry->amount) {
-            $userLedgerEntry->delete();
-        } else {
-            $userLedgerEntry->save();
-        }
+        UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
+        UserLedgerEntry::blockAdExpense($this->user_id, $amount);
     }
 
     private static function failIfInvalidStatus(int $value): void
