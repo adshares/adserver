@@ -40,4 +40,15 @@ final class DateUtils
 
         return $roundedDate;
     }
+
+    public static function areTheSameHour(DateTime $dateTimeInput1, DateTime $dateTimeInput2): bool
+    {
+        $dateTime1 = clone $dateTimeInput1;
+        $dateTime2 = clone $dateTimeInput2;
+
+        $dateTime1->setTime((int)$dateTime1->format('H'), 0);
+        $dateTime2->setTime((int)$dateTime2->format('H'), 0);
+
+        return $dateTime1 == $dateTime2;
+    }
 }

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
@@ -31,10 +32,12 @@ use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
+use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
@@ -140,6 +143,20 @@ final class ClientProvider extends ServiceProvider
                     ),
                     (string)config('app.license_id')
                 );
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () {
+                return new DummyExchangeRateRepository();
+            }
+        );
+
+        $this->app->bind(
+            EloquentExchangeRateRepository::class,
+            function () {
+                return new EloquentExchangeRateRepository();
             }
         );
     }

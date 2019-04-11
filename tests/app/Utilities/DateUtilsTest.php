@@ -53,6 +53,24 @@ final class DateUtilsTest extends TestCase
         $this->assertEquals($dateOutputExpected, $dateOutput);
     }
 
+    /**
+     * @dataProvider areTheSameHourProvider
+     *
+     * @param string $date1
+     * @param string $date2
+     * @param bool $areTheSameHour
+     */
+    public function testAreTheSameHour(string $date1, string $date2, bool $areTheSameHour): void
+    {
+        $this->assertEquals(
+            $areTheSameHour,
+            DateUtils::areTheSameHour(
+                DateTime::createFromFormat(DateTime::ATOM, $date1),
+                DateTime::createFromFormat(DateTime::ATOM, $date2)
+            )
+        );
+    }
+
     public function roundToNextHourProvider(): array
     {
         $table = [
@@ -72,6 +90,17 @@ final class DateUtilsTest extends TestCase
         ];
 
         return $this->convertStringToDateTimeTable($table);
+    }
+
+    public function areTheSameHourProvider(): array
+    {
+        return [
+            ['2019-01-26T09:21:56+0100', '2019-01-26T09:00:00+0100', true],
+            ['2019-01-26T09:00:00+0100', '2019-01-26T09:00:00+0100', true],
+            ['2019-01-26T09:21:56+0100', '2019-01-26T10:00:00+0200', true],
+            ['2019-01-26T09:21:56+0100', '2019-01-26T10:00:00+0100', false],
+            ['2019-01-26T09:00:00+0100', '2019-01-26T09:00:00+0300', false],
+        ];
     }
 
     private function convertStringToDateTimeTable(array $table): array
