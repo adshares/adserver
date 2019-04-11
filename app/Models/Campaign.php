@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Supply\Domain\ValueObject\Size;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -312,7 +313,9 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): int
     {
-        if ($this->time_end != null && $this->time_end < DateUtils::getDateTimeRoundedToCurrentHour()) {
+        if ($this->time_end != null
+            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
+            < DateUtils::getDateTimeRoundedToCurrentHour()) {
             return 0;
         }
 
