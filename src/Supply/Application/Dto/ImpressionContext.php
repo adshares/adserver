@@ -123,7 +123,9 @@ final class ImpressionContext
             $this->device['headers'] ?? []
         );
 
-        $headers['user-agent'] = $headers['User-Agent'] ?: $this->device['ua'] ?? '';
+        $headers['user-agent'] =
+            ($headers['user-agent'] ?? $headers['User-Agent'] ?? null) ?: ($this->device['ua'] ?? '');
+
         $headers['User-Agent'] = $headers['user-agent'];
 
         return $headers;
