@@ -104,11 +104,12 @@ class SettingsResponse implements Arrayable
             'hotwallet_max_value' => $this->hotWalletMaxValue,
             'hotwallet_is_active' => $this->coldWalletIsActive,
             'hotwallet_address' => $this->coldWalletAddress->toString(),
-            'cold_wallet_is_active' => $this->coldWalletIsActive,
-            'cold_wallet_address' => $this->coldWalletAddress->toString(),
             'adserver_name' => $this->adserverName,
             'technical_email' => $this->technicalEmail->toString(),
             'support_email' => $this->supportEmail->toString(),
+            //TODO: remove when front done
+            'cold_wallet_is_active' => $this->coldWalletIsActive,
+            'cold_wallet_address' => $this->coldWalletAddress->toString(),
         ];
 
         if ($this->advertiserCommission) {
