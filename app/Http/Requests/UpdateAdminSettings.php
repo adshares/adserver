@@ -35,22 +35,19 @@ class UpdateAdminSettings extends FormRequest
 
         //TODO: remove when front done
         $settings['cold_wallet_is_active'] = $settings['cold_wallet_is_active'] ?? $settings['hotwallet_is_active'];
-        $settings['cold_wallet_min_value'] = $settings['cold_wallet_min_value'] ?? $settings['hotwallet_min_value'];
-        $settings['cold_wallet_max_value'] = $settings['cold_wallet_max_value'] ?? $settings['hotwallet_max_value'];
         $settings['cold_wallet_address'] = $settings['cold_wallet_address'] ?? $settings['hotwallet_address'];
         unset(
-            $settings['hotwallet_min_value'],
-            $settings['hotwallet_max_value'],
+            $settings['hotwallet_is_active'],
             $settings['hotwallet_address']
         );
         //TODO: ^^^
 
-        $isHotWalletActive = (bool)$settings['cold_wallet_is_active'];
+        $isColdWalletActive = (bool)$settings['cold_wallet_is_active'];
 
-        if ($isHotWalletActive === false) {
+        if ($isColdWalletActive === false) {
             unset(
-                $settings['cold_wallet_min_value'],
-                $settings['cold_wallet_max_value'],
+                $settings['hotwallet_min_value'],
+                $settings['hotwallet_max_value'],
                 $settings['cold_wallet_address']
             );
         }
@@ -64,18 +61,18 @@ class UpdateAdminSettings extends FormRequest
 
         return [
             'settings.cold_wallet_is_active' => 'required|boolean',
-            'settings.cold_wallet_min_value' => [
+            'settings.hotwallet_min_value' => [
                 'required_if:settings.cold_wallet_is_active,1',
                 'integer',
                 'min:0',
                 'max:100000000000000000',
             ],
-            'settings.cold_wallet_max_value' => [
+            'settings.hotwallet_max_value' => [
                 'required_if:settings.cold_wallet_is_active,1',
                 'integer',
                 'min:1',
                 'max:100000000000000000',
-                'gt:settings.cold_wallet_min_value',
+                'gt:settings.hotwallet_min_value',
             ],
             'settings.cold_wallet_address' => [
                 'required_if:settings.cold_wallet_is_active,1',
@@ -100,12 +97,12 @@ class UpdateAdminSettings extends FormRequest
             Config::SUPPORT_EMAIL => (new Email($values['support_email']))->toString(),
         ];
 
-        if (isset($values['cold_wallet_min_value'])) {
-            $data[Config::HOT_WALLET_MIN_VALUE] = (int)$values['cold_wallet_min_value'];
+        if (isset($values['hotwallet_min_value'])) {
+            $data[Config::HOT_WALLET_MIN_VALUE] = (int)$values['hotwallet_min_value'];
         }
 
-        if (isset($values['cold_wallet_max_value'])) {
-            $data[Config::HOT_WALLET_MAX_VALUE] = (int)$values['cold_wallet_max_value'];
+        if (isset($values['hotwallet_max_value'])) {
+            $data[Config::HOT_WALLET_MAX_VALUE] = (int)$values['hotwallet_max_value'];
         }
 
         if (isset($values['cold_wallet_address'])) {
