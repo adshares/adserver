@@ -46,7 +46,7 @@ class UpdateConfigEntryNameForColdWallet extends Migration
         $coldWalletAddress = DB::table('configs')->where('key', Config::COLD_WALLET_ADDRESS)->first();
         if ($coldWalletAddress === null) {
             $hotWalletAddress = DB::table('configs')->where('key', 'hotwallet-address')->first();
-            if ($hotWalletAddress === null && $coldWalletAddress === null) {
+            if ($hotWalletAddress === null) {
                 DB::table('configs')->insert(
                     [
                         'key' => Config::COLD_WALLET_ADDRESS,
