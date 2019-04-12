@@ -150,14 +150,14 @@ class Config extends Model
         self::updateOrInsertDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME, $date);
     }
 
-    public static function getFee(string $feeType): float
+    public static function fetchFloatOrFail(string $feeType): float
     {
         $config = self::where('key', $feeType)->firstOrFail();
 
         return (float)$config->value;
     }
 
-    public static function getLicenceAccount(): string
+    public static function getLicenceAccountOrFail(): string
     {
         $config = self::where('key', self::LICENCE_ACCOUNT)->firstOrFail();
 
@@ -173,13 +173,7 @@ class Config extends Model
 
     public static function isColdWalletActive(): bool
     {
-        $config = self::where('key', self::COLD_WALLET_IS_ACTIVE)->first();
-
-        if (null === $config) {
-            return false;
-        }
-
-        return (bool)$config->value;
+        return (bool)self::fetchByKey(self::COLD_WALLET_IS_ACTIVE);
     }
 
     public static function updateAdminSettings(array $settings): void
@@ -191,13 +185,7 @@ class Config extends Model
 
     public static function fetchAdPayLastExportedEventId(): int
     {
-        $id = self::where('key', self::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
-
-        if (!$id) {
-            return 0;
-        }
-
-        return (int)$id->value;
+        return (int)self::fetchByKey(self::ADPAY_LAST_EXPORTED_EVENT_ID, '0');
     }
 
     public static function updateAdPayLastExportedEventId(int $id): void

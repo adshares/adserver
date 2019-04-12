@@ -58,6 +58,7 @@ class AdPayEventExportCommand extends Command
                 $adPay->addEvents($events);
 
                 $eventIdLastExported = $eventsToExport->last()->id;
+
                 Config::updateAdPayLastExportedEventId($eventIdLastExported);
                 $eventIdFirst = $eventIdLastExported + 1;
             }
