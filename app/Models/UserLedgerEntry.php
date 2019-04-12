@@ -318,7 +318,6 @@ class UserLedgerEntry extends Model
                     $adExpense->amount,
                     $adExpense->typeAsString()
                 )
-                
             );
         }
 
