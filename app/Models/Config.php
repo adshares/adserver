@@ -68,6 +68,7 @@ class Config extends Model
     public const SUPPORT_EMAIL = 'support-email';
 
     public const BONUS_NEW_USERS_ENABLED = 'bonus-new-users-enabled';
+
     public const BONUS_NEW_USERS_AMOUNT = 'bonus-new-users-amount';
 
     private const ADMIN_SETTINGS = [
