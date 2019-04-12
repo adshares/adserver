@@ -56,7 +56,7 @@ class WalletAmountCheckCommand extends Command
     {
         $this->info('[Wallet] Start command '.$this->signature);
 
-        if (!Config::isColdWalletActive()) {
+        if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
             $this->info('[Wallet] Hot wallet feature is disabled.');
 
             return;
@@ -89,7 +89,7 @@ class WalletAmountCheckCommand extends Command
                 config('app.adshares_address')
             );
 
-            Config::updateOrInsertDateTimeByKey(Config::OPERATOR_WALLET_EMAIL_LAST_TIME, new DateTime());
+            Config::upsertDateTime(Config::OPERATOR_WALLET_EMAIL_LAST_TIME, new DateTime());
 
             $this->info($message);
 
@@ -101,7 +101,7 @@ class WalletAmountCheckCommand extends Command
 
     private function shouldEmailBeSent(): bool
     {
-        $date = Config::fetchDateTimeByKeyOrEpochStart(Config::OPERATOR_WALLET_EMAIL_LAST_TIME);
+        $date = Config::fetchDateTime(Config::OPERATOR_WALLET_EMAIL_LAST_TIME);
 
         $interval = sprintf('%d second', self::SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS);
 

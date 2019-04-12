@@ -50,7 +50,7 @@ class AdSelectPaymentsExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $lastExportDate = Config::fetchDateTimeByKeyOrEpochStart(Config::ADSELECT_PAYMENT_EXPORT_TIME);
+        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
 
         try {
             $this->exporterService->exportPayments($lastExportDate);
@@ -60,7 +60,7 @@ class AdSelectPaymentsExportCommand extends Command
             return;
         }
 
-        Config::updateOrInsertDateTimeByKey(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
+        Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
 
         $this->info('Finished exporting event payments to AdSelect.');
     }

@@ -49,7 +49,7 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return new AccountId(Config::getLicenceAccountOrFail());
+            return new AccountId(Config::fetchStringOrFail(Config::LICENCE_ACCOUNT));
         }
 
         $value = $license->getPaymentAddress();

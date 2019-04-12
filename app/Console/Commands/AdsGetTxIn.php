@@ -47,18 +47,8 @@ class AdsGetTxIn extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $configDate = Config::where('key', Config::ADS_LOG_START)->first();
-        if (null === $configDate) {
-            $configDate = new Config();
-            $configDate->key = Config::ADS_LOG_START;
-
-            $dateFrom = new DateTime('@0');
-        } else {
-            $dateFrom = DateTime::createFromFormat(DATE_ATOM, $configDate->value);
-        }
-
         try {
-            $response = $adsClient->getLog($dateFrom);
+            $response = $adsClient->getLog(Config::fetchDateTime(Config::ADS_LOG_START));
         } catch (CommandException $exc) {
             $this->error('Cannot get log');
 
@@ -70,9 +60,9 @@ class AdsGetTxIn extends Command
             $txsCount = $this->parse($log);
 
             try {
-                $lastEventTimestamp = $this->getLastEventTime($log);
-                $configDate->value = (new DateTime())->setTimestamp($lastEventTimestamp)->format(DATE_ATOM);
-                $configDate->save();
+                $lastEventDate = (new DateTime())->setTimestamp($this->getLastEventTime($log));
+
+                Config::upsertDateTime(Config::ADS_LOG_START, $lastEventDate);
             } catch (ConsoleCommandException $exc) {
                 $this->error('Cannot get time of last event');
             }

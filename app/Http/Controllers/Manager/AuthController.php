@@ -93,8 +93,8 @@ class AuthController extends Controller
 
         DB::commit();
 
-        if (Config::isNewUserBonusEnabled()) {
-            $user->awardBonus(Config::newUserBonusAmount());
+        if (Config::isTrueOnly(Config::BONUS_NEW_USER_ENABLED)) {
+            $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
         }
 
         return self::json($user->toArray());

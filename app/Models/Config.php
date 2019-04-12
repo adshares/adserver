@@ -20,9 +20,12 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use function array_merge;
+use function sprintf;
 
 /**
  * @mixin Builder
@@ -45,9 +48,9 @@ class Config extends Model
 
     public const ADPAY_LAST_EXPORTED_EVENT_ID = 'adpay-last-exported-event-id';
 
-    private const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
+    public const ADSELECT_EVENT_EXPORT_TIME = 'adselect-event-export';
 
-    private const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
+    public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
 
     public const ADSELECT_PAYMENT_EXPORT_TIME = 'adselect-payment-export';
 
@@ -71,19 +74,19 @@ class Config extends Model
 
     public const BONUS_NEW_USER_AMOUNT = 'bonus-new-users-amount';
 
-    private const ADMIN_SETTINGS = [
-        self::OPERATOR_TX_FEE,
-        self::OPERATOR_RX_FEE,
-        self::LICENCE_RX_FEE,
-        self::HOT_WALLET_MIN_VALUE,
-        self::HOT_WALLET_MAX_VALUE,
-        self::COLD_WALLET_ADDRESS,
-        self::COLD_WALLET_IS_ACTIVE,
-        self::ADSERVER_NAME,
-        self::TECHNICAL_EMAIL,
-        self::SUPPORT_EMAIL,
-        self::BONUS_NEW_USER_ENABLED,
-        self::BONUS_NEW_USER_AMOUNT,
+    private const ADMIN_SETTINGS_DEFAULTS = [
+        self::OPERATOR_TX_FEE => '',
+        self::OPERATOR_RX_FEE => '',
+        self::LICENCE_RX_FEE => '',
+        self::HOT_WALLET_MIN_VALUE => '',
+        self::HOT_WALLET_MAX_VALUE => '',
+        self::COLD_WALLET_ADDRESS => '',
+        self::COLD_WALLET_IS_ACTIVE => '',
+        self::ADSERVER_NAME => '',
+        self::TECHNICAL_EMAIL => '',
+        self::SUPPORT_EMAIL => '',
+        self::BONUS_NEW_USER_ENABLED => '',
+        self::BONUS_NEW_USER_AMOUNT => '',
     ];
 
     public $incrementing = false;
@@ -94,9 +97,30 @@ class Config extends Model
 
     protected $guarded = [];
 
-    private static function fetchByKey(string $key, string $default = ''): string
+    private static function whereKey(string $key): Builder
     {
-        $config = self::where('key', $key)->first();
+        return self::where('key', $key);
+    }
+
+    private static function fetchByKey(string $key): ?self
+    {
+        return self::whereKey($key)->first();
+    }
+
+    private static function fetchByKeyOrFail(string $key): self
+    {
+        $object = self::fetchByKey($key);
+
+        if ($object === null) {
+            throw ConfigException::missingEntry($key);
+        }
+
+        return $object;
+    }
+
+    private static function fetchByKeyOrDefault(string $key, string $default = ''): string
+    {
+        $config = self::fetchByKey($key);
 
         if ($config === null) {
             return $default;
@@ -105,11 +129,47 @@ class Config extends Model
         return $config->value;
     }
 
-    private static function updateOrInsertByKey(string $key, string $value): void
+    public static function fetchDateTime(string $key, DateTime $default = null): DateTime
     {
-        $config = self::where('key', $key)->first();
+        $dateString = self::fetchByKeyOrDefault($key);
 
-        if (!$config) {
+        if ($dateString === '') {
+            if ($default === null) {
+                return new DateTime('@0');
+            }
+
+            return clone $default;
+        }
+
+        $object = DateTime::createFromFormat(DateTime::ATOM, $dateString);
+
+        if ($object === false) {
+            throw new RuntimeException(sprintf('Failed converting "%s" to DateTime', (string)$object));
+        }
+
+        return $object;
+    }
+
+    public static function fetchInt(string $key, int $default = 0): int
+    {
+        return (int)self::fetchByKeyOrDefault($key, (string)$default);
+    }
+
+    public static function fetchFloatOrFail(string $key): float
+    {
+        return (float)self::fetchByKeyOrFail($key)->value;
+    }
+
+    public static function fetchStringOrFail(string $key): string
+    {
+        return (string)self::fetchByKeyOrFail($key)->value;
+    }
+
+    private static function upsertByKey(string $key, string $value): void
+    {
+        $config = self::fetchByKey($key);
+
+        if ($config === null) {
             $config = new self();
             $config->key = $key;
         }
@@ -118,88 +178,35 @@ class Config extends Model
         $config->save();
     }
 
-    public static function fetchDateTimeByKeyOrEpochStart(string $key): DateTime
+    public static function upsertDateTime(string $key, DateTime $date): void
     {
-        $dateString = self::fetchByKey($key, '1970-01-01 00:00:00.000000');
-
-        return DateTime::createFromFormat(DateTime::ATOM, $dateString);
+        self::upsertByKey($key, $date->format(DateTime::ATOM));
     }
 
-    public static function updateOrInsertDateTimeByKey(string $key, DateTime $date): void
+    public static function upsertInt(string $key, int $id): void
     {
-        self::updateOrInsertByKey($key, $date->format(DateTime::ATOM));
+        self::upsertByKey($key, (string)$id);
     }
 
-    public static function fetchAdSelectEventExportTime(): DateTime
+    public static function isTrueOnly(string $key): bool
     {
-        return self::fetchDateTimeByKeyOrEpochStart(self::ADSELECT_EVENT_EXPORT_TIME);
-    }
-
-    public static function fetchAdSelectInventoryExportTime(): DateTime
-    {
-        return self::fetchDateTimeByKeyOrEpochStart(self::ADSELECT_INVENTORY_EXPORT_TIME);
-    }
-
-    public static function updateAdSelectEventExportTime(DateTime $date): void
-    {
-        self::updateOrInsertDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME, $date);
-    }
-
-    public static function updateAdSelectInventoryExportTime(DateTime $date): void
-    {
-        self::updateOrInsertDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME, $date);
-    }
-
-    public static function fetchFloatOrFail(string $feeType): float
-    {
-        $config = self::where('key', $feeType)->firstOrFail();
-
-        return (float)$config->value;
-    }
-
-    public static function getLicenceAccountOrFail(): string
-    {
-        $config = self::where('key', self::LICENCE_ACCOUNT)->firstOrFail();
-
-        return (string)$config->value;
+        return self::fetchByKeyOrDefault($key) === '1';
     }
 
     public static function fetchAdminSettings(): array
     {
-        $data = self::whereIn('key', self::ADMIN_SETTINGS)->get();
+        $fetched = self::whereIn('key', array_keys(self::ADMIN_SETTINGS_DEFAULTS))
+            ->get()
+            ->pluck('value', 'key')
+            ->toArray();
 
-        return $data->pluck('value', 'key')->toArray();
-    }
-
-    public static function isColdWalletActive(): bool
-    {
-        return (bool)self::fetchByKey(self::COLD_WALLET_IS_ACTIVE);
+        return array_merge(self::ADMIN_SETTINGS_DEFAULTS, $fetched);
     }
 
     public static function updateAdminSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            self::updateOrInsertByKey($key, $value);
+            self::upsertByKey($key, $value);
         }
-    }
-
-    public static function fetchAdPayLastExportedEventId(): int
-    {
-        return (int)self::fetchByKey(self::ADPAY_LAST_EXPORTED_EVENT_ID, '0');
-    }
-
-    public static function updateAdPayLastExportedEventId(int $id): void
-    {
-        self::updateOrInsertByKey(self::ADPAY_LAST_EXPORTED_EVENT_ID, (string)$id);
-    }
-
-    public static function isNewUserBonusEnabled(): bool
-    {
-        return (bool)self::fetchByKey(self::BONUS_NEW_USER_ENABLED);
-    }
-
-    public static function newUserBonusAmount(): int
-    {
-        return (int)self::fetchByKey(self::BONUS_NEW_USER_AMOUNT, '0');
     }
 }
