@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2019-04-12
+### Added
+- Bonus credits for advertising expenses
+### Improved
+- Campaign Reports
+### Fixed
+- Ensuring sufficient funds for future expenses 
+
 ## [0.5.2] - 2019-04-11
 ### Fixed
 - Cron jobs output
@@ -60,9 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.5.2...master
-[0.5.0]: https://github.com/adshares/adserver/compare/v0.5.1...v0.5.2
-[0.5.0]: https://github.com/adshares/adserver/compare/v0.5.0...v0.5.1
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.5.3...master
+[0.5.3]: https://github.com/adshares/adserver/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/adshares/adserver/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/adshares/adserver/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/adshares/adserver/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/adshares/adserver/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/adshares/adserver/compare/v0.3.1...v0.3.2
