@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Bonus credits for new users (on email-confirmation)
+- Bonus credits for new users (on email confirmation)
 
 ## [0.5.4] - 2019-04-12
 ### Fixed
