@@ -38,8 +38,10 @@ class UpdateConfigEntryNameForColdWallet extends Migration
                     ]
                 );
             } else {
-                $hotWalletIsActive->key = Config::COLD_WALLET_IS_ACTIVE;
-                $hotWalletIsActive->save();
+                DB::update(
+                    'UPDATE `configs` SET `key` = ? WHERE `key` = ?',
+                    [Config::COLD_WALLET_IS_ACTIVE, 'hotwallet-is-active']
+                );
             }
         }
 
@@ -55,8 +57,10 @@ class UpdateConfigEntryNameForColdWallet extends Migration
                     ]
                 );
             } else {
-                $hotWalletAddress->key = Config::COLD_WALLET_ADDRESS;
-                $hotWalletAddress->save();
+                DB::update(
+                    'UPDATE `configs` SET `key` = ? WHERE `key` = ?',
+                    [Config::COLD_WALLET_ADDRESS, 'hotwallet-address']
+                );
             }
         }
     }
