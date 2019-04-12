@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function array_merge;
 use function in_array;
+use function min;
 use function sprintf;
 
 /**
@@ -336,6 +337,20 @@ class UserLedgerEntry extends Model
     public static function processAdExpense(int $userId, int $nonNegativeAmount): array
     {
         return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $nonNegativeAmount);
+    }
+
+    public static function awardBonusToUser(User $user, int $amount): void
+    {
+        if ($amount <= 0) {
+            throw new \Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException('Awarded bonus has to be more than 0');
+        }
+
+        self::construct(
+            $user->id,
+            $amount,
+            self::STATUS_ACCEPTED,
+            self::TYPE_BONUS_EXPENSE
+        )->save();
     }
 
     public function setStatusAttribute(int $status): void

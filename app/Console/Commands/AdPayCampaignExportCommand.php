@@ -41,8 +41,7 @@ class AdPayCampaignExportCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $dateFrom = Config::fetchDateTimeByKey(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
-        $dateNow = new DateTime();
+        $dateFrom = Config::fetchDateTimeByKeyOrEpochStart(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
 
         $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->get();
         $this->info('Found '.count($updatedCampaigns).' updated campaigns to export.');
@@ -58,7 +57,7 @@ class AdPayCampaignExportCommand extends Command
             $adPay->deleteCampaign($campaignIds);
         }
 
-        Config::updateDateTimeByKey(Config::ADPAY_CAMPAIGN_EXPORT_TIME, $dateNow);
+        Config::updateOrInsertDateTimeByKey(Config::ADPAY_CAMPAIGN_EXPORT_TIME, new DateTime());
 
         $this->info('Finish command '.$this->signature);
     }

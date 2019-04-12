@@ -67,9 +67,9 @@ class Config extends Model
 
     public const SUPPORT_EMAIL = 'support-email';
 
-    public const BONUS_NEW_USERS_ENABLED = 'bonus-new-users-enabled';
+    public const BONUS_NEW_USER_ENABLED = 'bonus-new-users-enabled';
 
-    public const BONUS_NEW_USERS_AMOUNT = 'bonus-new-users-amount';
+    public const BONUS_NEW_USER_AMOUNT = 'bonus-new-users-amount';
 
     private const ADMIN_SETTINGS = [
         self::OPERATOR_TX_FEE,
@@ -82,8 +82,8 @@ class Config extends Model
         self::ADSERVER_NAME,
         self::TECHNICAL_EMAIL,
         self::SUPPORT_EMAIL,
-        self::BONUS_NEW_USERS_ENABLED,
-        self::BONUS_NEW_USERS_AMOUNT,
+        self::BONUS_NEW_USER_ENABLED,
+        self::BONUS_NEW_USER_AMOUNT,
     ];
 
     public $incrementing = false;
@@ -94,7 +94,7 @@ class Config extends Model
 
     protected $guarded = [];
 
-    public static function fetch(string $key, string $default = ''): string
+    private static function fetchByKey(string $key, string $default = ''): string
     {
         $config = self::where('key', $key)->first();
 
@@ -105,38 +105,7 @@ class Config extends Model
         return $config->value;
     }
 
-    public static function fetchAdSelectEventExportTime(): DateTime
-    {
-        return self::fetchDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME);
-    }
-
-    public static function fetchAdSelectInventoryExportTime(): DateTime
-    {
-        return self::fetchDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME);
-    }
-
-    public static function fetchDateTimeByKey(string $key): DateTime
-    {
-        $config = self::where('key', $key)->first();
-
-        if (!$config) {
-            return new DateTime('@0');
-        }
-
-        return DateTime::createFromFormat(DateTime::ATOM, $config->value);
-    }
-
-    public static function updateAdSelectEventExportTime(DateTime $date): void
-    {
-        self::updateDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME, $date);
-    }
-
-    public static function updateAdSelectInventoryExportTime(DateTime $date): void
-    {
-        self::updateDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME, $date);
-    }
-
-    public static function updateDateTimeByKey(string $key, DateTime $date): void
+    private static function updateOrInsertByKey(string $key, string $value): void
     {
         $config = self::where('key', $key)->first();
 
@@ -145,8 +114,40 @@ class Config extends Model
             $config->key = $key;
         }
 
-        $config->value = $date->format(DateTime::ATOM);
+        $config->value = $value;
         $config->save();
+    }
+
+    public static function fetchDateTimeByKeyOrEpochStart(string $key): DateTime
+    {
+        $dateString = self::fetchByKey($key, '1970-01-01 00:00:00.000000');
+
+        return DateTime::createFromFormat(DateTime::ATOM, $dateString);
+    }
+
+    public static function updateOrInsertDateTimeByKey(string $key, DateTime $date): void
+    {
+        self::updateOrInsertByKey($key, $date->format(DateTime::ATOM));
+    }
+
+    public static function fetchAdSelectEventExportTime(): DateTime
+    {
+        return self::fetchDateTimeByKeyOrEpochStart(self::ADSELECT_EVENT_EXPORT_TIME);
+    }
+
+    public static function fetchAdSelectInventoryExportTime(): DateTime
+    {
+        return self::fetchDateTimeByKeyOrEpochStart(self::ADSELECT_INVENTORY_EXPORT_TIME);
+    }
+
+    public static function updateAdSelectEventExportTime(DateTime $date): void
+    {
+        self::updateOrInsertDateTimeByKey(self::ADSELECT_EVENT_EXPORT_TIME, $date);
+    }
+
+    public static function updateAdSelectInventoryExportTime(DateTime $date): void
+    {
+        self::updateOrInsertDateTimeByKey(self::ADSELECT_INVENTORY_EXPORT_TIME, $date);
     }
 
     public static function getFee(string $feeType): float
@@ -184,15 +185,7 @@ class Config extends Model
     public static function updateAdminSettings(array $settings): void
     {
         foreach ($settings as $key => $value) {
-            $config = self::where('key', $key)->first();
-
-            if (!$config) {
-                $config = new self();
-                $config->key = $key;
-            }
-
-            $config->value = $value;
-            $config->save();
+            self::updateOrInsertByKey($key, $value);
         }
     }
 
@@ -209,14 +202,16 @@ class Config extends Model
 
     public static function updateAdPayLastExportedEventId(int $id): void
     {
-        $config = self::where('key', self::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
+        self::updateOrInsertByKey(self::ADPAY_LAST_EXPORTED_EVENT_ID, (string)$id);
+    }
 
-        if (!$config) {
-            $config = new self();
-            $config->key = self::ADPAY_LAST_EXPORTED_EVENT_ID;
-        }
+    public static function isNewUserBonusEnabled(): bool
+    {
+        return (bool)self::fetchByKey(self::BONUS_NEW_USER_ENABLED);
+    }
 
-        $config->value = $id;
-        $config->save();
+    public static function newUserBonusAmount(): int
+    {
+        return (int)self::fetchByKey(self::BONUS_NEW_USER_AMOUNT, '0');
     }
 }
