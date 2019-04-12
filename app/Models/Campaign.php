@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
@@ -284,14 +285,31 @@ class Campaign extends Model
             return;
         }
 
+        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
         if ($status === self::STATUS_ACTIVE) {
-            $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budgetForCurrentDateTime;
-        } else {
-            $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() - $budgetForCurrentDateTime;
+            $amount += $budgetForCurrentDateTime;
+        } elseif ($this->status === self::STATUS_ACTIVE) {
+            $amount -= $budgetForCurrentDateTime;
         }
 
-        UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
-        UserLedgerEntry::blockAdExpense($this->user_id, $amount);
+        $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
+        if ($amount <= $blockedAmount) {
+            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
+            if ($amount > 0) {
+                UserLedgerEntry::blockAdExpense($this->user_id, $amount);
+            }
+            DB::commit();
+        } catch (InvalidArgumentException $exception) {
+            DB::rollBack();
+
+            throw $exception;
+        }
     }
 
     private static function failIfInvalidStatus(int $value): void
