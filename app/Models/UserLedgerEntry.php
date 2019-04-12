@@ -21,9 +21,9 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function array_merge;
 use function in_array;
@@ -251,15 +251,20 @@ class UserLedgerEntry extends Model
             ->delete();
     }
 
-    public static function fetchBlockedEntriesByUserId(int $userId): Collection
+    public static function fetchBlockedAmountByUserId(int $userId): int
     {
-        return self::blockedEntries()->where('user_id', $userId)->get();
+        return (int)self::blockedEntriesByUserId($userId)->sum('amount');
     }
 
-    private static function blockedEntries()
+    private static function blockedEntries(): Builder
     {
         return self::where('status', self::STATUS_BLOCKED)
             ->whereIn('type', [self::TYPE_AD_EXPENSE, self::TYPE_BONUS_EXPENSE]);
+    }
+
+    private static function blockedEntriesByUserId(int $userId): Builder
+    {
+        return self::blockedEntries()->where('user_id', $userId);
     }
 
     private static function addAdExpense(int $status, int $userId, int $amount): array
@@ -304,7 +309,28 @@ class UserLedgerEntry extends Model
 
     public static function blockAdExpense(int $userId, int $nonNegativeAmount): array
     {
-        return self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+        $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+        foreach ($adExpenses as $adExpense) {
+            /** @var UserLedgerEntry $adExpense */
+            Log::info(
+                sprintf(
+                    '[UserLedgerEntry] Blocked %d clicks (%s)',
+                    $adExpense->amount,
+                    $adExpense->typeAsString()
+                )
+            );
+        }
+
+        return $adExpenses;
+    }
+
+    public static function releaseBlockedAdExpense(int $userId): void
+    {
+        $blockedEntries = self::blockedEntriesByUserId($userId);
+        $amount = self::fetchBlockedAmountByUserId($userId);
+        $blockedEntries->delete();
+
+        Log::info(sprintf('[UserLedgerEntry] Release blocked %d clicks', $amount));
     }
 
     public static function processAdExpense(int $userId, int $nonNegativeAmount): array
@@ -339,5 +365,34 @@ class UserLedgerEntry extends Model
         $this->txid = $transactionId;
 
         return $this;
+    }
+
+    private function typeAsString(): string
+    {
+        switch ($this->type) {
+            case self::TYPE_DEPOSIT:
+                $type = 'deposit';
+                break;
+            case self::TYPE_WITHDRAWAL:
+                $type = 'withdrawal';
+                break;
+            case self::TYPE_AD_INCOME:
+                $type = 'ad income';
+                break;
+            case self::TYPE_AD_EXPENSE:
+                $type = 'ad expense';
+                break;
+            case self::TYPE_BONUS_INCOME:
+                $type = 'bonus income';
+                break;
+            case self::TYPE_BONUS_EXPENSE:
+                $type = 'bonus expense';
+                break;
+            default:
+                $type = 'unknown';
+                break;
+        }
+
+        return $type;
     }
 }

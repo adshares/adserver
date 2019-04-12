@@ -21,12 +21,14 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Supply\Domain\ValueObject\Size;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -180,6 +182,18 @@ class Campaign extends Model
         return $query->groupBy('user_id')->selectRaw('sum(budget) as sum, user_id')->pluck('sum', 'user_id');
     }
 
+    public static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): int
+    {
+        $query = self::where('status', self::STATUS_ACTIVE)->where(
+            function ($q) {
+                $dateTime = DateUtils::getDateTimeRoundedToCurrentHour();
+                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
+            }
+        );
+
+        return (int)$query->sum('budget');
+    }
+
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
@@ -271,33 +285,30 @@ class Campaign extends Model
             return;
         }
 
-        $userLedgerEntry = UserLedgerEntry::fetchBlockedEntriesByUserId($this->user_id)->first();
-        if (null === $userLedgerEntry) {
-            if ($status === self::STATUS_ACTIVE) {
-                UserLedgerEntry::blockAdExpense($this->user_id, $budgetForCurrentDateTime);
-            } else {
-                Log::error(
-                    sprintf(
-                        '[Campaign] Attempt to release non existing blockade for user_id (%d), campaign_id (%d).',
-                        $this->user_id,
-                        $this->id
-                    )
-                );
-            }
+        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
+        if ($status === self::STATUS_ACTIVE) {
+            $amount += $budgetForCurrentDateTime;
+        } elseif ($this->status === self::STATUS_ACTIVE) {
+            $amount -= $budgetForCurrentDateTime;
+        }
 
+        $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
+        if ($amount <= $blockedAmount) {
+            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
             return;
         }
 
-        if ($status === self::STATUS_ACTIVE) {
-            $userLedgerEntry->amount = $userLedgerEntry->amount - $budgetForCurrentDateTime;
-        } else {
-            $userLedgerEntry->amount = $userLedgerEntry->amount + $budgetForCurrentDateTime;
-        }
+        DB::beginTransaction();
+        try {
+            UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
+            if ($amount > 0) {
+                UserLedgerEntry::blockAdExpense($this->user_id, $amount);
+            }
+            DB::commit();
+        } catch (InvalidArgumentException $exception) {
+            DB::rollBack();
 
-        if (0 === $userLedgerEntry->amount) {
-            $userLedgerEntry->delete();
-        } else {
-            $userLedgerEntry->save();
+            throw $exception;
         }
     }
 
@@ -312,7 +323,9 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): int
     {
-        if ($this->time_end != null && $this->time_end < DateUtils::getDateTimeRoundedToCurrentHour()) {
+        if ($this->time_end != null
+            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
+            < DateUtils::getDateTimeRoundedToCurrentHour()) {
             return 0;
         }
 
