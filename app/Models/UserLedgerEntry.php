@@ -311,8 +311,15 @@ class UserLedgerEntry extends Model
     {
         $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
         foreach ($adExpenses as $adExpense) {
-            /** @var UserLedgerEntry$adExpense */
-            Log::info(sprintf('[UserLedgerEntry] Blocked %d clicks (%s)', $adExpense->amount, $adExpense->typeAsString()));
+            /** @var UserLedgerEntry $adExpense */
+            Log::info(
+                sprintf(
+                    '[UserLedgerEntry] Blocked %d clicks (%s)',
+                    $adExpense->amount,
+                    $adExpense->typeAsString()
+                )
+                
+            );
         }
 
         return $adExpenses;
@@ -363,8 +370,7 @@ class UserLedgerEntry extends Model
 
     private function typeAsString(): string
     {
-        switch ($this->type)
-        {
+        switch ($this->type) {
             case self::TYPE_DEPOSIT:
                 $type = 'deposit';
                 break;
@@ -387,7 +393,7 @@ class UserLedgerEntry extends Model
                 $type = 'unknown';
                 break;
         }
-        
+
         return $type;
     }
 }
