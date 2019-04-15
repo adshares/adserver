@@ -61,7 +61,7 @@ class DemandPreparePayments extends Command
 
         $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
         $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-        $demandOperatorFeeCoefficient = Config::getFee(Config::OPERATOR_TX_FEE);
+        $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
         $groupedEvents = $events->each(
             function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
                 $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
