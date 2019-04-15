@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -31,6 +32,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use function config;
 use function hex2bin;
 
 /**
@@ -223,8 +225,6 @@ class EventLog extends Model
 
     public function impressionContext(): ImpressionContext
     {
-        // TODO input data should be validated - currently ErrorException could be thrown
-
         $headersArray = get_object_vars($this->headers);
 
         $refererList = $headersArray['referer'] ?? [];
@@ -235,27 +235,11 @@ class EventLog extends Model
         $userAgentList = $headersArray['user-agent'];
         $ua = $userAgentList[0] ?? '';
 
-        $cookieList = $headersArray['cookie'] ?? [];
-        $cookieHeader = $cookieList[0] ?? '';
-        $cookies = explode(';', $cookieHeader);
-
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => $this->findTid($cookies)]
+            ['uid' => Utils::checksumForTrackingId($this->user_id, config('app.adserver_secret'))]
         );
-    }
-
-    private function findTid(array $cookies): string
-    {
-        foreach ($cookies as $cookie) {
-            $arr = explode('=', $cookie, 2);
-            if ((count($arr) === 2) && trim($arr[0]) === 'tid') {
-                return trim($arr[1]);
-            }
-        }
-
-        return '';
     }
 
     public static function eventClicked(string $caseId): void

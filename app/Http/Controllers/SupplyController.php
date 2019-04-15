@@ -76,7 +76,6 @@ class SupplyController extends Controller
         $impressionId = $decodedQueryData['page']['iid'];
 
         $tid = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
             $request,
             $response,
             '',
@@ -313,7 +312,6 @@ class SupplyController extends Controller
         $impressionId = $request->query->get('iid');
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
             $request,
             $response,
             '',

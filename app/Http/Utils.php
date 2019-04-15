@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
+use function config;
 use function is_string;
 
 /**
@@ -177,13 +178,13 @@ class Utils
     }
 
     public static function attachOrProlongTrackingCookie(
-        $secret,
         Request $request,
         Response $response,
         $contentSha1,
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
+        $secret = config('app.adserver_secret');
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid, $secret)) {
             $tid = null;
@@ -274,7 +275,7 @@ class Utils
         }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = substr(sha1($id.$secret, true), 0, 6);
+        $checksum = self::checksumForTrackingId($id, $secret);
 
         return self::urlSafeBase64Encode($id.$checksum);
     }
@@ -391,5 +392,10 @@ class Utils
         $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+    }
+
+    public static function checksumForTrackingId(string $id, string $secret)
+    {
+        return substr(sha1($id.$secret, true), 0, 6);
     }
 }
