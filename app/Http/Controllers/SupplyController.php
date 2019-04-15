@@ -31,6 +31,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\View\View;
@@ -304,7 +305,7 @@ class SupplyController extends Controller
      * @param Request $request
      *
      * @return Response
-     * @throws \Exception
+     * @throws Exception
      */
     public function register(Request $request): Response
     {
@@ -316,7 +317,7 @@ class SupplyController extends Controller
             $request,
             $response,
             '',
-            new \DateTime(),
+            new DateTime(),
             $impressionId
         );
 

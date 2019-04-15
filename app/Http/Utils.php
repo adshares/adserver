@@ -224,7 +224,7 @@ class Utils
 
     private static function validTrackingId($input, $secret): bool
     {
-        if (!\is_string($input)) {
+        if (!is_string($input)) {
             return false;
         }
         $input = self::urlSafeBase64Decode($input);
@@ -387,7 +387,7 @@ class Utils
         string $data = null,
         string $tid = null
     ): ImpressionContext {
-        $partialImpressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $partialImpressionContext = self::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());

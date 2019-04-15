@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use stdClass;
@@ -111,7 +110,13 @@ final class ImpressionContext
 
     public function userId(): string
     {
-        return ($this->user['uid'] ?? '') ?: Utils::createTrackingId((string)config('app.adserver_secret'));
+        $uid = $this->user['uid'] ?? '';
+
+        if (!$uid) {
+            throw new ImpressionContextException('Missing UID - this should not happen');
+        }
+
+        return $uid;
     }
 
     private function headers(): array
