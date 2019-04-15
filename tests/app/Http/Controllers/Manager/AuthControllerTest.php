@@ -61,7 +61,7 @@ class AuthControllerTest extends TestCase
         return Token::first();
     }
 
-    public function testEmailActivate(): void
+    public function testEmailActivate_withBonus(): void
     {
         Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 1);
         Config::upsertInt(Config::BONUS_NEW_USER_AMOUNT, 1000);
@@ -90,6 +90,41 @@ class AuthControllerTest extends TestCase
         self::assertEmpty(Token::all());
 
         self::assertSame([1000, 1000, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]);
+    }
+
+    public function testEmailActivate_noBonus(): void
+    {
+        Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 0);
+
+        $activationToken = $this->testRegister();
+
+        $user = User::find($activationToken->user_id)->first();
+
+        self::assertSame([0, 0, 0],
+            [
+                $user->getBalance(),
+                $user->getBonusBalance(),
+                $user->getWalletBalance(),
+            ]);
+
+        $response = $this->postJson(
+            '/auth/email/activate',
+            [
+                'user' => [
+                    'emailConfirmToken' => $activationToken->uuid,
+                ],
+            ]
+        );
+
+        $response->assertStatus(Response::HTTP_OK);
+        self::assertEmpty(Token::all());
+
+        self::assertSame([0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
