@@ -26,6 +26,8 @@ use Adshares\Adserver\Models\Config;
 
 final class Feature
 {
+    public const BONUS_NEW_USERS = 'bonus-new-users';
+
     public static function enabled(string $feature): bool
     {
         return Config::isTrueOnly("$feature-enabled");
