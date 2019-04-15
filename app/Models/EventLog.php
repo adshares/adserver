@@ -32,7 +32,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use function config;
 use function hex2bin;
 
 /**
@@ -238,7 +237,7 @@ class EventLog extends Model
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::checksumForTrackingId($this->user_id, config('app.adserver_secret'))]
+            ['uid' => Utils::checksumForTrackingId($this->user_id)]
         );
     }
 

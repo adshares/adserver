@@ -186,7 +186,7 @@ class Utils
     ): string {
         $secret = config('app.adserver_secret');
         $tid = $request->cookies->get('tid');
-        if (!self::validTrackingId($tid, $secret)) {
+        if (!self::validTrackingId($tid)) {
             $tid = null;
             $etags = $request->getETags();
 
@@ -195,8 +195,8 @@ class Utils
                 $tid = self::decodeEtag($tag);
             }
 
-            if ($tid === null || !self::validTrackingId($tid, $secret)) {
-                $tid = self::createTrackingId($secret, $impressionId);
+            if ($tid === null || !self::validTrackingId($tid)) {
+                $tid = self::createTrackingId($impressionId);
             }
         }
         $response->headers->setCookie(
@@ -223,7 +223,7 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId($input, $secret): bool
+    private static function validTrackingId($input): bool
     {
         if (!is_string($input)) {
             return false;
@@ -232,7 +232,7 @@ class Utils
         $id = substr($input, 0, 16);
         $checksum = substr($input, 16);
 
-        return strpos(sha1($id.$secret, true), $checksum) === 0;
+        return strpos(sha1($id.config('app.adserver_secret'), true), $checksum) === 0;
     }
 
     private static function decodeEtag($etag)
@@ -259,7 +259,7 @@ class Utils
         );
     }
 
-    public static function createTrackingId(string $secret, ?string $nonce = null): string
+    public static function createTrackingId(?string $nonce = null): string
     {
         $input = [];
 
@@ -275,7 +275,7 @@ class Utils
         }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = self::checksumForTrackingId($id, $secret);
+        $checksum = self::checksumForTrackingId($id);
 
         return self::urlSafeBase64Encode($id.$checksum);
     }
@@ -394,8 +394,8 @@ class Utils
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 
-    public static function checksumForTrackingId(string $id, string $secret)
+    public static function checksumForTrackingId(string $id)
     {
-        return substr(sha1($id.$secret, true), 0, 6);
+        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 }
