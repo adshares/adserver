@@ -161,13 +161,45 @@ class ConfigTest extends TestCase
     /** @test */
     public function fetchAdminSettings(): void
     {
-        $this->fail();
+        $adminSettings = [
+            'payment-tx-fee' => '0.01',
+            'payment-rx-fee' => '0.01',
+            'licence-rx-fee' => '0.01',
+            'hotwallet-min-value' => '2000000000000000',
+            'hotwallet-max-value' => '50000000000000000',
+            'cold-wallet-address' => '',
+            'cold-wallet-is-active' => '0',
+            'adserver-name' => 'AdServer',
+            'technical-email' => 'mail@example.com',
+            'support-email' => 'mail@example.com',
+            'bonus-new-users-enabled' => '0',
+            'bonus-new-users-amount' => '0',
+        ];
+
+        self::assertEquals($adminSettings, Config::fetchAdminSettings());
     }
 
     /** @test */
     public function updateAdminSettings(): void
     {
-        $this->fail();
+        $adminSettings = [
+            'payment-tx-fee' => '1',
+            'payment-rx-fee' => '2',
+            'licence-rx-fee' => '3',
+            'hotwallet-min-value' => '4',
+            'hotwallet-max-value' => '5',
+            'cold-wallet-address' => '0000-00000000-XXXX',
+            'cold-wallet-is-active' => '1',
+            'adserver-name' => 'xxx',
+            'technical-email' => 'mail2@example.com',
+            'support-email' => 'mail3@example.com',
+            'bonus-new-users-enabled' => '1',
+            'bonus-new-users-amount' => '1',
+        ];
+
+        Config::updateAdminSettings($adminSettings);
+
+        self::assertEquals($adminSettings, Config::fetchAdminSettings());
     }
 
     public function boolDataProvider(): array
