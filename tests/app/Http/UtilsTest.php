@@ -30,7 +30,6 @@ class UtilsTest extends TestCase
     public function testIfCreateTrackingIdsAreTheSameWhenImpressionIdExists()
     {
         $impressionId = '1234567qweasd';
-        $secret = 'some-secret-123';
 
         $trackingId1 = Utils::createTrackingId($impressionId);
         $trackingId2 = Utils::createTrackingId($impressionId);
@@ -40,7 +39,6 @@ class UtilsTest extends TestCase
 
     public function testIfCreateTrackingIdsAreDifferentWhenNoImpressionId()
     {
-        $secret = 'some-secret-123';
 
         $trackingId1 = Utils::createTrackingId();
         $trackingId2 = Utils::createTrackingId();
