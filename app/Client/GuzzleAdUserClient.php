@@ -71,7 +71,6 @@ final class GuzzleAdUserClient implements AdUser
             config('app.adserver_id'),
             $partialContext->userId()
         );
-
         try {
             $response = $this->client->post(
                 $path,

@@ -27,8 +27,11 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
+use function sprintf;
 
 class AdPayEventExportCommand extends Command
 {
@@ -79,15 +82,28 @@ class AdPayEventExportCommand extends Command
     private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
     {
         foreach ($eventsToExport as $event) {
+            /** @var $event EventLog */
+
             if (null !== $event->human_score && null !== $event->our_userdata) {
                 continue;
             }
 
-            /** @var $event EventLog */
-            $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
-            $event->human_score = $userContext['human_score'];
-            $event->our_userdata = $userContext['keywords'];
-            $event->save();
+            try {
+                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
+                $event->human_score = $userContext['human_score'];
+                $event->our_userdata = $userContext['keywords'];
+
+                $event->save();
+            } catch (ImpressionContextException $e) {
+                Log::error(
+                    sprintf(
+                        '{"command":"%s","event":"%d","error":"%s"}',
+                        $this->signature,
+                        $event->id,
+                        $e->getMessage()
+                    )
+                );
+            }
         }
     }
 }
