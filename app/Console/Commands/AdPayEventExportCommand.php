@@ -90,6 +90,10 @@ class AdPayEventExportCommand extends Command
 
             try {
                 $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
+                $event->human_score = $userContext['human_score'];
+                $event->our_userdata = $userContext['keywords'];
+
+                $event->save();
             } catch (ImpressionContextException $e) {
                 Log::error(
                     sprintf(
@@ -100,11 +104,6 @@ class AdPayEventExportCommand extends Command
                     )
                 );
             }
-
-            $event->human_score = $userContext['human_score'];
-            $event->our_userdata = $userContext['keywords'];
-
-            $event->save();
         }
     }
 }
