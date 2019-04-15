@@ -22,7 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use Adshares\Common\Domain\Id;
-use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\InvalidArgumentException;
 use function dechex;
 use function ord;
 use function preg_match;

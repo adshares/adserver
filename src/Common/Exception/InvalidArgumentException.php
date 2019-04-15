@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\Exception;
+namespace Adshares\Common\Exception;
 
 final class InvalidArgumentException extends \InvalidArgumentException
 {

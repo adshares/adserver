@@ -20,11 +20,11 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 use function array_merge;
 use function in_array;
 use function min;
@@ -342,7 +342,7 @@ class UserLedgerEntry extends Model
     public static function awardBonusToUser(User $user, int $amount): void
     {
         if ($amount <= 0) {
-            throw new \Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException('Awarded bonus has to be more than 0');
+            throw new InvalidArgumentException('Awarded bonus has to be more than 0');
         }
 
         self::construct(
