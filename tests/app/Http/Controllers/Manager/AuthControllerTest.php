@@ -61,7 +61,7 @@ class AuthControllerTest extends TestCase
         return Token::first();
     }
 
-    public function testEmailActivate_withBonus(): void
+    public function testEmailActivateWithBonus(): void
     {
         Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 1);
         Config::upsertInt(Config::BONUS_NEW_USER_AMOUNT, 1000);
@@ -70,12 +70,14 @@ class AuthControllerTest extends TestCase
 
         $user = User::find($activationToken->user_id)->first();
 
-        self::assertSame([0, 0, 0],
+        self::assertSame(
+            [0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
                 $user->getWalletBalance(),
-            ]);
+            ]
+        );
 
         $response = $this->postJson(
             '/auth/email/activate',
@@ -89,15 +91,17 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         self::assertEmpty(Token::all());
 
-        self::assertSame([1000, 1000, 0],
+        self::assertSame(
+            [1000, 1000, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
                 $user->getWalletBalance(),
-            ]);
+            ]
+        );
     }
 
-    public function testEmailActivate_noBonus(): void
+    public function testEmailActivateNoBonus(): void
     {
         Config::upsertInt(Config::BONUS_NEW_USER_ENABLED, 0);
 
@@ -105,12 +109,14 @@ class AuthControllerTest extends TestCase
 
         $user = User::find($activationToken->user_id)->first();
 
-        self::assertSame([0, 0, 0],
+        self::assertSame(
+            [0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
                 $user->getWalletBalance(),
-            ]);
+            ]
+        );
 
         $response = $this->postJson(
             '/auth/email/activate',
@@ -124,11 +130,13 @@ class AuthControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_OK);
         self::assertEmpty(Token::all());
 
-        self::assertSame([0, 0, 0],
+        self::assertSame(
+            [0, 0, 0],
             [
                 $user->getBalance(),
                 $user->getBonusBalance(),
                 $user->getWalletBalance(),
-            ]);
+            ]
+        );
     }
 }

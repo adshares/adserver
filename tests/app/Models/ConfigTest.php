@@ -50,7 +50,7 @@ class ConfigTest extends TestCase
     }
 
     /** @test */
-    public function fetchDateTime_notInDatabase(): void
+    public function fetchDateTimeNotInDatabase(): void
     {
         self::assertEquals(new DateTime('@0'), Config::fetchDateTime(self::TEST_KEY));
 
@@ -98,7 +98,7 @@ class ConfigTest extends TestCase
     }
 
     /** @test */
-    public function fetchFloatOrFail_notInDatabase(): void
+    public function fetchFloatOrFailNotInDatabase(): void
     {
         $this->expectException(ConfigException::class);
 
@@ -129,7 +129,7 @@ class ConfigTest extends TestCase
     }
 
     /** @test */
-    public function fetchStringOrFail_notInDatabase(): void
+    public function fetchStringOrFailNotInDatabase(): void
     {
         $this->expectException(ConfigException::class);
 
@@ -153,7 +153,7 @@ class ConfigTest extends TestCase
     /**
      * @test
      */
-    public function isTrueOnly_notInDatabase(): void
+    public function isTrueOnlyNotInDatabase(): void
     {
         self::assertFalse(Config::isTrueOnly(self::TEST_KEY));
     }
