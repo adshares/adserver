@@ -31,7 +31,6 @@ use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use const DATE_ATOM;
 
 class WalletAmountCheckCommand extends Command
 {
@@ -57,7 +56,7 @@ class WalletAmountCheckCommand extends Command
     {
         $this->info('[Wallet] Start command '.$this->signature);
 
-        if (!Config::isColdWalletActive()) {
+        if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
             $this->info('[Wallet] Hot wallet feature is disabled.');
 
             return;
@@ -90,7 +89,7 @@ class WalletAmountCheckCommand extends Command
                 config('app.adshares_address')
             );
 
-            Config::updateDateTimeByKey(Config::OPERATOR_WALLET_EMAIL_LAST_TIME, new DateTime());
+            Config::upsertDateTime(Config::OPERATOR_WALLET_EMAIL_LAST_TIME, new DateTime());
 
             $this->info($message);
 
@@ -102,17 +101,10 @@ class WalletAmountCheckCommand extends Command
 
     private function shouldEmailBeSent(): bool
     {
-        $now = new DateTime();
-        $date = Config::fetch(Config::OPERATOR_WALLET_EMAIL_LAST_TIME);
+        $date = Config::fetchDateTime(Config::OPERATOR_WALLET_EMAIL_LAST_TIME);
 
-        if (!$date) {
-            return true;
-        }
+        $interval = sprintf('%d second', self::SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS);
 
-        $lastEmailTime = DateTime::createFromFormat(DATE_ATOM, $date);
-        $dateUntilEmailIsSent =
-            $lastEmailTime->modify(sprintf('%d second', self::SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS));
-
-        return $dateUntilEmailIsSent < $now;
+        return $date->modify($interval) < new DateTime();
     }
 }

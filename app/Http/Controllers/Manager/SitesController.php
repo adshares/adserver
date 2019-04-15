@@ -24,7 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Classify\Domain\Model\Classification;
-use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

@@ -191,7 +191,7 @@ class DemandController extends Controller
         $response->setCache(
             [
                 'etag' => md5(md5_file($jsPath).implode(':', $params)),
-                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+                'last_modified' => new DateTime('@'.filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
@@ -395,7 +395,7 @@ class DemandController extends Controller
     public function inventoryList(Request $request): JsonResponse
     {
         $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-        $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
+        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
         foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {

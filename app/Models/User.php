@@ -25,6 +25,7 @@ use Adshares\Adserver\Events\UserCreated;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\Email;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,6 +37,7 @@ use Illuminate\Support\Facades\Hash;
 /**
  * @property Collection|Campaign[] campaigns
  * @property int id
+ * @property DateTime|null email_confirmed_at
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -226,10 +228,20 @@ class User extends Authenticatable
         $user = new self();
         $user->name = $name;
         $user->email = $email->toString();
-        $user->email_confirmed_at = time();
+        $user->confirmEmail();
         $user->password = $password;
         $user->is_admin = 1;
 
         $user->save();
+    }
+
+    public function awardBonus(int $amount): void
+    {
+        UserLedgerEntry::awardBonusToUser($this, $amount);
+    }
+
+    public function confirmEmail(): void
+    {
+        $this->email_confirmed_at = new DateTime();
     }
 }

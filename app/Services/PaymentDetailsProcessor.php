@@ -70,7 +70,7 @@ class PaymentDetailsProcessor
             throw new MissingInitialConfigurationException('No config entry for license fee.');
         }
 
-        $operatorFee = Config::getFee(Config::OPERATOR_RX_FEE);
+        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
         if ($operatorFee === null) {
             throw new MissingInitialConfigurationException('No config entry for operator fee.');
         }
