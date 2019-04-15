@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\RuntimeException;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
@@ -47,6 +48,19 @@ class ConfigTest extends TestCase
 
         self::assertEquals($dateTime, Config::fetchDateTime(self::TEST_KEY));
         self::assertNotSame($dateTime, Config::fetchDateTime(self::TEST_KEY));
+    }
+
+    /** @test */
+    public function fetchDateTimeInvalidFormat(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        factory(Config::class)->create([
+            'key' => self::TEST_KEY,
+            'value' => 'invalid-date-format',
+        ]);
+
+        Config::fetchDateTime(self::TEST_KEY);
     }
 
     /** @test */

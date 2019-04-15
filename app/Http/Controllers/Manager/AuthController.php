@@ -75,8 +75,8 @@ class AuthController extends Controller
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
         DB::beginTransaction();
-
-        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+        $token = Token::check($request->input('user.email_confirm_token'));
+        if (false === $token) {
             return self::json([], Response::HTTP_FORBIDDEN);
         }
 
