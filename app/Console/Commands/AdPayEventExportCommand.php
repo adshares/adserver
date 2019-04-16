@@ -127,7 +127,11 @@ class AdPayEventExportCommand extends Command
             return $userInfoCache[$trackingId];
         }
 
-        $userContext = $userInfoCache[$trackingId] = $adUser->getUserContext($event->impressionContext());
+        $userContext = $adUser->getUserContext($event->impressionContext());
+
+        if ($userContext->humanScore() > AdUser::HUMAN_SCORE_ON_NO_UID) {
+            $userInfoCache[$trackingId] = $userContext;
+        }
 
         Log::debug(sprintf(
             '{"function": "%s", "userInfoCache": "miss", "event": %s, "context": %s}',
