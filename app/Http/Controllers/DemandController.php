@@ -46,6 +46,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function json_decode;
+use function sprintf;
 
 class DemandController extends Controller
 {
@@ -290,6 +291,14 @@ class DemandController extends Controller
         } else {
             $adUserUrl = null;
         }
+
+        Log::debug(
+            sprintf(
+                '{"eventName":"%s","redirect":"%s}',
+                __FUNCTION__,
+                $adUserUrl
+            )
+        );
 
         $response->setContent(view(
             'demand/view-event',
