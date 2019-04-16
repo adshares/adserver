@@ -113,10 +113,12 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        Log::debug(sprintf('{"uid":"%s","tid":"%s"}',
-                $this->user['uid'] ?? '',
-                $this->cookies()['tid'] ?? '')
-        );
+        Log::debug(sprintf(
+            '{"function":"%s","tid":"%s","uid":"%s"}',
+            __FUNCTION__,
+            $this->cookies()['tid'] ?? '',
+            $this->user['uid'] ?? ''
+        ));
 
         $uid = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 
