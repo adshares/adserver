@@ -312,13 +312,13 @@ class Utils
         $tid = $request->cookies->get('tid') ?? '';
 
         if (!self::validTrackingId($tid)) {
-            $etags = $request->getETags();
-
-            if (isset($etags[0])) {
-                $tag = str_replace('"', '', $etags[0]);
-
-                return self::decodeEtag($tag);
-            }
+//            $etags = $request->getETags();
+//
+//            if (isset($etags[0])) {
+//                $tag = str_replace('"', '', $etags[0]);
+//
+//                return self::decodeEtag($tag);
+//            }
 
             return self::trackingIdFromUserId(self::userId($impressionId));
         }
