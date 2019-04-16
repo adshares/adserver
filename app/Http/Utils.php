@@ -169,9 +169,10 @@ class Utils
 
     public static function userIdFromTrackingId(string $encodedId): string
     {
+        Log::debug($encodedId);
         $input = self::urlSafeBase64Decode($encodedId);
 
-        return substr($input, 0, 16);
+        return bin2hex(substr($input, 0, 16));
     }
 
     public static function attachOrProlongTrackingCookie(
@@ -314,7 +315,8 @@ class Utils
             }
 
             if (!self::validTrackingId($tid)) {
-                return self::urlSafeBase64Encode(self::userId($impressionId).self::checksum(self::userId($impressionId)));
+                return self::urlSafeBase64Encode(self::userId($impressionId)
+                    .self::checksum(self::userId($impressionId)));
             }
         }
 
@@ -326,7 +328,7 @@ class Utils
         return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 
-    private static function userId(?string $nonce)
+    private static function userId(?string $nonce): string
     {
         $input = [];
 
