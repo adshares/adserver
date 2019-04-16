@@ -217,7 +217,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $userId = Utils::userIdFromTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -258,7 +260,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $userId = Utils::userIdFromTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
