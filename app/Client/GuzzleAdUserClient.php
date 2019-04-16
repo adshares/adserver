@@ -77,9 +77,9 @@ final class GuzzleAdUserClient implements AdUser
             );
         } catch (ImpressionContextException $e) {
             Log::debug(sprintf(
-                '{message: "%s","url": "%s"}',
+                '{message: "%s","context": "%s"}',
                 addslashes($e->getMessage()),
-                (string)$this->client->getConfig('base_uri')
+                json_encode($partialContext->toArray())
             ));
 
             return new UserContext(
