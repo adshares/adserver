@@ -173,7 +173,7 @@ class Utils
         $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
 
         Log::debug(sprintf(
-            '{"function":"%s","tid":"%s","uid","%s"}',
+            '%s {"tid":"%s","uid","%s"}',
             __FUNCTION__,
             $trackingId,
             $userId
@@ -359,7 +359,7 @@ class Utils
 
         Log::debug(
             sprintf(
-                '{"function":"%s","uid":"%s","tid":"%s"}',
+                '%s {"uid":"%s","tid":"%s"}',
                 __FUNCTION__,
                 $userId,
                 $trackingId

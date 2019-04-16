@@ -120,7 +120,7 @@ final class ImpressionContext
         }
 
         Log::debug(sprintf(
-            '{"function":"%s","tid":"%s","uid":"%s","returns","%s"}',
+            '%s {"tid":"%s","uid":"%s","returns","%s"}',
             __FUNCTION__,
             $this->cookies()['tid'] ?? '',
             $this->user['uid'] ?? '',

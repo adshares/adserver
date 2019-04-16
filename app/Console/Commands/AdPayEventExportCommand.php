@@ -134,7 +134,7 @@ class AdPayEventExportCommand extends Command
         }
 
         Log::debug(sprintf(
-            '{"function": "%s", "userInfoCache": "miss", "event": %s, "context": %s}',
+            '%s {"userInfoCache": "miss", "event": %s, "context": %s}',
             __FUNCTION__,
             $event->id,
             json_encode($userContext->toArray())
