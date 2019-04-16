@@ -34,7 +34,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use function GuzzleHttp\json_encode;
 use function sprintf;
-use const __FUNCTION__;
 
 class AdPayEventExportCommand extends Command
 {
