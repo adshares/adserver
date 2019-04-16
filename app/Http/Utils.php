@@ -169,7 +169,7 @@ class Utils
 
     public static function userIdFromTrackingId(string $encodedId): string
     {
-        Log::debug($encodedId);
+        Log::debug("{\"uid\":\"$encodedId\"}");
         $input = self::urlSafeBase64Decode($encodedId);
 
         return bin2hex(substr($input, 0, 16));
@@ -209,9 +209,9 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId(string $input): bool
+    private static function validTrackingId(string $tid): bool
     {
-        $input = self::urlSafeBase64Decode($input);
+        $input = self::urlSafeBase64Decode($tid);
 
         return substr($input, 16) === self::checksum(substr($input, 0, 16));
     }
