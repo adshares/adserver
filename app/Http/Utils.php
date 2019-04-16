@@ -171,7 +171,7 @@ class Utils
     {
         $input = self::urlSafeBase64Decode($encodedId);
 
-        return bin2hex(substr($input, 0, 16));
+        return substr($input, 0, 16);
     }
 
     public static function attachOrProlongTrackingCookie(
@@ -239,26 +239,6 @@ class Utils
         );
     }
 
-    public static function createTrackingId(?string $nonce = null): string
-    {
-        $input = [];
-
-        if ($nonce !== null) {
-            $input[] = $nonce;
-            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
-        } else {
-            $input[] = microtime();
-            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
-            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
-            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
-            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
-        }
-
-        $id = substr(sha1(implode(':', $input), true), 0, 16);
-
-        return self::trackingIdFromUid($id);
-    }
-
     private static function generateEtag($tid, $contentSha1): string
     {
         $sha1 = pack('H*', $contentSha1);
@@ -319,18 +299,6 @@ class Utils
         return $partialImpressionContext;
     }
 
-    public static function trackingIdFromUid(string $id): string
-    {
-        $checksum = self::checksum($id);
-
-        return self::urlSafeBase64Encode($id.$checksum);
-    }
-
-    private static function checksum(string $id)
-    {
-        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
-    }
-
     private static function createTid(Request $request, ?string $impressionId): string
     {
         $tid = $request->cookies->get('tid');
@@ -346,10 +314,35 @@ class Utils
             }
 
             if (!self::validTrackingId($tid)) {
-                return self::createTrackingId($impressionId);
+                return self::urlSafeBase64Encode(self::userId($impressionId).self::checksum(self::userId($impressionId)));
             }
         }
 
         return $tid;
+    }
+
+    private static function checksum(string $id)
+    {
+        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+    }
+
+    private static function userId(?string $nonce)
+    {
+        $input = [];
+
+        if ($nonce !== null) {
+            $input[] = $nonce;
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
+        } else {
+            $input[] = microtime();
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
+            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
+            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
+            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+        }
+
+        $id = substr(sha1(implode(':', $input), true), 0, 16);
+
+        return $id;
     }
 }
