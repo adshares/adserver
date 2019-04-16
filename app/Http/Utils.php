@@ -352,6 +352,14 @@ class Utils
     public static function trackingIdFromUserId(string $userId): ?string
     {
         if (!$userId) {
+            Log::debug(
+                sprintf(
+                    '%s {"uid":"%s","tid":null}',
+                    __FUNCTION__,
+                    $userId
+                )
+            );
+
             return null;
         }
 
