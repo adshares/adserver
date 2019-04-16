@@ -20,9 +20,24 @@
 
 namespace Adshares\Lib;
 
+use DOMDocument;
+use DOMXPath;
+use Mimey\MimeTypes;
+use RuntimeException;
+use function sprintf;
+use function zip_close;
+use function zip_entry_close;
+use function zip_entry_filesize;
+use function zip_entry_name;
+use function zip_entry_open;
+use function zip_entry_read;
+use function zip_open;
+use function zip_read;
+
 class ZipToHtml
 {
     const MAX_ZIPPED_SIZE = 512 * 1024;
+
     const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
 
     const FIX_SCRIPT = <<<MYSCRIPT
@@ -77,8 +92,11 @@ class ZipToHtml
 MYSCRIPT;
 
     private $filename;
+
     private $assets = [];
+
     private $html_file;
+
     private $html_file_contents;
 
     public function __construct($filename)
@@ -100,7 +118,7 @@ MYSCRIPT;
     {
         $zipped_size = filesize($this->filename);
         if ($zipped_size >= self::MAX_ZIPPED_SIZE) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 sprintf(
                     "Zip file max size exceeded (%d KB > %d KB)  ",
                     $zipped_size / 1024,
@@ -109,17 +127,17 @@ MYSCRIPT;
             );
         }
 
-        $mimes = new \Mimey\MimeTypes();
+        $mimes = new MimeTypes();
 
         $unzipped_size = 0;
-        $zip = \zip_open($this->filename);
+        $zip = zip_open($this->filename);
 
         if ($zip) {
-            while ($zip_entry = \zip_read($zip)) {
-                $size = \zip_entry_filesize($zip_entry);
+            while ($zip_entry = zip_read($zip)) {
+                $size = zip_entry_filesize($zip_entry);
                 $unzipped_size += $size;
                 if ($unzipped_size >= self::MAX_UNZIPPED_SIZE) {
-                    throw new \RuntimeException(
+                    throw new RuntimeException(
                         sprintf(
                             "Zip file max uncompressed size exceeded (%d KB > %d KB)",
                             $unzipped_size / 1024,
@@ -128,22 +146,22 @@ MYSCRIPT;
                     );
                 }
 
-                $name = \zip_entry_name($zip_entry);
+                $name = zip_entry_name($zip_entry);
                 if (preg_match("#(/|^)(__|\.)#", $name)) {
                     continue;
                 }
                 $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
 
-                if ($size > 0 && \zip_entry_open($zip, $zip_entry, "r")) {
+                if ($size > 0 && zip_entry_open($zip, $zip_entry, "r")) {
                     if ($ext === 'html' || $ext === 'htm') {
                         if ($this->html_file) {
-                            throw new \RuntimeException("Zip file must contain only one html file");
+                            throw new RuntimeException("Zip file must contain only one html file");
                         }
                         $this->html_file = $name;
-                        $this->html_file_contents = \zip_entry_read($zip_entry, $size);
+                        $this->html_file_contents = zip_entry_read($zip_entry, $size);
                     } else {
                         $this->assets[$name] = [
-                            'contents' => \zip_entry_read($zip_entry, $size),
+                            'contents' => zip_entry_read($zip_entry, $size),
                             'type' => $ext,
                             'mime_type' => $mimes->getMimeType($ext),
                             'data_uri' => null,
@@ -151,31 +169,37 @@ MYSCRIPT;
                         ];
                     }
 
-                    \zip_entry_close($zip_entry);
+                    zip_entry_close($zip_entry);
                 }
             }
 
-            \zip_close($zip);
+            zip_close($zip);
 
             if (!$this->html_file) {
-                throw new \RuntimeException("Zip file must contain a html file");
+                throw new RuntimeException("Zip file must contain a html file");
             }
         }
     }
 
-    private function flattenHtml()
+    private function flattenHtml(): string
     {
         libxml_use_internal_errors(true);
-        $doc = new \DOMDocument();
+        $doc = new DOMDocument();
         $doc->loadHTML(mb_convert_encoding($this->html_file_contents, 'HTML-ENTITIES', 'UTF-8'));
 
-        $xpath = new \DOMXPath($doc);
-        [$html] = $xpath->query('//html');
+        $xpath = new DOMXPath($doc);
         [$body] = $xpath->query('//body');
         [$head] = $xpath->query('//head');
 
         if (!$head) {
             $head = $doc->createElement('head');
+
+            [$html] = $xpath->query('//html');
+
+            if (!$html) {
+                throw new RuntimeException('Missing HTML tag');
+            }
+
             $html->insertBefore($head, $body);
         }
 
@@ -183,16 +207,18 @@ MYSCRIPT;
 
         foreach ($stylesheets as $sheet) {
             $href = $sheet->getAttribute('href');
+
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme === 'data') {
-                    continue;
-                } else {
-                    throw new \RuntimeException(
-                        sprintf("Only local assets and data uri allowed (found %s)", $href)
+                if ($scheme !== 'data') {
+                    throw new RuntimeException(
+                        sprintf('Only local assets and data uri allowed (found %s)', $href)
                     );
                 }
+
+                continue;
             }
+
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
@@ -216,7 +242,7 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(
+                    throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
                 }
@@ -243,7 +269,7 @@ MYSCRIPT;
                 if ($scheme === 'data') {
                     continue;
                 } else {
-                    throw new \RuntimeException(
+                    throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
                 }
@@ -266,30 +292,33 @@ MYSCRIPT;
 
         $media = $xpath->query("//img[@srcset]|//source[@srcset]");
         foreach ($media as $tag) {
-            $newsrcset = preg_replace_callback('/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/', function ($match) {
-                $href = $match[1];
-                $scheme = parse_url($href, PHP_URL_SCHEME);
-                if ($scheme) {
-                    if ($scheme === 'data') {
-                        return $href . $match[2] . ($match[3] ?? '');
-                    } else {
-                        throw new \RuntimeException(
-                            sprintf("Only local assets and data uri allowed (found %s)", $href)
-                        );
+            $newsrcset = preg_replace_callback('/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/',
+                function ($match) {
+                    $href = $match[1];
+                    $scheme = parse_url($href, PHP_URL_SCHEME);
+                    if ($scheme) {
+                        if ($scheme === 'data') {
+                            return $href.$match[2].($match[3] ?? '');
+                        } else {
+                            throw new RuntimeException(
+                                sprintf("Only local assets and data uri allowed (found %s)", $href)
+                            );
+                        }
                     }
-                }
-                $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
-                if (isset($this->assets[$file])) {
-                    if (isset($this->assets[$file]['used'])) {
-                        return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
+                    $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+                    if (isset($this->assets[$file])) {
+                        if (isset($this->assets[$file]['used'])) {
+                            return 'asset-src:'.$file.$match[2].($match[3] ?? '');
+                        } else {
+                            $this->assets[$file]['used'] = true;
+
+                            return $this->getAssetDataUri($this->assets[$file]).$match[2].($match[3] ?? '');
+                        }
                     } else {
-                        $this->assets[$file]['used'] = true;
-                        return $this->getAssetDataUri($this->assets[$file]) . $match[2] . ($match[3] ?? '');
+                        return '';
                     }
-                } else {
-                    return '';
-                }
-            }, $tag->getAttribute('srcset'));
+                },
+                $tag->getAttribute('srcset'));
 
             $tag->setAttribute('srcset', $newsrcset);
         }
@@ -363,7 +392,7 @@ MYSCRIPT;
                     if ($scheme === 'data') {
                         return $match[0];
                     } else {
-                        throw new \RuntimeException(
+                        throw new RuntimeException(
                             sprintf("Only local assets and data uri allowed (found %s)", $match[1])
                         );
                     }
