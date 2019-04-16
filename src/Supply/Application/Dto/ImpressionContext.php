@@ -25,9 +25,11 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
+use function sprintf;
 
 final class ImpressionContext
 {
@@ -111,6 +113,11 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
+        Log::debug(sprintf('{"uid":"%s","tid":"%s"}',
+                $this->user['uid'] ?? '',
+                $this->cookies()['tid'] ?? '')
+        );
+
         $uid = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 
         if (!$uid) {
