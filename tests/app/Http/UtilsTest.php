@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class UtilsTest extends TestCase
 {
@@ -43,5 +44,19 @@ class UtilsTest extends TestCase
         $trackingId2 = Utils::createTrackingId();
 
         $this->assertNotEquals($trackingId1, $trackingId2);
+    }
+
+    public function testCookieParser(): void
+    {
+        $cookie =
+            <<<'COOKIE'
+__cfduid=dcca0acd3bd50c64cbcb9065546b155cd1549472688; _ga=GA1.2.1940241214.1552058552; tid=9UC1ix5tZDueMWEanRlvlMdpvpLf3A
+COOKIE;
+
+        $parts = HeaderUtils::split($cookie, ';=');
+
+        $parts = HeaderUtils::combine($parts) ;
+
+        self::assertIsArray($parts);
     }
 }

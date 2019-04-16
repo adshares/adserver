@@ -26,6 +26,7 @@ use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use stdClass;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
 
 final class ImpressionContext
@@ -83,7 +84,7 @@ final class ImpressionContext
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->user['uid'] ?? '',
+                'user_id' => $this->userId(),
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -110,7 +111,7 @@ final class ImpressionContext
 
     public function userId(): string
     {
-        $uid = $this->user['uid'] ?? '';
+        $uid = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 
         if (!$uid) {
             throw new ImpressionContextException('Missing UID - this should not happen');
@@ -128,11 +129,17 @@ final class ImpressionContext
             $this->device['headers'] ?? []
         );
 
-        $headers['user-agent'] =
-            ($headers['user-agent'] ?? $headers['User-Agent'] ?? null) ?: ($this->device['ua'] ?? '');
+        $headers['user-agent'] = ($headers['user-agent'] ?? $headers['User-Agent'] ?? false)
+            ?: ($this->device['ua'] ?? '');
 
+        /** @deprecated Remove when AdUser is ready */
         $headers['User-Agent'] = $headers['user-agent'];
 
         return $headers;
+    }
+
+    private function cookies(): array
+    {
+        return HeaderUtils::combine(HeaderUtils::split($this->headers()['cookie'], ';='));
     }
 }

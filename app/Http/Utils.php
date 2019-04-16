@@ -22,8 +22,10 @@ namespace Adshares\Adserver\Http;
 
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\ImpressionContextException;
 use DateTime;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
@@ -301,9 +303,20 @@ class Utils
         string $tid = null
     ): ImpressionContext {
         $partialImpressionContext = self::getPartialImpressionContext($request, $data, $tid);
-        $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
-        return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+        try {
+            $userContext = $contextProvider->getUserContext($partialImpressionContext);
+
+            return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+        } catch (ImpressionContextException $e) {
+            Log::error(sprintf(
+                '{message: "%s","context": "%s"}',
+                addslashes($e->getMessage()),
+                json_encode($partialImpressionContext->toArray())
+            ));
+        }
+
+        return $partialImpressionContext;
     }
 
     public static function trackingIdFromUid(string $id): string
