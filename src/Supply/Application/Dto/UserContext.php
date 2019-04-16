@@ -76,4 +76,19 @@ final class UserContext
             'human_score' => $this->humanScore,
         ];
     }
+
+    public function keywords(): array
+    {
+        return $this->keywords;
+    }
+
+    public function humanScore(): float
+    {
+        return $this->humanScore;
+    }
+
+    public function userId(): string
+    {
+        return $this->userId;
+    }
 }

@@ -84,7 +84,7 @@ final class ImpressionContext
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->userId(),
+                'user_id' => $this->trackingId(),
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -109,7 +109,7 @@ final class ImpressionContext
         return $this->site['keywords'] ?? [];
     }
 
-    public function userId(): string
+    public function trackingId(): string
     {
         $uid = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 

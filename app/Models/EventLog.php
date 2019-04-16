@@ -62,6 +62,7 @@ use function hex2bin;
  * @property int reason
  * @property int is_view_clicked
  * @property string domain
+ * @property int id
  * @mixin Builder
  */
 class EventLog extends Model

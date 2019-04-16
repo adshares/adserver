@@ -28,10 +28,13 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
+use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use function GuzzleHttp\json_encode;
 use function sprintf;
+use const __FUNCTION__;
 
 class AdPayEventExportCommand extends Command
 {
@@ -90,9 +93,10 @@ class AdPayEventExportCommand extends Command
             }
 
             try {
-                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
-                $event->human_score = $userContext['human_score'];
-                $event->our_userdata = $userContext['keywords'];
+                $userContext = $this->userContext($adUser, $event);
+
+                $event->human_score = $userContext->humanScore();
+                $event->our_userdata = $userContext->keywords();
 
                 $event->save();
             } catch (ImpressionContextException $e) {
@@ -106,5 +110,33 @@ class AdPayEventExportCommand extends Command
                 );
             }
         }
+    }
+
+    private function userContext(AdUser $adUser, EventLog $event): UserContext
+    {
+        static $userInfoCache = [];
+
+        $trackingId = $event->impressionContext()->trackingId();
+
+        if (isset($userInfoCache[$trackingId])) {
+            Log::debug(sprintf(
+                '{"function": "%s", "userInfoCache": "hit", "event": %s}',
+                __FUNCTION__,
+                $event->id
+            ));
+
+            return $userInfoCache[$trackingId];
+        }
+
+        $userContext = $userInfoCache[$trackingId] = $adUser->getUserContext($event->impressionContext());
+
+        Log::debug(sprintf(
+            '{"function": "%s", "userInfoCache": "miss", "event": %s, "context": %s}',
+            __FUNCTION__,
+            $event->id,
+            json_encode($userContext->toArray())
+        ));
+
+        return $userContext;
     }
 }
