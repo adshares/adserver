@@ -76,7 +76,6 @@ class SupplyController extends Controller
         $impressionId = $decodedQueryData['page']['iid'];
 
         $tid = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
             $request,
             $response,
             '',
@@ -173,8 +172,9 @@ class SupplyController extends Controller
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
-        $tid = $request->cookies->get('tid');
-        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
+        $trackingId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
@@ -252,10 +252,11 @@ class SupplyController extends Controller
         $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
-        $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
+        $trackingId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
@@ -313,7 +314,6 @@ class SupplyController extends Controller
         $impressionId = $request->query->get('iid');
 
         $trackingId = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
             $request,
             $response,
             '',

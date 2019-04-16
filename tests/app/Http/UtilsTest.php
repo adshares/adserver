@@ -27,23 +27,20 @@ use PHPUnit\Framework\TestCase;
 
 class UtilsTest extends TestCase
 {
-    public function testIfCreateTrackingIdsAreTheSameWhenImpressionIdExists()
+    public function testIfCreateTrackingIdsAreTheSameWhenImpressionIdExists(): void
     {
         $impressionId = '1234567qweasd';
-        $secret = 'some-secret-123';
 
-        $trackingId1 = Utils::createTrackingId($secret, $impressionId);
-        $trackingId2 = Utils::createTrackingId($secret, $impressionId);
+        $trackingId1 = Utils::createTrackingId($impressionId);
+        $trackingId2 = Utils::createTrackingId($impressionId);
 
         $this->assertEquals($trackingId1, $trackingId2);
     }
 
-    public function testIfCreateTrackingIdsAreDifferentWhenNoImpressionId()
+    public function testIfCreateTrackingIdsAreDifferentWhenNoImpressionId(): void
     {
-        $secret = 'some-secret-123';
-
-        $trackingId1 = Utils::createTrackingId($secret);
-        $trackingId2 = Utils::createTrackingId($secret);
+        $trackingId1 = Utils::createTrackingId();
+        $trackingId2 = Utils::createTrackingId();
 
         $this->assertNotEquals($trackingId1, $trackingId2);
     }

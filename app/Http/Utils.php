@@ -27,11 +27,12 @@ use Illuminate\Http\Request;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
+use function config;
 use function is_string;
+use function sha1;
+use function substr;
+use const true;
 
-/**
- * Various helpful methods.
- */
 class Utils
 {
     private const VALUE_GLUE = "\t";
@@ -39,8 +40,6 @@ class Utils
     private const PROP_GLUE = "\r";
 
     private const ZONE_GLUE = "\n";
-
-    private const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public const ENV_DEV = 'local';
 
@@ -109,7 +108,7 @@ class Utils
         return $result;
     }
 
-    public static function urlSafeBase64Decode($string)
+    public static function urlSafeBase64Decode(string $string): string
     {
         return base64_decode(
             str_replace(
@@ -166,38 +165,22 @@ class Utils
         }
     }
 
-    public static function getRawTrackingId($encodedId)
+    public static function userIdFromTrackingId(string $encodedId): string
     {
-        if (!$encodedId) {
-            return '';
-        }
         $input = self::urlSafeBase64Decode($encodedId);
 
         return bin2hex(substr($input, 0, 16));
     }
 
     public static function attachOrProlongTrackingCookie(
-        $secret,
         Request $request,
         Response $response,
         $contentSha1,
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
-        $tid = $request->cookies->get('tid');
-        if (!self::validTrackingId($tid, $secret)) {
-            $tid = null;
-            $etags = $request->getETags();
+        $tid = self::createTid($request, $impressionId);
 
-            if (isset($etags[0])) {
-                $tag = str_replace('"', '', $etags[0]);
-                $tid = self::decodeEtag($tag);
-            }
-
-            if ($tid === null || !self::validTrackingId($tid, $secret)) {
-                $tid = self::createTrackingId($secret, $impressionId);
-            }
-        }
         $response->headers->setCookie(
             new Cookie(
                 'tid',
@@ -207,6 +190,7 @@ class Utils
                 $request->getHost()
             )
         );
+
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
         $response->setCache(
@@ -222,19 +206,14 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId($input, $secret): bool
+    private static function validTrackingId(string $input): bool
     {
-        if (!is_string($input)) {
-            return false;
-        }
         $input = self::urlSafeBase64Decode($input);
-        $id = substr($input, 0, 16);
-        $checksum = substr($input, 16);
 
-        return strpos(sha1($id.$secret, true), $checksum) === 0;
+        return substr($input, 16) === self::checksum(substr($input, 0, 16));
     }
 
-    private static function decodeEtag($etag)
+    private static function decodeEtag($etag): string
     {
         $etag = str_replace('"', '', $etag);
 
@@ -258,7 +237,7 @@ class Utils
         );
     }
 
-    public static function createTrackingId(string $secret, ?string $nonce = null): string
+    public static function createTrackingId(?string $nonce = null): string
     {
         $input = [];
 
@@ -274,9 +253,8 @@ class Utils
         }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = substr(sha1($id.$secret, true), 0, 6);
 
-        return self::urlSafeBase64Encode($id.$checksum);
+        return self::trackingIdFromUid($id);
     }
 
     private static function generateEtag($tid, $contentSha1): string
@@ -284,71 +262,6 @@ class Utils
         $sha1 = pack('H*', $contentSha1);
 
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
-    }
-
-    public static function flattenKeywords(array $keywords, $prefix = ''): array
-    {
-        $ret = [];
-
-        if (array_values($keywords) == $keywords) {
-            $keywords = array_flip($keywords);
-            foreach ($keywords as &$value) {
-                $value = 1;
-            }
-        }
-
-        foreach ($keywords as $keyword => $value) {
-            if (is_array($value)) {
-                $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
-            } else {
-                $ret[$prefix.$keyword] = $value;
-            }
-        }
-
-        return $ret;
-    }
-
-    public static function generalKeywordMatch(array $keywords, $name, $min, $max)
-    {
-        $path = explode('_', $name);
-        $last = array_pop($path);
-        $keys = explode(':', $last);
-        $values = [];
-        foreach ($keys as $key) {
-            $key = implode('_', $path).'_'.$key;
-            if (isset($keywords[$key])) {
-                $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
-            } else {
-                return false;
-            }
-        }
-        $vectors = [''];
-        for ($i = 0; $i < count($values); ++$i) {
-            $orgVectors = $vectors;
-            for ($j = 0; $j < count($values[$i]); ++$j) {
-                $newVector = [];
-                foreach ($orgVectors as $vector) {
-                    $val = $values[$i][$j];
-                    if (is_numeric($val)) {
-                        $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
-                    }
-                    $newVector[] = ($vector ? $vector.':' : '').$val;
-                }
-                if (0 == $j) {
-                    $vectors = $newVector;
-                } else {
-                    $vectors = array_merge($vectors, $newVector);
-                }
-            }
-        }
-
-        foreach ($vectors as $vector) {
-            if (strcmp($min, $vector) <= 0 && strcmp($vector, $max) <= 0) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public static function createCaseIdContainsEventType(string $baseCaseId, string $eventType): string
@@ -391,5 +304,39 @@ class Utils
         $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+    }
+
+    public static function trackingIdFromUid(string $id): string
+    {
+        $checksum = self::checksum($id);
+
+        return self::urlSafeBase64Encode($id.$checksum);
+    }
+
+    private static function checksum(string $id)
+    {
+        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+    }
+
+    private static function createTid(Request $request, ?string $impressionId): string
+    {
+        $tid = $request->cookies->get('tid');
+
+        if (!self::validTrackingId($tid)) {
+            $tid = null;
+            $etags = $request->getETags();
+
+            if (isset($etags[0])) {
+                $tag = str_replace('"', '', $etags[0]);
+
+                return self::decodeEtag($tag);
+            }
+
+            if (!self::validTrackingId($tid)) {
+                return self::createTrackingId($impressionId);
+            }
+        }
+
+        return $tid;
     }
 }

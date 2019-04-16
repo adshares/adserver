@@ -47,9 +47,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function json_decode;
 
-/**
- * API commands used to serve banners and log relevant events.
- */
 class DemandController extends Controller
 {
     private const CONTENT_TYPE = 'Content-Type';
@@ -59,6 +56,7 @@ class DemandController extends Controller
 
     /** @var CampaignRepository */
     private $campaignRepository;
+
     /** @var LicenseReader */
     private $licenseReader;
 
@@ -72,7 +70,7 @@ class DemandController extends Controller
         $this->licenseReader = $licenseReader;
     }
 
-    public function serve(Request $request, $id)
+    public function serve(Request $request, $id): Response
     {
         $banner = $this->getBanner($id);
 
@@ -104,7 +102,6 @@ class DemandController extends Controller
         }
 
         $tid = Utils::attachOrProlongTrackingCookie(
-            config('app.adserver_secret'),
             $request,
             $response,
             $banner->creative_sha1,
@@ -139,7 +136,7 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->case_id = $caseId;
         $log->event_id = $eventId;
-        $log->user_id = Utils::getRawTrackingId($tid);
+        $log->user_id = Utils::userIdFromTrackingId($tid);
         $log->advertiser_id = $user->uuid;
         $log->campaign_id = $campaign->uuid;
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
@@ -167,7 +164,7 @@ class DemandController extends Controller
         return $banner;
     }
 
-    public function viewScript(Request $request)
+    public function viewScript(Request $request): StreamedResponse
     {
         $params = [json_encode($request->getSchemeAndHttpHost())];
 
@@ -191,7 +188,7 @@ class DemandController extends Controller
         $response->setCache(
             [
                 'etag' => md5(md5_file($jsPath).implode(':', $params)),
-                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
+                'last_modified' => new DateTime('@'.filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
@@ -220,7 +217,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -235,7 +234,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $userId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
@@ -252,7 +251,7 @@ class DemandController extends Controller
         return $response;
     }
 
-    public function view(Request $request, string $bannerId)
+    public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
         $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
@@ -261,7 +260,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = $request->cookies->get('tid')
+            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -273,7 +274,6 @@ class DemandController extends Controller
 
         if ($adUserEndpoint) {
             $demandTrackingId = Utils::attachOrProlongTrackingCookie(
-                config('app.adserver_secret'),
                 $request,
                 $response,
                 '',
@@ -310,7 +310,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $userId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
