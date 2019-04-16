@@ -31,8 +31,10 @@ use Adshares\Supply\Application\Dto\UserContext;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 use function config;
 use function GuzzleHttp\json_decode;
+use function GuzzleHttp\json_encode;
 use function sprintf;
 
 final class GuzzleAdUserClient implements AdUser
@@ -76,6 +78,14 @@ final class GuzzleAdUserClient implements AdUser
                 $path,
                 ['form_params' => $partialContext->adUserRequestBody()]
             );
+
+            Log::debug(sprintf(
+                '{"url": "%s", "path": "%s", "request": %s, "response": %s}',
+                (string)$this->client->getConfig('base_uri'),
+                $path,
+                json_encode($partialContext->adUserRequestBody()),
+                (string)$response->getBody()
+            ));
 
             $context = json_decode((string)$response->getBody(), true);
 
