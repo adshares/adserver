@@ -113,7 +113,7 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
+        $trackingId = $this->cookies()['tid'] ?? $this->user['uid'] ?? '';
 
         if (!$trackingId) {
             throw new ImpressionContextException('Missing UID - this should not happen');
