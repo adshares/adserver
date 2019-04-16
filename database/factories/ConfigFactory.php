@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,8 +20,13 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Common\Domain\ValueObject\Exception;
+use Adshares\Adserver\Models\Config;
+use Faker\Generator as Faker;
 
-final class InvalidArgumentException extends \InvalidArgumentException
-{
-}
+$factory->define(Config::class,
+    function (Faker $faker) {
+        return [
+            'key' => $faker->word(),
+            'value' => $faker->word(),
+        ];
+    });

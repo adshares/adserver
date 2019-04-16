@@ -25,8 +25,10 @@ use Adshares\Adserver\Mail\AuthRecovery;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Feature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -74,16 +76,27 @@ class AuthController extends Controller
         Validator::make($request->all(), ['user.email_confirm_token' => 'required'])->validate();
 
         DB::beginTransaction();
-        if (false === $token = Token::check($request->input('user.email_confirm_token'))) {
+        $token = Token::check($request->input('user.email_confirm_token'));
+        if (false === $token) {
             return self::json([], Response::HTTP_FORBIDDEN);
         }
+
+        /** @var User $user */
         $user = User::find($token['user_id']);
+
         if (empty($user)) {
             return self::json([], Response::HTTP_FORBIDDEN);
         }
-        $user->email_confirmed_at = date('Y-m-d H:i:s');
+
+        $user->confirmEmail();
+
         $user->save();
+
         DB::commit();
+
+        if (Feature::enabled(Feature::BONUS_NEW_USERS)) {
+            $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
+        }
 
         return self::json($user->toArray());
     }
@@ -215,7 +228,7 @@ class AuthController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -248,7 +261,7 @@ class AuthController extends Controller
     /**
      * Start password recovery process - generate and send email.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param Request $request
      *
      * @return JsonResponse
      */

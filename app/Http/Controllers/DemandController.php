@@ -395,7 +395,7 @@ class DemandController extends Controller
     public function inventoryList(Request $request): JsonResponse
     {
         $licenceTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-        $operatorTxFee = Config::getFee(Config::OPERATOR_TX_FEE);
+        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
         foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {

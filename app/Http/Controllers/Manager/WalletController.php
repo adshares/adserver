@@ -28,7 +28,7 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Common\Domain\ValueObject\Exception\InvalidArgumentException;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

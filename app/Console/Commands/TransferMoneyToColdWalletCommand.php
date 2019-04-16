@@ -52,7 +52,7 @@ class TransferMoneyToColdWalletCommand extends Command
     {
         $this->info('[Wallet] Start command '.$this->signature);
 
-        if (!Config::isColdWalletActive()) {
+        if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
             $this->info('[Wallet] Hot wallet feature is disabled.');
 
             return;

@@ -127,7 +127,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         $tokens = Token::all();
         self::assertCount(1, $tokens);
-        Mail::assertQueued(WithdrawalApproval::class, 1);
+        Mail::assertQueued(WithdrawalApproval::class);
 
         $firstToken = $tokens->first();
         $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
@@ -166,7 +166,7 @@ class WalletControllerTest extends TestCase
         $response->assertStatus(Response::HTTP_NO_CONTENT);
         $tokens = Token::all();
         self::assertCount(1, $tokens);
-        Mail::assertQueued(WithdrawalApproval::class, 1);
+        Mail::assertQueued(WithdrawalApproval::class);
 
         $firstToken = $tokens->first();
         $userLedgerEntry = UserLedgerEntry::find($firstToken->payload['ledgerEntry']);
