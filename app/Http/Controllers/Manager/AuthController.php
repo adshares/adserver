@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Feature;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -93,7 +94,7 @@ class AuthController extends Controller
 
         DB::commit();
 
-        if (Config::isTrueOnly(Config::BONUS_NEW_USER_ENABLED)) {
+        if (Feature::enabled(Feature::BONUS_NEW_USERS)) {
             $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
         }
 
