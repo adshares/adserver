@@ -54,10 +54,12 @@ use function hex2bin;
  * @property int human_score
  * @property string our_userdata
  * @property string their_userdata
- * @property int event_value
- * @property int licence_fee
- * @property int operator_fee
- * @property int paid_amount
+ * @property int $event_value_currency
+ * @property int $exchange_rate
+ * @property int $event_value
+ * @property int $license_fee
+ * @property int $operator_fee
+ * @property int $paid_amount
  * @property int payment_id
  * @property int reason
  * @property int is_view_clicked
@@ -101,7 +103,7 @@ class EventLog extends Model
         'our_userdata',
         'their_userdata',
         'timestamp',
-        'event_value',
+        'event_value_currency',
         'paid_amount',
         'payment_id',
         'reason',
@@ -141,8 +143,8 @@ class EventLog extends Model
 
     public static function fetchUnpaidEvents(): Collection
     {
-        $query = self::whereNotNull('event_value')
-            ->where('event_value', '>', 0)
+        $query = self::whereNotNull('event_value_currency')
+            ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->orderBy('pay_to');

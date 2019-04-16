@@ -53,7 +53,7 @@ class ExchangeRateReaderTest extends TestCase
 
     public function testExchangeRateReaderEmptyStorageAndRemoteSuccess(): void
     {
-        $exchangeRateValue = '1';
+        $exchangeRateValue = 1;
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -80,7 +80,7 @@ class ExchangeRateReaderTest extends TestCase
 
     public function testExchangeRateReaderEmptyStorageAndRemoteOldValue(): void
     {
-        $exchangeRateValue = '1';
+        $exchangeRateValue = 1;
         $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -104,7 +104,7 @@ class ExchangeRateReaderTest extends TestCase
 
     public function testExchangeRateReaderSuccessStorage(): void
     {
-        $exchangeRateValue = '1';
+        $exchangeRateValue = 1;
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -129,7 +129,7 @@ class ExchangeRateReaderTest extends TestCase
 
     public function testExchangeRateReaderStorageOldValueAndRemoteSuccess(): void
     {
-        $exchangeRateValue = '1';
+        $exchangeRateValue = 1;
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -144,7 +144,7 @@ class ExchangeRateReaderTest extends TestCase
         $repositoryStorable = $this->createMock(EloquentExchangeRateRepository::class);
         $repositoryStorable->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function () {
-                $exchangeRateValue = '1';
+                $exchangeRateValue = 1;
                 $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
                 return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');

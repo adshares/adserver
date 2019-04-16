@@ -52,9 +52,11 @@ use function hex2bin;
  * @property string our_userdata
  * @property string their_userdata
  * @property int event_value
- * @property int licence_fee_amount
- * @property int operator_fee_amount
- * @property int paid_amount
+ * @property int $license_fee
+ * @property int $operator_fee
+ * @property int $paid_amount
+ * @property int $exchange_rate
+ * @property int $paid_amount_currency
  * @property int ads_payment_id
  * @property int is_view_clicked
  * @property string domain
@@ -96,8 +98,8 @@ class NetworkEventLog extends Model
         'timestamp',
         'event_value',
         'paid_amount',
-        'licence_fee_amount',
-        'operator_fee_amount',
+        'license_fee',
+        'operator_fee',
         'ads_payment_id',
         'is_view_clicked',
         'domain',
@@ -131,8 +133,8 @@ class NetworkEventLog extends Model
         'their_userdata' => 'JsonValue',
         'event_value' => 'Money',
         'paid_amount' => 'Money',
-        'licence_fee_amount' => 'Money',
-        'operator_fee_amount' => 'Money',
+        'license_fee' => 'Money',
+        'operator_fee' => 'Money',
     ];
 
     public static function fetchByCaseId(string $caseId): Collection

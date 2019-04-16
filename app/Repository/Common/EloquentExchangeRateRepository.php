@@ -46,7 +46,7 @@ class EloquentExchangeRateRepository
 
         return new DomainExchangeRate(
             DateTime::createFromFormat(self::DATABASE_DATETIME_FORMAT, $exchangeRate->valid_at),
-            $exchangeRate->value,
+            (float)$exchangeRate->value,
             $exchangeRate->currency
         );
     }
