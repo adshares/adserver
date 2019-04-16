@@ -237,7 +237,7 @@ class EventLog extends Model
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::checksumForTrackingId($this->user_id)]
+            ['uid' => Utils::trackingIdFromUid($this->user_id)]
         );
     }
 

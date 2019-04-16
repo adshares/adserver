@@ -29,6 +29,9 @@ use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use function config;
 use function is_string;
+use function sha1;
+use function substr;
+use const true;
 
 /**
  * Various helpful methods.
@@ -184,7 +187,6 @@ class Utils
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
-        $secret = config('app.adserver_secret');
         $tid = $request->cookies->get('tid');
         if (!self::validTrackingId($tid)) {
             $tid = null;
@@ -275,9 +277,8 @@ class Utils
         }
 
         $id = substr(sha1(implode(':', $input), true), 0, 16);
-        $checksum = self::checksumForTrackingId($id);
 
-        return self::urlSafeBase64Encode($id.$checksum);
+        return self::trackingIdFromUid($id);
     }
 
     private static function generateEtag($tid, $contentSha1): string
@@ -394,8 +395,10 @@ class Utils
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 
-    public static function checksumForTrackingId(string $id)
+    public static function trackingIdFromUid($id): string
     {
-        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+        $checksum = substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+
+        return self::urlSafeBase64Encode($id.$checksum);
     }
 }
