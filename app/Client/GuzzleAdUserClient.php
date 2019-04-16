@@ -27,11 +27,14 @@ use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use function addslashes;
+use function config;
 use function GuzzleHttp\json_decode;
 use function GuzzleHttp\json_encode;
 use function sprintf;
@@ -66,11 +69,26 @@ final class GuzzleAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
-        $path = sprintf(
-            '/api/v0/data/%s/%s',
-            config('app.adserver_id'),
-            $partialContext->userId()
-        );
+        try {
+            $path = sprintf(
+                '/api/v0/data/%s/%s',
+                config('app.adserver_id'),
+                $partialContext->userId()
+            );
+        } catch (ImpressionContextException $e) {
+            Log::debug(sprintf(
+                '{message: "$s","url": "%s"}',
+                addslashes($e->getMessage()),
+                (string)$this->client->getConfig('base_uri')
+            ));
+
+            return new UserContext(
+                $partialContext->keywords(),
+                AdUser::HUMAN_SCORE_ON_NO_UID,
+                ''
+            );
+        }
+
         try {
             $response = $this->client->post(
                 $path,
@@ -91,7 +109,7 @@ final class GuzzleAdUserClient implements AdUser
         } catch (GuzzleException $exception) {
             return new UserContext(
                 $partialContext->keywords(),
-                AdUser::DEFAULT_HUMAN_SCORE,
+                AdUser::HUMAN_SCORE_ON_CONNECTION_ERROR,
                 $partialContext->userId()
             );
         }
