@@ -351,9 +351,7 @@ class Utils
             $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
         }
 
-        $id = substr(sha1(implode(':', $input), true), 0, 16);
-
-        return $id;
+        return substr(sha1(implode(':', $input), true), 0, 16);
     }
 
     public static function trackingIdFromUserId(string $userId): ?string
