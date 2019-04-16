@@ -113,20 +113,21 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        Log::debug(sprintf(
-            '{"function":"%s","tid":"%s","uid":"%s"}',
-            __FUNCTION__,
-            $this->cookies()['tid'] ?? '',
-            $this->user['uid'] ?? ''
-        ));
+        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 
-        $uid = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
-
-        if (!$uid) {
+        if (!$trackingId) {
             throw new ImpressionContextException('Missing UID - this should not happen');
         }
 
-        return $uid;
+        Log::debug(sprintf(
+            '{"function":"%s","tid":"%s","uid":"%s","returns","%s"}',
+            __FUNCTION__,
+            $this->cookies()['tid'] ?? '',
+            $this->user['uid'] ?? '',
+            $trackingId
+        ));
+
+        return $trackingId;
     }
 
     private function headers(): array

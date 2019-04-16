@@ -322,8 +322,9 @@ class Utils
             }
 
             if (!self::validTrackingId($tid)) {
-                return self::urlSafeBase64Encode(self::userId($impressionId)
-                    .self::checksum(self::userId($impressionId)));
+                $userId = self::userId($impressionId);
+
+                return self::trackingIdFromUserId($userId);
             }
         }
 
@@ -353,5 +354,10 @@ class Utils
         $id = substr(sha1(implode(':', $input), true), 0, 16);
 
         return $id;
+    }
+
+    public static function trackingIdFromUserId(string $userId): string
+    {
+        return self::urlSafeBase64Encode($userId.self::checksum($userId));
     }
 }
