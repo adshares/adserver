@@ -147,6 +147,6 @@ final class ImpressionContext
 
     private function cookies(): array
     {
-        return HeaderUtils::combine(HeaderUtils::split($this->headers()['cookie'], ';='));
+        return HeaderUtils::combine(HeaderUtils::split($this->headers()['cookie'] ?? '', ';='));
     }
 }
