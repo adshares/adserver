@@ -32,6 +32,7 @@ use Symfony\Component\HttpFoundation\Response;
 use function config;
 use function is_string;
 use function sha1;
+use function sprintf;
 use function substr;
 use const true;
 
@@ -167,12 +168,18 @@ class Utils
         }
     }
 
-    public static function userIdFromTrackingId(string $encodedId): string
+    public static function userIdFromTrackingId(string $trackingId): string
     {
-        Log::debug("{\"uid\":\"$encodedId\"}");
-        $input = self::urlSafeBase64Decode($encodedId);
+        $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
 
-        return bin2hex(substr($input, 0, 16));
+        Log::debug(sprintf(
+            '{"function":"%s","tid":"%s","uid","%s"}',
+            __FUNCTION__,
+            $trackingId,
+            $userId
+        ));
+
+        return $userId;
     }
 
     public static function attachOrProlongTrackingCookie(
