@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.6.0] - 2019-04-16
 ### Added
 - Bonus credits for new users (on email confirmation)
 
@@ -74,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.5.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.6.0...develop
+[0.6.0]: https://github.com/adshares/adserver/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/adshares/adserver/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/adshares/adserver/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/adshares/adserver/compare/v0.5.1...v0.5.2
