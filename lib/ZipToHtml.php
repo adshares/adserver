@@ -22,11 +22,9 @@ namespace Adshares\Lib;
 
 use DOMDocument;
 use DOMXPath;
-use Illuminate\Support\Facades\Log;
 use Mimey\MimeTypes;
 use RuntimeException;
 use function sprintf;
-use function str_replace_array;
 use function zip_close;
 use function zip_entry_close;
 use function zip_entry_filesize;
@@ -190,21 +188,21 @@ MYSCRIPT;
         $doc->loadHTML(mb_convert_encoding($this->html_file_contents, 'HTML-ENTITIES', 'UTF-8'));
 
         $xpath = new DOMXPath($doc);
+
         [$body] = $xpath->query('//body');
-        [$head] = $xpath->query('//head');
 
-        if (!$head) {
-            $head = $doc->createElement('head');
+        if (!$body) {
+            throw new RuntimeException('Missing BODY tag');
+        }
 
+        if (empty($xpath->query('//head'))) {
             [$html] = $xpath->query('//html');
 
             if (!$html) {
-                Log::debug(str_replace_array(["\t", "\n"], ' ', $this->html_file_contents));
-
                 throw new RuntimeException('Missing HTML tag');
             }
 
-            $html->insertBefore($head, $body);
+            $html->insertBefore($doc->createElement('head'), $body);
         }
 
         $stylesheets = $xpath->query("//link[@rel='stylesheet']");
@@ -354,7 +352,7 @@ MYSCRIPT;
         return $doc->saveHTML();
     }
 
-    private function normalizePath($path)
+    private function normalizePath($path): string
     {
         $parts = [];// Array to build a new path from the good parts
         $path = str_replace('\\', '/', $path);// Replace backslashes with forwardslashes
