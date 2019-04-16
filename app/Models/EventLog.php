@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -238,7 +237,7 @@ class EventLog extends Model
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::trackingIdFromUid($this->user_id)]
+            ['uid' => $this->user_id]
         );
     }
 
