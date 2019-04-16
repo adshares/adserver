@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -113,7 +114,7 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
+        $trackingId = Utils::trackingIdFromUserId($this->user['uid'] ?? '') ?? $this->cookies()['tid'] ?? '';
 
         if (!$trackingId) {
             throw new ImpressionContextException('Missing UID - this should not happen');

@@ -356,8 +356,12 @@ class Utils
         return $id;
     }
 
-    public static function trackingIdFromUserId(string $userId): string
+    public static function trackingIdFromUserId(string $userId): ?string
     {
+        if (!$userId) {
+            return null;
+        }
+
         return self::urlSafeBase64Encode($userId.self::checksum($userId));
     }
 }
