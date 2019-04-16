@@ -309,10 +309,9 @@ class Utils
 
     private static function createTid(Request $request, ?string $impressionId): string
     {
-        $tid = $request->cookies->get('tid');
+        $tid = $request->cookies->get('tid') ?? '';
 
         if (!self::validTrackingId($tid)) {
-            $tid = null;
             $etags = $request->getETags();
 
             if (isset($etags[0])) {
@@ -321,11 +320,7 @@ class Utils
                 return self::decodeEtag($tag);
             }
 
-            if (!self::validTrackingId($tid)) {
-                $userId = self::userId($impressionId);
-
-                return self::trackingIdFromUserId($userId);
-            }
+            return self::trackingIdFromUserId(self::userId($impressionId));
         }
 
         return $tid;
