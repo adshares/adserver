@@ -294,7 +294,7 @@ class DemandController extends Controller
 
         Log::debug(
             sprintf(
-                '{"eventName":"%s","redirect":"%s}',
+                'DEMAND {"eventName":"%s","redirect":"%s}',
                 __FUNCTION__,
                 $adUserUrl
             )

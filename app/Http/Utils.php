@@ -360,6 +360,17 @@ class Utils
             return null;
         }
 
-        return self::urlSafeBase64Encode($userId.self::checksum($userId));
+        $trackingId = self::urlSafeBase64Encode($userId.self::checksum($userId));
+
+        Log::debug(
+            sprintf(
+                '{"function":"%s","uid":"%s","tid":"%s"}',
+                __FUNCTION__,
+                $userId,
+                $trackingId
+            )
+        );
+
+        return $trackingId;
     }
 }
