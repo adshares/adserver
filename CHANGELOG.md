@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Currency handling during payments processing
 
 ## [0.6.0] - 2019-04-16
 ### Added
 - Bonus credits for new users (on email confirmation)
-- Currency handling during payments processing
 
 ## [0.5.4] - 2019-04-12
 ### Fixed
