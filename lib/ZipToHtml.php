@@ -292,7 +292,8 @@ MYSCRIPT;
 
         $media = $xpath->query("//img[@srcset]|//source[@srcset]");
         foreach ($media as $tag) {
-            $newsrcset = preg_replace_callback('/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/',
+            $newsrcset = preg_replace_callback(
+                '/([^"\'\s,]+)\s*(\s+\d+[wxh])(,\s*)?+/',
                 function ($match) {
                     $href = $match[1];
                     $scheme = parse_url($href, PHP_URL_SCHEME);
@@ -318,7 +319,8 @@ MYSCRIPT;
                         return '';
                     }
                 },
-                $tag->getAttribute('srcset'));
+                $tag->getAttribute('srcset')
+            );
 
             $tag->setAttribute('srcset', $newsrcset);
         }
