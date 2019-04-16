@@ -39,7 +39,6 @@ class UtilsTest extends TestCase
 
     public function testIfCreateTrackingIdsAreDifferentWhenNoImpressionId(): void
     {
-
         $trackingId1 = Utils::createTrackingId();
         $trackingId2 = Utils::createTrackingId();
 

@@ -108,7 +108,7 @@ class Utils
         return $result;
     }
 
-    public static function urlSafeBase64Decode($string)
+    public static function urlSafeBase64Decode(string $string): string
     {
         return base64_decode(
             str_replace(
@@ -179,20 +179,8 @@ class Utils
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
-        $tid = $request->cookies->get('tid');
-        if (!self::validTrackingId($tid)) {
-            $tid = null;
-            $etags = $request->getETags();
+        $tid = self::createTid($request, $impressionId);
 
-            if (isset($etags[0])) {
-                $tag = str_replace('"', '', $etags[0]);
-                $tid = self::decodeEtag($tag);
-            }
-
-            if ($tid === null || !self::validTrackingId($tid)) {
-                $tid = self::createTrackingId($impressionId);
-            }
-        }
         $response->headers->setCookie(
             new Cookie(
                 'tid',
@@ -202,6 +190,7 @@ class Utils
                 $request->getHost()
             )
         );
+
         $response->headers->set('P3P', 'CP="CAO PSA OUR"'); // IE needs this, not sure about meaning of this header
 
         $response->setCache(
@@ -217,16 +206,11 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId($input): bool
+    private static function validTrackingId(string $input): bool
     {
-        if (!is_string($input)) {
-            return false;
-        }
         $input = self::urlSafeBase64Decode($input);
-        $id = substr($input, 0, 16);
-        $checksum = substr($input, 16);
 
-        return strpos(sha1($id.config('app.adserver_secret'), true), $checksum) === 0;
+        return substr($input, 16) === self::checksum(substr($input, 0, 16));
     }
 
     private static function decodeEtag($etag): string
@@ -322,10 +306,37 @@ class Utils
         return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 
-    public static function trackingIdFromUid($id): string
+    public static function trackingIdFromUid(string $id): string
     {
-        $checksum = substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+        $checksum = self::checksum($id);
 
         return self::urlSafeBase64Encode($id.$checksum);
+    }
+
+    private static function checksum(string $id)
+    {
+        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+    }
+
+    private static function createTid(Request $request, ?string $impressionId): string
+    {
+        $tid = $request->cookies->get('tid');
+
+        if (!self::validTrackingId($tid)) {
+            $tid = null;
+            $etags = $request->getETags();
+
+            if (isset($etags[0])) {
+                $tag = str_replace('"', '', $etags[0]);
+
+                return self::decodeEtag($tag);
+            }
+
+            if (!self::validTrackingId($tid)) {
+                return self::createTrackingId($impressionId);
+            }
+        }
+
+        return $tid;
     }
 }
