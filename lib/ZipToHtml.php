@@ -22,9 +22,11 @@ namespace Adshares\Lib;
 
 use DOMDocument;
 use DOMXPath;
+use Illuminate\Support\Facades\Log;
 use Mimey\MimeTypes;
 use RuntimeException;
 use function sprintf;
+use function str_replace_array;
 use function zip_close;
 use function zip_entry_close;
 use function zip_entry_filesize;
@@ -197,6 +199,8 @@ MYSCRIPT;
             [$html] = $xpath->query('//html');
 
             if (!$html) {
+                Log::debug(str_replace_array(["\t", "\n"], ' ', $this->html_file_contents));
+
                 throw new RuntimeException('Missing HTML tag');
             }
 
