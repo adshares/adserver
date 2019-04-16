@@ -47,9 +47,6 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function json_decode;
 
-/**
- * API commands used to serve banners and log relevant events.
- */
 class DemandController extends Controller
 {
     private const CONTENT_TYPE = 'Content-Type';
@@ -59,6 +56,7 @@ class DemandController extends Controller
 
     /** @var CampaignRepository */
     private $campaignRepository;
+
     /** @var LicenseReader */
     private $licenseReader;
 
@@ -72,7 +70,7 @@ class DemandController extends Controller
         $this->licenseReader = $licenseReader;
     }
 
-    public function serve(Request $request, $id)
+    public function serve(Request $request, $id): Response
     {
         $banner = $this->getBanner($id);
 
@@ -138,7 +136,7 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->case_id = $caseId;
         $log->event_id = $eventId;
-        $log->user_id = Utils::getRawTrackingId($tid);
+        $log->user_id = Utils::userIdFromTrackingId($tid);
         $log->advertiser_id = $user->uuid;
         $log->campaign_id = $campaign->uuid;
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
@@ -166,7 +164,7 @@ class DemandController extends Controller
         return $banner;
     }
 
-    public function viewScript(Request $request)
+    public function viewScript(Request $request): StreamedResponse
     {
         $params = [json_encode($request->getSchemeAndHttpHost())];
 
@@ -219,7 +217,7 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = Utils::userIdFromTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -234,7 +232,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $userId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
@@ -251,7 +249,7 @@ class DemandController extends Controller
         return $response;
     }
 
-    public function view(Request $request, string $bannerId)
+    public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
         $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
@@ -260,7 +258,7 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = Utils::getRawTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
+        $userId = Utils::userIdFromTrackingId($request->cookies->get('tid')) ?: $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -308,7 +306,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $userId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,

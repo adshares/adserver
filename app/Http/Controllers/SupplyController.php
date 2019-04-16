@@ -173,7 +173,7 @@ class SupplyController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $tid = $request->cookies->get('tid');
-        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
+        $trackingId = Utils::userIdFromTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
@@ -254,7 +254,7 @@ class SupplyController extends Controller
         $tid = $request->cookies->get('tid');
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        $trackingId = Utils::getRawTrackingId($tid) ?: $clientIpAddress;
+        $trackingId = Utils::userIdFromTrackingId($tid) ?: $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));

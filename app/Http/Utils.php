@@ -33,9 +33,6 @@ use function sha1;
 use function substr;
 use const true;
 
-/**
- * Various helpful methods.
- */
 class Utils
 {
     private const VALUE_GLUE = "\t";
@@ -43,8 +40,6 @@ class Utils
     private const PROP_GLUE = "\r";
 
     private const ZONE_GLUE = "\n";
-
-    private const NUMERIC_PAD_FORMAT = "%'08.2f";
 
     public const ENV_DEV = 'local';
 
@@ -170,11 +165,8 @@ class Utils
         }
     }
 
-    public static function getRawTrackingId($encodedId)
+    public static function userIdFromTrackingId(string $encodedId): string
     {
-        if (!$encodedId) {
-            return '';
-        }
         $input = self::urlSafeBase64Decode($encodedId);
 
         return bin2hex(substr($input, 0, 16));
@@ -237,7 +229,7 @@ class Utils
         return strpos(sha1($id.config('app.adserver_secret'), true), $checksum) === 0;
     }
 
-    private static function decodeEtag($etag)
+    private static function decodeEtag($etag): string
     {
         $etag = str_replace('"', '', $etag);
 
@@ -286,71 +278,6 @@ class Utils
         $sha1 = pack('H*', $contentSha1);
 
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
-    }
-
-    public static function flattenKeywords(array $keywords, $prefix = ''): array
-    {
-        $ret = [];
-
-        if (array_values($keywords) == $keywords) {
-            $keywords = array_flip($keywords);
-            foreach ($keywords as &$value) {
-                $value = 1;
-            }
-        }
-
-        foreach ($keywords as $keyword => $value) {
-            if (is_array($value)) {
-                $ret = array_merge($ret, self::flattenKeywords($value, $keyword.'_'));
-            } else {
-                $ret[$prefix.$keyword] = $value;
-            }
-        }
-
-        return $ret;
-    }
-
-    public static function generalKeywordMatch(array $keywords, $name, $min, $max)
-    {
-        $path = explode('_', $name);
-        $last = array_pop($path);
-        $keys = explode(':', $last);
-        $values = [];
-        foreach ($keys as $key) {
-            $key = implode('_', $path).'_'.$key;
-            if (isset($keywords[$key])) {
-                $values[] = is_array($keywords[$key]) ? $keywords[$key] : [$keywords[$key]];
-            } else {
-                return false;
-            }
-        }
-        $vectors = [''];
-        for ($i = 0; $i < count($values); ++$i) {
-            $orgVectors = $vectors;
-            for ($j = 0; $j < count($values[$i]); ++$j) {
-                $newVector = [];
-                foreach ($orgVectors as $vector) {
-                    $val = $values[$i][$j];
-                    if (is_numeric($val)) {
-                        $val = sprintf(self::NUMERIC_PAD_FORMAT, $val);
-                    }
-                    $newVector[] = ($vector ? $vector.':' : '').$val;
-                }
-                if (0 == $j) {
-                    $vectors = $newVector;
-                } else {
-                    $vectors = array_merge($vectors, $newVector);
-                }
-            }
-        }
-
-        foreach ($vectors as $vector) {
-            if (strcmp($min, $vector) <= 0 && strcmp($vector, $max) <= 0) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public static function createCaseIdContainsEventType(string $baseCaseId, string $eventType): string
