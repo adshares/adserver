@@ -24,9 +24,9 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
+use Adshares\Adserver\Client\AdsOperatorExchangeRateRepository;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
@@ -149,7 +149,15 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             ExchangeRateRepository::class,
             function () {
-                return new DummyExchangeRateRepository();
+                return new AdsOperatorExchangeRateRepository(
+                    new Client(
+                        [
+                            'headers' => ['Content-Type' => 'application/json'],
+                            'base_uri' => config('app.ads_operator_server_url'),
+                            'timeout' => 5,
+                        ]
+                    )
+                );
             }
         );
 
