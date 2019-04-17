@@ -31,7 +31,7 @@ class AbstractFilterMapperTest extends TestCase
     public function testGenerateNestedStructure(): void
     {
         $keywordsJson = <<<JSON
-{"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":{"0":"en","2":"pl"},"country":"pl"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats","info"]},"keywords":{"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":{"0":"en","2":"pl"},"country":"pl"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats"]}},"uuid":"0417a7a2-48ea-4ec7-94cd-8de088b17831","human_score":"0.48"} 
+{"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":["pl","en"],"country":"pl"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats","info"]}} 
 JSON;
         $keywords = json_decode($keywordsJson, true);
 

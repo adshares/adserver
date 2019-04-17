@@ -23,15 +23,31 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper;
 
 use Illuminate\Support\Facades\Log;
-use function implode;
 use function is_array;
+use function is_numeric;
 use function json_encode;
 
 abstract class AbstractFilterMapper
 {
-    public static function generateNestedStructure(array $data, array $fullPath = [], array &$values = []): array
+    private static function flatten(array $array, string $prefix = ''): array
     {
-        if (empty($values)) {
+        $result = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $result += self::flatten($value, $prefix.$key.':');
+            } elseif (is_numeric($key)) {
+                $result[$prefix.$key][] = $value;
+            } else {
+                $result[$prefix.$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    public static function generateNestedStructure(array $data): array
+    {
+        if (empty($data)) {
             Log::debug(
                 sprintf(
                     '%s: %s',
@@ -40,26 +56,7 @@ abstract class AbstractFilterMapper
             );
         }
 
-        foreach ($data as $key => $item) {
-            if (is_array($item) && self::isAssoc($item)) {
-                $fullPath[] = $key;
-                self::generateNestedStructure($item, $fullPath, $values);
-
-                $fullPath = array_slice($fullPath, 0, 1);
-
-                if ($fullPath[0] === $key) {
-                    $fullPath = [];
-                }
-            } else {
-                $path = implode(':', $fullPath);
-
-                if (!empty($path)) {
-                    $values[$path] = $data;
-                }
-            }
-        }
-
-        return $values;
+        return self::flatten($data);
     }
 
     private static function isAssoc(array $arr): bool
