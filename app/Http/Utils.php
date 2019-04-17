@@ -316,16 +316,23 @@ class Utils
 
         $input = self::urlSafeBase64Decode($tid);
 
+
+        $crc = substr($input, 16);
+
+        $crc2 = self::checksum(substr($input, 0, 16));
+
         Log::debug(
             sprintf(
-                '%s {"encoded":"%s","decoded":"%s"}',
+                '%s {"encoded":"%s","decoded":"%s","crc":"%s","crc2:"%s"}',
                 __FUNCTION__,
+                $tid,
                 $input,
-                $tid
+                $crc,
+                $crc2
             )
         );
 
-        return substr($input, 16) === self::checksum(substr($input, 0, 16));
+        return $crc === $crc2;
     }
 
     public static function trackingIdFromUserId(string $userId): ?string
