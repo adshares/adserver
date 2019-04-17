@@ -23,6 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper;
 
 use Illuminate\Support\Facades\Log;
+use function array_filter;
+use function array_values;
 use function is_array;
 use function is_numeric;
 use function json_encode;
@@ -34,11 +36,17 @@ abstract class AbstractFilterMapper
         $result = [];
         foreach ($array as $key => $value) {
             if (is_array($value)) {
-                $result += self::flatten($value, $prefix.$key.':');
-            } elseif (is_numeric($key)) {
-                $result[$prefix.$key][] = $value;
-            } else {
-                $result[$prefix.$key] = $value;
+                if (self::isAssoc($value)) {
+                    if (self::allKeysAreNumeric($value)) {
+                        $result[$prefix.$key] = array_values($value);
+                    } else {
+                        $result += self::flatten($value, $prefix.$key.':');
+                    }
+                } else {
+                    $result[$prefix.$key] = $value;
+                }
+            } elseif ($value) {
+                $result[$prefix.$key] = [$value];
             }
         }
 
@@ -47,16 +55,20 @@ abstract class AbstractFilterMapper
 
     public static function generateNestedStructure(array $data): array
     {
+        $flattened = self::flatten($data);
+
         if (empty($data)) {
             Log::debug(
                 sprintf(
-                    '%s: %s',
+                    '%s: %s => %s',
                     __FUNCTION__,
-                    json_encode($data))
+                    json_encode($data),
+                    json_encode($flattened)
+                )
             );
         }
 
-        return self::flatten($data);
+        return array_filter($flattened);
     }
 
     private static function isAssoc(array $arr): bool
@@ -66,5 +78,14 @@ abstract class AbstractFilterMapper
         }
 
         return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    private static function allKeysAreNumeric(array $value): bool
+    {
+        return empty(array_filter(array_keys($value),
+            static function ($key) {
+                return !is_numeric($key);
+            }
+        ));
     }
 }

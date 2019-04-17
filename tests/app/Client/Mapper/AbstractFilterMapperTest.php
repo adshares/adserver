@@ -31,23 +31,63 @@ class AbstractFilterMapperTest extends TestCase
     public function testGenerateNestedStructure(): void
     {
         $keywordsJson = <<<JSON
-{"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":["pl","en"],"country":"pl"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats","info"]}} 
+{"nx":{
+  "a": "",
+  "b": [],
+  "c": {
+    "d": "",
+    "e": [],
+    "f": {
+      "g": "",
+      "h": [],
+      "i": {}
+    }
+  },
+  "j": "s2",
+  "k": [
+    "a1",
+    "a2",
+    "a3"
+  ],
+  "l": {
+    "m": "",
+    "n": [
+      "a1",
+      "a2",
+      "a3"
+    ],
+    "o": {
+      "p": "",
+      "q": {
+       "0" :"a1",
+       "2": "a2",
+       "4": "a3"
+      },
+      "r": {}
+    }
+  }
+},"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":["pl","en"],"country":"xx"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats","info"]}} 
 JSON;
         $keywords = json_decode($keywordsJson, true);
 
         self::assertSame(
             [
+                'nx:j' => ['s2'],
+                'nx:k' => ['a1', 'a2', 'a3'],
+                'nx:l:n' => ['a1', 'a2', 'a3'],
+                'nx:l:o:q' => ['a1', 'a2', 'a3'],
                 'device:type' => ['desktop'],
                 'device:os' => ['unix'],
                 'device:browser' => ['chrome'],
-                'user:language' => ['en', 'pl'],
+                'user:language' => ['pl', 'en'],
+                'user:country' => ['xx'],
                 'site:url' => [
                     '//demo-site.adshares.net',
                     'net',
                     'adshares.net',
                     'demo-site.adshares.net',
                 ],
-                'site:tag' => ['pets: cats'  , 'info'],
+                'site:tag' => ['pets: cats', 'info'],
 
             ],
             AbstractFilterMapper::generateNestedStructure($keywords)
