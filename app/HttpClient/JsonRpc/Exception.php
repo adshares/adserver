@@ -36,13 +36,20 @@ class Exception extends AdsharesException
     public static function onError(Procedure $procedure, string $base_url, string $body, Throwable $e)
     {
         return new static(sprintf(
-            '%s: %s {"url": "%s", "method": "%s", "body": %s}',
+            '%s: %s {"url": "%s", "method": "%s"}',
             get_class($e),
             self::cleanMessage($e),
             $base_url,
-            $procedure->method(),
-            $body
+            $procedure->method()
         ));
+//        return new static(sprintf(
+//            '%s: %s {"url": "%s", "method": "%s", "body": %s}',
+//            get_class($e),
+//            self::cleanMessage($e),
+//            $base_url,
+//            $procedure->method(),
+//            $body
+//        ));
     }
 
     private static function cleanMessage(Throwable $e): string
