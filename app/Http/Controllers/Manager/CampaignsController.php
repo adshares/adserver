@@ -30,6 +30,7 @@ use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,6 +43,7 @@ use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
+use function in_array;
 
 class CampaignsController extends Controller
 {
@@ -58,7 +60,11 @@ class CampaignsController extends Controller
     public function upload(Request $request): UploadedFile
     {
         try {
-            return Factory::create($request)->upload();
+            $uploaded = Factory::create($request)->upload();
+            if (!in_array($uploaded->getFormattedSize(), Size::SUPPORTED_SIZES, true)) {
+                throw new BadRequestHttpException('Unsupported image size.');
+            }
+            return $uploaded;
         } catch (RuntimeException $exception) {
             throw new BadRequestHttpException($exception->getMessage());
         }
