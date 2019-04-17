@@ -29,11 +29,11 @@ class Exception extends AdsharesException
     public static function onError(Procedure $procedure, string $base_url, string $body, string $message)
     {
         return new static(sprintf(
-            '{"url": "%s", "method": "%s", "body": %s,"message": "%s"}',
+            '%s {"url": "%s", "method": "%s", "body": %s}',
+            $message,
             $base_url,
             $procedure->method(),
-            $body,
-            $message
+            $body
         ));
     }
 }
