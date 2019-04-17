@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Client\Mapper;
 use Illuminate\Support\Facades\Log;
 use function implode;
 use function is_array;
+use function is_numeric;
 use function is_string;
 use function json_encode;
 
@@ -42,6 +43,7 @@ abstract class AbstractFilterMapper
         }
 
         foreach ($data as $key => $item) {
+            $key=is_numeric($key)?(int)$key:$key;
             if (is_array($item) && is_string($key)) {
                 $fullPath[] = $key;
                 self::generateNestedStructure($item, $fullPath, $values);
