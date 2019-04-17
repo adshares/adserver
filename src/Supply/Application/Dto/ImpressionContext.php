@@ -72,7 +72,7 @@ final class ImpressionContext
         return [
             'url' => $this->site['page'] ?? '',
             'tags' => $this->site['keywords'] ?? [],
-            'headers' => $this->headers(),
+            'headers' => $this->flatHeaders(),
         ];
     }
 
@@ -130,7 +130,7 @@ final class ImpressionContext
         return $trackingId;
     }
 
-    private function headers(): array
+    private function flatHeaders(): array
     {
         $headers = array_map(
             function ($items) {
@@ -150,6 +150,6 @@ final class ImpressionContext
 
     private function cookies(): array
     {
-        return HeaderUtils::combine(HeaderUtils::split($this->headers()['cookie'] ?? '', ';='));
+        return HeaderUtils::combine(HeaderUtils::split($this->flatHeaders()['cookie'] ?? '', ';='));
     }
 }
