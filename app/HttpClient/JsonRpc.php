@@ -28,10 +28,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\Log;
 use Throwable;
-use function sprintf;
-use function str_replace;
 
 final class JsonRpc
 {
@@ -50,12 +47,12 @@ final class JsonRpc
         try {
             $response = $this->client->request('POST', '/', ['body' => $body]);
 
-            Log::debug(sprintf(
-                '{"url": "%s", "body": %s, "result": %s}',
-                (string)$this->client->getConfig('base_uri'),
-                $body,
-                str_replace(["\n", "\r"], ' ', (string)$response->getBody())
-            ));
+//            Log::debug(sprintf(
+//                '{"url": "%s", "body": %s, "result": %s}',
+//                (string)$this->client->getConfig('base_uri'),
+//                $body,
+//                str_replace(["\n", "\r"], ' ', (string)$response->getBody())
+//            ));
 
             return (new Response($response, $procedure))->result();
         } catch (GuzzleException $e) {
