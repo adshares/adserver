@@ -85,7 +85,8 @@ final class JsonRpc
 
         if ($decoded && is_array($decoded)) {
             $message = $decoded['message'] ?? sprintf('Unknown error (%s)', get_class($e));
-        } elseif (strpos($message, "\n") !== false) {
+        }
+        if (strpos($message, "\n") !== false) {
             $message = str_replace(["\n", "\t"], ' ', $message);
         }
 
