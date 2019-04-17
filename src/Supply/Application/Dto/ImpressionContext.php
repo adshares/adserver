@@ -80,7 +80,7 @@ final class ImpressionContext
 
         foreach ($zones as $requestId => $zone) {
             $params[] = [
-                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords'] ?? []),
+                'keywords' => AbstractFilterMapper::generateNestedStructure($this->toArray()),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,

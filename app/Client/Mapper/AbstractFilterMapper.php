@@ -59,8 +59,9 @@ abstract class AbstractFilterMapper
 
         Log::debug(
             sprintf(
-                '%s: %s => %s',
+                '%s:%s %s => %s',
                 __METHOD__,
+                __LINE__,
                 json_encode($data),
                 json_encode($flattened)
             )
