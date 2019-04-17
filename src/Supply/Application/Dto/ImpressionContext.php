@@ -25,11 +25,9 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use stdClass;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
-use function sprintf;
 
 final class ImpressionContext
 {
@@ -113,19 +111,11 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId =  $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
+        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
 
         if (!$trackingId) {
             throw new ImpressionContextException('Missing UID - this should not happen');
         }
-
-        Log::debug(sprintf(
-            '%s {"cookie.tid":"%s","user.uid":"%s","returns","%s"}',
-            __METHOD__,
-            $this->cookies()['tid'] ?? '',
-            $this->user['uid'] ?? '',
-            $trackingId
-        ));
 
         return $trackingId;
     }
