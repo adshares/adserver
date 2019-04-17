@@ -42,16 +42,19 @@ class UploadedImage implements UploadedFile
 
     public function toArray(): array
     {
-        $formattedSize = '';
-
-        if (isset($this->size[0], $this->size[1])) {
-            $formattedSize = sprintf('%sx%s', $this->size[0], $this->size[1]);
-        }
+        $formattedSize = $this->getFormattedSize();
 
         return [
             'name' => $this->name,
             'url' => $this->previewUrl,
             'size' => $formattedSize,
         ];
+    }
+
+    public function getFormattedSize(): ?string
+    {
+        if (isset($this->size[0], $this->size[1])) {
+            return sprintf('%sx%s', $this->size[0], $this->size[1]);
+        }
     }
 }
