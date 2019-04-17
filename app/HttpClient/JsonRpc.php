@@ -64,7 +64,7 @@ final class JsonRpc
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                'GuzzleException: '.($decoded['message'] ?? 'Something is NO-YES')
+                'GuzzleException: '.($decoded['message'] ?? 'Unknown error')
             );
         } catch (Throwable $e) {
             throw Exception::onError(
