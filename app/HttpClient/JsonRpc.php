@@ -31,6 +31,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use function json_decode;
+use function strpos;
 
 final class JsonRpc
 {
@@ -58,13 +59,18 @@ final class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (GuzzleException $e) {
-            $decoded = json_decode($e->getMessage(), true) ?? [];
+            $message = $e->getMessage();
+
+            if (strpos($message, "\n") !== false) {
+                $decoded = json_decode($e->getMessage(), true) ?? [];
+                $message = $decoded['message'] ?? 'Unknown error';
+            }
 
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                'GuzzleException: '.($decoded['message'] ?? 'Unknown error')
+                'GuzzleException: '.$message
             );
         } catch (Throwable $e) {
             throw Exception::onError(
