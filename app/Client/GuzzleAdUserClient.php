@@ -68,7 +68,7 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $path = sprintf(
-            '/api/v0/data/%s/%s',
+            '/api/v1/data/%s/%s',
             config('app.adserver_id'),
             $partialContext->trackingId()
         );

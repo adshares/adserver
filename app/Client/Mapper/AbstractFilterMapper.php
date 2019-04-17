@@ -62,7 +62,7 @@ abstract class AbstractFilterMapper
         return $values;
     }
 
-    public static function isAssoc(array $arr): bool
+    private static function isAssoc(array $arr): bool
     {
         if ([] === $arr) {
             return false;
