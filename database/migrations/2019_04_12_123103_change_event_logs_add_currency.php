@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Schema;
 
 class ChangeEventLogsAddCurrency extends Migration
 {
+    private const EXCHANGE_RATE_VALUE = '0.05';
+
     public function up(): void
     {
         Schema::table(
@@ -49,8 +51,19 @@ class ChangeEventLogsAddCurrency extends Migration
             }
         );
 
-        DB::update('UPDATE `event_logs` SET `event_value_currency` = `event_value` WHERE `event_value` IS NOT NULL');
-        DB::update('UPDATE `event_logs` SET `exchange_rate` = 1 WHERE `event_value` IS NOT NULL');
+        DB::update(
+            sprintf(
+                'UPDATE `event_logs` SET `event_value_currency` = `event_value` * %s WHERE `event_value` IS NOT NULL',
+                self::EXCHANGE_RATE_VALUE
+            )
+        );
+
+        DB::update(
+            sprintf(
+                'UPDATE `event_logs` SET `exchange_rate` = %s WHERE `event_value` IS NOT NULL',
+                self::EXCHANGE_RATE_VALUE
+            )
+        );
 
         Schema::table(
             'network_event_logs',
@@ -74,8 +87,19 @@ class ChangeEventLogsAddCurrency extends Migration
             }
         );
 
-        DB::update('UPDATE `network_event_logs` SET `exchange_rate` = 1 WHERE `paid_amount` IS NOT NULL');
-        DB::update('UPDATE `network_event_logs` SET `paid_amount_currency` = `paid_amount` WHERE `paid_amount` IS NOT NULL');
+        DB::update(
+            sprintf(
+                'UPDATE `network_event_logs` SET `exchange_rate` = %s WHERE `paid_amount` IS NOT NULL',
+                self::EXCHANGE_RATE_VALUE
+            )
+        );
+
+        DB::update(
+            sprintf(
+                'UPDATE `network_event_logs` SET `paid_amount_currency` = `paid_amount` * %s WHERE `paid_amount` IS NOT NULL',
+                self::EXCHANGE_RATE_VALUE
+            )
+        );
     }
 
     public function down(): void
