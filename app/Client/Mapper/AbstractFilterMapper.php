@@ -25,8 +25,6 @@ namespace Adshares\Adserver\Client\Mapper;
 use Illuminate\Support\Facades\Log;
 use function implode;
 use function is_array;
-use function is_numeric;
-use function is_string;
 use function json_encode;
 
 abstract class AbstractFilterMapper
@@ -43,8 +41,7 @@ abstract class AbstractFilterMapper
         }
 
         foreach ($data as $key => $item) {
-            $key=is_numeric($key)?(int)$key:$key;
-            if (is_array($item) && is_string($key)) {
+            if (is_array($item) && self::isAssoc($item)) {
                 $fullPath[] = $key;
                 self::generateNestedStructure($item, $fullPath, $values);
 
@@ -57,11 +54,20 @@ abstract class AbstractFilterMapper
                 $path = implode(':', $fullPath);
 
                 if (!empty($path)) {
-                    $values[$path] = (array)$data;
+                    $values[$path] = $data;
                 }
             }
         }
 
         return $values;
+    }
+
+    public static function isAssoc(array $arr): bool
+    {
+        if ([] === $arr) {
+            return false;
+        }
+
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
