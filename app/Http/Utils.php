@@ -314,25 +314,9 @@ class Utils
             return false;
         }
 
-        $input = self::urlSafeBase64Decode($tid);
+        $binTid = self::urlSafeBase64Decode($tid);
 
-
-        $crc = substr($input, 16);
-
-        $crc2 = self::checksum(substr($input, 0, 16));
-
-        Log::debug(
-            sprintf(
-                '%s {"encoded":"%s","decoded":"%s","crc":"%s","crc2:"%s"}',
-                __FUNCTION__,
-                $tid,
-                $input,
-                $crc,
-                $crc2
-            )
-        );
-
-        return $crc === $crc2;
+        return substr($binTid, 16,6) === self::checksum(substr($binTid, 0, 16));
     }
 
     public static function trackingIdFromUserId(string $userId): ?string
