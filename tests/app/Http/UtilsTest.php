@@ -24,15 +24,25 @@ namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Tests\TestCase;
+use function hex2bin;
 
 class UtilsTest extends TestCase
 {
-    public function testTrackingId(): void
+    public function testUserIdFromTrackingId(): void
     {
-        $tid = 'FWUEQAFQyuP-LwnAcIEYWNryu5loFA';
+        $uidHex = 'e96438dd5a0e42a6881959886a8ebc2f';
 
-        $uid = Utils::userIdFromTrackingId($tid);
+        $tid = Utils::trackingIdFromBinUserId(hex2bin($uidHex));
 
-        self::assertSame($tid, Utils::trackingIdFromUserId($uid));
+        self::assertSame($uidHex, Utils::hexUserIdFromTrackingId($tid));
+    }
+
+    public function testTrackingIdFromUserId(): void
+    {
+        $tid = '6WQ43VoOQqaIGVmIao68L2qb7wUbKQ';
+
+        $uidHex = Utils::hexUserIdFromTrackingId($tid);
+
+        self::assertSame($tid, Utils::trackingIdFromBinUserId(hex2bin($uidHex)));
     }
 }

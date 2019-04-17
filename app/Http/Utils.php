@@ -33,6 +33,7 @@ use function config;
 use function is_string;
 use function sha1;
 use function sprintf;
+use function strlen;
 use function substr;
 use const true;
 
@@ -279,7 +280,7 @@ class Utils
         return $partialImpressionContext;
     }
 
-    private static function userId(?string $nonce): string
+    private static function binUserId(?string $nonce): string
     {
         $input = [];
 
@@ -305,7 +306,7 @@ class Utils
             return $tid;
         }
 
-        return self::trackingIdFromUserId(self::userId($impressionId));
+        return self::trackingIdFromBinUserId(self::binUserId($impressionId));
     }
 
     private static function validTrackingId(string $tid): bool
@@ -316,12 +317,12 @@ class Utils
 
         $binTid = self::urlSafeBase64Decode($tid);
 
-        return substr($binTid, 16,6) === self::checksum(substr($binTid, 0, 16));
+        return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
     }
 
-    public static function trackingIdFromUserId(string $userId): ?string
+    public static function trackingIdFromBinUserId(string $userId): ?string
     {
-        if (!$userId) {
+        if (!$userId || strlen($userId) !== 16) {
             Log::debug(
                 sprintf(
                     '%s {"uid":"%s","tid":null}',
@@ -347,7 +348,7 @@ class Utils
         return $trackingId;
     }
 
-    public static function userIdFromTrackingId(string $trackingId): string
+    public static function hexUserIdFromTrackingId(string $trackingId): string
     {
         $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
 
