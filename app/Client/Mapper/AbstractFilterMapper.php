@@ -80,7 +80,8 @@ abstract class AbstractFilterMapper
 
     private static function allKeysAreNumeric(array $value): bool
     {
-        return empty(array_filter(array_keys($value),
+        return empty(array_filter(
+            array_keys($value),
             static function ($key) {
                 return !is_numeric($key);
             }

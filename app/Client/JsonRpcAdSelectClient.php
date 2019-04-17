@@ -113,7 +113,8 @@ final class JsonRpcAdSelectClient implements AdSelect
         Log::debug(
             sprintf(
                 '%s:%s {"zones":%s,"banners":%s}',
-                __METHOD__,__LINE__,
+                __METHOD__,
+                __LINE__,
                 json_encode($zoneIds),
                 json_encode($bannerIds)
             )
