@@ -26,14 +26,20 @@ use Illuminate\Support\Facades\Log;
 use function implode;
 use function is_array;
 use function is_string;
+use function json_encode;
 
 abstract class AbstractFilterMapper
 {
     public static function generateNestedStructure(array $data, array $fullPath = [], array &$values = []): array
     {
-        Log::debug(sprintf('%s: $s',
-            __FUNCTION__,
-            $data));
+        if (empty($values)) {
+            Log::debug(
+                sprintf(
+                    '%s: %s',
+                    __FUNCTION__,
+                    json_encode($data))
+            );
+        }
 
         foreach ($data as $key => $item) {
             if (is_array($item) && is_string($key)) {
