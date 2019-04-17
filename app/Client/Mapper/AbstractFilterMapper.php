@@ -50,12 +50,12 @@ abstract class AbstractFilterMapper
             }
         }
 
-        return $result;
+        return array_filter($result);
     }
 
     public static function generateNestedStructure(array $data): array
     {
-        $flattened = array_filter(self::flatten($data));
+        $flattened = self::flatten($data);
 
         Log::debug(
             sprintf(
