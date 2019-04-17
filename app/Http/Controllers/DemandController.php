@@ -292,14 +292,6 @@ class DemandController extends Controller
             $adUserUrl = null;
         }
 
-        Log::debug(
-            sprintf(
-                'DEMAND %s {"redirect":"%s}',
-                __FUNCTION__,
-                $adUserUrl
-            )
-        );
-
         $response->setContent(view(
             'demand/view-event',
             [

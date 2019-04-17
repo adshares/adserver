@@ -21,12 +21,12 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use function config;
@@ -320,50 +320,26 @@ class Utils
         return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
     }
 
-    public static function trackingIdFromBinUserId(string $userId): ?string
+    public static function trackingIdFromBinUserId(string $id): ?string
     {
-        if (!$userId || strlen($userId) !== 16) {
-            Log::debug(
-                sprintf(
-                    '%s {"uid":"%s","tid":null}',
-                    __FUNCTION__,
-                    $userId
-                )
-            );
-
-            return null;
+        if (strlen($id) !== 16) {
+            throw new RuntimeException('UserId should be a 16-byte binary format string.');
         }
 
-        $trackingId = self::urlSafeBase64Encode($userId.self::checksum($userId));
-
-        Log::debug(
-            sprintf(
-                '%s {"uid":"%s","tid":"%s"}',
-                __FUNCTION__,
-                $userId,
-                $trackingId
-            )
-        );
-
-        return $trackingId;
-    }
-
-    public static function hexUserIdFromTrackingId(string $trackingId): string
-    {
-        $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
-
-        Log::debug(sprintf(
-            '%s {"tid":"%s","uid","%s"}',
-            __FUNCTION__,
-            $trackingId,
-            $userId
-        ));
-
-        return $userId;
+        return self::urlSafeBase64Encode($id.self::checksum($id));
     }
 
     private static function checksum(string $id)
     {
+        if (strlen($id) !== 16) {
+            throw new RuntimeException('Id should be a 16-byte binary format string.');
+        }
+
         return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+    }
+
+    public static function hexUserIdFromTrackingId(string $trackingId): string
+    {
+        return bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
     }
 }

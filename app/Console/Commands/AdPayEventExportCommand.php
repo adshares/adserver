@@ -32,7 +32,6 @@ use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use function GuzzleHttp\json_encode;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -118,12 +117,6 @@ class AdPayEventExportCommand extends Command
         $trackingId = $event->impressionContext()->trackingId();
 
         if (isset($userInfoCache[$trackingId])) {
-            Log::debug(sprintf(
-                '{"function": "%s", "userInfoCache": "hit", "event": %s}',
-                __FUNCTION__,
-                $event->id
-            ));
-
             return $userInfoCache[$trackingId];
         }
 
@@ -132,13 +125,6 @@ class AdPayEventExportCommand extends Command
         if ($userContext->humanScore() > AdUser::HUMAN_SCORE_ON_NO_UID) {
             $userInfoCache[$trackingId] = $userContext;
         }
-
-        Log::debug(sprintf(
-            '%s {"userInfoCache": "miss", "event": %s, "context": %s}',
-            __FUNCTION__,
-            $event->id,
-            json_encode($userContext->toArray())
-        ));
 
         return $userContext;
     }
