@@ -23,17 +23,40 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
 use Adshares\Common\Exception\Exception as AdsharesException;
+use Throwable;
+use function get_class;
+use function is_array;
+use function json_decode;
+use function sprintf;
+use function str_replace;
+use function strpos;
 
 class Exception extends AdsharesException
 {
-    public static function onError(Procedure $procedure, string $base_url, string $body, string $message)
+    public static function onError(Procedure $procedure, string $base_url, string $body, Throwable $e)
     {
         return new static(sprintf(
-            '%s {"url": "%s", "method": "%s", "body": %s}',
-            $message,
+            '%s: %s {"url": "%s", "method": "%s", "body": %s}',
+            get_class($e),
+            self::cleanMessage($e),
             $base_url,
             $procedure->method(),
             $body
         ));
+    }
+
+    private static function cleanMessage(Throwable $e): string
+    {
+        $message = $e->getMessage();
+        $decoded = json_decode($e->getMessage(), true);
+
+        if ($decoded && is_array($decoded)) {
+            $message = $decoded['message'] ?? sprintf('Unknown error (%s)', get_class($e));
+        }
+        if (strpos($message, "\n") !== false) {
+            $message = str_replace(["\n", "\t"], ' ', $message);
+        }
+
+        return $message;
     }
 }

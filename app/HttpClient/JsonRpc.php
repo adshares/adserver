@@ -30,9 +30,6 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use function get_class;
-use function is_array;
-use function json_decode;
 use function sprintf;
 use function str_replace;
 
@@ -66,30 +63,15 @@ final class JsonRpc
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                'GuzzleException: '.$this->cleanMessage($e)
+                $e
             );
         } catch (Throwable $e) {
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                $this->cleanMessage($e)
+                $e
             );
         }
-    }
-
-    public function cleanMessage(Throwable $e): string
-    {
-        $message = $e->getMessage();
-        $decoded = json_decode($e->getMessage(), true);
-
-        if ($decoded && is_array($decoded)) {
-            $message = $decoded['message'] ?? sprintf('Unknown error (%s)', get_class($e));
-        }
-        if (strpos($message, "\n") !== false) {
-            $message = str_replace(["\n", "\t"], ' ', $message);
-        }
-
-        return $message;
     }
 }
