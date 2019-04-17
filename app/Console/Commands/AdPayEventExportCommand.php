@@ -122,7 +122,7 @@ class AdPayEventExportCommand extends Command
 
         $userContext = $adUser->getUserContext($event->impressionContext());
 
-        if ($userContext->humanScore() > AdUser::HUMAN_SCORE_ON_NO_UID) {
+        if ($userContext->humanScore() > AdUser::HUMAN_SCORE_MINIMUM) {
             $userInfoCache[$trackingId] = $userContext;
         }
 
