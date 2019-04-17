@@ -24,10 +24,8 @@ namespace Adshares\Supply\Infrastructure\Service;
 
 use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Domain\ValueObject\Classification;
-use Illuminate\Support\Facades\Log;
 use SodiumException;
 use function sodium_crypto_sign_verify_detached;
-use function sprintf;
 
 class SodiumCompatClassifyVerifier implements ClassifyVerifier
 {
@@ -47,12 +45,6 @@ class SodiumCompatClassifyVerifier implements ClassifyVerifier
         try {
             return sodium_crypto_sign_verify_detached($signature, $message, hex2bin($this->publicKey));
         } catch (SodiumException $exception) {
-            Log::debug(sprintf(
-                '%s FAILED {"%s"}',
-                __METHOD__,
-                $publicBannerId
-            ));
-
             return false;
         }
     }

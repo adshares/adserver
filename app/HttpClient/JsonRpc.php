@@ -30,8 +30,11 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use function get_class;
+use function is_array;
 use function json_decode;
-use function strpos;
+use function sprintf;
+use function str_replace;
 
 final class JsonRpc
 {
@@ -59,26 +62,33 @@ final class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (GuzzleException $e) {
-            $message = $e->getMessage();
-
-            if (strpos($message, "\n") !== false) {
-                $decoded = json_decode($e->getMessage(), true) ?? [];
-                $message = $decoded['message'] ?? 'Unknown error';
-            }
-
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                'GuzzleException: '.$message
+                'GuzzleException: '.$this->cleanMessage($e)
             );
         } catch (Throwable $e) {
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
                 $body,
-                str_replace(["\n", "\r"], ' ', $e->getMessage())
+                $this->cleanMessage($e)
             );
         }
+    }
+
+    public function cleanMessage(Throwable $e): string
+    {
+        $message = $e->getMessage();
+        $decoded = json_decode($e->getMessage(), true);
+
+        if ($decoded && is_array($decoded)) {
+            $message = $decoded['message'] ?? sprintf('Unknown error (%s)', get_class($e));
+        } elseif (strpos($message, "\n") !== false) {
+            $message = str_replace(["\n", "\t"], ' ', $message);
+        }
+
+        return $message;
     }
 }
