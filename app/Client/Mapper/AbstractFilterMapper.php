@@ -55,20 +55,18 @@ abstract class AbstractFilterMapper
 
     public static function generateNestedStructure(array $data): array
     {
-        $flattened = self::flatten($data);
+        $flattened = array_filter(self::flatten($data));
 
-        if (empty($data)) {
-            Log::debug(
-                sprintf(
-                    '%s: %s => %s',
-                    __FUNCTION__,
-                    json_encode($data),
-                    json_encode($flattened)
-                )
-            );
-        }
+        Log::debug(
+            sprintf(
+                '%s: %s => %s',
+                __FUNCTION__,
+                json_encode($data),
+                json_encode($flattened)
+            )
+        );
 
-        return array_filter($flattened);
+        return $flattened;
     }
 
     private static function isAssoc(array $arr): bool
