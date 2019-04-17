@@ -168,20 +168,6 @@ class Utils
         }
     }
 
-    public static function userIdFromTrackingId(string $trackingId): string
-    {
-        $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
-
-        Log::debug(sprintf(
-            '%s {"tid":"%s","uid","%s"}',
-            __FUNCTION__,
-            $trackingId,
-            $userId
-        ));
-
-        return $userId;
-    }
-
     public static function attachOrProlongTrackingCookie(
         Request $request,
         Response $response,
@@ -189,7 +175,7 @@ class Utils
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
-        $tid = self::createTid($request, $impressionId);
+        $tid = self::getOrCreateTrackingId($request, $impressionId);
 
         $response->headers->setCookie(
             new Cookie(
@@ -214,20 +200,6 @@ class Utils
         $response->headers->addCacheControlDirective('no-transform');
 
         return $tid;
-    }
-
-    private static function validTrackingId(string $tid): bool
-    {
-        $input = self::urlSafeBase64Decode($tid);
-
-        return substr($input, 16) === self::checksum(substr($input, 0, 16));
-    }
-
-    private static function decodeEtag($etag): string
-    {
-        $etag = str_replace('"', '', $etag);
-
-        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
     }
 
     public static function urlSafeBase64Encode($string): string
@@ -307,30 +279,6 @@ class Utils
         return $partialImpressionContext;
     }
 
-    private static function createTid(Request $request, ?string $impressionId): string
-    {
-        $tid = $request->cookies->get('tid') ?? '';
-
-        if (!self::validTrackingId($tid)) {
-//            $etags = $request->getETags();
-//
-//            if (isset($etags[0])) {
-//                $tag = str_replace('"', '', $etags[0]);
-//
-//                return self::decodeEtag($tag);
-//            }
-
-            return self::trackingIdFromUserId(self::userId($impressionId));
-        }
-
-        return $tid;
-    }
-
-    private static function checksum(string $id)
-    {
-        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
-    }
-
     private static function userId(?string $nonce): string
     {
         $input = [];
@@ -347,6 +295,37 @@ class Utils
         }
 
         return substr(sha1(implode(':', $input), true), 0, 16);
+    }
+
+    private static function getOrCreateTrackingId(Request $request, ?string $impressionId): string
+    {
+        $tid = $request->cookies->get('tid') ?? '';
+
+        if (self::validTrackingId($tid)) {
+            return $tid;
+        }
+
+        return self::trackingIdFromUserId(self::userId($impressionId));
+    }
+
+    private static function validTrackingId(string $tid): bool
+    {
+        if (!$tid) {
+            return false;
+        }
+
+        $input = self::urlSafeBase64Decode($tid);
+
+        Log::debug(
+            sprintf(
+                '%s {"encoded":"%s","decoded":"%s"}',
+                __FUNCTION__,
+                $input,
+                $tid
+            )
+        );
+
+        return substr($input, 16) === self::checksum(substr($input, 0, 16));
     }
 
     public static function trackingIdFromUserId(string $userId): ?string
@@ -375,5 +354,24 @@ class Utils
         );
 
         return $trackingId;
+    }
+
+    public static function userIdFromTrackingId(string $trackingId): string
+    {
+        $userId = bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
+
+        Log::debug(sprintf(
+            '%s {"tid":"%s","uid","%s"}',
+            __FUNCTION__,
+            $trackingId,
+            $userId
+        ));
+
+        return $userId;
+    }
+
+    private static function checksum(string $id)
+    {
+        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 }
