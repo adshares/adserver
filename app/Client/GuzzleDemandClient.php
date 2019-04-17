@@ -250,7 +250,7 @@ final class GuzzleDemandClient implements DemandClient
 
         foreach ($expectedKeys as $key) {
             if (!isset($data[$key])) {
-                Log::debug('Invalid info.json:'.json_encode($data));
+                Log::debug(__METHOD__.' Invalid info.json: '.json_encode($data));
 
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
