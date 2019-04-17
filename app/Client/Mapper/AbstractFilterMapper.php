@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use Illuminate\Support\Facades\Log;
 use function implode;
 use function is_array;
 use function is_string;
@@ -30,6 +31,10 @@ abstract class AbstractFilterMapper
 {
     public static function generateNestedStructure(array $data, array $fullPath = [], array &$values = []): array
     {
+        Log::debug(sprintf('%s: $s',
+            __FUNCTION__,
+            $data));
+
         foreach ($data as $key => $item) {
             if (is_array($item) && is_string($key)) {
                 $fullPath[] = $key;
