@@ -29,6 +29,8 @@ use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
+use Throwable;
+use function json_decode;
 
 final class JsonRpc
 {
@@ -55,7 +57,16 @@ final class JsonRpc
             ));
 
             return (new Response($response, $procedure))->result();
-        } catch (Exception|GuzzleException $e) {
+        } catch (GuzzleException $e) {
+            $decoded = json_decode($e->getMessage(), true) ?? [];
+
+            throw Exception::onError(
+                $procedure,
+                (string)$this->client->getConfig('base_uri'),
+                $body,
+                'GuzzleException: '.($decoded['message'] ?? 'Something is NO-YES')
+            );
+        } catch (Throwable $e) {
             throw Exception::onError(
                 $procedure,
                 (string)$this->client->getConfig('base_uri'),
