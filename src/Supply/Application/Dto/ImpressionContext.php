@@ -121,7 +121,7 @@ final class ImpressionContext
 
         Log::debug(sprintf(
             '%s {"cookie.tid":"%s","user.uid":"%s","returns","%s"}',
-            __FUNCTION__,
+            __METHOD__,
             $this->cookies()['tid'] ?? '',
             $this->user['uid'] ?? '',
             $trackingId
