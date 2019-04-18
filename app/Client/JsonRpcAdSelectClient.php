@@ -88,14 +88,14 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $params = $context->adSelectRequestParams($existingZones);
 
-//        Log::debug(
-//            sprintf(
-//                '%s:%s %s',
-//                __METHOD__,
-//                __LINE__,
-//                str_replace("\n", ' ', json_encode($params))
-//            )
-//        );
+        Log::debug(
+            sprintf(
+                '%s:%s %s',
+                __METHOD__,
+                __LINE__,
+                str_replace("\n", ' ', json_encode($params))
+            )
+        );
 
         $result = $this->client->call(
             new Procedure(
