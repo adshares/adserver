@@ -49,4 +49,9 @@ final class ObjectResult implements Result
     {
         throw new ResultException('This is an `array`');
     }
+
+    public function failed(): bool
+    {
+        return false;
+    }
 }

@@ -36,4 +36,18 @@ class Exception extends PhpException
     {
         return new static($exception->getMessage(), $exception->getCode(), $exception);
     }
+
+    public static function cleanMessage(string $message): string
+    {
+        $decoded = json_decode($message, true);
+
+        if ($decoded && is_array($decoded)) {
+            $message = $decoded['message'] ?? sprintf('Unknown error (%s)', __CLASS__);
+        }
+        if (strpos($message, "\n") !== false) {
+            $message = str_replace(["\n", "\t"], ' ', $message);
+        }
+
+        return $message;
+    }
 }

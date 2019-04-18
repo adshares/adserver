@@ -111,4 +111,24 @@ class NetworkCampaign extends Model
     {
         return $this->banners()->where('status', Status::STATUS_ACTIVE)->get();
     }
+
+    public static function findSupplyIdsByDemandIds(array $demandIds): array
+    {
+        $binDemandIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $demandIds
+        );
+
+        $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)->select('uuid', 'demand_campaign_id')->get();
+
+        $ids = [];
+
+        foreach ($campaigns as $campaign) {
+            $ids[$campaign->demand_campaign_id] = $campaign->uuid;
+        }
+
+        return $ids;
+    }
 }

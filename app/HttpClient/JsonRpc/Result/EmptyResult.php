@@ -22,27 +22,18 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 
-final class BoolResult implements Result
+final class EmptyResult implements Result
 {
-    /** @var bool */
-    private $value;
-
-    public function __construct(bool $value)
+    public function toArray(): array
     {
-        $this->value = $value;
+        return [];
     }
 
     public function isTrue(): bool
     {
-        return $this->value;
-    }
-
-    public function toArray(): array
-    {
-        throw new ResultException('This is a `bool');
+        return false;
     }
 
     public function failed(): bool
@@ -50,4 +41,3 @@ final class BoolResult implements Result
         return false;
     }
 }
-

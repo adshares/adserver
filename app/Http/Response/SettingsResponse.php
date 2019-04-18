@@ -50,6 +50,12 @@ class SettingsResponse implements Arrayable
 
     private $coldWalletAddress;
 
+    /** @var bool */
+    private $bonusEnabled;
+
+    /** @var int */
+    private $bonusAmount;
+
     public function __construct(
         int $hotWalletMinValue,
         int $hotWalletMaxValue,
@@ -58,8 +64,10 @@ class SettingsResponse implements Arrayable
         Email $supportEmail,
         int $coldWalletIsActive,
         Id $coldWalletAddress,
-        ?Commission $advertiserCommission = null,
-        ?Commission $publisherCommission = null
+        bool $bonusEnabled,
+        int $bonusAmount,
+        ?Commission $advertiserCommission,
+        ?Commission $publisherCommission
     ) {
         $this->hotWalletMinValue = $hotWalletMinValue;
         $this->hotWalletMaxValue = $hotWalletMaxValue;
@@ -70,6 +78,8 @@ class SettingsResponse implements Arrayable
         $this->publisherCommission = $publisherCommission;
         $this->coldWalletIsActive = $coldWalletIsActive;
         $this->coldWalletAddress = $coldWalletAddress;
+        $this->bonusEnabled = $bonusEnabled;
+        $this->bonusAmount = $bonusAmount;
     }
 
     public static function fromConfigModel(array $data): self
@@ -84,6 +94,9 @@ class SettingsResponse implements Arrayable
         $technicalEmail = $data[Config::TECHNICAL_EMAIL];
         $supportEmail = $data[Config::SUPPORT_EMAIL];
 
+        $bonusEnabled = $data[Config::BONUS_NEW_USER_ENABLED];
+        $bonusAmount = $data[Config::BONUS_NEW_USER_AMOUNT];
+
         return new self(
             (int)$hotWalletMinValue,
             (int)$hotWalletMaxValue,
@@ -92,6 +105,8 @@ class SettingsResponse implements Arrayable
             new Email($supportEmail),
             (int)$coldWalletIsActive,
             $coldWalletAddress ? new AccountId((string)$coldWalletAddress) : new EmptyAccountId(),
+            (bool)$bonusEnabled,
+            (int)$bonusAmount,
             new Commission((float)$advertiserCommission),
             new Commission((float)$publisherCommission)
         );
@@ -110,6 +125,8 @@ class SettingsResponse implements Arrayable
             //TODO: remove when front done
             'hotwallet_is_active' => $this->coldWalletIsActive,
             'hotwallet_address' => $this->coldWalletAddress->toString(),
+            'bonus_new_users_enabled' => $this->bonusEnabled,
+            'bonus_new_users_amount' => $this->bonusAmount,
         ];
 
         if ($this->advertiserCommission) {

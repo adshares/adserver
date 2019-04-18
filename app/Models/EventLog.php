@@ -62,6 +62,7 @@ use function hex2bin;
  * @property int reason
  * @property int is_view_clicked
  * @property string domain
+ * @property int id
  * @mixin Builder
  */
 class EventLog extends Model
@@ -237,7 +238,7 @@ class EventLog extends Model
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::trackingIdFromUid($this->user_id)]
+            ['uid' => Utils::trackingIdFromBinUserId(hex2bin($this->user_id))]
         );
     }
 
