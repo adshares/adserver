@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,22 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Adserver\Client\Mapper\AdPay;
 
-use Adshares\Common\Application\Dto\Taxonomy;
-use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
 
-interface AdUser
+class OurKeywordsMapper extends AbstractFilterMapper
 {
-    public const HUMAN_SCORE_ON_CONNECTION_ERROR = 0.40;
-    public const HUMAN_SCORE_ON_MISSING_FIELD = 0.41;
-    public const HUMAN_SCORE_ON_MISSING_KEYWORD = 0.42;
-    public const HUMAN_SCORE_MINIMUM = 0.45;
+    public static function map($keywords)
+    {
+        if (!$keywords) {
+            return new stdClass();
+        }
 
-    public function fetchTargetingOptions(): Taxonomy;
-
-    public function getUserContext(ImpressionContext $context): UserContext;
+        return self::generateNestedStructure($keywords);
+    }
 }
