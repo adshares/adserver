@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
