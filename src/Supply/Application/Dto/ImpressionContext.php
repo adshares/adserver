@@ -40,6 +40,9 @@ final class ImpressionContext
     /** @var array */
     private $user;
 
+    /** @var array|null */
+    private $originalUser;
+
     public function __construct(array $site, array $device, array $user)
     {
         $this->site = $site;
@@ -50,6 +53,10 @@ final class ImpressionContext
     public function withUserDataReplacedBy(array $userData): self
     {
         $new = clone $this;
+
+        if (empty($new->originalUser)) {
+            $new->originalUser = $this->user;
+        }
 
         $new->user = $userData;
 
@@ -111,7 +118,7 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? '';
+        $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? $this->originalUser['uid'] ?? '';
 
         if (!$trackingId) {
             throw new ImpressionContextException('Missing UID - this should not happen');
