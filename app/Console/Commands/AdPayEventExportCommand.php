@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -104,7 +105,7 @@ class AdPayEventExportCommand extends Command
                         '{"command":"%s","event":"%d","error":"%s"}',
                         $this->signature,
                         $event->id,
-                        $e->getMessage()
+                        Exception::cleanMessage($e->getMessage())
                     )
                 );
             }

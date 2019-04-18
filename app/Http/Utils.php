@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
@@ -272,7 +273,7 @@ class Utils
         } catch (ImpressionContextException $e) {
             Log::error(sprintf(
                 '{message: "%s","context": "%s"}',
-                addslashes($e->getMessage()),
+                Exception::cleanMessage($e->getMessage()),
                 json_encode($partialImpressionContext->toArray())
             ));
         }
