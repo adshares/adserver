@@ -66,7 +66,10 @@ class AbstractFilterMapperTest extends TestCase
       "r": {}
     }
   }
-},"device":{"type":"desktop","os":"unix","browser":"chrome"},"user":{"language":["pl","en"],"country":"xx"},"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],"tag":["pets: cats","info"]}} 
+},"device":{"type":"desktop","os":"unix","browser":"chrome"},
+"user":{"language":["pl","en"],"country":"xx"},
+"site":{"url":["\/\/demo-site.adshares.net","net","adshares.net","demo-site.adshares.net"],
+"tag":["pets: cats","info"]}} 
 JSON;
         $keywords = json_decode($keywordsJson, true);
 
