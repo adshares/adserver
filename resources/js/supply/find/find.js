@@ -280,7 +280,9 @@ var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
     var url = serverOrigin + '/supply/register?iid=' + impressionId;
 
-    document.body.appendChild(createIframeFromUrl(url));
+    var iframe = createIframeFromUrl(url);
+    document.body.appendChild(iframe);
+    dwmthACL.push(iframe.contentWindow);
 };
 
 var createIframeFromUrl = function createIframeFromUrl(url) {
