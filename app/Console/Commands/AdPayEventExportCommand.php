@@ -124,16 +124,18 @@ class AdPayEventExportCommand extends Command
 
         $userContext = $adUser->getUserContext($event->impressionContext());
 
-        Log::debug(sprintf(
-            '%s {"userInfoCache": "MISS", "event": %s, "context": %s}',
-            __FUNCTION__,
-            $event->id,
-            json_encode($userContext->toArray())
-        ));
-
         if ($userContext->humanScore() > AdUser::HUMAN_SCORE_MINIMUM) {
             $userInfoCache[$trackingId] = $userContext;
         }
+
+        Log::debug(sprintf(
+            '%s {"userInfoCache": "MISS", "humanScore":%s, "event": %s, "userId": %s "context": %s}',
+            __FUNCTION__,
+            $userContext->humanScore(),
+            $event->id,
+            $event->user_id,
+            json_encode($userContext->toArray())
+        ));
 
         return $userContext;
     }
