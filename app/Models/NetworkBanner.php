@@ -362,6 +362,26 @@ class NetworkBanner extends Model
         return $ids;
     }
 
+    public static function findSupplyIdsByDemandIds(array $demandIds): array
+    {
+        $binDemandIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $demandIds
+        );
+
+        $banners = self::whereIn('demand_banner_id', $binDemandIds)->select('uuid', 'demand_banner_id')->get();
+
+        $ids = [];
+
+        foreach ($banners as $banner) {
+            $ids[$banner->demand_banner_id] = $banner->uuid;
+        }
+
+        return $ids;
+    }
+
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(NetworkCampaign::class, 'network_campaign_id');
