@@ -23,17 +23,29 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
 use Adshares\Common\Exception\Exception as AdsharesException;
+use Illuminate\Support\Facades\Log;
+use Throwable;
+use function get_class;
+use function sprintf;
 
 class Exception extends AdsharesException
 {
-    public static function onError(Procedure $procedure, string $base_url, string $body, string $message)
+    public static function onError(Procedure $procedure, string $base_url, string $body, Throwable $e): void
     {
-        return new static(sprintf(
-            '{"url": "%s", "method": "%s", "body": %s,"message": "%s"}',
+        Log::error(sprintf(
+            '%s: %s {"url": "%s", "method": "%s"}',
+            get_class($e),
+            self::cleanMessage($e->getMessage()),
             $base_url,
-            $procedure->method(),
-            $body,
-            $message
+            $procedure->method()
         ));
+//        throw new static(sprintf(
+//            '%s: %s {"url": "%s", "method": "%s", "body": %s}',
+//            get_class($e),
+//            self::cleanMessage($e),
+//            $base_url,
+//            $procedure->method(),
+//            $body
+//        ));
     }
 }

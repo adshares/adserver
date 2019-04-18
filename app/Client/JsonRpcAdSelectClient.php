@@ -87,6 +87,16 @@ final class JsonRpcAdSelectClient implements AdSelect
         });
 
         $params = $context->adSelectRequestParams($existingZones);
+
+        Log::debug(
+            sprintf(
+                '%s:%s %s',
+                __METHOD__,
+                __LINE__,
+                str_replace("\n", ' ', json_encode($params))
+            )
+        );
+
         $result = $this->client->call(
             new Procedure(
                 self::METHOD_BANNER_SELECT,
@@ -101,7 +111,9 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         Log::debug(
             sprintf(
-                '{"zones":%s,"banners":%s}',
+                '%s:%s {"zones":%s,"banners":%s}',
+                __METHOD__,
+                __LINE__,
                 json_encode($zoneIds),
                 json_encode($bannerIds)
             )
