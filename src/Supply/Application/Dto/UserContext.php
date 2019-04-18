@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Application\Service\AdUser;
+use function array_map;
 use function array_merge;
+use function is_array;
 
 final class UserContext
 {
@@ -42,17 +45,22 @@ final class UserContext
         $this->userId = $userId;
     }
 
-    public static function fromAdUserArray(array $context, string $userId): self
+    public static function fromAdUserArray(array $body): self
     {
-        foreach ($context['keywords'] ?? [] as $key => $value) {
-            $context['keywords'][$key] = is_array($value) ? $value : [$value];
-        }
-
         return new self(
-            $context['keywords'] ?? [],
-            (float)$context['human_score'],
-            $userId
+            self::arrayify($body['keywords'] ?? []),
+            (float)($body['human_score'] ?? AdUser::HUMAN_SCORE_ON_MISSING_FIELD),
+            $body['uuid'] ?? ''
         );
+    }
+
+    private static function arrayify(array $array): array
+    {
+        $function = static function ($item) {
+            return is_array($item) ? $item : [$item];
+        };
+
+        return array_map($function, $array);
     }
 
     public function toAdSelectPartialArray(): array
@@ -75,5 +83,20 @@ final class UserContext
             'keywords' => $this->keywords,
             'human_score' => $this->humanScore,
         ];
+    }
+
+    public function keywords(): array
+    {
+        return $this->keywords;
+    }
+
+    public function humanScore(): float
+    {
+        return $this->humanScore;
+    }
+
+    public function userId(): string
+    {
+        return $this->userId;
     }
 }

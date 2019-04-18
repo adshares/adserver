@@ -22,33 +22,68 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
-use function implode;
+use function array_filter;
+use function array_values;
 use function is_array;
-use function is_string;
+use function is_numeric;
 
 abstract class AbstractFilterMapper
 {
-    public static function generateNestedStructure(array $data, array $fullPath = [], array &$values = []): array
+    private static function flatten(array $array, string $prefix = ''): array
     {
-        foreach ($data as $key => $item) {
-            if (is_array($item) && is_string($key)) {
-                $fullPath[] = $key;
-                self::generateNestedStructure($item, $fullPath, $values);
-
-                $fullPath = array_slice($fullPath, 0, 1);
-
-                if ($fullPath[0] === $key) {
-                    $fullPath = [];
+        $result = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                if (self::isAssoc($value)) {
+                    if (self::allKeysAreNumeric($value)) {
+                        $result[$prefix.$key] = array_values($value);
+                    } else {
+                        $result += self::flatten($value, $prefix.$key.':');
+                    }
+                } else {
+                    $result[$prefix.$key] = $value;
                 }
-            } else {
-                $path = implode(':', $fullPath);
-
-                if (!empty($path)) {
-                    $values[$path] = (array)$data;
-                }
+            } elseif ($value) {
+                $result[$prefix.$key] = [$value];
             }
         }
 
-        return $values;
+        return array_filter($result);
+    }
+
+    public static function generateNestedStructure(array $data): array
+    {
+        $flattened = self::flatten($data);
+
+//        Log::debug(
+//            sprintf(
+//                '%s:%s %s => %s',
+//                __METHOD__,
+//                __LINE__,
+//                json_encode($data),
+//                json_encode($flattened)
+//            )
+//        );
+
+        return $flattened;
+    }
+
+    private static function isAssoc(array $arr): bool
+    {
+        if ([] === $arr) {
+            return false;
+        }
+
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
+    private static function allKeysAreNumeric(array $value): bool
+    {
+        return empty(array_filter(
+            array_keys($value),
+            static function ($key) {
+                return !is_numeric($key);
+            }
+        ));
     }
 }
