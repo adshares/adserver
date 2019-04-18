@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use stdClass;
@@ -49,7 +50,7 @@ class DemandEventMapper
                     'timestamp' => $timestamp,
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
-                    'human_score' => (float)($event->human_score ?? 0.5),
+                    'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
                     'user_id' => $event->user_id,
                 ];
 
