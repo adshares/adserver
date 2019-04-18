@@ -23,6 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Uploader\Image;
 
 use Adshares\Adserver\Uploader\UploadedFile;
+use Adshares\Supply\Domain\ValueObject\Size;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use function in_array;
 
 class UploadedImage implements UploadedFile
 {
@@ -35,6 +38,10 @@ class UploadedImage implements UploadedFile
 
     public function __construct(string $name, string $previewUrl, array $size)
     {
+        if (!in_array($this->getFormattedSize($size), Size::SUPPORTED_SIZES, true)) {
+            throw new BadRequestHttpException('Unsupported image size.');
+        }
+
         $this->name = $name;
         $this->previewUrl = $previewUrl;
         $this->size = $size;
@@ -42,7 +49,7 @@ class UploadedImage implements UploadedFile
 
     public function toArray(): array
     {
-        $formattedSize = $this->getFormattedSize();
+        $formattedSize = $this->getFormattedSize($this->size);
 
         return [
             'name' => $this->name,
@@ -51,10 +58,10 @@ class UploadedImage implements UploadedFile
         ];
     }
 
-    public function getFormattedSize(): ?string
+    private function getFormattedSize(array $size): ?string
     {
-        if (isset($this->size[0], $this->size[1])) {
-            return sprintf('%sx%s', $this->size[0], $this->size[1]);
+        if (isset($size[0], $size[1])) {
+            return sprintf('%sx%s', $size[0], $size[1]);
         }
     }
 }
