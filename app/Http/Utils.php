@@ -206,8 +206,12 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId(string $input): bool
+    private static function validTrackingId(?string $input): bool
     {
+        if (!$input) {
+            return false;
+        }
+
         $input = self::urlSafeBase64Decode($input);
 
         return substr($input, 16) === self::checksum(substr($input, 0, 16));
@@ -323,7 +327,6 @@ class Utils
         $tid = $request->cookies->get('tid');
 
         if (!self::validTrackingId($tid)) {
-            $tid = null;
             $etags = $request->getETags();
 
             if (isset($etags[0])) {
@@ -332,9 +335,7 @@ class Utils
                 return self::decodeEtag($tag);
             }
 
-            if (!self::validTrackingId($tid)) {
-                return self::createTrackingId($impressionId);
-            }
+            return self::createTrackingId($impressionId);
         }
 
         return $tid;
