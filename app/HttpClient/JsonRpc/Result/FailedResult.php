@@ -22,32 +22,40 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
+use Adshares\Common\Exception\Exception;
+use Adshares\Common\Exception\RuntimeException;
+use Throwable;
+use function get_class;
+use function sprintf;
 
-final class BoolResult implements Result
+final class FailedResult implements Result
 {
-    /** @var bool */
-    private $value;
+    /** @var string */
+    private $message;
 
-    public function __construct(bool $value)
+    public function __construct(string $message, Throwable $e = null)
     {
-        $this->value = $value;
-    }
-
-    public function isTrue(): bool
-    {
-        return $this->value;
+        $this->message = sprintf(
+            '%s %s %s',
+            $message,
+            $e ? get_class($e) : '',
+            $e ? Exception::cleanMessage($e->getMessage()) : ''
+        );
     }
 
     public function toArray(): array
     {
-        throw new ResultException('This is a `bool');
+        throw new RuntimeException("FAILED {$this->message}");
+    }
+
+    public function isTrue(): bool
+    {
+        throw new RuntimeException("FAILED {$this->message}");
     }
 
     public function failed(): bool
     {
-        return false;
+        return true;
     }
 }
-
