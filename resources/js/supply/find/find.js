@@ -53,6 +53,8 @@ var encodeZones = function (zone_data) {
     return UrlSafeBase64Encode(result.join(ZONE_GLUE)); // url safe encoding
 };
 
+var dwmthACL = [];
+
 var replaceTag = function (oldTag, newTag) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
         var name = oldTag.attributes[i].name;
@@ -71,7 +73,6 @@ var prepareElement = function (context, banner, element, contextParam) {
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
 
-    banner.dwmthACL = [];
     if (element.tagName == 'IFRAME') {
 
         prepareIframe(element);
@@ -103,35 +104,6 @@ var prepareElement = function (context, banner, element, contextParam) {
                     }
                     // prevent double click
                     document.activeElement.blur();
-                }
-            }
-
-            var has_access = event.source === element.contentWindow;
-            has_access || banner.dwmthACL.forEach(function(win) {
-                if(win && (win === event.source)) {
-                    has_access = true;
-                }
-            });
-            if (has_access && event.data)
-            {
-                var data, isString = typeof event.data == "string";
-                if (isString) {
-                    data = JSON.parse(event.data);
-                } else {
-                    data = event.data;
-                }
-                if (data.insertElem) {
-                    data.insertElem.forEach(function (request) {
-                        if(banner.dwmthACL.length >= 5) return;
-                        if(request.type == 'iframe') {
-                            var iframe = addTrackingIframe(request.url, div);
-                            banner.dwmthACL.push(iframe.contentWindow);
-                        } else if(request.type == 'img') {
-                            addTrackingImage(request.url, div);
-                            banner.dwmthACL.push(null);
-                        }
-
-                    });
                 }
             }
         });
@@ -437,6 +409,34 @@ domReady(function () {
             }
         })
     });
+
+    addListener(window, 'message', function (event) {
+        var has_access = dwmthACL.some(function(win) {
+            return win && (win === event.source);
+        });
+        if (has_access && event.data)
+        {
+            var data, isString = typeof event.data == "string";
+            if (isString) {
+                data = JSON.parse(event.data);
+            } else {
+                data = event.data;
+            }
+            if (data.insertElem) {
+                data.insertElem.forEach(function (request) {
+                    if(dwmthACL.length >= 5) return;
+                    if(request.type == 'iframe') {
+                        var iframe = addTrackingIframe(request.url);
+                        dwmthACL.push(iframe.contentWindow);
+                    } else if(request.type == 'img') {
+                        addTrackingImage(request.url);
+                        dwmthACL.push(null);
+                    }
+
+                });
+            }
+        }
+    });
 });
 
 var findDestination = function (zoneId, tags, excludedTags) {
@@ -460,6 +460,9 @@ var findDestination = function (zoneId, tags, excludedTags) {
 
 var addTrackingIframe = function (url, element) {
     if (!url) return;
+    if(!element) {
+        element = document.body.lastChild;
+    }
     var iframe = createIframeFromUrl(url);
     element.parentNode.insertBefore(iframe, element);
     setTimeout(function() {
@@ -470,12 +473,14 @@ var addTrackingIframe = function (url, element) {
 
 var addTrackingImage = function (url, element) {
     if (!url) return;
+    if(!element) {
+        element = document.body.lastChild;
+    }
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
     img.src = url;
-    document.body.appendChild(img);
     element.parentNode.insertBefore(img, element);
     return img;
 };
@@ -484,7 +489,7 @@ var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {
         binary: true
     }).then(function (data, xhr) {
-        context.cid = xhr.getResponseHeader('X-Adshares-Cid');
+        context.cid = xhr.getResponseHeader('X-' + 'h:s:d:A'.split(':').reverse().join('') + 'ares' + '-_C_i_d'.split('_').join(''));
 
         context.page.zone = context.zone.zone;
         var contextParam = encodeZones([context.page]);
@@ -521,7 +526,7 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                banner.dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
             });
         };
         if (banner.creative_sha1) {
