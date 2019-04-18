@@ -22,12 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
-use Illuminate\Support\Facades\Log;
 use function array_filter;
 use function array_values;
 use function is_array;
 use function is_numeric;
-use function json_encode;
 
 abstract class AbstractFilterMapper
 {
@@ -57,15 +55,15 @@ abstract class AbstractFilterMapper
     {
         $flattened = self::flatten($data);
 
-        Log::debug(
-            sprintf(
-                '%s:%s %s => %s',
-                __METHOD__,
-                __LINE__,
-                json_encode($data),
-                json_encode($flattened)
-            )
-        );
+//        Log::debug(
+//            sprintf(
+//                '%s:%s %s => %s',
+//                __METHOD__,
+//                __LINE__,
+//                json_encode($data),
+//                json_encode($flattened)
+//            )
+//        );
 
         return $flattened;
     }
