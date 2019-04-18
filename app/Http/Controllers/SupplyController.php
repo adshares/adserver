@@ -90,10 +90,7 @@ class SupplyController extends Controller
         $zones = Utils::decodeZones($data)['zones'];
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        return self::json($bannerFinder->findBanners(
-            $zones,
-            $context
-        ));
+        return self::json($bannerFinder->findBanners($zones, $context));
     }
 
     public function findScript(Request $request): StreamedResponse

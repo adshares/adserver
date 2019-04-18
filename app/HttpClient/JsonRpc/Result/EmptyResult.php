@@ -18,12 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Services;
+declare(strict_types = 1);
 
-class Adclassify
+namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
+
+use Adshares\Adserver\HttpClient\JsonRpc\Result;
+
+final class EmptyResult implements Result
 {
-    public function send(int $campaingId, ?array $targetingRequires, ?array $targetingExcludes, ?array $bannerUrls)
+    public function toArray(): array
     {
-        return ['18+', 'casino'];
+        return [];
+    }
+
+    public function isTrue(): bool
+    {
+        return false;
+    }
+
+    public function failed(): bool
+    {
+        return false;
     }
 }

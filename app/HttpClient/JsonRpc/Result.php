@@ -27,4 +27,6 @@ interface Result
     public function isTrue(): bool;
 
     public function toArray(): array;
+
+    public function failed(): bool;
 }

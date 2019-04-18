@@ -22,12 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\HttpClient;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
 use Adshares\Adserver\HttpClient\JsonRpc\Response;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
 use Throwable;
 
 final class JsonRpc
@@ -47,28 +45,9 @@ final class JsonRpc
         try {
             $response = $this->client->request('POST', '/', ['body' => $body]);
 
-//            Log::debug(sprintf(
-//                '{"url": "%s", "body": %s, "result": %s}',
-//                (string)$this->client->getConfig('base_uri'),
-//                $body,
-//                str_replace(["\n", "\r"], ' ', (string)$response->getBody())
-//            ));
-
             return (new Response($response, $procedure))->result();
-        } catch (GuzzleException $e) {
-            Exception::onError(
-                $procedure,
-                (string)$this->client->getConfig('base_uri'),
-                $body,
-                $e
-            );
         } catch (Throwable $e) {
-            Exception::onError(
-                $procedure,
-                (string)$this->client->getConfig('base_uri'),
-                $body,
-                $e
-            );
+            return new Result\FailedResult($body);
         }
     }
 }
