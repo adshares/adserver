@@ -112,7 +112,7 @@ class NetworkCampaign extends Model
         return $this->banners()->where('status', Status::STATUS_ACTIVE)->get();
     }
 
-    public static function findPublicIdsByDemandIds(array $demandIds): array
+    public static function findSupplyIdsByDemandIds(array $demandIds): array
     {
         $binDemandIds = array_map(
             function (string $item) {

@@ -362,7 +362,7 @@ class NetworkBanner extends Model
         return $ids;
     }
 
-    public static function findPublicIdsByDemandIds(array $demandIds): array
+    public static function findSupplyIdsByDemandIds(array $demandIds): array
     {
         $binDemandIds = array_map(
             function (string $item) {

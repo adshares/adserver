@@ -83,8 +83,8 @@ final class GuzzleDemandClient implements DemandClient
         $this->validateResponse($statusCode, $body);
 
         $campaigns = $this->createDecodedResponseFromBody($body);
-        $campaignDemandIdsToPublicIds = $this->getCampaignDemandIdsToPublicIds($campaigns);
-        $bannerDemandIdsToPublicIds = $this->getBannerDemandIdsToPublicIds($campaigns);
+        $campaignDemandIdsToSupplyIds = $this->getCampaignDemandIdsToSupplyIds($campaigns);
+        $bannerDemandIdsToSupplyIds = $this->getBannerDemandIdsToSupplyIds($campaigns);
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
@@ -94,8 +94,8 @@ final class GuzzleDemandClient implements DemandClient
                         $this->processData(
                             $data,
                             $sourceHost,
-                            $campaignDemandIdsToPublicIds,
-                            $bannerDemandIdsToPublicIds
+                            $campaignDemandIdsToSupplyIds,
+                            $bannerDemandIdsToSupplyIds
                         )
                     );
                 $campaignsCollection->add($data);
@@ -217,8 +217,8 @@ final class GuzzleDemandClient implements DemandClient
     private function processData(
         array $data,
         string $sourceHost,
-        array $campaignDemandIdsToPublicIds,
-        array $bannerDemandIdsToPublicIds
+        array $campaignDemandIdsToSupplyIds,
+        array $bannerDemandIdsToSupplyIds
     ): array {
         $data['demand_id'] = Uuid::fromString($data['id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
@@ -236,8 +236,8 @@ final class GuzzleDemandClient implements DemandClient
         foreach ((array)$data['banners'] as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
 
-            if ($bannerDemandIdsToPublicIds[$banner['id']]) {
-                $banner['id'] = Uuid::fromString($bannerDemandIdsToPublicIds[$banner['id']]);
+            if ($bannerDemandIdsToSupplyIds[$banner['id']]) {
+                $banner['id'] = Uuid::fromString($bannerDemandIdsToSupplyIds[$banner['id']]);
             } else {
                 unset($banner['id']);
             }
@@ -252,8 +252,8 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
         $data['banners'] = $banners;
 
-        if ($campaignDemandIdsToPublicIds[$data['id']]) {
-            $data['id'] = Uuid::fromString($campaignDemandIdsToPublicIds[$data['id']]);
+        if ($campaignDemandIdsToSupplyIds[$data['id']]) {
+            $data['id'] = Uuid::fromString($campaignDemandIdsToSupplyIds[$data['id']]);
         } else {
             unset($data['id']);
         }
@@ -293,17 +293,17 @@ final class GuzzleDemandClient implements DemandClient
         }
     }
 
-    private function getCampaignDemandIdsToPublicIds(array $campaigns): array
+    private function getCampaignDemandIdsToSupplyIds(array $campaigns): array
     {
         $campaignIds = [];
         foreach ($campaigns as $campaign) {
             $campaignIds[] = $campaign['id'];
         }
 
-        return NetworkCampaign::findPublicIdsByDemandIds($campaignIds);
+        return NetworkCampaign::findSupplyIdsByDemandIds($campaignIds);
     }
 
-    private function getBannerDemandIdsToPublicIds(array $campaigns): array
+    private function getBannerDemandIdsToSupplyIds(array $campaigns): array
     {
         $bannerDemandIds = [];
         foreach ($campaigns as $campaign) {
@@ -312,6 +312,6 @@ final class GuzzleDemandClient implements DemandClient
             }
         }
         
-        return NetworkBanner::findPublicIdsByDemandIds($bannerDemandIds);
+        return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds);
     }
 }
