@@ -60,11 +60,7 @@ class CampaignsController extends Controller
     public function upload(Request $request): UploadedFile
     {
         try {
-            $uploaded = Factory::create($request)->upload();
-            if (!in_array($uploaded->getFormattedSize(), Size::SUPPORTED_SIZES, true)) {
-                throw new BadRequestHttpException('Unsupported image size.');
-            }
-            return $uploaded;
+            return Factory::create($request)->upload();
         } catch (RuntimeException $exception) {
             throw new BadRequestHttpException($exception->getMessage());
         }
