@@ -28,6 +28,7 @@ use Illuminate\Support\Collection;
 use stdClass;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
+use function json_encode;
 
 final class ImpressionContext
 {
@@ -121,7 +122,14 @@ final class ImpressionContext
         $trackingId = $this->user['uid'] ?? $this->cookies()['tid'] ?? $this->originalUser['uid'] ?? '';
 
         if (!$trackingId) {
-            throw new ImpressionContextException('Missing UID - this should not happen');
+            Log::warning(sprintf(
+                '%s:%s Missing UID - this should not happen {"user":%s,"oldUser":%s,"cookies":%s}',
+                __FUNCTION__,
+                __LINE__,
+                json_encode($this->originalUser),
+                json_encode($this->user),
+                json_encode($this->cookies())
+            ));
         }
 
         return $trackingId;
