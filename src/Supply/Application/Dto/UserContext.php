@@ -45,12 +45,12 @@ final class UserContext
         $this->userId = $userId;
     }
 
-    public static function fromAdUserArray(array $body, string $userId): self
+    public static function fromAdUserArray(array $body): self
     {
         return new self(
             self::arrayify($body['keywords'] ?? []),
             (float)($body['human_score'] ?? AdUser::HUMAN_SCORE_ON_MISSING_FIELD),
-            $userId
+            $body['uuid'] ?? ''
         );
     }
 

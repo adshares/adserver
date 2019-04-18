@@ -88,7 +88,7 @@ final class GuzzleAdUserClient implements AdUser
 
             $body = json_decode((string)$response->getBody(), true);
 
-            return UserContext::fromAdUserArray($body, $partialContext->trackingId());
+            return UserContext::fromAdUserArray($body);
         } catch (GuzzleException $exception) {
             return new UserContext(
                 $partialContext->keywords(),
