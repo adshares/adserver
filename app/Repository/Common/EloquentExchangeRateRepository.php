@@ -53,6 +53,12 @@ class EloquentExchangeRateRepository
 
     public function storeExchangeRate(DomainExchangeRate $fetchedExchangeRate)
     {
-        (new ExchangeRate($fetchedExchangeRate->toArray()))->save();
+        (new ExchangeRate(
+            [
+                'valid_at' => $fetchedExchangeRate->getDateTime(),
+                'value' => $fetchedExchangeRate->getValue(),
+                'currency' => $fetchedExchangeRate->getCurrency(),
+            ]
+        ))->save();
     }
 }
