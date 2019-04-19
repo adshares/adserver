@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function array_map;
+use function array_unique;
 use function count;
 use function GuzzleHttp\json_encode;
 use function hex2bin;
@@ -155,21 +156,29 @@ HTML;
 
     public static function findByPublicIds(array $publicIds): Collection
     {
-        $binPublicIds = array_map(
+        $binPublicIds = array_unique(array_map(
             function (string $item) {
                 return hex2bin($item);
             },
             $publicIds
-        );
+        ));
 
         $zones = self::whereIn('uuid', $binPublicIds)->get();
 
         if (count($zones) !== count($binPublicIds)) {
-            Log::warning(sprintf(
-                'Missing zones. {"ids":%s,"zones":%s}',
-                json_encode($publicIds),
-                json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
-            ));
+            if (count($zones) < count($binPublicIds)) {
+                Log::warning(sprintf(
+                    'Missing zones. {"ids":%s,"zones":%s}',
+                    json_encode($publicIds),
+                    json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
+                ));
+            } else {
+                Log::error(sprintf(
+                    'Too many zones. {"ids":%s,"zones":%s}',
+                    json_encode($publicIds),
+                    json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
+                ));
+            }
         }
 
         return $zones;
