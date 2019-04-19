@@ -28,12 +28,16 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Feature;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,6 +54,14 @@ class AuthController extends Controller
     protected $email_change_token_time = 60 * 60; // 1 hour
 
     protected $email_new_change_resend_limit = 5 * 60; // 1 minute
+
+    /** @var ExchangeRateReader */
+    private $exchangeRateReader;
+
+    public function __construct(ExchangeRateReader $exchangeRateReader)
+    {
+        $this->exchangeRateReader = $exchangeRateReader;
+    }
 
     public function register(Request $request): JsonResponse
     {
@@ -222,7 +234,17 @@ class AuthController extends Controller
 
     public function check(): JsonResponse
     {
-        return self::json(Auth::user());
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime())->toArray();
+        } catch (ExchangeRateNotAvailableException $exception) {
+            Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            $exchangeRate = null;
+        }
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
     }
 
     /**
