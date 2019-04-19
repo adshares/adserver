@@ -307,7 +307,7 @@ class Utils
             return $tid;
         }
 
-        return self::trackingIdFromBinUserId(self::binUserId($impressionId));
+        return self::base64UrlEncodeWithChecksumFromBinUuidString(self::binUserId($impressionId));
     }
 
     private static function validTrackingId(string $tid): bool
@@ -321,7 +321,7 @@ class Utils
         return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
     }
 
-    public static function trackingIdFromBinUserId(string $id): ?string
+    public static function base64UrlEncodeWithChecksumFromBinUuidString(string $id): ?string
     {
         if (strlen($id) !== 16) {
             throw new RuntimeException('UserId should be a 16-byte binary format string.');

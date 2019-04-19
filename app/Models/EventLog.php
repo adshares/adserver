@@ -40,6 +40,7 @@ use function hex2bin;
  * @property string case_id
  * @property string event_id
  * @property string user_id
+ * @property string tracking_id
  * @property string banner_id
  * @property string publisher_id
  * @property string advertiser_id
@@ -183,7 +184,7 @@ class EventLog extends Model
         $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
+        $log->tracking_id = $trackingId;
         $log->zone_id = $zoneId;
         $log->publisher_id = $publisherId;
         $log->campaign_id = $campaignId;
@@ -238,7 +239,7 @@ class EventLog extends Model
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::trackingIdFromBinUserId(hex2bin($this->user_id))]
+            ['uid' => Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id))]
         );
     }
 
