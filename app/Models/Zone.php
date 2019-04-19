@@ -166,19 +166,13 @@ HTML;
         $zones = self::whereIn('uuid', $binPublicIds)->get();
 
         if (count($zones) !== count($binPublicIds)) {
-            if (count($zones) < count($binPublicIds)) {
-                Log::warning(sprintf(
-                    'Missing zones. {"ids":%s,"zones":%s}',
-                    json_encode($publicIds),
-                    json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
-                ));
-            } else {
-                Log::error(sprintf(
-                    'Too many zones. {"ids":%s,"zones":%s}',
-                    json_encode($publicIds),
-                    json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
-                ));
-            }
+            Log::warning(sprintf(
+                count($zones) < count($binPublicIds)
+                    ? 'Missing zones. {"ids":%s,"zones":%s}'
+                    : 'Too many zones. {"ids":%s,"zones":%s}',
+                json_encode($publicIds),
+                json_encode($zones->pluck(['id', 'width', 'height'])->toArray())
+            ));
         }
 
         return $zones;
