@@ -37,6 +37,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
@@ -234,15 +235,16 @@ class AuthController extends Controller
     public function check(): JsonResponse
     {
         try {
-            $exchangeRateValue = $this->exchangeRateReader->fetchExchangeRate(new DateTime())->getValue();
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime())->toArray();
         } catch (ExchangeRateNotAvailableException $exception) {
-            return self::json(['message' => 'Cannot fetch exchange rate'], Response::HTTP_SERVICE_UNAVAILABLE);
+            Log::error(sprintf('[AuthController] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            $exchangeRate = null;
         }
 
         /** @var User $user */
         $user = Auth::user();
 
-        return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRateValue]));
+        return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
     }
 
     /**
