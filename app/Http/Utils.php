@@ -339,7 +339,7 @@ class Utils
         return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 
-    public static function hexUserIdFromTrackingId(string $trackingId): string
+    public static function hexUuidFromBase64UrlWithChecksum(string $trackingId): string
     {
         return bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
     }

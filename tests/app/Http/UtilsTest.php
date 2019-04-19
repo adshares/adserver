@@ -34,14 +34,14 @@ class UtilsTest extends TestCase
 
         $tid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($uidHex));
 
-        self::assertSame($uidHex, Utils::hexUserIdFromTrackingId($tid));
+        self::assertSame($uidHex, Utils::hexUuidFromBase64UrlWithChecksum($tid));
     }
 
     public function testTrackingIdFromUserId(): void
     {
         $tid = '6WQ43VoOQqaIGVmIao68L2qb7wUbKQ';
 
-        $uidHex = Utils::hexUserIdFromTrackingId($tid);
+        $uidHex = Utils::hexUuidFromBase64UrlWithChecksum($tid);
 
         self::assertSame($tid, Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($uidHex)));
     }
