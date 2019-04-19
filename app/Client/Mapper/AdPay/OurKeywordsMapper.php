@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,12 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Services;
+declare(strict_types = 1);
 
-class Adclassify
+namespace Adshares\Adserver\Client\Mapper\AdPay;
+
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
+
+class OurKeywordsMapper extends AbstractFilterMapper
 {
-    public function send(int $campaingId, ?array $targetingRequires, ?array $targetingExcludes, ?array $bannerUrls)
+    public static function map($keywords)
     {
-        return ['18+', 'casino'];
+        if (!$keywords) {
+            return new stdClass();
+        }
+
+        return self::generateNestedStructure($keywords);
     }
 }

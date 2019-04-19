@@ -25,8 +25,11 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use stdClass;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
+use function json_encode;
 
 final class ImpressionContext
 {
@@ -39,6 +42,9 @@ final class ImpressionContext
     /** @var array */
     private $user;
 
+    /** @var array|null */
+    private $originalUser;
+
     public function __construct(array $site, array $device, array $user)
     {
         $this->site = $site;
@@ -49,6 +55,10 @@ final class ImpressionContext
     public function withUserDataReplacedBy(array $userData): self
     {
         $new = clone $this;
+
+        if (empty($new->originalUser)) {
+            $new->originalUser = $this->user;
+        }
 
         $new->user = $userData;
 
@@ -69,7 +79,7 @@ final class ImpressionContext
         return [
             'url' => $this->site['page'] ?? '',
             'tags' => $this->site['keywords'] ?? [],
-            'headers' => $this->headers(),
+            'headers' => $this->flatHeaders(),
         ];
     }
 
@@ -79,11 +89,11 @@ final class ImpressionContext
 
         foreach ($zones as $requestId => $zone) {
             $params[] = [
-                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords'] ?? []),
+                'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->user['uid'] ?? '',
+                'user_id' => $this->trackingId(),
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -108,18 +118,27 @@ final class ImpressionContext
         return $this->site['keywords'] ?? [];
     }
 
-    public function userId(): string
+    public function trackingId(): string
     {
-        $uid = $this->user['uid'] ?? '';
+        $trackingId = ($this->user['uid'] ?? false)
+            ?: ($this->cookies()['tid'] ?? false)
+                ?: ($this->originalUser['uid'] ?? '');
 
-        if (!$uid) {
-            throw new ImpressionContextException('Missing UID - this should not happen');
+        if (!$trackingId) {
+            Log::warning(sprintf(
+                '%s:%s Missing UID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
+                __FUNCTION__,
+                __LINE__,
+                json_encode($this->user),
+                json_encode($this->cookies()),
+                json_encode($this->originalUser)
+            ));
         }
 
-        return $uid;
+        return $trackingId;
     }
 
-    private function headers(): array
+    private function flatHeaders(): array
     {
         $headers = array_map(
             function ($items) {
@@ -128,11 +147,17 @@ final class ImpressionContext
             $this->device['headers'] ?? []
         );
 
-        $headers['user-agent'] =
-            ($headers['user-agent'] ?? $headers['User-Agent'] ?? null) ?: ($this->device['ua'] ?? '');
+        $headers['user-agent'] = ($headers['user-agent'] ?? $headers['User-Agent'] ?? false)
+            ?: ($this->device['ua'] ?? '');
 
+        /** @deprecated Remove when AdUser is ready */
         $headers['User-Agent'] = $headers['user-agent'];
 
         return $headers;
+    }
+
+    private function cookies(): array
+    {
+        return HeaderUtils::combine(HeaderUtils::split($this->flatHeaders()['cookie'] ?? '', ';='));
     }
 }

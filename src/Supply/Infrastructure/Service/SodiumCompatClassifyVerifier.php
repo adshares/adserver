@@ -51,6 +51,6 @@ class SodiumCompatClassifyVerifier implements ClassifyVerifier
 
     private function createMessageHash(string $keyword, string $publicBannerId): string
     {
-        return sha1($keyword . $publicBannerId);
+        return sha1($keyword.$publicBannerId);
     }
 }

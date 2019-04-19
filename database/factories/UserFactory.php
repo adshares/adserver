@@ -28,5 +28,6 @@ $factory->define(User::class, function (Faker $faker) {
         'uuid' => $faker->md5,
         'is_advertiser' => true,
         'is_publisher' => true,
+        'is_admin' => false,
     ];
 });

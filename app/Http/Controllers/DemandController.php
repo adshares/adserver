@@ -46,6 +46,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function json_decode;
+use function sprintf;
 
 class DemandController extends Controller
 {
@@ -136,7 +137,7 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->case_id = $caseId;
         $log->event_id = $eventId;
-        $log->user_id = Utils::userIdFromTrackingId($tid);
+        $log->user_id = Utils::hexUserIdFromTrackingId($tid);
         $log->advertiser_id = $user->uuid;
         $log->campaign_id = $campaign->uuid;
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
@@ -218,7 +219,7 @@ class DemandController extends Controller
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
         $userId = $request->cookies->get('tid')
-            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
             : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -261,7 +262,7 @@ class DemandController extends Controller
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
         $userId = $request->cookies->get('tid')
-            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
             : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');

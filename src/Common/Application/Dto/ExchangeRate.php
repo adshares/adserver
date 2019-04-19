@@ -76,7 +76,7 @@ class ExchangeRate implements Arrayable
     public function toArray(): array
     {
         return [
-            'valid_at' => $this->dateTime,
+            'valid_at' => $this->dateTime->format(DateTime::ATOM),
             'value' => $this->value,
             'currency' => $this->currency,
         ];

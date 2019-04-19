@@ -22,7 +22,7 @@ namespace Adshares\Adserver\Jobs;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
-use Adshares\Adserver\Services\Adclassify;
+use Adshares\Common\Application\Service\AdClassify;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -36,8 +36,11 @@ class ClassifyCampaign implements ShouldQueue
     const QUEUE_NAME = 'service_classify';
 
     private $campaignId;
+
     private $targetingRequires;
+
     private $targetingExcludes;
+
     private $banners;
 
     public function __construct(int $campaignId, ?array $targetingRequires, ?array $targetingExcludes, ?array $banners)
@@ -49,7 +52,7 @@ class ClassifyCampaign implements ShouldQueue
         $this->queue = self::QUEUE_NAME;
     }
 
-    public function handle(Adclassify $adclassify)
+    public function handle(AdClassify $adclassify)
     {
         $tags = $adclassify->send(
             $this->campaignId,

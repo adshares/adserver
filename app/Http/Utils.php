@@ -21,15 +21,20 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\Exception;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\ImpressionContextException;
 use DateTime;
 use Illuminate\Http\Request;
-use RuntimeException;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use function config;
 use function is_string;
 use function sha1;
+use function sprintf;
+use function strlen;
 use function substr;
 use const true;
 
@@ -165,13 +170,6 @@ class Utils
         }
     }
 
-    public static function userIdFromTrackingId(string $encodedId): string
-    {
-        $input = self::urlSafeBase64Decode($encodedId);
-
-        return bin2hex(substr($input, 0, 16));
-    }
-
     public static function attachOrProlongTrackingCookie(
         Request $request,
         Response $response,
@@ -179,7 +177,7 @@ class Utils
         DateTime $contentModified,
         ?string $impressionId = null
     ): string {
-        $tid = self::createTid($request, $impressionId);
+        $tid = self::getOrCreateTrackingId($request, $impressionId);
 
         $response->headers->setCookie(
             new Cookie(
@@ -206,20 +204,6 @@ class Utils
         return $tid;
     }
 
-    private static function validTrackingId(string $input): bool
-    {
-        $input = self::urlSafeBase64Decode($input);
-
-        return substr($input, 16) === self::checksum(substr($input, 0, 16));
-    }
-
-    private static function decodeEtag($etag): string
-    {
-        $etag = str_replace('"', '', $etag);
-
-        return self::urlSafeBase64Encode(strrev(substr(self::urlSafeBase64Decode($etag), 6)));
-    }
-
     public static function urlSafeBase64Encode($string): string
     {
         return str_replace(
@@ -235,26 +219,6 @@ class Utils
             ],
             base64_encode($string)
         );
-    }
-
-    public static function createTrackingId(?string $nonce = null): string
-    {
-        $input = [];
-
-        if ($nonce !== null) {
-            $input[] = $nonce;
-            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
-        } else {
-            $input[] = microtime();
-            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
-            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
-            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
-            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
-        }
-
-        $id = substr(sha1(implode(':', $input), true), 0, 16);
-
-        return self::trackingIdFromUid($id);
     }
 
     private static function generateEtag($tid, $contentSha1): string
@@ -301,42 +265,82 @@ class Utils
         string $tid = null
     ): ImpressionContext {
         $partialImpressionContext = self::getPartialImpressionContext($request, $data, $tid);
-        $userContext = $contextProvider->getUserContext($partialImpressionContext);
 
-        return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+        try {
+            $userContext = $contextProvider->getUserContext($partialImpressionContext);
+
+            return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
+        } catch (ImpressionContextException $e) {
+            Log::error(sprintf(
+                '{message: "%s","context": "%s"}',
+                Exception::cleanMessage($e->getMessage()),
+                json_encode($partialImpressionContext->toArray())
+            ));
+        }
+
+        return $partialImpressionContext;
     }
 
-    public static function trackingIdFromUid(string $id): string
+    private static function binUserId(?string $nonce): string
     {
-        $checksum = self::checksum($id);
+        $input = [];
 
-        return self::urlSafeBase64Encode($id.$checksum);
+        if ($nonce !== null) {
+            $input[] = $nonce;
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? '';
+        } else {
+            $input[] = microtime();
+            $input[] = $_SERVER['REMOTE_ADDR'] ?? mt_rand();
+            $input[] = $_SERVER['REMOTE_PORT'] ?? mt_rand();
+            $input[] = $_SERVER['REQUEST_TIME_FLOAT'] ?? mt_rand();
+            $input[] = is_callable('random_bytes') ? random_bytes(22) : openssl_random_pseudo_bytes(22);
+        }
+
+        return substr(sha1(implode(':', $input), true), 0, 16);
+    }
+
+    private static function getOrCreateTrackingId(Request $request, ?string $impressionId): string
+    {
+        $tid = $request->cookies->get('tid') ?? '';
+
+        if (self::validTrackingId($tid)) {
+            return $tid;
+        }
+
+        return self::trackingIdFromBinUserId(self::binUserId($impressionId));
+    }
+
+    private static function validTrackingId(string $tid): bool
+    {
+        if (!$tid) {
+            return false;
+        }
+
+        $binTid = self::urlSafeBase64Decode($tid);
+
+        return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
+    }
+
+    public static function trackingIdFromBinUserId(string $id): ?string
+    {
+        if (strlen($id) !== 16) {
+            throw new RuntimeException('UserId should be a 16-byte binary format string.');
+        }
+
+        return self::urlSafeBase64Encode($id.self::checksum($id));
     }
 
     private static function checksum(string $id)
     {
+        if (strlen($id) !== 16) {
+            throw new RuntimeException('Id should be a 16-byte binary format string.');
+        }
+
         return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 
-    private static function createTid(Request $request, ?string $impressionId): string
+    public static function hexUserIdFromTrackingId(string $trackingId): string
     {
-        $tid = $request->cookies->get('tid');
-
-        if (!self::validTrackingId($tid)) {
-            $tid = null;
-            $etags = $request->getETags();
-
-            if (isset($etags[0])) {
-                $tag = str_replace('"', '', $etags[0]);
-
-                return self::decodeEtag($tag);
-            }
-
-            if (!self::validTrackingId($tid)) {
-                return self::createTrackingId($impressionId);
-            }
-        }
-
-        return $tid;
+        return bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
     }
 }
