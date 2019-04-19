@@ -50,4 +50,3 @@ final class BoolResult implements Result
         return false;
     }
 }
-
