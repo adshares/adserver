@@ -71,7 +71,7 @@ class ChangeEventLogsAddCurrency extends Migration
                 self::EXCHANGE_RATE_VALUE,
                 'UPDATE `campaigns` '
                 .'SET `max_cpc` = `max_cpc`*{exchange_rate}, `max_cpm` = `max_cpm`*{exchange_rate}, '
-                .'`budget` = `budget`*{exchange_rate}, updated_at=now()'
+                .'`budget` = `budget`*{exchange_rate}'
             )
         );
 
@@ -117,7 +117,7 @@ class ChangeEventLogsAddCurrency extends Migration
                 self::EXCHANGE_RATE_VALUE,
                 'UPDATE `network_campaigns` '
                 .'SET `max_cpc` = `max_cpc`*{exchange_rate}, `max_cpm` = `max_cpm`*{exchange_rate}, '
-                .'`budget` = `budget`*{exchange_rate}, updated_at=now()'
+                .'`budget` = `budget`*{exchange_rate}'
             )
         );
     }
@@ -130,7 +130,7 @@ class ChangeEventLogsAddCurrency extends Migration
                 self::EXCHANGE_RATE_VALUE,
                 'UPDATE `network_campaigns` '
                 .'SET `max_cpc` = `max_cpc`/{exchange_rate}, `max_cpm` = `max_cpm`/{exchange_rate}, '
-                .'`budget` = `budget`/{exchange_rate}, updated_at=now()'
+                .'`budget` = `budget`/{exchange_rate}'
             )
         );
 
@@ -168,7 +168,7 @@ class ChangeEventLogsAddCurrency extends Migration
                 self::EXCHANGE_RATE_VALUE,
                 'UPDATE `campaigns` '
                 .'SET `max_cpc` = `max_cpc`/{exchange_rate}, `max_cpm` = `max_cpm`/{exchange_rate}, '
-                .'`budget` = `budget`/{exchange_rate}, updated_at=now()'
+                .'`budget` = `budget`/{exchange_rate}'
             )
         );
 
