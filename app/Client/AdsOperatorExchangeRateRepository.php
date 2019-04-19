@@ -64,7 +64,7 @@ final class AdsOperatorExchangeRateRepository implements ExchangeRateRepository
             throw new ExchangeRateNotAvailableException('Unexpected response format from the AdsOperator');
         }
 
-        return new ExchangeRate($roundedDateTime, (string)$body->rate, $currency);
+        return new ExchangeRate($roundedDateTime, $body->rate, $currency);
     }
 
     private function getUri(DateTime $dateTime, string $currency): string
