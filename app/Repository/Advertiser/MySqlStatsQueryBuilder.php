@@ -75,13 +75,13 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::CPC_TYPE:
-                $this->column('COALESCE(ROUND(AVG(e.event_value)), 0) AS c');
+                $this->column('COALESCE(ROUND(AVG(e.event_value_currency)), 0) AS c');
                 break;
             case StatsRepository::CPM_TYPE:
-                $this->column('COALESCE(ROUND(AVG(e.event_value)), 0)*1000 AS c');
+                $this->column('COALESCE(ROUND(AVG(e.event_value_currency)), 0)*1000 AS c');
                 break;
             case StatsRepository::SUM_TYPE:
-                $this->column('COALESCE(SUM(e.event_value), 0) AS c');
+                $this->column('COALESCE(SUM(e.event_value_currency), 0) AS c');
                 break;
             case StatsRepository::CTR_TYPE:
                 $this->column('COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c');
@@ -122,9 +122,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             .'WHEN (e.event_type <> \'view\') THEN NULL '
             .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
         );
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.event_value, NULL))), 0) AS cpc');
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.event_value, NULL))), 0)*1000 AS cpm');
-        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.event_value, 0)) AS cost');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.event_value_currency, NULL))), 0) AS cpc');
+        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.event_value_currency, NULL))), 0)*1000 AS cpm');
+        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.event_value_currency, 0)) AS cost');
     }
 
     public function setAdvertiserId(string $advertiserId): self

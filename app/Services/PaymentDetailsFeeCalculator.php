@@ -30,18 +30,22 @@ class PaymentDetailsFeeCalculator
     /** @var int $totalWeight */
     private $totalWeight;
 
-    /** @var float $licenceFee */
-    private $licenceFee;
+    /** @var float $licenseFeeCoefficient */
+    private $licenseFeeCoefficient;
 
-    /** @var float $operatorFee */
-    private $operatorFee;
+    /** @var float $operatorFeeCoefficient */
+    private $operatorFeeCoefficient;
 
-    public function __construct(int $totalAmount, int $totalWeight, float $licenceFee, float $operatorFee)
-    {
+    public function __construct(
+        int $totalAmount,
+        int $totalWeight,
+        float $licenseFeeCoefficient,
+        float $operatorFeeCoefficient
+    ) {
         $this->totalAmount = $totalAmount;
         $this->totalWeight = $totalWeight;
-        $this->licenceFee = $licenceFee;
-        $this->operatorFee = $operatorFee;
+        $this->licenseFeeCoefficient = $licenseFeeCoefficient;
+        $this->operatorFeeCoefficient = $operatorFeeCoefficient;
     }
 
     public function calculateFee(int $weight): array
@@ -49,16 +53,16 @@ class PaymentDetailsFeeCalculator
         $normalizationFactor = (float)$weight / $this->totalWeight;
         $amountBeforeFees = (int)floor($this->totalAmount * $normalizationFactor);
 
-        $licenceFeeAmount = (int)floor($this->licenceFee * $amountBeforeFees);
-        $transferAmountBeforeOperatorFee = $amountBeforeFees - $licenceFeeAmount;
+        $licenseFee = (int)floor($this->licenseFeeCoefficient * $amountBeforeFees);
+        $transferAmountBeforeOperatorFee = $amountBeforeFees - $licenseFee;
 
-        $operatorFeeAmount = (int)floor($this->operatorFee * $transferAmountBeforeOperatorFee);
-        $amountAfterFees = $transferAmountBeforeOperatorFee - $operatorFeeAmount;
+        $operatorFee = (int)floor($this->operatorFeeCoefficient * $transferAmountBeforeOperatorFee);
+        $amountAfterFees = $transferAmountBeforeOperatorFee - $operatorFee;
 
         return [
             'event_value' => $amountBeforeFees,
-            'licence_fee_amount' => $licenceFeeAmount,
-            'operator_fee_amount' => $operatorFeeAmount,
+            'license_fee' => $licenseFee,
+            'operator_fee' => $operatorFee,
             'paid_amount' => $amountAfterFees,
         ];
     }

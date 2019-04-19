@@ -29,7 +29,7 @@ use DateTime;
 
 class DummyExchangeRateRepository implements ExchangeRateRepository
 {
-    private const STABLE_RATE = '0.3333';
+    private const STABLE_RATE = 0.3333;
 
     public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate
     {

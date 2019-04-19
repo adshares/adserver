@@ -47,7 +47,9 @@ $factory->define(
             'zone_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['serve', 'view', 'click']),
             'ip' => bin2hex(inet_pton($faker->ipv4)),
-            'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
+            'event_value_currency' => $faker->numberBetween(10 ** 4, 10 ** 7),
+            'exchange_rate' => null,
+            'event_value' => null,
             'pay_to' => $faker->randomElement($addresses),
             'reason' => 0,
             'headers' => json_decode(
