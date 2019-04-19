@@ -236,7 +236,7 @@ final class GuzzleDemandClient implements DemandClient
         foreach ((array)$data['banners'] as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
 
-            if ($bannerDemandIdsToSupplyIds[$banner['id']]) {
+            if (array_key_exists($banner['id'], $bannerDemandIdsToSupplyIds)) {
                 $banner['id'] = Uuid::fromString($bannerDemandIdsToSupplyIds[$banner['id']]);
             } else {
                 unset($banner['id']);
@@ -252,7 +252,7 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
         $data['banners'] = $banners;
 
-        if ($campaignDemandIdsToSupplyIds[$data['id']]) {
+        if (array_key_exists($data['id'], $campaignDemandIdsToSupplyIds)) {
             $data['id'] = Uuid::fromString($campaignDemandIdsToSupplyIds[$data['id']]);
         } else {
             unset($data['id']);
