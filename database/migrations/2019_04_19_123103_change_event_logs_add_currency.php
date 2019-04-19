@@ -65,6 +65,16 @@ class ChangeEventLogsAddCurrency extends Migration
             )
         );
 
+        DB::update(
+            str_replace(
+                '{exchange_rate}',
+                self::EXCHANGE_RATE_VALUE,
+                'UPDATE `campaigns` '
+                .'SET `max_cpc` = `max_cpc`*{exchange_rate}, `max_cpm` = `max_cpm`*{exchange_rate}, '
+                .'`budget` = `budget`*{exchange_rate}, updated_at=now()'
+            )
+        );
+
         Schema::table(
             'network_event_logs',
             function (Blueprint $table) {
@@ -100,10 +110,30 @@ class ChangeEventLogsAddCurrency extends Migration
                 self::EXCHANGE_RATE_VALUE
             )
         );
+
+        DB::update(
+            str_replace(
+                '{exchange_rate}',
+                self::EXCHANGE_RATE_VALUE,
+                'UPDATE `network_campaigns` '
+                .'SET `max_cpc` = `max_cpc`*{exchange_rate}, `max_cpm` = `max_cpm`*{exchange_rate}, '
+                .'`budget` = `budget`*{exchange_rate}, updated_at=now()'
+            )
+        );
     }
 
     public function down(): void
     {
+        DB::update(
+            str_replace(
+                '{exchange_rate}',
+                self::EXCHANGE_RATE_VALUE,
+                'UPDATE `network_campaigns` '
+                .'SET `max_cpc` = `max_cpc`/{exchange_rate}, `max_cpm` = `max_cpm`/{exchange_rate}, '
+                .'`budget` = `budget`/{exchange_rate}, updated_at=now()'
+            )
+        );
+
         Schema::table(
             'network_event_logs',
             function (Blueprint $table) {
@@ -130,6 +160,16 @@ class ChangeEventLogsAddCurrency extends Migration
             function (Blueprint $table) {
                 $table->renameColumn('license_fee', 'licence_fee_amount');
             }
+        );
+
+        DB::update(
+            str_replace(
+                '{exchange_rate}',
+                self::EXCHANGE_RATE_VALUE,
+                'UPDATE `campaigns` '
+                .'SET `max_cpc` = `max_cpc`/{exchange_rate}, `max_cpm` = `max_cpm`/{exchange_rate}, '
+                .'`budget` = `budget`/{exchange_rate}, updated_at=now()'
+            )
         );
 
         Schema::table(
