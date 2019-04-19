@@ -76,7 +76,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $zones = Zone::findByPublicIds($zoneIds);
 
-        if ($zones->count() !== count($zoneIds)) {
+        if ($zones->count() < count($zoneIds)) {
             $zones = $this->attachDuplicatedZones($zones, $zoneIds);
         }
 
