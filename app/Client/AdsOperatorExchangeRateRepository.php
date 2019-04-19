@@ -52,7 +52,9 @@ final class AdsOperatorExchangeRateRepository implements ExchangeRateRepository
         } catch (RequestException $exception) {
             $message = 'Could not fetch an exchange rate from the AdsOperator (%s/%s).';
             throw new UnexpectedClientResponseException(
-                sprintf($message, $this->client->getConfig('base_uri'), $uri), $exception->getCode(), $exception
+                sprintf($message, $this->client->getConfig('base_uri'), $uri),
+                $exception->getCode(),
+                $exception
             );
         }
 
