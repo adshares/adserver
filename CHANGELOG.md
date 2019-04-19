@@ -86,7 +86,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.6.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.6.2...develop
+[0.6.2]: https://github.com/adshares/adserver/compare/v0.6.1...v0.6.2
+[0.6.1]: https://github.com/adshares/adserver/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/adshares/adserver/compare/v0.5.4...v0.6.0
 [0.5.4]: https://github.com/adshares/adserver/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/adshares/adserver/compare/v0.5.2...v0.5.3
