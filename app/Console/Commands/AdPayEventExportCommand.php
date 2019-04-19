@@ -96,12 +96,7 @@ class AdPayEventExportCommand extends Command
             try {
                 $userContext = $this->userContext($adUser, $event);
 
-                $userId = $userContext->userId();
-                if ($userId) {
-                    $event->user_id = Uuid::fromString($userId)->hex();
-                }
-                $event->human_score = $userContext->humanScore();
-                $event->our_userdata = $userContext->keywords();
+                $this->updateEventUsingContext($userContext, $event);
 
                 $event->save();
             } catch (ImpressionContextException $e) {
@@ -144,5 +139,15 @@ class AdPayEventExportCommand extends Command
         ));
 
         return $userContext;
+    }
+
+    private function updateEventUsingContext(UserContext $userContext, EventLog $event): void
+    {
+        $userId = $userContext->userId();
+        if ($userId) {
+            $event->user_id = Uuid::fromString($userId)->hex();
+        }
+        $event->human_score = $userContext->humanScore();
+        $event->our_userdata = $userContext->keywords();
     }
 }
