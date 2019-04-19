@@ -24,8 +24,8 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -51,7 +51,7 @@ final class AdsOperatorExchangeRateRepository implements ExchangeRateRepository
             $response = $this->client->get($uri);
         } catch (RequestException $exception) {
             $message = 'Could not fetch an exchange rate from the AdsOperator (%s/%s).';
-            throw new UnexpectedClientResponseException(
+            throw new ExchangeRateNotAvailableException(
                 sprintf($message, $this->client->getConfig('base_uri'), $uri),
                 $exception->getCode(),
                 $exception
@@ -61,7 +61,7 @@ final class AdsOperatorExchangeRateRepository implements ExchangeRateRepository
         $body = json_decode((string)$response->getBody());
 
         if (!isset($body->rate) || !is_numeric($body->rate)) {
-            throw new UnexpectedClientResponseException('Unexpected response format from the AdsOperator');
+            throw new ExchangeRateNotAvailableException('Unexpected response format from the AdsOperator');
         }
 
         return new ExchangeRate($roundedDateTime, (string)$body->rate, $currency);
