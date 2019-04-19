@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,25 +23,26 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
-use PHPUnit\Framework\TestCase;
+use Adshares\Adserver\Tests\TestCase;
+use function hex2bin;
 
 class UtilsTest extends TestCase
 {
-    public function testIfCreateTrackingIdsAreTheSameWhenImpressionIdExists(): void
+    public function testUserIdFromTrackingId(): void
     {
-        $impressionId = '1234567qweasd';
+        $uidHex = 'e96438dd5a0e42a6881959886a8ebc2f';
 
-        $trackingId1 = Utils::createTrackingId($impressionId);
-        $trackingId2 = Utils::createTrackingId($impressionId);
+        $tid = Utils::trackingIdFromBinUserId(hex2bin($uidHex));
 
-        $this->assertEquals($trackingId1, $trackingId2);
+        self::assertSame($uidHex, Utils::hexUserIdFromTrackingId($tid));
     }
 
-    public function testIfCreateTrackingIdsAreDifferentWhenNoImpressionId(): void
+    public function testTrackingIdFromUserId(): void
     {
-        $trackingId1 = Utils::createTrackingId();
-        $trackingId2 = Utils::createTrackingId();
+        $tid = '6WQ43VoOQqaIGVmIao68L2qb7wUbKQ';
 
-        $this->assertNotEquals($trackingId1, $trackingId2);
+        $uidHex = Utils::hexUserIdFromTrackingId($tid);
+
+        self::assertSame($tid, Utils::trackingIdFromBinUserId(hex2bin($uidHex)));
     }
 }

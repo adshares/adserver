@@ -27,7 +27,10 @@ use Adshares\Supply\Application\Dto\UserContext;
 
 interface AdUser
 {
-    public const DEFAULT_HUMAN_SCORE = 0.49;
+    public const HUMAN_SCORE_ON_CONNECTION_ERROR = 0.40;
+    public const HUMAN_SCORE_ON_MISSING_FIELD = 0.41;
+    public const HUMAN_SCORE_ON_MISSING_KEYWORD = 0.42;
+    public const HUMAN_SCORE_MINIMUM = 0.45;
 
     public function fetchTargetingOptions(): Taxonomy;
 

@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
@@ -81,12 +83,22 @@ final class GuzzleDemandClient implements DemandClient
         $this->validateResponse($statusCode, $body);
 
         $campaigns = $this->createDecodedResponseFromBody($body);
+        $campaignDemandIdsToSupplyIds = $this->getCampaignDemandIdsToSupplyIds($campaigns);
+        $bannerDemandIdsToSupplyIds = $this->getBannerDemandIdsToSupplyIds($campaigns);
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
             try {
-                $campaign = CampaignFactory::createFromArray($this->processData($data, $sourceHost));
-                $campaignsCollection->add($campaign);
+                $data =
+                    CampaignFactory::createFromArray(
+                        $this->processData(
+                            $data,
+                            $sourceHost,
+                            $campaignDemandIdsToSupplyIds,
+                            $bannerDemandIdsToSupplyIds
+                        )
+                    );
+                $campaignsCollection->add($data);
             } catch (RuntimeException $exception) {
                 Log::info(sprintf('[Inventory Importer] %s', $exception->getMessage()));
             }
@@ -202,8 +214,12 @@ final class GuzzleDemandClient implements DemandClient
         return $decoded;
     }
 
-    private function processData(array $data, string $sourceHost): array
-    {
+    private function processData(
+        array $data,
+        string $sourceHost,
+        array $campaignDemandIdsToSupplyIds,
+        array $bannerDemandIdsToSupplyIds
+    ): array {
         $data['demand_id'] = Uuid::fromString($data['id']);
         $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
         $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
@@ -219,7 +235,12 @@ final class GuzzleDemandClient implements DemandClient
         $banners = [];
         foreach ((array)$data['banners'] as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
-            unset($banner['id']);
+
+            if (array_key_exists($banner['id'], $bannerDemandIdsToSupplyIds)) {
+                $banner['id'] = Uuid::fromString($bannerDemandIdsToSupplyIds[$banner['id']]);
+            } else {
+                unset($banner['id']);
+            }
 
             $banners[] = $banner;
         }
@@ -231,8 +252,11 @@ final class GuzzleDemandClient implements DemandClient
         $data['max_cpm'] = (int)$data['max_cpm'];
         $data['banners'] = $banners;
 
-
-        unset($data['id']);
+        if (array_key_exists($data['id'], $campaignDemandIdsToSupplyIds)) {
+            $data['id'] = Uuid::fromString($campaignDemandIdsToSupplyIds[$data['id']]);
+        } else {
+            unset($data['id']);
+        }
 
         return $data;
     }
@@ -250,7 +274,7 @@ final class GuzzleDemandClient implements DemandClient
 
         foreach ($expectedKeys as $key) {
             if (!isset($data[$key])) {
-                Log::debug('Invalid info.json:'.json_encode($data));
+                Log::debug(__METHOD__.' Invalid info.json: '.json_encode($data));
 
                 throw new UnexpectedClientResponseException(sprintf('Field `%s` is required.', $key));
             }
@@ -267,5 +291,27 @@ final class GuzzleDemandClient implements DemandClient
         if (!isset($data['capabilities']) && !isset($data['supported'])) {
             throw new UnexpectedClientResponseException('Field `capabilities` (deprecated: `supported`) is required.');
         }
+    }
+
+    private function getCampaignDemandIdsToSupplyIds(array $campaigns): array
+    {
+        $campaignIds = [];
+        foreach ($campaigns as $campaign) {
+            $campaignIds[] = $campaign['id'];
+        }
+
+        return NetworkCampaign::findSupplyIdsByDemandIds($campaignIds);
+    }
+
+    private function getBannerDemandIdsToSupplyIds(array $campaigns): array
+    {
+        $bannerDemandIds = [];
+        foreach ($campaigns as $campaign) {
+            foreach ((array)$campaign['banners'] as $banner) {
+                $bannerDemandIds[] = $banner['id'];
+            }
+        }
+        
+        return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds);
     }
 }

@@ -32,7 +32,6 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -42,7 +41,6 @@ use Generator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function array_map;
-use function GuzzleHttp\json_encode;
 use function iterator_to_array;
 use function sprintf;
 use function strtoupper;
@@ -78,7 +76,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $zones = Zone::findByPublicIds($zoneIds);
 
-        if ($zones->count() !== count($zoneIds)) {
+        if ($zones->count() < count($zoneIds)) {
             $zones = $this->attachDuplicatedZones($zones, $zoneIds);
         }
 
@@ -86,26 +84,26 @@ final class JsonRpcAdSelectClient implements AdSelect
             return $zone === null;
         });
 
-        $params = $context->adSelectRequestParams($existingZones);
-        $result = $this->client->call(
-            new Procedure(
-                self::METHOD_BANNER_SELECT,
-                $params
-            )
+        $procedure = new Procedure(
+            self::METHOD_BANNER_SELECT,
+            $context->adSelectRequestParams($existingZones)
         );
 
-        $bannerMap = $this->createRequestIdsToBannerMap($result->toArray());
+        $result = $this->client->call($procedure);
+
+        $items = $result->toArray();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
+
+        $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
-
-        Log::debug(
-            sprintf(
-                '{"zones":%s,"banners":%s}',
-                json_encode($zoneIds),
-                json_encode($bannerIds)
-            )
-        );
 
         return new FoundBanners($banners);
     }
@@ -117,7 +115,14 @@ final class JsonRpcAdSelectClient implements AdSelect
             CampaignMapper::map($campaign)
         );
 
-        $this->client->call($procedure);
+        $this->client->call($procedure)->isTrue();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function exportEvents(array $eventsInput): void
@@ -129,7 +134,8 @@ final class JsonRpcAdSelectClient implements AdSelect
         }
 
         $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
-        $this->client->call($procedure);
+
+        $this->client->call($procedure)->isTrue();
     }
 
     public function exportEventsPayments(array $eventsInput): void
@@ -141,7 +147,15 @@ final class JsonRpcAdSelectClient implements AdSelect
         }
 
         $procedure = new Procedure(self::METHOD_EVENT_PAYMENT_ADD, $events);
-        $this->client->call($procedure);
+
+        $this->client->call($procedure)->isTrue();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function deleteFromInventory(CampaignCollection $campaigns): void
@@ -158,14 +172,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $mappedCampaigns
         );
 
-        $response = $this->client->call($procedure);
-
-        if (!$response->isTrue()) {
-            throw new RuntimeException(sprintf(
-                '[ADSELECT] `campaign_delete` failed (ids: %s)',
-                implode(',', $mappedCampaigns)
-            ));
-        }
+        $this->client->call($procedure)->isTrue();
     }
 
     private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection

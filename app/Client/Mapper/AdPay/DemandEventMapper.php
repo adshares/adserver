@@ -23,8 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
 use Adshares\Adserver\Models\EventLog;
-use DateTime;
+use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use stdClass;
 
 class DemandEventMapper
@@ -33,31 +34,32 @@ class DemandEventMapper
     {
         return $events->map(
             function (EventLog $event) {
-                $eventArray = $event->toArray();
+                /** @var Carbon $createdAt */
+                $createdAt = $event->created_at;
+                $timestamp = $createdAt->getTimestamp();
 
-                $timestamp = (new DateTime($eventArray['created_at']))->getTimestamp();
-
-                $theirKeywords = self::processTheirKeywords($eventArray['their_userdata']);
-                $ourKeywords = self::processOurKeywords($eventArray['our_userdata']);
+                $theirKeywords = self::processTheirKeywords($event->their_userdata);
+                $ourUserData = json_decode(json_encode($event->our_userdata), true);
+                $ourKeywords = OurKeywordsMapper::map($ourUserData);
 
                 $mapped = [
-                    'banner_id' => $eventArray['banner_id'],
-                    'case_id' => $eventArray['case_id'],
-                    'event_type' => $eventArray['event_type'],
-                    'event_id' => $eventArray['event_id'],
+                    'banner_id' => $event->banner_id,
+                    'case_id' => $event->case_id,
+                    'event_type' => $event->event_type,
+                    'event_id' => $event->event_id,
                     'timestamp' => $timestamp,
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
-                    'human_score' => (float)$eventArray['human_score'] ?? 0.5,
-                    'user_id' => $eventArray['user_id'],
+                    'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
+                    'user_id' => $event->user_id,
                 ];
 
-                if ($eventArray['publisher_id'] !== null) {
-                    $mapped['publisher_id'] = $eventArray['publisher_id'];
+                if ($event->publisher_id !== null) {
+                    $mapped['publisher_id'] = $event->publisher_id;
                 }
 
-                if ($eventArray['event_value'] !== null) {
-                    $mapped['event_value'] = $eventArray['event_value'];
+                if ($event->event_value !== null) {
+                    $mapped['event_value'] = $event->event_value;
                 }
 
                 return $mapped;
@@ -72,14 +74,5 @@ class DemandEventMapper
         }
 
         return array_fill_keys(explode(',', $keywords), 1);
-    }
-
-    private static function processOurKeywords($keywords)
-    {
-        if (!$keywords) {
-            return new stdClass();
-        }
-
-        return $keywords;
     }
 }

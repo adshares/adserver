@@ -26,11 +26,14 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
+use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use function json_encode;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -90,9 +93,10 @@ class AdPayEventExportCommand extends Command
             }
 
             try {
-                $userContext = $adUser->getUserContext($event->impressionContext())->toArray();
-                $event->human_score = $userContext['human_score'];
-                $event->our_userdata = $userContext['keywords'];
+                $userContext = $this->userContext($adUser, $event);
+
+                $event->human_score = $userContext->humanScore();
+                $event->our_userdata = $userContext->keywords();
 
                 $event->save();
             } catch (ImpressionContextException $e) {
@@ -101,10 +105,38 @@ class AdPayEventExportCommand extends Command
                         '{"command":"%s","event":"%d","error":"%s"}',
                         $this->signature,
                         $event->id,
-                        $e->getMessage()
+                        Exception::cleanMessage($e->getMessage())
                     )
                 );
             }
         }
+    }
+
+    private function userContext(AdUser $adUser, EventLog $event): UserContext
+    {
+        static $userInfoCache = [];
+
+        $trackingId = $event->impressionContext()->trackingId();
+
+        if (isset($userInfoCache[$trackingId])) {
+            return $userInfoCache[$trackingId];
+        }
+
+        $userContext = $adUser->getUserContext($event->impressionContext());
+
+        if ($userContext->humanScore() > AdUser::HUMAN_SCORE_MINIMUM) {
+            $userInfoCache[$trackingId] = $userContext;
+        }
+
+        Log::debug(sprintf(
+            '%s {"userInfoCache": "MISS", "humanScore":%s, "event": %s, "userId": %s "context": %s}',
+            __FUNCTION__,
+            $userContext->humanScore(),
+            $event->id,
+            $event->user_id,
+            json_encode($userContext->toArray())
+        ));
+
+        return $userContext;
     }
 }

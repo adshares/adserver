@@ -25,7 +25,6 @@ use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
-use Adshares\Adserver\Services\Adselect;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseDecoder;
@@ -38,20 +37,13 @@ use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
-use Storage;
 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(
-            Adselect::class,
-            function () {
-                return new Adselect(config('app.adselect_endpoint'), config('app.debug'));
-            }
-        );
-
         $this->app->bind(
             AdsClient::class,
             function () {

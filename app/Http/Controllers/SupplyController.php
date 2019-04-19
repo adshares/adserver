@@ -90,10 +90,7 @@ class SupplyController extends Controller
         $zones = Utils::decodeZones($data)['zones'];
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        return self::json($bannerFinder->findBanners(
-            $zones,
-            $context
-        ));
+        return self::json($bannerFinder->findBanners($zones, $context));
     }
 
     public function findScript(Request $request): StreamedResponse
@@ -173,7 +170,7 @@ class SupplyController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $trackingId = $request->cookies->get('tid')
-            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
             : $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
@@ -255,7 +252,7 @@ class SupplyController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = $request->cookies->get('tid')
-            ? Utils::userIdFromTrackingId($request->cookies->get('tid'))
+            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
             : $clientIpAddress;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));

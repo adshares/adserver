@@ -31,9 +31,8 @@ use Adshares\Supply\Application\Dto\UserContext;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Support\Facades\Log;
+use function config;
 use function GuzzleHttp\json_decode;
-use function GuzzleHttp\json_encode;
 use function sprintf;
 
 final class GuzzleAdUserClient implements AdUser
@@ -67,32 +66,34 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $path = sprintf(
-            '/api/v0/data/%s/%s',
+            '/api/v1/data/%s/%s',
             config('app.adserver_id'),
-            $partialContext->userId()
+            $partialContext->trackingId()
         );
+
         try {
             $response = $this->client->post(
                 $path,
                 ['form_params' => $partialContext->adUserRequestBody()]
             );
 
-            $context = json_decode((string)$response->getBody(), true);
+//            Log::debug(sprintf(
+//                '%s {"url": "%s", "path": "%s", "request": %s, "response": %s}',
+//                __METHOD__,
+//                (string)$this->client->getConfig('base_uri'),
+//                $path,
+//                json_encode($partialContext->adUserRequestBody()),
+//                (string)$response->getBody()
+//            ));
 
-            Log::debug(sprintf(
-                '{"url": "%s", "path": "%s", "request": %s, "response": %s}',
-                (string)$this->client->getConfig('base_uri'),
-                $path,
-                (string)json_encode($partialContext->adUserRequestBody()),
-                (string)$response->getBody()
-            ));
+            $body = json_decode((string)$response->getBody(), true);
 
-            return UserContext::fromAdUserArray($context, $partialContext->userId());
+            return UserContext::fromAdUserArray($body);
         } catch (GuzzleException $exception) {
             return new UserContext(
                 $partialContext->keywords(),
-                AdUser::DEFAULT_HUMAN_SCORE,
-                $partialContext->userId()
+                AdUser::HUMAN_SCORE_ON_CONNECTION_ERROR,
+                $partialContext->trackingId()
             );
         }
     }
