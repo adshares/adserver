@@ -126,12 +126,12 @@ final class ImpressionContext
 
         if (!$trackingId) {
             Log::warning(sprintf(
-                '%s:%s Missing UID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
+                '%s:%s Missing TID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
                 __METHOD__,
                 __LINE__,
-                json_encode($this->user)?:'null',
-                json_encode($this->cookies())?:'null',
-                json_encode($this->originalUser)?:'null'
+                json_encode($this->user) ?: 'null',
+                json_encode($this->cookies()) ?: 'null',
+                json_encode($this->originalUser) ?: 'null'
             ));
         }
 
