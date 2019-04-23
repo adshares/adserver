@@ -33,9 +33,9 @@ use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Throwable;
 use function array_filter;
-use function GuzzleHttp\json_encode;
+use function json_encode;
+use function sprintf;
 
 class Handler extends ExceptionHandler
 {
@@ -104,6 +104,26 @@ class Handler extends ExceptionHandler
         );
     }
 
+    private function response(string $message, int $code, array $trace, ?string $detail = ''): JsonResponse
+    {
+        $data = [
+            'code' => $code,
+            'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
+        ];
+
+        if (config('app.env') === Utils::ENV_DEV) {
+            $data['trace'] = $trace;
+
+            if ($detail) {
+                $data['detail'] = $detail;
+            }
+        }
+
+        Log::debug(sprintf('%s #%s %s %s', $message, $code, $detail, json_encode($trace)));
+
+        return new JsonResponse($data, $code);
+    }
+
     public function report(Exception $e)
     {
         if ($this->shouldntReport($e)) {
@@ -139,35 +159,5 @@ class Handler extends ExceptionHandler
                 )
             )
         );
-    }
-
-    private function response(string $message, int $code, array $trace, ?string $detail = ''): JsonResponse
-    {
-        $data = [
-            'code' => $code,
-            'message' => (config('app.env') === Utils::ENV_DEV || $code < 500) ? $message : 'Internal error',
-
-        ];
-
-        if (config('app.env') === Utils::ENV_DEV) {
-            $data['trace'] = $trace;
-
-            if ($detail) {
-                $data['detail'] = $detail;
-            }
-        }
-
-        try {
-            Log::debug(json_encode([
-                'code' => $code,
-                'message' => $message,
-                'trace' => $trace,
-                'detail' => $detail,
-            ]));
-        } catch (Throwable $e) {
-            Log::debug("$code;$message");
-        }
-
-        return new JsonResponse($data, $code);
     }
 }
