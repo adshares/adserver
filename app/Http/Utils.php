@@ -199,6 +199,7 @@ class Utils
                 'private' => true,
             ]
         );
+
         $response->headers->addCacheControlDirective('no-transform');
 
         return $tid;
