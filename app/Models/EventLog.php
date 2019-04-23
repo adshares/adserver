@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
@@ -32,7 +33,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 use function hex2bin;
+use function sprintf;
 
 /**
  * @property int created_at
@@ -235,10 +238,17 @@ class EventLog extends Model
         $userAgentList = $headersArray['user-agent'];
         $ua = $userAgentList[0] ?? '';
 
+        try {
+            $userId = Utils::trackingIdFromBinUserId(hex2bin($this->user_id));
+        } catch (RuntimeException $e) {
+            Log::warning(sprintf('%s %s', $e->getMessage(), $this->user_id));
+            $userId = '';
+        }
+
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => Utils::trackingIdFromBinUserId(hex2bin($this->user_id))]
+            ['uid' => $userId]
         );
     }
 
