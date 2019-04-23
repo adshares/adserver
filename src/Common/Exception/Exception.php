@@ -24,6 +24,7 @@ namespace Adshares\Common\Exception;
 
 use Exception as PhpException;
 use Throwable;
+use function json_decode;
 
 class Exception extends PhpException
 {

@@ -164,14 +164,13 @@ class SupplyController extends Controller
 
         $url = $this->addQueryStringToUrl($request, $url);
 
-        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $clientIpAddress;
+            : $caseId;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
@@ -196,7 +195,7 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $clientIpAddress,
+            bin2hex(inet_pton($request->getClientIp())),
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_CLICK
@@ -246,14 +245,13 @@ class SupplyController extends Controller
             $url = $this->addQueryStringToUrl($request, $url);
         }
 
-        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $clientIpAddress;
+            : $caseId;
         $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
@@ -278,7 +276,7 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            $clientIpAddress,
+            bin2hex(inet_pton($request->getClientIp())),
             $requestHeaders,
             $context,
             NetworkEventLog::TYPE_VIEW

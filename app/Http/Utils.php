@@ -57,7 +57,7 @@ class Utils
     ): ImpressionContext {
         $context = self::getImpressionContextArray($request, $contextStr);
 
-        return new ImpressionContext($context['site'], $context['device'], $tid ? ['uid' => $tid] : []);
+        return new ImpressionContext($context['site'], $context['device'], $tid ? ['tid' => $tid] : []);
     }
 
     public static function getImpressionContextArray(Request $request, $contextStr = null): array
@@ -229,7 +229,7 @@ class Utils
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
-    public static function createCaseIdContainsEventType(string $baseCaseId, string $eventType): string
+    public static function createCaseIdContainingEventType(string $baseCaseId, string $eventType): string
     {
         $caseId = substr($baseCaseId, 0, -2);
 
