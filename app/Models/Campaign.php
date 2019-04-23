@@ -280,17 +280,17 @@ class Campaign extends Model
 
     private function updateBlockade(int $status): void
     {
-        $budgetForCurrentDateTime = $this->getBudgetForCurrentDateTime();
-        if (0 === $budgetForCurrentDateTime) {
+        if ($status !== self::STATUS_ACTIVE) {
+            Log::info(sprintf('Hold the blockade'));
             return;
         }
 
-        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
-        if ($status === self::STATUS_ACTIVE) {
-            $amount += $budgetForCurrentDateTime;
-        } elseif ($this->status === self::STATUS_ACTIVE) {
-            $amount -= $budgetForCurrentDateTime;
+        $budgetForCurrentDateTime = $this->getBudgetForCurrentDateTime();
+        if (0 >= $budgetForCurrentDateTime) {
+            return;
         }
+
+        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budgetForCurrentDateTime;
 
         $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
         if ($amount <= $blockedAmount) {
