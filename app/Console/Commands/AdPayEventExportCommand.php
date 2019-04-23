@@ -34,12 +34,14 @@ use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Command\LockableTrait;
 use function json_encode;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
@@ -49,6 +51,12 @@ class AdPayEventExportCommand extends Command
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdPayEventExport] Start command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $timeStart = microtime(true);
         $this->info('[AdPayEventExport] Start command '.$this->signature);
 
