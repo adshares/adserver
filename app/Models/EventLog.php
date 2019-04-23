@@ -231,7 +231,7 @@ class EventLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function impressionContext(): ImpressionContext
+    public function impressionContextForAdUserQuery(): ImpressionContext
     {
         $headersArray = get_object_vars($this->headers);
 
