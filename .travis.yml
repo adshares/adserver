@@ -12,7 +12,6 @@ env:
     - APP_ENV=testing
     - APP_DEBUG=true
 before_install:
-  - pecl install apcu
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 install: composer install
 jobs:
