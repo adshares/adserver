@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use stdClass;
 use function substr;
 
@@ -73,7 +74,7 @@ class EventMapper
         $keywords = null;
         $eventContext = $event['context'];
         if (is_object($eventContext) && property_exists($eventContext, 'site')) {
-            $keywords = self::normalizeKeywords((array)$eventContext->site->keywords);
+            $keywords = AbstractFilterMapper::generateNestedStructure((array)$eventContext->site->keywords);
         }
 
         return $keywords;
