@@ -244,9 +244,9 @@ class EventLog extends Model
         $ua = $userAgentList[0] ?? '';
 
         try {
-            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->user_id));
+            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id));
         } catch (RuntimeException $e) {
-            Log::warning(sprintf('%s %s', $e->getMessage(), $this->user_id));
+            Log::warning(sprintf('%s %s', $e->getMessage(), $this->tracking_id));
             $trackingId = '';
         }
 
