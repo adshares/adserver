@@ -30,7 +30,9 @@ use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -43,18 +45,19 @@ use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
-use function in_array;
 
 class CampaignsController extends Controller
 {
-    /**
-     * @var CampaignRepository
-     */
+    /** @var CampaignRepository */
     private $campaignRepository;
 
-    public function __construct(CampaignRepository $campaignRepository)
+    /** @var ExchangeRateReader */
+    private $exchangeRateReader;
+
+    public function __construct(CampaignRepository $campaignRepository, ExchangeRateReader $exchangeRateReader)
     {
         $this->campaignRepository = $campaignRepository;
+        $this->exchangeRateReader = $exchangeRateReader;
     }
 
     public function upload(Request $request): UploadedFile
@@ -94,6 +97,12 @@ class CampaignsController extends Controller
 
     public function add(Request $request): JsonResponse
     {
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        } catch (ExchangeRateNotAvailableException $exception) {
+            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
         $status = $input['basic_information']['status'];
@@ -115,7 +124,7 @@ class CampaignsController extends Controller
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
         try {
-            $campaign->changeStatus($status);
+            $campaign->changeStatus($status, $exchangeRate);
 
             $this->campaignRepository->save($campaign);
         } catch (InvalidArgumentException $e) {
@@ -213,6 +222,12 @@ class CampaignsController extends Controller
 
     public function edit(Request $request, int $campaignId): JsonResponse
     {
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        } catch (ExchangeRateNotAvailableException $exception) {
+            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
         $this->validateRequestObject(
             $request,
             'campaign',
@@ -273,7 +288,7 @@ class CampaignsController extends Controller
 
         if ($status !== $campaign->status) {
             try {
-                $campaign->changeStatus($status);
+                $campaign->changeStatus($status, $exchangeRate);
 
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
@@ -295,7 +310,13 @@ class CampaignsController extends Controller
         $status = (int)$request->input('campaign.status');
 
         try {
-            $campaign->changeStatus($status);
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        } catch (ExchangeRateNotAvailableException $exception) {
+            return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
+
+        try {
+            $campaign->changeStatus($status, $exchangeRate);
         } catch (InvalidArgumentException $e) {
             Log::debug("Notify user [{$campaign->user_id}]"
                 ." that the campaign [{$campaign->id}] status cannot be set to [{$status}].");

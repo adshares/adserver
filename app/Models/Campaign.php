@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -252,19 +253,19 @@ class Campaign extends Model
         ];
     }
 
-    public function changeStatus(int $status): void
+    public function changeStatus(int $status, ?ExchangeRate $exchangeRate = null): void
     {
         if ($status === $this->status) {
             return;
         }
 
         self::failIfInvalidStatus($status);
-        $this->updateBlockadeOrFailIfNotAllowed($status);
+        $this->updateBlockadeOrFailIfNotAllowed($status, $exchangeRate);
 
         $this->status = $status;
     }
 
-    private function updateBlockadeOrFailIfNotAllowed(int $status): void
+    private function updateBlockadeOrFailIfNotAllowed(int $status, ?ExchangeRate $exchangeRate = null): void
     {
         if ($status !== self::STATUS_ACTIVE) {
             Log::info(sprintf('Hold the blockade'));
@@ -277,8 +278,13 @@ class Campaign extends Model
             return;
         }
 
+        if (null === $exchangeRate) {
+            Log::error('ExchangeRate is not available');
+            throw new InvalidArgumentException('ExchangeRate is not available');
+        }
+
         $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budget;
-        $amount = $totalBudget;// TODO convert to clicks
+        $amount = $exchangeRate->toClick($totalBudget);
 
         $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
         if ($amount <= $blockedAmount) {

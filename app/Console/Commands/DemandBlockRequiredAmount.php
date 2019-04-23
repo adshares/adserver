@@ -24,6 +24,9 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -35,9 +38,21 @@ class DemandBlockRequiredAmount extends Command
 
     protected $signature = 'ops:demand:payments:block';
 
+    /** @var ExchangeRateReader */
+    private $exchangeRateReader;
+
+    public function __construct(ExchangeRateReader $exchangeRateReader)
+    {
+        $this->exchangeRateReader = $exchangeRateReader;
+
+        parent::__construct();
+    }
+
     public function handle(): void
     {
         $this->info('Start command '.$this->signature);
+
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
 
         DB::beginTransaction();
 
@@ -45,18 +60,19 @@ class DemandBlockRequiredAmount extends Command
 
         $blockade = Campaign::fetchRequiredBudgetsPerUser();
         $this->info('Attempt to create '.count($blockade).' blockades.');
-        $this->blockAmountOrSuspendCampaigns($blockade);
+        $this->blockAmountOrSuspendCampaigns($blockade, $exchangeRate);
 
         DB::commit();
 
         $this->info('Created '.count($blockade).' new blocking Ledger entries.');
     }
 
-    private function blockAmountOrSuspendCampaigns(Collection $blockade): void
+    private function blockAmountOrSuspendCampaigns(Collection $blockade, ExchangeRate $exchangeRate): void
     {
-        $blockade->each(function ($sum, $userId) {
+        $blockade->each(function ($sum, $userId) use ($exchangeRate) {
+            $amount = $exchangeRate->toClick((int)$sum);
             try {
-                UserLedgerEntry::blockAdExpense((int)$userId, (int)$sum);
+                UserLedgerEntry::blockAdExpense((int)$userId, $amount);
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 
