@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use stdClass;
-use function substr;
 
 class EventMapper
 {
@@ -45,28 +44,6 @@ class EventMapper
         ];
 
         return $mappedEvent;
-    }
-
-    private static function normalizeKeywords(?array $keywords = []): array
-    {
-        $mappedKeywords = [];
-
-        foreach ($keywords as $keyword) {
-            $lastOccurrence = strrpos($keyword, ':');
-
-            if ($lastOccurrence === false) {
-                $mappedKeywords[$keyword] = 1;
-
-                continue;
-            }
-
-            $key = substr($keyword, 0, $lastOccurrence);
-            $value = substr($keyword, $lastOccurrence + 1);
-
-            $mappedKeywords[$key] = $value;
-        }
-
-        return $mappedKeywords;
     }
 
     private static function getNormalizedKeywordsFromEvent($event): ?array
