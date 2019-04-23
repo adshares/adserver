@@ -255,7 +255,6 @@ class DemandController extends Controller
     public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
-        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
@@ -263,7 +262,8 @@ class DemandController extends Controller
 
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $clientIpAddress;
+            : $caseId;
+
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -274,18 +274,11 @@ class DemandController extends Controller
         $response = new Response();
 
         if ($adUserEndpoint) {
-            $demandTrackingId = Utils::attachOrProlongTrackingCookie(
-                $request,
-                $response,
-                '',
-                new DateTime()
-            );
-
             $adUserUrl = sprintf(
                 '%s/register/%s/%s/%s.htm',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
-                $demandTrackingId,
+                $trackingId,
                 Utils::urlSafeBase64Encode(random_bytes(8))
             );
         } else {
@@ -300,6 +293,7 @@ class DemandController extends Controller
                 'aduser_url' => $adUserUrl,
             ]
         ));
+
         $response->send();
 
         $banner = $this->getBanner($bannerId);
@@ -316,7 +310,7 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $clientIpAddress,
+            bin2hex(inet_pton($request->getClientIp())),
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
