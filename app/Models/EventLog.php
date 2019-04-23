@@ -25,8 +25,10 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -229,7 +231,7 @@ class EventLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function impressionContext(): ImpressionContext
+    public function impressionContextForAdUserQuery(): ImpressionContext
     {
         $headersArray = get_object_vars($this->headers);
 
@@ -242,16 +244,16 @@ class EventLog extends Model
         $ua = $userAgentList[0] ?? '';
 
         try {
-            $userId = Utils::trackingIdFromBinUserId(hex2bin($this->user_id));
+            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id));
         } catch (RuntimeException $e) {
-            Log::warning(sprintf('%s %s', $e->getMessage(), $this->user_id));
-            $userId = '';
+            Log::warning(sprintf('%s %s', $e->getMessage(), $this->tracking_id));
+            $trackingId = '';
         }
 
         return new ImpressionContext(
             ['domain' => $domain, 'page' => $domain],
             ['ip' => $ip, 'ua' => $ua],
-            ['uid' => $userId]
+            ['tid' => $trackingId]
         );
     }
 
@@ -260,5 +262,15 @@ class EventLog extends Model
         self::where('case_id', hex2bin($caseId))
             ->where('event_type', self::TYPE_VIEW)
             ->update(['is_view_clicked' => 1]);
+    }
+
+    public function updateWithUserContext(UserContext $userContext): void
+    {
+        $userId = $userContext->userId();
+        if ($userId) {
+            $this->user_id = Uuid::fromString($userId)->hex();
+        }
+        $this->human_score = $userContext->humanScore();
+        $this->our_userdata = $userContext->keywords();
     }
 }

@@ -30,6 +30,7 @@ use stdClass;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
 use function json_encode;
+use function sprintf;
 
 final class ImpressionContext
 {
@@ -87,13 +88,26 @@ final class ImpressionContext
     {
         $params = [];
 
+        try {
+            $trackingId = $this->trackingId();
+        } catch (ImpressionContextException $e) {
+            Log::warning(sprintf(
+                '%s:%s > %s',
+                __METHOD__,
+                __LINE__,
+                $e->getMessage()
+            ));
+
+            $trackingId = '';
+        }
+
         foreach ($zones as $requestId => $zone) {
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->trackingId(),
+                'user_id' => $trackingId,
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -120,18 +134,27 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId = ($this->user['uid'] ?? false)
+        $trackingId = ($this->user['tid'] ?? false)
             ?: ($this->cookies()['tid'] ?? false)
-                ?: ($this->originalUser['uid'] ?? '');
+                ?: ($this->originalUser['tid'] ?? '');
 
         if (!$trackingId) {
-            Log::warning(sprintf(
-                '%s:%s Missing UID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
-                __FUNCTION__,
+//            Log::warning(sprintf(
+//                '%s:%s Missing TID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
+//                __METHOD__,
+//                __LINE__,
+//                json_encode($this->user) ?: 'null',
+//                json_encode($this->cookies()) ?: 'null',
+//                json_encode($this->originalUser) ?: 'null'
+//            ));
+
+            throw new ImpressionContextException(sprintf(
+                '%s:%s Missing TID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
+                __METHOD__,
                 __LINE__,
-                json_encode($this->user),
-                json_encode($this->cookies()),
-                json_encode($this->originalUser)
+                json_encode($this->user) ?: 'null',
+                json_encode($this->cookies()) ?: 'null',
+                json_encode($this->originalUser) ?: 'null'
             ));
         }
 
