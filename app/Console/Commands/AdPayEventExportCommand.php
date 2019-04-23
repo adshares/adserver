@@ -88,7 +88,7 @@ class AdPayEventExportCommand extends Command
     private function fetchEventsToExport(int $eventIdFirst): Collection
     {
         return EventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', (new DateTime())->modify('-10 minutes'))
+            ->where('created_at', '<=', new DateTime('-10 minutes'))
             ->orderBy('id')
             ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
             ->get();
