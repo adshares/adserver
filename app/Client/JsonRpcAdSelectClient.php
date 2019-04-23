@@ -93,12 +93,12 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $items = $result->toArray();
 
-        Log::debug(sprintf(
-            '%s:%s %s',
-            __METHOD__,
-            __LINE__,
-            $procedure->toJson()
-        ));
+//        Log::debug(sprintf(
+//            '%s:%s %s',
+//            __METHOD__,
+//            __LINE__,
+//            $procedure->toJson()
+//        ));
 
         $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap);
