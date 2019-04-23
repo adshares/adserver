@@ -23,9 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper;
 
 use function array_filter;
+use function array_keys;
+use function array_map;
 use function array_values;
 use function is_array;
 use function is_numeric;
+use function str_ireplace;
+use function stripos;
 
 abstract class AbstractFilterMapper
 {
@@ -55,17 +59,19 @@ abstract class AbstractFilterMapper
     {
         $flattened = self::flatten($data);
 
+        $mapped = self::modifyDomain($flattened);
+
 //        Log::debug(
 //            sprintf(
 //                '%s:%s %s => %s',
 //                __METHOD__,
 //                __LINE__,
 //                json_encode($data),
-//                json_encode($flattened)
+//                json_encode($mapped)
 //            )
 //        );
 
-        return $flattened;
+        return $mapped;
     }
 
     private static function isAssoc(array $arr): bool
@@ -85,5 +91,29 @@ abstract class AbstractFilterMapper
                 return !is_numeric($key);
             }
         ));
+    }
+
+    private static function modifyDomain(array $flattened): array
+    {
+        $condition = static function (string $key): bool {
+            return $key === 'domain'
+                || (stripos($key, ':domain') !== false && stripos($key, ':domain:') === false);
+        };
+
+        $replaceCallback = static function (string $value): string {
+            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], $value);
+        };
+
+        $callback = static function (array $items, string $key) use ($replaceCallback, $condition): array {
+            if ($condition($key)) {
+                return array_map($replaceCallback, $items);
+            }
+
+            return $items;
+        };
+
+        $mapped = array_map($callback, $flattened, array_keys($flattened));
+
+        return $mapped;
     }
 }
