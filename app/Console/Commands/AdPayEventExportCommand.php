@@ -26,7 +26,6 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
@@ -102,10 +101,7 @@ class AdPayEventExportCommand extends Command
             }
 
             try {
-                $userContext = $this->userContext($adUser, $event);
-
-                $this->updateEventUsingContext($userContext, $event);
-
+                $event->updateWithUserContext($this->userContext($adUser, $event));
                 $event->save();
             } catch (ImpressionContextException $e) {
                 Log::error(
@@ -124,13 +120,14 @@ class AdPayEventExportCommand extends Command
     {
         static $userInfoCache = [];
 
-        $trackingId = $event->impressionContext()->trackingId();
+        $impressionContext = $event->impressionContext();
+        $trackingId = $impressionContext->trackingId();
 
         if (isset($userInfoCache[$trackingId])) {
             return $userInfoCache[$trackingId];
         }
 
-        $userContext = $adUser->getUserContext($event->impressionContext());
+        $userContext = $adUser->getUserContext($impressionContext);
 
         if ($userContext->humanScore() > AdUser::HUMAN_SCORE_MINIMUM) {
             $userInfoCache[$trackingId] = $userContext;
@@ -143,19 +140,9 @@ class AdPayEventExportCommand extends Command
             $event->id,
             $event->user_id,
             $event->tracking_id,
-            json_encode($userContext->toArray())
+            json_encode($userContext->toArray())?:'null'
         ));
 
         return $userContext;
-    }
-
-    private function updateEventUsingContext(UserContext $userContext, EventLog $event): void
-    {
-        $userId = $userContext->userId();
-        if ($userId) {
-            $event->user_id = Uuid::fromString($userId)->hex();
-        }
-        $event->human_score = $userContext->humanScore();
-        $event->our_userdata = $userContext->keywords();
     }
 }

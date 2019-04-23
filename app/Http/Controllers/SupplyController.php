@@ -168,7 +168,7 @@ class SupplyController extends Controller
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_CLICK);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
             : $clientIpAddress;
@@ -250,7 +250,7 @@ class SupplyController extends Controller
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, NetworkEventLog::TYPE_VIEW);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
             : $clientIpAddress;

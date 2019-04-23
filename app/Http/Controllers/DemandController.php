@@ -129,7 +129,7 @@ class DemandController extends Controller
         );
 
         $caseId = (string)Uuid::caseId();
-        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_REQUEST);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_REQUEST);
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
@@ -212,15 +212,14 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $clientIpAddress = bin2hex(inet_pton($request->getClientIp()));
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $clientIpAddress;
+            : $caseId;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
@@ -240,7 +239,7 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $clientIpAddress,
+            bin2hex(inet_pton($request->getClientIp())),
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
@@ -258,7 +257,7 @@ class DemandController extends Controller
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
         $trackingId = $request->cookies->get('tid')
             ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))

@@ -120,18 +120,18 @@ final class ImpressionContext
 
     public function trackingId(): string
     {
-        $trackingId = ($this->user['uid'] ?? false)
+        $trackingId = ($this->user['tid'] ?? false)
             ?: ($this->cookies()['tid'] ?? false)
-                ?: ($this->originalUser['uid'] ?? '');
+                ?: ($this->originalUser['tid'] ?? '');
 
         if (!$trackingId) {
             Log::warning(sprintf(
                 '%s:%s Missing UID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
                 __FUNCTION__,
                 __LINE__,
-                json_encode($this->user),
-                json_encode($this->cookies()),
-                json_encode($this->originalUser)
+                json_encode($this->user)?:'null',
+                json_encode($this->cookies())?:'null',
+                json_encode($this->originalUser)?:'null'
             ));
         }
 
