@@ -36,7 +36,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\LockableTrait;
 use function json_encode;
-use function sleep;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -58,7 +57,6 @@ class AdPayEventExportCommand extends Command
             return;
         }
 
-        sleep(10);
         $timeStart = microtime(true);
         $this->info('[AdPayEventExport] Start command '.$this->signature);
 
