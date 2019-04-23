@@ -137,7 +137,7 @@ class DemandController extends Controller
         $log->banner_id = $banner->uuid;
         $log->case_id = $caseId;
         $log->event_id = $eventId;
-        $log->user_id = Utils::hexUserIdFromTrackingId($tid);
+        $log->tracking_id = Utils::hexUuidFromBase64UrlWithChecksum($tid);
         $log->advertiser_id = $user->uuid;
         $log->campaign_id = $campaign->uuid;
         $log->ip = bin2hex(inet_pton($request->getClientIp()));
@@ -218,8 +218,8 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_CLICK);
 
-        $userId = $request->cookies->get('tid')
-            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
+        $trackingId = $request->cookies->get('tid')
+            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
             : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -235,7 +235,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $userId,
+            $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
@@ -261,8 +261,8 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainsEventType($caseId, EventLog::TYPE_VIEW);
 
-        $userId = $request->cookies->get('tid')
-            ? Utils::hexUserIdFromTrackingId($request->cookies->get('tid'))
+        $trackingId = $request->cookies->get('tid')
+            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
             : $clientIpAddress;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -311,7 +311,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $userId,
+            $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,

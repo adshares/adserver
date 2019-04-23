@@ -24,16 +24,18 @@ use Adshares\Common\Domain\Id;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use function mt_rand;
 use function sprintf;
+use function str_replace;
 use function substr;
 
 final class Uuid implements Id
 {
+    /** @var string */
     private $id;
 
     public function __construct(string $value)
     {
         if (!self::isValid($value)) {
-            throw new InvalidUuidException();
+            throw new InvalidUuidException(sprintf('%s is not a valid UUID', $value));
         }
 
         $this->id = $value;
@@ -42,7 +44,7 @@ final class Uuid implements Id
     public static function isValid(string $uuid): bool
     {
         $pregMatch = preg_match(
-            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.'[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+            '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
             $uuid
         );
 
@@ -154,5 +156,15 @@ final class Uuid implements Id
         }
 
         return $this->id === $other->id;
+    }
+
+    public function bin(): string
+    {
+        return hex2bin($this->hex());
+    }
+
+    public function hex(): string
+    {
+        return str_replace('-', '', $this->id);
     }
 }

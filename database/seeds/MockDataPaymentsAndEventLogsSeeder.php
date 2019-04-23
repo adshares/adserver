@@ -72,6 +72,7 @@ class MockDataPaymentsAndEventLogsSeeder extends Seeder
         $event->case_id = (string)$caseId;
         $event->event_id = (string)Uuid::v4();
         $event->user_id = (string)Uuid::v4();
+        $event->tracking_id = (string)Uuid::v4();
         $event->banner_id = (string)Uuid::v4();
         $event->zone_id = (string)Uuid::v4();
         $event->event_type = $type;

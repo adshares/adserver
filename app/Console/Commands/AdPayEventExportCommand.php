@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
@@ -95,8 +96,7 @@ class AdPayEventExportCommand extends Command
             try {
                 $userContext = $this->userContext($adUser, $event);
 
-                $event->human_score = $userContext->humanScore();
-                $event->our_userdata = $userContext->keywords();
+                $this->updateEventUsingContext($userContext, $event);
 
                 $event->save();
             } catch (ImpressionContextException $e) {
@@ -129,14 +129,25 @@ class AdPayEventExportCommand extends Command
         }
 
         Log::debug(sprintf(
-            '%s {"userInfoCache": "MISS", "humanScore":%s, "event": %s, "userId": %s "context": %s}',
+            '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"userId":%s,"trackingId":%s,"context": %s}',
             __FUNCTION__,
             $userContext->humanScore(),
             $event->id,
             $event->user_id,
+            $event->tracking_id,
             json_encode($userContext->toArray())
         ));
 
         return $userContext;
+    }
+
+    private function updateEventUsingContext(UserContext $userContext, EventLog $event): void
+    {
+        $userId = $userContext->userId();
+        if ($userId) {
+            $event->user_id = Uuid::fromString($userId)->hex();
+        }
+        $event->human_score = $userContext->humanScore();
+        $event->our_userdata = $userContext->keywords();
     }
 }
