@@ -138,9 +138,9 @@ class AdPayEventExportCommand extends Command
             __FUNCTION__,
             $userContext->humanScore(),
             $event->id,
-            $event->user_id,
+            $event->user_id ?: 'null',
             $event->tracking_id,
-            json_encode($userContext->toArray())?:'null'
+            json_encode($userContext->toArray()) ?: 'null'
         ));
 
         return $userContext;
