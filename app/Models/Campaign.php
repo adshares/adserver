@@ -259,43 +259,39 @@ class Campaign extends Model
         }
 
         self::failIfInvalidStatus($status);
-        $this->failIfTransitionNotAllowed($status);
-        $this->updateBlockade($status);
+        $this->updateBlockadeOrFailIfNotAllowed($status);
 
         $this->status = $status;
     }
 
-    private function failIfTransitionNotAllowed(int $status): void
-    {
-        if ($status === self::STATUS_ACTIVE) {
-            $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
-
-            $requiredBalance = $this->getBudgetForCurrentDateTime();
-
-            if ($balance < $requiredBalance) {
-                throw new InvalidArgumentException('Campaign budgets exceed account balance');
-            }
-        }
-    }
-
-    private function updateBlockade(int $status): void
+    private function updateBlockadeOrFailIfNotAllowed(int $status): void
     {
         if ($status !== self::STATUS_ACTIVE) {
             Log::info(sprintf('Hold the blockade'));
+
             return;
         }
 
-        $budgetForCurrentDateTime = $this->getBudgetForCurrentDateTime();
-        if (0 >= $budgetForCurrentDateTime) {
+        $budget = $this->getBudgetForCurrentDateTime();
+        if (0 >= $budget) {
             return;
         }
 
-        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budgetForCurrentDateTime;
+        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budget;
+        $amount = $totalBudget;// TODO convert to clicks
 
         $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
         if ($amount <= $blockedAmount) {
             Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
+
             return;
+        }
+
+        $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
+        $requiredBalance = $amount - $blockedAmount;
+
+        if ($balance < $requiredBalance) {
+            throw new InvalidArgumentException('Campaign budgets exceed account balance');
         }
 
         DB::beginTransaction();
