@@ -31,6 +31,7 @@ use Adshares\Common\Exception\Exception;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
+use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
@@ -87,6 +88,7 @@ class AdPayEventExportCommand extends Command
     private function fetchEventsToExport(int $eventIdFirst): Collection
     {
         return EventLog::where('id', '>=', $eventIdFirst)
+            ->where('created_at', '<=', (new DateTime())->modify('-10 minutes'))
             ->orderBy('id')
             ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
             ->get();
