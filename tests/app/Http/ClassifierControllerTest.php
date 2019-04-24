@@ -31,6 +31,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use function factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use function urldecode;
 use function urlencode;
 
 final class ClassifierControllerTest extends TestCase
@@ -54,6 +55,7 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
+
         $items = $content['items'];
 
         $this->assertCount(3, $items);

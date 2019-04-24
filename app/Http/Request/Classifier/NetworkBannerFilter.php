@@ -65,7 +65,9 @@ class NetworkBannerFilter
         $this->userId = $userId;
         $this->siteId = $siteId;
 
-        $this->landingUrl = urldecode($request->get('landing_url'));
+        $landingUrl = $request->get('landing_url');
+
+        $this->landingUrl = $landingUrl ? urldecode($landingUrl) : null;
 
         $this->validate();
     }
