@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use function array_combine;
 use function array_filter;
 use function array_keys;
 use function array_map;
@@ -98,8 +99,9 @@ abstract class AbstractFilterMapper
             return $items;
         };
 
-        $mapped = array_map($callback, $flattened, array_keys($flattened));
+        $keys = array_keys($flattened);
+        $mapped = array_map($callback, $flattened, $keys);
 
-        return $mapped;
+        return array_combine($keys, $mapped);
     }
 }
