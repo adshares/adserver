@@ -313,7 +313,7 @@ class UserLedgerEntry extends Model
         $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
         foreach ($adExpenses as $adExpense) {
             /** @var UserLedgerEntry $adExpense */
-            Log::info(
+            Log::debug(
                 sprintf(
                     '[UserLedgerEntry] Blocked %d clicks (%s)',
                     $adExpense->amount,
@@ -331,7 +331,7 @@ class UserLedgerEntry extends Model
         $amount = self::fetchBlockedAmountByUserId($userId);
         $blockedEntries->delete();
 
-        Log::info(sprintf('[UserLedgerEntry] Release blocked %d clicks', $amount));
+        Log::debug(sprintf('[UserLedgerEntry] Release blocked %d clicks', $amount));
     }
 
     public static function processAdExpense(int $userId, int $nonNegativeAmount): array
