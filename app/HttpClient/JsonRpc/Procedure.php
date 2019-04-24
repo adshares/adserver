@@ -70,8 +70,9 @@ final class Procedure
             'params' => array_slice($this->params, 0, $maxParamCount),
         ];
 
-        if ($maxParamCount) {
-            $arr['originalParamCount'] = count($this->params);
+        $count = count($this->params);
+        if ($maxParamCount && $maxParamCount < $count) {
+            $arr['originalParamCount'] = $count;
         }
 
         return json_encode($arr);
