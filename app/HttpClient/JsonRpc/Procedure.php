@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\HttpClient\JsonRpc;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
+use function array_slice;
 use function GuzzleHttp\json_encode;
 
 final class Procedure
@@ -58,6 +59,16 @@ final class Procedure
             'method' => $this->method,
             'params' => $this->params,
         ];
+    }
+
+    public function toString(int $maxParamCount = null): string
+    {
+        return json_encode([
+            'jsonrpc' => self::RPC_VERSION,
+            'id' => $this->id,
+            'method' => $this->method,
+            'params' => array_slice($this->params, 0, $maxParamCount),
+        ]);
     }
 
     public function id(): string

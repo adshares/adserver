@@ -47,7 +47,7 @@ final class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (Throwable $e) {
-            return new Result\FailedResult($body, $e);
+            return new Result\FailedResult($procedure->toString(100), $e);
         }
     }
 }
