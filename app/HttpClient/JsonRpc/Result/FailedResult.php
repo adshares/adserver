@@ -46,12 +46,12 @@ final class FailedResult implements Result
 
     public function toArray(): array
     {
-        throw new RuntimeException("FAILED {$this->message}");
+        throw new RuntimeException("FAILED toArray {$this->message}");
     }
 
     public function isTrue(): bool
     {
-        throw new RuntimeException("FAILED {$this->message}");
+        throw new RuntimeException("FAILED isTrue {$this->message}");
     }
 
     public function failed(): bool

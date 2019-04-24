@@ -24,6 +24,7 @@ namespace Adshares\Common\Exception;
 
 use Exception as PhpException;
 use Throwable;
+use function json_decode;
 
 class Exception extends PhpException
 {
@@ -44,10 +45,7 @@ class Exception extends PhpException
         if ($decoded && is_array($decoded)) {
             $message = $decoded['message'] ?? sprintf('Unknown error (%s)', __CLASS__);
         }
-        if (strpos($message, "\n") !== false) {
-            $message = str_replace(["\n", "\t"], ' ', $message);
-        }
 
-        return $message;
+        return str_replace(["\n", "\t"], ' ', $message);
     }
 }

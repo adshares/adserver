@@ -22,10 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use function array_combine;
 use function array_filter;
+use function array_keys;
+use function array_map;
 use function array_values;
 use function is_array;
 use function is_numeric;
+use function rtrim;
+use function str_ireplace;
+use function stripos;
 
 abstract class AbstractFilterMapper
 {
@@ -34,7 +40,7 @@ abstract class AbstractFilterMapper
         $result = [];
         foreach ($array as $key => $value) {
             if (is_array($value)) {
-                if (self::isAssoc($value)) {
+                if (self::isAssocAndNotEmpty($value)) {
                     if (self::allKeysAreNumeric($value)) {
                         $result[$prefix.$key] = array_values($value);
                     } else {
@@ -53,28 +59,16 @@ abstract class AbstractFilterMapper
 
     public static function generateNestedStructure(array $data): array
     {
-        $flattened = self::flatten($data);
-
-//        Log::debug(
-//            sprintf(
-//                '%s:%s %s => %s',
-//                __METHOD__,
-//                __LINE__,
-//                json_encode($data),
-//                json_encode($flattened)
-//            )
-//        );
-
-        return $flattened;
+        return self::isAssoc($data) ? self::modifyDomain(self::flatten($data)) : $data;
     }
 
-    private static function isAssoc(array $arr): bool
+    private static function isAssocAndNotEmpty(array $arr): bool
     {
         if ([] === $arr) {
             return false;
         }
 
-        return array_keys($arr) !== range(0, count($arr) - 1);
+        return self::isAssoc($arr);
     }
 
     private static function allKeysAreNumeric(array $value): bool
@@ -85,5 +79,35 @@ abstract class AbstractFilterMapper
                 return !is_numeric($key);
             }
         ));
+    }
+
+    private static function modifyDomain(array $flattened): array
+    {
+        $condition = static function (string $key): bool {
+            return $key === 'domain'
+                || (stripos($key, ':domain') !== false && stripos($key, ':domain:') === false);
+        };
+
+        $replaceCallback = static function (string $value): string {
+            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], rtrim($value, "/ \t\n\r\0\x0B"));
+        };
+
+        $callback = static function (array $items, string $key) use ($replaceCallback, $condition): array {
+            if ($condition($key)) {
+                return array_map($replaceCallback, $items);
+            }
+
+            return $items;
+        };
+
+        $keys = array_keys($flattened);
+        $mapped = array_map($callback, $flattened, $keys);
+
+        return array_combine($keys, $mapped);
+    }
+
+    private static function isAssoc(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }

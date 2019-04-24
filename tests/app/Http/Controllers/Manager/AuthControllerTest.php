@@ -22,11 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
+use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
@@ -34,6 +37,30 @@ use Illuminate\Support\Facades\Mail;
 class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const URI_CHECK = '/auth/check';
+
+    private const STRUCTURE_CHECK = [
+        'uuid',
+        'email',
+        'isAdvertiser',
+        'isPublisher',
+        'isAdmin',
+        'adserverWallet' => [
+            'totalFunds',
+            'walletBalance',
+            'bonusBalance',
+            'totalFundsInCurrency',
+            'totalFundsChange',
+            'lastPaymentAt',
+        ],
+        'isEmailConfirmed',
+        'exchangeRate' => [
+            'validAt',
+            'value',
+            'currency',
+        ],
+    ];
 
     public function testRegister(): Token
     {
@@ -138,5 +165,45 @@ class AuthControllerTest extends TestCase
                 $user->getWalletBalance(),
             ]
         );
+    }
+
+    public function testCheck(): void
+    {
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () {
+                return new DummyExchangeRateRepository();
+            }
+        );
+
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI_CHECK);
+
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::STRUCTURE_CHECK);
+    }
+
+    public function testCheckWithoutExchangeRate(): void
+    {
+        $repository = $this->createMock(ExchangeRateRepository::class);
+        $repository->expects($this->once())->method('fetchExchangeRate')->willThrowException(
+            new ExchangeRateNotAvailableException()
+        );
+
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () use ($repository) {
+                return $repository;
+            }
+        );
+
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI_CHECK);
+
+        $structure = self::STRUCTURE_CHECK;
+        unset($structure['exchangeRate']);
+
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure($structure);
     }
 }

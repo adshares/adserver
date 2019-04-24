@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e7adcac1daf678917ae30c4527414592",
+    "content-hash": "40503b850034ee426da3dd890e128a79",
     "packages": [
         {
             "name": "adshares/ads-client",
@@ -3310,6 +3310,68 @@
             "description": "Symfony HttpKernel Component",
             "homepage": "https://symfony.com",
             "time": "2018-12-06T17:39:52+00:00"
+        },
+        {
+            "name": "symfony/lock",
+            "version": "v4.2.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/lock.git",
+                "reference": "e1067037abe6aeb3706e492db4b93bf6ad14c5d8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/lock/zipball/e1067037abe6aeb3706e492db4b93bf6ad14c5d8",
+                "reference": "e1067037abe6aeb3706e492db4b93bf6ad14c5d8",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1.3",
+                "psr/log": "~1.0"
+            },
+            "require-dev": {
+                "doctrine/dbal": "~2.4",
+                "predis/predis": "~1.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "4.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Lock\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                },
+                {
+                    "name": "Jérémy Derussé",
+                    "email": "jeremy@derusse.com"
+                }
+            ],
+            "description": "Symfony Lock Component",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "cas",
+                "flock",
+                "locking",
+                "mutex",
+                "redlock",
+                "semaphore"
+            ],
+            "time": "2019-04-06T10:12:12+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -6627,10 +6689,16 @@
     "prefer-lowest": false,
     "platform": {
         "php": "^7.2",
+        "ext-apcu": "*",
+        "ext-dom": "*",
+        "ext-fileinfo": "*",
         "ext-gd": "*",
         "ext-intl": "*",
         "ext-json": "*",
-        "ext-sodium": "*"
+        "ext-libxml": "*",
+        "ext-openssl": "*",
+        "ext-sodium": "*",
+        "ext-zip": "*"
     },
     "platform-dev": []
 }

@@ -22,10 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\QueryException;
 
 /**
  * @property int id
@@ -78,7 +80,24 @@ class Classification extends Model
         $classification->signature = $signature;
         $classification->status = $status;
 
-        $classification->save();
+        DB::beginTransaction();
+
+        try {
+            $classification->save();
+
+            if (null === $siteId && !$status) {
+                self::where('banner_id', $bannerId)
+                    ->where('user_id', $userId)
+                    ->whereNotNull('site_id')
+                    ->delete();
+            }
+        } catch (QueryException $queryException) {
+            DB::rollBack();
+
+            throw $queryException;
+        }
+
+        DB::commit();
     }
 
     public static function findByBannerId(int $bannerId)

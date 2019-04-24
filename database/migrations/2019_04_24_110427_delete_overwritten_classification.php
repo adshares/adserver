@@ -18,31 +18,33 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Adshares\Adserver\Facades\DB;
+use Illuminate\Database\Migrations\Migration;
 
-namespace Adshares\Adserver\Tests\Http;
-
-use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Tests\TestCase;
-use function hex2bin;
-
-class UtilsTest extends TestCase
+class DeleteOverwrittenClassification extends Migration
 {
-    public function testUserIdFromTrackingId(): void
+    private const DELETE_STATEMENT = <<<SQL
+DELETE
+FROM classifications
+WHERE id IN (
+  SELECT id
+  FROM (
+         SELECT c.id
+         FROM classifications AS c
+                INNER JOIN
+                (SELECT user_id, banner_id FROM classifications WHERE site_id IS NULL AND status = 0) AS rejected
+                ON c.user_id = rejected.user_id AND c.banner_id = rejected.banner_id
+         WHERE c.site_id IS NOT NULL
+       ) AS ids
+)
+SQL;
+
+    public function up(): void
     {
-        $uidHex = 'e96438dd5a0e42a6881959886a8ebc2f';
-
-        $tid = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($uidHex));
-
-        self::assertSame($uidHex, Utils::hexUuidFromBase64UrlWithChecksum($tid));
+        DB::statement(self::DELETE_STATEMENT);
     }
 
-    public function testTrackingIdFromUserId(): void
+    public function down(): void
     {
-        $tid = '6WQ43VoOQqaIGVmIao68L2qb7wUbKQ';
-
-        $uidHex = Utils::hexUuidFromBase64UrlWithChecksum($tid);
-
-        self::assertSame($tid, Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($uidHex)));
     }
 }

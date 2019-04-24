@@ -151,7 +151,6 @@ class NetworkBanner extends Model
     {
         $query = self::queryByFilter($networkBannerFilter);
 
-
         return self::queryPaging($query, $limit, $offset)->get();
     }
 
@@ -228,27 +227,25 @@ class NetworkBanner extends Model
             $query = self::querySkipRejectedGlobally($query, $userId);
         }
 
+        if (null !== $networkBannerFilter->getLandingUrl()) {
+            $query->where('network_campaigns.landing_url', 'like', '%'.$networkBannerFilter->getLandingUrl().'%');
+        }
+
         return $query;
     }
 
     private static function getBaseQuery(NetworkBannerFilter $networkBannerFilter): Builder
     {
-        $query = null;
-
         if ($networkBannerFilter->isApproved()) {
-            $query = self::fetchApproved($networkBannerFilter);
+            return self::fetchApproved($networkBannerFilter);
         }
 
         if ($networkBannerFilter->isRejected()) {
-            $query = self::fetchRejected($networkBannerFilter);
+            return  self::fetchRejected($networkBannerFilter);
         }
 
         if ($networkBannerFilter->isUnclassified()) {
-            $query = self::fetchUnclassified($networkBannerFilter);
-        }
-
-        if ($query) {
-            return $query;
+            return  self::fetchUnclassified($networkBannerFilter);
         }
 
         return self::fetchAll($networkBannerFilter);

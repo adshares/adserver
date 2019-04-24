@@ -31,9 +31,12 @@ class UpdateOptionsTest extends TestCase
 {
     public function testTargetingOptionsUpdate(): void
     {
-        $this->app->bind(AdUser::class, function () {
-            return new DummyAdUserClient();
-        });
+        $this->app->bind(
+            AdUser::class,
+            function () {
+                return new DummyAdUserClient();
+            }
+        );
 
         $this->artisan('ops:targeting-options:update')
             ->assertExitCode(0);
@@ -41,9 +44,12 @@ class UpdateOptionsTest extends TestCase
 
     public function testFilteringOptionsUpdate(): void
     {
-        $this->app->bind(AdClassify::class, function () {
-            return new DummyAdClassifyClient();
-        });
+        $this->app->bind(
+            AdClassify::class,
+            function () {
+                return new DummyAdClassifyClient();
+            }
+        );
 
         $this->artisan('ops:filtering-options:update')
             ->assertExitCode(0);

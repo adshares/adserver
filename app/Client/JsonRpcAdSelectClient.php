@@ -76,7 +76,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $zones = Zone::findByPublicIds($zoneIds);
 
-        if ($zones->count() !== count($zoneIds)) {
+        if ($zones->count() < count($zoneIds)) {
             $zones = $this->attachDuplicatedZones($zones, $zoneIds);
         }
 
@@ -136,6 +136,13 @@ final class JsonRpcAdSelectClient implements AdSelect
         $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
 
         $this->client->call($procedure)->isTrue();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function exportEventsPayments(array $eventsInput): void
@@ -211,7 +218,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $bannerId = $bannerMap[$requestId] ?? null;
 
             if ($bannerId === null) {
-                Log::warning(sprintf('Zone %s not found (AdSelect `request_id`: %s).', $zone->id, $requestId));
+                Log::warning(sprintf('Banner for zone 0x%s (%s) not found', $zone->uuid, $zone->id));
             }
 
             $bannerIds[$zone->uuid][] = $bannerId;
@@ -227,7 +234,9 @@ final class JsonRpcAdSelectClient implements AdSelect
                 $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
                 if (null === $banner) {
-                    Log::warning(sprintf('Banner %s not found.', $bannerId));
+                    if ($bannerId) {
+                        Log::warning(sprintf('Banner %s not found.', $bannerId));
+                    }
 
                     yield null;
                 } else {

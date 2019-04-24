@@ -1,16 +1,16 @@
 {
     "require": {
         "php": "^7.2",
+        "ext-apcu": "*",
+        "ext-dom": "*",
+        "ext-fileinfo": "*",
         "ext-gd": "*",
         "ext-intl": "*",
         "ext-json": "*",
-        "ext-sodium": "*",
-        "ext-fileinfo": "*",
-        "ext-openssl": "*",
-        "ext-apcu": "*",
-        "ext-zip": "*",
         "ext-libxml": "*",
-        "ext-dom": "*",
+        "ext-openssl": "*",
+        "ext-sodium": "*",
+        "ext-zip": "*",
         "adshares/ads-client": "^1",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-cors": "^0.11",
@@ -22,7 +22,8 @@
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
         "ralouphie/mimey": "^2.1",
-        "ramsey/uuid": "^3"
+        "ramsey/uuid": "^3",
+        "symfony/lock": "^4.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.4",
