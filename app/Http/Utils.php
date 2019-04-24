@@ -57,7 +57,7 @@ class Utils
     ): ImpressionContext {
         $context = self::getImpressionContextArray($request, $contextStr);
 
-        return new ImpressionContext($context['site'], $context['device'], $tid ? ['uid' => $tid] : []);
+        return new ImpressionContext($context['site'], $context['device'], $tid ? ['tid' => $tid] : []);
     }
 
     public static function getImpressionContextArray(Request $request, $contextStr = null): array
@@ -199,6 +199,7 @@ class Utils
                 'private' => true,
             ]
         );
+
         $response->headers->addCacheControlDirective('no-transform');
 
         return $tid;
@@ -228,7 +229,7 @@ class Utils
         return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
     }
 
-    public static function createCaseIdContainsEventType(string $baseCaseId, string $eventType): string
+    public static function createCaseIdContainingEventType(string $baseCaseId, string $eventType): string
     {
         $caseId = substr($baseCaseId, 0, -2);
 
@@ -307,7 +308,7 @@ class Utils
             return $tid;
         }
 
-        return self::trackingIdFromBinUserId(self::binUserId($impressionId));
+        return self::base64UrlEncodeWithChecksumFromBinUuidString(self::binUserId($impressionId));
     }
 
     private static function validTrackingId(string $tid): bool
@@ -321,7 +322,7 @@ class Utils
         return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
     }
 
-    public static function trackingIdFromBinUserId(string $id): ?string
+    public static function base64UrlEncodeWithChecksumFromBinUuidString(string $id): ?string
     {
         if (strlen($id) !== 16) {
             throw new RuntimeException('UserId should be a 16-byte binary format string.');
@@ -339,7 +340,7 @@ class Utils
         return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
     }
 
-    public static function hexUserIdFromTrackingId(string $trackingId): string
+    public static function hexUuidFromBase64UrlWithChecksum(string $trackingId): string
     {
         return bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
     }

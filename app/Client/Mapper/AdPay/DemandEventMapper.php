@@ -51,7 +51,7 @@ class DemandEventMapper
                     'their_keywords' => $theirKeywords,
                     'our_keywords' => $ourKeywords,
                     'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
-                    'user_id' => $event->user_id,
+                    'user_id' => $event->user_id ?? $event->tracking_id,
                 ];
 
                 if ($event->publisher_id !== null) {

@@ -40,6 +40,7 @@ $factory->define(
             'case_id' => $faker->uuid,
             'event_id' => $faker->uuid,
             'user_id' => $faker->uuid,
+            'tracking_id' => $faker->uuid,
             'banner_id' => $faker->uuid,
             'publisher_id' => $faker->uuid,
             'advertiser_id' => $faker->uuid,

@@ -47,8 +47,8 @@ use function hex2bin;
  * @property int deleted_at
  * @property int user_id
  * @property string landing_url
- * @property \DateTime time_start
- * @property \DateTime time_end
+ * @property DateTime time_start
+ * @property DateTime time_end
  * @property int status
  * @property string name
  * @property array|null|string strategy_name
@@ -216,7 +216,7 @@ class Campaign extends Model
         return $this->banners;
     }
 
-    public function getTargetingAttribute()
+    public function getTargetingAttribute(): array
     {
         return [
             "requires" => $this->targeting_requires,
@@ -224,7 +224,7 @@ class Campaign extends Model
         ];
     }
 
-    public function setBasicInformationAttribute(array $value)
+    public function setBasicInformationAttribute(array $value): void
     {
         $this->status = $value["status"];
         $this->name = $value["name"];
@@ -239,7 +239,7 @@ class Campaign extends Model
         $this->time_end = $value["date_end"] ?? null;
     }
 
-    public function getBasicInformationAttribute()
+    public function getBasicInformationAttribute(): array
     {
         return [
             "status" => $this->status,
