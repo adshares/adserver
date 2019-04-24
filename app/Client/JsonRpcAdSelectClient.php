@@ -93,12 +93,12 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $items = $result->toArray();
 
-//        Log::debug(sprintf(
-//            '%s:%s %s',
-//            __METHOD__,
-//            __LINE__,
-//            $procedure->toJson()
-//        ));
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
 
         $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap);
@@ -117,12 +117,12 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $this->client->call($procedure)->isTrue();
 
-//        Log::debug(sprintf(
-//            '%s:%s %s',
-//            __METHOD__,
-//            __LINE__,
-//            $procedure->toJson()
-//        ));
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function exportEvents(array $eventsInput): void
@@ -136,6 +136,13 @@ final class JsonRpcAdSelectClient implements AdSelect
         $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
 
         $this->client->call($procedure)->isTrue();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function exportEventsPayments(array $eventsInput): void
@@ -211,7 +218,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $bannerId = $bannerMap[$requestId] ?? null;
 
             if ($bannerId === null) {
-                Log::warning(sprintf('Zone %s not found (AdSelect `request_id`: %s).', $zone->id, $requestId));
+                Log::warning(sprintf('Banner for zone 0x%s (%s) not found', $zone->uuid, $zone->id));
             }
 
             $bannerIds[$zone->uuid][] = $bannerId;
@@ -227,7 +234,9 @@ final class JsonRpcAdSelectClient implements AdSelect
                 $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
                 if (null === $banner) {
-                    Log::warning(sprintf('Banner %s not found.', $bannerId));
+                    if ($bannerId) {
+                        Log::warning(sprintf('Banner %s not found.', $bannerId));
+                    }
 
                     yield null;
                 } else {

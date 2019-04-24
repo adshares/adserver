@@ -52,13 +52,13 @@ class AdPayEventExportCommand extends Command
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
         if (!$this->lock()) {
-            $this->info('[AdPayEventExport] Start command '.$this->signature.' already running.');
+            $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
         }
 
         $timeStart = microtime(true);
-        $this->info('[AdPayEventExport] Start command '.$this->signature);
+        $this->info('Start command '.$this->signature);
 
         $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
 
