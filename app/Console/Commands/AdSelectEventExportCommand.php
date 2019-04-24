@@ -28,10 +28,12 @@ use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use DateTime;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdSelectEventExportCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adselect:event:export';
 
@@ -46,9 +48,15 @@ class AdSelectEventExportCommand extends Command
         parent::__construct();
     }
 
-    public function handle()
+    public function handle(): void
     {
-        $this->info('Start command '.$this->signature);
+        if (!$this->lock()) {
+            $this->info('[AdSelectEventExport] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
+        $this->info('[AdSelectEventExport] Start command '.$this->signature);
 
         $lastExportDate = Config::fetchDateTime(Config::ADSELECT_EVENT_EXPORT_TIME);
 
@@ -62,6 +70,6 @@ class AdSelectEventExportCommand extends Command
 
         Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, new DateTime());
 
-        $this->info('Finished exporting events to AdSelect.');
+        $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
     }
 }

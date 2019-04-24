@@ -136,6 +136,13 @@ final class JsonRpcAdSelectClient implements AdSelect
         $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
 
         $this->client->call($procedure)->isTrue();
+
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $procedure->toJson()
+        ));
     }
 
     public function exportEventsPayments(array $eventsInput): void
