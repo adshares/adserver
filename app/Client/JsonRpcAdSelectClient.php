@@ -218,7 +218,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $bannerId = $bannerMap[$requestId] ?? null;
 
             if ($bannerId === null) {
-                Log::warning(sprintf('Zone %s not found (AdSelect `request_id`: %s).', $zone->id, $requestId));
+                Log::warning(sprintf('Banner for zone 0x%s (%s) not found', $zone->uuid, $zone->id));
             }
 
             $bannerIds[$zone->uuid][] = $bannerId;
