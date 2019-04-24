@@ -40,7 +40,7 @@ abstract class AbstractFilterMapper
         $result = [];
         foreach ($array as $key => $value) {
             if (is_array($value)) {
-                if (self::isAssoc($value)) {
+                if (self::isAssocAndNotEmpty($value)) {
                     if (self::allKeysAreNumeric($value)) {
                         $result[$prefix.$key] = array_values($value);
                     } else {
@@ -59,16 +59,16 @@ abstract class AbstractFilterMapper
 
     public static function generateNestedStructure(array $data): array
     {
-        return self::modifyDomain(self::flatten($data));
+        return self::isAssoc($data) ? self::modifyDomain(self::flatten($data)) : $data;
     }
 
-    private static function isAssoc(array $arr): bool
+    private static function isAssocAndNotEmpty(array $arr): bool
     {
         if ([] === $arr) {
             return false;
         }
 
-        return array_keys($arr) !== range(0, count($arr) - 1);
+        return self::isAssoc($arr);
     }
 
     private static function allKeysAreNumeric(array $value): bool
@@ -104,5 +104,10 @@ abstract class AbstractFilterMapper
         $mapped = array_map($callback, $flattened, $keys);
 
         return array_combine($keys, $mapped);
+    }
+
+    private static function isAssoc(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
