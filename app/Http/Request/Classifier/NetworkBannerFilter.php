@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Http\Request\Classifier;
 use Adshares\Adserver\Models\NetworkBanner;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+use function urldecode;
 
 class NetworkBannerFilter
 {
@@ -49,6 +50,9 @@ class NetworkBannerFilter
     /** @var int|null */
     private $siteId;
 
+    /** @var string */
+    private $landingUrl;
+
     public function __construct(Request $request, int $userId, ?int $siteId)
     {
         $this->approved = (bool)$request->get('approved', false);
@@ -60,6 +64,8 @@ class NetworkBannerFilter
 
         $this->userId = $userId;
         $this->siteId = $siteId;
+
+        $this->landingUrl = urldecode($request->get('landing_url'));
 
         $this->validate();
     }
@@ -97,6 +103,11 @@ class NetworkBannerFilter
     public function getSiteId(): ?int
     {
         return $this->siteId;
+    }
+
+    public function getLandingUrl(): ?string
+    {
+        return $this->landingUrl;
     }
 
     private function validate(): void
