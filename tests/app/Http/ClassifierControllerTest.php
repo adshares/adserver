@@ -204,6 +204,36 @@ final class ClassifierControllerTest extends TestCase
         $this->assertEquals(204, $response->getStatusCode());
     }
 
+    public function testRejectGloballyWhenForSiteExistsInDb(): void
+    {
+        $this->mockVerifier();
+        $user = factory(User::class)->create(['id' => 1]);
+        factory(User::class)->create(['id' => 2]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+        factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => 3, 'user_id' => 1]);
+
+        $data = [
+            'classification' => [
+                'banner_id' => 1,
+                'status' => false,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
+        $this->assertEquals(204, $response->getStatusCode());
+
+        /** @var Collection $classification */
+        $classification = Classification::where('banner_id', 1)
+            ->where('user_id', 1)
+            ->get();
+
+        $this->assertCount(1, $classification);
+        $this->assertFalse($classification->first()->status);
+    }
+
     public function testChangeSiteStatusWhenDoesNotExistInDb(): void
     {
         $this->mockVerifier();
