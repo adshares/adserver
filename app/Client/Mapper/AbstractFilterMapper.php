@@ -22,12 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use function array_combine;
 use function array_filter;
 use function array_keys;
 use function array_map;
 use function array_values;
 use function is_array;
 use function is_numeric;
+use function rtrim;
 use function str_ireplace;
 use function stripos;
 
@@ -87,7 +89,7 @@ abstract class AbstractFilterMapper
         };
 
         $replaceCallback = static function (string $value): string {
-            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], $value);
+            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], rtrim($value, "/ \t\n\r\0\x0B"));
         };
 
         $callback = static function (array $items, string $key) use ($replaceCallback, $condition): array {
@@ -98,8 +100,9 @@ abstract class AbstractFilterMapper
             return $items;
         };
 
-        $mapped = array_map($callback, $flattened, array_keys($flattened));
+        $keys = array_keys($flattened);
+        $mapped = array_map($callback, $flattened, $keys);
 
-        return $mapped;
+        return array_combine($keys, $mapped);
     }
 }
