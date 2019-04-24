@@ -51,7 +51,7 @@ class EventMapper
         $keywords = null;
         $eventContext = $event['context'];
         if (is_object($eventContext) && property_exists($eventContext, 'site')) {
-            $keywords = AbstractFilterMapper::generateNestedStructure((array)$eventContext->site->keywords);
+            $keywords = AbstractFilterMapper::generateNestedStructure(['site'=>(array)$eventContext->site->keywords]);
         }
 
         return $keywords;
