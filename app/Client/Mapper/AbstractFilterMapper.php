@@ -29,6 +29,7 @@ use function array_map;
 use function array_values;
 use function is_array;
 use function is_numeric;
+use function rtrim;
 use function str_ireplace;
 use function stripos;
 
@@ -88,7 +89,7 @@ abstract class AbstractFilterMapper
         };
 
         $replaceCallback = static function (string $value): string {
-            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], $value);
+            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], rtrim($value,"/ \t\n\r\0\x0B"));
         };
 
         $callback = static function (array $items, string $key) use ($replaceCallback, $condition): array {
