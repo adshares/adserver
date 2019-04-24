@@ -265,6 +265,7 @@ final class ClassifierControllerTest extends TestCase
 
     /**
      * @dataProvider provideLandingUrl
+     *
      * @param string $url
      */
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
@@ -280,9 +281,15 @@ final class ClassifierControllerTest extends TestCase
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 3, 'network_campaign_id' => 2]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 3, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]);
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]
+        );
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
+        );
+        factory(Classification::class)->create(
+            ['banner_id' => 3, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
+        );
 
         $url = urlencode($url);
 
