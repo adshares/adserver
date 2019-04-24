@@ -89,7 +89,7 @@ abstract class AbstractFilterMapper
         };
 
         $replaceCallback = static function (string $value): string {
-            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], rtrim($value,"/ \t\n\r\0\x0B"));
+            return str_ireplace(['http:', 'https:', '//www.'], ['', '', '//'], rtrim($value, "/ \t\n\r\0\x0B"));
         };
 
         $callback = static function (array $items, string $key) use ($replaceCallback, $condition): array {
