@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -35,7 +36,6 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\LockableTrait;
-use function json_encode;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -105,10 +105,11 @@ class AdPayEventExportCommand extends Command
             try {
                 $event->updateWithUserContext($this->userContext($adUser, $event));
                 $event->save();
-            } catch (ImpressionContextException $e) {
+            } catch (ImpressionContextException|RuntimeException $e) {
                 Log::error(
                     sprintf(
-                        '{"command":"%s","event":"%d","error":"%s"}',
+                        '%s {"command":"%s","event":"%d","error":"%s"}',
+                        get_class($e),
                         $this->signature,
                         $event->id,
                         Exception::cleanMessage($e->getMessage())
@@ -141,7 +142,7 @@ class AdPayEventExportCommand extends Command
             $userContext->humanScore(),
             $event->id,
             $event->tracking_id,
-            json_encode($userContext->toArray()) ?: 'null'
+            $userContext->toString()
         ));
 
         return $userContext;

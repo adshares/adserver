@@ -26,6 +26,7 @@ use Adshares\Common\Application\Service\AdUser;
 use function array_map;
 use function array_merge;
 use function is_array;
+use function json_encode;
 
 final class UserContext
 {
@@ -76,13 +77,13 @@ final class UserContext
         ];
     }
 
-    public function toArray(): array
+    public function toString(): string
     {
-        return [
+        json_encode([
             'uid' => $this->userId,
             'keywords' => $this->keywords,
             'human_score' => $this->humanScore,
-        ];
+        ]) ?: '-';
     }
 
     public function keywords(): array
