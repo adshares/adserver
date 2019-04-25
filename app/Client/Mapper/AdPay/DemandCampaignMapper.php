@@ -44,7 +44,7 @@ class DemandCampaignMapper
                         'banner_id' => $banner['uuid'],
                         'banner_size' => self::processSize($banner),
                         'keywords' => [
-                            'type' => $banner['type'],
+                            'type' => [$banner['type']],
                         ],
                     ];
                 }
