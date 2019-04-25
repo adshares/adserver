@@ -28,8 +28,8 @@ class Ipv6 extends Migration
     public function up(): void
     {
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE event_logs MODIFY ip varbinary(16)');
-            DB::statement('ALTER TABLE network_event_logs MODIFY ip varbinary(16)');
+            DB::statement('ALTER TABLE event_logs MODIFY ip VARBINARY(16)');
+            DB::statement('ALTER TABLE network_event_logs MODIFY ip VARBINARY(16)');
         } else {
             Schema::table(
                 'event_logs',
