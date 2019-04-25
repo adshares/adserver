@@ -13,6 +13,8 @@ mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 mkdir -pm 777 storage/framework/views
 
+ln -sf ${SERVICE_DIR}/storage/app/public public/storage
+
 composer install --no-dev
 
 yarn install
@@ -20,9 +22,7 @@ yarn run prod
 
 rm -f bootstrap/cache/config.php
 artisanCommand config:cache
-
 artisanCommand key:generate
-artisanCommand storage:link
 
 if [[ ${DB_MIGRATE_FRESH:-0} -eq 1 ]]
 then
