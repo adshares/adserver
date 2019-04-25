@@ -79,7 +79,7 @@ final class UserContext
 
     public function toString(): string
     {
-        json_encode([
+       return json_encode([
             'uid' => $this->userId,
             'keywords' => $this->keywords,
             'human_score' => $this->humanScore,

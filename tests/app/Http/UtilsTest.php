@@ -60,5 +60,10 @@ class UtilsTest extends TestCase
 
         $uid = Uuid::fromString(Utils::hexUuidFromBase64UrlWithChecksum($userId))->hex();
         self::assertSame('1d5fe87246e81035d90e5a7f55c19f37', $uid);
+
+        self::assertSame(
+            '{"uid":"HV_ockboEDXZDlp_VcGfN6Dx7DxMPw","keywords":[],"human_score":0.4}',
+            $userContext->toString()
+        );
     }
 }
