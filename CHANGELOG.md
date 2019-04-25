@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - IP column size
 - Build process
+- Invalid UUID error on Event export 
 
 ## [0.6.5] - 2019-04-25
 ### Fixed
