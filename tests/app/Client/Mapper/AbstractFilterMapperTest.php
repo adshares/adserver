@@ -28,7 +28,13 @@ use function json_decode;
 
 class AbstractFilterMapperTest extends TestCase
 {
-    public function testGenerateNestedStructure(): void
+    /** @dataProvider structureProvider */
+    public function testGenerateNestedStructure(array $input, array $expected): void
+    {
+        self::assertSame($expected, AbstractFilterMapper::generateNestedStructure($input));
+    }
+
+    public function structureProvider(): array
     {
         $keywordsJson = <<<JSON
 {"nx":{
@@ -73,27 +79,45 @@ class AbstractFilterMapperTest extends TestCase
 JSON;
         $keywords = json_decode($keywordsJson, true);
 
-        self::assertSame(
-            [
-                'nx:j' => ['s2'],
-                'nx:k' => ['a1', 'a2', 'a3'],
-                'nx:l:n' => ['a1', 'a2', 'a3'],
-                'nx:l:o:q' => ['a1', 'a2', 'a3'],
-                'device:type' => ['desktop'],
-                'device:os' => ['unix'],
-                'device:browser' => ['chrome'],
-                'user:language' => ['pl', 'en'],
-                'user:country' => ['xx'],
-                'site:url' => [
-                    '//demo-site.adshares.net',
-                    'net',
-                    'adshares.net',
-                    'demo-site.adshares.net',
-                ],
-                'site:tag' => ['pets: cats', 'info'],
+        return [
+            'typical'=>[
+                $keywords,
+                [
+                    'nx:j' => ['s2'],
+                    'nx:k' => ['a1', 'a2', 'a3'],
+                    'nx:l:n' => ['a1', 'a2', 'a3'],
+                    'nx:l:o:q' => ['a1', 'a2', 'a3'],
+                    'device:type' => ['desktop'],
+                    'device:os' => ['unix'],
+                    'device:browser' => ['chrome'],
+                    'user:language' => ['pl', 'en'],
+                    'user:country' => ['xx'],
+                    'site:url' => [
+                        '//demo-site.adshares.net',
+                        'net',
+                        'adshares.net',
+                        'demo-site.adshares.net',
+                    ],
+                    'site:tag' => ['pets: cats', 'info'],
 
+                ],
             ],
-            AbstractFilterMapper::generateNestedStructure($keywords)
-        );
+            'single'=>[
+                ['one'],
+                ['one'],
+            ],
+            'double'=>[
+                ['one', 'two'],
+                ['one', 'two'],
+            ],
+            'single with colon'=>[
+                ['pets:cats', 'one:two'],
+                ['pets:cats', 'one:two'],
+            ],
+            'double with colon'=>[
+                ['pets:cats'],
+                ['pets:cats'],
+            ],
+        ];
     }
 }

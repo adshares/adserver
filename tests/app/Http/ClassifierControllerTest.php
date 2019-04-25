@@ -25,11 +25,14 @@ namespace Adshares\Adserver\Tests\Http;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use function factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use function urldecode;
+use function urlencode;
 
 final class ClassifierControllerTest extends TestCase
 {
@@ -52,6 +55,7 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
+
         $items = $content['items'];
 
         $this->assertCount(3, $items);
@@ -204,6 +208,36 @@ final class ClassifierControllerTest extends TestCase
         $this->assertEquals(204, $response->getStatusCode());
     }
 
+    public function testRejectGloballyWhenForSiteExistsInDb(): void
+    {
+        $this->mockVerifier();
+        $user = factory(User::class)->create(['id' => 1]);
+        factory(User::class)->create(['id' => 2]);
+        $this->actingAs($user, 'api');
+
+        factory(NetworkCampaign::class)->create(['id' => 1]);
+        factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
+        factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => 3, 'user_id' => 1]);
+
+        $data = [
+            'classification' => [
+                'banner_id' => 1,
+                'status' => false,
+            ],
+        ];
+
+        $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
+        $this->assertEquals(204, $response->getStatusCode());
+
+        /** @var Collection $classification */
+        $classification = Classification::where('banner_id', 1)
+            ->where('user_id', 1)
+            ->get();
+
+        $this->assertCount(1, $classification);
+        $this->assertFalse($classification->first()->status);
+    }
+
     public function testChangeSiteStatusWhenDoesNotExistInDb(): void
     {
         $this->mockVerifier();
@@ -257,5 +291,52 @@ final class ClassifierControllerTest extends TestCase
 
         $this->assertTrue($classification->status);
         $this->assertEquals(204, $response->getStatusCode());
+    }
+
+    /**
+     * @dataProvider provideLandingUrl
+     *
+     * @param string $url
+     */
+    public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
+    {
+        $user = factory(User::class)->create(['id' => 1]);
+        $user->is_advertiser = 1;
+        $this->actingAs($user, 'api');
+
+        $site = factory(Site::class)->create(['id' => 1, 'user_id' => $user->id]);
+
+        factory(NetworkCampaign::class)->create(['id' => 1, 'landing_url' => 'http://example.com']);
+        factory(NetworkCampaign::class)->create(['id' => 2, 'landing_url' => 'http://adshares.net']);
+        factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
+        factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
+        factory(NetworkBanner::class)->create(['id' => 3, 'network_campaign_id' => 2]);
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]
+        );
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
+        );
+        factory(Classification::class)->create(
+            ['banner_id' => 3, 'status' => 1, 'site_id' => $site->id, 'user_id' => 1]
+        );
+
+        $url = urlencode($url);
+
+        $response = $this->getJson(self::CLASSIFICATION_LIST.'/3?landingUrl='.$url);
+        $content = json_decode($response->getContent(), true);
+        $items = $content['items'];
+
+        $this->assertCount(1, $items);
+        $this->assertEquals('http://adshares.net', $items[0]['landingUrl']);
+    }
+
+    public function provideLandingUrl(): array
+    {
+        return [
+            ['http://adshares.net'],
+            ['adshares'],
+            ['adshares.net'],
+        ];
     }
 }
