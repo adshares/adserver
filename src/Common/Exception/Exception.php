@@ -43,7 +43,7 @@ class Exception extends PhpException
         $decoded = json_decode($message, true);
 
         if ($decoded && is_array($decoded)) {
-            $message = $decoded['message'] ?? sprintf('Unknown error (%s)', __CLASS__);
+            $message = $decoded['message'] ?? 'Unknown error';
         }
 
         return str_replace(["\n", "\t"], ' ', $message);

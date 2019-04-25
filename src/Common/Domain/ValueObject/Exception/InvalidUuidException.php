@@ -20,7 +20,7 @@
 
 namespace Adshares\Common\Domain\ValueObject\Exception;
 
-use RuntimeException;
+use Adshares\Common\Exception\RuntimeException;
 
 final class InvalidUuidException extends RuntimeException
 {

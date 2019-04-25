@@ -24,6 +24,8 @@ namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Application\Dto\UserContext;
 use function hex2bin;
 
 class UtilsTest extends TestCase
@@ -44,5 +46,19 @@ class UtilsTest extends TestCase
         $uidHex = Utils::hexUuidFromBase64UrlWithChecksum($tid);
 
         self::assertSame($tid, Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($uidHex)));
+    }
+
+    public function testContext(): void
+    {
+        $userContext = new UserContext(
+            [],
+            0.4,
+            'HV_ockboEDXZDlp_VcGfN6Dx7DxMPw'
+        );
+
+        $userId = $userContext->userId();
+
+        $uid = Uuid::fromString(Utils::hexUuidFromBase64UrlWithChecksum($userId))->hex();
+        self::assertSame('1d5fe87246e81035d90e5a7f55c19f37', $uid);
     }
 }

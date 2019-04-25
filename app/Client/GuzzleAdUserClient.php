@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
@@ -93,7 +94,7 @@ final class GuzzleAdUserClient implements AdUser
             return new UserContext(
                 $partialContext->keywords(),
                 AdUser::HUMAN_SCORE_ON_CONNECTION_ERROR,
-                $partialContext->trackingId()
+                Utils::hexUuidFromBase64UrlWithChecksum($partialContext->trackingId())
             );
         }
     }
