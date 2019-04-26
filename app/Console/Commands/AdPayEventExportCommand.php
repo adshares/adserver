@@ -132,10 +132,6 @@ class AdPayEventExportCommand extends Command
 
         $userContext = $adUser->getUserContext($impressionContext);
 
-        if ($userContext->humanScore() > AdUser::HUMAN_SCORE_MINIMUM) {
-            $userInfoCache[$trackingId] = $userContext;
-        }
-
         Log::debug(sprintf(
             '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"trackingId":%s,"context": %s}',
             __FUNCTION__,
@@ -144,6 +140,8 @@ class AdPayEventExportCommand extends Command
             $event->tracking_id,
             $userContext->toString()
         ));
+
+        $userInfoCache[$trackingId] = $userContext;
 
         return $userContext;
     }
