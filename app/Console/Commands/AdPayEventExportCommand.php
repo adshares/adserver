@@ -141,6 +141,8 @@ class AdPayEventExportCommand extends Command
             $userContext->toString()
         ));
 
+        $userInfoCache[$trackingId] = $userContext;
+
         return $userContext;
     }
 }
