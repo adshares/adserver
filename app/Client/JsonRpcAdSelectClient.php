@@ -74,13 +74,13 @@ final class JsonRpcAdSelectClient implements AdSelect
             $zones
         );
 
-        $zones = Zone::findByPublicIds($zoneIds);
+        $zoneCollection = Zone::findByPublicIds($zoneIds);
 
-        if ($zones->count() < count($zoneIds)) {
-            $zones = $this->attachDuplicatedZones($zones, $zoneIds);
+        if ($zoneCollection->count() < count($zoneIds)) {
+            $zoneCollection = $this->attachDuplicatedZones($zoneCollection, $zoneIds);
         }
 
-        $existingZones = $zones->reject(function ($zone) {
+        $existingZones = $zoneCollection->reject(function ($zone) {
             return $zone === null;
         });
 
@@ -101,7 +101,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         ));
 
         $bannerMap = $this->createRequestIdsToBannerMap($items);
-        $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap);
+        $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap, $zoneIds);
 
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
@@ -210,7 +210,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         return $idMap;
     }
 
-    private function fixBannerOrdering(Collection $zones, array $bannerMap): array
+    private function fixBannerOrdering(Collection $zones, array $bannerMap, array $zoneIds): array
     {
         $bannerIds = [];
 
@@ -223,8 +223,14 @@ final class JsonRpcAdSelectClient implements AdSelect
 
             $bannerIds[$zone->uuid][] = $bannerId;
         }
+        
+        $orderedBannerIds = [];
+        
+        foreach ($zoneIds as $zoneId) {
+            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? null;
+        }
 
-        return $bannerIds;
+        return $orderedBannerIds;
     }
 
     private function fetchInOrderOfAppearance(array $params): Generator
