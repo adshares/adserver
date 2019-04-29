@@ -30,7 +30,7 @@ use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
-final class AdsOperatorExchangeRateRepository implements ExchangeRateRepository
+final class GuzzleAdsOperatorClient implements ExchangeRateRepository
 {
     private const GET_ENDPOINT = '/api/v1/exchange-rate/{date}/{currency}';
 
