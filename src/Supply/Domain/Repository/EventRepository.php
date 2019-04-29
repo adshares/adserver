@@ -28,7 +28,7 @@ interface EventRepository
 {
     public const PACKAGE_SIZE = 500;
 
-    public function fetchEventsCreatedFromDate(
+    public function fetchUnpaidEventsCreatedFromDate(
         DateTime $dateTime,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0

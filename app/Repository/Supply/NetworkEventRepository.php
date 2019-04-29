@@ -28,7 +28,7 @@ use DateTime;
 
 class NetworkEventRepository implements EventRepository
 {
-    public function fetchEventsCreatedFromDate(
+    public function fetchUnpaidEventsCreatedFromDate(
         DateTime $dateTime,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0

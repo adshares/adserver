@@ -27,8 +27,6 @@ use DateTime;
 
 class AdSelectEventExporter
 {
-    public $exportedEvents = 0;
-
     private $client;
 
     private $eventRepository;
@@ -45,7 +43,7 @@ class AdSelectEventExporter
         $exported = 0;
 
         do {
-            $events = $this->eventRepository->fetchEventsCreatedFromDate(
+            $events = $this->eventRepository->fetchUnpaidEventsCreatedFromDate(
                 $from,
                 EventRepository::PACKAGE_SIZE,
                 $offset
