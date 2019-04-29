@@ -25,9 +25,9 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
-use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use DateTime;
 use Illuminate\Console\Command;
+use function sprintf;
 
 class AdSelectPaymentsExportCommand extends Command
 {
@@ -51,17 +51,19 @@ class AdSelectPaymentsExportCommand extends Command
         $this->info('Start command '.$this->signature);
 
         $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
+        $this->info(sprintf(
+            '[ADSELECT] Trying to export events from %s',
+            $lastExportDate->format(DateTime::ATOM)
+        ));
 
-        try {
-            $this->exporterService->exportPayments($lastExportDate);
-        } catch (NoEventsForGivenTimePeriod $exception) {
-            $this->info($exception->getMessage());
-
-            return;
-        }
+        $this->exporterService->exportPayments($lastExportDate);
+        $this->info(sprintf(
+            '[ADSELECT] Exported %s paid events',
+            $this->exporterService->numberOfExportedEvents()
+        ));
 
         Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
 
-        $this->info('Finished exporting event payments to AdSelect.');
+        $this->info('Finished exporting event payments to AdSelect');
     }
 }

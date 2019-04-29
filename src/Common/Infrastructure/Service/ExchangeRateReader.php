@@ -49,12 +49,14 @@ class ExchangeRateReader
         $this->repositoryRemote = $repositoryRemote;
     }
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
     {
-        try {
-            $exchangeRateFromStorage = $this->repositoryStorable->fetchExchangeRate($dateTime, $currency);
+        $dateTimeForComputation = (null === $dateTime) ? new DateTime() : clone $dateTime;
 
-            if (DateUtils::areTheSameHour($exchangeRateFromStorage->getDateTime(), $dateTime)) {
+        try {
+            $exchangeRateFromStorage = $this->repositoryStorable->fetchExchangeRate($dateTimeForComputation, $currency);
+
+            if (DateUtils::areTheSameHour($exchangeRateFromStorage->getDateTime(), $dateTimeForComputation)) {
                 return $exchangeRateFromStorage;
             }
         } catch (ExchangeRateNotAvailableException $exception) {
@@ -62,12 +64,12 @@ class ExchangeRateReader
         }
 
         try {
-            $exchangeRateRemote = $this->repositoryRemote->fetchExchangeRate($dateTime, $currency);
+            $exchangeRateRemote = $this->repositoryRemote->fetchExchangeRate($dateTimeForComputation, $currency);
         } catch (ExchangeRateNotAvailableException $exception) {
             Log::warning(
                 sprintf(
                     '[ExchangeRateReader] Cannot fetch exchange rate for %s: %s',
-                    $dateTime->format(DateTime::ATOM),
+                    $dateTimeForComputation->format(DateTime::ATOM),
                     $exception->getMessage()
                 )
             );

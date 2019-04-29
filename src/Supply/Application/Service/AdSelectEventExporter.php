@@ -25,9 +25,12 @@ namespace Adshares\Supply\Application\Service;
 use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use Adshares\Supply\Domain\Repository\EventRepository;
 use DateTime;
+use function sprintf;
 
 class AdSelectEventExporter
 {
+    public $exportedEvents = 0;
+
     private $client;
 
     private $eventRepository;
@@ -57,18 +60,24 @@ class AdSelectEventExporter
 
     public function exportPayments(DateTime $from): void
     {
-        $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate($from);
+        $offset = 0;
 
-        if (!$events) {
-            throw new NoEventsForGivenTimePeriod(
-                sprintf(
-                    'Paid events from: %s not found. Current time: %s',
-                    $from->format(DateTime::ATOM),
-                    (new DateTime())->format(DateTime::ATOM)
-                )
+        do {
+            $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate(
+                $from,
+                EventRepository::PACKAGE_SIZE,
+                $offset
             );
-        }
 
-        $this->client->exportEventsPayments($events);
+            $this->client->exportEventsPayments($events);
+            $this->exportedEvents += count($events);
+
+            $offset += EventRepository::PACKAGE_SIZE;
+        } while (count($events) === EventRepository::PACKAGE_SIZE);
+    }
+
+    public function numberOfExportedEvents(): int
+    {
+        return $this->exportedEvents;
     }
 }

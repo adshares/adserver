@@ -22,13 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Console;
 
+use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Demand\Application\Service\AdPay;
+use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
@@ -40,6 +43,15 @@ class AdPayGetPaymentsTest extends TestCase
 
     public function testHandle(): void
     {
+        $dummyExchangeRateRepository = new DummyExchangeRateRepository();
+        
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            function () use ($dummyExchangeRateRepository) {
+                return $dummyExchangeRateRepository;
+            }
+        );
+
         $user = factory(User::class)->create();
         $userId = $user->id;
         $userUuid = $user->uuid;
@@ -53,7 +65,7 @@ class AdPayGetPaymentsTest extends TestCase
 
         /** @var Collection|EventLog[] $events */
         $events = factory(EventLog::class)->times(3)->create([
-            'event_value' => null,
+            'event_value_currency' => null,
             'advertiser_id' => $userUuid,
             'campaign_id' => $campaignUuid,
             'banner_id' => $bannerUuid,
@@ -67,8 +79,11 @@ class AdPayGetPaymentsTest extends TestCase
             ];
         });
 
-        $total = $calculatedEvents->sum('amount');
-        factory(UserLedgerEntry::class)->create(['amount' => $total, 'user_id' => $userId]);
+        $totalInCurrency = $calculatedEvents->sum('amount');
+        $userBalance = (int)ceil(
+            $totalInCurrency / $dummyExchangeRateRepository->fetchExchangeRate(new DateTime())->getValue()
+        );
+        factory(UserLedgerEntry::class)->create(['amount' => $userBalance, 'user_id' => $userId]);
 
         $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
             $adPay = $this->createMock(AdPay::class);
@@ -83,7 +98,7 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
 
-            $eventValue['event_value'] = $eventValue['amount'];
+            $eventValue['event_value_currency'] = $eventValue['amount'];
             unset($eventValue['amount']);
 
             $this->assertDatabaseHas('event_logs', $eventValue);
