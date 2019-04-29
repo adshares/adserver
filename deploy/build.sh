@@ -67,3 +67,5 @@ if [[ ${_CREATE_ADMIN:-0} -eq 1 ]]
 then
     artisanCommand ops:admin:create --password
 fi
+
+artisanCommand ops:exchange-rate:fetch

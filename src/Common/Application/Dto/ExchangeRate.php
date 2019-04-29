@@ -30,13 +30,13 @@ class ExchangeRate implements Arrayable
     /** @var DateTime */
     private $dateTime;
 
-    /** @var string */
+    /** @var float */
     private $value;
 
     /** @var string */
     private $currency;
 
-    public function __construct(DateTime $dateTime, string $value, string $currency)
+    public function __construct(DateTime $dateTime, float $value, string $currency)
     {
         $this->dateTime = $dateTime;
         $this->value = $value;
@@ -48,7 +48,7 @@ class ExchangeRate implements Arrayable
         return $this->dateTime;
     }
 
-    public function getValue(): string
+    public function getValue(): float
     {
         return $this->value;
     }
@@ -56,6 +56,16 @@ class ExchangeRate implements Arrayable
     public function getCurrency(): string
     {
         return $this->currency;
+    }
+
+    public function fromClick(int $amountInClicks): float
+    {
+        return (int)floor((float)$amountInClicks * $this->value);
+    }
+
+    public function toClick(int $amountInCurrency): int
+    {
+        return (int)floor($amountInCurrency / $this->value);
     }
 
     public function toString(): string

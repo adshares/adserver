@@ -28,7 +28,9 @@ use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTime;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
@@ -38,12 +40,16 @@ class PaymentDetailsProcessor
     /** @var string */
     private $adServerAddress;
 
+    /** @var ExchangeRateReader */
+    private $exchangeRateReader;
+
     /** @var LicenseReader */
     private $licenseReader;
 
-    public function __construct(LicenseReader $licenseReader)
+    public function __construct(ExchangeRateReader $exchangeRateReader, LicenseReader $licenseReader)
     {
         $this->adServerAddress = (string)config('app.adshares_address');
+        $this->exchangeRateReader = $exchangeRateReader;
         $this->licenseReader = $licenseReader;
     }
 
@@ -56,6 +62,8 @@ class PaymentDetailsProcessor
      */
     public function processPaymentDetails(string $senderAddress, int $adsPaymentId, array $paymentDetails): void
     {
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+
         $amountReceived = $this->getPaymentAmount($adsPaymentId);
 
         try {
@@ -87,8 +95,8 @@ class PaymentDetailsProcessor
         foreach ($paymentDetails as $key => $paymentDetail) {
             $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
             $paymentDetail['event_value'] = $calculatedFees['event_value'];
-            $paymentDetail['licence_fee_amount'] = $calculatedFees['licence_fee_amount'];
-            $paymentDetail['operator_fee_amount'] = $calculatedFees['operator_fee_amount'];
+            $paymentDetail['license_fee'] = $calculatedFees['license_fee'];
+            $paymentDetail['operator_fee'] = $calculatedFees['operator_fee'];
             $paymentDetail['paid_amount'] = $calculatedFees['paid_amount'];
 
             $paymentDetails[$key] = $paymentDetail;
@@ -96,6 +104,8 @@ class PaymentDetailsProcessor
 
         $totalPaidAmount = 0;
         $totalLicenceFee = 0;
+
+        $exchangeRateValue = $exchangeRate->getValue();
 
         try {
             DB::beginTransaction();
@@ -109,14 +119,16 @@ class PaymentDetailsProcessor
                 $event->pay_from = $senderAddress;
                 $event->ads_payment_id = $adsPaymentId;
                 $event->event_value = $paymentDetail['event_value'];
+                $event->license_fee = $paymentDetail['license_fee'];
+                $event->operator_fee = $paymentDetail['operator_fee'];
                 $event->paid_amount = $paymentDetail['paid_amount'];
-                $event->licence_fee_amount = $paymentDetail['licence_fee_amount'];
-                $event->operator_fee_amount = $paymentDetail['operator_fee_amount'];
+                $event->exchange_rate = $exchangeRateValue;
+                $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
 
                 $event->save();
 
                 $totalPaidAmount += $paymentDetail['paid_amount'];
-                $totalLicenceFee += $paymentDetail['licence_fee_amount'];
+                $totalLicenceFee += $paymentDetail['license_fee'];
             }
 
             NetworkPayment::registerNetworkPayment(

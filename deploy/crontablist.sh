@@ -11,6 +11,10 @@ else
     _REDIRECTION="&>> ${LOG_DIR}/adserver-crontab.log"
 fi
 
+echo -n "0 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:exchange-rate:fetch"
+echo ""
+
 echo -n "* * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:inventory:import ${_REDIRECTION}"
 echo -n " && "

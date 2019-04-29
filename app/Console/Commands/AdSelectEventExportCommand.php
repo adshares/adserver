@@ -25,10 +25,10 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
-use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use DateTime;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Command\LockableTrait;
+use function sprintf;
 
 class AdSelectEventExportCommand extends Command
 {
@@ -60,13 +60,17 @@ class AdSelectEventExportCommand extends Command
 
         $lastExportDate = Config::fetchDateTime(Config::ADSELECT_EVENT_EXPORT_TIME);
 
-        try {
-            $this->exporterService->export($lastExportDate);
-        } catch (NoEventsForGivenTimePeriod $exception) {
-            $this->info($exception->getMessage());
+        $this->info(sprintf(
+            '[ADSELECT] Trying to export unpaid events from %s',
+            $lastExportDate->format(DateTime::ATOM)
+        ));
 
-            return;
-        }
+        $exported = $this->exporterService->exportUnpaidEvents($lastExportDate);
+
+        $this->info(sprintf(
+            '[ADSELECT] Exported %s unpaid events',
+            $exported
+        ));
 
         Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, new DateTime());
 

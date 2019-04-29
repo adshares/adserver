@@ -28,16 +28,30 @@ use DateTime;
 
 class NetworkEventRepository implements EventRepository
 {
-    public function fetchEventsCreatedFromDate(DateTime $dateTime): array
-    {
-        $events = NetworkEventLog::where('created_at', '>=', $dateTime)->get();
+    public function fetchUnpaidEventsCreatedFromDate(
+        DateTime $dateTime,
+        int $limit = self::PACKAGE_SIZE,
+        int $offset = 0
+    ): array {
+        $events = NetworkEventLog::where('created_at', '>=', $dateTime)
+            ->whereNull('event_value')
+            ->take($limit)
+            ->skip($offset)
+            ->get();
 
         return $events->toArray();
     }
 
-    public function fetchPaidEventsUpdatedFromDate(DateTime $dateTime): array
-    {
-        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)->whereNotNull('event_value')->get();
+    public function fetchPaidEventsUpdatedFromDate(
+        DateTime $dateTime,
+        int $limit = self::PACKAGE_SIZE,
+        int $offset = 0
+    ): array {
+        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)
+            ->whereNotNull('event_value')
+            ->take($limit)
+            ->skip($offset)
+            ->get();
 
         return $events->toArray();
     }

@@ -65,7 +65,7 @@ class DemandPreparePayments extends Command
         $groupedEvents = $events->each(
             function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
                 $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
-                $entry->licence_fee = $licenseFee;
+                $entry->license_fee = $licenseFee;
 
                 $amountAfterFee = $entry->event_value - $licenseFee;
                 $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);

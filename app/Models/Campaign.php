@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -252,51 +253,51 @@ class Campaign extends Model
         ];
     }
 
-    public function changeStatus(int $status): void
+    public function changeStatus(int $status, ?ExchangeRate $exchangeRate = null): void
     {
         if ($status === $this->status) {
             return;
         }
 
         self::failIfInvalidStatus($status);
-        $this->failIfTransitionNotAllowed($status);
-        $this->updateBlockade($status);
+        $this->updateBlockadeOrFailIfNotAllowed($status, $exchangeRate);
 
         $this->status = $status;
     }
 
-    private function failIfTransitionNotAllowed(int $status): void
+    private function updateBlockadeOrFailIfNotAllowed(int $status, ?ExchangeRate $exchangeRate = null): void
     {
-        if ($status === self::STATUS_ACTIVE) {
-            $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
+        if ($status !== self::STATUS_ACTIVE) {
+            Log::info(sprintf('Hold the blockade'));
 
-            $requiredBalance = $this->getBudgetForCurrentDateTime();
-
-            if ($balance < $requiredBalance) {
-                throw new InvalidArgumentException('Campaign budgets exceed account balance');
-            }
-        }
-    }
-
-    private function updateBlockade(int $status): void
-    {
-        $budgetForCurrentDateTime = $this->getBudgetForCurrentDateTime();
-        if (0 === $budgetForCurrentDateTime) {
             return;
         }
 
-        $amount = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
-        if ($status === self::STATUS_ACTIVE) {
-            $amount += $budgetForCurrentDateTime;
-        } elseif ($this->status === self::STATUS_ACTIVE) {
-            $amount -= $budgetForCurrentDateTime;
+        $budget = $this->getBudgetForCurrentDateTime();
+        if (0 >= $budget) {
+            return;
         }
+
+        if (null === $exchangeRate) {
+            Log::error('ExchangeRate is not available');
+            throw new InvalidArgumentException('ExchangeRate is not available');
+        }
+
+        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budget;
+        $amount = $exchangeRate->toClick($totalBudget);
 
         $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
         if ($amount <= $blockedAmount) {
             Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
 
             return;
+        }
+
+        $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
+        $requiredBalance = $amount - $blockedAmount;
+
+        if ($balance < $requiredBalance) {
+            throw new InvalidArgumentException('Campaign budgets exceed account balance');
         }
 
         DB::beginTransaction();

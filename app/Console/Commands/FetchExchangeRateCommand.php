@@ -61,7 +61,7 @@ class FetchExchangeRateCommand extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $exchangeRate = $this->repositoryRemote->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->repositoryRemote->fetchExchangeRate();
         $this->info(sprintf('Exchange rate: %s', $exchangeRate->toString()));
 
         try {

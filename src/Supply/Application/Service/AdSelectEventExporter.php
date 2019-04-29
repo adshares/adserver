@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use Adshares\Supply\Domain\Repository\EventRepository;
 use DateTime;
 
@@ -38,37 +37,50 @@ class AdSelectEventExporter
         $this->eventRepository = $eventRepository;
     }
 
-    public function export(DateTime $from): void
+    public function exportUnpaidEvents(DateTime $from): int
     {
-        $events = $this->eventRepository->fetchEventsCreatedFromDate($from);
+        $offset = 0;
+        $exported = 0;
 
-        if (!$events) {
-            throw new NoEventsForGivenTimePeriod(
-                sprintf(
-                    'Events from: %s not found. Current time: %s',
-                    $from->format(DateTime::ATOM),
-                    (new DateTime())->format(DateTime::ATOM)
-                )
+        do {
+            $events = $this->eventRepository->fetchUnpaidEventsCreatedFromDate(
+                $from,
+                EventRepository::PACKAGE_SIZE,
+                $offset
             );
-        }
 
-        $this->client->exportEvents($events);
+            $this->client->exportEvents($events);
+            $exported += count($events);
+
+            $offset += EventRepository::PACKAGE_SIZE;
+        } while (count($events) === EventRepository::PACKAGE_SIZE);
+
+        return $exported;
     }
 
-    public function exportPayments(DateTime $from): void
+    public function exportPaidEvents(DateTime $from): int
     {
-        $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate($from);
+        $offset = 0;
+        $exported = 0;
 
-        if (!$events) {
-            throw new NoEventsForGivenTimePeriod(
-                sprintf(
-                    'Paid events from: %s not found. Current time: %s',
-                    $from->format(DateTime::ATOM),
-                    (new DateTime())->format(DateTime::ATOM)
-                )
+        do {
+            $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate(
+                $from,
+                EventRepository::PACKAGE_SIZE,
+                $offset
             );
-        }
 
-        $this->client->exportEventsPayments($events);
+            $this->client->exportEventsPayments($events);
+            $exported += count($events);
+
+            $offset += EventRepository::PACKAGE_SIZE;
+        } while (count($events) === EventRepository::PACKAGE_SIZE);
+
+        return $exported;
+    }
+
+    public function numberOfExportedEvents(): int
+    {
+        return $this->exportedEvents;
     }
 }

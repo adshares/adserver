@@ -25,13 +25,15 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
-use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use DateTime;
 use Illuminate\Console\Command;
+use function sprintf;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdSelectPaymentsExportCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adselect:payment:export';
 
@@ -48,20 +50,28 @@ class AdSelectPaymentsExportCommand extends Command
 
     public function handle(): void
     {
-        $this->info('Start command '.$this->signature);
-
-        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
-
-        try {
-            $this->exporterService->exportPayments($lastExportDate);
-        } catch (NoEventsForGivenTimePeriod $exception) {
-            $this->info($exception->getMessage());
+        if (!$this->lock()) {
+            $this->info('[AdSelectEventExport] Command '.$this->signature.' already running');
 
             return;
         }
 
+        $this->info('Start command '.$this->signature);
+
+        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
+        $this->info(sprintf(
+            '[ADSELECT] Trying to export paid events from %s',
+            $lastExportDate->format(DateTime::ATOM)
+        ));
+
+        $exported = $this->exporterService->exportPaidEvents($lastExportDate);
+        $this->info(sprintf(
+            '[ADSELECT] Exported %s paid events',
+            $exported
+        ));
+
         Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
 
-        $this->info('Finished exporting event payments to AdSelect.');
+        $this->info('Finished exporting event payments to AdSelect');
     }
 }
