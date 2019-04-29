@@ -31,10 +31,10 @@ class EloquentExchangeRateRepository
 {
     private const DATABASE_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): DomainExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): DomainExchangeRate
     {
         $exchangeRate =
-            ExchangeRate::where('valid_at', '<=', $dateTime)
+            ExchangeRate::where('valid_at', '<=', (null === $dateTime) ? new DateTime() : $dateTime)
                 ->where('currency', $currency)
                 ->orderBy('valid_at', 'DESC')
                 ->limit(1)

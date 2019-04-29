@@ -59,7 +59,7 @@ class AdPayGetPayments extends Command
 
         $this->info('Found '.count($calculations).' calculations.');
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->info(sprintf('Current exchange rate is %f', $exchangeRate->getValue()));
 
         $eventIds = $calculations->map(function (array $amount) {

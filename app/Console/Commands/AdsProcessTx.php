@@ -311,7 +311,7 @@ class AdsProcessTx extends Command
 
     private function reactivateSuspendedCampaigns(User $user): void
     {
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
         $balance = UserLedgerEntry::getBalanceByUserId($user->id);
         $campaigns = $user->campaigns;

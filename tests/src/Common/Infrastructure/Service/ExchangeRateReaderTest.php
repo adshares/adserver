@@ -48,7 +48,7 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRateReader->fetchExchangeRate();
     }
 
     /**
@@ -75,7 +75,7 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
     }
@@ -103,7 +103,7 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRateReader->fetchExchangeRate();
     }
 
     /**
@@ -128,7 +128,7 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
     }
@@ -162,7 +162,7 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
     }

@@ -38,7 +38,7 @@ final class EloquentExchangeRateRepositoryTest extends TestCase
         $repository = new EloquentExchangeRateRepository();
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $repository->fetchExchangeRate(new DateTime());
+        $repository->fetchExchangeRate();
     }
 
     public function testExchangeRateRepositoryStoreAndFetch(): void
@@ -50,7 +50,7 @@ final class EloquentExchangeRateRepositoryTest extends TestCase
 
         $exchangeRate = new ExchangeRate($dateTime, 1.3, 'USD');
         $repository->storeExchangeRate($exchangeRate);
-        $exchangeRateFromRepository = $repository->fetchExchangeRate(new DateTime());
+        $exchangeRateFromRepository = $repository->fetchExchangeRate();
 
         $this->assertEquals($exchangeRate, $exchangeRateFromRepository);
     }

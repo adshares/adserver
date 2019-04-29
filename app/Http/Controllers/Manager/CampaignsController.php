@@ -98,7 +98,7 @@ class CampaignsController extends Controller
     public function add(Request $request): JsonResponse
     {
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
         } catch (ExchangeRateNotAvailableException $exception) {
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
@@ -223,7 +223,7 @@ class CampaignsController extends Controller
     public function edit(Request $request, int $campaignId): JsonResponse
     {
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
         } catch (ExchangeRateNotAvailableException $exception) {
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
@@ -310,7 +310,7 @@ class CampaignsController extends Controller
         $status = (int)$request->input('campaign.status');
 
         try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
         } catch (ExchangeRateNotAvailableException $exception) {
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }

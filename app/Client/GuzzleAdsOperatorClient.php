@@ -42,10 +42,12 @@ final class GuzzleAdsOperatorClient implements ExchangeRateRepository
         $this->client = $client;
     }
 
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate
+    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
     {
-        $roundedDateTime = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
-        $uri = $this->getUri($dateTime->modify('-1 hour'), $currency);
+        $dateTimeForComputation = (null === $dateTime) ? new DateTime() : clone $dateTime;
+
+        $roundedDateTime = DateUtils::getDateTimeRoundedToCurrentHour($dateTimeForComputation);
+        $uri = $this->getUri($dateTimeForComputation->modify('-1 hour'), $currency);
 
         try {
             $response = $this->client->get($uri);

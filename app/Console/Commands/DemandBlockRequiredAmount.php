@@ -52,7 +52,7 @@ class DemandBlockRequiredAmount extends Command
     {
         $this->info('Start command '.$this->signature);
 
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
         DB::beginTransaction();
 

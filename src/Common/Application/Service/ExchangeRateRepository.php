@@ -36,5 +36,5 @@ interface ExchangeRateRepository
      *
      * @throws ExchangeRateNotAvailableException
      */
-    public function fetchExchangeRate(DateTime $dateTime, string $currency = 'USD'): ExchangeRate;
+    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate;
 }

@@ -62,7 +62,7 @@ class PaymentDetailsProcessor
      */
     public function processPaymentDetails(string $senderAddress, int $adsPaymentId, array $paymentDetails): void
     {
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
         $amountReceived = $this->getPaymentAmount($adsPaymentId);
 
