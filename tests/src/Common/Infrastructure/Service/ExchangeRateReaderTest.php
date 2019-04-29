@@ -48,12 +48,14 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRateReader->fetchExchangeRate();
     }
 
-    public function testExchangeRateReaderEmptyStorageAndRemoteSuccess(): void
+    /**
+     * @dataProvider exchangeRateProvider
+     */
+    public function testExchangeRateReaderEmptyStorageAndRemoteSuccess(float $exchangeRateValue): void
     {
-        $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -73,14 +75,16 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
     }
 
-    public function testExchangeRateReaderEmptyStorageAndRemoteOldValue(): void
+    /**
+     * @dataProvider exchangeRateProvider
+     */
+    public function testExchangeRateReaderEmptyStorageAndRemoteOldValue(float $exchangeRateValue): void
     {
-        $exchangeRateValue = '1';
         $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -99,12 +103,14 @@ class ExchangeRateReaderTest extends TestCase
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
         $this->expectException(ExchangeRateNotAvailableException::class);
-        $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRateReader->fetchExchangeRate();
     }
 
-    public function testExchangeRateReaderSuccessStorage(): void
+    /**
+     * @dataProvider exchangeRateProvider
+     */
+    public function testExchangeRateReaderSuccessStorage(float $exchangeRateValue): void
     {
-        $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -122,14 +128,16 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
     }
 
-    public function testExchangeRateReaderStorageOldValueAndRemoteSuccess(): void
+    /**
+     * @dataProvider exchangeRateProvider
+     */
+    public function testExchangeRateReaderStorageOldValueAndRemoteSuccess(float $exchangeRateValue): void
     {
-        $exchangeRateValue = '1';
         $exchangeRateDateTime = null;
 
         $repositoryRemote = $this->createMock(ExchangeRateRepository::class);
@@ -144,7 +152,7 @@ class ExchangeRateReaderTest extends TestCase
         $repositoryStorable = $this->createMock(EloquentExchangeRateRepository::class);
         $repositoryStorable->expects($this->once())->method('fetchExchangeRate')->willReturnCallback(
             function () {
-                $exchangeRateValue = '1';
+                $exchangeRateValue = 1;
                 $exchangeRateDateTime = (new DateTime())->modify('-1 year');
 
                 return new ExchangeRate($exchangeRateDateTime, $exchangeRateValue, 'USD');
@@ -154,8 +162,17 @@ class ExchangeRateReaderTest extends TestCase
 
         $exchangeRateReader = new ExchangeRateReader($repositoryStorable, $repositoryRemote);
 
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate(new DateTime());
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
         $this->assertEquals($exchangeRateValue, $exchangeRate->getValue());
         $this->assertEquals($exchangeRateDateTime, $exchangeRate->getDateTime());
+    }
+
+    public function exchangeRateProvider(): array
+    {
+        return [
+            [0.5],
+            [1.0],
+            [1.5],
+        ];
     }
 }

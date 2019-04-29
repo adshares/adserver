@@ -35,9 +35,11 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use DateTime;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Response;
@@ -58,16 +60,20 @@ class AdsProcessTx extends Command
 
     private $adServerAddress;
 
+    /** @var ExchangeRateReader */
+    private $exchangeRateReader;
+
     /** @var DemandClient $demandClient */
     private $demandClient;
 
     /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
     private $paymentDetailsProcessor;
 
-    public function __construct()
+    public function __construct(ExchangeRateReader $exchangeRateReader)
     {
         parent::__construct();
         $this->adServerAddress = config('app.adshares_address');
+        $this->exchangeRateReader = $exchangeRateReader;
     }
 
     public function handle(
@@ -305,18 +311,22 @@ class AdsProcessTx extends Command
 
     private function reactivateSuspendedCampaigns(User $user): void
     {
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+
         $balance = UserLedgerEntry::getBalanceByUserId($user->id);
         $campaigns = $user->campaigns;
 
-        $requiredAmount = $campaigns->filter(function (Campaign $campaign) {
+        $requiredBudget = $campaigns->filter(function (Campaign $campaign) {
             return $campaign->status === Campaign::STATUS_ACTIVE || $campaign->status === Campaign::STATUS_SUSPENDED;
         })->sum('budget');
 
-        if ($balance >= $requiredAmount) {
+        $requiredBalance = $exchangeRate->toClick($requiredBudget);
+
+        if ($balance >= $requiredBalance) {
             $campaigns->filter(function (Campaign $campaign) {
                 return $campaign->status === Campaign::STATUS_SUSPENDED;
-            })->each(function (Campaign $campaign) {
-                $campaign->changeStatus(Campaign::STATUS_ACTIVE);
+            })->each(function (Campaign $campaign) use ($exchangeRate) {
+                $campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate);
                 $campaign->save();
             });
         }
