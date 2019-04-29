@@ -22,10 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Supply\Application\Service\Exception\NoEventsForGivenTimePeriod;
 use Adshares\Supply\Domain\Repository\EventRepository;
 use DateTime;
-use function sprintf;
 
 class AdSelectEventExporter
 {
@@ -41,26 +39,31 @@ class AdSelectEventExporter
         $this->eventRepository = $eventRepository;
     }
 
-    public function export(DateTime $from): void
-    {
-        $events = $this->eventRepository->fetchEventsCreatedFromDate($from);
-
-        if (!$events) {
-            throw new NoEventsForGivenTimePeriod(
-                sprintf(
-                    'Events from: %s not found. Current time: %s',
-                    $from->format(DateTime::ATOM),
-                    (new DateTime())->format(DateTime::ATOM)
-                )
-            );
-        }
-
-        $this->client->exportEvents($events);
-    }
-
-    public function exportPayments(DateTime $from): void
+    public function exportUnpaidEvents(DateTime $from): int
     {
         $offset = 0;
+        $exported = 0;
+
+        do {
+            $events = $this->eventRepository->fetchEventsCreatedFromDate(
+                $from,
+                EventRepository::PACKAGE_SIZE,
+                $offset
+            );
+
+            $this->client->exportEvents($events);
+            $exported += count($events);
+
+            $offset += EventRepository::PACKAGE_SIZE;
+        } while (count($events) === EventRepository::PACKAGE_SIZE);
+
+        return $exported;
+    }
+
+    public function exportPaidEvents(DateTime $from): int
+    {
+        $offset = 0;
+        $exported = 0;
 
         do {
             $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate(
@@ -70,10 +73,12 @@ class AdSelectEventExporter
             );
 
             $this->client->exportEventsPayments($events);
-            $this->exportedEvents += count($events);
+            $exported += count($events);
 
             $offset += EventRepository::PACKAGE_SIZE;
         } while (count($events) === EventRepository::PACKAGE_SIZE);
+
+        return $exported;
     }
 
     public function numberOfExportedEvents(): int

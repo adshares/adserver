@@ -28,10 +28,12 @@ use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use DateTime;
 use Illuminate\Console\Command;
 use function sprintf;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdSelectPaymentsExportCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adselect:payment:export';
 
@@ -48,18 +50,24 @@ class AdSelectPaymentsExportCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdSelectEventExport] Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
         $this->info(sprintf(
-            '[ADSELECT] Trying to export events from %s',
+            '[ADSELECT] Trying to export paid events from %s',
             $lastExportDate->format(DateTime::ATOM)
         ));
 
-        $this->exporterService->exportPayments($lastExportDate);
+        $exported = $this->exporterService->exportPaidEvents($lastExportDate);
         $this->info(sprintf(
             '[ADSELECT] Exported %s paid events',
-            $this->exporterService->numberOfExportedEvents()
+            $exported
         ));
 
         Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
