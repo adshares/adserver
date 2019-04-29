@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Currency handling during payments processing
+- Export events (paid and unpaid) in packages
 
 ## [0.6.7] - 2019-04-26
 ### Added
