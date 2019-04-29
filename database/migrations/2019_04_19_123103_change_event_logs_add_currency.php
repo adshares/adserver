@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Schema;
 
 class ChangeEventLogsAddCurrency extends Migration
 {
-    private const EXCHANGE_RATE_VALUE = '0.05';
+    private const EXCHANGE_RATE_VALUE = '0.08972';
 
     public function up(): void
     {
