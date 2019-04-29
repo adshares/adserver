@@ -98,7 +98,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_id' => (string)$this->campaignData['banners'][0]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
-                        'type' => 'image',
+                        'type' => ['image'],
                         'classification' => [],
                     ],
                 ],
@@ -106,7 +106,7 @@ final class CampaignMapperTest extends TestCase
                     'banner_id' => (string)$this->campaignData['banners'][1]['id'],
                     'banner_size' => '728x90',
                     'keywords' => [
-                        'type' => 'image',
+                        'type' => ['image'],
                         'classification' => [],
                     ],
                 ],
