@@ -26,7 +26,13 @@ use DateTime;
 
 interface EventRepository
 {
+    public const PACKAGE_SIZE = 500;
+
     public function fetchEventsCreatedFromDate(DateTime $dateTime): array;
 
-    public function fetchPaidEventsUpdatedFromDate(DateTime $dateTime): array;
+    public function fetchPaidEventsUpdatedFromDate(
+        DateTime $dateTime,
+        int $limit = self::PACKAGE_SIZE,
+        int $offset = 0
+    ): array;
 }
