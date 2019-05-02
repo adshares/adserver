@@ -120,10 +120,10 @@ class DemandController extends Controller
                 $headers = [];
                 foreach ($response->headers->allPreserveCase() as $name => $value) {
                     if (0 === strpos($name, 'X-')) {
-                        $headers[] = "$name:".implode(',', $value);
+                        $headers[] = "$name:" . implode(',', $value);
                     }
                 }
-                echo implode("\n", $headers)."\n\n";
+                echo implode("\n", $headers) . "\n\n";
                 echo base64_encode($banner->creative_contents);
             }
         );
@@ -148,7 +148,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Cid', $caseId);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
+            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '') . $mime);
         }
 
         return $response;
@@ -188,8 +188,8 @@ class DemandController extends Controller
 
         $response->setCache(
             [
-                'etag' => md5(md5_file($jsPath).implode(':', $params)),
-                'last_modified' => new DateTime('@'.filemtime($jsPath)),
+                'etag' => md5(md5_file($jsPath) . implode(':', $params)),
+                'last_modified' => new DateTime('@' . filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
@@ -217,8 +217,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
+        $tid = $request->cookies->get('tid');
+        $trackingId = $tid
+            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -229,17 +230,18 @@ class DemandController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
+        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $trackingId ?: $ip,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            bin2hex(inet_pton($request->getClientIp())),
+            $ip,
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
@@ -259,8 +261,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
+        $tid = $request->cookies->get('tid');
+        $trackingId = $tid
+            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
 
         $payTo = $request->query->get('pto');
@@ -277,7 +280,7 @@ class DemandController extends Controller
                 '%s/register/%s/%s/%s.htm',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
-                $trackingId,
+                $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
                 Utils::urlSafeBase64Encode(random_bytes(8))
             );
         } else {
@@ -299,17 +302,18 @@ class DemandController extends Controller
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
+        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $trackingId ?: $ip,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            bin2hex(inet_pton($request->getClientIp())),
+            $ip,
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
@@ -339,7 +343,7 @@ class DemandController extends Controller
         $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         $response->send();
 
-        $context = Utils::urlSafeBase64Decode($request->query->get('k'));
+        $context = Utils::urlSafeBase64Decode($request->query->get('k') ?? '');
         $decodedContext = json_decode($context);
 
         try {
@@ -435,6 +439,14 @@ class DemandController extends Controller
         return self::json($campaigns, Response::HTTP_OK);
     }
 
+    private function changeHost(string $url, Request $request): string
+    {
+        $currentHost = $request->getSchemeAndHttpHost();
+        $bannerHost = config('app.adserver_banner_host');
+
+        return str_replace($currentHost, $bannerHost, $url);
+    }
+
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
     {
         $licenceFee = (int)floor($budget * $licenceTxFee);
@@ -442,13 +454,5 @@ class DemandController extends Controller
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
-    }
-
-    private function changeHost(string $url, Request $request): string
-    {
-        $currentHost = $request->getSchemeAndHttpHost();
-        $bannerHost = config('app.adserver_banner_host');
-
-        return str_replace($currentHost, $bannerHost, $url);
     }
 }
