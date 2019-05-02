@@ -439,14 +439,6 @@ class DemandController extends Controller
         return self::json($campaigns, Response::HTTP_OK);
     }
 
-    private function changeHost(string $url, Request $request): string
-    {
-        $currentHost = $request->getSchemeAndHttpHost();
-        $bannerHost = config('app.adserver_banner_host');
-
-        return str_replace($currentHost, $bannerHost, $url);
-    }
-
     private function calculateBudgetAfterFees(int $budget, float $licenceTxFee, float $operatorTxFee): int
     {
         $licenceFee = (int)floor($budget * $licenceTxFee);
@@ -454,5 +446,13 @@ class DemandController extends Controller
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
+    }
+
+    private function changeHost(string $url, Request $request): string
+    {
+        $currentHost = $request->getSchemeAndHttpHost();
+        $bannerHost = config('app.adserver_banner_host');
+
+        return str_replace($currentHost, $bannerHost, $url);
     }
 }
