@@ -120,10 +120,10 @@ class DemandController extends Controller
                 $headers = [];
                 foreach ($response->headers->allPreserveCase() as $name => $value) {
                     if (0 === strpos($name, 'X-')) {
-                        $headers[] = "$name:" . implode(',', $value);
+                        $headers[] = "$name:".implode(',', $value);
                     }
                 }
-                echo implode("\n", $headers) . "\n\n";
+                echo implode("\n", $headers)."\n\n";
                 echo base64_encode($banner->creative_contents);
             }
         );
@@ -148,7 +148,7 @@ class DemandController extends Controller
         $response->headers->set('X-Adshares-Cid', $caseId);
 
         if (!$response->isNotModified($request)) {
-            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '') . $mime);
+            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
         }
 
         return $response;
@@ -188,8 +188,8 @@ class DemandController extends Controller
 
         $response->setCache(
             [
-                'etag' => md5(md5_file($jsPath) . implode(':', $params)),
-                'last_modified' => new DateTime('@' . filemtime($jsPath)),
+                'etag' => md5(md5_file($jsPath).implode(':', $params)),
+                'last_modified' => new DateTime('@'.filemtime($jsPath)),
                 'max_age' => 3600 * 24 * 30,
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
