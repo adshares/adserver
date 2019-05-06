@@ -271,7 +271,6 @@ class WalletController extends Controller
                 $date = $ledgerItem->created_at->format(DATE_ATOM);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
-                $txid = $this->getUserLedgerEntryTxid($ledgerItem);
                 $address = $this->getUserLedgerEntryAddress($ledgerItem);
 
                 $items[] = [
@@ -280,7 +279,7 @@ class WalletController extends Controller
                     'type' => $type,
                     'date' => $date,
                     'address' => $address,
-                    'txid' => $txid,
+                    'txid' => $ledgerItem->txid,
                     'id' => $ledgerItem->id,
                 ];
             }
@@ -294,34 +293,14 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    /**
-     * @param $ledgerItem
-     *
-     * @return string
-     */
-    private function getUserLedgerEntryAddress($ledgerItem): ?string
+    private function getUserLedgerEntryAddress(UserLedgerEntry $ledgerItem): ?string
     {
         if ((int)$ledgerItem->amount > 0) {
-            $address = $ledgerItem->address_to;
-        } else {
             $address = $ledgerItem->address_from;
+        } else {
+            $address = $ledgerItem->address_to;
         }
 
         return $address;
-    }
-
-    /**
-     * @param $ledgerItem
-     *
-     * @return null|string
-     */
-    private function getUserLedgerEntryTxid($ledgerItem): ?string
-    {
-        $type = (int)$ledgerItem->type;
-        $txid = (null !== $ledgerItem->txid
-            && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
-            ? $ledgerItem->txid : null;
-
-        return $txid;
     }
 }
