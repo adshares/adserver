@@ -30,7 +30,6 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
-use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -139,16 +138,16 @@ class AdPayGetPayments extends Command
 
                 Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks."
                     ." Needs $totalEventValue, but has $maxSpendableAmount");
-
-                $totalEventValue = $singleUserEvents->sum('event_value_currency');
             }
 
             $singleUserEvents->each(function (EventLog $entry) {
                 $entry->save();
             });
 
-            if ($totalEventValue > 0) {
-                return UserLedgerEntry::processAdExpense($user->id, $totalEventValue);
+            $totalEventValueInClicks = $singleUserEvents->sum('event_value');
+
+            if ($totalEventValueInClicks > 0) {
+                return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks);
             }
 
             return false;
