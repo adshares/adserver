@@ -28,7 +28,7 @@ use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use GuzzleHttp\ClientInterface;
 use Throwable;
 
-final class JsonRpc
+class JsonRpc
 {
     /** @var ClientInterface */
     private $client;

@@ -32,7 +32,7 @@ use function array_shift;
 use function json_encode;
 use function sprintf;
 
-final class ImpressionContext
+class ImpressionContext
 {
     /** @var array */
     private $site;
