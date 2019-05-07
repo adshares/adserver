@@ -123,7 +123,12 @@ class AdPayGetPayments extends Command
                 );
             }
 
-            $maxSpendableAmount = $exchangeRate->fromClick($user->getBalance());
+            $userBalance = $user->getBalance();
+            if ($userBalance < 0) {
+                $this->error(sprintf('User %s has negative balance %d', $userPublicId, $userBalance));
+            }
+
+            $maxSpendableAmount = ($userBalance < 0) ? 0 : $exchangeRate->fromClick($userBalance);
             $totalEventValue = $singleUserEvents->sum('event_value_currency');
 
             if ($maxSpendableAmount < $totalEventValue) {
