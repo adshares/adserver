@@ -123,9 +123,6 @@ class JsonRpcAdSelectClientTest extends TestCase
             }
         );
 
-        /** @var $mockImpressionContext ImpressionContext */
-        $mockImpressionContext = $this->createMock(ImpressionContext::class);
-        $mockImpressionContext->expects($this->once())->method('adSelectRequestParams')->willReturn([]);
 
         /** @var $mockJsonRpc JsonRpc */
         $jsonRpcAdSelectClient = new JsonRpcAdSelectClient($mockJsonRpc);
@@ -136,8 +133,9 @@ class JsonRpcAdSelectClientTest extends TestCase
             ['zone' => $ZONE_UUID_DOUBLE_BILLBOARD],
         ];
 
-        $foundBanners = $jsonRpcAdSelectClient->findBanners($requestedZones, $mockImpressionContext);
-        
+        $context = new ImpressionContext([], [], ['keywords' => []]);
+        $foundBanners = $jsonRpcAdSelectClient->findBanners($requestedZones, $context);
+
         $this->assertCount(3, $foundBanners);
         
         foreach ($foundBanners as $foundBanner) {
