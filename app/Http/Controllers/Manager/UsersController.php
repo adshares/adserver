@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Kernel;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
@@ -42,27 +41,22 @@ class UsersController extends Controller
 
     protected $email_new_change_resend_limit = 5 * 60; // 1 minute
 
-    /**
-     * Create a new controller instance.
-     */
-    public function __construct()
-    {
-        $this->middleware(Kernel::SNAKE_CASING)->except(['emailChangeStep1']);
-    }
-
     public function add(Request $request)
     {
         $this->validateRequestObject($request, 'user', User::$rules_add);
         Validator::make($request->all(), ['uri' => 'required'])->validate();
 
         DB::beginTransaction();
+
         $user = User::register($request->input('user'));
+
         Mail::to($user)->queue(
             new UserEmailActivate(
                 Token::generate('email-activate', $this->email_activation_token_time, $user->id),
                 $request->input('uri')
             )
         );
+
         DB::commit();
 
         return self::json($user->toArray(), Response::HTTP_CREATED)

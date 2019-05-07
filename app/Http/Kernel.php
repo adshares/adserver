@@ -39,13 +39,18 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
+
     private const GUEST = 'guest';
+
     private const ADMIN = 'admin';
-    public const ADMIN_ACCESS = 'only-admin-users';
+
     public const USER_ACCESS = 'only-authenticated-users';
+
+    public const ADMIN_ACCESS = 'only-admin-users';
+
     public const GUEST_ACCESS = 'only-guest-users';
+
     public const JSON_API = 'api';
-    public const SNAKE_CASING = 'snake_casing';
 
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -54,20 +59,21 @@ class Kernel extends HttpKernel
     ];
 
     protected $middlewareGroups = [
-        self::ADMIN_ACCESS => [
-            self::ADMIN.':api',
-        ],
         self::USER_ACCESS => [
             self::AUTH.':api',
         ],
         self::GUEST_ACCESS => [
             self::GUEST.':api',
         ],
+        self::ADMIN_ACCESS => [
+            self::AUTH.':api',
+            self::ADMIN.':api',
+        ],
         self::JSON_API => [
             ValidatePostSize::class,
             TrimStrings::class,
             ConvertEmptyStringsToNull::class,
-            self::SNAKE_CASING,
+            SnakizeRequest::class,
             SubstituteBindings::class,
             #post
             SetCacheHeaders::class,
@@ -76,10 +82,9 @@ class Kernel extends HttpKernel
     ];
 
     protected $routeMiddleware = [
-        self::GUEST => RequireGuestAccess::class,
         self::AUTH => Authenticate::class,
+        self::GUEST => RequireGuestAccess::class,
         self::ADMIN => RequireAdminAccess::class,
-        self::SNAKE_CASING => SnakizeRequest::class,
     ];
 
     public function bootstrap()
