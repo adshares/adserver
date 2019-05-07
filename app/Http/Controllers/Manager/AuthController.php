@@ -31,7 +31,6 @@ use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -247,13 +246,6 @@ class AuthController extends Controller
         return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     */
     public function login(Request $request): JsonResponse
     {
         if (Auth::guard()->attempt(
@@ -268,11 +260,6 @@ class AuthController extends Controller
         return response()->json([], Response::HTTP_BAD_REQUEST);
     }
 
-    /**
-     * Log the user out of the application.
-     *
-     * @return JsonResponse
-     */
     public function logout(): JsonResponse
     {
         Auth::user()->clearApiKey();
@@ -280,13 +267,6 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    /**
-     * Start password recovery process - generate and send email.
-     *
-     * @param Request $request
-     *
-     * @return JsonResponse
-     */
     public function recovery(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['email' => 'required|email', 'uri' => 'required'])->validate();
@@ -309,11 +289,6 @@ class AuthController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    /**
-     * Tests and extends user password recovery token.
-     *
-     * @return JsonResponse
-     */
     public function recoveryTokenExtend($token): JsonResponse
     {
         if (Token::extend($token, $this->password_recovery_token_time, null, 'password-recovery')) {
