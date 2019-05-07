@@ -29,6 +29,6 @@ class DomainReader
 {
     public static function domain(string $url): string
     {
-        return parse_url($url, PHP_URL_HOST);
+        return $url ? parse_url($url, PHP_URL_HOST) : '';
     }
 }
