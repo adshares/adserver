@@ -30,7 +30,9 @@ use DateTime;
 interface StatsRepository
 {
     public const VIEW_TYPE = 'view';
+    public const VIEW_ALL_TYPE = 'viewAll';
     public const CLICK_TYPE = 'click';
+    public const CLICK_ALL_TYPE = 'clickAll';
     public const CPC_TYPE = 'cpc';
     public const CPM_TYPE = 'cpm';
     public const SUM_TYPE = 'sum';
@@ -53,7 +55,23 @@ interface StatsRepository
         ?string $campaignId = null
     ): ChartResult;
 
+    public function fetchViewAll(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult;
+
     public function fetchClick(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult;
+
+    public function fetchClickAll(
         string $advertiserId,
         string $resolution,
         DateTime $dateStart,

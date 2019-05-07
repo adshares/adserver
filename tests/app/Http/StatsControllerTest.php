@@ -84,7 +84,9 @@ final class StatsControllerTest extends TestCase
 
             $methodNameMapper = [
                 StatsRepository::CLICK_TYPE => 'fetchClick',
+                StatsRepository::CLICK_ALL_TYPE => 'fetchClickAll',
                 StatsRepository::VIEW_TYPE => 'fetchView',
+                StatsRepository::VIEW_ALL_TYPE => 'fetchViewAll',
                 StatsRepository::CPC_TYPE => 'fetchCpc',
                 StatsRepository::CPM_TYPE => 'fetchCpm',
                 StatsRepository::SUM_TYPE => 'fetchSum',
@@ -127,7 +129,9 @@ final class StatsControllerTest extends TestCase
     {
         return [
             ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['viewAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['click', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['clickAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['cpc', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['cpm', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],

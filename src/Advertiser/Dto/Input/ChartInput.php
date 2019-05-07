@@ -30,7 +30,9 @@ final class ChartInput
 {
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
+        StatsRepository::VIEW_ALL_TYPE,
         StatsRepository::CLICK_TYPE,
+        StatsRepository::CLICK_ALL_TYPE,
         StatsRepository::CPC_TYPE,
         StatsRepository::CPM_TYPE,
         StatsRepository::SUM_TYPE,

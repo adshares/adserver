@@ -35,7 +35,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
+        StatsRepository::VIEW_ALL_TYPE,
         StatsRepository::CLICK_TYPE,
+        StatsRepository::CLICK_ALL_TYPE,
         StatsRepository::CPC_TYPE,
         StatsRepository::CPM_TYPE,
         StatsRepository::SUM_TYPE,
@@ -71,7 +73,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
+            case StatsRepository::VIEW_ALL_TYPE:
             case StatsRepository::CLICK_TYPE:
+            case StatsRepository::CLICK_ALL_TYPE:
                 $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::CPC_TYPE:
@@ -96,13 +100,26 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::CPM_TYPE:
             case StatsRepository::CTR_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where('e.event_value_currency IS NOT NULL');
+                $this->where('e.reason = 0');
+                break;
+            case StatsRepository::VIEW_ALL_TYPE:
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where(sprintf('e.is_view_clicked = %d', 1));
+                $this->where('e.event_value_currency IS NOT NULL');
+                $this->where('e.reason = 0');
+                break;
+            case StatsRepository::CLICK_ALL_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
             case StatsRepository::CPC_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_CLICK));
+                $this->where('e.event_value_currency IS NOT NULL');
+                $this->where('e.reason = 0');
                 break;
         }
     }
