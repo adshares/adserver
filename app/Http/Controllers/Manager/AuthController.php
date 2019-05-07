@@ -161,7 +161,7 @@ class AuthController extends Controller
                 [
                     'message' => "You have already requested email change.\n"
                         ."You can request email change every 5 minutes.\n"
-                        ."Please wait 5 minutes or less to start configuring another email address.",
+                        .'Please wait 5 minutes or less to start configuring another email address.',
                 ]
             );
         }
