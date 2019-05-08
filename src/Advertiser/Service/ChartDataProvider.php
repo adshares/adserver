@@ -31,8 +31,10 @@ final class ChartDataProvider
     private const REPOSITORY_MAPPER = [
         StatsRepository::CLICK_TYPE => 'fetchClick',
         StatsRepository::CLICK_ALL_TYPE => 'fetchClickAll',
+        StatsRepository::CLICK_INVALID_RATE_TYPE => 'fetchClickInvalidRate',
         StatsRepository::VIEW_TYPE => 'fetchView',
         StatsRepository::VIEW_ALL_TYPE => 'fetchViewAll',
+        StatsRepository::VIEW_INVALID_RATE_TYPE => 'fetchViewInvalidRate',
         StatsRepository::CPC_TYPE => 'fetchCpc',
         StatsRepository::CPM_TYPE => 'fetchCpm',
         StatsRepository::SUM_TYPE => 'fetchSum',

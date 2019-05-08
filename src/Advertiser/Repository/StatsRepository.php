@@ -31,8 +31,10 @@ interface StatsRepository
 {
     public const VIEW_TYPE = 'view';
     public const VIEW_ALL_TYPE = 'viewAll';
+    public const VIEW_INVALID_RATE_TYPE = 'viewInvalidRate';
     public const CLICK_TYPE = 'click';
     public const CLICK_ALL_TYPE = 'clickAll';
+    public const CLICK_INVALID_RATE_TYPE = 'clickInvalidRate';
     public const CPC_TYPE = 'cpc';
     public const CPM_TYPE = 'cpm';
     public const SUM_TYPE = 'sum';
@@ -63,6 +65,14 @@ interface StatsRepository
         ?string $campaignId = null
     ): ChartResult;
 
+    public function fetchViewInvalidRate(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult;
+
     public function fetchClick(
         string $advertiserId,
         string $resolution,
@@ -72,6 +82,14 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchClickAll(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult;
+
+    public function fetchClickInvalidRate(
         string $advertiserId,
         string $resolution,
         DateTime $dateStart,

@@ -73,6 +73,25 @@ class MySqlStatsRepository implements StatsRepository
         return new ChartResult($result);
     }
 
+    public function fetchViewInvalidRate(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::VIEW_INVALID_RATE_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        return new ChartResult($result);
+    }
+
     public function fetchClick(
         string $advertiserId,
         string $resolution,
@@ -101,6 +120,25 @@ class MySqlStatsRepository implements StatsRepository
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::CLICK_ALL_TYPE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchClickInvalidRate(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::CLICK_INVALID_RATE_TYPE,
             $advertiserId,
             $resolution,
             $dateStart,
