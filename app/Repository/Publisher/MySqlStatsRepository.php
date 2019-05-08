@@ -52,6 +52,24 @@ class MySqlStatsRepository implements StatsRepository
 
         return new ChartResult($result);
     }
+    public function fetchViewAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::VIEW_ALL_TYPE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        return new ChartResult($result);
+    }
 
     public function fetchClick(
         string $publisherId,
@@ -62,6 +80,25 @@ class MySqlStatsRepository implements StatsRepository
     ): ChartResult {
         $result = $this->fetch(
             StatsRepository::CLICK_TYPE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchClickAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::CLICK_ALL_TYPE,
             $publisherId,
             $resolution,
             $dateStart,

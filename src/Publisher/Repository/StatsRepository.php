@@ -30,7 +30,9 @@ use DateTime;
 interface StatsRepository
 {
     public const VIEW_TYPE = 'view';
+    public const VIEW_ALL_TYPE = 'viewAll';
     public const CLICK_TYPE = 'click';
+    public const CLICK_ALL_TYPE = 'clickAll';
     public const RPC_TYPE = 'rpc';
     public const RPM_TYPE = 'rpm';
     public const SUM_TYPE = 'sum';
@@ -52,7 +54,23 @@ interface StatsRepository
         ?string $siteId = null
     ): ChartResult;
 
+    public function fetchViewAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
     public function fetchClick(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchClickAll(
         string $publisherId,
         string $resolution,
         DateTime $dateStart,

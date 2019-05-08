@@ -34,7 +34,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
+        StatsRepository::VIEW_ALL_TYPE,
         StatsRepository::CLICK_TYPE,
+        StatsRepository::CLICK_ALL_TYPE,
         StatsRepository::RPC_TYPE,
         StatsRepository::RPM_TYPE,
         StatsRepository::SUM_TYPE,
@@ -69,7 +71,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($type) {
             case StatsRepository::VIEW_TYPE:
+            case StatsRepository::VIEW_ALL_TYPE:
             case StatsRepository::CLICK_TYPE:
+            case StatsRepository::CLICK_ALL_TYPE:
                 $this->column('COUNT(e.created_at) AS c');
                 break;
             case StatsRepository::RPC_TYPE:
@@ -94,13 +98,23 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::RPM_TYPE:
             case StatsRepository::CTR_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
+                $this->where('e.paid_amount_currency IS NOT NULL');
+                break;
+            case StatsRepository::VIEW_ALL_TYPE:
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
+                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
+                $this->where(sprintf('e.is_view_clicked = %d', 1));
+                $this->where('e.paid_amount_currency IS NOT NULL');
+                break;
+            case StatsRepository::CLICK_ALL_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
             case StatsRepository::RPC_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_CLICK));
+                $this->where('e.paid_amount_currency IS NOT NULL');
                 break;
         }
     }
@@ -113,16 +127,50 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
-        $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
+        $filterEventValid = 'AND e.paid_amount_currency IS NOT NULL';
+        $filterEventInvalid = 'OR e.paid_amount_currency IS NULL';
+
         $this->column(
-            'IFNULL(AVG(CASE '
-                    .'WHEN (e.event_type <> \'view\') THEN NULL '
-                    .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
+            sprintf(
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1 %s, 1, 0)) AS clicks",
+                NetworkEventLog::TYPE_VIEW,
+                $filterEventValid
+            )
         );
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.paid_amount_currency, NULL))), 0) AS rpc');
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.paid_amount_currency, NULL))), 0)*1000 AS rpm');
-        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.paid_amount_currency, 0)) AS revenue');
+        $this->column(
+            sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", NetworkEventLog::TYPE_VIEW, $filterEventValid)
+        );
+        $this->column(
+            sprintf(
+                'IFNULL(AVG(CASE '
+                ."WHEN (e.event_type <> '%s' %s) THEN NULL "
+                .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
+                NetworkEventLog::TYPE_VIEW,
+                $filterEventInvalid
+            )
+        );
+        $this->column(
+            sprintf(
+                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.paid_amount_currency, NULL))), 0) AS rpc",
+                NetworkEventLog::TYPE_CLICK,
+                $filterEventValid
+            )
+        );
+        $this->column(
+            sprintf(
+                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.paid_amount_currency, NULL))), 0)*1000 AS rpm",
+                NetworkEventLog::TYPE_VIEW,
+                $filterEventValid
+            )
+        );
+        $this->column(
+            sprintf(
+                "SUM(IF(e.event_type IN ('%s', '%s') %s, e.paid_amount_currency, 0)) AS revenue",
+                NetworkEventLog::TYPE_CLICK,
+                NetworkEventLog::TYPE_VIEW,
+                $filterEventValid
+            )
+        );
     }
 
     public function setPublisherId(string $publisherId): self
@@ -134,11 +182,13 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
     {
-        $this->where(sprintf(
-            'e.created_at BETWEEN \'%s\' AND \'%s\'',
-            $this->convertDateTimeToMySqlDate($dateStart),
-            $this->convertDateTimeToMySqlDate($dateEnd)
-        ));
+        $this->where(
+            sprintf(
+                'e.created_at BETWEEN \'%s\' AND \'%s\'',
+                $this->convertDateTimeToMySqlDate($dateStart),
+                $this->convertDateTimeToMySqlDate($dateEnd)
+            )
+        );
 
         return $this;
     }
