@@ -40,7 +40,6 @@ interface StatsRepository
     public const SUM_TYPE = 'sum';
     public const CTR_TYPE = 'ctr';
     public const STATS_TYPE = 'stats';
-    public const STATS_SUM_TYPE = 'statsSum';
 
     public const HOUR_RESOLUTION = 'hour';
     public const DAY_RESOLUTION = 'day';

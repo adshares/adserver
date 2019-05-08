@@ -22,31 +22,33 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Repository\Advertiser;
 
-use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsQueryBuilder;
+use Adshares\Advertiser\Repository\StatsRepository;
 use PHPUnit\Framework\TestCase;
-use function str_replace;
 
 final class MysqlStatsQueryBuilderTest extends TestCase
 {
     public function testWhenCampaignIdIsAppended(): void
     {
-        $class = (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))->appendCampaignIdGroupBy();
+        $class = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->appendCampaignIdGroupBy();
 
         $query = $class->build();
 
-        $expect = <<<SQL
-SELECT SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)) AS clicks,
-SUM(IF(e.event_type = 'view', 1, 0)) AS views,
-IFNULL(AVG(CASE WHEN (e.event_type <> 'view') THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,
-IFNULL(ROUND(AVG(IF(e.event_type = 'click', e.event_value_currency, NULL))), 0) AS cpc,
-IFNULL(ROUND(AVG(IF(e.event_type = 'view', e.event_value_currency, NULL))), 0)*1000 AS cpm,
-SUM(IF(e.event_type IN ('click', 'view'), e.event_value_currency, 0))
- AS cost,e.campaign_id AS campaign_id FROM event_logs e 
-INNER JOIN campaigns c ON c.uuid = e.campaign_id WHERE c.deleted_at is null 
-GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0
-SQL;
+        $expect = "SELECT SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1"
+            ." AND e.event_value_currency IS NOT NULL AND e.reason = 0, 1, 0)) AS clicks,"
+            ."SUM(IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.reason = 0, 1, 0)) AS views,"
+            ."IFNULL(AVG(CASE WHEN (e.event_type <> 'view' OR e.event_value_currency IS NULL OR e.reason <> 0)"
+            ." THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,"
+            ."IFNULL(ROUND(AVG(IF(e.event_type = 'click' AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
+            ." e.event_value_currency, NULL))), 0) AS cpc,"
+            ."IFNULL(ROUND(AVG(IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
+            ." e.event_value_currency, NULL))), 0)*1000 AS cpm,"
+            ."SUM(IF(e.event_type IN ('click', 'view') AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
+            ." e.event_value_currency, 0)) AS cost,"
+            ."e.campaign_id AS campaign_id FROM event_logs e "
+            ."INNER JOIN campaigns c ON c.uuid = e.campaign_id WHERE c.deleted_at is null "
+            ."GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0";
 
-        $this->assertEquals(str_replace(PHP_EOL, '', $expect), $query);
+        $this->assertEquals($expect, $query);
     }
 }

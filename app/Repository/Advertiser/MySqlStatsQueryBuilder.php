@@ -45,7 +45,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::SUM_TYPE,
         StatsRepository::CTR_TYPE,
         StatsRepository::STATS_TYPE,
-        StatsRepository::STATS_SUM_TYPE,
     ];
 
     public function __construct(string $type)
@@ -54,7 +53,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->appendEventType($type);
         $this->withoutRemovedCampaigns();
 
-        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE) {
             $this->selectBaseStatsColumns();
         }
 
@@ -140,8 +139,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $filterEventValid = ' AND e.event_value_currency IS NOT NULL AND e.reason = 0';
-        $filterEventInvalid = ' OR e.event_value_currency IS NULL OR e.reason <> 0';
+        $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.reason = 0';
+        $filterEventInvalid = 'OR e.event_value_currency IS NULL OR e.reason <> 0';
 
         $this->column(
             sprintf(
