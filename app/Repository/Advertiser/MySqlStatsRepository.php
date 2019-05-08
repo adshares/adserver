@@ -89,6 +89,10 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
+
         return new ChartResult($result);
     }
 
@@ -145,6 +149,10 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $campaignId
         );
+
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
 
         return new ChartResult($result);
     }
