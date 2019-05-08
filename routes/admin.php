@@ -19,6 +19,7 @@
  */
 
 use Adshares\Adserver\Http\Controllers\Manager\AdminController;
+use Adshares\Adserver\Http\Controllers\Manager\AuthController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -31,6 +32,8 @@ Route::get('terms', [AdminController::class, 'getTerms']);
 Route::put('terms', [AdminController::class, 'putTerms']);
 Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
 Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
+
+Route::get('impersonate/{user}', [AuthController::class, 'impersonate']);
 
 Route::get('users', [UsersController::class, 'browse'])
     ->name('app.users.browse');

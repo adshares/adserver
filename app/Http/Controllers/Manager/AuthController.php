@@ -246,6 +246,17 @@ class AuthController extends Controller
         return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
     }
 
+    public function impersonate(User $user): JsonResponse
+    {
+        if ($user->isAdmin()) {
+            return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user->generateApiKey();
+
+        return self::json($user->toArray());
+    }
+
     public function login(Request $request): JsonResponse
     {
         if (Auth::guard()->attempt(
