@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @mixin Builder
+ * @property string uuid
  */
 class Token extends Model
 {
@@ -36,20 +37,10 @@ class Token extends Model
     use BinHex;
     use Serialize;
 
-    /**
-     * The event map for the model.
-     *
-     * @var array
-     */
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'multi_usage',
         'payload',
@@ -58,25 +49,11 @@ class Token extends Model
         'valid_until',
     ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'payload' => 'Serialize',
     ];
 
-    /**
-     * Checks if can generate another token for user based on time limit and tag.
-     *
-     * @param int $user_id
-     * @param string $tag
-     * @param int $older_then_seconds
-     *
-     * @return bool
-     */
     public static function canGenerate(int $user_id, $tag, int $older_then_seconds)
     {
         if (self::where('user_id', $user_id)->where('tag', $tag)->where(
@@ -90,15 +67,6 @@ class Token extends Model
         return true;
     }
 
-    /**
-     * checks if token is valid, process it (removes if one time use only).
-     *
-     * @param string $uuid
-     * @param int $user_id default null
-     * @param string $tag default null
-     *
-     * @return array
-     */
     public static function check($uuid, int $user_id = null, $tag = null)
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
@@ -121,14 +89,6 @@ class Token extends Model
         return $token->toArray();
     }
 
-    /**
-     * extend token validation until time, returns true if token was valid and is being extended.
-     *
-     * @param string $uuid
-     * @param int $seconds_valid
-     *
-     * @return bool
-     */
     public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null)
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
@@ -149,17 +109,6 @@ class Token extends Model
         return true;
     }
 
-    /**
-     * generates Token and returns token uuid.
-     *
-     * @param string $tag
-     * @param int $valid_until_seconds
-     * @param int $user_id
-     * @param mixed $payload
-     * @param bool $multi_usage
-     *
-     * @return string
-     */
     public static function generate(
         string $tag,
         int $valid_until_seconds,
@@ -171,5 +120,10 @@ class Token extends Model
         $token = self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
 
         return $token->uuid;
+    }
+
+    public static function impersonation(User $user): self
+    {
+        return self::generate('impersonation', 24 * 3600, $user->id, null, true);
     }
 }

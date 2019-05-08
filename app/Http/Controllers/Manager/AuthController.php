@@ -249,9 +249,9 @@ class AuthController extends Controller
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $user->generateApiKey();
+        $token = Token::impersonation($user);
 
-        return self::json($user->toArray());
+        return self::json($token->uuid);
     }
 
     public function login(Request $request): JsonResponse
