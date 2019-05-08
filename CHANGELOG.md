@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- User impersonation by server admin
 - Recognize fake events in statistics
 ### Fixed
 - Users' ad expenses are in ADS not in currency
