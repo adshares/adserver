@@ -196,7 +196,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
                 ->setPublisherId($publisherId)
                 ->setDateRange($dateStart, $dateEnd);
 

@@ -40,7 +40,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::SUM_TYPE,
         StatsRepository::CTR_TYPE,
         StatsRepository::STATS_TYPE,
-        StatsRepository::STATS_SUM_TYPE,
     ];
 
     public function __construct(string $type)
@@ -49,7 +48,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->appendEventType($type);
         $this->withoutRemovedSites();
 
-        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
+        if ($type === StatsRepository::STATS_TYPE) {
             $this->selectBaseStatsColumns();
         }
 
