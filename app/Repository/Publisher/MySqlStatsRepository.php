@@ -71,6 +71,29 @@ class MySqlStatsRepository implements StatsRepository
         return new ChartResult($result);
     }
 
+    public function fetchViewInvalidRate(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::VIEW_INVALID_RATE_TYPE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
+
+        return new ChartResult($result);
+    }
+
     public function fetchClick(
         string $publisherId,
         string $resolution,
@@ -105,6 +128,29 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchClickInvalidRate(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::CLICK_INVALID_RATE_TYPE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
 
         return new ChartResult($result);
     }

@@ -35,8 +35,10 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     private const ALLOWED_TYPES = [
         StatsRepository::VIEW_TYPE,
         StatsRepository::VIEW_ALL_TYPE,
+        StatsRepository::VIEW_INVALID_RATE_TYPE,
         StatsRepository::CLICK_TYPE,
         StatsRepository::CLICK_ALL_TYPE,
+        StatsRepository::CLICK_INVALID_RATE_TYPE,
         StatsRepository::RPC_TYPE,
         StatsRepository::RPM_TYPE,
         StatsRepository::SUM_TYPE,
@@ -76,6 +78,10 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::CLICK_ALL_TYPE:
                 $this->column('COUNT(e.created_at) AS c');
                 break;
+            case StatsRepository::VIEW_INVALID_RATE_TYPE:
+            case StatsRepository::CLICK_INVALID_RATE_TYPE:
+                $this->column('COALESCE(AVG(IF(e.paid_amount_currency IS NULL, 1, 0)), 0) AS c');
+                break;
             case StatsRepository::RPC_TYPE:
                 $this->column('COALESCE(ROUND(AVG(e.paid_amount_currency)), 0) AS c');
                 break;
@@ -101,6 +107,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->where('e.paid_amount_currency IS NOT NULL');
                 break;
             case StatsRepository::VIEW_ALL_TYPE:
+            case StatsRepository::VIEW_INVALID_RATE_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 break;
             case StatsRepository::CLICK_TYPE:
@@ -109,6 +116,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->where('e.paid_amount_currency IS NOT NULL');
                 break;
             case StatsRepository::CLICK_ALL_TYPE:
+            case StatsRepository::CLICK_INVALID_RATE_TYPE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where(sprintf('e.is_view_clicked = %d', 1));
                 break;
