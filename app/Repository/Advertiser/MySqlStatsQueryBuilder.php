@@ -132,16 +132,50 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
-        $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
+        $filterEventValid = ' AND e.event_value_currency IS NOT NULL AND e.reason = 0';
+        $filterEventInvalid = ' OR e.event_value_currency IS NULL OR e.reason <> 0';
+
         $this->column(
-            'IFNULL(AVG(CASE '
-            .'WHEN (e.event_type <> \'view\') THEN NULL '
-            .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
+            sprintf(
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1 %s, 1, 0)) AS clicks",
+                EventLog::TYPE_VIEW,
+                $filterEventValid
+            )
         );
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.event_value_currency, NULL))), 0) AS cpc');
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.event_value_currency, NULL))), 0)*1000 AS cpm');
-        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.event_value_currency, 0)) AS cost');
+        $this->column(
+            sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", EventLog::TYPE_VIEW, $filterEventValid)
+        );
+        $this->column(
+            sprintf(
+                'IFNULL(AVG(CASE '
+                ."WHEN (e.event_type <> '%s' %s) THEN NULL "
+                .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
+                EventLog::TYPE_VIEW,
+                $filterEventInvalid
+            )
+        );
+        $this->column(
+            sprintf(
+                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.event_value_currency, NULL))), 0) AS cpc",
+                EventLog::TYPE_CLICK,
+                $filterEventValid
+            )
+        );
+        $this->column(
+            sprintf(
+                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.event_value_currency, NULL))), 0)*1000 AS cpm",
+                EventLog::TYPE_VIEW,
+                $filterEventValid
+            )
+        );
+        $this->column(
+            sprintf(
+                "SUM(IF(e.event_type IN ('%s', '%s') %s, e.event_value_currency, 0)) AS cost",
+                EventLog::TYPE_CLICK,
+                EventLog::TYPE_VIEW,
+                $filterEventValid
+            )
+        );
     }
 
     public function setAdvertiserId(string $advertiserId): self
