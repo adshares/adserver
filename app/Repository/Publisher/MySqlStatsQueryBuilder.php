@@ -76,7 +76,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_VIEW_ALL:
             case StatsRepository::TYPE_CLICK:
             case StatsRepository::TYPE_CLICK_ALL:
-                $this->column('COUNT(e.created_at) AS c');
+                $this->column('COUNT(1) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_INVALID_RATE:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
@@ -112,13 +112,13 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_CLICK:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
-                $this->where(sprintf('e.is_view_clicked = %d', 1));
+                $this->where('e.is_view_clicked = 1');
                 $this->where('e.paid_amount_currency IS NOT NULL');
                 break;
             case StatsRepository::TYPE_CLICK_ALL:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
-                $this->where(sprintf('e.is_view_clicked = %d', 1));
+                $this->where('e.is_view_clicked = 1');
                 break;
             case StatsRepository::TYPE_RPC:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_CLICK));
