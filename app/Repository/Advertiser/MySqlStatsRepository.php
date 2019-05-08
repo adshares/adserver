@@ -43,7 +43,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::VIEW_TYPE,
+            StatsRepository::TYPE_VIEW,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -62,7 +62,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::VIEW_ALL_TYPE,
+            StatsRepository::TYPE_VIEW_ALL,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -81,7 +81,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::VIEW_INVALID_RATE_TYPE,
+            StatsRepository::TYPE_VIEW_INVALID_RATE,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -104,7 +104,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CLICK_TYPE,
+            StatsRepository::TYPE_CLICK,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -123,7 +123,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CLICK_ALL_TYPE,
+            StatsRepository::TYPE_CLICK_ALL,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -142,7 +142,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CLICK_INVALID_RATE_TYPE,
+            StatsRepository::TYPE_CLICK_INVALID_RATE,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -165,7 +165,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CPC_TYPE,
+            StatsRepository::TYPE_CPC,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -184,7 +184,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CPM_TYPE,
+            StatsRepository::TYPE_CPM,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -203,7 +203,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::SUM_TYPE,
+            StatsRepository::TYPE_SUM,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -222,7 +222,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CTR_TYPE,
+            StatsRepository::TYPE_CTR,
             $advertiserId,
             $resolution,
             $dateStart,
@@ -243,7 +243,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendCampaignIdGroupBy();
@@ -281,7 +281,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd);
 
@@ -317,7 +317,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
@@ -428,34 +428,34 @@ class MySqlStatsRepository implements StatsRepository
         $formattedResult = [];
 
         $date = (new DateTime())->setTimezone($dateTimeZone);
-        if ($resolution !== StatsRepository::HOUR_RESOLUTION) {
+        if ($resolution !== StatsRepository::RESOLUTION_HOUR) {
             $date->setTime(0, 0, 0, 0);
         }
 
         foreach ($result as $row) {
-            if ($resolution === StatsRepository::HOUR_RESOLUTION) {
+            if ($resolution === StatsRepository::RESOLUTION_HOUR) {
                 $date->setTime($row->h, 0, 0, 0);
             }
 
             switch ($resolution) {
-                case StatsRepository::HOUR_RESOLUTION:
-                case StatsRepository::DAY_RESOLUTION:
+                case StatsRepository::RESOLUTION_HOUR:
+                case StatsRepository::RESOLUTION_DAY:
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
-                case StatsRepository::WEEK_RESOLUTION:
+                case StatsRepository::RESOLUTION_WEEK:
                     $yearweek = (string)$row->yw;
                     $year = (int)substr($yearweek, 0, 4);
                     $week = (int)substr($yearweek, 4);
                     $date->setISODate($year, $week, 1);
                     break;
-                case StatsRepository::MONTH_RESOLUTION:
+                case StatsRepository::RESOLUTION_MONTH:
                     $date->setDate($row->y, $row->m, 1);
                     break;
-                case StatsRepository::QUARTER_RESOLUTION:
+                case StatsRepository::RESOLUTION_QUARTER:
                     $month = $row->q * 3 - 2;
                     $date->setDate($row->y, $month, 1);
                     break;
-                case StatsRepository::YEAR_RESOLUTION:
+                case StatsRepository::RESOLUTION_YEAR:
                 default:
                     $date->setDate($row->y, 1, 1);
                     break;
@@ -501,28 +501,28 @@ class MySqlStatsRepository implements StatsRepository
     ): DateTime {
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
-        if ($resolution === StatsRepository::HOUR_RESOLUTION) {
+        if ($resolution === StatsRepository::RESOLUTION_HOUR) {
             $date->setTime((int)$date->format('H'), 0, 0, 0);
         } else {
             $date->setTime(0, 0, 0, 0);
         }
 
         switch ($resolution) {
-            case StatsRepository::HOUR_RESOLUTION:
-            case StatsRepository::DAY_RESOLUTION:
+            case StatsRepository::RESOLUTION_HOUR:
+            case StatsRepository::RESOLUTION_DAY:
                 break;
-            case StatsRepository::WEEK_RESOLUTION:
+            case StatsRepository::RESOLUTION_WEEK:
                 $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
                 break;
-            case StatsRepository::MONTH_RESOLUTION:
+            case StatsRepository::RESOLUTION_MONTH:
                 $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
                 break;
-            case StatsRepository::QUARTER_RESOLUTION:
+            case StatsRepository::RESOLUTION_QUARTER:
                 $quarter = (int)floor((int)$date->format('m') - 1 / 3);
                 $month = $quarter * 3 + 1;
                 $date->setDate((int)$date->format('Y'), $month, 1);
                 break;
-            case StatsRepository::YEAR_RESOLUTION:
+            case StatsRepository::RESOLUTION_YEAR:
             default:
                 $date->setDate((int)$date->format('Y'), 1, 1);
                 break;
@@ -534,24 +534,24 @@ class MySqlStatsRepository implements StatsRepository
     private static function advanceDateTime(string $resolution, DateTime $date): void
     {
         switch ($resolution) {
-            case StatsRepository::HOUR_RESOLUTION:
+            case StatsRepository::RESOLUTION_HOUR:
                 $date->modify('+1 hour');
                 break;
-            case StatsRepository::DAY_RESOLUTION:
+            case StatsRepository::RESOLUTION_DAY:
                 $date->modify('tomorrow');
                 break;
-            case StatsRepository::WEEK_RESOLUTION:
+            case StatsRepository::RESOLUTION_WEEK:
                 $date->modify('+7 days');
                 break;
-            case StatsRepository::MONTH_RESOLUTION:
+            case StatsRepository::RESOLUTION_MONTH:
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::QUARTER_RESOLUTION:
+            case StatsRepository::RESOLUTION_QUARTER:
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::YEAR_RESOLUTION:
+            case StatsRepository::RESOLUTION_YEAR:
             default:
                 $date->modify('first day of next year');
                 break;

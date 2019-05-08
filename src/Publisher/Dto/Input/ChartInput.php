@@ -29,25 +29,25 @@ use function in_array;
 final class ChartInput
 {
     private const ALLOWED_TYPES = [
-        StatsRepository::VIEW_TYPE,
-        StatsRepository::VIEW_ALL_TYPE,
-        StatsRepository::VIEW_INVALID_RATE_TYPE,
-        StatsRepository::CLICK_TYPE,
-        StatsRepository::CLICK_ALL_TYPE,
-        StatsRepository::CLICK_INVALID_RATE_TYPE,
-        StatsRepository::RPC_TYPE,
-        StatsRepository::RPM_TYPE,
-        StatsRepository::SUM_TYPE,
-        StatsRepository::CTR_TYPE,
+        StatsRepository::TYPE_VIEW,
+        StatsRepository::TYPE_VIEW_ALL,
+        StatsRepository::TYPE_VIEW_INVALID_RATE,
+        StatsRepository::TYPE_CLICK,
+        StatsRepository::TYPE_CLICK_ALL,
+        StatsRepository::TYPE_CLICK_INVALID_RATE,
+        StatsRepository::TYPE_RPC,
+        StatsRepository::TYPE_RPM,
+        StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_CTR,
     ];
 
     private const ALLOWED_RESOLUTIONS = [
-        StatsRepository::HOUR_RESOLUTION,
-        StatsRepository::DAY_RESOLUTION,
-        StatsRepository::WEEK_RESOLUTION,
-        StatsRepository::MONTH_RESOLUTION,
-        StatsRepository::QUARTER_RESOLUTION,
-        StatsRepository::YEAR_RESOLUTION,
+        StatsRepository::RESOLUTION_HOUR,
+        StatsRepository::RESOLUTION_DAY,
+        StatsRepository::RESOLUTION_WEEK,
+        StatsRepository::RESOLUTION_MONTH,
+        StatsRepository::RESOLUTION_QUARTER,
+        StatsRepository::RESOLUTION_YEAR,
     ];
 
     /** @var string */

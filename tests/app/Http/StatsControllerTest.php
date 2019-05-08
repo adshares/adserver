@@ -83,16 +83,16 @@ final class StatsControllerTest extends TestCase
             );
 
             $methodNameMapper = [
-                StatsRepository::CLICK_TYPE => 'fetchClick',
-                StatsRepository::CLICK_ALL_TYPE => 'fetchClickAll',
-                StatsRepository::CLICK_INVALID_RATE_TYPE => 'fetchClickInvalidRate',
-                StatsRepository::VIEW_TYPE => 'fetchView',
-                StatsRepository::VIEW_ALL_TYPE => 'fetchViewAll',
-                StatsRepository::VIEW_INVALID_RATE_TYPE => 'fetchViewInvalidRate',
-                StatsRepository::CPC_TYPE => 'fetchCpc',
-                StatsRepository::CPM_TYPE => 'fetchCpm',
-                StatsRepository::SUM_TYPE => 'fetchSum',
-                StatsRepository::CTR_TYPE => 'fetchCtr',
+                StatsRepository::TYPE_CLICK => 'fetchClick',
+                StatsRepository::TYPE_CLICK_ALL => 'fetchClickAll',
+                StatsRepository::TYPE_CLICK_INVALID_RATE => 'fetchClickInvalidRate',
+                StatsRepository::TYPE_VIEW => 'fetchView',
+                StatsRepository::TYPE_VIEW_ALL => 'fetchViewAll',
+                StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
+                StatsRepository::TYPE_CPC => 'fetchCpc',
+                StatsRepository::TYPE_CPM => 'fetchCpm',
+                StatsRepository::TYPE_SUM => 'fetchSum',
+                StatsRepository::TYPE_CTR => 'fetchCtr',
             ];
 
             $method = $methodNameMapper[$type];

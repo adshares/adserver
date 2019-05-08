@@ -30,7 +30,7 @@ final class MysqlStatsQueryBuilderTest extends TestCase
 {
     public function testWhenCampaignIdIsAppended(): void
     {
-        $class = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))->appendCampaignIdGroupBy();
+        $class = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))->appendCampaignIdGroupBy();
 
         $query = $class->build();
 
