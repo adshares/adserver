@@ -34,14 +34,16 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     protected const TABLE_NAME = 'event_logs e';
 
     private const ALLOWED_TYPES = [
-        StatsRepository::VIEW_TYPE,
-        StatsRepository::CLICK_TYPE,
-        StatsRepository::CPC_TYPE,
-        StatsRepository::CPM_TYPE,
-        StatsRepository::SUM_TYPE,
-        StatsRepository::CTR_TYPE,
-        StatsRepository::STATS_TYPE,
-        StatsRepository::STATS_SUM_TYPE,
+        StatsRepository::TYPE_VIEW,
+        StatsRepository::TYPE_VIEW_ALL,
+        StatsRepository::TYPE_VIEW_INVALID_RATE,
+        StatsRepository::TYPE_CLICK,
+        StatsRepository::TYPE_CLICK_ALL,
+        StatsRepository::TYPE_CLICK_INVALID_RATE,
+        StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_CTR,
+        StatsRepository::TYPE_STATS,
+        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
@@ -49,10 +51,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
         $this->withoutRemovedCampaigns();
-
-        if ($type === StatsRepository::STATS_TYPE || $type === StatsRepository::STATS_SUM_TYPE) {
-            $this->selectBaseStatsColumns();
-        }
 
         parent::__construct($type);
     }
@@ -70,21 +68,27 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     private function selectBaseColumns(string $type): void
     {
         switch ($type) {
-            case StatsRepository::VIEW_TYPE:
-            case StatsRepository::CLICK_TYPE:
-                $this->column('COUNT(e.created_at) AS c');
+            case StatsRepository::TYPE_VIEW:
+            case StatsRepository::TYPE_VIEW_ALL:
+            case StatsRepository::TYPE_CLICK:
+            case StatsRepository::TYPE_CLICK_ALL:
+                $this->column('COUNT(1) AS c');
                 break;
-            case StatsRepository::CPC_TYPE:
-                $this->column('COALESCE(ROUND(AVG(e.event_value_currency)), 0) AS c');
+            case StatsRepository::TYPE_VIEW_INVALID_RATE:
+            case StatsRepository::TYPE_CLICK_INVALID_RATE:
+                $this->column('COALESCE(AVG(IF(e.event_value_currency IS NULL OR e.reason <> 0, 1, 0)), 0) AS c');
                 break;
-            case StatsRepository::CPM_TYPE:
-                $this->column('COALESCE(ROUND(AVG(e.event_value_currency)), 0)*1000 AS c');
-                break;
-            case StatsRepository::SUM_TYPE:
+            case StatsRepository::TYPE_SUM:
                 $this->column('COALESCE(SUM(e.event_value_currency), 0) AS c');
                 break;
-            case StatsRepository::CTR_TYPE:
+            case StatsRepository::TYPE_CTR:
                 $this->column('COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c');
+                break;
+            case StatsRepository::TYPE_STATS:
+                $this->selectBaseStatsColumns();
+                break;
+            case StatsRepository::TYPE_STATS_REPORT:
+                $this->selectBaseStatsReportColumns();
                 break;
         }
     }
@@ -92,17 +96,26 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     private function appendEventType(string $type): void
     {
         switch ($type) {
-            case StatsRepository::VIEW_TYPE:
-            case StatsRepository::CPM_TYPE:
-            case StatsRepository::CTR_TYPE:
+            case StatsRepository::TYPE_VIEW:
+            case StatsRepository::TYPE_CTR:
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where('e.event_value_currency IS NOT NULL');
+                $this->where('e.reason = 0');
+                break;
+            case StatsRepository::TYPE_VIEW_ALL:
+            case StatsRepository::TYPE_VIEW_INVALID_RATE:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 break;
-            case StatsRepository::CLICK_TYPE:
+            case StatsRepository::TYPE_CLICK:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
-                $this->where(sprintf('e.is_view_clicked = %d', 1));
+                $this->where('e.is_view_clicked = 1');
+                $this->where('e.event_value_currency IS NOT NULL');
+                $this->where('e.reason = 0');
                 break;
-            case StatsRepository::CPC_TYPE:
-                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_CLICK));
+            case StatsRepository::TYPE_CLICK_ALL:
+            case StatsRepository::TYPE_CLICK_INVALID_RATE:
+                $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
+                $this->where('e.is_view_clicked = 1');
                 break;
         }
     }
@@ -115,16 +128,51 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $this->column('SUM(IF(e.event_type = \'view\' AND e.is_view_clicked = 1, 1, 0)) AS clicks');
-        $this->column('SUM(IF(e.event_type = \'view\', 1, 0)) AS views');
+        $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.reason = 0';
+        $filterEventInvalid = 'OR e.event_value_currency IS NULL OR e.reason <> 0';
+
         $this->column(
-            'IFNULL(AVG(CASE '
-            .'WHEN (e.event_type <> \'view\') THEN NULL '
-            .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr'
+            sprintf(
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1 %s, 1, 0)) AS clicks",
+                EventLog::TYPE_VIEW,
+                $filterEventValid
+            )
         );
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'click\', e.event_value_currency, NULL))), 0) AS cpc');
-        $this->column('IFNULL(ROUND(AVG(IF(e.event_type = \'view\', e.event_value_currency, NULL))), 0)*1000 AS cpm');
-        $this->column('SUM(IF(e.event_type IN (\'click\', \'view\'), e.event_value_currency, 0)) AS cost');
+        $this->column(
+            sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", EventLog::TYPE_VIEW, $filterEventValid)
+        );
+        $this->column(
+            sprintf(
+                'IFNULL(AVG(CASE '
+                ."WHEN (e.event_type <> '%s' %s) THEN NULL "
+                .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
+                EventLog::TYPE_VIEW,
+                $filterEventInvalid
+            )
+        );
+        $this->column(
+            sprintf(
+                "SUM(IF(e.event_type IN ('%s', '%s') %s, e.event_value_currency, 0)) AS cost",
+                EventLog::TYPE_CLICK,
+                EventLog::TYPE_VIEW,
+                $filterEventValid
+            )
+        );
+    }
+
+    private function selectBaseStatsReportColumns(): void
+    {
+        $this->selectBaseStatsColumns();
+
+        $this->column(
+            sprintf(
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1, 1, 0)) AS clicksAll",
+                EventLog::TYPE_VIEW
+            )
+        );
+        $this->column(
+            sprintf("SUM(IF(e.event_type = '%s', 1, 0)) AS viewsAll", EventLog::TYPE_VIEW)
+        );
     }
 
     public function setAdvertiserId(string $advertiserId): self
@@ -153,7 +201,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     public function appendResolution(string $resolution): self
     {
         switch ($resolution) {
-            case StatsRepository::HOUR_RESOLUTION:
+            case StatsRepository::RESOLUTION_HOUR:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->column('MONTH(e.created_at) as m');
                 $this->column('DAY(e.created_at) AS d');
@@ -163,7 +211,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->groupBy('DAY(e.created_at)');
                 $this->groupBy('HOUR(e.created_at)');
                 break;
-            case StatsRepository::DAY_RESOLUTION:
+            case StatsRepository::RESOLUTION_DAY:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->column('MONTH(e.created_at) as m');
                 $this->column('DAY(e.created_at) AS d');
@@ -172,23 +220,23 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->groupBy('MONTH(e.created_at)');
                 $this->groupBy('DAY(e.created_at)');
                 break;
-            case StatsRepository::WEEK_RESOLUTION:
+            case StatsRepository::RESOLUTION_WEEK:
                 $this->column('YEARWEEK(e.created_at, 3) as yw');
                 $this->groupBy('YEARWEEK(e.created_at, 3)');
                 break;
-            case StatsRepository::MONTH_RESOLUTION:
+            case StatsRepository::RESOLUTION_MONTH:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->column('MONTH(e.created_at) as m');
                 $this->groupBy('YEAR(e.created_at)');
                 $this->groupBy('MONTH(e.created_at)');
                 break;
-            case StatsRepository::QUARTER_RESOLUTION:
+            case StatsRepository::RESOLUTION_QUARTER:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->column('QUARTER(e.created_at) as q');
                 $this->groupBy('YEAR(e.created_at)');
                 $this->groupBy('QUARTER(e.created_at)');
                 break;
-            case StatsRepository::YEAR_RESOLUTION:
+            case StatsRepository::RESOLUTION_YEAR:
             default:
                 $this->column('YEAR(e.created_at) AS y');
                 $this->groupBy('YEAR(e.created_at)');
@@ -227,9 +275,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('ctr>0');
-        $this->having('cpc>0');
-        $this->having('cpm>0');
         $this->having('cost>0');
+
+        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
+            $this->having('clicksAll>0');
+            $this->having('viewsAll>0');
+        }
 
         return $this;
     }

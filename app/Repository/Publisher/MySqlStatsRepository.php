@@ -27,6 +27,7 @@ use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 use Adshares\Publisher\Dto\Result\Stats\DataEntry;
+use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
@@ -42,13 +43,54 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::VIEW_TYPE,
+            StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        return new ChartResult($result);
+    }
+    public function fetchViewAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_VIEW_ALL,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchViewInvalidRate(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_VIEW_INVALID_RATE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
 
         return new ChartResult($result);
     }
@@ -61,13 +103,55 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CLICK_TYPE,
+            StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchClickAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_CLICK_ALL,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchClickInvalidRate(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_CLICK_INVALID_RATE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        foreach ($result as &$row) {
+            $row[1] = (float)$row[1];
+        }
 
         return new ChartResult($result);
     }
@@ -79,14 +163,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::RPC_TYPE,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_CLICK,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateRpc((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -98,14 +202,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::RPM_TYPE,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_VIEW,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateRpm((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -118,7 +242,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::SUM_TYPE,
+            StatsRepository::TYPE_SUM,
             $publisherId,
             $resolution,
             $dateStart,
@@ -137,7 +261,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::CTR_TYPE,
+            StatsRepository::TYPE_CTR,
             $publisherId,
             $resolution,
             $dateStart,
@@ -158,7 +282,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendSiteIdGroupBy();
@@ -174,13 +298,17 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $revenue = (int)$row->revenue;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue
             );
 
             $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
@@ -196,7 +324,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_SUM_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
                 ->setPublisherId($publisherId)
                 ->setDateRange($dateStart, $dateEnd);
 
@@ -211,13 +339,17 @@ class MySqlStatsRepository implements StatsRepository
 
         if (!empty($queryResult)) {
             $row = $queryResult[0];
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $revenue = (int)$row->revenue;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue
             );
         } else {
             $calculation = new Calculation(0, 0, 0, 0, 0, 0);
@@ -232,7 +364,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::STATS_TYPE))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
@@ -249,13 +381,23 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
-            $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+            $clicks = (int)$row->clicks;
+            $clicksAll = (int)$row->clicksAll;
+            $views = (int)$row->views;
+            $viewsAll = (int)$row->viewsAll;
+            $revenue = (int)$row->revenue;
+
+            $calculation = new ReportCalculation(
+                $clicks,
+                $clicksAll,
+                $this->calculateInvalidRate($clicksAll, $clicks),
+                $views,
+                $viewsAll,
+                $this->calculateInvalidRate($viewsAll, $views),
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue,
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue,
                 $row->domain
             );
 
@@ -343,34 +485,34 @@ class MySqlStatsRepository implements StatsRepository
         $formattedResult = [];
 
         $date = (new DateTime())->setTimezone($dateTimeZone);
-        if ($resolution !== StatsRepository::HOUR_RESOLUTION) {
+        if ($resolution !== StatsRepository::RESOLUTION_HOUR) {
             $date->setTime(0, 0, 0, 0);
         }
 
         foreach ($result as $row) {
-            if ($resolution === StatsRepository::HOUR_RESOLUTION) {
+            if ($resolution === StatsRepository::RESOLUTION_HOUR) {
                 $date->setTime($row->h, 0, 0, 0);
             }
 
             switch ($resolution) {
-                case StatsRepository::HOUR_RESOLUTION:
-                case StatsRepository::DAY_RESOLUTION:
+                case StatsRepository::RESOLUTION_HOUR:
+                case StatsRepository::RESOLUTION_DAY:
                     $date->setDate($row->y, $row->m, $row->d);
                     break;
-                case StatsRepository::WEEK_RESOLUTION:
+                case StatsRepository::RESOLUTION_WEEK:
                     $yearweek = (string)$row->yw;
                     $year = (int)substr($yearweek, 0, 4);
                     $week = (int)substr($yearweek, 4);
                     $date->setISODate($year, $week, 1);
                     break;
-                case StatsRepository::MONTH_RESOLUTION:
+                case StatsRepository::RESOLUTION_MONTH:
                     $date->setDate($row->y, $row->m, 1);
                     break;
-                case StatsRepository::QUARTER_RESOLUTION:
+                case StatsRepository::RESOLUTION_QUARTER:
                     $month = $row->q * 3 - 2;
                     $date->setDate($row->y, $month, 1);
                     break;
-                case StatsRepository::YEAR_RESOLUTION:
+                case StatsRepository::RESOLUTION_YEAR:
                 default:
                     $date->setDate($row->y, 1, 1);
                     break;
@@ -416,28 +558,28 @@ class MySqlStatsRepository implements StatsRepository
     ): DateTime {
         $date = (clone $dateStart)->setTimezone($dateTimeZone);
 
-        if ($resolution === StatsRepository::HOUR_RESOLUTION) {
+        if ($resolution === StatsRepository::RESOLUTION_HOUR) {
             $date->setTime((int)$date->format('H'), 0, 0, 0);
         } else {
             $date->setTime(0, 0, 0, 0);
         }
 
         switch ($resolution) {
-            case StatsRepository::HOUR_RESOLUTION:
-            case StatsRepository::DAY_RESOLUTION:
+            case StatsRepository::RESOLUTION_HOUR:
+            case StatsRepository::RESOLUTION_DAY:
                 break;
-            case StatsRepository::WEEK_RESOLUTION:
+            case StatsRepository::RESOLUTION_WEEK:
                 $date->setISODate((int)$date->format('Y'), (int)$date->format('W'), 1);
                 break;
-            case StatsRepository::MONTH_RESOLUTION:
+            case StatsRepository::RESOLUTION_MONTH:
                 $date->setDate((int)$date->format('Y'), (int)$date->format('m'), 1);
                 break;
-            case StatsRepository::QUARTER_RESOLUTION:
+            case StatsRepository::RESOLUTION_QUARTER:
                 $quarter = (int)floor((int)$date->format('m') - 1 / 3);
                 $month = $quarter * 3 + 1;
                 $date->setDate((int)$date->format('Y'), $month, 1);
                 break;
-            case StatsRepository::YEAR_RESOLUTION:
+            case StatsRepository::RESOLUTION_YEAR:
             default:
                 $date->setDate((int)$date->format('Y'), 1, 1);
                 break;
@@ -449,24 +591,24 @@ class MySqlStatsRepository implements StatsRepository
     private static function advanceDateTime(string $resolution, DateTime $date): void
     {
         switch ($resolution) {
-            case StatsRepository::HOUR_RESOLUTION:
+            case StatsRepository::RESOLUTION_HOUR:
                 $date->modify('+1 hour');
                 break;
-            case StatsRepository::DAY_RESOLUTION:
+            case StatsRepository::RESOLUTION_DAY:
                 $date->modify('tomorrow');
                 break;
-            case StatsRepository::WEEK_RESOLUTION:
+            case StatsRepository::RESOLUTION_WEEK:
                 $date->modify('+7 days');
                 break;
-            case StatsRepository::MONTH_RESOLUTION:
+            case StatsRepository::RESOLUTION_MONTH:
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::QUARTER_RESOLUTION:
+            case StatsRepository::RESOLUTION_QUARTER:
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 $date->modify('first day of next month');
                 break;
-            case StatsRepository::YEAR_RESOLUTION:
+            case StatsRepository::RESOLUTION_YEAR:
             default:
                 $date->modify('first day of next year');
                 break;
@@ -501,5 +643,20 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return $result;
+    }
+
+    private function calculateRpc(int $revenue, int $clicks): int
+    {
+        return (0 === $clicks) ? 0 : (int)round($revenue / $clicks);
+    }
+
+    private function calculateRpm(int $revenue, int $views): int
+    {
+        return (0 === $views) ? 0 : (int)round($revenue / $views * 1000);
+    }
+
+    private function calculateInvalidRate(int $totalCount, int $validCount): float
+    {
+        return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
 }

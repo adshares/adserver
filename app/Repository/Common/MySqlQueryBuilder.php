@@ -41,12 +41,16 @@ abstract class MySqlQueryBuilder
     protected $havingConditions = [];
     protected $joins = [];
 
+    /** @var @var string */
+    private $type;
+
     public function __construct(string $type)
     {
         if (!$this->isTypeAllowed($type)) {
             throw new RuntimeException(sprintf('Unsupported query type: %s', $type));
         }
 
+        $this->setType($type);
         $this->query = str_replace('#tableName', $this->getTableName(), self::QUERY);
     }
 
@@ -108,6 +112,16 @@ abstract class MySqlQueryBuilder
 
 
         return $this->query;
+    }
+
+    protected function getType(): string
+    {
+        return $this->type;
+    }
+
+    private function setType(string $type): void
+    {
+        $this->type = $type;
     }
 
     abstract protected function isTypeAllowed(string $type): bool;

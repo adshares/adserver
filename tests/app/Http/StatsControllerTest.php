@@ -83,12 +83,16 @@ final class StatsControllerTest extends TestCase
             );
 
             $methodNameMapper = [
-                StatsRepository::CLICK_TYPE => 'fetchClick',
-                StatsRepository::VIEW_TYPE => 'fetchView',
-                StatsRepository::CPC_TYPE => 'fetchCpc',
-                StatsRepository::CPM_TYPE => 'fetchCpm',
-                StatsRepository::SUM_TYPE => 'fetchSum',
-                StatsRepository::CTR_TYPE => 'fetchCtr',
+                StatsRepository::TYPE_CLICK => 'fetchClick',
+                StatsRepository::TYPE_CLICK_ALL => 'fetchClickAll',
+                StatsRepository::TYPE_CLICK_INVALID_RATE => 'fetchClickInvalidRate',
+                StatsRepository::TYPE_VIEW => 'fetchView',
+                StatsRepository::TYPE_VIEW_ALL => 'fetchViewAll',
+                StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
+                StatsRepository::TYPE_CPC => 'fetchCpc',
+                StatsRepository::TYPE_CPM => 'fetchCpm',
+                StatsRepository::TYPE_SUM => 'fetchSum',
+                StatsRepository::TYPE_CTR => 'fetchCtr',
             ];
 
             $method = $methodNameMapper[$type];
@@ -127,7 +131,11 @@ final class StatsControllerTest extends TestCase
     {
         return [
             ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['viewAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['viewInvalidRate', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['click', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['clickAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['clickInvalidRate', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['cpc', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['cpm', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['sum', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
