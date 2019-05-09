@@ -29,21 +29,26 @@ use DateTime;
 
 interface StatsRepository
 {
-    public const VIEW_TYPE = 'view';
-    public const CLICK_TYPE = 'click';
-    public const RPC_TYPE = 'rpc';
-    public const RPM_TYPE = 'rpm';
-    public const SUM_TYPE = 'sum';
-    public const CTR_TYPE = 'ctr';
-    public const STATS_TYPE = 'stats';
-    public const STATS_SUM_TYPE = 'statsSum';
+    public const TYPE_VIEW = 'view';
+    public const TYPE_VIEW_ALL = 'viewAll';
+    public const TYPE_VIEW_INVALID_RATE = 'viewInvalidRate';
+    public const TYPE_VIEW_UNIQUE = 'viewUnique';
+    public const TYPE_CLICK = 'click';
+    public const TYPE_CLICK_ALL = 'clickAll';
+    public const TYPE_CLICK_INVALID_RATE = 'clickInvalidRate';
+    public const TYPE_RPC = 'rpc';
+    public const TYPE_RPM = 'rpm';
+    public const TYPE_SUM = 'sum';
+    public const TYPE_CTR = 'ctr';
+    public const TYPE_STATS = 'stats';
+    public const TYPE_STATS_REPORT = 'statsReport';
 
-    public const HOUR_RESOLUTION = 'hour';
-    public const DAY_RESOLUTION = 'day';
-    public const WEEK_RESOLUTION = 'week';
-    public const MONTH_RESOLUTION = 'month';
-    public const QUARTER_RESOLUTION = 'quarter';
-    public const YEAR_RESOLUTION = 'year';
+    public const RESOLUTION_HOUR = 'hour';
+    public const RESOLUTION_DAY = 'day';
+    public const RESOLUTION_WEEK = 'week';
+    public const RESOLUTION_MONTH = 'month';
+    public const RESOLUTION_QUARTER = 'quarter';
+    public const RESOLUTION_YEAR = 'year';
 
     public function fetchView(
         string $publisherId,
@@ -53,7 +58,47 @@ interface StatsRepository
         ?string $siteId = null
     ): ChartResult;
 
+    public function fetchViewAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchViewInvalidRate(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchViewUnique(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
     public function fetchClick(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchClickAll(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchClickInvalidRate(
         string $publisherId,
         string $resolution,
         DateTime $dateStart,
