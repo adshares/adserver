@@ -32,6 +32,7 @@ final class ChartInput
         StatsRepository::TYPE_VIEW,
         StatsRepository::TYPE_VIEW_ALL,
         StatsRepository::TYPE_VIEW_INVALID_RATE,
+        StatsRepository::TYPE_VIEW_UNIQUE,
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_CLICK_INVALID_RATE,

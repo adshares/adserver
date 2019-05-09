@@ -34,6 +34,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
+        StatsRepository::TYPE_VIEW_UNIQUE,
         StatsRepository::TYPE_VIEW_ALL,
         StatsRepository::TYPE_VIEW_INVALID_RATE,
         StatsRepository::TYPE_CLICK,
@@ -73,6 +74,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CLICK_ALL:
                 $this->column('COUNT(1) AS c');
                 break;
+            case StatsRepository::TYPE_VIEW_UNIQUE:
+                $this->column('COUNT(DISTINCT e.user_id, e.site_id) AS c');
+                break;
             case StatsRepository::TYPE_VIEW_INVALID_RATE:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
                 $this->column('COALESCE(AVG(IF(e.paid_amount_currency IS NULL, 1, 0)), 0) AS c');
@@ -96,6 +100,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($type) {
             case StatsRepository::TYPE_VIEW:
+            case StatsRepository::TYPE_VIEW_UNIQUE:
             case StatsRepository::TYPE_CTR:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where('e.paid_amount_currency IS NOT NULL');
@@ -169,6 +174,13 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         );
         $this->column(
             sprintf("SUM(IF(e.event_type = '%s', 1, 0)) AS viewsAll", NetworkEventLog::TYPE_VIEW)
+        );
+        $this->column(
+            sprintf(
+                "COUNT(DISTINCT(CASE WHEN e.event_type = '%s' AND e.paid_amount_currency IS NOT NULL"
+                .' THEN e.user_id END)) AS viewsUnique',
+                NetworkEventLog::TYPE_VIEW
+            )
         );
     }
 
@@ -275,10 +287,11 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('views>0');
         $this->having('ctr>0');
         $this->having('revenue>0');
-        
+
         if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
             $this->having('clicksAll>0');
             $this->having('viewsAll>0');
+            $this->having('viewsUnique>0');
         }
 
         return $this;

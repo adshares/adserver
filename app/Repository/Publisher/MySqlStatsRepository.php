@@ -53,6 +53,7 @@ class MySqlStatsRepository implements StatsRepository
 
         return new ChartResult($result);
     }
+
     public function fetchViewAll(
         string $publisherId,
         string $resolution,
@@ -91,6 +92,25 @@ class MySqlStatsRepository implements StatsRepository
         foreach ($result as &$row) {
             $row[1] = (float)$row[1];
         }
+
+        return new ChartResult($result);
+    }
+
+    public function fetchViewUnique(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_VIEW_UNIQUE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
 
         return new ChartResult($result);
     }
@@ -394,6 +414,7 @@ class MySqlStatsRepository implements StatsRepository
                 $views,
                 $viewsAll,
                 $this->calculateInvalidRate($viewsAll, $views),
+                (int)$row->viewsUnique,
                 (float)$row->ctr,
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),

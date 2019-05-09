@@ -97,6 +97,25 @@ class MySqlStatsRepository implements StatsRepository
         return new ChartResult($result);
     }
 
+    public function fetchViewUnique(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_VIEW_UNIQUE,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        return new ChartResult($result);
+    }
+
     public function fetchClick(
         string $advertiserId,
         string $resolution,
@@ -396,6 +415,7 @@ class MySqlStatsRepository implements StatsRepository
                 $views,
                 $viewsAll,
                 $this->calculateInvalidRate($viewsAll, $views),
+                (int)$row->viewsUnique,
                 (float)$row->ctr,
                 $this->calculateCpc($cost, $clicks),
                 $this->calculateCpm($cost, $views),

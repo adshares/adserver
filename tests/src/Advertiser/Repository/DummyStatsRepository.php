@@ -57,6 +57,36 @@ class DummyStatsRepository implements StatsRepository
         return new ChartResult($data);
     }
 
+    public function fetchViewAll(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchViewAll() method.
+    }
+
+    public function fetchViewInvalidRate(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchViewInvalidRate() method.
+    }
+
+    public function fetchViewUnique(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchViewUnique() method.
+    }
+
     public function fetchClick(
         string $advertiserId,
         string $resolution,
@@ -72,6 +102,26 @@ class DummyStatsRepository implements StatsRepository
         ];
 
         return new ChartResult($data);
+    }
+
+    public function fetchClickAll(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchClickAll() method.
+    }
+
+    public function fetchClickInvalidRate(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        // TODO: Implement fetchClickInvalidRate() method.
     }
 
     public function fetchCpc(
