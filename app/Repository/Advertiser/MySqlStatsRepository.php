@@ -164,14 +164,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_CPC,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $advertiserId,
             $resolution,
             $dateStart,
             $dateEnd,
             $campaignId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_CLICK,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        $result = [];
+        
+        $rowCount = count($resultCount);
+        
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateCpc((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -183,14 +203,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_CPM,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $advertiserId,
             $resolution,
             $dateStart,
             $dateEnd,
             $campaignId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_VIEW,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateCpm((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -259,13 +299,17 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $cost = (int)$row->cost;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->cpc,
-                (int)$row->cpm,
-                (int)$row->cost
+                $this->calculateCpc($cost, $clicks),
+                $this->calculateCpm($cost, $views),
+                $cost
             );
 
             $bannerId = ($campaignId !== null) ? bin2hex($row->banner_id) : null;
@@ -296,13 +340,17 @@ class MySqlStatsRepository implements StatsRepository
 
         if (!empty($queryResult)) {
             $row = $queryResult[0];
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $cost = (int)$row->cost;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->cpc,
-                (int)$row->cpm,
-                (int)$row->cost
+                $this->calculateCpc($cost, $clicks),
+                $this->calculateCpm($cost, $views),
+                $cost
             );
         } else {
             $calculation = new Calculation(0, 0, 0, 0, 0, 0);
@@ -334,13 +382,17 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $cost = (int)$row->cost;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->cpc,
-                (int)$row->cpm,
-                (int)$row->cost,
+                $this->calculateCpc($cost, $clicks),
+                $this->calculateCpm($cost, $views),
+                $cost,
                 $row->domain
             );
 
@@ -586,5 +638,15 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return $result;
+    }
+
+    private function calculateCpc(int $cost, int $clicks): int
+    {
+        return (0 === $clicks) ? 0 : (int)round($cost / $clicks);
+    }
+
+    private function calculateCpm(int $cost, int $views): int
+    {
+        return (0 === $views) ? 0 : (int)round($cost / $views * 1000);
     }
 }

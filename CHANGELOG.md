@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - User impersonation by server admin
 - Recognize fake events in statistics
+### Changed
+- Formulas for computing CPC, CPM, RPC, RPM. Total cost is used instead of payment for event of particular type
 ### Fixed
 - Users' ad expenses are in ADS not in currency
 ### Improved

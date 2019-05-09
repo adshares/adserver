@@ -39,8 +39,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_CLICK_INVALID_RATE,
-        StatsRepository::TYPE_RPC,
-        StatsRepository::TYPE_RPM,
         StatsRepository::TYPE_SUM,
         StatsRepository::TYPE_CTR,
         StatsRepository::TYPE_STATS,
@@ -82,12 +80,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
                 $this->column('COALESCE(AVG(IF(e.paid_amount_currency IS NULL, 1, 0)), 0) AS c');
                 break;
-            case StatsRepository::TYPE_RPC:
-                $this->column('COALESCE(ROUND(AVG(e.paid_amount_currency)), 0) AS c');
-                break;
-            case StatsRepository::TYPE_RPM:
-                $this->column('COALESCE(ROUND(AVG(e.paid_amount_currency)), 0)*1000 AS c');
-                break;
             case StatsRepository::TYPE_SUM:
                 $this->column('COALESCE(SUM(e.paid_amount_currency), 0) AS c');
                 break;
@@ -101,7 +93,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($type) {
             case StatsRepository::TYPE_VIEW:
-            case StatsRepository::TYPE_RPM:
             case StatsRepository::TYPE_CTR:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where('e.paid_amount_currency IS NOT NULL');
@@ -119,10 +110,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
                 $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_VIEW));
                 $this->where('e.is_view_clicked = 1');
-                break;
-            case StatsRepository::TYPE_RPC:
-                $this->where(sprintf("e.event_type = '%s'", NetworkEventLog::TYPE_CLICK));
-                $this->where('e.paid_amount_currency IS NOT NULL');
                 break;
         }
     }
@@ -155,20 +142,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
                 NetworkEventLog::TYPE_VIEW,
                 $filterEventInvalid
-            )
-        );
-        $this->column(
-            sprintf(
-                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.paid_amount_currency, NULL))), 0) AS rpc",
-                NetworkEventLog::TYPE_CLICK,
-                $filterEventValid
-            )
-        );
-        $this->column(
-            sprintf(
-                "IFNULL(ROUND(AVG(IF(e.event_type = '%s' %s, e.paid_amount_currency, NULL))), 0)*1000 AS rpm",
-                NetworkEventLog::TYPE_VIEW,
-                $filterEventValid
             )
         );
         $this->column(
@@ -283,8 +256,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('ctr>0');
-        $this->having('rpc>0');
-        $this->having('rpm>0');
         $this->having('revenue>0');
 
         return $this;

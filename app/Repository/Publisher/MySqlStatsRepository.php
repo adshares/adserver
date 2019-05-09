@@ -162,14 +162,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_RPC,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_CLICK,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateRpc((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -181,14 +201,34 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_RPM,
+        $resultSum = $this->fetch(
+            StatsRepository::TYPE_SUM,
             $publisherId,
             $resolution,
             $dateStart,
             $dateEnd,
             $siteId
         );
+
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_VIEW,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateRpm((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+            ];
+        }
 
         return new ChartResult($result);
     }
@@ -257,13 +297,17 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $revenue = (int)$row->revenue;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue
             );
 
             $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
@@ -294,13 +338,17 @@ class MySqlStatsRepository implements StatsRepository
 
         if (!empty($queryResult)) {
             $row = $queryResult[0];
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $revenue = (int)$row->revenue;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue
             );
         } else {
             $calculation = new Calculation(0, 0, 0, 0, 0, 0);
@@ -332,13 +380,17 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         foreach ($queryResult as $row) {
+            $clicks = (int)$row->clicks;
+            $views = (int)$row->views;
+            $revenue = (int)$row->revenue;
+
             $calculation = new Calculation(
-                (int)$row->clicks,
-                (int)$row->views,
+                $clicks,
+                $views,
                 (float)$row->ctr,
-                (int)$row->rpc,
-                (int)$row->rpm,
-                (int)$row->revenue,
+                $this->calculateRpc($revenue, $clicks),
+                $this->calculateRpm($revenue, $views),
+                $revenue,
                 $row->domain
             );
 
@@ -584,5 +636,15 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return $result;
+    }
+
+    private function calculateRpc(int $revenue, int $clicks): int
+    {
+        return (0 === $clicks) ? 0 : (int)round($revenue / $clicks);
+    }
+
+    private function calculateRpm(int $revenue, int $views): int
+    {
+        return (0 === $views) ? 0 : (int)round($revenue / $views * 1000);
     }
 }
