@@ -87,6 +87,7 @@ final class StatsControllerTest extends TestCase
                 StatsRepository::TYPE_CLICK_ALL => 'fetchClickAll',
                 StatsRepository::TYPE_CLICK_INVALID_RATE => 'fetchClickInvalidRate',
                 StatsRepository::TYPE_VIEW => 'fetchView',
+                StatsRepository::TYPE_VIEW_UNIQUE => 'fetchViewUnique',
                 StatsRepository::TYPE_VIEW_ALL => 'fetchViewAll',
                 StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
                 StatsRepository::TYPE_CPC => 'fetchCpc',
@@ -131,6 +132,7 @@ final class StatsControllerTest extends TestCase
     {
         return [
             ['view', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
+            ['viewUnique', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['viewAll', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['viewInvalidRate', ['hour', 'day', 'week', 'month', 'quarter', 'year']],
             ['click', ['hour', 'day', 'week', 'month', 'quarter', 'year']],

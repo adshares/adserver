@@ -33,6 +33,7 @@ final class ChartDataProvider
         StatsRepository::TYPE_CLICK_ALL => 'fetchClickAll',
         StatsRepository::TYPE_CLICK_INVALID_RATE => 'fetchClickInvalidRate',
         StatsRepository::TYPE_VIEW => 'fetchView',
+        StatsRepository::TYPE_VIEW_UNIQUE => 'fetchViewUnique',
         StatsRepository::TYPE_VIEW_ALL => 'fetchViewAll',
         StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
         StatsRepository::TYPE_RPC => 'fetchRpc',

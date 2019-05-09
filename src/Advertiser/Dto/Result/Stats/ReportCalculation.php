@@ -36,6 +36,9 @@ class ReportCalculation extends Calculation
     /** @var float */
     private $impressionsInvalidRate;
 
+    /** @var int */
+    private $impressionsUnique;
+
     public function __construct(
         int $clicks,
         int $clicksAll,
@@ -43,6 +46,7 @@ class ReportCalculation extends Calculation
         int $impressions,
         int $impressionsAll,
         float $impressionsInvalidRate,
+        int $impressionsUnique,
         float $ctr,
         int $averageCpc,
         int $averageCpm,
@@ -61,6 +65,7 @@ class ReportCalculation extends Calculation
 
         $this->clicksAll = $clicksAll;
         $this->clicksInvalidRate = $clicksInvalidRate;
+        $this->impressionsUnique = $impressionsUnique;
         $this->impressionsAll = $impressionsAll;
         $this->impressionsInvalidRate = $impressionsInvalidRate;
     }
@@ -72,6 +77,7 @@ class ReportCalculation extends Calculation
             'clicksInvalidRate' => $this->clicksInvalidRate,
             'impressionsAll' => $this->impressionsAll,
             'impressionsInvalidRate' => $this->impressionsInvalidRate,
+            'impressionsUnique' => $this->impressionsUnique,
         ];
 
         return array_merge($data, parent::toArray());
