@@ -159,12 +159,10 @@ class AuthController extends Controller
             );
         }
 
-        Mail::to($user)->queue(
-            new UserEmailChangeConfirm1Old(
-                Token::generate(Token::EMAIL_CHANGE_STEP_1, $user, $request->all())->uuid,
-                $request->input('uri_step1')
-            )
-        );
+        $token = Token::generate(Token::EMAIL_CHANGE_STEP_1, $user, $request->all());
+        $mailable = new UserEmailChangeConfirm1Old($token->uuid, $request->input('uri_step1'));
+
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
@@ -189,12 +187,12 @@ class AuthController extends Controller
                 ['message' => 'This email already exists in our database']
             );
         }
-        Mail::to($token['payload']['email'])->queue(
-            new UserEmailChangeConfirm2New(
-                Token::generate(Token::EMAIL_CHANGE_STEP_2, $user, $token['payload'])->uuid,
-                $token['payload']['uri_step2']
-            )
-        );
+
+        $token2 = Token::generate(Token::EMAIL_CHANGE_STEP_2, $user, $token['payload']);
+        $mailable = new UserEmailChangeConfirm2New($token2->uuid, $token['payload']['uri_step2']);
+
+        Mail::to($token['payload']['email'])->queue($mailable);
+
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
@@ -289,7 +287,10 @@ class AuthController extends Controller
             return self::json([], Response::HTTP_NO_CONTENT);
         }
 
-        $mailable = new AuthRecovery(Token::generate(Token::PASSWORD_RECOVERY, $user)->uuid, $request->input('uri'));
+        $mailable = new AuthRecovery(
+            Token::generate(Token::PASSWORD_RECOVERY, $user)->uuid,
+            $request->input('uri')
+        );
 
         Mail::to($user)->queue($mailable);
 
