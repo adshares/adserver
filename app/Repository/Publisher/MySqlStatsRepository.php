@@ -27,6 +27,7 @@ use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
 use Adshares\Publisher\Dto\Result\Stats\DataEntry;
+use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
@@ -363,7 +364,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
@@ -381,12 +382,18 @@ class MySqlStatsRepository implements StatsRepository
         $result = [];
         foreach ($queryResult as $row) {
             $clicks = (int)$row->clicks;
+            $clicksAll = (int)$row->clicksAll;
             $views = (int)$row->views;
+            $viewsAll = (int)$row->viewsAll;
             $revenue = (int)$row->revenue;
 
-            $calculation = new Calculation(
+            $calculation = new ReportCalculation(
                 $clicks,
+                $clicksAll,
+                $this->calculateInvalidRate($clicksAll, $clicks),
                 $views,
+                $viewsAll,
+                $this->calculateInvalidRate($viewsAll, $views),
                 (float)$row->ctr,
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),
@@ -646,5 +653,10 @@ class MySqlStatsRepository implements StatsRepository
     private function calculateRpm(int $revenue, int $views): int
     {
         return (0 === $views) ? 0 : (int)round($revenue / $views * 1000);
+    }
+
+    private function calculateInvalidRate(int $totalCount, int $validCount): float
+    {
+        return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
 }

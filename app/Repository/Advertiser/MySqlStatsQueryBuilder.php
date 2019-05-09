@@ -43,6 +43,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_SUM,
         StatsRepository::TYPE_CTR,
         StatsRepository::TYPE_STATS,
+        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
@@ -50,10 +51,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
         $this->withoutRemovedCampaigns();
-
-        if ($type === StatsRepository::TYPE_STATS) {
-            $this->selectBaseStatsColumns();
-        }
 
         parent::__construct($type);
     }
@@ -86,6 +83,12 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_CTR:
                 $this->column('COALESCE(AVG(IF(e.is_view_clicked, 1, 0)), 0) AS c');
+                break;
+            case StatsRepository::TYPE_STATS:
+                $this->selectBaseStatsColumns();
+                break;
+            case StatsRepository::TYPE_STATS_REPORT:
+                $this->selectBaseStatsReportColumns();
                 break;
         }
     }
@@ -154,6 +157,21 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 EventLog::TYPE_VIEW,
                 $filterEventValid
             )
+        );
+    }
+
+    private function selectBaseStatsReportColumns(): void
+    {
+        $this->selectBaseStatsColumns();
+
+        $this->column(
+            sprintf(
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1, 1, 0)) AS clicksAll",
+                EventLog::TYPE_VIEW
+            )
+        );
+        $this->column(
+            sprintf("SUM(IF(e.event_type = '%s', 1, 0)) AS viewsAll", EventLog::TYPE_VIEW)
         );
     }
 
@@ -258,6 +276,11 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('views>0');
         $this->having('ctr>0');
         $this->having('cost>0');
+
+        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
+            $this->having('clicksAll>0');
+            $this->having('viewsAll>0');
+        }
 
         return $this;
     }

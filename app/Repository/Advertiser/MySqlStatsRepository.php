@@ -27,6 +27,7 @@ use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
+use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use function bin2hex;
@@ -365,7 +366,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
@@ -383,12 +384,18 @@ class MySqlStatsRepository implements StatsRepository
         $result = [];
         foreach ($queryResult as $row) {
             $clicks = (int)$row->clicks;
+            $clicksAll = (int)$row->clicksAll;
             $views = (int)$row->views;
+            $viewsAll = (int)$row->viewsAll;
             $cost = (int)$row->cost;
 
-            $calculation = new Calculation(
+            $calculation = new ReportCalculation(
                 $clicks,
+                $clicksAll,
+                $this->calculateInvalidRate($clicksAll, $clicks),
                 $views,
+                $viewsAll,
+                $this->calculateInvalidRate($viewsAll, $views),
                 (float)$row->ctr,
                 $this->calculateCpc($cost, $clicks),
                 $this->calculateCpm($cost, $views),
@@ -648,5 +655,10 @@ class MySqlStatsRepository implements StatsRepository
     private function calculateCpm(int $cost, int $views): int
     {
         return (0 === $views) ? 0 : (int)round($cost / $views * 1000);
+    }
+
+    private function calculateInvalidRate(int $totalCount, int $validCount): float
+    {
+        return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
 }
