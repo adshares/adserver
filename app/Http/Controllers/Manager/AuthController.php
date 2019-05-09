@@ -58,10 +58,10 @@ class AuthController extends Controller
         DB::beginTransaction();
 
         $user = User::register($request->input('user'));
-        $token = Token::activation($user);
+        $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
+        $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
 
-        Mail::to($user)
-            ->queue(new UserEmailActivate($token->uuid, $request->input('uri')));
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
@@ -118,8 +118,10 @@ class AuthController extends Controller
             );
         }
 
-        Mail::to($user)
-            ->queue(new UserEmailActivate(Token::activation($user)->uuid, $request->input('uri')));
+        $token = Token::generate(Token::EMAIL_ACTIVATE, $user);
+        $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
+
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
