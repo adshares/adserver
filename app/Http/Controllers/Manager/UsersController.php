@@ -21,90 +21,18 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Collection;
 
 class UsersController extends Controller
 {
-
-    public function browse()
+    public function browse(): Collection
     {
         return User::all();
     }
 
-    public function edit(Request $request): JsonResponse
+    public function count(): int
     {
-        if (!Auth::check() && !$request->has('user.token')) {
-            return self::json(
-                [],
-                Response::HTTP_UNAUTHORIZED,
-                ['message' => 'Required authenticated access or token authentication']
-            );
-        }
-
-        DB::beginTransaction();
-        if (Auth::check()) {
-            $user = Auth::user();
-            $token_authorization = false;
-        } else {
-            if (false === $token = Token::check($request->input('user.token'), null, 'password-recovery')) {
-                DB::rollBack();
-
-                return self::json(
-                    [],
-                    Response::HTTP_UNPROCESSABLE_ENTITY,
-                    ['message' => 'Authentication token is invalid']
-                );
-            }
-            $user = User::findOrFail($token['user_id']);
-            $token_authorization = true;
-        }
-
-        $this->validateRequestObject($request, 'user', User::$rules);
-        $user->fill($request->input('user'));
-
-        if (!$request->has('user.password_new')) {
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
-        if ($token_authorization) {
-            $user->password = $request->input('user.password_new');
-            $user->save();
-            DB::commit();
-
-            return self::json($user->toArray());
-        }
-
-        if (!$request->has('user.password_old') || !$user->validPassword($request->input('user.password_old'))) {
-            DB::rollBack();
-
-            return self::json(
-                $user->toArray(),
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-                ['password_old' => 'Old password is not valid']
-            );
-        }
-
-        $user->password = $request->input('user.password_new');
-        $user->save();
-        DB::commit();
-
-        return self::json($user->toArray());
-    }
-
-    public function read($user_id)
-    {
-        // TODO check privileges
-        $user = User::findOrFail($user_id);
-
-        return self::json($user->toArray());
+        return User::all()->count();
     }
 }

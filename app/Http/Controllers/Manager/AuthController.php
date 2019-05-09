@@ -118,12 +118,9 @@ class AuthController extends Controller
             );
         }
 
-        Mail::to($user)->queue(
-            new UserEmailActivate(
-                Token::activation($user)->uuid,
-                $request->input('uri')
-            )
-        );
+        $mailable = new UserEmailActivate(Token::activation($user)->uuid, $request->input('uri'));
+
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
