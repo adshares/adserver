@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -50,12 +51,9 @@ class UsersController extends Controller
 
         $user = User::register($request->input('user'));
 
-        Mail::to($user)->queue(
-            new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
-                $request->input('uri')
-            )
-        );
+        $mailable = new UserEmailActivate(Token::activation($user)->uuid, $request->input('uri'));
+
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
@@ -68,7 +66,7 @@ class UsersController extends Controller
         return User::all();
     }
 
-    public function edit(Request $request)
+    public function edit(Request $request): JsonResponse
     {
         if (!Auth::check() && !$request->has('user.token')) {
             return self::json(

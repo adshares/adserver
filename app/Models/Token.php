@@ -37,6 +37,33 @@ class Token extends Model
     use BinHex;
     use Serialize;
 
+    private const VALIDITY_PERIODS = [
+        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_CHANGE_STEP_1 => 3600,
+        self::EMAIL_CHANGE_STEP_2 => 3600,
+        self::PASSWORD_RECOVERY => 2 * 60,
+        self::IMPERSONATION => 24 * 3600,
+        self::EMAIL_APPROVE_WITHDRAWAL => 15 * 60,
+    ];
+
+    private const MINIMAL_AGE_LIMITS = [
+        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_CHANGE_STEP_1 => 5 * 60,
+        self::EMAIL_CHANGE_STEP_2 => 5 * 60,
+    ];
+
+    public const EMAIL_ACTIVATE = 'email-activate';
+
+    public const EMAIL_CHANGE_STEP_1 = 'email-change-step1';
+
+    public const EMAIL_CHANGE_STEP_2 = 'email-change-step2';
+
+    public const PASSWORD_RECOVERY = 'password-recovery';
+
+    public const IMPERSONATION = 'impersonation';
+
+    public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
+
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
@@ -54,7 +81,12 @@ class Token extends Model
         'payload' => 'Serialize',
     ];
 
-    public static function canGenerate(int $user_id, $tag, int $older_then_seconds)
+    public static function canGenerateToken(User $user, string $tag): bool
+    {
+        return self::canGenerate($user->id, $tag, self::MINIMAL_AGE_LIMITS[$tag]);
+    }
+
+    private static function canGenerate(int $user_id, string $tag, int $older_then_seconds): bool
     {
         if (self::where('user_id', $user_id)->where('tag', $tag)->where(
             'created_at',
@@ -70,26 +102,29 @@ class Token extends Model
     public static function check($uuid, int $user_id = null, $tag = null)
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
+
         if (!empty($user_id)) {
             $q->where('user_id', $user_id);
         }
+
         if (!empty($tag)) {
             $q->where('tag', $tag);
         }
+
         $token = $q->first();
+
         if (empty($token)) {
             return false;
         }
-        $return = $token->toArray();
-        if ($token->multi_usage) {
-            return $return;
+
+        if (!$token->multi_usage) {
+            $token->delete();
         }
-        $token->delete();
 
         return $token->toArray();
     }
 
-    public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null)
+    public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null): bool
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
         if (!empty($user_id)) {
@@ -109,21 +144,40 @@ class Token extends Model
         return true;
     }
 
-    public static function generate(
+    public static function generate(string $tag, User $user, array $payload = null): self
+    {
+        return self::generateToken($tag, self::VALIDITY_PERIODS[$tag], $user->id, $payload);
+    }
+
+    private static function generateToken(
         string $tag,
         int $valid_until_seconds,
         int $user_id = null,
         $payload = null,
         bool $multi_usage = false
-    ) {
+    ): self {
         $valid_until = date('Y-m-d H:i:s', time() + $valid_until_seconds);
-        $token = self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
 
-        return $token->uuid;
+        return self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
     }
 
     public static function impersonation(User $user): self
     {
-        return self::generate('impersonation', 24 * 3600, $user->id, null, true);
+        return self::generateToken(
+            self::IMPERSONATION,
+            self::VALIDITY_PERIODS[self::IMPERSONATION],
+            $user->id,
+            null,
+            true
+        );
+    }
+
+    public static function activation(User $user): self
+    {
+        return self::generateToken(
+            self::EMAIL_ACTIVATE,
+            self::VALIDITY_PERIODS[self::EMAIL_ACTIVATE],
+            $user->id
+        );
     }
 }

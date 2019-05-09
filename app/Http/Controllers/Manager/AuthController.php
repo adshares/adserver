@@ -46,13 +46,7 @@ class AuthController extends Controller
 
     protected $password_recovery_token_time = 120 * 60; // 2 hours
 
-    protected $email_activation_token_time = 24 * 60 * 60; // 24 hours
-
     protected $email_activation_resend_limit = 15 * 60; // 15 minutes
-
-    protected $email_change_token_time = 60 * 60; // 1 hour
-
-    protected $email_new_change_resend_limit = 5 * 60; // 1 minute
 
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
@@ -70,9 +64,10 @@ class AuthController extends Controller
         DB::beginTransaction();
 
         $user = User::register($request->input('user'));
-        $token = Token::generate('email-activate', $this->email_activation_token_time, $user->id);
+        $token = Token::activation($user);
+        $mailable = new UserEmailActivate($token->uuid, $request->input('uri'));
 
-        Mail::to($user)->queue(new UserEmailActivate($token, $request->input('uri')));
+        Mail::to($user)->queue($mailable);
 
         DB::commit();
 
@@ -112,9 +107,13 @@ class AuthController extends Controller
     public function emailActivateResend(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['uri' => 'required'])->validate();
+
+        /** @var User $user */
         $user = Auth::user();
+
         DB::beginTransaction();
-        if (!Token::canGenerate($user->id, 'email-activate', $this->email_activation_resend_limit)) {
+
+        if (!Token::canGenerateToken($user, Token::EMAIL_ACTIVATE)) {
             return self::json(
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
@@ -124,12 +123,14 @@ class AuthController extends Controller
                 ]
             );
         }
+
         Mail::to($user)->queue(
             new UserEmailActivate(
-                Token::generate('email-activate', $this->email_activation_token_time, $user->id),
+                Token::activation($user)->uuid,
                 $request->input('uri')
             )
         );
+
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
@@ -149,9 +150,12 @@ class AuthController extends Controller
             );
         }
 
+        /** @var User $user */
         $user = Auth::user();
+
         DB::beginTransaction();
-        if (!Token::canGenerate($user->id, 'email-change-step1', $this->email_new_change_resend_limit)) {
+
+        if (!Token::canGenerateToken($user, Token::EMAIL_CHANGE_STEP_1)) {
             return self::json(
                 [],
                 Response::HTTP_TOO_MANY_REQUESTS,
@@ -162,12 +166,14 @@ class AuthController extends Controller
                 ]
             );
         }
+
         Mail::to($user)->queue(
             new UserEmailChangeConfirm1Old(
-                Token::generate('email-change-step1', $this->email_change_token_time, $user->id, $request->all()),
+                Token::generate(Token::EMAIL_CHANGE_STEP_1, $user, $request->all())->uuid,
                 $request->input('uri_step1')
             )
         );
+
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
@@ -193,7 +199,7 @@ class AuthController extends Controller
         }
         Mail::to($token['payload']['email'])->queue(
             new UserEmailChangeConfirm2New(
-                Token::generate('email-change-step2', $this->email_change_token_time, $user->id, $token['payload']),
+                Token::generate(Token::EMAIL_CHANGE_STEP_2, $user, $token['payload'])->uuid,
                 $token['payload']['uri_step2']
             )
         );
@@ -278,20 +284,23 @@ class AuthController extends Controller
     public function recovery(Request $request): JsonResponse
     {
         Validator::make($request->all(), ['email' => 'required|email', 'uri' => 'required'])->validate();
+
         $user = User::where('email', $request->input('email'))->first();
+
         if (empty($user)) {
             return self::json([], Response::HTTP_NO_CONTENT);
         }
+
         DB::beginTransaction();
-        if (!Token::canGenerate($user->id, 'password-recovery', $this->password_recovery_resend_limit)) {
+
+        if (!Token::canGenerateToken($user, Token::PASSWORD_RECOVERY)) {
             return self::json([], Response::HTTP_NO_CONTENT);
         }
-        Mail::to($user)->queue(
-            new AuthRecovery(
-                Token::generate('password-recovery', $this->password_recovery_token_time, $user->id),
-                $request->input('uri')
-            )
-        );
+
+        $mailable = new AuthRecovery(Token::generate(Token::PASSWORD_RECOVERY, $user)->uuid, $request->input('uri'));
+
+        Mail::to($user)->queue($mailable);
+
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);

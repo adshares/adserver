@@ -28,18 +28,12 @@ class AuthRecovery extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $token;
+    protected $tokenId;
     protected $uri;
 
-    /**
-     * Create a new message instance.
-     *
-     * @param string $token
-     * @param string $uri
-     */
-    public function __construct($token, $uri)
+    public function __construct($tokenId, $uri)
     {
-        $this->token = $token;
+        $this->tokenId = $tokenId;
         $this->uri = $uri;
     }
 
@@ -52,7 +46,7 @@ class AuthRecovery extends Mailable
     {
         return $this->markdown('emails.auth-recovery')->with(
             [
-                'token' => $this->token,
+                'token' => $this->tokenId,
                 'uri' => $this->uri,
             ]
         );
