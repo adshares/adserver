@@ -42,12 +42,6 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    protected $password_recovery_resend_limit = 2 * 60; //2 minutes
-
-    protected $password_recovery_token_time = 120 * 60; // 2 hours
-
-    protected $email_activation_resend_limit = 15 * 60; // 15 minutes
-
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
@@ -308,11 +302,15 @@ class AuthController extends Controller
 
     public function recoveryTokenExtend($token): JsonResponse
     {
-        if (Token::extend($token, $this->password_recovery_token_time, null, 'password-recovery')) {
-            return self::json([], Response::HTTP_NO_CONTENT);
+        if (!Token::extend(Token::PASSWORD_RECOVERY, $token)) {
+            return self::json(
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['message' => 'Password recovery token is invalid']
+            );
         }
 
-        return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY, ['message' => 'Password recovery token is invalid']);
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 
     public function updateSelf(Request $request): JsonResponse

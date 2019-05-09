@@ -124,21 +124,22 @@ class Token extends Model
         return $token->toArray();
     }
 
-    public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null): bool
+    public static function extend($tag, string $tokenId): bool
     {
-        $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
-        if (!empty($user_id)) {
-            $q->where('user_id', $user_id);
-        }
+        $q = self::where('uuid', hex2bin($tokenId))->where('valid_until', '>', date('Y-m-d H:i:s'));
+
         if (!empty($tag)) {
             $q->where('tag', $tag);
         }
+
         $token = $q->first();
 
         if (empty($token)) {
             return false;
         }
-        $token->valid_until = date('Y-m-d H:i:s', time() + $seconds_valid);
+
+        $token->valid_until = date('Y-m-d H:i:s', time() + self::VALIDITY_PERIODS[$tag]);
+
         $token->save();
 
         return true;
