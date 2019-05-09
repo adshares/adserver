@@ -39,15 +39,11 @@ final class MysqlStatsQueryBuilderTest extends TestCase
             ."SUM(IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.reason = 0, 1, 0)) AS views,"
             ."IFNULL(AVG(CASE WHEN (e.event_type <> 'view' OR e.event_value_currency IS NULL OR e.reason <> 0)"
             ." THEN NULL WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr,"
-            ."IFNULL(ROUND(AVG(IF(e.event_type = 'click' AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
-            ." e.event_value_currency, NULL))), 0) AS cpc,"
-            ."IFNULL(ROUND(AVG(IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
-            ." e.event_value_currency, NULL))), 0)*1000 AS cpm,"
             ."SUM(IF(e.event_type IN ('click', 'view') AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
             ." e.event_value_currency, 0)) AS cost,"
             ."e.campaign_id AS campaign_id FROM event_logs e "
             ."INNER JOIN campaigns c ON c.uuid = e.campaign_id WHERE c.deleted_at is null "
-            ."GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cpc>0 OR cpm>0 OR cost>0";
+            ."GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR ctr>0 OR cost>0";
 
         $this->assertEquals($expect, $query);
     }
