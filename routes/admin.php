@@ -37,5 +37,3 @@ Route::get('impersonate/{user}', [AuthController::class, 'impersonate']);
 
 Route::get('users', [UsersController::class, 'browse'])
     ->name('app.users.browse');
-Route::get('users/count', [UsersController::class, 'count'])
-    ->name('app.users.count');
