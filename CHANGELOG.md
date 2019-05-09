@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.7.1] - 2019-05-09
 ### Added
 - User impersonation by server admin
 - Recognize fake events in statistics
@@ -123,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.7.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.7.1...develop
+[0.7.1]: https://github.com/adshares/adserver/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/adshares/adserver/compare/v0.6.7...v0.7.0
 [0.6.7]: https://github.com/adshares/adserver/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/adshares/adserver/compare/v0.6.5...v0.6.6
