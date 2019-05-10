@@ -37,7 +37,7 @@ class Impersonation
     {
         $header = $request->header(self::HEADER_NAME);
 
-        if ($header && Auth::user()->isAdmin()) {
+        if ($header && $header !== 'null' && Auth::user()->isAdmin()) {
             $userId = (int)Token::check($header)['payload'];
 
             /** @var User|Authenticatable $user */
