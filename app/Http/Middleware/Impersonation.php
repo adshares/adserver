@@ -22,16 +22,32 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Middleware;
 
+use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-class RequireAdminAccess
+class Impersonation
 {
-    public function handle($request, Closure $next)
+    private const HEADER_NAME = 'x-adshares-impersonation';
+
+    public function handle(Request $request, Closure $next)
     {
-        if (!Auth::user()->isAdmin()) {
-            throw new AccessDeniedHttpException('Forbidden access.');
+        $header = $request->header(self::HEADER_NAME);
+
+        if ($header && Auth::user()->isAdmin()) {
+            $userId = (int)Token::check($header)['payload'];
+
+            /** @var User|Authenticatable $user */
+            $user = User::where('id', $userId)
+                ->where('is_admin', 0)
+                ->first();
+
+            if ($user) {
+                Auth::setUser($user);
+            }
         }
 
         return $next($request);
