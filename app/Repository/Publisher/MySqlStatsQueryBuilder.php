@@ -299,8 +299,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendDomainGroupBy(): self
     {
-        $this->column('e.domain AS domain');
-        $this->groupBy('e.domain');
+        $this->column("IFNULL(e.domain, '') AS domain");
+        $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
     }
