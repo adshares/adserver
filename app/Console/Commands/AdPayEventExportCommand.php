@@ -98,7 +98,8 @@ class AdPayEventExportCommand extends Command
         foreach ($eventsToExport as $event) {
             /** @var $event EventLog */
 
-            if (null !== $event->human_score && null !== $event->our_userdata) {
+            if ($event->event_type === EventLog::TYPE_REQUEST
+                || ($event->human_score !== null && $event->our_userdata !== null)) {
                 continue;
             }
 

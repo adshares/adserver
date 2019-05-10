@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2019-05-09
+### Added
+- User impersonation by server admin
+- Recognize fake events in statistics
+- Columns to statistics report: all views/clicks, invalid views/clicks rate, unique views
+### Changed
+- Formulas for computing CPC, CPM, RPC, RPM. Total cost is used instead of payment for event of particular type
+### Fixed
+- Users' ad expenses are in ADS not in currency
+### Improved
+- AdPay event exporting
+
 ## [0.7.0] - 2019-04-29
 ### Added
 - Currency handling during payments processing
@@ -113,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.7.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.7.1...develop
+[0.7.1]: https://github.com/adshares/adserver/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/adshares/adserver/compare/v0.6.7...v0.7.0
 [0.6.7]: https://github.com/adshares/adserver/compare/v0.6.6...v0.6.7
 [0.6.6]: https://github.com/adshares/adserver/compare/v0.6.5...v0.6.6

@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Ads\Util\AdsConverter;
+use function array_map;
 
 class PublisherReportResponse extends ReportResponse
 {
@@ -33,8 +34,13 @@ class PublisherReportResponse extends ReportResponse
         'Zone Name',
         'Target Domain',
         'Revenue',
+        'All Clicks',
         'Clicks',
+        'Clicks invalid rate',
+        'All Views',
         'Views',
+        'Views invalid rate',
+        'Unique Views',
         'Ctr',
         'AverageRpc',
         'AverageRpm',
@@ -56,8 +62,13 @@ class PublisherReportResponse extends ReportResponse
                     $item['zoneName'],
                     $item['domain'] ?? '',
                     AdsConverter::clicksToAds($item['revenue']),
+                    $item['clicksAll'],
                     $item['clicks'],
+                    $item['clicksInvalidRate'],
+                    $item['impressionsAll'],
                     $item['impressions'],
+                    $item['impressionsInvalidRate'],
+                    $item['impressionsUnique'],
                     $item['ctr'],
                     AdsConverter::clicksToAds($item['averageRpc']),
                     AdsConverter::clicksToAds($item['averageRpm']),

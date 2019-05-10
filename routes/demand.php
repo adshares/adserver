@@ -18,27 +18,34 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-
-use Adshares\Adserver\Http\Controllers\DemandController;
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
-use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\ClassifyController;
+use Adshares\Adserver\Http\Controllers\DemandController;
+use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])->name('demand-inventory');
+Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])
+    ->name('demand-inventory');
 
-Route::get('/view.js', [DemandController::class, 'viewScript'])->name('demand-view.js');
+Route::get('/view.js', [DemandController::class, 'viewScript'])
+    ->name('demand-view.js');
 
-Route::get('/serve/{id}', [DemandController::class, 'serve'])->name('banner-serve');
-Route::get('/view/{id}', [DemandController::class, 'view'])->name('banner-view');
-Route::get('/click/{id}', [DemandController::class, 'click'])->name('banner-click');
-Route::get('/context/{id}', [DemandController::class, 'context'])->name('banner-context');
-Route::get('/payment-details/{transactionId}/{accountAddress}/{date}/{signature}', [DemandController::class, 'paymentDetails']);
+Route::get('/serve/{id}', [DemandController::class, 'serve'])
+    ->name('banner-serve');
+Route::get('/view/{id}', [DemandController::class, 'view'])
+    ->name('banner-view');
+Route::get('/click/{id}', [DemandController::class, 'click'])
+    ->name('banner-click');
+Route::get('/context/{id}', [DemandController::class, 'context'])
+    ->name('banner-context');
+Route::get('/payment-details/{transactionId}/{accountAddress}/{date}/{signature}',
+    [DemandController::class, 'paymentDetails']);
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 # should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
-Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])->name('banner-preview');
+Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])
+    ->name('banner-preview');
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);

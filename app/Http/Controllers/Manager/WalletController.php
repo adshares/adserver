@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -190,6 +191,7 @@ class WalletController extends Controller
 
         $total = $amount + $fee;
 
+        /** @var User $user */
         $user = Auth::user();
 
         if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
@@ -214,11 +216,9 @@ class WalletController extends Controller
             'ledgerEntry' => $ledgerEntry->id,
         ];
 
-        $token = Token::generate('email-approve-withdrawal', 15 * 60, $user->id, $payload);
-
         Mail::to($user)->queue(
             new WithdrawalApproval(
-                config('app.adpanel_url')."/auth/withdrawal-confirmation/$token",
+                Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
                 $amount,
                 $fee,
                 $addressTo->toString()
@@ -271,7 +271,6 @@ class WalletController extends Controller
                 $date = $ledgerItem->created_at->format(DATE_ATOM);
                 $status = (int)$ledgerItem->status;
                 $type = (int)$ledgerItem->type;
-                $txid = $this->getUserLedgerEntryTxid($ledgerItem);
                 $address = $this->getUserLedgerEntryAddress($ledgerItem);
 
                 $items[] = [
@@ -280,7 +279,7 @@ class WalletController extends Controller
                     'type' => $type,
                     'date' => $date,
                     'address' => $address,
-                    'txid' => $txid,
+                    'txid' => $ledgerItem->txid,
                     'id' => $ledgerItem->id,
                 ];
             }
@@ -294,34 +293,14 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    /**
-     * @param $ledgerItem
-     *
-     * @return string
-     */
-    private function getUserLedgerEntryAddress($ledgerItem): ?string
+    private function getUserLedgerEntryAddress(UserLedgerEntry $ledgerItem): ?string
     {
         if ((int)$ledgerItem->amount > 0) {
-            $address = $ledgerItem->address_to;
-        } else {
             $address = $ledgerItem->address_from;
+        } else {
+            $address = $ledgerItem->address_to;
         }
 
         return $address;
-    }
-
-    /**
-     * @param $ledgerItem
-     *
-     * @return null|string
-     */
-    private function getUserLedgerEntryTxid($ledgerItem): ?string
-    {
-        $type = (int)$ledgerItem->type;
-        $txid = (null !== $ledgerItem->txid
-            && ($type === UserLedgerEntry::TYPE_DEPOSIT || $type === UserLedgerEntry::TYPE_WITHDRAWAL))
-            ? $ledgerItem->txid : null;
-
-        return $txid;
     }
 }

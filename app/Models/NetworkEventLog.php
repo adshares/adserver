@@ -182,10 +182,6 @@ class NetworkEventLog extends Model
             return;
         }
 
-        $banner = Banner::fetchBanner($bannerId);
-        $landingUrl = $banner->campaign->landing_url ?? null;
-        $domain = $landingUrl ? DomainReader::domain($landingUrl) : null;
-
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -199,13 +195,14 @@ class NetworkEventLog extends Model
         $log->headers = $headers;
         $log->event_type = $type;
         $log->context = $context->toArray();
-        $log->domain = $domain;
+        $log->domain = DomainReader::domain(Banner::fetchBanner($bannerId)->campaign->landing_url ?? '');
+
         $log->save();
     }
 
     public static function eventClicked(string $caseId): void
     {
-        $a= self::where('case_id', hex2bin($caseId))
+        self::where('case_id', hex2bin($caseId))
             ->where('event_type', self::TYPE_VIEW)
             ->update(['is_view_clicked' => 1]);
     }

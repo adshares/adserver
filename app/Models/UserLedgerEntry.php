@@ -349,7 +349,7 @@ class UserLedgerEntry extends Model
             $user->id,
             $amount,
             self::STATUS_ACCEPTED,
-            self::TYPE_BONUS_EXPENSE
+            self::TYPE_BONUS_INCOME
         )->save();
     }
 

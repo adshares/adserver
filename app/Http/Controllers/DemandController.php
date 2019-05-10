@@ -217,8 +217,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
+        $tid = $request->cookies->get('tid');
+        $trackingId = $tid
+            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
@@ -229,17 +230,18 @@ class DemandController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
+        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $trackingId ?: $ip,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            bin2hex(inet_pton($request->getClientIp())),
+            $ip,
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
@@ -259,8 +261,9 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
+        $tid = $request->cookies->get('tid');
+        $trackingId = $tid
+            ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
 
         $payTo = $request->query->get('pto');
@@ -277,7 +280,7 @@ class DemandController extends Controller
                 '%s/register/%s/%s/%s.htm',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
-                $trackingId,
+                $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
                 Utils::urlSafeBase64Encode(random_bytes(8))
             );
         } else {
@@ -299,17 +302,18 @@ class DemandController extends Controller
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
+        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId,
+            $trackingId ?: $ip,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            bin2hex(inet_pton($request->getClientIp())),
+            $ip,
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
@@ -339,7 +343,7 @@ class DemandController extends Controller
         $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         $response->send();
 
-        $context = Utils::urlSafeBase64Decode($request->query->get('k'));
+        $context = Utils::urlSafeBase64Decode($request->query->get('k') ?? '');
         $decodedContext = json_decode($context);
 
         try {
