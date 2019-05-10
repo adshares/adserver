@@ -80,7 +80,8 @@ class PublisherReportResponse extends ReportResponse
         ],
         'CTR' => [
             'format' => NumberFormat::FORMAT_PERCENTAGE_00,
-            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your zone to the number of total users who viewed it.',
+            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your zone to the number of ' .
+                'total users who viewed it.',
         ],
     ];
 

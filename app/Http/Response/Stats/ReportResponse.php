@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
@@ -109,7 +109,9 @@ abstract class ReportResponse
             }
             if (!empty($prop['fill'])) {
                 $fills[$x] = $prop['fill'];
-                $sheet->getStyle($coordinate)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($fills[$x]);
+                $sheet->getStyle($coordinate)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB($fills[$x]);
             }
             if (!empty($prop['color'])) {
                 $colors[$x] = $prop['color'];
@@ -130,7 +132,9 @@ abstract class ReportResponse
                     $sheet->getStyle($coordinate)->getNumberFormat()->setFormatCode($formats[$x]);
                 }
                 if (!empty($fills[$x])) {
-                    $sheet->getStyle($coordinate)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($fills[$x]);
+                    $sheet->getStyle($coordinate)->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setRGB($fills[$x]);
                 }
                 if (!empty($colors[$x])) {
                     $sheet->getStyle($coordinate)->getFont()->getColor()->setRGB($colors[$x]);

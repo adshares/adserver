@@ -18,13 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Ads\Util\AdsConverter;
-use function array_map;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use function array_map;
 
 class AdvertiserReportResponse extends ReportResponse
 {
@@ -79,7 +79,8 @@ class AdvertiserReportResponse extends ReportResponse
         ],
         'CTR' => [
             'format' => NumberFormat::FORMAT_PERCENTAGE_00,
-            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your ad to the number of total users who viewed it.',
+            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your ad to the number of ' .
+                'total users who viewed it.',
         ],
         'CPC' => [
             'format' => '"$"#,##0.0000_-',
