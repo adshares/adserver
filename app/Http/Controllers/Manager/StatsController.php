@@ -317,8 +317,9 @@ class StatsController extends Controller
         $result = $this->publisherStatsDataProvider->fetchReportData($input);
 
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
+        $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data))->response();
+        return (new PublisherReportResponse($data, $name, config('app.name')))->response();
     }
 
     public function advertiserReport(
@@ -350,8 +351,9 @@ class StatsController extends Controller
         $result = $this->advertiserStatsDataProvider->fetchReportData($input);
 
         $data = $this->transformIdAndFilterNullFromAdvertiserData($result->toArray());
+        $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data))->response();
+        return (new AdvertiserReportResponse($data, $name, config('app.name')))->response();
     }
 
     public function publisherStatsWithTotal(
@@ -503,5 +505,14 @@ class StatsController extends Controller
         $data = array_values(array_filter($data, $this->callbackFilteringNullFromPublisherStats()));
 
         return $data;
+    }
+
+    private function formatReportName(\DateTime $from, \DateTime $to)
+    {
+        return sprintf(
+            '%s_%s',
+            $from->format('Y-m-d'),
+            $to->format('Y-m-d')
+        );
     }
 }

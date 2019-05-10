@@ -21,6 +21,7 @@
         "laravel/framework": "5.7.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
+        "phpoffice/phpspreadsheet": "^1.6",
         "ralouphie/mimey": "^2.1",
         "ramsey/uuid": "^3",
         "symfony/lock": "^4.2"

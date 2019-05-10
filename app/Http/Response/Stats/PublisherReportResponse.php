@@ -24,27 +24,67 @@ namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Ads\Util\AdsConverter;
 use function array_map;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class PublisherReportResponse extends ReportResponse
 {
+
     private const PUBLISHER_COLUMNS = [
-        'Site Id',
-        'Site Name',
-        'Zone Id',
-        'Zone Name',
-        'Target Domain',
-        'Revenue',
-        'All Clicks',
-        'Clicks',
-        'Clicks invalid rate',
-        'All Views',
-        'Views',
-        'Views invalid rate',
-        'Unique Views',
-        'Ctr',
-        'AverageRpc',
-        'AverageRpm',
+        'Site' => [
+            'width' => 24,
+        ],
+        'Zone' => [
+            'width' => 24,
+        ],
+        'Domain' => [
+            'width' => 24,
+        ],
+        'Revenue' => [
+            'format' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
+            'fill' => 'E5F2FF',
+            'color' => '003771',
+        ],
+        'Total views' => [
+            'format' => '#,##0',
+        ],
+        'Views' => [
+            'format' => '#,##0',
+            'comment' => 'Total views excluding rejected ones.',
+            'fill' => 'B8F4B5',
+            'color' => '056100',
+        ],
+        'IVR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Invalid views rate (IVR) is the ratio of rejected views to the number of total views.',
+        ],
+        'Unique views' => [
+            'format' => '#,##0',
+            'comment' => 'Unique views are the number of unique users that views your site.',
+        ],
+        'RPM' => [
+            'format' => '"$"#,##0.0000_-',
+            'comment' => 'Average revenue-per-thousand views (RPM).',
+        ],
+        'Total clicks' => [
+            'format' => '#,##0',
+        ],
+        'Clicks' => [
+            'format' => '#,##0',
+            'comment' => 'Total clicks excluding rejected ones.',
+            'fill' => 'B8F4B5',
+            'color' => '056100',
+        ],
+        'ICR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Invalid clicks rate (ICR) is the ratio of rejected clicks to the number of total clicks.',
+        ],
+        'CTR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your zone to the number of ' .
+                'total users who viewed it.',
+        ],
     ];
+
 
     protected function columns(): array
     {
@@ -56,22 +96,19 @@ class PublisherReportResponse extends ReportResponse
         return array_map(
             static function ($item) {
                 return [
-                    $item['siteId'],
                     $item['siteName'],
-                    $item['zoneId'],
                     $item['zoneName'],
                     $item['domain'] ?? '',
                     AdsConverter::clicksToAds($item['revenue']),
-                    $item['clicksAll'],
-                    $item['clicks'],
-                    $item['clicksInvalidRate'],
                     $item['impressionsAll'],
                     $item['impressions'],
                     $item['impressionsInvalidRate'],
                     $item['impressionsUnique'],
-                    $item['ctr'],
-                    AdsConverter::clicksToAds($item['averageRpc']),
                     AdsConverter::clicksToAds($item['averageRpm']),
+                    $item['clicksAll'],
+                    $item['clicks'],
+                    $item['clicksInvalidRate'],
+                    $item['ctr'],
                 ];
             },
             $this->data
