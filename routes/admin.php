@@ -34,6 +34,7 @@ Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
 Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
 
 Route::get('impersonate/{user}', [AuthController::class, 'impersonate']);
+Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
 
 Route::get('users', [UsersController::class, 'browse'])
     ->name('app.users.browse');
