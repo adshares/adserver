@@ -29,7 +29,6 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class RequireAdminAccess extends Authenticate
 {
-
     public function handle($request, Closure $next, ...$guards)
     {
         if (!Auth::user()->isAdmin()) {
