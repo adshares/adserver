@@ -35,6 +35,8 @@ use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
+    private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
+
     public function fetchView(
         string $publisherId,
         string $resolution,
@@ -419,7 +421,7 @@ class MySqlStatsRepository implements StatsRepository
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),
                 $revenue,
-                $row->domain
+                $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
             $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;

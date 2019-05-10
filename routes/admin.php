@@ -33,14 +33,7 @@ Route::put('terms', [AdminController::class, 'putTerms']);
 Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
 Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
 
-Route::get('impersonate/{user}', [AuthController::class, 'impersonate']);
+Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
 
 Route::get('users', [UsersController::class, 'browse'])
     ->name('app.users.browse');
-
-//    Route::get('users/count', [UsersController::class, 'count'])->name('app.users.count');
-//    Route::get('users/{user_id}', [UsersController::class, 'read'])->name('app.users.read');
-//    Route::post('users', [UsersController::class, 'add'])->name('app.users.add');
-//    Route::put('users/{user_id}', [UsersController::class, 'edit'])->name('app.users.edit');
-//    Route::patch('users/{user_id}', [UsersController::class, 'update'])->name('app.users.update');
-//    Route::delete('users/{user_id}', [UsersController::class, 'delete'])->name('app.users.delete');

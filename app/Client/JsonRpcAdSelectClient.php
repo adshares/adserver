@@ -43,7 +43,7 @@ use Illuminate\Support\Facades\Log;
 use function array_map;
 use function iterator_to_array;
 use function sprintf;
-use function strtoupper;
+use function strtolower;
 
 final class JsonRpcAdSelectClient implements AdSelect
 {
@@ -69,7 +69,7 @@ final class JsonRpcAdSelectClient implements AdSelect
     {
         $zoneIds = array_map(
             function (array $zone) {
-                return $zone['zone'];
+                return strtolower((string)$zone['zone']);
             },
             $zones
         );
@@ -102,7 +102,6 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap, $zoneIds);
-
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
         return new FoundBanners($banners);
@@ -188,7 +187,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         foreach ($zoneIds as $zonePublicIdPassedFromPublisher) {
             $zones[] = $uniqueZones->filter(
                 function (Zone $zone) use ($zonePublicIdPassedFromPublisher) {
-                    return strtoupper($zone->uuid) === strtoupper($zonePublicIdPassedFromPublisher);
+                    return $zone->uuid === $zonePublicIdPassedFromPublisher;
                 }
             )->first();
         }
@@ -223,11 +222,11 @@ final class JsonRpcAdSelectClient implements AdSelect
 
             $bannerIds[$zone->uuid][] = $bannerId;
         }
-        
+
         $orderedBannerIds = [];
-        
+
         foreach ($zoneIds as $zoneId) {
-            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? null;
+            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? [null];
         }
 
         return $orderedBannerIds;

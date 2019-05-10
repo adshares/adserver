@@ -36,6 +36,8 @@ use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
+    private const PLACEHOLDER_FORM_EMPTY_DOMAIN = 'N/A';
+
     public function fetchView(
         string $advertiserId,
         string $resolution,
@@ -420,7 +422,7 @@ class MySqlStatsRepository implements StatsRepository
                 $this->calculateCpc($cost, $clicks),
                 $this->calculateCpm($cost, $views),
                 $cost,
-                $row->domain
+                $row->domain ?: self::PLACEHOLDER_FORM_EMPTY_DOMAIN
             );
 
             $bannerId = ($row->banner_id !== null) ? bin2hex($row->banner_id) : null;

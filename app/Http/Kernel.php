@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Http\Middleware\CamelizeJsonResponse;
+use Adshares\Adserver\Http\Middleware\Impersonation;
 use Adshares\Adserver\Http\Middleware\RequireAdminAccess;
 use Adshares\Adserver\Http\Middleware\RequireGuestAccess;
 use Adshares\Adserver\Http\Middleware\SnakizeRequest;
@@ -40,10 +41,6 @@ class Kernel extends HttpKernel
 {
     private const AUTH = 'auth';
 
-    private const GUEST = 'guest';
-
-    private const ADMIN = 'admin';
-
     public const USER_ACCESS = 'only-authenticated-users';
 
     public const ADMIN_ACCESS = 'only-admin-users';
@@ -61,13 +58,14 @@ class Kernel extends HttpKernel
     protected $middlewareGroups = [
         self::USER_ACCESS => [
             self::AUTH.':api',
+            Impersonation::class,
         ],
         self::GUEST_ACCESS => [
-            self::GUEST.':api',
+            RequireGuestAccess::class,
         ],
         self::ADMIN_ACCESS => [
             self::AUTH.':api',
-            self::ADMIN.':api',
+            RequireAdminAccess::class,
         ],
         self::JSON_API => [
             ValidatePostSize::class,
@@ -75,7 +73,7 @@ class Kernel extends HttpKernel
             ConvertEmptyStringsToNull::class,
             SnakizeRequest::class,
             SubstituteBindings::class,
-            #post
+            #post-handle
             SetCacheHeaders::class,
             CamelizeJsonResponse::class,
         ],
@@ -83,13 +81,12 @@ class Kernel extends HttpKernel
 
     protected $routeMiddleware = [
         self::AUTH => Authenticate::class,
-        self::GUEST => RequireGuestAccess::class,
-        self::ADMIN => RequireAdminAccess::class,
     ];
 
     public function bootstrap()
     {
         parent::bootstrap();
+
         DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }

@@ -23,12 +23,13 @@ namespace Adshares\Adserver\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use function config;
 
 class WithdrawalApproval extends Mailable
 {
     use Queueable, SerializesModels;
 
-    private $url;
+    private $tokenId;
 
     private $amount;
 
@@ -36,9 +37,9 @@ class WithdrawalApproval extends Mailable
 
     private $fee;
 
-    public function __construct($url, $amount, $fee, $target)
+    public function __construct($tokenId, $amount, $fee, $target)
     {
-        $this->url = $url;
+        $this->tokenId = $tokenId;
         $this->amount = $amount;
         $this->target = $target;
         $this->fee = $fee;
@@ -47,13 +48,12 @@ class WithdrawalApproval extends Mailable
     public function build(): self
     {
         $variables = [
-            'url' => $this->url,
+            'url' => config('app.adpanel_url')."/auth/withdrawal-confirmation/{$this->tokenId}",
             'amount' => $this->amount,
             'fee' => $this->fee,
             'target' => $this->target,
         ];
 
-        return $this->markdown('emails.withdrawal-approval')
-            ->with($variables);
+        return $this->markdown('emails.withdrawal-approval')->with($variables);
     }
 }

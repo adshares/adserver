@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * @mixin Builder
+ * @property string uuid
  */
 class Token extends Model
 {
@@ -36,20 +37,38 @@ class Token extends Model
     use BinHex;
     use Serialize;
 
-    /**
-     * The event map for the model.
-     *
-     * @var array
-     */
+    private const VALIDITY_PERIODS = [
+        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_CHANGE_STEP_1 => 3600,
+        self::EMAIL_CHANGE_STEP_2 => 3600,
+        self::PASSWORD_RECOVERY => 3600,
+        self::IMPERSONATION => 24 * 3600,
+        self::EMAIL_APPROVE_WITHDRAWAL => 15 * 60,
+    ];
+
+    private const MINIMAL_AGE_LIMITS = [
+        self::EMAIL_ACTIVATE => 24 * 3600,
+        self::EMAIL_CHANGE_STEP_1 => 5 * 60,
+        self::EMAIL_CHANGE_STEP_2 => 5 * 60,
+        self::PASSWORD_RECOVERY => 2 * 60,
+    ];
+
+    public const EMAIL_ACTIVATE = 'email-activate';
+
+    public const EMAIL_CHANGE_STEP_1 = 'email-change-step1';
+
+    public const EMAIL_CHANGE_STEP_2 = 'email-change-step2';
+
+    public const PASSWORD_RECOVERY = 'password-recovery';
+
+    public const IMPERSONATION = 'impersonation';
+
+    public const EMAIL_APPROVE_WITHDRAWAL = 'email-approve-withdrawal';
+
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'multi_usage',
         'payload',
@@ -58,26 +77,17 @@ class Token extends Model
         'valid_until',
     ];
 
-    /**
-     * The attributes that use some Models\Traits with mutator settings automation.
-     *
-     * @var array
-     */
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'payload' => 'Serialize',
     ];
 
-    /**
-     * Checks if can generate another token for user based on time limit and tag.
-     *
-     * @param int $user_id
-     * @param string $tag
-     * @param int $older_then_seconds
-     *
-     * @return bool
-     */
-    public static function canGenerate(int $user_id, $tag, int $older_then_seconds)
+    public static function canGenerateToken(User $user, string $tag): bool
+    {
+        return self::canGenerate($user->id, $tag, self::MINIMAL_AGE_LIMITS[$tag]);
+    }
+
+    private static function canGenerate(int $user_id, string $tag, int $older_then_seconds): bool
     {
         if (self::where('user_id', $user_id)->where('tag', $tag)->where(
             'created_at',
@@ -90,86 +100,86 @@ class Token extends Model
         return true;
     }
 
-    /**
-     * checks if token is valid, process it (removes if one time use only).
-     *
-     * @param string $uuid
-     * @param int $user_id default null
-     * @param string $tag default null
-     *
-     * @return array
-     */
     public static function check($uuid, int $user_id = null, $tag = null)
     {
         $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
+
         if (!empty($user_id)) {
             $q->where('user_id', $user_id);
         }
+
         if (!empty($tag)) {
             $q->where('tag', $tag);
         }
+
         $token = $q->first();
+
         if (empty($token)) {
             return false;
         }
-        $return = $token->toArray();
-        if ($token->multi_usage) {
-            return $return;
+
+        if (!$token->multi_usage) {
+            $token->delete();
         }
-        $token->delete();
 
         return $token->toArray();
     }
 
-    /**
-     * extend token validation until time, returns true if token was valid and is being extended.
-     *
-     * @param string $uuid
-     * @param int $seconds_valid
-     *
-     * @return bool
-     */
-    public static function extend($uuid, int $seconds_valid, $user_id = null, $tag = null)
+    public static function extend($tag, string $tokenId): bool
     {
-        $q = self::where('uuid', hex2bin($uuid))->where('valid_until', '>', date('Y-m-d H:i:s'));
-        if (!empty($user_id)) {
-            $q->where('user_id', $user_id);
-        }
+        $q = self::where('uuid', hex2bin($tokenId))->where('valid_until', '>', date('Y-m-d H:i:s'));
+
         if (!empty($tag)) {
             $q->where('tag', $tag);
         }
+
         $token = $q->first();
 
         if (empty($token)) {
             return false;
         }
-        $token->valid_until = date('Y-m-d H:i:s', time() + $seconds_valid);
+
+        $token->valid_until = date('Y-m-d H:i:s', time() + self::VALIDITY_PERIODS[$tag]);
+
         $token->save();
 
         return true;
     }
 
-    /**
-     * generates Token and returns token uuid.
-     *
-     * @param string $tag
-     * @param int $valid_until_seconds
-     * @param int $user_id
-     * @param mixed $payload
-     * @param bool $multi_usage
-     *
-     * @return string
-     */
-    public static function generate(
+    public static function generate(string $tag, User $user, array $payload = null): self
+    {
+        return self::generateToken($tag, self::VALIDITY_PERIODS[$tag], $user->id, $payload);
+    }
+
+    private static function generateToken(
         string $tag,
         int $valid_until_seconds,
         int $user_id = null,
         $payload = null,
         bool $multi_usage = false
-    ) {
+    ): self {
         $valid_until = date('Y-m-d H:i:s', time() + $valid_until_seconds);
-        $token = self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
 
-        return $token->uuid;
+        return self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
+    }
+
+    public static function impersonate(User $who, User $asWhom): self
+    {
+        return self::generateToken(
+            self::IMPERSONATION,
+            self::VALIDITY_PERIODS[self::IMPERSONATION],
+            $who->id,
+            $asWhom->id,
+            true
+        );
+    }
+
+    public static function activation(User $user): self
+    {
+        return self::generateToken(
+            self::EMAIL_ACTIVATE,
+            self::VALIDITY_PERIODS[self::EMAIL_ACTIVATE],
+            $user->id
+        );
     }
 }
