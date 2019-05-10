@@ -69,7 +69,7 @@ final class JsonRpcAdSelectClient implements AdSelect
     {
         $zoneIds = array_map(
             function (array $zone) {
-                return strtolower($zone['zone']);
+                return strtolower((string)$zone['zone']);
             },
             $zones
         );
