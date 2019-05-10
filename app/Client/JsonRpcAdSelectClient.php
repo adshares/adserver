@@ -235,11 +235,6 @@ final class JsonRpcAdSelectClient implements AdSelect
     private function fetchInOrderOfAppearance(array $params): Generator
     {
         foreach ($params as $zoneId => $bannerIds) {
-            if (!$bannerIds) {
-                yield null;
-                continue;
-            }
-
             foreach ($bannerIds as $bannerId) {
                 $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
