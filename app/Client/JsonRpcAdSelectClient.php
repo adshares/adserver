@@ -44,7 +44,6 @@ use function array_map;
 use function iterator_to_array;
 use function sprintf;
 use function strtoupper;
-use function var_export;
 
 final class JsonRpcAdSelectClient implements AdSelect
 {
@@ -103,7 +102,6 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $bannerMap, $zoneIds);
-
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
         return new FoundBanners($banners);
@@ -224,9 +222,9 @@ final class JsonRpcAdSelectClient implements AdSelect
 
             $bannerIds[$zone->uuid][] = $bannerId;
         }
-        
+
         $orderedBannerIds = [];
-        
+
         foreach ($zoneIds as $zoneId) {
             $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? null;
         }
@@ -237,7 +235,11 @@ final class JsonRpcAdSelectClient implements AdSelect
     private function fetchInOrderOfAppearance(array $params): Generator
     {
         foreach ($params as $zoneId => $bannerIds) {
-            Log::debug(var_export($bannerIds, true));
+            if (!$bannerIds) {
+                yield null;
+                continue;
+            }
+
             foreach ($bannerIds as $bannerId) {
                 $banner = $bannerId ? NetworkBanner::findByUuid($bannerId) : null;
 
