@@ -227,7 +227,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         $orderedBannerIds = [];
         
         foreach ($zoneIds as $zoneId) {
-            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? null;
+            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? [null];
         }
 
         return $orderedBannerIds;

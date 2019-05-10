@@ -123,7 +123,6 @@ class JsonRpcAdSelectClientTest extends TestCase
             }
         );
 
-
         /** @var $mockJsonRpc JsonRpc */
         $jsonRpcAdSelectClient = new JsonRpcAdSelectClient($mockJsonRpc);
 
@@ -153,5 +152,42 @@ class JsonRpcAdSelectClientTest extends TestCase
         $this->assertEquals($BANNER_UUID_TRIPLE_BILLBOARD, $foundBanners->get(1)['id']);
         
         $this->assertNull($foundBanners->get(2));
+    }
+
+    public function testFindBannersNonExistentZone()
+    {
+        $ZONE_UUID_SINGLE_BILLBOARD = '01';
+
+        $BANNER_UUID_SINGLE_BILLBOARD = '10';
+
+        $mockResult = $this->createMock(Result::class);
+        $mockResult->expects($this->once())->method('toArray')->willReturn(
+            [
+                [
+                    'banner_id' => $BANNER_UUID_SINGLE_BILLBOARD,
+                    'request_id' => 0,
+                ],
+            ]
+        );
+
+        $mockJsonRpc = $this->createMock(JsonRpc::class);
+        $mockJsonRpc->expects($this->once())->method('call')->willReturnCallback(
+            function () use ($mockResult) {
+                return $mockResult;
+            }
+        );
+
+        /** @var $mockJsonRpc JsonRpc */
+        $jsonRpcAdSelectClient = new JsonRpcAdSelectClient($mockJsonRpc);
+
+        $requestedZones = [
+            ['zone' => $ZONE_UUID_SINGLE_BILLBOARD],
+        ];
+
+        $context = new ImpressionContext([], [], ['keywords' => []]);
+        $foundBanners = $jsonRpcAdSelectClient->findBanners($requestedZones, $context);
+
+        $this->assertCount(1, $foundBanners);
+        $this->assertNull($foundBanners->get(0));
     }
 }
