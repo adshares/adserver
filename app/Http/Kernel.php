@@ -90,6 +90,7 @@ class Kernel extends HttpKernel
     public function bootstrap()
     {
         parent::bootstrap();
+
         DatabaseConfigReader::overwriteAdministrationConfig();
     }
 }

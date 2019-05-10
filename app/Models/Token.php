@@ -162,13 +162,13 @@ class Token extends Model
         return self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
     }
 
-    public static function impersonation(User $user): self
+    public static function impersonate(User $who, User $asWhom): self
     {
         return self::generateToken(
             self::IMPERSONATION,
             self::VALIDITY_PERIODS[self::IMPERSONATION],
-            $user->id,
-            null,
+            $who->id,
+            $asWhom->id,
             true
         );
     }

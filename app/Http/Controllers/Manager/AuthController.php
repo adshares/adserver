@@ -245,7 +245,7 @@ class AuthController extends Controller
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $token = Token::impersonation($user);
+        $token = Token::impersonate(Auth::user(), $user);
 
         return self::json($token->uuid);
     }
