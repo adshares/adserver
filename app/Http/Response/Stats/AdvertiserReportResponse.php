@@ -24,26 +24,67 @@ namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Ads\Util\AdsConverter;
 use function array_map;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class AdvertiserReportResponse extends ReportResponse
 {
     private const ADVERTISER_COLUMNS = [
-        'Campaign Id',
-        'Campaign Name',
-        'Banner Id',
-        'Banner Name',
-        'Target Domain',
-        'Cost',
-        'All Clicks',
-        'Clicks',
-        'Clicks invalid rate',
-        'All Views',
-        'Views',
-        'Views invalid rate',
-        'Unique Views',
-        'Ctr',
-        'AverageCpc',
-        'AverageCpm',
+        'Campaign' => [
+            'width' => 24,
+        ],
+        'Banner' => [
+            'width' => 24,
+        ],
+        'Domain' => [
+            'width' => 24,
+        ],
+        'Cost' => [
+            'format' => NumberFormat::FORMAT_CURRENCY_USD_SIMPLE,
+            'fill' => 'E5F2FF',
+            'color' => '003771',
+        ],
+        'Total views' => [
+            'format' => '#,##0',
+        ],
+        'Views' => [
+            'format' => '#,##0',
+            'comment' => 'Total views excluding rejected ones.',
+            'fill' => 'B8F4B5',
+            'color' => '056100',
+        ],
+        'IVR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Invalid views rate (IVR) is the ratio of rejected views to the number of total views.',
+        ],
+        'Unique views' => [
+            'format' => '#,##0',
+            'comment' => 'Unique views are the number of unique users that views your campaign.',
+        ],
+        'CPM' => [
+            'format' => '"$"#,##0.0000_-',
+            'comment' => 'Average cost-per-thousand views (CPM).',
+        ],
+        'Total clicks' => [
+            'format' => '#,##0',
+        ],
+        'Clicks' => [
+            'format' => '#,##0',
+            'comment' => 'Total clicks excluding rejected ones.',
+            'fill' => 'B8F4B5',
+            'color' => '056100',
+        ],
+        'ICR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Invalid clicks rate (ICR) is the ratio of rejected clicks to the number of total clicks.',
+        ],
+        'CTR' => [
+            'format' => NumberFormat::FORMAT_PERCENTAGE_00,
+            'comment' => 'Click-through rate (CTR) is the ratio of users who clicked on your ad to the number of total users who viewed it.',
+        ],
+        'CPC' => [
+            'format' => '"$"#,##0.0000_-',
+            'comment' => 'Average cost-per-click (CPC).',
+        ],
     ];
 
     protected function columns(): array
@@ -56,22 +97,20 @@ class AdvertiserReportResponse extends ReportResponse
         return array_map(
             static function ($item) {
                 return [
-                    $item['campaignId'],
                     $item['campaignName'],
-                    $item['bannerId'],
                     $item['bannerName'],
                     $item['domain'] ?? '',
                     AdsConverter::clicksToAds($item['cost']),
-                    $item['clicksAll'],
-                    $item['clicks'],
-                    $item['clicksInvalidRate'],
                     $item['impressionsAll'],
                     $item['impressions'],
                     $item['impressionsInvalidRate'],
                     $item['impressionsUnique'],
+                    AdsConverter::clicksToAds($item['averageCpm']),
+                    $item['clicksAll'],
+                    $item['clicks'],
+                    $item['clicksInvalidRate'],
                     $item['ctr'],
                     AdsConverter::clicksToAds($item['averageCpc']),
-                    AdsConverter::clicksToAds($item['averageCpm']),
                 ];
             },
             $this->data
