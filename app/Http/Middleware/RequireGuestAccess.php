@@ -27,9 +27,9 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class RequireGuestAccess
 {
-    public function handle($request, Closure $next, $guard = null)
+    public function handle($request, Closure $next)
     {
-        if (Auth::guard($guard)->check()) {
+        if (Auth::check()) {
             return Response::json(
                 [
                     'errors' => ['message' => 'You cannot be logged in for this action.'],
