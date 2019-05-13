@@ -36,7 +36,7 @@ use DateTimeZone;
 
 class MySqlStatsRepository implements StatsRepository
 {
-    private const PLACEHOLDER_FORM_EMPTY_DOMAIN = 'N/A';
+    private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
 
     public function fetchView(
         string $advertiserId,
@@ -300,15 +300,20 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStats(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendCampaignIdGroupBy();
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        } else {
+            $queryBuilder->appendAdvertiserIdGroupBy();
+        }
 
         if ($campaignId) {
             $queryBuilder
@@ -335,21 +340,25 @@ class MySqlStatsRepository implements StatsRepository
             );
 
             $bannerId = ($campaignId !== null) ? bin2hex($row->banner_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId);
+            $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($row->advertiser_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
         }
 
         return new DataCollection($result);
     }
 
     public function fetchStatsTotal(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        }
 
         if ($campaignId) {
             $queryBuilder
@@ -382,17 +391,22 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
-            ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
             ->appendBannerIdGroupBy();
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        } else {
+            $queryBuilder->appendAdvertiserIdGroupBy();
+        }
 
         if ($campaignId) {
             $queryBuilder->appendCampaignIdWhereClause($campaignId);
@@ -422,11 +436,12 @@ class MySqlStatsRepository implements StatsRepository
                 $this->calculateCpc($cost, $clicks),
                 $this->calculateCpm($cost, $views),
                 $cost,
-                $row->domain ?: self::PLACEHOLDER_FORM_EMPTY_DOMAIN
+                $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
             $bannerId = ($row->banner_id !== null) ? bin2hex($row->banner_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId);
+            $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($row->advertiser_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
         }
 
         return new DataCollection($result);

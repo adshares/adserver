@@ -299,15 +299,20 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStats(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendSiteIdGroupBy();
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        } else {
+            $queryBuilder->appendPublisherIdGroupBy();
+        }
 
         if ($siteId) {
             $queryBuilder
@@ -334,21 +339,25 @@ class MySqlStatsRepository implements StatsRepository
             );
 
             $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
+            $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
         }
 
         return new DataCollection($result);
     }
 
     public function fetchStatsTotal(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
-                ->setPublisherId($publisherId)
-                ->setDateRange($dateStart, $dateEnd);
+            ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        }
 
         if ($siteId) {
             $queryBuilder
@@ -381,17 +390,22 @@ class MySqlStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
         $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
-            ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendSiteIdGroupBy()
             ->appendZoneIdGroupBy();
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        } else {
+            $queryBuilder->appendPublisherIdGroupBy();
+        }
 
         if ($siteId) {
             $queryBuilder->appendSiteIdWhereClause($siteId);
@@ -425,7 +439,8 @@ class MySqlStatsRepository implements StatsRepository
             );
 
             $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId);
+            $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
+            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
         }
 
         return new DataCollection($result);

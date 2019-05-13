@@ -181,6 +181,14 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
+    public function appendPublisherIdGroupBy(): self
+    {
+        $this->column('e.publisher_id AS publisher_id');
+        $this->groupBy('e.publisher_id');
+
+        return $this;
+    }
+
     public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
     {
         $this->where(

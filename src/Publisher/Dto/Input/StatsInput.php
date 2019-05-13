@@ -26,7 +26,7 @@ use DateTime;
 
 class StatsInput
 {
-    /** @var string */
+    /** @var string|null */
     private $publisherId;
 
     /** @var DateTime */
@@ -39,7 +39,7 @@ class StatsInput
     private $siteId;
 
     public function __construct(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -58,7 +58,7 @@ class StatsInput
         $this->dateEnd = $dateEnd;
     }
 
-    public function getPublisherId(): string
+    public function getPublisherId(): ?string
     {
         return $this->publisherId;
     }
