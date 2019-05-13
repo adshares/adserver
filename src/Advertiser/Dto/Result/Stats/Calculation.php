@@ -42,17 +42,13 @@ class Calculation
     /** @var int */
     private $cost;
 
-    /** @var string|null */
-    private $domain;
-
     public function __construct(
         int $clicks,
         int $impressions,
         float $ctr,
         int $averageCpc,
         int $averageCpm,
-        int $cost,
-        ?string $domain = null
+        int $cost
     ) {
         $this->clicks = $clicks;
         $this->impressions = $impressions;
@@ -60,12 +56,11 @@ class Calculation
         $this->averageCpc = $averageCpc;
         $this->averageCpm = $averageCpm;
         $this->cost = $cost;
-        $this->domain = $domain;
     }
 
     public function toArray(): array
     {
-        $data = [
+        return [
             'clicks' => $this->clicks,
             'impressions' => $this->impressions,
             'ctr' => $this->ctr,
@@ -73,11 +68,5 @@ class Calculation
             'averageCpm' => $this->averageCpm,
             'cost' => $this->cost,
         ];
-
-        if ($this->domain) {
-            $data['domain'] = $this->domain;
-        }
-
-        return $data;
     }
 }
