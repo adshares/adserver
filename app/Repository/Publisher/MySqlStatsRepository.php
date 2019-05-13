@@ -327,7 +327,7 @@ class MySqlStatsRepository implements StatsRepository
             $calculation = new Calculation(
                 $clicks,
                 $views,
-                (float)$row->ctr,
+                $this->calculateCtr($clicks, $views),
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),
                 $revenue
@@ -368,7 +368,7 @@ class MySqlStatsRepository implements StatsRepository
             $calculation = new Calculation(
                 $clicks,
                 $views,
-                (float)$row->ctr,
+                $this->calculateCtr($clicks, $views),
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),
                 $revenue
@@ -417,7 +417,7 @@ class MySqlStatsRepository implements StatsRepository
                 $viewsAll,
                 $this->calculateInvalidRate($viewsAll, $views),
                 (int)$row->viewsUnique,
-                (float)$row->ctr,
+                $this->calculateCtr($clicks, $views),
                 $this->calculateRpc($revenue, $clicks),
                 $this->calculateRpm($revenue, $views),
                 $revenue,
@@ -676,6 +676,11 @@ class MySqlStatsRepository implements StatsRepository
     private function calculateRpm(int $revenue, int $views): int
     {
         return (0 === $views) ? 0 : (int)round($revenue / $views * 1000);
+    }
+
+    private function calculateCtr(int $clicks, int $views): float
+    {
+        return (0 === $views) ? 0 : $clicks / $views;
     }
 
     private function calculateInvalidRate(int $totalCount, int $validCount): float

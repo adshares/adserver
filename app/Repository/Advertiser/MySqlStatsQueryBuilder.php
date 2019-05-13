@@ -134,7 +134,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     private function selectBaseStatsColumns(): void
     {
         $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.reason = 0';
-        $filterEventInvalid = 'OR e.event_value_currency IS NULL OR e.reason <> 0';
 
         $this->column(
             sprintf(
@@ -145,15 +144,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         );
         $this->column(
             sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", EventLog::TYPE_VIEW, $filterEventValid)
-        );
-        $this->column(
-            sprintf(
-                'IFNULL(AVG(CASE '
-                ."WHEN (e.event_type <> '%s' %s) THEN NULL "
-                .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
-                EventLog::TYPE_VIEW,
-                $filterEventInvalid
-            )
         );
         $this->column(
             sprintf(
@@ -288,7 +278,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->groupBy('e.campaign_id');
         $this->having('clicks>0');
         $this->having('views>0');
-        $this->having('ctr>0');
         $this->having('cost>0');
 
         if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
