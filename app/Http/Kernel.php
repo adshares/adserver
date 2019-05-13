@@ -43,6 +43,8 @@ class Kernel extends HttpKernel
 
     public const USER_ACCESS = 'only-authenticated-users';
 
+    public const ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION = 'only-authenticated-users-except-impersonation';
+
     public const ADMIN_ACCESS = 'only-admin-users';
 
     public const GUEST_ACCESS = 'only-guest-users';
@@ -59,6 +61,9 @@ class Kernel extends HttpKernel
         self::USER_ACCESS => [
             self::AUTH.':api',
             Impersonation::class,
+        ],
+        self::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION => [
+            self::AUTH.':api',
         ],
         self::GUEST_ACCESS => [
             RequireGuestAccess::class,

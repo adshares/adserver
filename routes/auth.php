@@ -31,10 +31,13 @@ Route::middleware(Kernel::USER_ACCESS)->group(function () {
     Route::get('email/confirm2New/{token}', [AuthController::class, 'emailChangeStep3']);
 
     Route::get('check', [AuthController::class, 'check']);
-    Route::get('logout', [AuthController::class, 'logout']);
 
     Route::patch('self', [AuthController::class, 'updateSelf']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
+});
+
+Route::middleware(Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION)->group(function () {
+    Route::get('logout', [AuthController::class, 'logout']);
 });
 
 Route::middleware(Kernel::GUEST_ACCESS)->group(function () {
