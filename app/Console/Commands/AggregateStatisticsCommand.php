@@ -33,7 +33,7 @@ class AggregateStatisticsCommand extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:stats:aggregate {--hour=}';
+    protected $signature = 'ops:stats:aggregate {--A|advertiser} {--P|publisher} {--hour=}';
 
     protected $description = 'Aggregates events data for statistics';
 
@@ -60,7 +60,7 @@ class AggregateStatisticsCommand extends Command
         $hour = $this->option('hour');
         if ($hour !== null) {
             if (false === ($from = DateTime::createFromFormat(DateTime::ATOM, $hour))) {
-                $this->error(sprintf('[Cache statistics] Invalid hour option format "%s"', $hour));
+                $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
 
                 return;
             }
@@ -72,14 +72,29 @@ class AggregateStatisticsCommand extends Command
 
         $this->info(
             sprintf(
-                '[Cache statistics] Processes events from %s to %s',
+                '[Aggregate statistics] Processes events from %s to %s',
                 $from->format(DateTime::ATOM),
                 $to->format(DateTime::ATOM)
             )
         );
 
-        $this->advertiserStatsRepository->aggregateStatistics($from, $to);
-        $this->publisherStatsRepository->aggregateStatistics($from, $to);
+        $processAdvertiserEvents = $this->option('advertiser');
+        $processPublisherEvents = $this->option('publisher');
+
+        if (!$processAdvertiserEvents && !$processPublisherEvents) {
+            $processAdvertiserEvents = true;
+            $processPublisherEvents = true;
+        }
+        
+        if ($processAdvertiserEvents) {
+            $this->info('[Aggregate statistics] Processing advertiser events');
+            $this->advertiserStatsRepository->aggregateStatistics($from, $to);
+        }
+
+        if ($processPublisherEvents) {
+            $this->info('[Aggregate statistics] Processing publisher events');
+            $this->publisherStatsRepository->aggregateStatistics($from, $to);
+        }
 
         $this->info('End command '.$this->signature);
     }
