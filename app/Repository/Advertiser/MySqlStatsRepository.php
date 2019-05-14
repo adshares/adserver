@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
@@ -445,6 +446,35 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return new DataCollection($result);
+    }
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    {
+        $cacheTable = 'event_logs_hourly';
+
+        $deleteQuery = sprintf(
+            "DELETE FROM %s WHERE hour_timestamp='%s'",
+            $cacheTable,
+            MySqlQueryBuilder::convertDateTimeToMySqlDate($dateStart)
+        );
+        $this->executeQuery($deleteQuery, $dateStart);
+
+        $subQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendDomainGroupBy()
+            ->appendCampaignIdGroupBy()
+            ->appendBannerIdGroupBy()
+            ->appendAdvertiserIdGroupBy()
+            ->selectDateStartColumn($dateStart)
+            ->build();
+
+        $query = 'INSERT INTO '
+            .$cacheTable
+            .' (`clicks`,`views`,`cost`,`clicksAll`,`viewsAll`,`viewsUnique`,'
+            .'`domain`,`campaign_id`,`banner_id`,`advertiser_id`,`hour_timestamp`)'
+            .$subQuery;
+
+        $this->executeQuery($query, $dateStart);
     }
 
     private function fetch(

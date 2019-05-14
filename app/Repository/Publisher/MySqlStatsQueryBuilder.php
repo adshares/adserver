@@ -202,9 +202,11 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    private function convertDateTimeToMySqlDate(DateTime $dateTime): string
+    public function selectDateStartColumn(DateTime $dateStart): self
     {
-        return $dateTime->format('Y-m-d H:i:s');
+        $this->column(sprintf("'%s' AS start_date", $this->convertDateTimeToMySqlDate($dateStart)));
+
+        return $this;
     }
 
     public function appendResolution(string $resolution): self

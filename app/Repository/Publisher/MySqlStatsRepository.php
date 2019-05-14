@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
@@ -30,6 +31,7 @@ use Adshares\Publisher\Dto\Result\Stats\DataEntry;
 use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
+use function bin2hex;
 use DateTime;
 use DateTimeZone;
 
@@ -444,6 +446,35 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         return new DataCollection($result);
+    }
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    {
+        $cacheTable = 'network_event_logs_hourly';
+
+        $deleteQuery = sprintf(
+            "DELETE FROM %s WHERE hour_timestamp='%s'",
+            $cacheTable,
+            MySqlQueryBuilder::convertDateTimeToMySqlDate($dateStart)
+        );
+        $this->executeQuery($deleteQuery, $dateStart);
+
+        $subQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendDomainGroupBy()
+            ->appendSiteIdGroupBy()
+            ->appendZoneIdGroupBy()
+            ->appendPublisherIdGroupBy()
+            ->selectDateStartColumn($dateStart)
+            ->build();
+
+        $query = 'INSERT INTO '
+            .$cacheTable
+            .' (`clicks`,`views`,`revenue`,`clicksAll`,`viewsAll`,`viewsUnique`,'
+            .'`domain`,`site_id`,`zone_id`,`publisher_id`,`hour_timestamp`)'
+            .$subQuery;
+
+        $this->executeQuery($query, $dateStart);
     }
 
     private function fetch(

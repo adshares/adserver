@@ -158,4 +158,6 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection;
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
 }

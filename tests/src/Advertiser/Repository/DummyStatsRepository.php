@@ -254,4 +254,9 @@ class DummyStatsRepository implements StatsRepository
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
     }
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    {
+        // TODO: Implement cacheStatistics() method.
+    }
 }

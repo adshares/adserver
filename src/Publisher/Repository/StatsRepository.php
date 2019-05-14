@@ -23,8 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Publisher\Repository;
 
 use Adshares\Publisher\Dto\Result\ChartResult;
-use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
+use Adshares\Publisher\Dto\Result\Stats\Total;
 use DateTime;
 
 interface StatsRepository
@@ -158,4 +158,6 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection;
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
 }
