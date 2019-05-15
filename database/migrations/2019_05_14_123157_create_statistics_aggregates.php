@@ -79,15 +79,15 @@ class CreateStatisticsAggregates extends Migration
     {
         $result = DB::select(sprintf('SELECT created_at FROM %s ORDER BY created_at ASC LIMIT 1', $tableName));
         if (count($result) > 0) {
-            $dt = DateUtils::getDateTimeRoundedToCurrentHour(
+            $processedHour = DateUtils::getDateTimeRoundedToCurrentHour(
                 DateTime::createFromFormat('Y-m-d H:i:s', $result[0]->created_at)
             );
 
-            $now = DateUtils::getDateTimeRoundedToCurrentHour();
+            $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
 
-            while ($dt < $now) {
-                Artisan::call('ops:stats:aggregate', [$commandSwitch => true, '--hour' => $dt->format(DateTime::ATOM)]);
-                $dt->modify('+1 hour');
+            while ($processedHour < $currentHour) {
+                Artisan::call('ops:stats:aggregate', [$commandSwitch => true, '--hour' => $processedHour->format(DateTime::ATOM)]);
+                $processedHour->modify('+1 hour');
             }
         }
     }
