@@ -84,8 +84,8 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_VIEW_INVALID_RATE,
+        $resultTotalCount = $this->fetch(
+            StatsRepository::TYPE_VIEW_ALL,
             $publisherId,
             $resolution,
             $dateStart,
@@ -93,8 +93,24 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        foreach ($result as &$row) {
-            $row[1] = (float)$row[1];
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_VIEW,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateInvalidRate((int)$resultTotalCount[$i][1], (int)$resultCount[$i][1]),
+            ];
         }
 
         return new ChartResult($result);
@@ -164,8 +180,8 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_CLICK_INVALID_RATE,
+        $resultTotalCount = $this->fetch(
+            StatsRepository::TYPE_CLICK_ALL,
             $publisherId,
             $resolution,
             $dateStart,
@@ -173,8 +189,24 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        foreach ($result as &$row) {
-            $row[1] = (float)$row[1];
+        $resultCount = $this->fetch(
+            StatsRepository::TYPE_CLICK,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultCount);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultCount[$i][0],
+                $this->calculateInvalidRate((int)$resultTotalCount[$i][1], (int)$resultCount[$i][1]),
+            ];
         }
 
         return new ChartResult($result);
@@ -284,8 +316,8 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
-            StatsRepository::TYPE_CTR,
+        $resultClicks = $this->fetch(
+            StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
             $dateStart,
@@ -293,8 +325,24 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        foreach ($result as &$row) {
-            $row[1] = (float)$row[1];
+        $resultViews = $this->fetch(
+            StatsRepository::TYPE_VIEW,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $result = [];
+
+        $rowCount = count($resultViews);
+
+        for ($i = 0; $i < $rowCount; $i++) {
+            $result[] = [
+                $resultViews[$i][0],
+                $this->calculateCtr((int)$resultClicks[$i][1], (int)$resultViews[$i][1]),
+            ];
         }
 
         return new ChartResult($result);
