@@ -1,10 +1,8 @@
 <?php
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Utilities\DateUtils;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 
 class CreateStatisticsAggregates extends Migration
@@ -64,31 +62,11 @@ class CreateStatisticsAggregates extends Migration
             DB::statement(sprintf('ALTER TABLE %s MODIFY site_id varbinary(16)', self::TABLE_NETWORK_EVENT_LOGS));
             DB::statement(sprintf('ALTER TABLE %s MODIFY zone_id varbinary(16)', self::TABLE_NETWORK_EVENT_LOGS));
         }
-
-        $this->aggregateLegacyEventsInLoop('event_logs', '-A');
-        $this->aggregateLegacyEventsInLoop('network_event_logs', '-P');
     }
 
     public function down(): void
     {
         Schema::dropIfExists(self::TABLE_EVENT_LOGS);
         Schema::dropIfExists(self::TABLE_NETWORK_EVENT_LOGS);
-    }
-
-    private function aggregateLegacyEventsInLoop(string $tableName, string $commandSwitch): void
-    {
-        $result = DB::select(sprintf('SELECT created_at FROM %s ORDER BY created_at ASC LIMIT 1', $tableName));
-        if (count($result) > 0) {
-            $processedHour = DateUtils::getDateTimeRoundedToCurrentHour(
-                DateTime::createFromFormat('Y-m-d H:i:s', $result[0]->created_at)
-            );
-
-            $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
-
-            while ($processedHour < $currentHour) {
-                Artisan::call('ops:stats:aggregate', [$commandSwitch => true, '--hour' => $processedHour->format(DateTime::ATOM)]);
-                $processedHour->modify('+1 hour');
-            }
-        }
     }
 }
