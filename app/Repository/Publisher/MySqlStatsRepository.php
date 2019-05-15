@@ -354,7 +354,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setDateRange($dateStart, $dateEnd)
             ->appendSiteIdGroupBy();
 
@@ -402,7 +402,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setDateRange($dateStart, $dateEnd);
 
         if (null !== $publisherId) {
@@ -445,7 +445,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendSiteIdGroupBy()
@@ -534,7 +534,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId,
         ?string $zoneId = null
     ): array {
-        $queryBuilder = (new MySqlStatsQueryBuilder($type))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendResolution($resolution);

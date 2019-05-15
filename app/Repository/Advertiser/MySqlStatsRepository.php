@@ -354,7 +354,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setDateRange($dateStart, $dateEnd)
             ->appendCampaignIdGroupBy();
 
@@ -402,7 +402,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
             ->setDateRange($dateStart, $dateEnd);
 
         if (null !== $advertiserId) {
@@ -445,7 +445,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
@@ -534,7 +534,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $campaignId,
         ?string $bannerId = null
     ): array {
-        $queryBuilder = (new MySqlStatsQueryBuilder($type))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
             ->appendResolution($resolution);
