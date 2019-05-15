@@ -29,9 +29,9 @@ class CreateStatisticsAggregates extends Migration
                 $table->bigInteger('cost')->nullable(false);
                 $table->unsignedInteger('clicks')->nullable(false);
                 $table->unsignedInteger('views')->nullable(false);
-                $table->unsignedInteger('clicksAll')->nullable(false);
-                $table->unsignedInteger('viewsAll')->nullable(false);
-                $table->unsignedInteger('viewsUnique')->nullable(false);
+                $table->unsignedInteger('clicks_all')->nullable(false);
+                $table->unsignedInteger('views_all')->nullable(false);
+                $table->unsignedInteger('views_unique')->nullable(false);
             }
         );
 
@@ -49,9 +49,9 @@ class CreateStatisticsAggregates extends Migration
                 $table->bigInteger('revenue')->nullable(false);
                 $table->unsignedInteger('clicks')->nullable(false);
                 $table->unsignedInteger('views')->nullable(false);
-                $table->unsignedInteger('clicksAll')->nullable(false);
-                $table->unsignedInteger('viewsAll')->nullable(false);
-                $table->unsignedInteger('viewsUnique')->nullable(false);
+                $table->unsignedInteger('clicks_all')->nullable(false);
+                $table->unsignedInteger('views_all')->nullable(false);
+                $table->unsignedInteger('views_unique')->nullable(false);
             }
         );
 

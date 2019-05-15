@@ -470,7 +470,7 @@ class MySqlStatsRepository implements StatsRepository
 
         $query = 'INSERT INTO '
             .$cacheTable
-            .' (`clicks`,`views`,`revenue`,`clicksAll`,`viewsAll`,`viewsUnique`,'
+            .' (`clicks`,`views`,`revenue`,`clicks_all`,`views_all`,`views_unique`,'
             .'`domain`,`site_id`,`zone_id`,`publisher_id`,`hour_timestamp`)'
             .$subQuery;
 
