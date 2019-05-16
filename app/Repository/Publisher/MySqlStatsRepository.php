@@ -790,12 +790,12 @@ class MySqlStatsRepository implements StatsRepository
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
 
-    private function getDataEntriesWithoutEvents(array $queryResult, array $allZonesResult, ?string $publisherId): array
+    private function getDataEntriesWithoutEvents(array $queryResult, array $allZones, ?string $publisherId): array
     {
         $result = [];
 
-        foreach ($allZonesResult as $allZoneResult) {
-            $binaryZoneId = $allZoneResult->zone_id;
+        foreach ($allZones as $zone) {
+            $binaryZoneId = $zone->zone_id;
             $isZonePresent = false;
 
             foreach ($queryResult as $row) {
@@ -808,11 +808,11 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isZonePresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedPublisherId = ($publisherId === null) ? bin2hex($allZoneResult->user_id) : null;
+                $selectedPublisherId = ($publisherId === null) ? bin2hex($zone->user_id) : null;
                 $result[] =
                     new DataEntry(
                         $calculation,
-                        bin2hex($allZoneResult->site_id),
+                        bin2hex($zone->site_id),
                         bin2hex($binaryZoneId),
                         $selectedPublisherId
                     );

@@ -792,13 +792,13 @@ class MySqlStatsRepository implements StatsRepository
 
     private function getDataEntriesWithoutEvents(
         array $queryResult,
-        array $allBannersResult,
+        array $allBanners,
         ?string $advertiserId
     ): array {
         $result = [];
 
-        foreach ($allBannersResult as $allBannerResult) {
-            $binaryBannerId = $allBannerResult->banner_id;
+        foreach ($allBanners as $banner) {
+            $binaryBannerId = $banner->banner_id;
             $isBannerPresent = false;
 
             foreach ($queryResult as $row) {
@@ -811,11 +811,11 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isBannerPresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($allBannerResult->advertiser_id) : null;
+                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->advertiser_id) : null;
                 $result[] =
                     new DataEntry(
                         $calculation,
-                        bin2hex($allBannerResult->campaign_id),
+                        bin2hex($banner->campaign_id),
                         bin2hex($binaryBannerId),
                         $selectedAdvertiserId
                     );
