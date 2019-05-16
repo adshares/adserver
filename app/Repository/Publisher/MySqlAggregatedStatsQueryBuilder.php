@@ -46,6 +46,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     public function __construct(string $type)
     {
         $this->selectBaseColumns($type);
+        $this->withoutRemovedSites();
 
         parent::__construct($type);
     }
@@ -104,6 +105,12 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->column('SUM(e.clicks_all) AS clicksAll');
         $this->column('SUM(e.views_all) AS viewsAll');
         $this->column('SUM(e.views_unique) AS viewsUnique');
+    }
+
+    private function withoutRemovedSites(): void
+    {
+        $this->join('sites s', 's.uuid = e.site_id');
+        $this->where('s.deleted_at IS NULL');
     }
 
     public function setPublisherId(string $publisherId): self

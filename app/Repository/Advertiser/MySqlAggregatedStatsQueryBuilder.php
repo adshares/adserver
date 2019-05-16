@@ -46,6 +46,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     public function __construct(string $type)
     {
         $this->selectBaseColumns($type);
+        $this->withoutRemovedCampaigns();
 
         parent::__construct($type);
     }
@@ -104,6 +105,12 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->column('SUM(e.clicks_all) AS clicksAll');
         $this->column('SUM(e.views_all) AS viewsAll');
         $this->column('SUM(e.views_unique) AS viewsUnique');
+    }
+
+    private function withoutRemovedCampaigns(): void
+    {
+        $this->join('campaigns c', 'c.uuid = e.campaign_id');
+        $this->where('c.deleted_at IS NULL');
     }
 
     public function setAdvertiserId(string $advertiserId): self
