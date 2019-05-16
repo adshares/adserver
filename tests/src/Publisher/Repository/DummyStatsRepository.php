@@ -202,7 +202,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStats(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -234,7 +234,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsTotal(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
@@ -245,11 +245,16 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
+    }
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    {
+        // TODO: Implement cacheStatistics() method.
     }
 }
