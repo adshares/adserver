@@ -25,11 +25,17 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 
 class UsersController extends Controller
 {
-    public function browse(): LengthAwarePaginator
+    public function browse(Request $request): LengthAwarePaginator
     {
+        $query = $request->get('q');
+        if ($query) {
+            return User::where('email', 'LIKE', '%'.$query.'%')->paginate();
+        }
+
         return User::paginate();
     }
 }
