@@ -84,7 +84,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): ChartResult {
-        $resultTotalCount = $this->fetch(
+        $resultViewsAll = $this->fetch(
             StatsRepository::TYPE_VIEW_ALL,
             $advertiserId,
             $resolution,
@@ -93,7 +93,7 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
-        $resultCount = $this->fetch(
+        $resultViews = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $advertiserId,
             $resolution,
@@ -104,12 +104,12 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
 
-        $rowCount = count($resultCount);
+        $rowCount = count($resultViews);
 
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
-                $resultCount[$i][0],
-                $this->calculateInvalidRate((int)$resultTotalCount[$i][1], (int)$resultCount[$i][1]),
+                $resultViews[$i][0],
+                $this->calculateInvalidRate((int)$resultViewsAll[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -180,7 +180,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): ChartResult {
-        $resultTotalCount = $this->fetch(
+        $resultClicksAll = $this->fetch(
             StatsRepository::TYPE_CLICK_ALL,
             $advertiserId,
             $resolution,
@@ -189,7 +189,7 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
-        $resultCount = $this->fetch(
+        $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $advertiserId,
             $resolution,
@@ -200,12 +200,12 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
 
-        $rowCount = count($resultCount);
+        $rowCount = count($resultClicks);
 
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
-                $resultCount[$i][0],
-                $this->calculateInvalidRate((int)$resultTotalCount[$i][1], (int)$resultCount[$i][1]),
+                $resultClicks[$i][0],
+                $this->calculateInvalidRate((int)$resultClicksAll[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -228,7 +228,7 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
-        $resultCount = $this->fetch(
+        $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $advertiserId,
             $resolution,
@@ -239,12 +239,12 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
         
-        $rowCount = count($resultCount);
+        $rowCount = count($resultClicks);
         
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
-                $resultCount[$i][0],
-                $this->calculateCpc((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+                $resultClicks[$i][0],
+                $this->calculateCpc((int)$resultSum[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -267,7 +267,7 @@ class MySqlStatsRepository implements StatsRepository
             $campaignId
         );
 
-        $resultCount = $this->fetch(
+        $resultViews = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $advertiserId,
             $resolution,
@@ -278,12 +278,12 @@ class MySqlStatsRepository implements StatsRepository
 
         $result = [];
 
-        $rowCount = count($resultCount);
+        $rowCount = count($resultViews);
 
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
-                $resultCount[$i][0],
-                $this->calculateCpm((int)$resultSum[$i][1], (int)$resultCount[$i][1]),
+                $resultViews[$i][0],
+                $this->calculateCpm((int)$resultSum[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
