@@ -26,7 +26,7 @@ use DateTime;
 
 class StatsInput
 {
-    /** @var string */
+    /** @var string|null */
     private $advertiserId;
 
     /** @var DateTime */
@@ -39,7 +39,7 @@ class StatsInput
     private $campaignId;
 
     public function __construct(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
@@ -58,7 +58,7 @@ class StatsInput
         $this->dateEnd = $dateEnd;
     }
 
-    public function getAdvertiserId(): string
+    public function getAdvertiserId(): ?string
     {
         return $this->advertiserId;
     }

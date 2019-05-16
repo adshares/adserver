@@ -131,7 +131,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     private function selectBaseStatsColumns(): void
     {
         $filterEventValid = 'AND e.paid_amount_currency IS NOT NULL';
-        $filterEventInvalid = 'OR e.paid_amount_currency IS NULL';
 
         $this->column(
             sprintf(
@@ -142,15 +141,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         );
         $this->column(
             sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", NetworkEventLog::TYPE_VIEW, $filterEventValid)
-        );
-        $this->column(
-            sprintf(
-                'IFNULL(AVG(CASE '
-                ."WHEN (e.event_type <> '%s' %s) THEN NULL "
-                .'WHEN (e.is_view_clicked = 1) THEN 1 ELSE 0 END), 0) AS ctr',
-                NetworkEventLog::TYPE_VIEW,
-                $filterEventInvalid
-            )
         );
         $this->column(
             sprintf(
@@ -191,6 +181,14 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
+    public function appendPublisherIdGroupBy(): self
+    {
+        $this->column('e.publisher_id AS publisher_id');
+        $this->groupBy('e.publisher_id');
+
+        return $this;
+    }
+
     public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
     {
         $this->where(
@@ -204,9 +202,11 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    private function convertDateTimeToMySqlDate(DateTime $dateTime): string
+    public function selectDateStartColumn(DateTime $dateStart): self
     {
-        return $dateTime->format('Y-m-d H:i:s');
+        $this->column(sprintf("'%s' AS start_date", $this->convertDateTimeToMySqlDate($dateStart)));
+
+        return $this;
     }
 
     public function appendResolution(string $resolution): self
@@ -285,7 +285,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->groupBy('e.site_id');
         $this->having('clicks>0');
         $this->having('views>0');
-        $this->having('ctr>0');
         $this->having('revenue>0');
 
         if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
@@ -299,8 +298,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendDomainGroupBy(): self
     {
-        $this->column('e.domain AS domain');
-        $this->groupBy('e.domain');
+        $this->column("IFNULL(e.domain, '') AS domain");
+        $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
     }

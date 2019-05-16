@@ -195,7 +195,7 @@ class NetworkEventLog extends Model
         $log->headers = $headers;
         $log->event_type = $type;
         $log->context = $context->toArray();
-        $log->domain = DomainReader::domain(Banner::fetchBanner($bannerId)->campaign->landing_url ?? '');
+        $log->domain = DomainReader::domain(NetworkBanner::findByUuid($bannerId)->campaign->landing_url ?? '');
 
         $log->save();
     }

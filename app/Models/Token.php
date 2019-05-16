@@ -41,7 +41,7 @@ class Token extends Model
         self::EMAIL_ACTIVATE => 24 * 3600,
         self::EMAIL_CHANGE_STEP_1 => 3600,
         self::EMAIL_CHANGE_STEP_2 => 3600,
-        self::PASSWORD_RECOVERY => 2 * 60,
+        self::PASSWORD_RECOVERY => 3600,
         self::IMPERSONATION => 24 * 3600,
         self::EMAIL_APPROVE_WITHDRAWAL => 15 * 60,
     ];
@@ -50,6 +50,7 @@ class Token extends Model
         self::EMAIL_ACTIVATE => 24 * 3600,
         self::EMAIL_CHANGE_STEP_1 => 5 * 60,
         self::EMAIL_CHANGE_STEP_2 => 5 * 60,
+        self::PASSWORD_RECOVERY => 2 * 60,
     ];
 
     public const EMAIL_ACTIVATE = 'email-activate';
@@ -162,13 +163,13 @@ class Token extends Model
         return self::create(compact('user_id', 'tag', 'payload', 'valid_until', 'multi_usage'));
     }
 
-    public static function impersonation(User $user): self
+    public static function impersonate(User $who, User $asWhom): self
     {
         return self::generateToken(
             self::IMPERSONATION,
             self::VALIDITY_PERIODS[self::IMPERSONATION],
-            $user->id,
-            null,
+            $who->id,
+            $asWhom->id,
             true
         );
     }

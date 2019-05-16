@@ -33,6 +33,8 @@ echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:payments:prepare"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:payments:send"
+echo -n " && "
+echo -n "php ${SERVICE_DIR}/artisan ops:stats:aggregate"
 echo ""
 
 echo -n "59 * * * * "
