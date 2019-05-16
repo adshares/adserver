@@ -139,23 +139,25 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchStats(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection;
 
     public function fetchStatsTotal(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total;
 
     public function fetchStatsToReport(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection;
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
 }
