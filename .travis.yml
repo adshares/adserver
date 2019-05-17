@@ -21,7 +21,7 @@ jobs:
         - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
 
     - script:
-        - vendor/bin/phpunit --testsuite Console,Http,Unit
+        - vendor/bin/phpunit
         - sonar-scanner
 
 notifications:
