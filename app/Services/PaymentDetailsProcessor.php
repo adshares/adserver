@@ -30,7 +30,6 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use DateTime;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;

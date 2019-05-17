@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Common\Application\Dto\ExchangeRate as DomainExchangeRate;
 use Illuminate\Database\Eloquent\Model;
 
 class ExchangeRate extends Model

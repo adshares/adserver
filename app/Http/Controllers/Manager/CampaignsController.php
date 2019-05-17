@@ -32,7 +32,6 @@ use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;

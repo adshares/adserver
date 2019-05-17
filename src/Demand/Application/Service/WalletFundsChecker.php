@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Adserver\Models\UserLedgerEntry;
 
 class WalletFundsChecker
 {
