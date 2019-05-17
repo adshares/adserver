@@ -23,6 +23,7 @@ if [ ! -e /tmp/ops_payments_in_progress ]; then
     ./artisan ops:adpay:payments:get ${ADPAY_PAYMENTS_GET_PARAM}
     ./artisan ops:demand:payments:prepare
     ./artisan ops:demand:payments:send
+    ./artisan ops:stats:aggregate
 
     rm -f /tmp/ops_payments_in_progress
 fi
