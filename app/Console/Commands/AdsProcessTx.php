@@ -39,20 +39,23 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdsProcessTx extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     public const EXIT_CODE_SUCCESS = 0;
 
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
+
+    public const EXIT_CODE_COMMAND_LOCKED = 2;
 
     protected $signature = 'ads:process-tx';
 
@@ -81,6 +84,12 @@ class AdsProcessTx extends Command
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
+        if (!$this->lock()) {
+            $this->info('[AdsProcessTx] Command '.$this->signature.' already running.');
+
+            return self::EXIT_CODE_COMMAND_LOCKED;
+        }
+
         $this->info('Start command '.$this->signature);
         $this->demandClient = $demandClient;
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;

@@ -26,15 +26,23 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class DemandSendPayments extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:demand:payments:send';
 
     public function handle(Ads $ads): void
     {
+        if (!$this->lock()) {
+            $this->info('[Demand] (DemandSendPayments) Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);

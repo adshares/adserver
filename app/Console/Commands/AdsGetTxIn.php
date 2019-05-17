@@ -30,10 +30,12 @@ use Adshares\Adserver\Models\Config;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdsGetTxIn extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     public const EXIT_CODE_SUCCESS = 0;
 
@@ -45,6 +47,12 @@ class AdsGetTxIn extends Command
 
     public function handle(AdsClient $adsClient): int
     {
+        if (!$this->lock()) {
+            $this->info('[AdsGetTxIn] Command '.$this->signature.' already running.');
+
+            return self::EXIT_CODE_ERROR;
+        }
+
         $this->info('Start command '.$this->signature);
 
         try {

@@ -26,6 +26,7 @@ use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 use function file_exists;
 use function GuzzleHttp\json_encode;
 use function str_pad;
@@ -34,6 +35,7 @@ use const STR_PAD_LEFT;
 class AdsSend extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ads:send {--external}';
 
@@ -42,6 +44,12 @@ class AdsSend extends Command
 
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdsSend] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $filePath = base_path('accounts.local.php');
         if (file_exists($filePath)) {
             $this->data = include $filePath;

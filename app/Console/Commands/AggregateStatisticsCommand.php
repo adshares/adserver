@@ -28,10 +28,12 @@ use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use DateTime;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AggregateStatisticsCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:stats:aggregate {--A|advertiser} {--P|publisher} {--hour=}';
 
@@ -55,6 +57,12 @@ class AggregateStatisticsCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[Aggregate statistics] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $hour = $this->option('hour');

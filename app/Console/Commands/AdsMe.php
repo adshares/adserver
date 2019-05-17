@@ -24,15 +24,23 @@ use Adshares\Ads;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdsMe extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ads:me';
 
-    public function handle(AdsClient $adsClient)
+    public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdsMe] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
         $me = $adsClient->getMe();
         $this->info(Ads\Util\AdsConverter::clicksToAds($me->getAccount()->getBalance()));

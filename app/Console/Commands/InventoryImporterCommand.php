@@ -28,10 +28,12 @@ use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class InventoryImporterCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:demand:inventory:import';
 
@@ -50,6 +52,12 @@ class InventoryImporterCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[Inventory Importer] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $this->removeNonExistentHosts();

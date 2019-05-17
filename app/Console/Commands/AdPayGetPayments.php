@@ -33,6 +33,7 @@ use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Command\LockableTrait;
 use function collect;
 use function floor;
 use function now;
@@ -40,11 +41,18 @@ use function now;
 class AdPayGetPayments extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdPayGetPayments] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         DB::beginTransaction();

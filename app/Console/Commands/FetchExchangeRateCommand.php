@@ -25,13 +25,14 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class FetchExchangeRateCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     private const SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION = 23000;
 
@@ -59,6 +60,12 @@ class FetchExchangeRateCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[FetchExchangeRate] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->repositoryRemote->fetchExchangeRate();

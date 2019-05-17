@@ -29,6 +29,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
+use Symfony\Component\Console\Command\LockableTrait;
 use function str_random;
 use function substr;
 use function env;
@@ -36,6 +37,7 @@ use function env;
 class CreateAdminUserCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:admin:create {--password=}';
 
@@ -43,6 +45,12 @@ class CreateAdminUserCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[CreateAdminUser] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $password = $this->option('password');
 
         if (!$password) {

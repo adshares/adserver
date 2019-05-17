@@ -23,15 +23,23 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Supply\Application\Service\FilteringOptionsImporter;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class UpdateFilteringOptions extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:filtering-options:update';
 
     public function handle(FilteringOptionsImporter $service): void
     {
+        if (!$this->lock()) {
+            $this->info('[UpdateFilteringOptions] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $service->import();

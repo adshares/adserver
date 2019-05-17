@@ -24,15 +24,17 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\UrlObject;
+use Adshares\Common\UrlInterface;
 use Adshares\Network\Broadcast;
 use Adshares\Network\BroadcastableUrl;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 use function route;
 
 class AdsBroadcastHost extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     /**
      * @var string
@@ -45,7 +47,7 @@ class AdsBroadcastHost extends Command
     protected $description = 'Sends AdServer host address as broadcast message to blockchain';
 
     /**
-     * @var UrlObject
+     * @var UrlInterface
      */
     private $infoApiUrl;
 
@@ -58,11 +60,15 @@ class AdsBroadcastHost extends Command
 
     /**
      * @param AdsClient $adsClient
-     *
-     * @return int
      */
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdsBroadcastHost] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $url = new BroadcastableUrl($this->infoApiUrl);

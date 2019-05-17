@@ -23,15 +23,23 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Demand\Application\Service\TargetingOptionsImporter;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class UpdateTargetingOptions extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:targeting-options:update';
 
     public function handle(TargetingOptionsImporter $service): void
     {
+        if (!$this->lock()) {
+            $this->info('[UpdateTargetingOptions] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $service->import();

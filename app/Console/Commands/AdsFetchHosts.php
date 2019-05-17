@@ -34,10 +34,12 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdsFetchHosts extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     /**
      * Length of block in seconds
@@ -71,11 +73,15 @@ class AdsFetchHosts extends Command
 
     /**
      * @param AdsClient $adsClient
-     *
-     * @return int
      */
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdsFetchHosts] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $timeNow = time();

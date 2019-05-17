@@ -28,11 +28,13 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Exception\TransferMoneyException;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 use function sprintf;
 
 class TransferMoneyToColdWalletCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:wallet:transfer:cold';
 
@@ -50,6 +52,12 @@ class TransferMoneyToColdWalletCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[Wallet] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('[Wallet] Start command '.$this->signature);
 
         if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {

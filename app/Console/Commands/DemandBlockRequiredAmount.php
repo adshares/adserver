@@ -26,15 +26,16 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class DemandBlockRequiredAmount extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:demand:payments:block';
 
@@ -50,6 +51,12 @@ class DemandBlockRequiredAmount extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[DemandBlockRequiredAmount] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();

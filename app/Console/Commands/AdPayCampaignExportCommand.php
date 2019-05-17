@@ -28,10 +28,12 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdPayCampaignExportCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adpay:campaign:export';
 
@@ -39,6 +41,12 @@ class AdPayCampaignExportCommand extends Command
 
     public function handle(AdPay $adPay): void
     {
+        if (!$this->lock()) {
+            $this->info('[AdPayCampaignExport] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $now = new DateTime();

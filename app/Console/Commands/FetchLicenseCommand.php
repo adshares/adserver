@@ -29,10 +29,12 @@ use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class FetchLicenseCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:license:fetch';
 
@@ -55,6 +57,12 @@ class FetchLicenseCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[FetchLicense] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         try {

@@ -28,10 +28,12 @@ use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use DateTime;
 use Illuminate\Console\Command;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class AdSelectInventoryExporterCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:adselect:inventory:export';
 
@@ -54,6 +56,12 @@ class AdSelectInventoryExporterCommand extends Command
 
     public function handle()
     {
+        if (!$this->lock()) {
+            $this->info('[AdSelectInventoryExporter] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Started exporting inventory to AdSelect.');
 
         // @todo use it when $from, $to functionality will be implemented

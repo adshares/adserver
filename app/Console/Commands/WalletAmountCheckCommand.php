@@ -31,10 +31,12 @@ use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class WalletAmountCheckCommand extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 1800;
 
@@ -54,6 +56,12 @@ class WalletAmountCheckCommand extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[Wallet] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('[Wallet] Start command '.$this->signature);
 
         if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {

@@ -29,10 +29,12 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class DemandPreparePayments extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:demand:payments:prepare';
 
@@ -48,6 +50,12 @@ class DemandPreparePayments extends Command
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('[DemandPreparePayments] Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $events = EventLog::fetchUnpaidEvents();

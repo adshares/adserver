@@ -35,15 +35,23 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Exception;
 use Illuminate\Console\Command;
 use RuntimeException;
+use Symfony\Component\Console\Command\LockableTrait;
 
 class SupplySendPayments extends Command
 {
     use LineFormatterTrait;
+    use LockableTrait;
 
     protected $signature = 'ops:supply:payments:send';
 
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('[Supply] (SupplySendPayments) Command '.$this->signature.' already running.');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $payments = NetworkPayment::fetchNotProcessed();
