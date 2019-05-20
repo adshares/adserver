@@ -242,8 +242,7 @@ class EventLog extends Model
 
         $ip = inet_ntop(hex2bin($this->ip));
 
-        $userAgentList = $headersArray['user-agent'];
-        $ua = $userAgentList[0] ?? '';
+        $ua = $headersArray['user-agent'][0] ?? '';
 
         try {
             $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id));

@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types = 1);
+
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Illuminate\Support\Facades\Route;
