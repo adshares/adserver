@@ -26,6 +26,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 final class InventoryImporterCommandTest extends TestCase
 {
     use RefreshDatabase;

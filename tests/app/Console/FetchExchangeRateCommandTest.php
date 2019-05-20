@@ -26,6 +26,9 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 final class FetchExchangeRateCommandTest extends TestCase
 {
     public function testFetchExchangeRate(): void

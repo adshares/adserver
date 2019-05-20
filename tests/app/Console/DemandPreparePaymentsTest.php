@@ -29,6 +29,9 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class DemandPreparePaymentsTest extends TestCase
 {
     use RefreshDatabase;

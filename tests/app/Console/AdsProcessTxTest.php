@@ -42,6 +42,9 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+/**
+ * @runTestsInSeparateProcesses
+ */
 class AdsProcessTxTest extends TestCase
 {
     use RefreshDatabase;

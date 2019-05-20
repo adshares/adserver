@@ -31,132 +31,40 @@ use Adshares\Adserver\Tests\TestCase;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
+/**
+ * @runTestsInSeparateProcesses 
+ */
 class AdsGetTxInTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testAdsTxInConsecutiveCalls(): void
+    public function testAdsTxIn(): void
     {
+        $expectedTxAddedCount = 12;
+        $logResponse = $this->getLog();
+
         $this->app->bind(
             AdsClient::class,
-            function () {
+            function () use ($logResponse) {
                 $adsClient = $this->createMock(AdsClient::class);
-                $adsClient->method('getLog')->will(
-                    $this->returnCallback(
-                        function ($d) {
-                            if (null === $d) {
-                                $ts = 0;
-                            } else {
-                                /** @var $d \DateTime */
-                                $ts = $d->getTimestamp();
-                            }
-                            switch ($ts) {
-                                case 1539606265:
-                                    $response = new GetLogResponse(json_decode($this->getLog2(), true));
-                                    break;
-                                case 0:
-                                default:
-                                    $response = new GetLogResponse(json_decode($this->getLog1(), true));
-                                    break;
-                            }
-
-                            return $response;
-                        }
-                    )
-                );
+                $adsClient->method('getLog')->willReturn(new GetLogResponse(json_decode($logResponse, true)));
 
                 return $adsClient;
             }
         );
 
-        $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 12')->assertExitCode(0);
+        $this->artisan('ads:get-tx-in')
+            ->expectsOutput(sprintf('Number of added txs: %d', $expectedTxAddedCount))
+            ->assertExitCode(0);
+
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $expectedDate = (new DateTime())->setTimestamp(1539606265)->format(DateTime::ATOM);
         $this->assertEquals($expectedDate, $from->value);
-        $this->assertEquals(12, AdsPayment::all()->count());
-        $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
-
-        $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 0')->assertExitCode(
-            AdsGetTxIn::EXIT_CODE_SUCCESS
-        );
-        $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertEquals($expectedDate, $from->value);
-        $this->assertEquals(12, AdsPayment::all()->count());
-        $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
+        $this->assertEquals($expectedTxAddedCount, AdsPayment::all()->count());
+        $this->assertEquals($expectedTxAddedCount, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 
-    private function getLog2(): string
-    {
-        return '{
-            "current_block_time": "1539606240",
-            "previous_block_time": "1539606208",
-            "tx": {
-                "data": "11010001000000FA86C45B",
-                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0D'
-            .'95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
-                "time": "1539606266",
-                "account_msid": "0",
-                "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-                "account_hashout": "B5DEFCD2F7215A67FA9EDAD9A093597DE6AF6C2A6A3BFB40FE28BA1742BE86CF",
-                "deduct": "0.00000000000",
-                "fee": "0.00000000000"
-            },
-            "account": {
-                "address": "0001-00000001-8B4E",
-                "node": "1",
-                "id": "1",
-                "msid": "3",
-                "time": "1539606267",
-                "date": "2018-10-15 14:24:27",
-                "status": "0",
-                "paired_node": "0",
-                "paired_id": "0",
-                "local_change": "1539606240",
-                "remote_change": "1539605824",
-                "balance": "0.00020000000",
-                "public_key": "6431A8580B014DA2420FF32842B0BA3CAB3B77F01D1150E5A0D34743F243B778",
-                "hash": "8CEEF0B68910FF40333FAECD88B0DEBF4881018C0517D635DA7C34803382B0CE"
-            },
-            "log": [{
-                    "time": "1539606265",
-                    "date": "2018-10-15 14:24:25",
-                    "type_no": "32772",
-                    "confirmed": "no",
-                    "type": "send_one",
-                    "node": "1",
-                    "account": "0",
-                    "address": "0001-00000000-9B6F",
-                    "node_msid": "15",
-                    "node_mpos": "2",
-                    "account_msid": "12",
-                    "amount": "10752128.71192856647",
-                    "sender_fee": "5376.06435596428",
-                    "message": "0000000000000000000000000000000000000000000000000000000000000000",
-                    "inout": "in",
-                    "id": "0001:0000000F:0002"
-                }, {
-                    "time": "1539606265",
-                    "date": "2018-10-15 14:24:27",
-                    "type_no": "4",
-                    "confirmed": "no",
-                    "type": "send_one",
-                    "node": "1",
-                    "account": "0",
-                    "address": "0001-00000000-9B6F",
-                    "node_msid": "15",
-                    "node_mpos": "3",
-                    "account_msid": "2",
-                    "amount": "-10746955.23432140578",
-                    "sender_fee": "5373.47761716070",
-                    "message": "0000000000000000000000000000000000000000000000000000000000000000",
-                    "inout": "out",
-                    "id": "0001:0000000F:0003"
-                }
-            ]
-        }';
-    }
-
-    private function getLog1(): string
+    private function getLog(): string
     {
         return '{
             "current_block_time": "1539606240",
