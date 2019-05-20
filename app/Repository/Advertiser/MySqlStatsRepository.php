@@ -31,9 +31,9 @@ use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
-use function bin2hex;
 use DateTime;
 use DateTimeZone;
+use function bin2hex;
 
 class MySqlStatsRepository implements StatsRepository
 {
@@ -238,9 +238,9 @@ class MySqlStatsRepository implements StatsRepository
         );
 
         $result = [];
-        
+
         $rowCount = count($resultClicks);
-        
+
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultClicks[$i][0],
@@ -493,7 +493,14 @@ class MySqlStatsRepository implements StatsRepository
             $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
         }
 
-        return new DataCollection($result);
+        $resultWithoutEvents =
+            $this->getDataEntriesWithoutEvents(
+                $queryResult,
+                $this->fetchAllBannersWithCampaignAndUser($advertiserId),
+                $advertiserId
+            );
+
+        return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
@@ -516,7 +523,8 @@ class MySqlStatsRepository implements StatsRepository
             ->selectDateStartColumn($dateStart)
             ->build();
 
-        $query = 'INSERT INTO '
+        $query =
+            'INSERT INTO '
             .$cacheTable
             .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
             .'`domain`,`campaign_id`,`banner_id`,`advertiser_id`,`hour_timestamp`)'
@@ -780,5 +788,57 @@ class MySqlStatsRepository implements StatsRepository
     private function calculateInvalidRate(int $totalCount, int $validCount): float
     {
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
+    }
+
+    private function getDataEntriesWithoutEvents(
+        array $queryResult,
+        array $allBanners,
+        ?string $advertiserId
+    ): array {
+        $result = [];
+
+        foreach ($allBanners as $banner) {
+            $binaryBannerId = $banner->banner_id;
+            $isBannerPresent = false;
+
+            foreach ($queryResult as $row) {
+                if ($row->banner_id === $binaryBannerId) {
+                    $isBannerPresent = true;
+                    break;
+                }
+            }
+
+            if (!$isBannerPresent) {
+                $calculation =
+                    new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
+                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->advertiser_id) : null;
+                $result[] =
+                    new DataEntry(
+                        $calculation,
+                        bin2hex($banner->campaign_id),
+                        bin2hex($binaryBannerId),
+                        $selectedAdvertiserId
+                    );
+            }
+        }
+
+        return $result;
+    }
+
+    private function fetchAllBannersWithCampaignAndUser(?string $advertiserId): array
+    {
+        $query = <<<SQL
+SELECT u.uuid AS user_id, c.uuid AS campaign_id, b.uuid AS banner_id
+FROM users u
+       JOIN campaigns c ON u.id = c.user_id
+       JOIN banners b ON b.campaign_id = c.id
+WHERE c.deleted_at IS NULL
+SQL;
+
+        if (null !== $advertiserId) {
+            $query .= sprintf(' AND u.uuid = 0x%s', $advertiserId);
+        }
+
+        return DB::select($query);
     }
 }

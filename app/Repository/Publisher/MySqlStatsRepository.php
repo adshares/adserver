@@ -31,9 +31,9 @@ use Adshares\Publisher\Dto\Result\Stats\DataEntry;
 use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
-use function bin2hex;
 use DateTime;
 use DateTimeZone;
+use function bin2hex;
 
 class MySqlStatsRepository implements StatsRepository
 {
@@ -493,7 +493,14 @@ class MySqlStatsRepository implements StatsRepository
             $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
         }
 
-        return new DataCollection($result);
+        $resultWithoutEvents =
+            $this->getDataEntriesWithoutEvents(
+                $queryResult,
+                $this->fetchAllZonesWithSiteAndUser($publisherId),
+                $publisherId
+            );
+
+        return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
@@ -516,7 +523,8 @@ class MySqlStatsRepository implements StatsRepository
             ->selectDateStartColumn($dateStart)
             ->build();
 
-        $query = 'INSERT INTO '
+        $query =
+            'INSERT INTO '
             .$cacheTable
             .' (`clicks`,`views`,`revenue`,`clicks_all`,`views_all`,`views_unique`,'
             .'`domain`,`site_id`,`zone_id`,`publisher_id`,`hour_timestamp`)'
@@ -780,5 +788,54 @@ class MySqlStatsRepository implements StatsRepository
     private function calculateInvalidRate(int $totalCount, int $validCount): float
     {
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
+    }
+
+    private function getDataEntriesWithoutEvents(array $queryResult, array $allZones, ?string $publisherId): array
+    {
+        $result = [];
+
+        foreach ($allZones as $zone) {
+            $binaryZoneId = $zone->zone_id;
+            $isZonePresent = false;
+
+            foreach ($queryResult as $row) {
+                if ($row->zone_id === $binaryZoneId) {
+                    $isZonePresent = true;
+                    break;
+                }
+            }
+
+            if (!$isZonePresent) {
+                $calculation =
+                    new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
+                $selectedPublisherId = ($publisherId === null) ? bin2hex($zone->user_id) : null;
+                $result[] =
+                    new DataEntry(
+                        $calculation,
+                        bin2hex($zone->site_id),
+                        bin2hex($binaryZoneId),
+                        $selectedPublisherId
+                    );
+            }
+        }
+
+        return $result;
+    }
+
+    private function fetchAllZonesWithSiteAndUser(?string $publisherId): array
+    {
+        $query = <<<SQL
+SELECT u.uuid AS user_id, s.uuid AS site_id, z.uuid AS zone_id
+FROM users u
+       JOIN sites s ON u.id = s.user_id
+       JOIN zones z ON z.site_id = s.id
+WHERE s.deleted_at IS NULL
+SQL;
+
+        if (null !== $publisherId) {
+            $query .= sprintf(' AND u.uuid = 0x%s', $publisherId);
+        }
+
+        return DB::select($query);
     }
 }
