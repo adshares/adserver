@@ -557,7 +557,7 @@ class MySqlStatsRepository implements StatsRepository
 
     private function executeQuery(string $query, DateTime $dateStart): array
     {
-        $dateTimeZone = $dateStart->getTimezone();
+        $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
         $queryResult = DB::select($query);
         $this->unsetDbSessionTimeZone();
