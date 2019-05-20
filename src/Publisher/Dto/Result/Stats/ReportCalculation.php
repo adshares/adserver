@@ -39,6 +39,9 @@ class ReportCalculation extends Calculation
     /** @var int */
     private $impressionsUnique;
 
+    /** @var string */
+    private $domain;
+
     public function __construct(
         int $clicks,
         int $clicksAll,
@@ -48,19 +51,18 @@ class ReportCalculation extends Calculation
         float $impressionsInvalidRate,
         int $impressionsUnique,
         float $ctr,
-        int $averageCpc,
-        int $averageCpm,
-        int $cost,
-        ?string $domain = null
+        int $averageRpc,
+        int $averageRpm,
+        int $revenue,
+        string $domain
     ) {
         parent::__construct(
             $clicks,
             $impressions,
             $ctr,
-            $averageCpc,
-            $averageCpm,
-            $cost,
-            $domain
+            $averageRpc,
+            $averageRpm,
+            $revenue
         );
 
         $this->clicksAll = $clicksAll;
@@ -68,6 +70,7 @@ class ReportCalculation extends Calculation
         $this->impressionsUnique = $impressionsUnique;
         $this->impressionsAll = $impressionsAll;
         $this->impressionsInvalidRate = $impressionsInvalidRate;
+        $this->domain = $domain;
     }
 
     public function toArray(): array
@@ -78,6 +81,7 @@ class ReportCalculation extends Calculation
             'impressionsAll' => $this->impressionsAll,
             'impressionsInvalidRate' => $this->impressionsInvalidRate,
             'impressionsUnique' => $this->impressionsUnique,
+            'domain' => $this->domain,
         ];
 
         return array_merge($data, parent::toArray());

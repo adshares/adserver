@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Common;
 
+use DateTime;
 use RuntimeException;
 use function implode;
 use function sprintf;
@@ -122,6 +123,11 @@ abstract class MySqlQueryBuilder
     private function setType(string $type): void
     {
         $this->type = $type;
+    }
+
+    public static function convertDateTimeToMySqlDate(DateTime $dateTime): string
+    {
+        return $dateTime->format('Y-m-d H:i:s');
     }
 
     abstract protected function isTypeAllowed(string $type): bool;

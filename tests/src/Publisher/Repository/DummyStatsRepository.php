@@ -42,15 +42,11 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 1, 1],
-            ['2019-01-01T16:00:00+00:00', 2, 2],
-            ['2019-01-01T17:00:00+00:00', 3, 3],
-            ['2019-01-01T18:00:00+00:00', 4, 4],
+            ['2019-01-01T15:00:00+00:00', 1],
+            ['2019-01-01T16:00:00+00:00', 2],
+            ['2019-01-01T17:00:00+00:00', 3],
+            ['2019-01-01T18:00:00+00:00', 4],
         ];
-
-        if ($siteId) {
-            $data = $this->setDataForCampaign($data);
-        }
 
         return new ChartResult($data);
     }
@@ -62,7 +58,7 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        // TODO: Implement fetchViewAll() method.
+        $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchViewInvalidRate(
@@ -72,7 +68,14 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        // TODO: Implement fetchViewInvalidRate() method.
+        $data = [
+            ['2019-01-01T15:00:00+00:00', 0.01],
+            ['2019-01-01T16:00:00+00:00', 0.31],
+            ['2019-01-01T17:00:00+00:00', 0.61],
+            ['2019-01-01T18:00:00+00:00', 0.91],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchViewUnique(
@@ -82,18 +85,7 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        // TODO: Implement fetchViewUnique() method.
-    }
-
-    private function setDataForCampaign(array $data): array
-    {
-        foreach ($data as &$entry) {
-            foreach ($entry as &$value) {
-                $value = 100 + $value;
-            }
-        }
-
-        return $data;
+        $this->fetchView($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchClick(
@@ -104,10 +96,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 11, 11],
-            ['2019-01-01T16:00:00+00:00', 21, 21],
-            ['2019-01-01T17:00:00+00:00', 31, 31],
-            ['2019-01-01T18:00:00+00:00', 41, 41],
+            ['2019-01-01T15:00:00+00:00', 11],
+            ['2019-01-01T16:00:00+00:00', 21],
+            ['2019-01-01T17:00:00+00:00', 31],
+            ['2019-01-01T18:00:00+00:00', 41],
         ];
 
         return new ChartResult($data);
@@ -120,7 +112,7 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        // TODO: Implement fetchClickAll() method.
+        $this->fetchClick($publisherId, $resolution, $dateStart, $dateEnd, $siteId);
     }
 
     public function fetchClickInvalidRate(
@@ -130,7 +122,14 @@ class DummyStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        // TODO: Implement fetchClickInvalidRate() method.
+        $data = [
+            ['2019-01-01T15:00:00+00:00', 0.02],
+            ['2019-01-01T16:00:00+00:00', 0.32],
+            ['2019-01-01T17:00:00+00:00', 0.62],
+            ['2019-01-01T18:00:00+00:00', 0.92],
+        ];
+
+        return new ChartResult($data);
     }
 
     public function fetchRpc(
@@ -141,10 +140,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 12, 12],
-            ['2019-01-01T16:00:00+00:00', 22, 22],
-            ['2019-01-01T17:00:00+00:00', 32, 32],
-            ['2019-01-01T18:00:00+00:00', 42, 42],
+            ['2019-01-01T15:00:00+00:00', 12],
+            ['2019-01-01T16:00:00+00:00', 22],
+            ['2019-01-01T17:00:00+00:00', 32],
+            ['2019-01-01T18:00:00+00:00', 42],
         ];
 
         return new ChartResult($data);
@@ -158,10 +157,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 13, 13],
-            ['2019-01-01T16:00:00+00:00', 23, 23],
-            ['2019-01-01T17:00:00+00:00', 33, 33],
-            ['2019-01-01T18:00:00+00:00', 43, 43],
+            ['2019-01-01T15:00:00+00:00', 13],
+            ['2019-01-01T16:00:00+00:00', 23],
+            ['2019-01-01T17:00:00+00:00', 33],
+            ['2019-01-01T18:00:00+00:00', 43],
         ];
 
         return new ChartResult($data);
@@ -175,10 +174,10 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 14, 14],
-            ['2019-01-01T16:00:00+00:00', 24, 24],
-            ['2019-01-01T17:00:00+00:00', 34, 34],
-            ['2019-01-01T18:00:00+00:00', 44, 44],
+            ['2019-01-01T15:00:00+00:00', 14],
+            ['2019-01-01T16:00:00+00:00', 24],
+            ['2019-01-01T17:00:00+00:00', 34],
+            ['2019-01-01T18:00:00+00:00', 44],
         ];
 
         return new ChartResult($data);
@@ -192,17 +191,17 @@ class DummyStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $data = [
-            ['2019-01-01T15:00:00+00:00', 15, 15],
-            ['2019-01-01T16:00:00+00:00', 25, 25],
-            ['2019-01-01T17:00:00+00:00', 35, 35],
-            ['2019-01-01T18:00:00+00:00', 45, 45],
+            ['2019-01-01T15:00:00+00:00', 0.03],
+            ['2019-01-01T16:00:00+00:00', 0.33],
+            ['2019-01-01T17:00:00+00:00', 0.63],
+            ['2019-01-01T18:00:00+00:00', 0.93],
         ];
 
         return new ChartResult($data);
     }
 
     public function fetchStats(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
@@ -234,7 +233,7 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsTotal(
-        string $advertiserId,
+        ?string $advertiserId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $campaignId = null
@@ -245,11 +244,16 @@ class DummyStatsRepository implements StatsRepository
     }
 
     public function fetchStatsToReport(
-        string $publisherId,
+        ?string $publisherId,
         DateTime $dateStart,
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
+    }
+
+    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
+    {
+        // TODO: Implement cacheStatistics() method.
     }
 }
