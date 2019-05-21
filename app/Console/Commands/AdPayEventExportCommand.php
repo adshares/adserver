@@ -51,7 +51,8 @@ class AdPayEventExportCommand extends Command
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        if (!$this->lock()) {
+        $lockId = config('app.adserver_id').$this->getName();
+        if (!$this->lock($lockId)) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
