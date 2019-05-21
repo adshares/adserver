@@ -157,7 +157,7 @@ class EventLog extends Model
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-1 days'))
+            ->where('created_at', '>', (new DateTime())->modify('-1 day'))
             ->orderBy('pay_to');
 
         return $query->get();
