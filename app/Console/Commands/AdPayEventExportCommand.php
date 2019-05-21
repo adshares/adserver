@@ -72,10 +72,15 @@ class AdPayEventExportCommand extends Command
             $eventIdLast = (int)$eventIdLast;
         }
 
+        $counter = 0;
         do {
             $eventsToExport = $this->fetchEventsToExport((int)$eventIdFirst, $eventIdLast);
 
-            $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
+            $this->info(sprintf(
+                '[AdPayEventExport] Found %d events to export [%d].',
+                count($eventsToExport),
+                ++$counter
+            ));
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
