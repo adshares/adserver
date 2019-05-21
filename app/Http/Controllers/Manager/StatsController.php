@@ -301,11 +301,13 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsPublisher($user);
+        if (!$user->isAdmin()) {
+            $this->validateUserAsPublisher($user);
+        }
 
         try {
             $input = new PublisherStatsInput(
-                $user->uuid,
+                $user->isAdmin() ? null : $user->uuid,
                 $from,
                 $to,
                 $siteId
@@ -335,11 +337,13 @@ class StatsController extends Controller
         $user = Auth::user();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
+        if (!$user->isAdmin()) {
+            $this->validateUserAsAdvertiser($user);
+        }
 
         try {
             $input = new AdvertiserStatsInput(
-                $user->uuid,
+                $user->isAdmin() ? null : $user->uuid,
                 $from,
                 $to,
                 $campaignId
