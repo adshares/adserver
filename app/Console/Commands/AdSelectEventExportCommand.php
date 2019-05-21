@@ -50,7 +50,8 @@ class AdSelectEventExportCommand extends Command
 
     public function handle(): void
     {
-        if (!$this->lock()) {
+        $lockId = config('app.adserver_id').$this->getName();
+        if (!$this->lock($lockId)) {
             $this->info('[AdSelectEventExport] Command '.$this->signature.' already running.');
 
             return;

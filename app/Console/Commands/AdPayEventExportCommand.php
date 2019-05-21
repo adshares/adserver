@@ -36,6 +36,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\LockableTrait;
+use function config;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -53,8 +54,9 @@ class AdPayEventExportCommand extends Command
     {
         $eventIdFirst = $this->option('first');
         $eventIdLast = $this->option('last');
+        $lockId = config('app.adserver_id').$this->getName();
 
-        if ($eventIdLast === null && !$this->lock()) {
+        if ($eventIdLast === null && !$this->lock($lockId)) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
@@ -109,7 +111,7 @@ class AdPayEventExportCommand extends Command
             $builder = $builder->where('created_at', '<=', new DateTime('-10 minutes'));
         }
 
-        return $builder ->orderBy('id')
+        return $builder->orderBy('id')
             ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
             ->get();
     }
