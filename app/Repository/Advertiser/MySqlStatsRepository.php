@@ -496,7 +496,7 @@ class MySqlStatsRepository implements StatsRepository
         $resultWithoutEvents =
             $this->getDataEntriesWithoutEvents(
                 $queryResult,
-                $this->fetchAllBannersWithCampaignAndUser($advertiserId),
+                $this->fetchAllBannersWithCampaignAndUser($advertiserId, $campaignId),
                 $advertiserId
             );
 
@@ -825,7 +825,7 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function fetchAllBannersWithCampaignAndUser(?string $advertiserId): array
+    private function fetchAllBannersWithCampaignAndUser(?string $advertiserId, ?string $campaignId): array
     {
         $query = <<<SQL
 SELECT u.uuid AS user_id, c.uuid AS campaign_id, b.uuid AS banner_id
@@ -837,6 +837,9 @@ SQL;
 
         if (null !== $advertiserId) {
             $query .= sprintf(' AND u.uuid = 0x%s', $advertiserId);
+        }
+        if (null !== $campaignId) {
+            $query .= sprintf(' AND c.uuid = 0x%s', $campaignId);
         }
 
         return DB::select($query);

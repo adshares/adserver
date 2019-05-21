@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Improved
 - Bonus spending scheme
+### Fixed
+- Reports for specific campaign/site should not have information about other campaigns/sites
 
 ## [0.8.1] - 2019-05-21
 ### Improved
