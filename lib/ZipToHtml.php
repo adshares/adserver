@@ -46,7 +46,7 @@ class ZipToHtml
     for(var i=0;i<styles.length;i++) {
         var code = styles[i].innerHTML;
         
-        code = code.replace(/\/\*\{asset-src:(.*?)\}\*\//, function(match, src) {
+        code = code.replace(/\/\*\{asset-src:(.*?)\}\*\//g, function(match, src) {
             var uri = ''; var org = document.querySelector('[data-asset-org="' + src + '"]');
             if(org) {
                 uri = org.getAttribute('src') || org.getAttribute('data-src');
