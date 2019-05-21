@@ -66,9 +66,12 @@ class AdPayEventExportCommand extends Command
         if ($eventIdFirst === null) {
             $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
         }
+        if ($eventIdLast !== null) {
+            $eventIdLast = (int)$eventIdLast;
+        }
 
         do {
-            $eventsToExport = $this->fetchEventsToExport($eventIdFirst, $eventIdLast);
+            $eventsToExport = $this->fetchEventsToExport((int)$eventIdFirst, $eventIdLast);
 
             $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
             if (count($eventsToExport) > 0) {
