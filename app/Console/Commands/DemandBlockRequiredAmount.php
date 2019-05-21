@@ -26,7 +26,6 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;

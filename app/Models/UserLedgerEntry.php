@@ -29,6 +29,7 @@ use function array_merge;
 use function in_array;
 use function min;
 use function sprintf;
+use const PHP_INT_MAX;
 
 /**
  * @mixin Builder
@@ -268,7 +269,7 @@ class UserLedgerEntry extends Model
         return self::blockedEntries()->where('user_id', $userId);
     }
 
-    private static function addAdExpense(int $status, int $userId, int $amount): array
+    private static function addAdExpense(int $status, int $userId, int $amount, int $maxBonus = PHP_INT_MAX): array
     {
         if ($amount < 0) {
             throw new InvalidArgumentException(
@@ -282,8 +283,10 @@ class UserLedgerEntry extends Model
             );
         }
 
+        $bonus = min($maxBonus, self::getBonusBalanceByUserId($userId));
+
         $entries = [];
-        $bonus = self::getBonusBalanceByUserId($userId);
+
         if ($bonus > 0) {
             $obj = self::construct(
                 $userId,
@@ -294,6 +297,7 @@ class UserLedgerEntry extends Model
             $obj->save();
             $entries[] = $obj;
         }
+
         if ($amount > $bonus) {
             $obj = self::construct(
                 $userId,
