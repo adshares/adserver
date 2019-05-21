@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
@@ -57,21 +58,25 @@ class DemandBlockRequiredAmount extends Command
 
         UserLedgerEntry::pushBlockedToProcessing();
 
-        $blockade = Campaign::fetchRequiredBudgetsPerUser();
-        $this->info('Attempt to create '.count($blockade).' blockades.');
-        $this->blockAmountOrSuspendCampaigns($blockade, $exchangeRate);
+        $blockades = Campaign::fetchRequiredBudgetsPerUser();
+        $this->info('Attempt to create '.count($blockades).' blockades.');
+        $this->blockAmountOrSuspendCampaigns($blockades, $exchangeRate);
 
         DB::commit();
 
-        $this->info('Created '.count($blockade).' new blocking Ledger entries.');
+        $this->info('Created '.count($blockades).' new blocking Ledger entries.');
     }
 
     private function blockAmountOrSuspendCampaigns(Collection $blockade, ExchangeRate $exchangeRate): void
     {
-        $blockade->each(function ($sum, $userId) use ($exchangeRate) {
-            $amount = $exchangeRate->toClick((int)$sum);
+        $blockade->each(static function (AdvertiserBudget $budget, int $userId) use ($exchangeRate) {
+            $amount = new AdvertiserBudget(
+                $exchangeRate->toClick($budget->total()),
+                $exchangeRate->toClick($budget->bonusable())
+            );
+
             try {
-                UserLedgerEntry::blockAdExpense((int)$userId, $amount);
+                UserLedgerEntry::blockAdExpense($userId, $amount);
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 
