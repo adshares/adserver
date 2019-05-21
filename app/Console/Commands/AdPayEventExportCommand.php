@@ -63,8 +63,10 @@ class AdPayEventExportCommand extends Command
         $timeStart = microtime(true);
         $this->info('Start command '.$this->signature);
 
+        $configEventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
+
         if ($eventIdFirst === null) {
-            $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
+            $eventIdFirst = $configEventIdFirst;
         }
         if ($eventIdLast !== null) {
             $eventIdLast = (int)$eventIdLast;
@@ -81,8 +83,9 @@ class AdPayEventExportCommand extends Command
                 $adPay->addEvents($events);
 
                 $eventIdLastExported = $eventsToExport->last()->id;
-
-                Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
+                if ($eventIdLastExported > $configEventIdFirst) {
+                    Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
+                }
                 $eventIdFirst = $eventIdLastExported + 1;
             }
         } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
