@@ -259,8 +259,8 @@ class EventLog extends Model
 
     public static function eventClicked(string $caseId): void
     {
-        self::where('case_id', hex2bin($caseId))
-            ->where('event_type', self::TYPE_VIEW)
+        $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
+        self::where('event_id', hex2bin($eventId))
             ->update(['is_view_clicked' => 1]);
     }
 
