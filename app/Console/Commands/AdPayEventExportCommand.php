@@ -45,13 +45,16 @@ class AdPayEventExportCommand extends Command
 
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
-    protected $signature = 'ops:adpay:event:export';
+    protected $signature = 'ops:adpay:event:export {--first=} {--last=}';
 
     protected $description = 'Exports event data to AdPay';
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        if (!$this->lock()) {
+        $eventIdFirst = $this->option('first');
+        $eventIdLast = $this->option('last');
+
+        if ($eventIdLast === null && !$this->lock()) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
@@ -60,10 +63,12 @@ class AdPayEventExportCommand extends Command
         $timeStart = microtime(true);
         $this->info('Start command '.$this->signature);
 
-        $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
+        if ($eventIdFirst === null) {
+            $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
+        }
 
         do {
-            $eventsToExport = $this->fetchEventsToExport($eventIdFirst);
+            $eventsToExport = $this->fetchEventsToExport($eventIdFirst, $eventIdLast);
 
             $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
             if (count($eventsToExport) > 0) {
@@ -84,11 +89,16 @@ class AdPayEventExportCommand extends Command
         $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
     }
 
-    private function fetchEventsToExport(int $eventIdFirst): Collection
+    private function fetchEventsToExport(int $eventIdFirst, ?int $eventIdLast = null): Collection
     {
-        return EventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', new DateTime('-10 minutes'))
-            ->orderBy('id')
+        $builder = EventLog::where('id', '>=', $eventIdFirst);
+        if ($eventIdLast !== null) {
+            $builder = $builder->where('id', '<=', $eventIdLast);
+        } else {
+            $builder = $builder->where('created_at', '<=', new DateTime('-10 minutes'));
+        }
+
+        return $builder ->orderBy('id')
             ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
             ->get();
     }
