@@ -48,7 +48,7 @@ class AddIndexToStatisticsAggregates extends Migration
         Schema::table(
             'event_logs_hourly',
             function (Blueprint $table) {
-                $table->dropIndex('hour_timestamp');
+                $table->dropIndex(['hour_timestamp']);
                 $table->dropIndex(['advertiser_id', 'campaign_id']);
             }
         );
@@ -56,7 +56,7 @@ class AddIndexToStatisticsAggregates extends Migration
         Schema::table(
             'network_event_logs_hourly',
             function (Blueprint $table) {
-                $table->dropIndex('hour_timestamp');
+                $table->dropIndex(['hour_timestamp']);
                 $table->dropIndex(['publisher_id', 'site_id']);
             }
         );
