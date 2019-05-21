@@ -85,7 +85,10 @@ class AdPayGetPayments extends Command
             return $entry->campaign_id;
         });
 
-        $groupedByCampaign->each(function (Collection $singleCampaignEvents, string $campaignPublicId) use (
+        $groupedByCampaign->each(function (
+            Collection $singleCampaignEvents,
+            string $campaignPublicId
+        ) use (
             $exchangeRate
         ) {
             $campaign = Campaign::fetchByUuid($campaignPublicId);
