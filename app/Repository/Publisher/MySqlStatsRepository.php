@@ -496,7 +496,7 @@ class MySqlStatsRepository implements StatsRepository
         $resultWithoutEvents =
             $this->getDataEntriesWithoutEvents(
                 $queryResult,
-                $this->fetchAllZonesWithSiteAndUser($publisherId),
+                $this->fetchAllZonesWithSiteAndUser($publisherId, $siteId),
                 $publisherId
             );
 
@@ -822,7 +822,7 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function fetchAllZonesWithSiteAndUser(?string $publisherId): array
+    private function fetchAllZonesWithSiteAndUser(?string $publisherId, ?string $siteId): array
     {
         $query = <<<SQL
 SELECT u.uuid AS user_id, s.uuid AS site_id, z.uuid AS zone_id
@@ -834,6 +834,9 @@ SQL;
 
         if (null !== $publisherId) {
             $query .= sprintf(' AND u.uuid = 0x%s', $publisherId);
+        }
+        if (null !== $siteId) {
+            $query .= sprintf(' AND s.uuid = 0x%s', $siteId);
         }
 
         return DB::select($query);
