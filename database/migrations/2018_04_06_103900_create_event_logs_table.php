@@ -64,7 +64,7 @@ class CreateEventLogsTable extends Migration
                 $table->bigInteger('licence_fee')->unsigned()->nullable();
                 $table->bigInteger('operator_fee')->unsigned()->nullable();
                 $table->bigInteger('paid_amount')->unsigned()->nullable();
-                $table->integer('payment_id')->nullable();
+                $table->integer('payment_id')->nullable()->index();
 
                 $table->tinyInteger('reason')->unsigned()->nullable();
                 $table->tinyInteger('is_view_clicked')->unsigned()->default(0);
