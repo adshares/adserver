@@ -61,7 +61,7 @@ class CreateNetworkEventLogsTable extends Migration
             $table->bigInteger('paid_amount')->nullable();
             $table->bigInteger('licence_fee_amount')->nullable();
             $table->bigInteger('operator_fee_amount')->nullable();
-            $table->bigInteger('ads_payment_id')->nullable();
+            $table->bigInteger('ads_payment_id')->nullable()->index();
 
             $table->tinyInteger('is_view_clicked')->unsigned()->default(0);
         });

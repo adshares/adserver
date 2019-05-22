@@ -34,8 +34,9 @@ interface EventRepository
         int $offset = 0
     ): array;
 
-    public function fetchPaidEventsUpdatedFromDate(
-        DateTime $dateTime,
+    public function fetchPaidEventsUpdatedAfterAdsPaymentId(
+        int $adsPaymentIdStart,
+        int $adsPaymentIdEnd,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array;
