@@ -180,7 +180,7 @@ class Campaign extends Model
         );
 
         /** @var Collection $all */
-        $all = $query->all();
+        $all = $query->get();
 
         return $all->keyBy('user_id')
             ->map(static function (Collection $collection) {
