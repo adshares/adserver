@@ -314,8 +314,7 @@ class Campaign extends Model
     {
         if ($this->time_end != null
             && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
-            < DateUtils::getDateTimeRoundedToCurrentHour()
-        ) {
+            < DateUtils::getDateTimeRoundedToCurrentHour()) {
             return 0;
         }
 
