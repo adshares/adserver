@@ -298,11 +298,11 @@ class Campaign extends Model
         $amount = $exchangeRate->toClick($totalBudget);
 
         $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
-        if ($amount <= $blockedAmount) {
-            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
-
-            return;
-        }
+//        if ($amount <= $blockedAmount) {
+//            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
+//
+//            return;
+//        }
 
         $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
         $requiredBalance = $amount - $blockedAmount;
