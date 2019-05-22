@@ -36,6 +36,7 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Command\LockableTrait;
+use function config;
 use function sprintf;
 
 class AdPayEventExportCommand extends Command
@@ -45,14 +46,17 @@ class AdPayEventExportCommand extends Command
 
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
-    protected $signature = 'ops:adpay:event:export';
+    protected $signature = 'ops:adpay:event:export {--first=} {--last=}';
 
     protected $description = 'Exports event data to AdPay';
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
+        $eventIdFirst = $this->option('first');
+        $eventIdLast = $this->option('last');
         $lockId = config('app.adserver_id').$this->getName();
-        if (!$this->lock($lockId)) {
+
+        if ($eventIdLast === null && !$this->lock($lockId)) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
@@ -61,12 +65,24 @@ class AdPayEventExportCommand extends Command
         $timeStart = microtime(true);
         $this->info('Start command '.$this->signature);
 
-        $eventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
+        $configEventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
 
+        if ($eventIdFirst === null) {
+            $eventIdFirst = $configEventIdFirst;
+        }
+        if ($eventIdLast !== null) {
+            $eventIdLast = (int)$eventIdLast;
+        }
+
+        $counter = 0;
         do {
-            $eventsToExport = $this->fetchEventsToExport($eventIdFirst);
+            $eventsToExport = $this->fetchEventsToExport((int)$eventIdFirst, $eventIdLast);
 
-            $this->info('[AdPayEventExport] Found '.count($eventsToExport).' events to export.');
+            $this->info(sprintf(
+                '[AdPayEventExport] Found %d events to export [%d].',
+                count($eventsToExport),
+                ++$counter
+            ));
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
@@ -74,8 +90,9 @@ class AdPayEventExportCommand extends Command
                 $adPay->addEvents($events);
 
                 $eventIdLastExported = $eventsToExport->last()->id;
-
-                Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
+                if ($eventIdLastExported > $configEventIdFirst) {
+                    Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
+                }
                 $eventIdFirst = $eventIdLastExported + 1;
             }
         } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
@@ -85,11 +102,16 @@ class AdPayEventExportCommand extends Command
         $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
     }
 
-    private function fetchEventsToExport(int $eventIdFirst): Collection
+    private function fetchEventsToExport(int $eventIdFirst, ?int $eventIdLast = null): Collection
     {
-        return EventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', new DateTime('-10 minutes'))
-            ->orderBy('id')
+        $builder = EventLog::where('id', '>=', $eventIdFirst);
+        if ($eventIdLast !== null) {
+            $builder = $builder->where('id', '<=', $eventIdLast);
+        } else {
+            $builder = $builder->where('created_at', '<=', new DateTime('-10 minutes'));
+        }
+
+        return $builder->orderBy('id')
             ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
             ->get();
     }

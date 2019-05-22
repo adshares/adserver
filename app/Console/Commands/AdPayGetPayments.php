@@ -81,9 +81,16 @@ class AdPayGetPayments extends Command
             $entry->reason = $calculation['reason'];
         });
 
-        $unpaidEvents->groupBy(function (EventLog $entry) {
+        $groupedByCampaign = $unpaidEvents->groupBy(function (EventLog $entry) {
             return $entry->campaign_id;
-        })->each(function (Collection $singleCampaignEvents, string $campaignPublicId) use ($exchangeRate) {
+        });
+
+        $groupedByCampaign->each(function (
+            Collection $singleCampaignEvents,
+            string $campaignPublicId
+        ) use (
+            $exchangeRate
+        ) {
             $campaign = Campaign::fetchByUuid($campaignPublicId);
 
             if (!$campaign) {
