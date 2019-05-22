@@ -32,7 +32,6 @@ use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -250,7 +249,7 @@ class CampaignsController extends Controller
         $status = $campaign->status;
         $campaign->fill($input);
 
-        $campaign->changeStatus(Campaign::STATUS_INACTIVE);
+        $campaign->status = Campaign::STATUS_INACTIVE;
 
         $bannersToUpdate = [];
         $bannersToDelete = [];
@@ -352,7 +351,7 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
 
         if ($campaign->status !== Campaign::STATUS_INACTIVE) {
-            $campaign->changeStatus(Campaign::STATUS_INACTIVE);
+            $campaign->status = Campaign::STATUS_INACTIVE;
             $this->campaignRepository->save($campaign);
         }
 

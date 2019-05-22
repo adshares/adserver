@@ -35,7 +35,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function hex2bin;
 
@@ -144,7 +143,7 @@ class Campaign extends Model
         self::fetchByUserId($userId)->filter(function (self $campaign) {
             return $campaign->status === Campaign::STATUS_ACTIVE;
         })->each(function (Campaign $campaign) {
-            $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
+            $campaign->status = Campaign::STATUS_SUSPENDED;
             $campaign->save();
         });
     }
@@ -264,65 +263,42 @@ class Campaign extends Model
         ];
     }
 
-    public function changeStatus(int $status, ?ExchangeRate $exchangeRate = null): void
+    public function changeStatus(int $status, ExchangeRate $exchangeRate): void
     {
         if ($status === $this->status) {
             return;
         }
 
         self::failIfInvalidStatus($status);
-        $this->updateBlockadeOrFailIfNotAllowed($status, $exchangeRate);
+
+        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod()
+            + ($status === self::STATUS_ACTIVE ? $this->getBudgetForCurrentDateTime() : 0);
+
+        $this->updateBlockadeOrFailIfNotAllowed($exchangeRate->toClick($totalBudget));
 
         $this->status = $status;
     }
 
-    private function updateBlockadeOrFailIfNotAllowed(int $status, ?ExchangeRate $exchangeRate = null): void
+    private function updateBlockadeOrFailIfNotAllowed(int $amount): void
     {
-        if ($status !== self::STATUS_ACTIVE) {
-            Log::info(sprintf('Hold the blockade'));
+        DB::beginTransaction();
+        UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
 
-            return;
-        }
-
-        $budget = $this->getBudgetForCurrentDateTime();
-        if (0 >= $budget) {
-            return;
-        }
-
-        if (null === $exchangeRate) {
-            Log::error('ExchangeRate is not available');
-            throw new InvalidArgumentException('ExchangeRate is not available');
-        }
-
-        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budget;
-        $amount = $exchangeRate->toClick($totalBudget);
-
-        $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
-//        if ($amount <= $blockedAmount) {
-//            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
-//
-//            return;
-//        }
-
-        $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
-        $requiredBalance = $amount - $blockedAmount;
-
-        if ($balance < $requiredBalance) {
+        if ($amount > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
             throw new InvalidArgumentException('Campaign budgets exceed account balance');
         }
 
-        DB::beginTransaction();
         try {
-            UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
             if ($amount > 0) {
                 UserLedgerEntry::blockAdExpense($this->user_id, $amount);
             }
-            DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
 
             throw $exception;
         }
+
+        DB::commit();
     }
 
     private static function failIfInvalidStatus(int $value): void
@@ -336,9 +312,8 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): int
     {
-        if ($this->time_end != null
-            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
-            < DateUtils::getDateTimeRoundedToCurrentHour()) {
+        $end = DateTime::createFromFormat(DateTime::ATOM, $this->time_end);
+        if ($this->time_end != null && $end < DateUtils::getDateTimeRoundedToCurrentHour()) {
             return 0;
         }
 
