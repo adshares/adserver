@@ -29,6 +29,7 @@ use function array_merge;
 use function in_array;
 use function min;
 use function sprintf;
+use const PHP_INT_MAX;
 
 /**
  * @mixin Builder
@@ -268,36 +269,45 @@ class UserLedgerEntry extends Model
         return self::blockedEntries()->where('user_id', $userId);
     }
 
-    private static function addAdExpense(int $status, int $userId, int $amount): array
+    private static function addAdExpense(int $status, int $userId, int $total, int $maxBonus = PHP_INT_MAX): array
     {
-        if ($amount < 0) {
+        if ($total < 0) {
             throw new InvalidArgumentException(
                 sprintf('Amount needs to be non-negative - User [%s].', $userId)
             );
         }
 
-        if (self::getBalanceByUserId($userId) < $amount) {
+        if ($maxBonus < 0) {
+            throw new InvalidArgumentException(
+                sprintf('MaxBonus needs to be non-negative - User [%s].', $userId)
+            );
+        }
+
+        if (self::getBalanceByUserId($userId) < $total) {
             throw new InvalidArgumentException(
                 sprintf('Insufficient funds for User [%s] when adding ad expense.', $userId)
             );
         }
 
+        $bonus = min($maxBonus, self::getBonusBalanceByUserId($userId));
+
         $entries = [];
-        $bonus = self::getBonusBalanceByUserId($userId);
+
         if ($bonus > 0) {
             $obj = self::construct(
                 $userId,
-                -min($bonus, $amount),
+                -min($bonus, $total),
                 $status,
                 self::TYPE_BONUS_EXPENSE
             );
             $obj->save();
             $entries[] = $obj;
         }
-        if ($amount > $bonus) {
+
+        if ($total > $bonus) {
             $obj = self::construct(
                 $userId,
-                -($amount - $bonus),
+                -($total - $bonus),
                 $status,
                 self::TYPE_AD_EXPENSE
             );
@@ -308,9 +318,10 @@ class UserLedgerEntry extends Model
         return $entries;
     }
 
-    public static function blockAdExpense(int $userId, int $nonNegativeAmount): array
+    public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
     {
-        $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+        $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $totalAmount, $maxBonus);
+
         foreach ($adExpenses as $adExpense) {
             /** @var UserLedgerEntry $adExpense */
             Log::debug(

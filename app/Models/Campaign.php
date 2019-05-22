@@ -174,13 +174,24 @@ class Campaign extends Model
     public static function fetchRequiredBudgetsPerUser(): Collection
     {
         $query = self::where('status', self::STATUS_ACTIVE)->where(
-            function ($q) {
+            static function ($q) {
                 $dateTime = DateUtils::getDateTimeRoundedToNextHour();
                 $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
             }
         );
 
-        return $query->groupBy('user_id')->selectRaw('sum(budget) as sum, user_id')->pluck('sum', 'user_id');
+        /** @var Collection $all */
+        $all = $query->all();
+
+        return $all->keyBy('user_id')
+            ->map(static function (Collection $collection) {
+                return $collection->reduce(
+                    static function (AdvertiserBudget $carry, Campaign $campaign) {
+                        return $carry->add($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
+                    },
+                    new AdvertiserBudget()
+                );
+            });
     }
 
     public static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): int
@@ -332,5 +343,10 @@ class Campaign extends Model
         }
 
         return $this->budget;
+    }
+
+    private function isDirectDeal(): bool
+    {
+        return isset($this->targeting_requires['site']['domain']);
     }
 }
