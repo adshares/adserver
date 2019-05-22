@@ -49,10 +49,6 @@ class ChangeConfigEntryForAdselectExport extends Migration
             return;
         }
 
-        if (null === $adsPaymentId) {
-            return;
-        }
-
         DB::table('configs')
             ->where('key', Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->update(
