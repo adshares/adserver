@@ -24,31 +24,24 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
-use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
+use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use Illuminate\Console\Command;
 
-class AggregateStatisticsCommand extends Command
+class AggregateStatisticsAdvertiserCommand extends Command
 {
     use LineFormatterTrait;
 
-    protected $signature = 'ops:stats:aggregate {--A|advertiser} {--P|publisher} {--hour=}';
+    protected $signature = 'ops:stats:aggregate:advertiser {--hour=}';
 
     protected $description = 'Aggregates events data for statistics';
 
-    /** @var AdvertiserStatsRepository */
-    private $advertiserStatsRepository;
+    /** @var StatsRepository */
+    private $statsRepository;
 
-    /** @var PublisherStatsRepository */
-    private $publisherStatsRepository;
-
-    public function __construct(
-        AdvertiserStatsRepository $advertiserStatsRepository,
-        PublisherStatsRepository $publisherStatsRepository
-    ) {
-        $this->advertiserStatsRepository = $advertiserStatsRepository;
-        $this->publisherStatsRepository = $publisherStatsRepository;
+    public function __construct(StatsRepository $statsRepository)
+    {
+        $this->statsRepository = $statsRepository;
 
         parent::__construct();
     }
@@ -78,23 +71,7 @@ class AggregateStatisticsCommand extends Command
             )
         );
 
-        $processAdvertiserEvents = $this->option('advertiser');
-        $processPublisherEvents = $this->option('publisher');
-
-        if (!$processAdvertiserEvents && !$processPublisherEvents) {
-            $processAdvertiserEvents = true;
-            $processPublisherEvents = true;
-        }
-        
-        if ($processAdvertiserEvents) {
-            $this->info('[Aggregate statistics] Processing advertiser events');
-            $this->advertiserStatsRepository->aggregateStatistics($from, $to);
-        }
-
-        if ($processPublisherEvents) {
-            $this->info('[Aggregate statistics] Processing publisher events');
-            $this->publisherStatsRepository->aggregateStatistics($from, $to);
-        }
+        $this->statsRepository->aggregateStatistics($from, $to);
 
         $this->info('End command '.$this->signature);
     }
