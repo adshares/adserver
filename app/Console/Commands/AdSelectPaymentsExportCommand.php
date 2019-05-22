@@ -64,7 +64,7 @@ class AdSelectPaymentsExportCommand extends Command
         $greatestAdsPaymentIdInDatabase =
             NetworkEventLog::where('ads_payment_id', '>', $lastExportedAdsPaymentId)->max('ads_payment_id');
 
-        if (null === $greatestAdsPaymentIdInDatabase || $greatestAdsPaymentIdInDatabase <= $lastExportedAdsPaymentId) {
+        if (null === $greatestAdsPaymentIdInDatabase) {
             $this->info('[ADSELECT] No paid events to export');
 
             return;
