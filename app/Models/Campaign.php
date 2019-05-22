@@ -312,8 +312,10 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): int
     {
-        $end = DateTime::createFromFormat(DateTime::ATOM, $this->time_end);
-        if ($this->time_end != null && $end < DateUtils::getDateTimeRoundedToCurrentHour()) {
+        if ($this->time_end != null
+            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
+            < DateUtils::getDateTimeRoundedToCurrentHour()
+        ) {
             return 0;
         }
 
