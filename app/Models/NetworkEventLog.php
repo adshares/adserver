@@ -138,11 +138,6 @@ class NetworkEventLog extends Model
         'operator_fee' => 'Money',
     ];
 
-    public static function fetchByCaseId(string $caseId): Collection
-    {
-        return self::where('case_id', hex2bin($caseId))->get();
-    }
-
     public static function fetchByEventId(string $eventId): ?NetworkEventLog
     {
         return self::where('event_id', hex2bin($eventId))->first();
