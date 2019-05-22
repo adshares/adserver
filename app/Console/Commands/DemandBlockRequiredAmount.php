@@ -70,13 +70,12 @@ class DemandBlockRequiredAmount extends Command
     private function blockAmountOrSuspendCampaigns(Collection $blockade, ExchangeRate $exchangeRate): void
     {
         $blockade->each(static function (AdvertiserBudget $budget, int $userId) use ($exchangeRate) {
-            $amount = new AdvertiserBudget(
-                $exchangeRate->toClick($budget->total()),
-                $exchangeRate->toClick($budget->bonusable())
-            );
-
             try {
-                UserLedgerEntry::blockAdExpense($userId, $amount);
+                UserLedgerEntry::blockAdExpense(
+                    $userId,
+                    $exchangeRate->toClick($budget->total()),
+                    $exchangeRate->toClick($budget->bonusable())
+                );
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 
