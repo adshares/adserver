@@ -84,7 +84,10 @@ class AdPayGetPayments extends Command
 
                 if ($maxSpendableAmount < $totalEventValue) {
                     $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
-                    $singleCampaignEvents->each(function (EventLog $entry) use ($normalizationFactor, $exchangeRate) {
+                    $singleCampaignEvents->each(static function (EventLog $entry) use (
+                        $normalizationFactor,
+                        $exchangeRate
+                    ) {
                         $amount = (int)floor($entry->event_value_currency * $normalizationFactor);
                         $entry->event_value_currency = $amount;
                         $entry->event_value = $exchangeRate->toClick($amount);
@@ -108,9 +111,11 @@ class AdPayGetPayments extends Command
                 $userBalance = $user->getBalance();
                 if ($userBalance < 0) {
                     $this->error(sprintf('User %s has negative balance %d', $userPublicId, $userBalance));
+                    $maxSpendableAmount = 0;
+                } else {
+                    $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
                 }
 
-                $maxSpendableAmount = ($userBalance < 0) ? 0 : $exchangeRate->fromClick($userBalance);
                 $totalEventValue = $singleUserEvents->sum('event_value_currency');
 
                 if ($maxSpendableAmount < $totalEventValue) {
