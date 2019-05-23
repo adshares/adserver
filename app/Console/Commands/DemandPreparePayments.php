@@ -21,33 +21,36 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class DemandPreparePayments extends Command
+class DemandPreparePayments extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:demand:payments:prepare';
 
     /** @var LicenseReader */
     private $licenseReader;
 
-    public function __construct(LicenseReader $licenseReader)
+    public function __construct(Locker $locker, LicenseReader $licenseReader)
     {
         $this->licenseReader = $licenseReader;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $events = EventLog::fetchUnpaidEvents();

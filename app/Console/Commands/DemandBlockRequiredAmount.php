@@ -20,36 +20,39 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
-class DemandBlockRequiredAmount extends Command
+class DemandBlockRequiredAmount extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:demand:payments:block';
 
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader)
+    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
     {
         $this->exchangeRateReader = $exchangeRateReader;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();

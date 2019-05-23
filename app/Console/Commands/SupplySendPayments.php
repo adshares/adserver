@@ -25,7 +25,6 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkEventLog;
@@ -33,17 +32,20 @@ use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Exception;
-use Illuminate\Console\Command;
 use RuntimeException;
 
-class SupplySendPayments extends Command
+class SupplySendPayments extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:supply:payments:send';
 
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $payments = NetworkPayment::fetchNotProcessed();

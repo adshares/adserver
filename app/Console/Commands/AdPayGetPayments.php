@@ -21,7 +21,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
@@ -30,21 +29,24 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function collect;
 use function floor;
 use function now;
 
-class AdPayGetPayments extends Command
+class AdPayGetPayments extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         DB::beginTransaction();

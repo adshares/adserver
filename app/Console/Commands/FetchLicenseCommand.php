@@ -22,18 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Common\Application\Service\LicenseDecoder;
 use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Illuminate\Console\Command;
 
-class FetchLicenseCommand extends Command
+class FetchLicenseCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:license:fetch';
 
     protected $description = 'Fetch operator license from License Server';
@@ -44,17 +41,27 @@ class FetchLicenseCommand extends Command
     /** @var LicenseVault */
     private $licenseVault;
 
-    public function __construct(LicenseProvider $license, LicenseDecoder $licenseDecoder, LicenseVault $licenseVault)
-    {
+    public function __construct(
+        Locker $locker,
+        LicenseProvider $license,
+        LicenseDecoder $licenseDecoder,
+        LicenseVault $licenseVault
+    ) {
         $this->license = $license;
         $this->licenseDecoder = $licenseDecoder;
         $this->licenseVault = $licenseVault;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         try {
@@ -68,6 +75,7 @@ class FetchLicenseCommand extends Command
             }
 
             $this->error($exception->getMessage());
+
             return;
         }
 

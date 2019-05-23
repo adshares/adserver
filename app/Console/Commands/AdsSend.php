@@ -23,18 +23,14 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CliDriver;
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
-use Illuminate\Console\Command;
 use function file_exists;
 use function GuzzleHttp\json_encode;
 use function str_pad;
 use const STR_PAD_LEFT;
 
-class AdsSend extends Command
+class AdsSend extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ads:send {--external}';
 
     /** @var array */
@@ -42,6 +38,12 @@ class AdsSend extends Command
 
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $filePath = base_path('accounts.local.php');
         if (file_exists($filePath)) {
             $this->data = include $filePath;

@@ -22,17 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Publisher\Repository\StatsRepository as PublisherStatsRepository;
 use DateTime;
-use Illuminate\Console\Command;
 
-class AggregateStatisticsCommand extends Command
+class AggregateStatisticsCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:stats:aggregate {--A|advertiser} {--P|publisher} {--hour=}';
 
     protected $description = 'Aggregates events data for statistics';
@@ -44,17 +41,24 @@ class AggregateStatisticsCommand extends Command
     private $publisherStatsRepository;
 
     public function __construct(
+        Locker $locker,
         AdvertiserStatsRepository $advertiserStatsRepository,
         PublisherStatsRepository $publisherStatsRepository
     ) {
         $this->advertiserStatsRepository = $advertiserStatsRepository;
         $this->publisherStatsRepository = $publisherStatsRepository;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $hour = $this->option('hour');

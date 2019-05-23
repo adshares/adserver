@@ -22,18 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Exception\TransferMoneyException;
 use Adshares\Demand\Application\Service\TransferMoneyToColdWallet;
-use Illuminate\Console\Command;
 use function sprintf;
 
-class TransferMoneyToColdWalletCommand extends Command
+class TransferMoneyToColdWalletCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:wallet:transfer:cold';
 
     protected $description = 'Transfer money from Hot to Cold Wallet when amount is greater than `max` definition';
@@ -41,15 +38,21 @@ class TransferMoneyToColdWalletCommand extends Command
     /** @var TransferMoneyToColdWallet */
     private $transferMoneyToColdWalletService;
 
-    public function __construct(TransferMoneyToColdWallet $transferMoneyToColdWalletService)
+    public function __construct(Locker $locker, TransferMoneyToColdWallet $transferMoneyToColdWalletService)
     {
         $this->transferMoneyToColdWalletService = $transferMoneyToColdWalletService;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('[Wallet] Start command '.$this->signature);
 
         if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {
