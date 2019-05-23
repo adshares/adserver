@@ -23,10 +23,6 @@ class ChangeNetworkEventLogs extends Migration
         if (DB::isMySql()) {
             DB::statement('ALTER TABLE network_event_logs MODIFY campaign_id varbinary(16)');
         }
-
-        Schema::table('network_event_logs', static function (Blueprint $table) {
-            $table->index('banner_id');
-        });
     }
 
     /**
@@ -40,7 +36,6 @@ class ChangeNetworkEventLogs extends Migration
             'network_event_logs',
             static function (Blueprint $table) {
                 $table->dropColumn('campaign_id');
-                $table->dropIndex('network_event_logs_banner_id_index');
             }
         );
     }
