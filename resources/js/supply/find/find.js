@@ -54,6 +54,7 @@ var encodeZones = function (zone_data) {
 };
 
 var dwmthACL = [];
+var dwmthURLS = [];
 
 var replaceTag = function (oldTag, newTag) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
@@ -280,9 +281,11 @@ var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
     var url = serverOrigin + '/supply/register?iid=' + impressionId;
 
+    if(dwmthURLS[url]) return;
     var iframe = createIframeFromUrl(url);
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
+    dwmthURLS[url] = 1;
 };
 
 var createIframeFromUrl = function createIframeFromUrl(url) {
@@ -330,9 +333,6 @@ var getBrowserContext = function () {
 };
 
 domReady(function () {
-
-    aduserPixel(getImpressionId());
-
     var tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = tags.length;
 
@@ -369,6 +369,8 @@ domReady(function () {
     if(valid == 0) {
         return;
     }
+
+    aduserPixel(getImpressionId());
 
     var data = encodeZones(params);
 
@@ -434,13 +436,16 @@ domReady(function () {
                 data.insertElem.forEach(function (request) {
                     if(dwmthACL.length >= 5 * valid) return;
                     if(request.type == 'iframe') {
+                        if(dwmthURLS[request.url]) return;
                         var iframe = addTrackingIframe(request.url);
                         dwmthACL.push(iframe.contentWindow);
+                        dwmthURLS[request.url] = 1;
                     } else if(request.type == 'img') {
+                        if(dwmthURLS[request.url]) return;
                         addTrackingImage(request.url);
                         dwmthACL.push(null);
+                        dwmthURLS[request.url] = 1;
                     }
-
                 });
             }
         }
