@@ -39,13 +39,9 @@ class EventMapper
             'keywords' => $keywords,
             'publisher_id' => $event['publisher_id'],
             'banner_id' => $event['banner_id'],
-            'campaign_id' => $event['campaign_id'],
             'user_id' => $event['user_id'],
             'event_id' => $event['event_id'],
-            'type' => $event['event_type'],
-            'zone_id' => $event['zone_id'],
-            'case_id' => $event['case_id'],
-            'time' => DateTime::createFromFormat('Y-m-d H:i:s', $event['created_at'])->format(DateTime::ATOM),
+            'event_type' => $event['event_type'],
         ];
 
         return $mappedEvent;
