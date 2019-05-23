@@ -309,7 +309,7 @@ class DemandController extends Controller
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
-                Utils::urlSafeBase64Encode(random_bytes(8))
+                $impressionId ?? Utils::urlSafeBase64Encode(random_bytes(8))
             );
         } else {
             $adUserUrl = null;
