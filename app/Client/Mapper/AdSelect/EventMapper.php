@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
-use DateTime;
 use stdClass;
 
 class EventMapper
