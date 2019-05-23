@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -137,11 +138,6 @@ class NetworkEventLog extends Model
         'operator_fee' => 'Money',
     ];
 
-    public static function fetchByCaseId(string $caseId): Collection
-    {
-        return self::where('case_id', hex2bin($caseId))->get();
-    }
-
     public static function fetchByEventId(string $eventId): ?NetworkEventLog
     {
         return self::where('event_id', hex2bin($eventId))->first();
@@ -202,8 +198,8 @@ class NetworkEventLog extends Model
 
     public static function eventClicked(string $caseId): void
     {
-        self::where('case_id', hex2bin($caseId))
-            ->where('event_type', self::TYPE_VIEW)
+        $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
+        self::where('event_id', hex2bin($eventId))
             ->update(['is_view_clicked' => 1]);
     }
 }
