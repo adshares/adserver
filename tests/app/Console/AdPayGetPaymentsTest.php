@@ -35,7 +35,6 @@ use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
-use function mt_rand;
 
 class AdPayGetPaymentsTest extends TestCase
 {
@@ -44,7 +43,7 @@ class AdPayGetPaymentsTest extends TestCase
     public function testHandle(): void
     {
         $dummyExchangeRateRepository = new DummyExchangeRateRepository();
-        
+
         $this->app->bind(
             ExchangeRateRepository::class,
             function () use ($dummyExchangeRateRepository) {
@@ -74,8 +73,8 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents = $events->map(function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => mt_rand(0, 1000*10**11),
-                'reason' => 0
+                'amount' => random_int(0, 1000 * 10 ** 11),
+                'reason' => 0,
             ];
         });
 
@@ -85,15 +84,18 @@ class AdPayGetPaymentsTest extends TestCase
         );
         factory(UserLedgerEntry::class)->create(['amount' => $userBalance, 'user_id' => $userId]);
 
-        $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
-            $adPay = $this->createMock(AdPay::class);
-            $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+        $this->app->bind(
+            AdPay::class,
+            function () use ($calculatedEvents) {
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
 
-            return $adPay;
-        });
+                return $adPay;
+            }
+        );
 
         $this->artisan('ops:adpay:payments:get')
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
