@@ -24,15 +24,19 @@ namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 use function json_decode;
+use function random_int;
 
 class DemandBlockPaymentsTest extends TestCase
 {
@@ -61,7 +65,7 @@ class DemandBlockPaymentsTest extends TestCase
             ->assertExitCode(0);
     }
 
-    public function testHandle(): void
+    public function testBlock(): void
     {
         $user = factory(User::class)->create();
 
@@ -70,6 +74,15 @@ class DemandBlockPaymentsTest extends TestCase
 
         $this->artisan('ops:demand:payments:block')
             ->expectsOutput('Attempt to create 1 blockades.')
+            ->assertExitCode(0);
+    }
+
+    public function testPay(): void
+    {
+        $this->createStuff();
+        $this->createStuff();
+
+        $this->artisan('ops:adpay:payments:get')
             ->assertExitCode(0);
     }
 
@@ -106,8 +119,11 @@ class DemandBlockPaymentsTest extends TestCase
         }
     }
 
-    private static function createCampaigns(User $user, int $withTargeting = 2, int $activeCount = 5): void
-    {
+    private static function createCampaigns(
+        User $user,
+        int $withTargeting = 2,
+        int $activeCount = 5
+    ): \Illuminate\Support\Collection {
         factory(Campaign::class)->create([
             'user_id' => $user->id,
             'status' => Campaign::STATUS_INACTIVE,
@@ -128,5 +144,40 @@ class DemandBlockPaymentsTest extends TestCase
             'status' => Campaign::STATUS_ACTIVE,
             'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
         ]);
+
+        return Campaign::all()->map(static function (Campaign $campaign) {
+            /** @var Collection|EventLog[] $events */
+            return factory(EventLog::class)->times(3)->create([
+                'event_value_currency' => null,
+                'advertiser_id' => $campaign->user->uuid,
+                'campaign_id' => $campaign->uuid,
+            ]);
+        })->flatten(1);
+    }
+
+    private function createStuff(): void
+    {
+        $user = factory(User::class)->create();
+
+        $events = self::createCampaigns($user);
+        self::createLedgerEntries($user);
+
+        $calculatedEvents = $events->map(static function (EventLog $entry) {
+            return [
+                'event_id' => $entry->event_id,
+                'amount' => random_int(0, 10 ** 11),
+                'reason' => 0,
+            ];
+        });
+
+        $this->app->bind(
+            AdPay::class,
+            function () use ($calculatedEvents) {
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+
+                return $adPay;
+            }
+        );
     }
 }

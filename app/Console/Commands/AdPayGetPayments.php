@@ -131,20 +131,29 @@ class AdPayGetPayments extends Command
 
     private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): void
     {
-        $unpaidEvents->groupBy('campaign_id')
-            ->each(function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
+        self::$campaignBudgets = $unpaidEvents->groupBy('campaign_id')
+            ->mapToGroups(function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
                 $campaign = Campaign::fetchByUuid($campaignPublicId);
 
-                if ($campaign) {
-                    $this->normalize($events, (int)$campaign->budget, $exchangeRate);
-                } else {
+                if (!$campaign) {
                     Log::warning(
                         sprintf(
                             '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
                             $campaignPublicId
                         )
                     );
+
+                    return [];
                 }
+
+                $total = $campaign->budget;
+                $this->normalize($events, $total, $exchangeRate);
+
+                $bonusable = $campaign->isDirectDeal() ? 0 : $total;
+
+                return [
+                    $campaign->user_id => new AdvertiserBudget($total, $bonusable),
+                ];
             });
     }
 
