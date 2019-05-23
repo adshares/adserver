@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
@@ -41,6 +42,13 @@ use function now;
 class AdPayGetPayments extends Command
 {
     use LineFormatterTrait;
+
+    private const EVENT_VALUE_CURRENCY = 'event_value_currency';
+
+    private const EVENT_VALUE = 'event_value';
+
+    /** @var Collection|AdvertiserBudget[] */
+    private static $campaignBudgets;
 
     protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
@@ -64,89 +72,9 @@ class AdPayGetPayments extends Command
 
         $this->updateEventsWithAdPayData($unpaidEvents, $calculations, $exchangeRate);
 
-        $unpaidEvents->groupBy('campaign_id')
-            ->each(static function (Collection $singleCampaignEvents, string $campaignPublicId) use ($exchangeRate) {
-                $campaign = Campaign::fetchByUuid($campaignPublicId);
+        $this->evaluateEventsByCampaign($unpaidEvents, $exchangeRate);
 
-                if (!$campaign) {
-                    Log::warning(
-                        sprintf(
-                            '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
-                            $campaignPublicId
-                        )
-                    );
-
-                    return true;
-                }
-
-                $maxSpendableAmount = (int)$campaign->budget;
-                $totalEventValue = $singleCampaignEvents->sum('event_value_currency');
-
-                if ($maxSpendableAmount < $totalEventValue) {
-                    $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
-                    $singleCampaignEvents->each(static function (EventLog $entry) use (
-                        $normalizationFactor,
-                        $exchangeRate
-                    ) {
-                        $amount = (int)floor($entry->event_value_currency * $normalizationFactor);
-                        $entry->event_value_currency = $amount;
-                        $entry->event_value = $exchangeRate->toClick($amount);
-                    });
-                }
-            });
-
-        $ledgerEntries = $unpaidEvents->groupBy('advertiser_id')
-            ->map(function (Collection $singleUserEvents, string $userPublicId) use ($exchangeRate) {
-                $user = User::fetchByUuid($userPublicId);
-
-                if (!$user) {
-                    throw new Exception(
-                        sprintf(
-                            '{"error":"no-user","command":"ops:adpay:payments:get","advertiser_id":"%s"}',
-                            $userPublicId
-                        )
-                    );
-                }
-
-                $userBalance = $user->getBalance();
-                if ($userBalance < 0) {
-                    $this->error(sprintf('User %s has negative balance %d', $userPublicId, $userBalance));
-                    $maxSpendableAmount = 0;
-                } else {
-                    $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
-                }
-
-                $totalEventValue = $singleUserEvents->sum('event_value_currency');
-
-                if ($maxSpendableAmount < $totalEventValue) {
-                    $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
-                    $singleUserEvents->each(static function (EventLog $entry) use (
-                        $normalizationFactor,
-                        $exchangeRate
-                    ) {
-                        $amount = (int)floor($entry->event_value_currency * $normalizationFactor);
-                        $entry->event_value_currency = $amount;
-                        $entry->event_value = $exchangeRate->toClick($amount);
-                    });
-
-                    Campaign::suspendAllForUserId($user->id);
-
-                    Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks."
-                        ." Needs $totalEventValue, but has $maxSpendableAmount");
-                }
-
-                $singleUserEvents->each(static function (EventLog $entry) {
-                    $entry->save();
-                });
-
-                $totalEventValueInClicks = $singleUserEvents->sum('event_value');
-
-                if ($totalEventValueInClicks > 0) {
-                    return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks);
-                }
-
-                return false;
-            })->filter();
+        $ledgerEntries = $this->processExpenses($unpaidEvents, $exchangeRate);
 
         DB::commit();
 
@@ -199,5 +127,90 @@ class AdPayGetPayments extends Command
             $entry->event_value = $exchangeRate->toClick($amount);
             $entry->reason = $calculation['reason'];
         });
+    }
+
+    private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): void
+    {
+        $unpaidEvents->groupBy('campaign_id')
+            ->each(function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
+                $campaign = Campaign::fetchByUuid($campaignPublicId);
+
+                if ($campaign) {
+                    $this->normalize($events, (int)$campaign->budget, $exchangeRate);
+                } else {
+                    Log::warning(
+                        sprintf(
+                            '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
+                            $campaignPublicId
+                        )
+                    );
+                }
+            });
+    }
+
+    private function processExpenses(Collection $unpaidEvents, ExchangeRate $exchangeRate): Collection
+    {
+        return $unpaidEvents->groupBy('advertiser_id')
+            ->map(function (Collection $events, string $userPublicId) use ($exchangeRate) {
+                $user = User::fetchByUuid($userPublicId);
+
+                if (!$user) {
+                    throw new Exception(
+                        sprintf(
+                            '{"error":"no-user","command":"ops:adpay:payments:get","advertiser_id":"%s"}',
+                            $userPublicId
+                        )
+                    );
+                }
+
+                $userBalance = $user->getBalance();
+                if ($userBalance < 0) {
+                    $this->error(sprintf('User %s has negative balance %d', $userPublicId, $userBalance));
+                    $maxSpendableAmount = 0;
+                } else {
+                    $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
+                }
+
+                $insufficientFunds = $this->normalize($events, $maxSpendableAmount, $exchangeRate);
+
+                if ($insufficientFunds) {
+                    Campaign::suspendAllForUserId($user->id);
+
+                    Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks.");
+                }
+
+                $events->each(static function (EventLog $entry) {
+                    $entry->save();
+                });
+
+                $totalEventValueInClicks = $events->sum(self::EVENT_VALUE);
+
+                if ($totalEventValueInClicks > 0) {
+                    return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks);
+                }
+
+                return false;
+            })->filter();
+    }
+
+    private function normalize(Collection $events, int $maxSpendableAmount, ExchangeRate $exchangeRate): bool
+    {
+        $totalEventValue = $events->sum(self::EVENT_VALUE_CURRENCY);
+
+        if ($maxSpendableAmount < $totalEventValue) {
+            $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
+            $events->each(static function (EventLog $entry) use (
+                $normalizationFactor,
+                $exchangeRate
+            ) {
+                $amount = (int)floor($entry->event_value_currency * $normalizationFactor);
+                $entry->event_value_currency = $amount;
+                $entry->event_value = $exchangeRate->toClick($amount);
+            });
+
+            return true;
+        }
+
+        return false;
     }
 }

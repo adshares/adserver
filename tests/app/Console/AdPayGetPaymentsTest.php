@@ -70,7 +70,7 @@ class AdPayGetPaymentsTest extends TestCase
             'banner_id' => $bannerUuid,
         ]);
 
-        $calculatedEvents = $events->map(function (EventLog $entry) {
+        $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
                 'amount' => random_int(0, 1000 * 10 ** 11),

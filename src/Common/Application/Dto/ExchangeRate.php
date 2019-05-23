@@ -58,7 +58,7 @@ class ExchangeRate implements Arrayable
         return $this->currency;
     }
 
-    public function fromClick(int $amountInClicks): float
+    public function fromClick(int $amountInClicks): int
     {
         return (int)floor((float)$amountInClicks * $this->value);
     }

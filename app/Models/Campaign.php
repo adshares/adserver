@@ -52,7 +52,7 @@ use function hex2bin;
  * @property string name
  * @property array|null|string strategy_name
  * @property float bid
- * @property float budget
+ * @property int budget
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
@@ -95,6 +95,7 @@ class Campaign extends Model
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
         'status' => 'int',
+        'budget' => 'int',
     ];
 
     protected $dispatchesEvents = [
@@ -321,7 +322,7 @@ class Campaign extends Model
         return $this->budget;
     }
 
-    private function isDirectDeal(): bool
+    public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
     }
