@@ -22,36 +22,30 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use DateTime;
-use Illuminate\Console\Command;
 use function sprintf;
-use Symfony\Component\Console\Command\LockableTrait;
 
-class AdSelectPaymentsExportCommand extends Command
+class AdSelectPaymentsExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-    use LockableTrait;
-
     protected $signature = 'ops:adselect:payment:export';
 
     protected $description = 'Export event payments to AdSelect';
 
     protected $exporterService;
 
-    public function __construct(AdSelectEventExporter $exporterService)
+    public function __construct(Locker $locker, AdSelectEventExporter $exporterService)
     {
-        parent::__construct();
+        parent::__construct($locker);
 
         $this->exporterService = $exporterService;
     }
 
     public function handle(): void
     {
-        $lockId = config('app.adserver_id').$this->getName();
-        if (!$this->lock($lockId)) {
+        if (!$this->lock()) {
             $this->info('[AdSelectPaymentsExport] Command '.$this->signature.' already running');
 
             return;
