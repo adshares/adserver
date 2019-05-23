@@ -811,7 +811,7 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isBannerPresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->advertiser_id) : null;
+                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->user_id) : null;
                 $result[] =
                     new DataEntry(
                         $calculation,

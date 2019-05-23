@@ -36,7 +36,7 @@ trait Ownership
 
     public function scopeOwnedBy(Builder $query, ?User $user): Builder
     {
-        if (!$user) {
+        if (!$user || $user->isAdmin()) {
             return $query;
         }
 
