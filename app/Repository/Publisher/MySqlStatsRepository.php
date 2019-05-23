@@ -489,7 +489,7 @@ class MySqlStatsRepository implements StatsRepository
             );
 
             $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;
-            $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
+            $selectedPublisherId = $publisherId ?: bin2hex($row->publisher_id);
             $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
         }
 
@@ -808,7 +808,7 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isZonePresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedPublisherId = ($publisherId === null) ? bin2hex($zone->user_id) : null;
+                $selectedPublisherId = $publisherId ?: bin2hex($zone->user_id);
                 $result[] =
                     new DataEntry(
                         $calculation,

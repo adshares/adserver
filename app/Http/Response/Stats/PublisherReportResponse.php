@@ -30,6 +30,8 @@ class PublisherReportResponse extends ReportResponse
 {
 
     private const PUBLISHER_COLUMNS = [
+        'User' => [
+        ],
         'Site' => [
             'width' => 24,
         ],
@@ -96,6 +98,7 @@ class PublisherReportResponse extends ReportResponse
         return array_map(
             static function ($item) {
                 return [
+                    $item['publisher'] ?? '',
                     $item['siteName'],
                     $item['zoneName'],
                     $item['domain'] ?? '',

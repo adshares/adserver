@@ -29,6 +29,8 @@ use function array_map;
 class AdvertiserReportResponse extends ReportResponse
 {
     private const ADVERTISER_COLUMNS = [
+        'User' => [
+        ],
         'Campaign' => [
             'width' => 24,
         ],
@@ -98,6 +100,7 @@ class AdvertiserReportResponse extends ReportResponse
         return array_map(
             static function ($item) {
                 return [
+                    $item['advertiser'] ?? '',
                     $item['campaignName'],
                     $item['bannerName'],
                     $item['domain'] ?? '',

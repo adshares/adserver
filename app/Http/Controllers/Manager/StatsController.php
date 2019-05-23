@@ -396,6 +396,12 @@ class StatsController extends Controller
 
     private function transformPublicIdToPrivateId(array $item): array
     {
+        if (isset($item['advertiserId'])) {
+            $user = User::fetchByUuid($item['advertiserId']);
+            $item['advertiserId'] = $user->id ?? null;
+            $item['advertiser'] = $user->email ?? null;
+        }
+
         if (isset($item['campaignId'])) {
             $campaign = Campaign::fetchByUuid($item['campaignId']);
             $item['campaignId'] = $campaign->id ?? null;
@@ -406,6 +412,12 @@ class StatsController extends Controller
             $banner = Banner::fetchBanner($item['bannerId']);
             $item['bannerId'] = $banner->id ?? null;
             $item['bannerName'] = $banner->name ?? null;
+        }
+
+        if (isset($item['publisherId'])) {
+            $user = User::fetchByUuid($item['publisherId']);
+            $item['publisherId'] = $user->id ?? null;
+            $item['publisher'] = $user->email ?? null;
         }
 
         if (isset($item['siteId'])) {

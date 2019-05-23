@@ -489,7 +489,7 @@ class MySqlStatsRepository implements StatsRepository
             );
 
             $bannerId = ($row->banner_id !== null) ? bin2hex($row->banner_id) : null;
-            $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($row->advertiser_id) : null;
+            $selectedAdvertiserId = $advertiserId ?: bin2hex($row->advertiser_id);
             $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
         }
 
@@ -811,7 +811,7 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isBannerPresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->user_id) : null;
+                $selectedAdvertiserId = $advertiserId ?: bin2hex($banner->user_id);
                 $result[] =
                     new DataEntry(
                         $calculation,
