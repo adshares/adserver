@@ -182,7 +182,7 @@ class Campaign extends Model
         /** @var Collection $all */
         $all = $query->get();
 
-        return $all->keyBy('user_id')
+        return $all->groupBy('user_id')
             ->map(static function (Collection $collection) {
                 return $collection->reduce(
                     static function (AdvertiserBudget $carry, Campaign $campaign) {
