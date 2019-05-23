@@ -44,6 +44,7 @@ use function hex2bin;
  * @property string publisher_id
  * @property string site_id
  * @property string zone_id
+ * @property string campaign_id
  * @property string event_type
  * @property string pay_from
  * @property string ip
@@ -126,6 +127,7 @@ class NetworkEventLog extends Model
         'publisher_id' => 'BinHex',
         'zone_id' => 'BinHex',
         'site_id' => 'BinHex',
+        'campaign_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -178,12 +180,25 @@ class NetworkEventLog extends Model
             return;
         }
 
+        $banner = NetworkBanner::fetchByPublicIdWithCampaign($bannerId);
+
+        if (!$banner) {
+            return;
+        }
+
+        $campaignId = $banner->getAttribute('campaign')->uuid ?? null;
+
+        if (!$campaignId) {
+            return;
+        }
+
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
         $log->user_id = $trackingId;
         $log->zone_id = $zoneId;
+        $log->campaign_id = $campaignId;
         $log->publisher_id = $publisherId;
         $log->site_id = $siteId;
         $log->pay_from = $payFrom;
