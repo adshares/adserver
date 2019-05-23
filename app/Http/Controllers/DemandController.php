@@ -220,7 +220,7 @@ class DemandController extends Controller
         $response = new RedirectResponse($url);
         $impressionId = $request->query->get('iid');
 
-        if($impressionId) {
+        if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
                 $response,
@@ -230,7 +230,6 @@ class DemandController extends Controller
             );
         } else {
             $tid = $request->cookies->get('tid');
-
         }
 
         $trackingId = $tid
@@ -278,7 +277,7 @@ class DemandController extends Controller
         $response = new Response();
         $impressionId = $request->query->get('iid');
 
-        if($impressionId) {
+        if ($impressionId) {
             $tid = Utils::attachOrProlongTrackingCookie(
                 $request,
                 $response,
@@ -288,7 +287,6 @@ class DemandController extends Controller
             );
         } else {
             $tid = $request->cookies->get('tid');
-
         }
 
         $trackingId = $tid
