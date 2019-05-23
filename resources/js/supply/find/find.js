@@ -343,6 +343,7 @@ domReady(function () {
     var param, params = [];
     params.push(getBrowserContext());
 
+    var valid = 0;
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
         if(tag.__dwmth) {
@@ -361,7 +362,12 @@ domReady(function () {
         }
         if (param.zone) {
             params.push(param);
+            valid++;
         }
+    }
+
+    if(valid == 0) {
+        return;
     }
 
     var data = encodeZones(params);
@@ -426,7 +432,7 @@ domReady(function () {
             }
             if (data.insertElem) {
                 data.insertElem.forEach(function (request) {
-                    if(dwmthACL.length >= 5) return;
+                    if(dwmthACL.length >= 5 * valid) return;
                     if(request.type == 'iframe') {
                         var iframe = addTrackingIframe(request.url);
                         dwmthACL.push(iframe.contentWindow);
