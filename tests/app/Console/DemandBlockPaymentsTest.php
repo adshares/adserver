@@ -85,7 +85,7 @@ class DemandBlockPaymentsTest extends TestCase
 
         $budgets->each(static function (AdvertiserBudget $budget) {
             self::assertEquals(500 * 10 ** 11, $budget->total());
-            self::assertEquals(300 * 10 * 11, $budget->bonusable());
+            self::assertEquals(300 * 10 ** 11, $budget->bonusable());
         });
     }
 
