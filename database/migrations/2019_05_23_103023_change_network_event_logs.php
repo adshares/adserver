@@ -16,7 +16,7 @@ class ChangeNetworkEventLogs extends Migration
         Schema::table(
             'network_event_logs',
             static function (Blueprint $table) {
-                $table->binary('campaign_id', 16)->after('zone_id');
+                $table->binary('campaign_id', 16)->after('zone_id')->nullable();
             }
         );
 
