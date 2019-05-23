@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
@@ -29,8 +29,6 @@ use function array_map;
 class AdvertiserReportResponse extends ReportResponse
 {
     private const ADVERTISER_COLUMNS = [
-        'User' => [
-        ],
         'Campaign' => [
             'width' => 24,
         ],
@@ -90,17 +88,34 @@ class AdvertiserReportResponse extends ReportResponse
         ],
     ];
 
+    /** @var bool */
+    private $isAdmin;
+
+    public function __construct(array $data, ?string $name = null, ?string $creator = null, ?bool $isAdmin = false)
+    {
+        $this->isAdmin = $isAdmin;
+
+        parent::__construct($data, $name, $creator);
+    }
+
     protected function columns(): array
     {
-        return self::ADVERTISER_COLUMNS;
+        $columns = self::ADVERTISER_COLUMNS;
+
+        if ($this->isAdmin) {
+            array_unshift($columns, ['User' => []]);
+        }
+
+        return $columns;
     }
 
     protected function rows(): array
     {
+        $isAdmin = $this->isAdmin;
+
         return array_map(
-            static function ($item) {
-                return [
-                    $item['advertiser'] ?? '',
+            static function ($item) use ($isAdmin) {
+                $row = [
                     $item['campaignName'],
                     $item['bannerName'],
                     $item['domain'] ?? '',
@@ -116,6 +131,12 @@ class AdvertiserReportResponse extends ReportResponse
                     $item['ctr'],
                     AdsConverter::clicksToAds($item['averageCpc']),
                 ];
+
+                if ($isAdmin) {
+                    array_unshift($row, $item['advertiser'] ?? '');
+                }
+
+                return $row;
             },
             $this->data
         );

@@ -299,15 +299,16 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $isAdmin = $user->isAdmin();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$user->isAdmin()) {
+        if (!$isAdmin) {
             $this->validateUserAsPublisher($user);
         }
 
         try {
             $input = new PublisherStatsInput(
-                $user->isAdmin() ? null : $user->uuid,
+                $isAdmin ? null : $user->uuid,
                 $from,
                 $to,
                 $siteId
@@ -321,7 +322,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, config('app.name')))->response();
+        return (new PublisherReportResponse($data, $name, config('app.name'), $isAdmin))->response();
     }
 
     public function advertiserReport(
@@ -335,15 +336,16 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $isAdmin = $user->isAdmin();
 
         $this->validateChartInputParameters($from, $to);
-        if (!$user->isAdmin()) {
+        if (!$isAdmin) {
             $this->validateUserAsAdvertiser($user);
         }
 
         try {
             $input = new AdvertiserStatsInput(
-                $user->isAdmin() ? null : $user->uuid,
+                $isAdmin ? null : $user->uuid,
                 $from,
                 $to,
                 $campaignId
@@ -357,7 +359,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromAdvertiserData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, config('app.name')))->response();
+        return (new AdvertiserReportResponse($data, $name, config('app.name'), $isAdmin))->response();
     }
 
     public function publisherStatsWithTotal(
