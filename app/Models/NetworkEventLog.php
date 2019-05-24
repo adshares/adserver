@@ -40,6 +40,7 @@ use function hex2bin;
  * @property string case_id
  * @property string event_id
  * @property string user_id
+ * @property string $tracking_id
  * @property string banner_id
  * @property string publisher_id
  * @property string site_id
@@ -84,7 +85,7 @@ class NetworkEventLog extends Model
     protected $fillable = [
         'case_id',
         'event_id',
-        'user_id',
+        'tracking_id',
         'banner_id',
         'zone_id',
         'publisher_id',
@@ -123,6 +124,7 @@ class NetworkEventLog extends Model
         'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
+        'tracking_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
         'zone_id' => 'BinHex',
@@ -196,7 +198,7 @@ class NetworkEventLog extends Model
         $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
+        $log->tracking_id = $trackingId;
         $log->zone_id = $zoneId;
         $log->campaign_id = $campaignId;
         $log->publisher_id = $publisherId;
