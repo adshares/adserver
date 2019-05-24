@@ -133,7 +133,7 @@ var prepareInfoBox = function (context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute; top: 0px; right: 0px;background-color: #fff');
+    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important');
 
     var link = document.createElement('a');
     link.target = '_blank';
