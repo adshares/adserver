@@ -24,13 +24,12 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class AdPayCampaignExportCommandTest extends TestCase
+class AdPayCampaignExportCommandTest extends CommandTestCase
 {
     use RefreshDatabase;
 

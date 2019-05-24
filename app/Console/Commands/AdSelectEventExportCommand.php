@@ -22,36 +22,30 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use DateTime;
-use Illuminate\Console\Command;
-use Symfony\Component\Console\Command\LockableTrait;
 use function sprintf;
 
-class AdSelectEventExportCommand extends Command
+class AdSelectEventExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-    use LockableTrait;
-
     protected $signature = 'ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
 
     protected $exporterService;
 
-    public function __construct(AdSelectEventExporter $exporterService)
+    public function __construct(Locker $locker, AdSelectEventExporter $exporterService)
     {
         $this->exporterService = $exporterService;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
-        $lockId = config('app.adserver_id').$this->getName();
-        if (!$this->lock($lockId)) {
+        if (!$this->lock()) {
             $this->info('[AdSelectEventExport] Command '.$this->signature.' already running.');
 
             return;

@@ -20,18 +20,20 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Demand\Application\Service\TargetingOptionsImporter;
-use Illuminate\Console\Command;
 
-class UpdateTargetingOptions extends Command
+class UpdateTargetingOptions extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:targeting-options:update';
 
     public function handle(TargetingOptionsImporter $service): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $service->import();
