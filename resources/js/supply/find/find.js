@@ -205,10 +205,12 @@ function getBoundRect(el, overflow) {
     if(overflow) {
         var css = window.getComputedStyle(el);
         if (css.overflowX == 'visible') {
-            width = 100000;
+            width = 200000;
+            left = -100000;
         }
         if (css.overflowY == 'visible') {
-            height = 100000;
+            height = 200000;
+            top = -100000;
         }
     }
 
