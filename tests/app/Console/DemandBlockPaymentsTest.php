@@ -190,9 +190,9 @@ class DemandBlockPaymentsTest extends TestCase
 
     public function testFetchRequiredBudgetsPerUser(): void
     {
-        $this->createCampaigns(factory(User::class)->create());
-        $this->createCampaigns(factory(User::class)->create());
-        $this->createCampaigns(factory(User::class)->create());
+        self::createCampaigns(factory(User::class)->create());
+        self::createCampaigns(factory(User::class)->create());
+        self::createCampaigns(factory(User::class)->create());
 
         $budgets = Campaign::fetchRequiredBudgetsPerUser();
 
