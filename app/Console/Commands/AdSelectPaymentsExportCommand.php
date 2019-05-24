@@ -24,8 +24,8 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
-use DateTime;
 use function sprintf;
 
 class AdSelectPaymentsExportCommand extends BaseCommand
@@ -53,19 +53,37 @@ class AdSelectPaymentsExportCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
-        $this->info(sprintf(
-            '[ADSELECT] Trying to export paid events from %s',
-            $lastExportDate->format(DateTime::ATOM)
-        ));
+        $lastExportedAdsPaymentId = Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID);
 
-        $exported = $this->exporterService->exportPaidEvents($lastExportDate);
-        $this->info(sprintf(
-            '[ADSELECT] Exported %s paid events',
-            $exported
-        ));
+        $greatestAdsPaymentIdInDatabase =
+            NetworkEventLog::where('ads_payment_id', '>', $lastExportedAdsPaymentId)->max('ads_payment_id');
 
-        Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
+        if (null === $greatestAdsPaymentIdInDatabase) {
+            $this->info('[ADSELECT] No paid events to export');
+
+            return;
+        }
+
+        $adsPaymentIdStart = $lastExportedAdsPaymentId + 1;
+        $adsPaymentIdEnd = $greatestAdsPaymentIdInDatabase;
+
+        $this->info(
+            sprintf(
+                '[ADSELECT] Trying to export paid events with ads_payment_id <%d;%d>',
+                $adsPaymentIdStart,
+                $adsPaymentIdEnd
+            )
+        );
+
+        $exported = $this->exporterService->exportPaidEvents($adsPaymentIdStart, $adsPaymentIdEnd);
+        $this->info(
+            sprintf(
+                '[ADSELECT] Exported %s paid events',
+                $exported
+            )
+        );
+
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID, $adsPaymentIdEnd);
 
         $this->info('Finished exporting event payments to AdSelect');
     }

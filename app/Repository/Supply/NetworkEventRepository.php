@@ -42,13 +42,13 @@ class NetworkEventRepository implements EventRepository
         return $events->toArray();
     }
 
-    public function fetchPaidEventsUpdatedFromDate(
-        DateTime $dateTime,
+    public function fetchPaidEventsUpdatedAfterAdsPaymentId(
+        int $adsPaymentIdStart,
+        int $adsPaymentIdEnd,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array {
-        $events = NetworkEventLog::where('updated_at', '>=', $dateTime)
-            ->whereNotNull('event_value')
+        $events = NetworkEventLog::whereBetween('ads_payment_id', [$adsPaymentIdStart, $adsPaymentIdEnd])
             ->take($limit)
             ->skip($offset)
             ->get();
