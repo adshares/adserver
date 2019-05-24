@@ -34,29 +34,17 @@ use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection as SupportCollection;
+use function array_merge;
 use function factory;
 use function json_decode;
-use function random_int;
 
 class DemandBlockPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp()
-    {
-        parent::setUp();
-        $this->app->bind(
-            ExchangeRateReader::class,
-            function () {
-                $mock = $this->createMock(ExchangeRateReader::class);
-
-                $mock->method('fetchExchangeRate')
-                    ->willReturn(new ExchangeRate(new DateTime(), 1, 'XXX'));
-
-                return $mock;
-            }
-        );
-    }
+    /** @var array */
+    private static $calculations = [];
 
     public function testZero(): void
     {
@@ -67,39 +55,59 @@ class DemandBlockPaymentsTest extends TestCase
 
     public function testBlock(): void
     {
+        $this->mockAdPay();
+
+        /** @var User $user */
         $user = factory(User::class)->create();
 
         self::createCampaigns($user);
         self::createLedgerEntries($user);
 
+        self::assertEquals(1000 * 10 ** 11, $user->getBalance());
+        self::assertEquals(500 * 10 ** 11, $user->getWalletBalance());
+        self::assertEquals(500 * 10 ** 11, $user->getBonusBalance());
+
         $this->artisan('ops:demand:payments:block')
             ->expectsOutput('Attempt to create 1 blockades.')
             ->assertExitCode(0);
+
+        self::assertEquals(500 * 10 ** 11, $user->getBalance());
+        self::assertEquals(300 * 10 ** 11, $user->getWalletBalance());
+        self::assertEquals(200 * 10 ** 11, $user->getBonusBalance());
     }
 
-    public function testPay(): void
-    {
-        $this->createStuff();
-        $this->createStuff();
+    private static function createCampaigns(
+        User $user,
+        int $withTargeting = 2,
+        int $activeCount = 5
+    ): SupportCollection {
+        $withoutTargeting = $activeCount - $withTargeting;
 
-        $this->artisan('ops:adpay:payments:get')
-            ->assertExitCode(0);
-    }
+        if ($withoutTargeting) {
+            factory(Campaign::class)->times($withoutTargeting)->create([
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]);
+        }
 
-    public function testFetchRequiredBudgetsPerUser(): void
-    {
-        $this->createCampaigns(factory(User::class)->create());
-        $this->createCampaigns(factory(User::class)->create());
-        $this->createCampaigns(factory(User::class)->create());
+        if ($withTargeting) {
+            factory(Campaign::class, $withTargeting)->times($withTargeting)->create([
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+                'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
+            ]);
+        }
 
-        $budgets = Campaign::fetchRequiredBudgetsPerUser();
-
-        self::assertCount(3, $budgets);
-
-        $budgets->each(static function (AdvertiserBudget $budget) {
-            self::assertEquals(500 * 10 ** 11, $budget->total());
-            self::assertEquals(300 * 10 ** 11, $budget->bonusable());
-        });
+        return Campaign::all()->map(static function (Campaign $campaign) {
+            /** @var Collection|EventLog[] $events */
+            return factory(EventLog::class)->times(3)->create([
+                'exchange_rate' => null,
+                'event_value' => null,
+                'event_value_currency' => null,
+                'advertiser_id' => $campaign->user->uuid,
+                'campaign_id' => $campaign->uuid,
+            ]);
+        })->flatten(1);
     }
 
     private static function createLedgerEntries(User $user): void
@@ -119,64 +127,94 @@ class DemandBlockPaymentsTest extends TestCase
         }
     }
 
-    private static function createCampaigns(
-        User $user,
-        int $withTargeting = 2,
-        int $activeCount = 5
-    ): \Illuminate\Support\Collection {
-        factory(Campaign::class)->create([
-            'user_id' => $user->id,
-            'status' => Campaign::STATUS_INACTIVE,
-        ]);
-        factory(Campaign::class)->create([
-            'user_id' => $user->id,
-            'status' => Campaign::STATUS_SUSPENDED,
-
-        ]);
-
-        factory(Campaign::class, $activeCount - $withTargeting)->create([
-            'user_id' => $user->id,
-            'status' => Campaign::STATUS_ACTIVE,
-        ]);
-
-        factory(Campaign::class, $withTargeting)->create([
-            'user_id' => $user->id,
-            'status' => Campaign::STATUS_ACTIVE,
-            'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
-        ]);
-
-        return Campaign::all()->map(static function (Campaign $campaign) {
-            /** @var Collection|EventLog[] $events */
-            return factory(EventLog::class)->times(3)->create([
-                'event_value_currency' => null,
-                'advertiser_id' => $campaign->user->uuid,
-                'campaign_id' => $campaign->uuid,
-            ]);
-        })->flatten(1);
+    public function values(): array
+    {
+        return [
+            [0, 9850, 5000, 4850, 1],
+            [2, 9850, 4940, 4910, 1],
+            [5, 9850, 4850, 5000, 1],
+            [0, 9985, 5000, 4985, 10],
+            [2, 9985, 4994, 4991, 10],
+            [5, 9985, 4985, 5000, 10],
+        ];
     }
 
-    private function createStuff(): void
+    /** @dataProvider values */
+    public function testPay(int $targetingCount, int $balance, int $wallet, int $bonus, int $exchangeRate): void
+    {
+        $this->mockAdPay($exchangeRate);
+
+        $user = $this->createStuff($targetingCount);
+
+        $this->app->bind(
+            AdPay::class,
+            function () {
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn(self::$calculations);
+
+                return $adPay;
+            }
+        );
+
+        self::assertEquals(1000 * 10 ** 11, $user->getBalance());
+        self::assertEquals(500 * 10 ** 11, $user->getWalletBalance());
+        self::assertEquals(500 * 10 ** 11, $user->getBonusBalance());
+
+        $this->artisan('ops:adpay:payments:get')
+            ->assertExitCode(0);
+
+        self::assertEquals($balance * 10 ** 10, $user->getBalance());
+        self::assertEquals($wallet * 10 ** 10, $user->getWalletBalance());
+        self::assertEquals($bonus * 10 ** 10, $user->getBonusBalance());
+    }
+
+    private function createStuff(int $withTargeting): User
     {
         $user = factory(User::class)->create();
 
-        $events = self::createCampaigns($user);
+        $events = self::createCampaigns($user, $withTargeting);
         self::createLedgerEntries($user);
 
         $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => random_int(0, 10 ** 11),
+                'amount' => 10 ** 11,
                 'reason' => 0,
             ];
         });
 
-        $this->app->bind(
-            AdPay::class,
-            function () use ($calculatedEvents) {
-                $adPay = $this->createMock(AdPay::class);
-                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+        self::$calculations = array_merge(self::$calculations, $calculatedEvents->all());
 
-                return $adPay;
+        return $user;
+    }
+
+    public function testFetchRequiredBudgetsPerUser(): void
+    {
+        $this->createCampaigns(factory(User::class)->create());
+        $this->createCampaigns(factory(User::class)->create());
+        $this->createCampaigns(factory(User::class)->create());
+
+        $budgets = Campaign::fetchRequiredBudgetsPerUser();
+
+        self::assertCount(3, $budgets);
+
+        $budgets->each(static function (AdvertiserBudget $budget) {
+            self::assertEquals(500 * 10 ** 11, $budget->total());
+            self::assertEquals(300 * 10 ** 11, $budget->bonusable());
+        });
+    }
+
+    protected function mockAdPay(int $value = 1): void
+    {
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () use ($value) {
+                $mock = $this->createMock(ExchangeRateReader::class);
+
+                $mock->method('fetchExchangeRate')
+                    ->willReturn(new ExchangeRate(new DateTime(), $value, 'XXX'));
+
+                return $mock;
             }
         );
     }

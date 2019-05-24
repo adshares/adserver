@@ -35,9 +35,9 @@ use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use function collect;
 use function floor;
 use function now;
+use function sprintf;
 
 class AdPayGetPayments extends Command
 {
@@ -46,6 +46,10 @@ class AdPayGetPayments extends Command
     private const EVENT_VALUE_CURRENCY = 'event_value_currency';
 
     private const EVENT_VALUE = 'event_value';
+
+    public const DIRECT = 'direct';
+
+    public const NORMAL = 'normal';
 
     /** @var Collection|AdvertiserBudget[] */
     private static $campaignBudgets;
@@ -71,8 +75,6 @@ class AdPayGetPayments extends Command
         $this->info("Found {$unpaidEvents->count()} entries to update.");
 
         $this->updateEventsWithAdPayData($unpaidEvents, $calculations, $exchangeRate);
-
-        $this->evaluateEventsByCampaign($unpaidEvents, $exchangeRate);
 
         $ledgerEntries = $this->processExpenses($unpaidEvents, $exchangeRate);
 
@@ -108,9 +110,7 @@ class AdPayGetPayments extends Command
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
 
-        $calculations = collect($adPay->getPayments($timestamp, (bool)$this->option('force')));
-
-        return $calculations;
+        return new Collection($adPay->getPayments($timestamp, (bool)$this->option('force')));
     }
 
     private function updateEventsWithAdPayData(
@@ -129,10 +129,10 @@ class AdPayGetPayments extends Command
         });
     }
 
-    private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): void
+    private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): Collection
     {
-        self::$campaignBudgets = $unpaidEvents->groupBy('campaign_id')
-            ->mapToGroups(function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
+        return $unpaidEvents->groupBy('campaign_id')
+            ->mapToGroups(static function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
                 $campaign = Campaign::fetchByUuid($campaignPublicId);
 
                 if (!$campaign) {
@@ -143,17 +143,15 @@ class AdPayGetPayments extends Command
                         )
                     );
 
-                    return [];
+                    return new Collection();
                 }
 
                 $total = $campaign->budget;
-                $this->normalize($events, $total, $exchangeRate);
+                self::normalize($events, $total, $exchangeRate);
 
-                $bonusable = $campaign->isDirectDeal() ? 0 : $total;
-
-                return [
-                    $campaign->user_id => new AdvertiserBudget($total, $bonusable),
-                ];
+                return [$campaign->isDirectDeal() ? self::DIRECT : self::NORMAL => $events->all()];
+            })->map(static function (Collection $groups) {
+                return new Collection($groups->reduce('array_merge', []));
             });
     }
 
@@ -172,37 +170,47 @@ class AdPayGetPayments extends Command
                     );
                 }
 
-                $userBalance = $user->getBalance();
-                if ($userBalance < 0) {
-                    $this->error(sprintf('User %s has negative balance %d', $userPublicId, $userBalance));
-                    $maxSpendableAmount = 0;
-                } else {
-                    $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
-                }
+                $clicks = $this->evaluateEventsByCampaign($events, $exchangeRate)
+                    ->map(function (Collection $events, string $key) use ($user, $exchangeRate, $userPublicId) {
+                        $userBalance = $key === self::DIRECT ? $user->getWalletBalance() : $user->getBalance();
 
-                $insufficientFunds = $this->normalize($events, $maxSpendableAmount, $exchangeRate);
+                        if ($userBalance < 0) {
+                            $this->error(sprintf('User %s has negative "%s" balance %d',
+                                $userPublicId,
+                                $key,
+                                $userBalance));
+                            $maxSpendableAmount = 0;
+                        } else {
+                            $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
+                        }
 
-                if ($insufficientFunds) {
-                    Campaign::suspendAllForUserId($user->id);
+                        $insufficientFunds = self::normalize($events, $maxSpendableAmount, $exchangeRate);
 
-                    Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks.");
-                }
+                        $events->each(static function (EventLog $entry) {
+                            $entry->save();
+                        });
 
-                $events->each(static function (EventLog $entry) {
-                    $entry->save();
-                });
+                        if ($insufficientFunds) {
+                            Campaign::suspendAllForUserId($user->id);
 
-                $totalEventValueInClicks = $events->sum(self::EVENT_VALUE);
+                            Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks.");
+                        }
 
+                        return $events->sum(self::EVENT_VALUE);
+                    });
+
+                $maxBonus = $clicks->get(self::NORMAL, 0);
+
+                $totalEventValueInClicks = $maxBonus + $clicks->get(self::DIRECT, 0);
                 if ($totalEventValueInClicks > 0) {
-                    return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks);
+                    return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks, $maxBonus);
                 }
 
                 return false;
             })->filter();
     }
 
-    private function normalize(Collection $events, int $maxSpendableAmount, ExchangeRate $exchangeRate): bool
+    private static function normalize(Collection $events, int $maxSpendableAmount, ExchangeRate $exchangeRate): bool
     {
         $totalEventValue = $events->sum(self::EVENT_VALUE_CURRENCY);
 
