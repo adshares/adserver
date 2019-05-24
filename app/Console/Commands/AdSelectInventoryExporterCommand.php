@@ -22,17 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Supply\NetworkCampaignRepository;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use DateTime;
-use Illuminate\Console\Command;
 
-class AdSelectInventoryExporterCommand extends Command
+class AdSelectInventoryExporterCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:adselect:inventory:export';
 
     protected $description = 'Export campaigns inventory to AdSelect';
@@ -43,17 +40,24 @@ class AdSelectInventoryExporterCommand extends Command
     private $campaignRepository;
 
     public function __construct(
+        Locker $locker,
         AdSelectInventoryExporter $inventoryExporterService,
         NetworkCampaignRepository $campaignRepository
     ) {
         $this->inventoryExporterService = $inventoryExporterService;
         $this->campaignRepository = $campaignRepository;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle()
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Started exporting inventory to AdSelect.');
 
         // @todo use it when $from, $to functionality will be implemented

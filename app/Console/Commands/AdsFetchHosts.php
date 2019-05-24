@@ -26,19 +26,16 @@ use Adshares\Ads\AdsClient;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Network\BroadcastableUrl;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
-class AdsFetchHosts extends Command
+class AdsFetchHosts extends BaseCommand
 {
-    use LineFormatterTrait;
-
     /**
      * Length of block in seconds
      */
@@ -62,20 +59,24 @@ class AdsFetchHosts extends Command
     /** @var DemandClient */
     private $client;
 
-    public function __construct(DemandClient $client)
+    public function __construct(Locker $locker, DemandClient $client)
     {
         $this->client = $client;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     /**
      * @param AdsClient $adsClient
-     *
-     * @return int
      */
     public function handle(AdsClient $adsClient): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $timeNow = time();

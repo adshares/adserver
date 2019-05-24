@@ -22,27 +22,29 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Exception\RuntimeException;
-use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
 use function str_random;
 use function substr;
 use function env;
 
-class CreateAdminUserCommand extends Command
+class CreateAdminUserCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:admin:create {--password=}';
 
     protected $description = 'Create an admin user';
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $password = $this->option('password');
 
         if (!$password) {

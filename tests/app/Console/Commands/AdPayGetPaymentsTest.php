@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Models\Banner;
@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
@@ -36,7 +35,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class AdPayGetPaymentsTest extends TestCase
+class AdPayGetPaymentsTest extends CommandTestCase
 {
     use RefreshDatabase;
 

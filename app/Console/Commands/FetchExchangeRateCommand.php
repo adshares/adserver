@@ -22,17 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
-use DateTime;
-use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 
-class FetchExchangeRateCommand extends Command
+class FetchExchangeRateCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     private const SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION = 23000;
 
     private const SQL_ERROR_CODE_DUPLICATE_ENTRY = 1062;
@@ -48,17 +44,24 @@ class FetchExchangeRateCommand extends Command
     private $repositoryRemote;
 
     public function __construct(
+        Locker $locker,
         EloquentExchangeRateRepository $repositoryStorable,
         ExchangeRateRepository $repositoryRemote
     ) {
         $this->repositoryStorable = $repositoryStorable;
         $this->repositoryRemote = $repositoryRemote;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->repositoryRemote->fetchExchangeRate();
