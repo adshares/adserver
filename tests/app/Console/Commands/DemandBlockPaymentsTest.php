@@ -20,14 +20,13 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
@@ -39,12 +38,12 @@ use function array_merge;
 use function factory;
 use function json_decode;
 
-class DemandBlockPaymentsTest extends TestCase
+class DemandBlockPaymentsTest extends CommandTestCase
 {
     use RefreshDatabase;
 
     /** @var array */
-    private static $calculations = [];
+    private $calculations = [];
 
     public function testZero(): void
     {
@@ -55,7 +54,7 @@ class DemandBlockPaymentsTest extends TestCase
 
     public function testBlock(): void
     {
-        $this->mockAdPay();
+        $this->mockExchangeRate();
 
         /** @var User $user */
         $user = factory(User::class)->create();
@@ -142,7 +141,7 @@ class DemandBlockPaymentsTest extends TestCase
     /** @dataProvider values */
     public function testPay(int $targetingCount, int $balance, int $wallet, int $bonus, int $exchangeRate): void
     {
-        $this->mockAdPay($exchangeRate);
+        $this->mockExchangeRate($exchangeRate);
 
         $user = $this->createStuff($targetingCount);
 
@@ -150,7 +149,7 @@ class DemandBlockPaymentsTest extends TestCase
             AdPay::class,
             function () {
                 $adPay = $this->createMock(AdPay::class);
-                $adPay->method('getPayments')->willReturn(self::$calculations);
+                $adPay->method('getPayments')->willReturn($this->calculations);
 
                 return $adPay;
             }
@@ -183,7 +182,7 @@ class DemandBlockPaymentsTest extends TestCase
             ];
         });
 
-        self::$calculations = array_merge(self::$calculations, $calculatedEvents->all());
+        $this->calculations = array_merge($this->calculations, $calculatedEvents->all());
 
         return $user;
     }
@@ -204,7 +203,7 @@ class DemandBlockPaymentsTest extends TestCase
         });
     }
 
-    protected function mockAdPay(int $value = 1): void
+    private function mockExchangeRate(int $value = 1): void
     {
         $this->app->bind(
             ExchangeRateReader::class,
