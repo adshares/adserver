@@ -193,7 +193,8 @@ class AdPayGetPayments extends BaseCommand
                         if ($insufficientFunds) {
                             Campaign::suspendAllForUserId($user->id);
 
-                            Log::debug("Suspended Campaigns for user [{$user->id}] due to insufficient amount of clicks.");
+                            Log::debug("Suspended Campaigns for user [{$user->id}] "
+                                .'due to insufficient amount of clicks.');
                         }
 
                         return $events->sum(self::EVENT_VALUE);
