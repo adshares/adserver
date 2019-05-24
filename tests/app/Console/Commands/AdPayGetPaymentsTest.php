@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class AdPayGetPaymentsTest extends CommandTestCase
+class AdPayGetPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 

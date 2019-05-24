@@ -25,12 +25,13 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class DemandSendPaymentsTest extends CommandTestCase
+class DemandSendPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 

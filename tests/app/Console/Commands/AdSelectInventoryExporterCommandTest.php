@@ -20,10 +20,11 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Supply\Application\Service\AdSelect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdSelectInventoryExporterCommandTest extends CommandTestCase
+class AdSelectInventoryExporterCommandTest extends TestCase
 {
     use RefreshDatabase;
 

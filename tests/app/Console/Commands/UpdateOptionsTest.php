@@ -23,10 +23,11 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
 
-class UpdateOptionsTest extends CommandTestCase
+class UpdateOptionsTest extends TestCase
 {
     public function testTargetingOptionsUpdate(): void
     {

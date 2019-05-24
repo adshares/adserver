@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
@@ -38,7 +39,7 @@ use function array_merge;
 use function factory;
 use function json_decode;
 
-class DemandBlockPaymentsTest extends CommandTestCase
+class DemandBlockPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 

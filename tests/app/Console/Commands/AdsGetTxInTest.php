@@ -27,10 +27,11 @@ use Adshares\Ads\Response\GetLogResponse;
 use Adshares\Adserver\Console\Commands\AdsGetTxIn;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Tests\Console\TestCase;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdsGetTxInTest extends CommandTestCase
+class AdsGetTxInTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -46,7 +47,7 @@ class AdsGetTxInTest extends CommandTestCase
                             if (null === $d) {
                                 $ts = 0;
                             } else {
-                                /** @var $d \DateTime */
+                                /** @var $d DateTime */
                                 $ts = $d->getTimestamp();
                             }
                             switch ($ts) {
@@ -550,7 +551,7 @@ class AdsGetTxInTest extends CommandTestCase
             AdsClient::class,
             function () {
                 $adsClient = $this->createMock(AdsClient::class);
-                $command = new GetLogCommand(new \DateTime());
+                $command = new GetLogCommand(new DateTime());
                 $exception = new CommandException($command, 'Process timed out');
                 $adsClient->method('getLog')->willThrowException($exception);
 
