@@ -393,4 +393,9 @@ class NetworkBanner extends Model
     {
         return self::where('uuid', hex2bin($publicId))->first();
     }
+
+    public static function fetchByPublicIdWithCampaign(string $publicId)
+    {
+        return self::with('campaign')->where('uuid', hex2bin($publicId))->first();
+    }
 }

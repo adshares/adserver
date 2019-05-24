@@ -23,12 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Response\Stats;
 
 use Adshares\Ads\Util\AdsConverter;
-use function array_map;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use function array_map;
 
 class PublisherReportResponse extends ReportResponse
 {
-
     private const PUBLISHER_COLUMNS = [
         'Site' => [
             'width' => 24,
@@ -85,17 +84,34 @@ class PublisherReportResponse extends ReportResponse
         ],
     ];
 
+    /** @var bool */
+    private $isAdmin;
+
+    public function __construct(array $data, ?string $name = null, ?string $creator = null, ?bool $isAdmin = false)
+    {
+        $this->isAdmin = $isAdmin;
+
+        parent::__construct($data, $name, $creator);
+    }
 
     protected function columns(): array
     {
-        return self::PUBLISHER_COLUMNS;
+        $columns = self::PUBLISHER_COLUMNS;
+
+        if ($this->isAdmin) {
+            array_unshift($columns, ['User' => []]);
+        }
+
+        return $columns;
     }
 
     protected function rows(): array
     {
+        $isAdmin = $this->isAdmin;
+
         return array_map(
-            static function ($item) {
-                return [
+            static function ($item) use ($isAdmin) {
+                $row = [
                     $item['siteName'],
                     $item['zoneName'],
                     $item['domain'] ?? '',
@@ -110,6 +126,12 @@ class PublisherReportResponse extends ReportResponse
                     $item['clicksInvalidRate'],
                     $item['ctr'],
                 ];
+
+                if ($isAdmin) {
+                    array_unshift($row, $item['publisher'] ?? '');
+                }
+
+                return $row;
             },
             $this->data
         );
