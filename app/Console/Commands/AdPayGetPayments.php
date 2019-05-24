@@ -173,10 +173,12 @@ class AdPayGetPayments extends BaseCommand
                         $userBalance = $key === self::DIRECT ? $user->getWalletBalance() : $user->getBalance();
 
                         if ($userBalance < 0) {
-                            $this->error(sprintf('User %s has negative "%s" balance %d',
+                            $this->error(sprintf(
+                                'User %s has negative "%s" balance %d',
                                 $userPublicId,
                                 $key,
-                                $userBalance));
+                                $userBalance
+                            ));
                             $maxSpendableAmount = 0;
                         } else {
                             $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
