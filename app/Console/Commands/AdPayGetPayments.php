@@ -22,7 +22,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
@@ -46,9 +45,6 @@ class AdPayGetPayments extends BaseCommand
     public const DIRECT = 'direct';
 
     public const NORMAL = 'normal';
-
-    /** @var Collection|AdvertiserBudget[] */
-    private static $campaignBudgets;
 
     protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
 
