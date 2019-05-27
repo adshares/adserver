@@ -24,11 +24,12 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class DemandPreparePaymentsTest extends CommandTestCase
+class DemandPreparePaymentsTest extends TestCase
 {
     use RefreshDatabase;
 

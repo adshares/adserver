@@ -217,7 +217,21 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
-        $tid = $request->cookies->get('tid');
+        $response = new RedirectResponse($url);
+        $impressionId = $request->query->get('iid');
+
+        if ($impressionId) {
+            $tid = Utils::attachOrProlongTrackingCookie(
+                $request,
+                $response,
+                '',
+                new DateTime(),
+                $impressionId
+            );
+        } else {
+            $tid = $request->cookies->get('tid');
+        }
+
         $trackingId = $tid
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
@@ -227,7 +241,6 @@ class DemandController extends Controller
         $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
 
-        $response = new RedirectResponse($url);
         $response->send();
 
         $ip = bin2hex(inet_pton($request->getClientIp()));
@@ -236,7 +249,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId ?: $ip,
+            $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,
@@ -261,7 +274,21 @@ class DemandController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
 
-        $tid = $request->cookies->get('tid');
+        $response = new Response();
+        $impressionId = $request->query->get('iid');
+
+        if ($impressionId) {
+            $tid = Utils::attachOrProlongTrackingCookie(
+                $request,
+                $response,
+                '',
+                new DateTime(),
+                $impressionId
+            );
+        } else {
+            $tid = $request->cookies->get('tid');
+        }
+
         $trackingId = $tid
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
@@ -273,7 +300,6 @@ class DemandController extends Controller
         $keywords = $context['page']['keywords'] ?? '';
 
         $adUserEndpoint = config('app.aduser_base_url');
-        $response = new Response();
 
         if ($adUserEndpoint) {
             $adUserUrl = sprintf(
@@ -281,7 +307,7 @@ class DemandController extends Controller
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
-                Utils::urlSafeBase64Encode(random_bytes(8))
+                $impressionId ?? Utils::urlSafeBase64Encode(random_bytes(8))
             );
         } else {
             $adUserUrl = null;
@@ -308,7 +334,7 @@ class DemandController extends Controller
             $eventId,
             $bannerId,
             $context['page']['zone'] ?? null,
-            $trackingId ?: $ip,
+            $trackingId,
             $publisherId,
             $campaign->uuid,
             $user->uuid,

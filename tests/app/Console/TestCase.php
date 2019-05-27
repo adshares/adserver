@@ -20,12 +20,12 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Tests\TestCase as AdsharesTestCase;
 
-class CommandTestCase extends TestCase
+class TestCase extends AdsharesTestCase
 {
     protected function setUp()
     {

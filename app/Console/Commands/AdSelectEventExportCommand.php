@@ -83,9 +83,18 @@ class AdSelectEventExportCommand extends BaseCommand
 //        $eventUuid =
 //        $eventIdFirst = NetworkEventLog::fetchByEventId($eventUuid);
         $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
-        $eventIdLast = NetworkEventLog::max('id');
 
         if (null === $eventIdFirst) {
+            $this->info('[ADSELECT] No events to export');
+
+            return;
+        }
+
+        $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
+            ->where('created_at', '<=', new DateTime('-10 minutes'))
+            ->max('id');
+
+        if (null === $eventIdLast) {
             $this->info('[ADSELECT] No events to export');
 
             return;

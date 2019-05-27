@@ -28,22 +28,26 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
-use function mt_rand;
+use function json_decode;
+use function random_int;
 
-class AdPayGetPaymentsTest extends CommandTestCase
+class AdPayGetPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
     public function testHandle(): void
     {
         $dummyExchangeRateRepository = new DummyExchangeRateRepository();
-        
+
         $this->app->bind(
             ExchangeRateRepository::class,
             function () use ($dummyExchangeRateRepository) {
@@ -70,11 +74,11 @@ class AdPayGetPaymentsTest extends CommandTestCase
             'banner_id' => $bannerUuid,
         ]);
 
-        $calculatedEvents = $events->map(function (EventLog $entry) {
+        $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => mt_rand(0, 1000*10**11),
-                'reason' => 0
+                'amount' => random_int(0, 1000 * 10 ** 11),
+                'reason' => 0,
             ];
         });
 
@@ -84,15 +88,18 @@ class AdPayGetPaymentsTest extends CommandTestCase
         );
         factory(UserLedgerEntry::class)->create(['amount' => $userBalance, 'user_id' => $userId]);
 
-        $this->app->bind(AdPay::class, function () use ($calculatedEvents) {
-            $adPay = $this->createMock(AdPay::class);
-            $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+        $this->app->bind(
+            AdPay::class,
+            function () use ($calculatedEvents) {
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
 
-            return $adPay;
-        });
+                return $adPay;
+            }
+        );
 
         $this->artisan('ops:adpay:payments:get')
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
@@ -102,5 +109,104 @@ class AdPayGetPaymentsTest extends CommandTestCase
 
             $this->assertDatabaseHas('event_logs', $eventValue);
         });
+    }
+
+    public function test(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
+            $entries = [
+                [UserLedgerEntry::TYPE_DEPOSIT, 100, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_BONUS_INCOME, 100, UserLedgerEntry::STATUS_ACCEPTED],
+            ];
+
+            foreach ($entries as $entry) {
+                factory(UserLedgerEntry::class)->create([
+                    'type' => $entry[0],
+                    'amount' => $entry[1],
+                    'status' => $entry[2],
+                    'user_id' => $user->id,
+                ]);
+            }
+
+            factory(Campaign::class)->create([
+                'user_id' => $user->id,
+                'budget' => 100,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]);
+            factory(Campaign::class)->create([
+                'user_id' => $user->id,
+                'budget' => 100,
+                'status' => Campaign::STATUS_ACTIVE,
+                'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
+            ]);
+
+            Campaign::all()->each(static function (Campaign $campaign) {
+                $banner = factory(Banner::class)->create([
+                    'campaign_id' => $campaign->id,
+                ]);
+
+                factory(EventLog::class)->times(1)->create([
+                    'event_value_currency' => null,
+                    'advertiser_id' => $campaign->user->uuid,
+                    'campaign_id' => $campaign->uuid,
+                    'banner_id' => $banner->uuid,
+                ]);
+
+                if (!$campaign->isDirectDeal()) {
+                    factory(EventLog::class)->times(1)->create([
+                        'event_value_currency' => null,
+                        'advertiser_id' => $campaign->user->uuid,
+                        'campaign_id' => $campaign->uuid,
+                        'banner_id' => $banner->uuid,
+                    ]);
+                }
+            });
+        })->first();
+
+        $this->app->bind(
+            AdPay::class,
+            function () {
+                $calculatedEvents = EventLog::all()->map(static function (EventLog $entry) {
+                    return [
+                        'event_id' => $entry->event_id,
+                        'amount' => 100,
+                        'reason' => 0,
+                    ];
+                });
+
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+
+                return $adPay;
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () {
+                $mock = $this->createMock(ExchangeRateReader::class);
+
+                $mock->method('fetchExchangeRate')
+                    ->willReturn(new ExchangeRate(new DateTime(), 1, 'XXX'));
+
+                return $mock;
+            }
+        );
+
+        $this->artisan('ops:adpay:payments:get')
+            ->assertExitCode(0);
+
+        $count = EventLog::all()->map(static function (EventLog $entry) {
+            if (Campaign::fetchByUuid($entry->campaign_id)->isDirectDeal()) {
+                self::assertEquals(100, $entry->event_value_currency);
+            } else {
+                self::assertEquals(50, $entry->event_value_currency);
+            }
+        })->count();
+
+        self::assertEquals(3, $count);
+
+        self::assertEquals(0, $user->getBalance());
     }
 }

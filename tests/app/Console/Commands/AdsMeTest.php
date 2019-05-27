@@ -22,8 +22,9 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Response\GetAccountResponse;
+use Adshares\Adserver\Tests\Console\TestCase;
 
-class AdsMeTest extends CommandTestCase
+class AdsMeTest extends TestCase
 {
     public function testAdsMe()
     {

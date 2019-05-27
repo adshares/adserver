@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Hash;
  * @property Collection|Campaign[] campaigns
  * @property int id
  * @property DateTime|null email_confirmed_at
+ * @property string uuid
  * @mixin Builder
  */
 class User extends Authenticatable

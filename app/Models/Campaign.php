@@ -35,7 +35,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function hex2bin;
 
@@ -53,7 +52,7 @@ use function hex2bin;
  * @property string name
  * @property array|null|string strategy_name
  * @property float bid
- * @property float budget
+ * @property int budget
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
@@ -96,6 +95,7 @@ class Campaign extends Model
         'targeting_requires' => 'json',
         'targeting_excludes' => 'json',
         'status' => 'int',
+        'budget' => 'int',
     ];
 
     protected $dispatchesEvents = [
@@ -144,7 +144,7 @@ class Campaign extends Model
         self::fetchByUserId($userId)->filter(function (self $campaign) {
             return $campaign->status === Campaign::STATUS_ACTIVE;
         })->each(function (Campaign $campaign) {
-            $campaign->changeStatus(Campaign::STATUS_SUSPENDED);
+            $campaign->status = Campaign::STATUS_SUSPENDED;
             $campaign->save();
         });
     }
@@ -181,9 +181,9 @@ class Campaign extends Model
         );
 
         /** @var Collection $all */
-        $all = $query->all();
+        $all = $query->get();
 
-        return $all->keyBy('user_id')
+        return $all->groupBy('user_id')
             ->map(static function (Collection $collection) {
                 return $collection->reduce(
                     static function (AdvertiserBudget $carry, Campaign $campaign) {
@@ -264,65 +264,42 @@ class Campaign extends Model
         ];
     }
 
-    public function changeStatus(int $status, ?ExchangeRate $exchangeRate = null): void
+    public function changeStatus(int $status, ExchangeRate $exchangeRate): void
     {
         if ($status === $this->status) {
             return;
         }
 
         self::failIfInvalidStatus($status);
-        $this->updateBlockadeOrFailIfNotAllowed($status, $exchangeRate);
+
+        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod()
+            + ($status === self::STATUS_ACTIVE ? $this->getBudgetForCurrentDateTime() : 0);
+
+        $this->updateBlockadeOrFailIfNotAllowed($exchangeRate->toClick($totalBudget));
 
         $this->status = $status;
     }
 
-    private function updateBlockadeOrFailIfNotAllowed(int $status, ?ExchangeRate $exchangeRate = null): void
+    private function updateBlockadeOrFailIfNotAllowed(int $amount): void
     {
-        if ($status !== self::STATUS_ACTIVE) {
-            Log::info(sprintf('Hold the blockade'));
+        DB::beginTransaction();
+        UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
 
-            return;
-        }
-
-        $budget = $this->getBudgetForCurrentDateTime();
-        if (0 >= $budget) {
-            return;
-        }
-
-        if (null === $exchangeRate) {
-            Log::error('ExchangeRate is not available');
-            throw new InvalidArgumentException('ExchangeRate is not available');
-        }
-
-        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod() + $budget;
-        $amount = $exchangeRate->toClick($totalBudget);
-
-        $blockedAmount = abs(UserLedgerEntry::fetchBlockedAmountByUserId($this->user_id));
-        if ($amount <= $blockedAmount) {
-            Log::info(sprintf('Hold the blockade %d, while total budget is %d', $blockedAmount, $amount));
-
-            return;
-        }
-
-        $balance = UserLedgerEntry::getBalanceByUserId($this->user_id);
-        $requiredBalance = $amount - $blockedAmount;
-
-        if ($balance < $requiredBalance) {
+        if ($amount > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
             throw new InvalidArgumentException('Campaign budgets exceed account balance');
         }
 
-        DB::beginTransaction();
         try {
-            UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
             if ($amount > 0) {
                 UserLedgerEntry::blockAdExpense($this->user_id, $amount);
             }
-            DB::commit();
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
 
             throw $exception;
         }
+
+        DB::commit();
     }
 
     private static function failIfInvalidStatus(int $value): void
@@ -345,7 +322,7 @@ class Campaign extends Model
         return $this->budget;
     }
 
-    private function isDirectDeal(): bool
+    public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
     }
