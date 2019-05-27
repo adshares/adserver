@@ -55,7 +55,7 @@ final class ImpressionContext
         $this->user = $user;
     }
 
-    public static function fromEventData($headers, string $ip, string $trackingId): self
+    public static function fromEventData($headers, ?string $ip, ?string $trackingId): self
     {
         $headersArray = get_object_vars($headers);
 
