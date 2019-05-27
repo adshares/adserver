@@ -91,7 +91,7 @@ class DemandBlockPaymentsTest extends TestCase
         }
 
         if ($withTargeting) {
-            factory(Campaign::class, $withTargeting)->times($withTargeting)->create([
+            factory(Campaign::class)->times($withTargeting)->create([
                 'user_id' => $user->id,
                 'status' => Campaign::STATUS_ACTIVE,
                 'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),

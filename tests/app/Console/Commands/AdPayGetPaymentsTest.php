@@ -29,12 +29,16 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
+use function json_decode;
+use function random_int;
 
 class AdPayGetPaymentsTest extends TestCase
 {
@@ -105,5 +109,88 @@ class AdPayGetPaymentsTest extends TestCase
 
             $this->assertDatabaseHas('event_logs', $eventValue);
         });
+    }
+
+    public function test(): void
+    {
+        $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
+            $entries = [
+                [UserLedgerEntry::TYPE_DEPOSIT, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_BONUS_INCOME, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
+            ];
+
+            foreach ($entries as $entry) {
+                factory(UserLedgerEntry::class)->create([
+                    'type' => $entry[0],
+                    'amount' => $entry[1],
+                    'status' => $entry[2],
+                    'user_id' => $user->id,
+                ]);
+            }
+
+            factory(Campaign::class)->create([
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]);
+            factory(Campaign::class)->create([
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+                'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
+            ]);
+
+            Campaign::all()->each(static function (Campaign $campaign) {
+                $banner = factory(Banner::class)->create([
+                    'campaign_id' => $campaign->id,
+                ]);
+
+                factory(EventLog::class)->times(10)->create([
+                    'event_value_currency' => null,
+                    'advertiser_id' => $campaign->user->uuid,
+                    'campaign_id' => $campaign->uuid,
+                    'banner_id' => $banner->uuid,
+                ]);
+            });
+        });
+
+        $this->app->bind(
+            AdPay::class,
+            function () {
+                $calculatedEvents = EventLog::all()->map(static function (EventLog $entry) {
+                    return [
+                        'event_id' => $entry->event_id,
+                        'amount' => 10 * 10 ** 11,
+                        'reason' => 0,
+                    ];
+                });
+
+                $adPay = $this->createMock(AdPay::class);
+                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+
+                return $adPay;
+            }
+        );
+
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () {
+                $mock = $this->createMock(ExchangeRateReader::class);
+
+                $mock->method('fetchExchangeRate')
+                    ->willReturn(new ExchangeRate(new DateTime(), 1, 'XXX'));
+
+                return $mock;
+            }
+        );
+
+        $this->artisan('ops:adpay:payments:get')
+            ->assertExitCode(0);
+
+        $count = EventLog::all()->map(static function (EventLog $entry) {
+            self::assertEquals(10 * 10 ** 11, $entry->event_value_currency);
+        })->count();
+
+        self::assertEquals(20, $count);
+
+        self::assertEquals(0, $user->first()->getBalance());
     }
 }
