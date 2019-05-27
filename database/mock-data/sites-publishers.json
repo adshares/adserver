@@ -9,57 +9,68 @@
           "Leaderboard": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD1",
             "width": 728,
-            "height": 90
+            "height": 90,
+            "label": "leaderboard"
           },
           "Wide Skycraper": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD2",
             "width": 160,
-            "height": 600
+            "height": 600,
+            "label": "wide-skyscraper"
           },
           "Large Rectangle": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD3",
             "width": 336,
-            "height": 280
+            "height": 280,
+            "label": "large-rectangle"
           },
           "Half Page": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD4",
             "width": 300,
-            "height": 600
+            "height": 600,
+            "label": "half-page"
           },
           "Large Mobile": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD5",
             "width": 320,
-            "height": 100
+            "height": 100,
+            "label": "large-mobile-banner"
           },
           "Leaderboard 2": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD6",
             "width": 728,
-            "height": 90
+            "height": 90,
+            "label": "leaderboard"
           },
           "Leaderboard 3": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD7",
             "width": 728,
-            "height": 90
+            "height": 90,
+            "label": "leaderboard"
           },
           "Large Rectangle 2": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD8",
             "width": 336,
-            "height": 280
+            "height": 280,
+            "label": "large-rectangle"
           },
           "Large Mobile 2": {
             "uuid": "950A658CACB246F8A142EFB722A2ACD9",
             "width": 320,
-            "height": 100
+            "height": 100,
+            "label": "large-mobile-banner"
           },
           "Large Mobile 3": {
             "uuid": "950A658CACB246F8A142EFB722A2ACDA",
             "width": 320,
-            "height": 100
+            "height": 100,
+            "label": "large-mobile-banner"
           },
           "Wide Skyscraper 2": {
             "uuid": "950A658CACB246F8A142EFB722A2ACDB",
             "width": 160,
-            "height": 600
+            "height": 600,
+            "label": "wide-skyscraper"
           }
         }
       },

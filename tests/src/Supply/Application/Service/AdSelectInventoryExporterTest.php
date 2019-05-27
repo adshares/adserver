@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class AdSelectInventoryExporterTest extends TestCase
 {
@@ -56,7 +57,8 @@ class AdSelectInventoryExporterTest extends TestCase
             ->expects($this->once())
             ->method('exportInventory');
 
-        $service = new AdSelectInventoryExporter($client, $this->createMock(CampaignRepository::class));
+        $logger = new NullLogger();
+        $service = new AdSelectInventoryExporter($client, $this->createMock(CampaignRepository::class), $logger);
         $service->export(new CampaignCollection($campaign), new CampaignCollection());
     }
 }
