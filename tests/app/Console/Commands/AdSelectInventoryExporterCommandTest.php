@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,25 +18,24 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Tests\Console\Commands;
 
-namespace Adshares\Supply\Domain\Repository;
+use Adshares\Supply\Application\Service\AdSelect;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
-interface EventRepository
+class AdSelectInventoryExporterCommandTest extends CommandTestCase
 {
-    public const PACKAGE_SIZE = 500;
+    use RefreshDatabase;
 
-    public function fetchUnpaidEventsBetweenIds(
-        int $eventIdFirst,
-        int $eventIdLast,
-        int $limit = self::PACKAGE_SIZE,
-        int $offset = 0
-    ): array;
+    public function testExport(): void
+    {
+        $this->app->bind(AdSelect::class, function () {
+            $adSelect = $this->createMock(AdSelect::class);
 
-    public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $adsPaymentIdFirst,
-        int $adsPaymentIdLast,
-        int $limit = self::PACKAGE_SIZE,
-        int $offset = 0
-    ): array;
+            return $adSelect;
+        });
+
+        $this->artisan('ops:adselect:inventory:export')
+            ->assertExitCode(0);
+    }
 }

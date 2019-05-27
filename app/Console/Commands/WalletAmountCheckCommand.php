@@ -23,19 +23,16 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Ads\Util\AdsConverter;
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Mail\WalletFundsEmail;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Demand\Application\Service\WalletFundsChecker;
 use DateTime;
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
-class WalletAmountCheckCommand extends Command
+class WalletAmountCheckCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     private const SEND_EMAIL_MINIMAL_INTERVAL_IN_SECONDS = 1800;
 
     protected $signature = 'ops:wallet:transfer:check';
@@ -45,15 +42,21 @@ class WalletAmountCheckCommand extends Command
     /** @var WalletFundsChecker */
     private $hotWalletCheckerService;
 
-    public function __construct(WalletFundsChecker $hotWalletCheckerService)
+    public function __construct(Locker $locker, WalletFundsChecker $hotWalletCheckerService)
     {
         $this->hotWalletCheckerService = $hotWalletCheckerService;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('[Wallet] Start command '.$this->signature);
 
         if (!Config::isTrueOnly(Config::COLD_WALLET_IS_ACTIVE)) {

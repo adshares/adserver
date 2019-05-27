@@ -26,7 +26,7 @@ use Adshares\Ads\Entity\Transaction\SendManyTransaction;
 use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
@@ -39,20 +39,18 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
-class AdsProcessTx extends Command
+class AdsProcessTx extends BaseCommand
 {
-    use LineFormatterTrait;
-
     public const EXIT_CODE_SUCCESS = 0;
 
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
+
+    public const EXIT_CODE_LOCKED = 2;
 
     protected $signature = 'ads:process-tx';
 
@@ -69,9 +67,9 @@ class AdsProcessTx extends Command
     /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
     private $paymentDetailsProcessor;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader)
+    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
     {
-        parent::__construct();
+        parent::__construct($locker);
         $this->adServerAddress = config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
     }
@@ -81,7 +79,14 @@ class AdsProcessTx extends Command
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return self::EXIT_CODE_LOCKED;
+        }
+
         $this->info('Start command '.$this->signature);
+
         $this->demandClient = $demandClient;
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 

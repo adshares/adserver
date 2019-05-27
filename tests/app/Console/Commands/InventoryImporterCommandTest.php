@@ -18,15 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
-final class InventoryImporterCommandTest extends TestCase
+final class InventoryImporterCommandTest extends CommandTestCase
 {
     use RefreshDatabase;
 

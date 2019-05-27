@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Domain\Repository\EventRepository;
-use DateTime;
 
 class AdSelectEventExporter
 {
@@ -37,14 +36,15 @@ class AdSelectEventExporter
         $this->eventRepository = $eventRepository;
     }
 
-    public function exportUnpaidEvents(DateTime $from): int
+    public function exportUnpaidEvents(int $eventIdFirst, int $eventIdLast): int
     {
         $offset = 0;
         $exported = 0;
 
         do {
-            $events = $this->eventRepository->fetchUnpaidEventsCreatedFromDate(
-                $from,
+            $events = $this->eventRepository->fetchUnpaidEventsBetweenIds(
+                $eventIdFirst,
+                $eventIdLast,
                 EventRepository::PACKAGE_SIZE,
                 $offset
             );
@@ -58,14 +58,15 @@ class AdSelectEventExporter
         return $exported;
     }
 
-    public function exportPaidEvents(DateTime $from): int
+    public function exportPaidEvents(int $adsPaymentIdFirst, int $adsPaymentIdLast): int
     {
         $offset = 0;
         $exported = 0;
 
         do {
-            $events = $this->eventRepository->fetchPaidEventsUpdatedFromDate(
-                $from,
+            $events = $this->eventRepository->fetchPaidEventsUpdatedAfterAdsPaymentId(
+                $adsPaymentIdFirst,
+                $adsPaymentIdLast,
                 EventRepository::PACKAGE_SIZE,
                 $offset
             );
@@ -77,10 +78,5 @@ class AdSelectEventExporter
         } while (count($events) === EventRepository::PACKAGE_SIZE);
 
         return $exported;
-    }
-
-    public function numberOfExportedEvents(): int
-    {
-        return $this->exportedEvents;
     }
 }

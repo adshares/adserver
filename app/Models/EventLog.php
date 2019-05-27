@@ -26,8 +26,6 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Common\Exception\RuntimeException;
-use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Contracts\Support\Arrayable;
@@ -36,9 +34,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Log;
 use function hex2bin;
-use function sprintf;
 
 /**
  * @property int created_at
@@ -232,31 +228,6 @@ class EventLog extends Model
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
-    }
-
-    public function impressionContextForAdUserQuery(): ImpressionContext
-    {
-        $headersArray = get_object_vars($this->headers);
-
-        $refererList = $headersArray['referer'] ?? [];
-        $domain = $refererList[0] ?? '';
-
-        $ip = inet_ntop(hex2bin($this->ip));
-
-        $ua = $headersArray['user-agent'][0] ?? '';
-
-        try {
-            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id));
-        } catch (RuntimeException $e) {
-            Log::warning(sprintf('%s %s', $e->getMessage(), $this->tracking_id));
-            $trackingId = '';
-        }
-
-        return new ImpressionContext(
-            ['domain' => $domain, 'page' => $domain],
-            ['ip' => $ip, 'ua' => $ua],
-            ['tid' => $trackingId]
-        );
     }
 
     public static function eventClicked(string $caseId): void
