@@ -128,6 +128,7 @@ class AdSelectEventExportCommand extends BaseCommand
                 try {
                     $event->updateWithUserContext($this->userContext($this->adUser, $event));
                     $event->save();
+                    $updated++;
                 } catch (ImpressionContextException|RuntimeException $e) {
                     Log::error(
                         sprintf(
@@ -140,7 +141,6 @@ class AdSelectEventExportCommand extends BaseCommand
                     );
                 }
             }
-            $updated += count($events);
 
             $offset += NetworkEventRepository::PACKAGE_SIZE;
         } while (count($events) === NetworkEventRepository::PACKAGE_SIZE);
