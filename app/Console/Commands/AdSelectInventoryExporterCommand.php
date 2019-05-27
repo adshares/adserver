@@ -74,7 +74,7 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
         $this->inventoryExporterService->export($activeCampaigns, $deletedCampaigns);
 
-//        Config::upsertDateTime(Config::ADSELECT_INVENTORY_EXPORT_TIME, new DateTime());
+        Config::upsertDateTime(Config::ADSELECT_INVENTORY_EXPORT_TIME, new DateTime());
 
         $this->info('Finished exporting inventory to AdSelect.');
     }
