@@ -80,7 +80,7 @@ class AdSelectEventExportCommand extends BaseCommand
         ));
 
 //        TODO SRV-356 fetch NetworkEventLog uuid from adselect
-//        $eventUuid = 
+//        $eventUuid =
 //        $eventIdFirst = NetworkEventLog::fetchByEventId($eventUuid);
         $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
         $eventIdLast = NetworkEventLog::max('id');

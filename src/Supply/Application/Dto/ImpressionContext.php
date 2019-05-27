@@ -74,7 +74,9 @@ final class ImpressionContext
         }
 
         return new self(
-            ['domain' => $domain, 'page' => $domain], ['ip' => $ip, 'ua' => $ua], ['tid' => $trackingId]
+            ['domain' => $domain, 'page' => $domain],
+            ['ip' => $ip, 'ua' => $ua],
+            ['tid' => $trackingId]
         );
     }
 
