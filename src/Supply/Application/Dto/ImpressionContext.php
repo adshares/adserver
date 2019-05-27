@@ -192,6 +192,8 @@ final class ImpressionContext
             json_encode($this->cookies()) ?: 'null',
             json_encode($this->originalUser) ?: 'null'
         ));
+
+        return '';
     }
 
     private function flatHeaders(): array
