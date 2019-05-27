@@ -177,9 +177,13 @@ class SupplyController extends Controller
 
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
+
+        $impressionId = $request->query->get('iid');
+
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
         $url = Utils::addUrlParameter($url, 'eid', $eventId);
+        $url = Utils::addUrlParameter($url, 'iid', $impressionId);
 
         $response = new RedirectResponse($url);
         $response->send();
@@ -258,9 +262,12 @@ class SupplyController extends Controller
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
+        $impressionId = $request->query->get('iid');
+
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
         $url = Utils::addUrlParameter($url, 'eid', $eventId);
+        $url = Utils::addUrlParameter($url, 'iid', $impressionId);
 
         $response = new RedirectResponse($url);
         $response->send();
