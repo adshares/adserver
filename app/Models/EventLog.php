@@ -234,31 +234,6 @@ class EventLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public function impressionContextForAdUserQuery(): ImpressionContext
-    {
-        $headersArray = get_object_vars($this->headers);
-
-        $refererList = $headersArray['referer'] ?? [];
-        $domain = $refererList[0] ?? '';
-
-        $ip = inet_ntop(hex2bin($this->ip));
-
-        $ua = $headersArray['user-agent'][0] ?? '';
-
-        try {
-            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($this->tracking_id));
-        } catch (RuntimeException $e) {
-            Log::warning(sprintf('%s %s', $e->getMessage(), $this->tracking_id));
-            $trackingId = '';
-        }
-
-        return new ImpressionContext(
-            ['domain' => $domain, 'page' => $domain],
-            ['ip' => $ip, 'ua' => $ua],
-            ['tid' => $trackingId]
-        );
-    }
-
     public static function eventClicked(string $caseId): void
     {
         $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);

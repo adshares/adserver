@@ -24,16 +24,16 @@ namespace Adshares\Adserver\Repository\Supply;
 
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Domain\Repository\EventRepository;
-use DateTime;
 
 class NetworkEventRepository implements EventRepository
 {
-    public function fetchUnpaidEventsCreatedFromDate(
-        DateTime $dateTime,
+    public function fetchUnpaidEventsBetweenIds(
+        int $eventIdFirst,
+        int $eventIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array {
-        $events = NetworkEventLog::where('created_at', '>=', $dateTime)
+        $events = NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])
             ->whereNull('event_value')
             ->take($limit)
             ->skip($offset)
@@ -43,12 +43,12 @@ class NetworkEventRepository implements EventRepository
     }
 
     public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $adsPaymentIdStart,
-        int $adsPaymentIdEnd,
+        int $adsPaymentIdFirst,
+        int $adsPaymentIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array {
-        $events = NetworkEventLog::whereBetween('ads_payment_id', [$adsPaymentIdStart, $adsPaymentIdEnd])
+        $events = NetworkEventLog::whereBetween('ads_payment_id', [$adsPaymentIdFirst, $adsPaymentIdLast])
             ->take($limit)
             ->skip($offset)
             ->get();

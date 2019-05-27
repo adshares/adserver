@@ -28,7 +28,9 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -218,5 +220,15 @@ class NetworkEventLog extends Model
         $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
         self::where('event_id', hex2bin($eventId))
             ->update(['is_view_clicked' => 1]);
+    }
+
+    public function updateWithUserContext(UserContext $userContext): void
+    {
+        $userId = $userContext->userId();
+        if ($userId) {
+            $this->user_id = Uuid::fromString($userId)->hex();
+        }
+        $this->human_score = $userContext->humanScore();
+        $this->our_userdata = $userContext->keywords();
     }
 }

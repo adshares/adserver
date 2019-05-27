@@ -29,6 +29,7 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
@@ -147,7 +148,7 @@ class AdPayEventExportCommand extends Command
     {
         static $userInfoCache = [];
 
-        $impressionContext = $event->impressionContextForAdUserQuery();
+        $impressionContext = ImpressionContext::fromEventData($event->headers, $event->ip, $event->tracking_id);
         $trackingId = $impressionContext->trackingId();
 
         if (isset($userInfoCache[$trackingId])) {

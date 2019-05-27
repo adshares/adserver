@@ -22,21 +22,20 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Repository;
 
-use DateTime;
-
 interface EventRepository
 {
     public const PACKAGE_SIZE = 500;
 
-    public function fetchUnpaidEventsCreatedFromDate(
-        DateTime $dateTime,
+    public function fetchUnpaidEventsBetweenIds(
+        int $eventIdFirst,
+        int $eventIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array;
 
     public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $adsPaymentIdStart,
-        int $adsPaymentIdEnd,
+        int $adsPaymentIdFirst,
+        int $adsPaymentIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array;
