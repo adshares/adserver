@@ -4,7 +4,6 @@
     </head>
     <body>
         <script type="text/javascript">
-            demandLogContext('{{ $log_url }}');
             @isset($aduser_url)
             parent.postMessage({
                 'insertElem': [
@@ -12,6 +11,7 @@
                 ]
             }, '*');
             @endisset
+            demandLogContext('{{ $log_url }}');
         </script>
     </body>
 </html>
