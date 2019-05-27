@@ -269,7 +269,7 @@ class UserLedgerEntry extends Model
         return self::blockedEntries()->where('user_id', $userId);
     }
 
-    private static function addAdExpense(int $status, int $userId, int $total, int $maxBonus = PHP_INT_MAX): array
+    private static function addAdExpense(int $status, int $userId, int $total, int $maxBonus): array
     {
         if ($total < 0) {
             throw new InvalidArgumentException(
@@ -345,9 +345,9 @@ class UserLedgerEntry extends Model
         Log::debug(sprintf('[UserLedgerEntry] Release blocked %d clicks', $amount));
     }
 
-    public static function processAdExpense(int $userId, int $nonNegativeAmount): array
+    public static function processAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
     {
-        return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $nonNegativeAmount);
+        return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $totalAmount, $maxBonus);
     }
 
     public static function awardBonusToUser(User $user, int $amount): void

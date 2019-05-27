@@ -33,15 +33,18 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
-class AdsProcessTxTest extends CommandTestCase
+class AdsProcessTxTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -230,7 +233,7 @@ class AdsProcessTxTest extends CommandTestCase
             function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 // getBlockIds
-                $getBlockIdsStub = new \PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls(
+                $getBlockIdsStub = new ConsecutiveCalls(
                     [
                         $this->getBlockIds1(),
                         $this->getBlockIds2(),
@@ -382,7 +385,7 @@ JSON
      * @param string $txid
      *
      * @return GetTransactionResponse
-     * @throws \Exception
+     * @throws Exception
      */
     private function getTx(string $txid): GetTransactionResponse
     {
@@ -398,7 +401,7 @@ JSON
                 break;
 
             default:
-                throw new \Exception();
+                throw new Exception();
         }
 
         return new GetTransactionResponse(json_decode($response, true));

@@ -20,12 +20,13 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
-final class InventoryImporterCommandTest extends CommandTestCase
+final class InventoryImporterCommandTest extends TestCase
 {
     use RefreshDatabase;
 
