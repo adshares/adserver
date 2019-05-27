@@ -93,21 +93,6 @@ final class ClientProvider extends ServiceProvider
 
 //        $this->app->bind(
 //            AdSelect::class,
-//            static function () {
-//                return new GuzzleAdSelectClient(
-//                    new Client(
-//                        [
-//                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-//                            'base_uri' => config('app.adselect_endpoint'),
-//                            'timeout' => 5,
-//                        ]
-//                    )
-//                );
-//            }
-//        );
-
-//        $this->app->bind(
-//            AdSelect::class,
 //            function () {
 //                return new GuzzleAdSelectClient(
 //                    new Client(
