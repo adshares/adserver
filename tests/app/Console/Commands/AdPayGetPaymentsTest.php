@@ -116,8 +116,8 @@ class AdPayGetPaymentsTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
             $entries = [
-                [UserLedgerEntry::TYPE_DEPOSIT, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
-                [UserLedgerEntry::TYPE_BONUS_INCOME, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_DEPOSIT, 100, UserLedgerEntry::STATUS_ACCEPTED],
+                [UserLedgerEntry::TYPE_BONUS_INCOME, 100, UserLedgerEntry::STATUS_ACCEPTED],
             ];
 
             foreach ($entries as $entry) {
@@ -131,10 +131,12 @@ class AdPayGetPaymentsTest extends TestCase
 
             factory(Campaign::class)->create([
                 'user_id' => $user->id,
+                'budget' => 100,
                 'status' => Campaign::STATUS_ACTIVE,
             ]);
             factory(Campaign::class)->create([
                 'user_id' => $user->id,
+                'budget' => 100,
                 'status' => Campaign::STATUS_ACTIVE,
                 'targeting_requires' => json_decode('{"site": {"domain": ["www.adshares.net"]}}', true),
             ]);
@@ -144,12 +146,21 @@ class AdPayGetPaymentsTest extends TestCase
                     'campaign_id' => $campaign->id,
                 ]);
 
-                factory(EventLog::class)->times(10)->create([
+                factory(EventLog::class)->times(1)->create([
                     'event_value_currency' => null,
                     'advertiser_id' => $campaign->user->uuid,
                     'campaign_id' => $campaign->uuid,
                     'banner_id' => $banner->uuid,
                 ]);
+
+                if (!$campaign->isDirectDeal()) {
+                    factory(EventLog::class)->times(1)->create([
+                        'event_value_currency' => null,
+                        'advertiser_id' => $campaign->user->uuid,
+                        'campaign_id' => $campaign->uuid,
+                        'banner_id' => $banner->uuid,
+                    ]);
+                }
             });
         })->first();
 
@@ -159,7 +170,7 @@ class AdPayGetPaymentsTest extends TestCase
                 $calculatedEvents = EventLog::all()->map(static function (EventLog $entry) {
                     return [
                         'event_id' => $entry->event_id,
-                        'amount' => 10 * 10 ** 11,
+                        'amount' => 100,
                         'reason' => 0,
                     ];
                 });
@@ -187,10 +198,14 @@ class AdPayGetPaymentsTest extends TestCase
             ->assertExitCode(0);
 
         $count = EventLog::all()->map(static function (EventLog $entry) {
-            self::assertEquals(10 * 10 ** 11, $entry->event_value_currency);
+            if (Campaign::fetchByUuid($entry->campaign_id)->isDirectDeal()) {
+                self::assertEquals(100, $entry->event_value_currency);
+            } else {
+                self::assertEquals(50, $entry->event_value_currency);
+            }
         })->count();
 
-        self::assertEquals(20, $count);
+        self::assertEquals(3, $count);
 
         self::assertEquals(0, $user->getBalance());
     }
