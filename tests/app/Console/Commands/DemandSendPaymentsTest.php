@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,18 +20,17 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Ads;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class DemandSendPaymentsTest extends TestCase
+class DemandSendPaymentsTest extends CommandTestCase
 {
     use RefreshDatabase;
 

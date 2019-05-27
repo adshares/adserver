@@ -22,7 +22,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
@@ -33,18 +32,12 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
-use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Console\Command\LockableTrait;
-use function config;
 use function sprintf;
 
-class AdPayEventExportCommand extends Command
+class AdPayEventExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-    use LockableTrait;
-
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
 
     protected $signature = 'ops:adpay:event:export {--first=} {--last=}';
@@ -55,9 +48,8 @@ class AdPayEventExportCommand extends Command
     {
         $eventIdFirst = $this->option('first');
         $eventIdLast = $this->option('last');
-        $lockId = config('app.adserver_id').$this->getName();
 
-        if ($eventIdLast === null && !$this->lock($lockId)) {
+        if ($eventIdLast === null && !$this->lock()) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;

@@ -21,20 +21,22 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
-use Illuminate\Console\Command;
 
-class DemandSendPayments extends Command
+class DemandSendPayments extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:demand:payments:send';
 
     public function handle(Ads $ads): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);

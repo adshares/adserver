@@ -22,16 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
-use Illuminate\Console\Command;
 
-class AggregateStatisticsAdvertiserCommand extends Command
+class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:stats:aggregate:advertiser {--hour=}';
 
     protected $description = 'Aggregates events data for statistics';
@@ -39,18 +36,24 @@ class AggregateStatisticsAdvertiserCommand extends Command
     /** @var StatsRepository */
     private $statsRepository;
 
-    public function __construct(StatsRepository $statsRepository)
+    public function __construct(Locker $locker, StatsRepository $statsRepository)
     {
         $this->statsRepository = $statsRepository;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
-        $this->info('Start command '.$this->signature);
-
         $hour = $this->option('hour');
+        if (null === $hour && !$this->lock()) {
+            $this->info('Command '.$this->getName().' already running');
+
+            return;
+        }
+
+        $this->info('Start command '.$this->getName());
+
         if ($hour !== null) {
             if (false === ($from = DateTime::createFromFormat(DateTime::ATOM, $hour))) {
                 $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
@@ -73,6 +76,6 @@ class AggregateStatisticsAdvertiserCommand extends Command
 
         $this->statsRepository->aggregateStatistics($from, $to);
 
-        $this->info('End command '.$this->signature);
+        $this->info('End command '.$this->getName());
     }
 }

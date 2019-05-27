@@ -1,13 +1,13 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -19,15 +19,14 @@
  */
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\DummyAdUserClient;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
 
-class UpdateOptionsTest extends TestCase
+class UpdateOptionsTest extends CommandTestCase
 {
     public function testTargetingOptionsUpdate(): void
     {

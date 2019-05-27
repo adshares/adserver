@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetBlockIdsCommand;
@@ -33,7 +33,6 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -42,7 +41,7 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdsProcessTxTest extends TestCase
+class AdsProcessTxTest extends CommandTestCase
 {
     use RefreshDatabase;
 
