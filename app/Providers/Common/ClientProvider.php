@@ -74,38 +74,38 @@ final class ClientProvider extends ServiceProvider
             }
         );
 
-//        $this->app->bind(
-//            AdSelect::class,
-//            function () {
-//                return new JsonRpcAdSelectClient(
-//                    new JsonRpc(
-//                        new Client(
-//                            [
-//                                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-//                                'base_uri' => config('app.adselect_endpoint'),
-//                                'timeout' => 5,
-//                            ]
-//                        )
-//                    )
-//                );
-//            }
-//        );
-
         $this->app->bind(
             AdSelect::class,
             function () {
-                return new GuzzleAdSelectClient(
-                    new Client(
-                        [
-                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.adselect_endpoint'),
-                            'timeout' => 5,
-                        ]
+                return new JsonRpcAdSelectClient(
+                    new JsonRpc(
+                        new Client(
+                            [
+                                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                                'base_uri' => config('app.adselect_endpoint'),
+                                'timeout' => 5,
+                            ]
+                        )
                     )
-
                 );
             }
         );
+
+//        $this->app->bind(
+//            AdSelect::class,
+//            function () {
+//                return new GuzzleAdSelectClient(
+//                    new Client(
+//                        [
+//                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+//                            'base_uri' => config('app.adselect_endpoint'),
+//                            'timeout' => 5,
+//                        ]
+//                    )
+//
+//                );
+//            }
+//        );
 
         $this->app->bind(
             AdUser::class,
