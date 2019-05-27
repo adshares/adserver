@@ -85,6 +85,12 @@ class AdSelectEventExportCommand extends BaseCommand
         $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
         $eventIdLast = NetworkEventLog::max('id');
 
+        if (null === $eventIdFirst) {
+            $this->info('[ADSELECT] No events to export');
+
+            return;
+        }
+
         $updated = $this->updateNetworkEventsWithAdUserData($eventIdFirst, $eventIdLast);
 
         $this->info(sprintf(
