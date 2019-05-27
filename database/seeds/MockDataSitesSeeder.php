@@ -30,46 +30,57 @@ class MockDataSitesSeeder extends Seeder
         'Leaderboard' => [
             'width' => 728,
             'height' => 90,
+            'label' => 'leaderboard',
         ],
         'Wide Skycraper' => [
             'width' => 160,
             'height' => 600,
+            'label' => 'wide-skyscraper',
         ],
         'Large Rectangle' => [
             'width' => 336,
             'height' => 280,
+            'label' => 'large-rectangle',
         ],
         'Half Page' => [
             'width' => 300,
             'height' => 600,
+            'label' => 'half-page',
         ],
         'Large Mobile' => [
             'width' => 320,
             'height' => 100,
+            'label' => 'large-mobile-banner',
         ],
         'Leaderboard 2' => [
             'width' => 728,
             'height' => 90,
+            'label' => 'leaderboard',
         ],
         'Leaderboard 3' => [
             'width' => 728,
             'height' => 90,
+            'label' => 'leaderboard',
         ],
         'Large Rectangle 2' => [
             'width' => 336,
             'height' => 280,
+            'label' => 'large-rectangle',
         ],
         'Large Mobile 2' => [
             'width' => 320,
             'height' => 100,
+            'label' => 'large-mobile-banner',
         ],
         'Large Mobile 3' => [
             'width' => 320,
             'height' => 100,
+            'label' => 'large-mobile-banner',
         ],
         'Wide Skyscraper 2' => [
             'width' => 160,
             'height' => 600,
+            'label' => 'wide-skyscraper',
         ],
     ];
 
@@ -120,7 +131,9 @@ class MockDataSitesSeeder extends Seeder
                         'site_id' => $newSite->id,
                         'width' => $zone['width'],
                         'height' => $zone['height'],
+                        'label' => $zone['label'],
                     ]);
+
                 }
 
                 $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
