@@ -36,6 +36,7 @@ class EventMapper
         }
 
         $mappedEvent = [
+            'id' => $event['id'],
             'keywords' => $keywords,
             'publisher_id' => $event['publisher_id'],
             'banner_id' => $event['banner_id'],
