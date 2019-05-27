@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Client;
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\EventMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
-use Adshares\Adserver\Client\Mapper\AdSelect\FindBannerMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
@@ -38,8 +37,6 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use function array_map;
-use function GuzzleHttp\json_decode;
 use InvalidArgumentException;
 use Log;
 use Generator;
@@ -47,6 +44,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
+use function array_map;
+use function GuzzleHttp\json_decode;
 use function iterator_to_array;
 use function json_encode;
 use function config;
@@ -114,11 +113,8 @@ class GuzzleAdSelectClient implements AdSelect
 
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
-
-//        $mapped = FindBannerMapper::map($zones, $context);
-
         $zoneIds = array_map(
-            function (array $zone) {
+            static function (array $zone) {
                 return strtolower((string)$zone['zone']);
             },
             $zones
@@ -130,7 +126,7 @@ class GuzzleAdSelectClient implements AdSelect
             $zoneCollection = self::attachDuplicatedZones($zoneCollection, $zoneIds);
         }
 
-        $existingZones = $zoneCollection->reject(function ($zone) {
+        $existingZones = $zoneCollection->reject(static function ($zone) {
             return $zone === null;
         });
 
@@ -155,16 +151,15 @@ class GuzzleAdSelectClient implements AdSelect
         try {
             $items = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new DomainRuntimeException('Invalid json data.');
+            throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
         }
-//        Log::debug(sprintf(
-//            '%s:%s %s',
-//            __METHOD__,
-//            __LINE__,
-//            $procedure->toJson()
-//        ));
+        Log::debug(sprintf(
+            '%s:%s %s',
+            __METHOD__,
+            __LINE__,
+            $body
+        ));
 
-//        $bannerMap = $this->createRequestIdsToBannerMap($items);
         $bannerIds = $this->fixBannerOrdering($existingZones, $items, $zoneIds);
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
 
