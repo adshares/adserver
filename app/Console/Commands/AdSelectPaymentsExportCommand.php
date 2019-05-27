@@ -22,36 +22,30 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
-use DateTime;
-use Illuminate\Console\Command;
 use function sprintf;
-use Symfony\Component\Console\Command\LockableTrait;
 
-class AdSelectPaymentsExportCommand extends Command
+class AdSelectPaymentsExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-    use LockableTrait;
-
     protected $signature = 'ops:adselect:payment:export';
 
     protected $description = 'Export event payments to AdSelect';
 
     protected $exporterService;
 
-    public function __construct(AdSelectEventExporter $exporterService)
+    public function __construct(Locker $locker, AdSelectEventExporter $exporterService)
     {
-        parent::__construct();
+        parent::__construct($locker);
 
         $this->exporterService = $exporterService;
     }
 
     public function handle(): void
     {
-        $lockId = config('app.adserver_id').$this->getName();
-        if (!$this->lock($lockId)) {
+        if (!$this->lock()) {
             $this->info('[AdSelectPaymentsExport] Command '.$this->signature.' already running');
 
             return;
@@ -59,19 +53,37 @@ class AdSelectPaymentsExportCommand extends Command
 
         $this->info('Start command '.$this->signature);
 
-        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME);
-        $this->info(sprintf(
-            '[ADSELECT] Trying to export paid events from %s',
-            $lastExportDate->format(DateTime::ATOM)
-        ));
+        $lastExportedAdsPaymentId = Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID);
 
-        $exported = $this->exporterService->exportPaidEvents($lastExportDate);
-        $this->info(sprintf(
-            '[ADSELECT] Exported %s paid events',
-            $exported
-        ));
+        $greatestAdsPaymentIdInDatabase =
+            NetworkEventLog::where('ads_payment_id', '>', $lastExportedAdsPaymentId)->max('ads_payment_id');
 
-        Config::upsertDateTime(Config::ADSELECT_PAYMENT_EXPORT_TIME, new DateTime());
+        if (null === $greatestAdsPaymentIdInDatabase) {
+            $this->info('[ADSELECT] No paid events to export');
+
+            return;
+        }
+
+        $adsPaymentIdFirst = $lastExportedAdsPaymentId + 1;
+        $adsPaymentIdLast = $greatestAdsPaymentIdInDatabase;
+
+        $this->info(
+            sprintf(
+                '[ADSELECT] Trying to export paid events with ads_payment_id <%d;%d>',
+                $adsPaymentIdFirst,
+                $adsPaymentIdLast
+            )
+        );
+
+        $exported = $this->exporterService->exportPaidEvents($adsPaymentIdFirst, $adsPaymentIdLast);
+        $this->info(
+            sprintf(
+                '[ADSELECT] Exported %s paid events',
+                $exported
+            )
+        );
+
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID, $adsPaymentIdLast);
 
         $this->info('Finished exporting event payments to AdSelect');
     }
