@@ -23,7 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -51,6 +53,31 @@ final class ImpressionContext
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
+    }
+
+    public static function fromEventData($headers, string $ip, string $trackingId): self
+    {
+        $headersArray = get_object_vars($headers);
+
+        $refererList = $headersArray['referer'] ?? [];
+        $domain = $refererList[0] ?? '';
+
+        $ip = inet_ntop(hex2bin($ip));
+
+        $ua = $headersArray['user-agent'][0] ?? '';
+
+        try {
+            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($trackingId));
+        } catch (RuntimeException $e) {
+            Log::warning(sprintf('%s %s', $e->getMessage(), $trackingId));
+            $trackingId = '';
+        }
+
+        return new self(
+            ['domain' => $domain, 'page' => $domain],
+            ['ip' => $ip, 'ua' => $ua],
+            ['tid' => $trackingId]
+        );
     }
 
     public function withUserDataReplacedBy(array $userData): self

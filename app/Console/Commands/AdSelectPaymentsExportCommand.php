@@ -64,18 +64,18 @@ class AdSelectPaymentsExportCommand extends BaseCommand
             return;
         }
 
-        $adsPaymentIdStart = $lastExportedAdsPaymentId + 1;
-        $adsPaymentIdEnd = $greatestAdsPaymentIdInDatabase;
+        $adsPaymentIdFirst = $lastExportedAdsPaymentId + 1;
+        $adsPaymentIdLast = $greatestAdsPaymentIdInDatabase;
 
         $this->info(
             sprintf(
                 '[ADSELECT] Trying to export paid events with ads_payment_id <%d;%d>',
-                $adsPaymentIdStart,
-                $adsPaymentIdEnd
+                $adsPaymentIdFirst,
+                $adsPaymentIdLast
             )
         );
 
-        $exported = $this->exporterService->exportPaidEvents($adsPaymentIdStart, $adsPaymentIdEnd);
+        $exported = $this->exporterService->exportPaidEvents($adsPaymentIdFirst, $adsPaymentIdLast);
         $this->info(
             sprintf(
                 '[ADSELECT] Exported %s paid events',
@@ -83,7 +83,7 @@ class AdSelectPaymentsExportCommand extends BaseCommand
             )
         );
 
-        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID, $adsPaymentIdEnd);
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID, $adsPaymentIdLast);
 
         $this->info('Finished exporting event payments to AdSelect');
     }
