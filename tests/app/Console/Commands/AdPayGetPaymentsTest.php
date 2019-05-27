@@ -113,6 +113,7 @@ class AdPayGetPaymentsTest extends TestCase
 
     public function test(): void
     {
+        /** @var User $user */
         $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
             $entries = [
                 [UserLedgerEntry::TYPE_DEPOSIT, 100 * 10 ** 11, UserLedgerEntry::STATUS_ACCEPTED],
@@ -150,7 +151,7 @@ class AdPayGetPaymentsTest extends TestCase
                     'banner_id' => $banner->uuid,
                 ]);
             });
-        });
+        })->first();
 
         $this->app->bind(
             AdPay::class,
@@ -191,6 +192,6 @@ class AdPayGetPaymentsTest extends TestCase
 
         self::assertEquals(20, $count);
 
-        self::assertEquals(0, $user->first()->getBalance());
+        self::assertEquals(0, $user->getBalance());
     }
 }
