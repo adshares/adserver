@@ -130,12 +130,20 @@ final class CampaignsTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'budget' => $budget]);
+        $campaign = factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => $budget,
+        ]);
 
         $this->assertCount(1, Campaign::where('id', $campaign->id)->get());
 
-        $response =
-            $this->putJson(self::URI."/{$campaign->id}/status", ['campaign' => ['status' => Campaign::STATUS_ACTIVE]]);
+        $response = $this->putJson(
+            self::URI."/{$campaign->id}/status",
+            [
+                'campaign' => ['status' => Campaign::STATUS_ACTIVE],
+            ]
+        );
+
         $response->assertStatus($responseCode);
     }
 

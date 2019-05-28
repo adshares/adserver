@@ -202,7 +202,9 @@ class Campaign extends Model
             }
         );
 
-        return $query->get()->reduce(
+        $statics = $query->get();
+
+        return $statics->reduce(
             static function (AdvertiserBudget $carry, Campaign $campaign) {
                 return $carry->addInt($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
             },
@@ -279,7 +281,7 @@ class Campaign extends Model
         $budget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
 
         if ($status === self::STATUS_ACTIVE) {
-            $budget->add($this->getBudgetForCurrentDateTime());
+            $budget = $budget->add($this->getBudgetForCurrentDateTime());
         }
 
         $this->updateBlockadeOrFailIfNotAllowed(
