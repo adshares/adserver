@@ -303,7 +303,6 @@ class GuzzleAdSelectClient implements AdSelect
     public function getLastPaidEventId(): int
     {
         return $this->getLastEventId('paid');
-
     }
 
     public function getLastUnpaidEventId(): int
