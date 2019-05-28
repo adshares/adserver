@@ -50,7 +50,7 @@ class AdPayGetPaymentsTest extends TestCase
 
         $this->app->bind(
             ExchangeRateRepository::class,
-            function () use ($dummyExchangeRateRepository) {
+            static function () use ($dummyExchangeRateRepository) {
                 return $dummyExchangeRateRepository;
             }
         );
