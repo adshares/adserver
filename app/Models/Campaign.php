@@ -293,6 +293,7 @@ class Campaign extends Model
     private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): void
     {
         DB::beginTransaction();
+
         UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
 
         if ($total > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
