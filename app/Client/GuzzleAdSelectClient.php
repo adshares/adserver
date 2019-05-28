@@ -52,6 +52,7 @@ use function config;
 use function route;
 use function sprintf;
 use function strtolower;
+use Symfony\Component\HttpFoundation\Response;
 
 class GuzzleAdSelectClient implements AdSelect
 {
@@ -199,7 +200,6 @@ class GuzzleAdSelectClient implements AdSelect
             $mapped[] = EventPaymentMapper::map($event);
         }
 
-
         try {
             $this->client->post('/api/v1/events/paid', [
                 RequestOptions::JSON => ['events' => $mapped],
@@ -298,5 +298,61 @@ class GuzzleAdSelectClient implements AdSelect
                 }
             }
         }
+    }
+
+    public function getLastPaidEventId(): int
+    {
+        return $this->getLastEventId('paid');
+
+    }
+
+    public function getLastUnpaidEventId(): int
+    {
+        return $this->getLastEventId('unpaid');
+    }
+
+    private function getLastEventId(string $type): int
+    {
+        try {
+            $uri = sprintf('/api/v1/events/%s/last', $type);
+            $response = $this->client->get($uri);
+        } catch (RequestException $exception) {
+            if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
+                return 0;
+            }
+
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADSELECT] Fetch last %s event id from %s failed (%s).',
+                    $type,
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        $body = (string)$response->getBody();
+        try {
+            $item = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new DomainRuntimeException(sprintf(
+                '[ADSELECT] Fetch last %s events. Invalid json data (%s).',
+                $type,
+                $body
+            ));
+        }
+
+        if (!isset($item['id'])) {
+            throw new UnexpectedClientResponseException(
+                '[ADSELECT] Could not fetch last %s event from adselect (%s). Event id is required, given: %s.',
+                $type,
+                $this->client->getConfig()['base_uri'],
+                $body
+            );
+        }
+
+        return (int)$item['id'];
     }
 }

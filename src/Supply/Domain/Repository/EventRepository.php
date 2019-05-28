@@ -34,8 +34,8 @@ interface EventRepository
     ): array;
 
     public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $adsPaymentIdFirst,
-        int $adsPaymentIdLast,
+        int $eventIdFirst,
+        int $eventIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array;

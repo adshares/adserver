@@ -71,24 +71,7 @@ class AdSelectEventExportCommand extends BaseCommand
         }
 
         $this->info('[AdSelectEventExport] Start command '.$this->signature);
-
-        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_EVENT_EXPORT_TIME);
-
-        $this->info(sprintf(
-            '[ADSELECT] Trying to export unpaid events from %s',
-            $lastExportDate->format(DateTime::ATOM)
-        ));
-
-//        TODO SRV-356 fetch NetworkEventLog uuid from adselect
-//        $eventUuid =
-//        $eventIdFirst = NetworkEventLog::fetchByEventId($eventUuid);
-        $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
-
-        if (null === $eventIdFirst) {
-            $this->info('[ADSELECT] No events to export');
-
-            return;
-        }
+        $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
 
         $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
             ->where('created_at', '<=', new DateTime('-10 minutes'))
@@ -113,10 +96,6 @@ class AdSelectEventExportCommand extends BaseCommand
             '[ADSELECT] Exported %s unpaid events',
             $exported
         ));
-
-        // TODO SRV-356 remove storing last export time and delete key from Config (model and database)
-        $dateTime = new DateTime();
-        Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, $dateTime);
 
         $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
     }

@@ -152,4 +152,14 @@ final class DummyAdSelectClient implements AdSelect
     {
         // TODO: Implement deleteFromInventory() method.
     }
+
+    public function getLastPaidEventId(): int
+    {
+        return 0;
+    }
+
+    public function getLastUnpaidEventId(): int
+    {
+        return 0;
+    }
 }
