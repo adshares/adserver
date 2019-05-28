@@ -141,16 +141,12 @@ final class CampaignsTest extends TestCase
 
     private function createCampaignForUser(User $user): int
     {
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id]);
-
-        return $campaign->id;
+        return factory(Campaign::class)->create(['user_id' => $user->id])->id;
     }
 
     private function createBannerForCampaign(int $campaignId): int
     {
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
-
-        return $banner->id;
+        return factory(Banner::class)->create(['campaign_id' => $campaignId])->id;
     }
 
     public function testFailDeleteNotOwnedCampaign(): void
