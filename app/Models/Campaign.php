@@ -173,12 +173,11 @@ class Campaign extends Model
 
     public static function fetchRequiredBudgetsPerUser(): Collection
     {
-        $query = self::where('status', self::STATUS_ACTIVE)->where(
-            static function ($q) {
+        $query = self::where('status', self::STATUS_ACTIVE)
+            ->where(static function ($q) {
                 $dateTime = DateUtils::getDateTimeRoundedToNextHour();
                 $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-            }
-        );
+            });
 
         /** @var Collection $all */
         $all = $query->get();
@@ -187,23 +186,28 @@ class Campaign extends Model
             ->map(static function (Collection $collection) {
                 return $collection->reduce(
                     static function (AdvertiserBudget $carry, Campaign $campaign) {
-                        return $carry->add($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
+                        return $carry->addInt($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
                     },
                     new AdvertiserBudget()
                 );
             });
     }
 
-    public static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): int
+    private static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): AdvertiserBudget
     {
         $query = self::where('status', self::STATUS_ACTIVE)->where(
-            function ($q) {
+            static function ($q) {
                 $dateTime = DateUtils::getDateTimeRoundedToCurrentHour();
                 $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
             }
         );
 
-        return (int)$query->sum('budget');
+        return $query->get()->reduce(
+            static function (AdvertiserBudget $carry, Campaign $campaign) {
+                return $carry->addInt($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
+            },
+            new AdvertiserBudget()
+        );
     }
 
     public function banners(): HasMany
@@ -272,26 +276,32 @@ class Campaign extends Model
 
         self::failIfInvalidStatus($status);
 
-        $totalBudget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod()
-            + ($status === self::STATUS_ACTIVE ? $this->getBudgetForCurrentDateTime() : 0);
+        $budget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
 
-        $this->updateBlockadeOrFailIfNotAllowed($exchangeRate->toClick($totalBudget));
+        if ($status === self::STATUS_ACTIVE) {
+            $budget->add($this->getBudgetForCurrentDateTime());
+        }
+
+        $this->updateBlockadeOrFailIfNotAllowed(
+            $exchangeRate->toClick($budget->total()),
+            $exchangeRate->toClick($budget->bonusable())
+        );
 
         $this->status = $status;
     }
 
-    private function updateBlockadeOrFailIfNotAllowed(int $amount): void
+    private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): void
     {
         DB::beginTransaction();
         UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
 
-        if ($amount > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
+        if ($total > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
             throw new InvalidArgumentException('Campaign budgets exceed account balance');
         }
 
         try {
-            if ($amount > 0) {
-                UserLedgerEntry::blockAdExpense($this->user_id, $amount);
+            if ($total > 0) {
+                UserLedgerEntry::blockAdExpense($this->user_id, $total, $bonusable);
             }
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
@@ -311,15 +321,15 @@ class Campaign extends Model
         }
     }
 
-    private function getBudgetForCurrentDateTime(): int
+    private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
         if ($this->time_end != null
             && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
             < DateUtils::getDateTimeRoundedToCurrentHour()) {
-            return 0;
+            return new AdvertiserBudget();
         }
 
-        return $this->budget;
+        return new AdvertiserBudget($this->budget, $this->isDirectDeal() ? 0 : $this->budget);
     }
 
     public function isDirectDeal(): bool
