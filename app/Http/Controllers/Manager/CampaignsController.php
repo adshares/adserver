@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
@@ -30,6 +31,8 @@ use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
+use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Illuminate\Http\JsonResponse;
@@ -50,12 +53,19 @@ class CampaignsController extends Controller
     /** @var CampaignRepository */
     private $campaignRepository;
 
+    /** @var ConfigurationRepository */
+    private $configurationRepository;
+
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
-    public function __construct(CampaignRepository $campaignRepository, ExchangeRateReader $exchangeRateReader)
-    {
+    public function __construct(
+        CampaignRepository $campaignRepository,
+        ConfigurationRepository $configurationRepository,
+        ExchangeRateReader $exchangeRateReader
+    ) {
         $this->campaignRepository = $campaignRepository;
+        $this->configurationRepository = $configurationRepository;
         $this->exchangeRateReader = $exchangeRateReader;
     }
 
@@ -108,8 +118,15 @@ class CampaignsController extends Controller
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
-        $input['targeting_requires'] = $request->input('campaign.targeting.requires');
-        $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
+
+        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+
+        $input['targeting_requires'] = $targetingProcessor->processTargeting(
+            $request->input('campaign.targeting.requires')
+        );
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting(
+            $request->input('campaign.targeting.excludes')
+        );
 
         $banners = [];
 
@@ -237,8 +254,15 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-        $input['targeting_requires'] = $request->input('campaign.targeting.requires');
-        $input['targeting_excludes'] = $request->input('campaign.targeting.excludes');
+
+        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+
+        $input['targeting_requires'] = $targetingProcessor->processTargeting(
+            $request->input('campaign.targeting.requires')
+        );
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting(
+            $request->input('campaign.targeting.excludes')
+        );
 
         unset($input['status']); // Client cannot change status in EDIT action
 
@@ -396,5 +420,10 @@ class CampaignsController extends Controller
         $campaign->classification_tags = null;
 
         $campaign->update();
+    }
+
+    private function getTargetingSchema(): array
+    {
+        return (new OptionsSelector($this->configurationRepository->fetchTargetingOptions()))->toArray();
     }
 }

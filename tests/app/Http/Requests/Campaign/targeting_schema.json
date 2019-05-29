@@ -1,0 +1,1880 @@
+[
+  {
+    "value_type": "group",
+    "key": "user",
+    "label": "User",
+    "allow_input": false,
+    "children": [
+      {
+        "value_type": "string",
+        "key": "country",
+        "label": "Country",
+        "allow_input": false,
+        "values": [
+          {
+            "label": "Afghanistan",
+            "value": "af"
+          },
+          {
+            "label": "\u00c5land Islands",
+            "value": "ax"
+          },
+          {
+            "label": "Albania",
+            "value": "al"
+          },
+          {
+            "label": "Algeria",
+            "value": "dz"
+          },
+          {
+            "label": "American Samoa",
+            "value": "as"
+          },
+          {
+            "label": "Andorra",
+            "value": "ad"
+          },
+          {
+            "label": "Angola",
+            "value": "ao"
+          },
+          {
+            "label": "Anguilla",
+            "value": "ai"
+          },
+          {
+            "label": "Antarctica",
+            "value": "aq"
+          },
+          {
+            "label": "Antigua and Barbuda",
+            "value": "ag"
+          },
+          {
+            "label": "Argentina",
+            "value": "ar"
+          },
+          {
+            "label": "Armenia",
+            "value": "am"
+          },
+          {
+            "label": "Aruba",
+            "value": "aw"
+          },
+          {
+            "label": "Australia",
+            "value": "au"
+          },
+          {
+            "label": "Austria",
+            "value": "at"
+          },
+          {
+            "label": "Azerbaijan",
+            "value": "az"
+          },
+          {
+            "label": "Bahamas",
+            "value": "bs"
+          },
+          {
+            "label": "Bahrain",
+            "value": "bh"
+          },
+          {
+            "label": "Bangladesh",
+            "value": "bd"
+          },
+          {
+            "label": "Barbados",
+            "value": "bb"
+          },
+          {
+            "label": "Belarus",
+            "value": "by"
+          },
+          {
+            "label": "Belgium",
+            "value": "be"
+          },
+          {
+            "label": "Belize",
+            "value": "bz"
+          },
+          {
+            "label": "Benin",
+            "value": "bj"
+          },
+          {
+            "label": "Bermuda",
+            "value": "bm"
+          },
+          {
+            "label": "Bhutan",
+            "value": "bt"
+          },
+          {
+            "label": "Bolivia, Plurinational State of",
+            "value": "bo"
+          },
+          {
+            "label": "Bonaire, Sint Eustatius and Saba",
+            "value": "bq"
+          },
+          {
+            "label": "Bosnia and Herzegovina",
+            "value": "ba"
+          },
+          {
+            "label": "Botswana",
+            "value": "bw"
+          },
+          {
+            "label": "Bouvet Island",
+            "value": "bv"
+          },
+          {
+            "label": "Brazil",
+            "value": "br"
+          },
+          {
+            "label": "British Indian Ocean Territory",
+            "value": "io"
+          },
+          {
+            "label": "Brunei Darussalam",
+            "value": "bn"
+          },
+          {
+            "label": "Bulgaria",
+            "value": "bg"
+          },
+          {
+            "label": "Burkina Faso",
+            "value": "bf"
+          },
+          {
+            "label": "Burundi",
+            "value": "bi"
+          },
+          {
+            "label": "Cambodia",
+            "value": "kh"
+          },
+          {
+            "label": "Cameroon",
+            "value": "cm"
+          },
+          {
+            "label": "Canada",
+            "value": "ca"
+          },
+          {
+            "label": "Cape Verde",
+            "value": "cv"
+          },
+          {
+            "label": "Cayman Islands",
+            "value": "ky"
+          },
+          {
+            "label": "Central African Republic",
+            "value": "cf"
+          },
+          {
+            "label": "Chad",
+            "value": "td"
+          },
+          {
+            "label": "Chile",
+            "value": "cl"
+          },
+          {
+            "label": "China",
+            "value": "cn"
+          },
+          {
+            "label": "Christmas Island",
+            "value": "cx"
+          },
+          {
+            "label": "Cocos (Keeling) Islands",
+            "value": "cc"
+          },
+          {
+            "label": "Colombia",
+            "value": "co"
+          },
+          {
+            "label": "Comoros",
+            "value": "km"
+          },
+          {
+            "label": "Congo",
+            "value": "cg"
+          },
+          {
+            "label": "Congo, the Democratic Republic of the",
+            "value": "cd"
+          },
+          {
+            "label": "Cook Islands",
+            "value": "ck"
+          },
+          {
+            "label": "Costa Rica",
+            "value": "cr"
+          },
+          {
+            "label": "C\u00f4te d'Ivoire",
+            "value": "ci"
+          },
+          {
+            "label": "Croatia",
+            "value": "hr"
+          },
+          {
+            "label": "Cuba",
+            "value": "cu"
+          },
+          {
+            "label": "Cura\u00e7ao",
+            "value": "cw"
+          },
+          {
+            "label": "Cyprus",
+            "value": "cy"
+          },
+          {
+            "label": "Czech Republic",
+            "value": "cz"
+          },
+          {
+            "label": "Denmark",
+            "value": "dk"
+          },
+          {
+            "label": "Djibouti",
+            "value": "dj"
+          },
+          {
+            "label": "Dominica",
+            "value": "dm"
+          },
+          {
+            "label": "Dominican Republic",
+            "value": "do"
+          },
+          {
+            "label": "Ecuador",
+            "value": "ec"
+          },
+          {
+            "label": "Egypt",
+            "value": "eg"
+          },
+          {
+            "label": "El Salvador",
+            "value": "sv"
+          },
+          {
+            "label": "Equatorial Guinea",
+            "value": "gq"
+          },
+          {
+            "label": "Eritrea",
+            "value": "er"
+          },
+          {
+            "label": "Estonia",
+            "value": "ee"
+          },
+          {
+            "label": "Ethiopia",
+            "value": "et"
+          },
+          {
+            "label": "Falkland Islands (Malvinas)",
+            "value": "fk"
+          },
+          {
+            "label": "Faroe Islands",
+            "value": "fo"
+          },
+          {
+            "label": "Fiji",
+            "value": "fj"
+          },
+          {
+            "label": "Finland",
+            "value": "fi"
+          },
+          {
+            "label": "France",
+            "value": "fr"
+          },
+          {
+            "label": "French Guiana",
+            "value": "gf"
+          },
+          {
+            "label": "French Polynesia",
+            "value": "pf"
+          },
+          {
+            "label": "French Southern Territories",
+            "value": "tf"
+          },
+          {
+            "label": "Gabon",
+            "value": "ga"
+          },
+          {
+            "label": "Gambia",
+            "value": "gm"
+          },
+          {
+            "label": "Georgia",
+            "value": "ge"
+          },
+          {
+            "label": "Germany",
+            "value": "de"
+          },
+          {
+            "label": "Ghana",
+            "value": "gh"
+          },
+          {
+            "label": "Gibraltar",
+            "value": "gi"
+          },
+          {
+            "label": "Greece",
+            "value": "gr"
+          },
+          {
+            "label": "Greenland",
+            "value": "gl"
+          },
+          {
+            "label": "Grenada",
+            "value": "gd"
+          },
+          {
+            "label": "Guadeloupe",
+            "value": "gp"
+          },
+          {
+            "label": "Guam",
+            "value": "gu"
+          },
+          {
+            "label": "Guatemala",
+            "value": "gt"
+          },
+          {
+            "label": "Guernsey",
+            "value": "gg"
+          },
+          {
+            "label": "Guinea",
+            "value": "gn"
+          },
+          {
+            "label": "Guinea-Bissau",
+            "value": "gw"
+          },
+          {
+            "label": "Guyana",
+            "value": "gy"
+          },
+          {
+            "label": "Haiti",
+            "value": "ht"
+          },
+          {
+            "label": "Heard Island and McDonald Islands",
+            "value": "hm"
+          },
+          {
+            "label": "Holy See (Vatican City State)",
+            "value": "va"
+          },
+          {
+            "label": "Honduras",
+            "value": "hn"
+          },
+          {
+            "label": "Hong Kong",
+            "value": "hk"
+          },
+          {
+            "label": "Hungary",
+            "value": "hu"
+          },
+          {
+            "label": "Iceland",
+            "value": "is"
+          },
+          {
+            "label": "India",
+            "value": "in"
+          },
+          {
+            "label": "Indonesia",
+            "value": "id"
+          },
+          {
+            "label": "Iran, Islamic Republic of",
+            "value": "ir"
+          },
+          {
+            "label": "Iraq",
+            "value": "iq"
+          },
+          {
+            "label": "Ireland",
+            "value": "ie"
+          },
+          {
+            "label": "Isle of Man",
+            "value": "im"
+          },
+          {
+            "label": "Israel",
+            "value": "il"
+          },
+          {
+            "label": "Italy",
+            "value": "it"
+          },
+          {
+            "label": "Jamaica",
+            "value": "jm"
+          },
+          {
+            "label": "Japan",
+            "value": "jp"
+          },
+          {
+            "label": "Jersey",
+            "value": "je"
+          },
+          {
+            "label": "Jordan",
+            "value": "jo"
+          },
+          {
+            "label": "Kazakhstan",
+            "value": "kz"
+          },
+          {
+            "label": "Kenya",
+            "value": "ke"
+          },
+          {
+            "label": "Kiribati",
+            "value": "ki"
+          },
+          {
+            "label": "Korea, Democratic People's Republic of",
+            "value": "kp"
+          },
+          {
+            "label": "Korea, Republic of",
+            "value": "kr"
+          },
+          {
+            "label": "Kuwait",
+            "value": "kw"
+          },
+          {
+            "label": "Kyrgyzstan",
+            "value": "kg"
+          },
+          {
+            "label": "Lao People's Democratic Republic",
+            "value": "la"
+          },
+          {
+            "label": "Latvia",
+            "value": "lv"
+          },
+          {
+            "label": "Lebanon",
+            "value": "lb"
+          },
+          {
+            "label": "Lesotho",
+            "value": "ls"
+          },
+          {
+            "label": "Liberia",
+            "value": "lr"
+          },
+          {
+            "label": "Libya",
+            "value": "ly"
+          },
+          {
+            "label": "Liechtenstein",
+            "value": "li"
+          },
+          {
+            "label": "Lithuania",
+            "value": "lt"
+          },
+          {
+            "label": "Luxembourg",
+            "value": "lu"
+          },
+          {
+            "label": "Macao",
+            "value": "mo"
+          },
+          {
+            "label": "Macedonia, the Former Yugoslav Republic of",
+            "value": "mk"
+          },
+          {
+            "label": "Madagascar",
+            "value": "mg"
+          },
+          {
+            "label": "Malawi",
+            "value": "mw"
+          },
+          {
+            "label": "Malaysia",
+            "value": "my"
+          },
+          {
+            "label": "Maldives",
+            "value": "mv"
+          },
+          {
+            "label": "Mali",
+            "value": "ml"
+          },
+          {
+            "label": "Malta",
+            "value": "mt"
+          },
+          {
+            "label": "Marshall Islands",
+            "value": "mh"
+          },
+          {
+            "label": "Martinique",
+            "value": "mq"
+          },
+          {
+            "label": "Mauritania",
+            "value": "mr"
+          },
+          {
+            "label": "Mauritius",
+            "value": "mu"
+          },
+          {
+            "label": "Mayotte",
+            "value": "yt"
+          },
+          {
+            "label": "Mexico",
+            "value": "mx"
+          },
+          {
+            "label": "Micronesia, Federated States of",
+            "value": "fm"
+          },
+          {
+            "label": "Moldova, Republic of",
+            "value": "md"
+          },
+          {
+            "label": "Monaco",
+            "value": "mc"
+          },
+          {
+            "label": "Mongolia",
+            "value": "mn"
+          },
+          {
+            "label": "Montenegro",
+            "value": "me"
+          },
+          {
+            "label": "Montserrat",
+            "value": "ms"
+          },
+          {
+            "label": "Morocco",
+            "value": "ma"
+          },
+          {
+            "label": "Mozambique",
+            "value": "mz"
+          },
+          {
+            "label": "Myanmar",
+            "value": "mm"
+          },
+          {
+            "label": "Namibia",
+            "value": "na"
+          },
+          {
+            "label": "Nauru",
+            "value": "nr"
+          },
+          {
+            "label": "Nepal",
+            "value": "np"
+          },
+          {
+            "label": "Netherlands",
+            "value": "nl"
+          },
+          {
+            "label": "New Caledonia",
+            "value": "nc"
+          },
+          {
+            "label": "New Zealand",
+            "value": "nz"
+          },
+          {
+            "label": "Nicaragua",
+            "value": "ni"
+          },
+          {
+            "label": "Niger",
+            "value": "ne"
+          },
+          {
+            "label": "Nigeria",
+            "value": "ng"
+          },
+          {
+            "label": "Niue",
+            "value": "nu"
+          },
+          {
+            "label": "Norfolk Island",
+            "value": "nf"
+          },
+          {
+            "label": "Northern Mariana Islands",
+            "value": "mp"
+          },
+          {
+            "label": "Norway",
+            "value": "no"
+          },
+          {
+            "label": "Oman",
+            "value": "om"
+          },
+          {
+            "label": "Pakistan",
+            "value": "pk"
+          },
+          {
+            "label": "Palau",
+            "value": "pw"
+          },
+          {
+            "label": "Palestine, State of",
+            "value": "ps"
+          },
+          {
+            "label": "Panama",
+            "value": "pa"
+          },
+          {
+            "label": "Papua New Guinea",
+            "value": "pg"
+          },
+          {
+            "label": "Paraguay",
+            "value": "py"
+          },
+          {
+            "label": "Peru",
+            "value": "pe"
+          },
+          {
+            "label": "Philippines",
+            "value": "ph"
+          },
+          {
+            "label": "Pitcairn",
+            "value": "pn"
+          },
+          {
+            "label": "Poland",
+            "value": "pl"
+          },
+          {
+            "label": "Portugal",
+            "value": "pt"
+          },
+          {
+            "label": "Puerto Rico",
+            "value": "pr"
+          },
+          {
+            "label": "Qatar",
+            "value": "qa"
+          },
+          {
+            "label": "R\u00e9union",
+            "value": "re"
+          },
+          {
+            "label": "Romania",
+            "value": "ro"
+          },
+          {
+            "label": "Russian Federation",
+            "value": "ru"
+          },
+          {
+            "label": "Rwanda",
+            "value": "rw"
+          },
+          {
+            "label": "Saint Barth\u00e9lemy",
+            "value": "bl"
+          },
+          {
+            "label": "Saint Helena, Ascension and Tristan da Cunha",
+            "value": "sh"
+          },
+          {
+            "label": "Saint Kitts and Nevis",
+            "value": "kn"
+          },
+          {
+            "label": "Saint Lucia",
+            "value": "lc"
+          },
+          {
+            "label": "Saint Martin (French part)",
+            "value": "mf"
+          },
+          {
+            "label": "Saint Pierre and Miquelon",
+            "value": "pm"
+          },
+          {
+            "label": "Saint Vincent and the Grenadines",
+            "value": "vc"
+          },
+          {
+            "label": "Samoa",
+            "value": "ws"
+          },
+          {
+            "label": "San Marino",
+            "value": "sm"
+          },
+          {
+            "label": "Sao Tome and Principe",
+            "value": "st"
+          },
+          {
+            "label": "Saudi Arabia",
+            "value": "sa"
+          },
+          {
+            "label": "Senegal",
+            "value": "sn"
+          },
+          {
+            "label": "Serbia",
+            "value": "rs"
+          },
+          {
+            "label": "Seychelles",
+            "value": "sc"
+          },
+          {
+            "label": "Sierra Leone",
+            "value": "sl"
+          },
+          {
+            "label": "Singapore",
+            "value": "sg"
+          },
+          {
+            "label": "Sint Maarten (Dutch part)",
+            "value": "sx"
+          },
+          {
+            "label": "Slovakia",
+            "value": "sk"
+          },
+          {
+            "label": "Slovenia",
+            "value": "si"
+          },
+          {
+            "label": "Solomon Islands",
+            "value": "sb"
+          },
+          {
+            "label": "Somalia",
+            "value": "so"
+          },
+          {
+            "label": "South Africa",
+            "value": "za"
+          },
+          {
+            "label": "South Georgia and the South Sandwich Islands",
+            "value": "gs"
+          },
+          {
+            "label": "South Sudan",
+            "value": "ss"
+          },
+          {
+            "label": "Spain",
+            "value": "es"
+          },
+          {
+            "label": "Sri Lanka",
+            "value": "lk"
+          },
+          {
+            "label": "Sudan",
+            "value": "sd"
+          },
+          {
+            "label": "Surilabel",
+            "value": "sr"
+          },
+          {
+            "label": "Svalbard and Jan Mayen",
+            "value": "sj"
+          },
+          {
+            "label": "Swaziland",
+            "value": "sz"
+          },
+          {
+            "label": "Sweden",
+            "value": "se"
+          },
+          {
+            "label": "Switzerland",
+            "value": "ch"
+          },
+          {
+            "label": "Syrian Arab Republic",
+            "value": "sy"
+          },
+          {
+            "label": "Taiwan, Province of China",
+            "value": "tw"
+          },
+          {
+            "label": "Tajikistan",
+            "value": "tj"
+          },
+          {
+            "label": "Tanzania, United Republic of",
+            "value": "tz"
+          },
+          {
+            "label": "Thailand",
+            "value": "th"
+          },
+          {
+            "label": "Timor-Leste",
+            "value": "tl"
+          },
+          {
+            "label": "Togo",
+            "value": "tg"
+          },
+          {
+            "label": "Tokelau",
+            "value": "tk"
+          },
+          {
+            "label": "Tonga",
+            "value": "to"
+          },
+          {
+            "label": "Trinidad and Tobago",
+            "value": "tt"
+          },
+          {
+            "label": "Tunisia",
+            "value": "tn"
+          },
+          {
+            "label": "Turkey",
+            "value": "tr"
+          },
+          {
+            "label": "Turkmenistan",
+            "value": "tm"
+          },
+          {
+            "label": "Turks and Caicos Islands",
+            "value": "tc"
+          },
+          {
+            "label": "Tuvalu",
+            "value": "tv"
+          },
+          {
+            "label": "Uganda",
+            "value": "ug"
+          },
+          {
+            "label": "Ukraine",
+            "value": "ua"
+          },
+          {
+            "label": "United Arab Emirates",
+            "value": "ae"
+          },
+          {
+            "label": "United Kingdom",
+            "value": "gb"
+          },
+          {
+            "label": "United States",
+            "value": "us"
+          },
+          {
+            "label": "United States Minor Outlying Islands",
+            "value": "um"
+          },
+          {
+            "label": "Uruguay",
+            "value": "uy"
+          },
+          {
+            "label": "Uzbekistan",
+            "value": "uz"
+          },
+          {
+            "label": "Vanuatu",
+            "value": "vu"
+          },
+          {
+            "label": "Venezuela, Bolivarian Republic of",
+            "value": "ve"
+          },
+          {
+            "label": "Viet Nam",
+            "value": "vn"
+          },
+          {
+            "label": "Virgin Islands, British",
+            "value": "vg"
+          },
+          {
+            "label": "Virgin Islands, U.S.",
+            "value": "vi"
+          },
+          {
+            "label": "Wallis and Futuna",
+            "value": "wf"
+          },
+          {
+            "label": "Western Sahara",
+            "value": "eh"
+          },
+          {
+            "label": "Yemen",
+            "value": "ye"
+          },
+          {
+            "label": "Zambia",
+            "value": "zm"
+          },
+          {
+            "label": "Zimbabwe",
+            "value": "zw"
+          },
+          {
+            "label": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      {
+        "value_type": "string",
+        "key": "language",
+        "label": "Language",
+        "allow_input": false,
+        "values": [
+          {
+            "label": "Abkhazian",
+            "value": "ab"
+          },
+          {
+            "label": "Afar",
+            "value": "aa"
+          },
+          {
+            "label": "Afrikaans",
+            "value": "af"
+          },
+          {
+            "label": "Akan",
+            "value": "ak"
+          },
+          {
+            "label": "Albanian",
+            "value": "sq"
+          },
+          {
+            "label": "Amharic",
+            "value": "am"
+          },
+          {
+            "label": "Arabic",
+            "value": "ar"
+          },
+          {
+            "label": "Aragonese",
+            "value": "an"
+          },
+          {
+            "label": "Armenian",
+            "value": "hy"
+          },
+          {
+            "label": "Assamese",
+            "value": "as"
+          },
+          {
+            "label": "Avaric",
+            "value": "av"
+          },
+          {
+            "label": "Avestan",
+            "value": "ae"
+          },
+          {
+            "label": "Aymara",
+            "value": "ay"
+          },
+          {
+            "label": "Azerbaijani",
+            "value": "az"
+          },
+          {
+            "label": "Bambara",
+            "value": "bm"
+          },
+          {
+            "label": "Bashkir",
+            "value": "ba"
+          },
+          {
+            "label": "Basque",
+            "value": "eu"
+          },
+          {
+            "label": "Belarusian",
+            "value": "be"
+          },
+          {
+            "label": "Bengali",
+            "value": "bn"
+          },
+          {
+            "label": "Bihari languages",
+            "value": "bh"
+          },
+          {
+            "label": "Bislama",
+            "value": "bi"
+          },
+          {
+            "label": "Bosnian",
+            "value": "bs"
+          },
+          {
+            "label": "Breton",
+            "value": "br"
+          },
+          {
+            "label": "Bulgarian",
+            "value": "bg"
+          },
+          {
+            "label": "Burmese",
+            "value": "my"
+          },
+          {
+            "label": "Catalan",
+            "value": "ca"
+          },
+          {
+            "label": "Central Khmer",
+            "value": "km"
+          },
+          {
+            "label": "Chamorro",
+            "value": "ch"
+          },
+          {
+            "label": "Chechen",
+            "value": "ce"
+          },
+          {
+            "label": "Chichewa",
+            "value": "ny"
+          },
+          {
+            "label": "Chinese",
+            "value": "zh"
+          },
+          {
+            "label": "Church\u00a0Slavic",
+            "value": "cu"
+          },
+          {
+            "label": "Chuvash",
+            "value": "cv"
+          },
+          {
+            "label": "Cornish",
+            "value": "kw"
+          },
+          {
+            "label": "Corsican",
+            "value": "co"
+          },
+          {
+            "label": "Cree",
+            "value": "cr"
+          },
+          {
+            "label": "Croatian",
+            "value": "hr"
+          },
+          {
+            "label": "Czech",
+            "value": "cs"
+          },
+          {
+            "label": "Danish",
+            "value": "da"
+          },
+          {
+            "label": "Divehi",
+            "value": "dv"
+          },
+          {
+            "label": "Dutch",
+            "value": "nl"
+          },
+          {
+            "label": "Dzongkha",
+            "value": "dz"
+          },
+          {
+            "label": "English",
+            "value": "en"
+          },
+          {
+            "label": "Esperanto",
+            "value": "eo"
+          },
+          {
+            "label": "Estonian",
+            "value": "et"
+          },
+          {
+            "label": "Ewe",
+            "value": "ee"
+          },
+          {
+            "label": "Faroese",
+            "value": "fo"
+          },
+          {
+            "label": "Fijian",
+            "value": "fj"
+          },
+          {
+            "label": "Finnish",
+            "value": "fi"
+          },
+          {
+            "label": "French",
+            "value": "fr"
+          },
+          {
+            "label": "Fulah",
+            "value": "ff"
+          },
+          {
+            "label": "Gaelic",
+            "value": "gd"
+          },
+          {
+            "label": "Galician",
+            "value": "gl"
+          },
+          {
+            "label": "Ganda",
+            "value": "lg"
+          },
+          {
+            "label": "Georgian",
+            "value": "ka"
+          },
+          {
+            "label": "German",
+            "value": "de"
+          },
+          {
+            "label": "Greek",
+            "value": "el"
+          },
+          {
+            "label": "Guarani",
+            "value": "gn"
+          },
+          {
+            "label": "Gujarati",
+            "value": "gu"
+          },
+          {
+            "label": "Haitian",
+            "value": "ht"
+          },
+          {
+            "label": "Hausa",
+            "value": "ha"
+          },
+          {
+            "label": "Hebrew",
+            "value": "he"
+          },
+          {
+            "label": "Herero",
+            "value": "hz"
+          },
+          {
+            "label": "Hindi",
+            "value": "hi"
+          },
+          {
+            "label": "Hiri Motu",
+            "value": "ho"
+          },
+          {
+            "label": "Hungarian",
+            "value": "hu"
+          },
+          {
+            "label": "Icelandic",
+            "value": "is"
+          },
+          {
+            "label": "Ido",
+            "value": "io"
+          },
+          {
+            "label": "Igbo",
+            "value": "ig"
+          },
+          {
+            "label": "Indonesian",
+            "value": "id"
+          },
+          {
+            "label": "Interlingua",
+            "value": "ia"
+          },
+          {
+            "label": "Interlingue",
+            "value": "ie"
+          },
+          {
+            "label": "Inuktitut",
+            "value": "iu"
+          },
+          {
+            "label": "Inupiaq",
+            "value": "ik"
+          },
+          {
+            "label": "Irish",
+            "value": "ga"
+          },
+          {
+            "label": "Italian",
+            "value": "it"
+          },
+          {
+            "label": "Japanese",
+            "value": "ja"
+          },
+          {
+            "label": "Javanese",
+            "value": "jv"
+          },
+          {
+            "label": "Kalaallisut",
+            "value": "kl"
+          },
+          {
+            "label": "Kannada",
+            "value": "kn"
+          },
+          {
+            "label": "Kanuri",
+            "value": "kr"
+          },
+          {
+            "label": "Kashmiri",
+            "value": "ks"
+          },
+          {
+            "label": "Kazakh",
+            "value": "kk"
+          },
+          {
+            "label": "Kikuyu",
+            "value": "ki"
+          },
+          {
+            "label": "Kinyarwanda",
+            "value": "rw"
+          },
+          {
+            "label": "Kirghiz",
+            "value": "ky"
+          },
+          {
+            "label": "Komi",
+            "value": "kv"
+          },
+          {
+            "label": "Kongo",
+            "value": "kg"
+          },
+          {
+            "label": "Korean",
+            "value": "ko"
+          },
+          {
+            "label": "Kuanyama",
+            "value": "kj"
+          },
+          {
+            "label": "Kurdish",
+            "value": "ku"
+          },
+          {
+            "label": "Lao",
+            "value": "lo"
+          },
+          {
+            "label": "Latin",
+            "value": "la"
+          },
+          {
+            "label": "Latvian",
+            "value": "lv"
+          },
+          {
+            "label": "Limburgan",
+            "value": "li"
+          },
+          {
+            "label": "Lingala",
+            "value": "ln"
+          },
+          {
+            "label": "Lithuanian",
+            "value": "lt"
+          },
+          {
+            "label": "Luba-Katanga",
+            "value": "lu"
+          },
+          {
+            "label": "Luxembourgish",
+            "value": "lb"
+          },
+          {
+            "label": "Macedonian",
+            "value": "mk"
+          },
+          {
+            "label": "Malagasy",
+            "value": "mg"
+          },
+          {
+            "label": "Malay",
+            "value": "ms"
+          },
+          {
+            "label": "Malayalam",
+            "value": "ml"
+          },
+          {
+            "label": "Maltese",
+            "value": "mt"
+          },
+          {
+            "label": "Manx",
+            "value": "gv"
+          },
+          {
+            "label": "Maori",
+            "value": "mi"
+          },
+          {
+            "label": "Marathi",
+            "value": "mr"
+          },
+          {
+            "label": "Marshallese",
+            "value": "mh"
+          },
+          {
+            "label": "Mongolian",
+            "value": "mn"
+          },
+          {
+            "label": "Nauru",
+            "value": "na"
+          },
+          {
+            "label": "Navajo",
+            "value": "nv"
+          },
+          {
+            "label": "Ndonga",
+            "value": "ng"
+          },
+          {
+            "label": "Nepali",
+            "value": "ne"
+          },
+          {
+            "label": "North Ndebele",
+            "value": "nd"
+          },
+          {
+            "label": "Northern Sami",
+            "value": "se"
+          },
+          {
+            "label": "Norwegian",
+            "value": "no"
+          },
+          {
+            "label": "Norwegian Bokm\u00e5l",
+            "value": "nb"
+          },
+          {
+            "label": "Norwegian Nynorsk",
+            "value": "nn"
+          },
+          {
+            "label": "Occitan",
+            "value": "oc"
+          },
+          {
+            "label": "Ojibwa",
+            "value": "oj"
+          },
+          {
+            "label": "Oriya",
+            "value": "or"
+          },
+          {
+            "label": "Oromo",
+            "value": "om"
+          },
+          {
+            "label": "Ossetian",
+            "value": "os"
+          },
+          {
+            "label": "Pali",
+            "value": "pi"
+          },
+          {
+            "label": "Panjabi",
+            "value": "pa"
+          },
+          {
+            "label": "Pashto",
+            "value": "ps"
+          },
+          {
+            "label": "Persian",
+            "value": "fa"
+          },
+          {
+            "label": "Polish",
+            "value": "pl"
+          },
+          {
+            "label": "Portuguese",
+            "value": "pt"
+          },
+          {
+            "label": "Quechua",
+            "value": "qu"
+          },
+          {
+            "label": "Romanian",
+            "value": "ro"
+          },
+          {
+            "label": "Romansh",
+            "value": "rm"
+          },
+          {
+            "label": "Rundi",
+            "value": "rn"
+          },
+          {
+            "label": "Russian",
+            "value": "ru"
+          },
+          {
+            "label": "Samoan",
+            "value": "sm"
+          },
+          {
+            "label": "Sango",
+            "value": "sg"
+          },
+          {
+            "label": "Sanskrit",
+            "value": "sa"
+          },
+          {
+            "label": "Sardinian",
+            "value": "sc"
+          },
+          {
+            "label": "Serbian",
+            "value": "sr"
+          },
+          {
+            "label": "Shona",
+            "value": "sn"
+          },
+          {
+            "label": "Sichuan Yi",
+            "value": "ii"
+          },
+          {
+            "label": "Sindhi",
+            "value": "sd"
+          },
+          {
+            "label": "Sinhala",
+            "value": "si"
+          },
+          {
+            "label": "Slovak",
+            "value": "sk"
+          },
+          {
+            "label": "Slovenian",
+            "value": "sl"
+          },
+          {
+            "label": "Somali",
+            "value": "so"
+          },
+          {
+            "label": "South Ndebele",
+            "value": "nr"
+          },
+          {
+            "label": "Southern Sotho",
+            "value": "st"
+          },
+          {
+            "label": "Spanish",
+            "value": "es"
+          },
+          {
+            "label": "Sundanese",
+            "value": "su"
+          },
+          {
+            "label": "Swahili",
+            "value": "sw"
+          },
+          {
+            "label": "Swati",
+            "value": "ss"
+          },
+          {
+            "label": "Swedish",
+            "value": "sv"
+          },
+          {
+            "label": "Tagalog",
+            "value": "tl"
+          },
+          {
+            "label": "Tahitian",
+            "value": "ty"
+          },
+          {
+            "label": "Tajik",
+            "value": "tg"
+          },
+          {
+            "label": "Tamil",
+            "value": "ta"
+          },
+          {
+            "label": "Tatar",
+            "value": "tt"
+          },
+          {
+            "label": "Telugu",
+            "value": "te"
+          },
+          {
+            "label": "Thai",
+            "value": "th"
+          },
+          {
+            "label": "Tibetan",
+            "value": "bo"
+          },
+          {
+            "label": "Tigrinya",
+            "value": "ti"
+          },
+          {
+            "label": "Tonga",
+            "value": "to"
+          },
+          {
+            "label": "Tsonga",
+            "value": "ts"
+          },
+          {
+            "label": "Tswana",
+            "value": "tn"
+          },
+          {
+            "label": "Turkish",
+            "value": "tr"
+          },
+          {
+            "label": "Turkmen",
+            "value": "tk"
+          },
+          {
+            "label": "Twi",
+            "value": "tw"
+          },
+          {
+            "label": "Uighur",
+            "value": "ug"
+          },
+          {
+            "label": "Ukrainian",
+            "value": "uk"
+          },
+          {
+            "label": "Urdu",
+            "value": "ur"
+          },
+          {
+            "label": "Uzbek",
+            "value": "uz"
+          },
+          {
+            "label": "Venda",
+            "value": "ve"
+          },
+          {
+            "label": "Vietnamese",
+            "value": "vi"
+          },
+          {
+            "label": "Volap\u00fck",
+            "value": "vo"
+          },
+          {
+            "label": "Walloon",
+            "value": "wa"
+          },
+          {
+            "label": "Welsh",
+            "value": "cy"
+          },
+          {
+            "label": "Western Frisian",
+            "value": "fy"
+          },
+          {
+            "label": "Wolof",
+            "value": "wo"
+          },
+          {
+            "label": "Xhosa",
+            "value": "xh"
+          },
+          {
+            "label": "Yiddish",
+            "value": "yi"
+          },
+          {
+            "label": "Yoruba",
+            "value": "yo"
+          },
+          {
+            "label": "Zhuang",
+            "value": "za"
+          },
+          {
+            "label": "Zulu",
+            "value": "zu"
+          },
+          {
+            "label": "Other",
+            "value": "other"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "value_type": "group",
+    "key": "site",
+    "label": "Site",
+    "allow_input": false,
+    "children": [
+      {
+        "value_type": "string",
+        "key": "domain",
+        "label": "Domain",
+        "allow_input": true
+      }
+    ]
+  },
+  {
+    "value_type": "group",
+    "key": "device",
+    "label": "Device",
+    "allow_input": false,
+    "children": [
+      {
+        "value_type": "string",
+        "key": "type",
+        "label": "Device type",
+        "allow_input": false,
+        "values": [
+          {
+            "label": "Desktop",
+            "value": "desktop"
+          },
+          {
+            "label": "Mobile",
+            "value": "mobile"
+          },
+          {
+            "label": "Tablet",
+            "value": "tablet"
+          },
+          {
+            "label": "TV",
+            "value": "tv"
+          },
+          {
+            "label": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      {
+        "value_type": "string",
+        "key": "os",
+        "label": "Operating System",
+        "allow_input": false,
+        "values": [
+          {
+            "label": "Android",
+            "value": "android"
+          },
+          {
+            "label": "Apple OS",
+            "value": "apple_os"
+          },
+          {
+            "label": "Unix",
+            "value": "unix"
+          },
+          {
+            "label": "Windows",
+            "value": "windows"
+          },
+          {
+            "label": "Other",
+            "value": "other"
+          }
+        ]
+      },
+      {
+        "value_type": "string",
+        "key": "browser",
+        "label": "Browser",
+        "allow_input": false,
+        "values": [
+          {
+            "label": "Chrome",
+            "value": "chrome"
+          },
+          {
+            "label": "Edge",
+            "value": "edge"
+          },
+          {
+            "label": "Firefox",
+            "value": "firefox"
+          },
+          {
+            "label": "Internet Explorer",
+            "value": "msie"
+          },
+          {
+            "label": "Opera",
+            "value": "opera"
+          },
+          {
+            "label": "Safari",
+            "value": "safari"
+          },
+          {
+            "label": "Other",
+            "value": "other"
+          }
+        ]
+      }
+    ]
+  }
+]
