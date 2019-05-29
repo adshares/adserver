@@ -50,33 +50,18 @@ class TargetingProcessor
                 continue;
             }
 
-            $shouldBeAdded = false;
-
             foreach ($schema as $availableGroup) {
                 if ($key !== $availableGroup['key']) {
                     continue;
                 }
 
-                if ('group' === $availableGroup['value_type']) {
-                    $processed = $this->processGroups($group, $availableGroup['children']);
-                    $shouldBeAdded = true;
-                } elseif ('string' === $availableGroup['value_type']) {
-                    if ($availableGroup['allow_input']) {
-                        $processed = $this->processInputs($group);
-                    } else {
-                        $processed = $this->processValues($group, $availableGroup['values']);
-                    }
+                $processed = $this->processRegardlessType($group, $availableGroup);
 
-                    if (count($processed) > 0) {
-                        $shouldBeAdded = true;
-                    }
+                if (count($processed) > 0) {
+                    $groupsProcessed[$key] = $processed;
                 }
 
                 break;
-            }
-
-            if ($shouldBeAdded) {
-                $groupsProcessed[$key] = $processed;
             }
         }
 
@@ -121,5 +106,22 @@ class TargetingProcessor
         }
 
         return $inputsProcessed;
+    }
+
+    private function processRegardlessType(array $group, array $availableGroup): array
+    {
+        $type = $availableGroup['value_type'];
+
+        if ('group' === $type) {
+            return $this->processGroups($group, $availableGroup['children']);
+        }
+
+        if ('string' === $type) {
+            return $availableGroup['allow_input']
+                ? $this->processInputs($group)
+                : $this->processValues($group, $availableGroup['values']);
+        }
+
+        return [];
     }
 }

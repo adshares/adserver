@@ -68,6 +68,15 @@ final class TargetingProcessorTest extends TestCase
         $this->assertEquals($this->getTargetingValid(), $result);
     }
 
+    public function testWhileTargetingInvalidNotInArray(): void
+    {
+        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+
+        $result = $targetingProcessor->processTargeting($this->getTargetingInvalidValueNotInArray());
+
+        $this->assertEquals([], $result);
+    }
+
     private function getTargetingValid(): array
     {
         return json_decode(
@@ -138,6 +147,15 @@ JSON
         array_push($targeting['user']['country'], 'af');
 
         return $targeting;
+    }
+
+    private function getTargetingInvalidValueNotInArray(): array
+    {
+        return [
+            'site' => [
+                'domain' => 'www.a.pl',
+            ],
+        ];
     }
 
     public function invalidTargetingProvider(): array
