@@ -247,6 +247,7 @@ final class CampaignsTest extends TestCase
 
     public function blockingTestProvider(): array
     {
+        // campaignBudget,isDirectDeal,ads,bonus,expectedCampaignStatus
         return [
             [100, false, 100, 0, Campaign::STATUS_ACTIVE],
             [100, false, 0, 100, Campaign::STATUS_ACTIVE],
