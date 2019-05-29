@@ -46,6 +46,10 @@ class TargetingProcessor
         $groupsProcessed = [];
 
         foreach ($groups as $key => $group) {
+            if (!is_array($group)) {
+                continue;
+            }
+
             $shouldBeAdded = false;
 
             foreach ($schema as $availableGroup) {

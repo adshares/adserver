@@ -233,7 +233,7 @@ final class CampaignsTest extends TestCase
         $campaignInputData['basicInformation']['budget'] = $budget;
         $campaignInputData['basicInformation']['dateEnd'] = null;
         if ($hasDomainTargeting) {
-            $campaignInputData['targeting']['requires']['site']['domain'] = 'www.adshares.net';
+            $campaignInputData['targeting']['requires']['site']['domain'] = ['www.adshares.net'];
         }
 
         $response1 = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
