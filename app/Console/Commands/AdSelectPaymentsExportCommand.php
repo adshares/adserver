@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
@@ -56,7 +57,7 @@ class AdSelectPaymentsExportCommand extends BaseCommand
 
         try {
             $eventIdFirst = $this->exporterService->getLastPaidEventId() + 1;
-        } catch (UnexpectedClientResponseException $exception) {
+        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
 
             return;

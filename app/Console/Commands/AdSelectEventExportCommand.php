@@ -74,7 +74,7 @@ class AdSelectEventExportCommand extends BaseCommand
 
         try {
             $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
-        } catch (UnexpectedClientResponseException $exception) {
+        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
 
             return;
