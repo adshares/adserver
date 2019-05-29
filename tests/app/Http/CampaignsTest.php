@@ -23,9 +23,14 @@ namespace Adshares\Adserver\Tests\Http;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use function factory;
 
 final class CampaignsTest extends TestCase
 {
@@ -181,6 +186,69 @@ final class CampaignsTest extends TestCase
         return [
             [100, Response::HTTP_BAD_REQUEST],
             [0, Response::HTTP_NO_CONTENT],
+        ];
+    }
+
+    /** @dataProvider blockingTestProvider */
+    public function testAddCampaignWhenNoFunds(
+        int $budget,
+        bool $hasDomainTargeting,
+        int $currency,
+        int $bonus,
+        int $status
+    ): void {
+        $entries = [
+            [UserLedgerEntry::TYPE_DEPOSIT, $currency, UserLedgerEntry::STATUS_ACCEPTED],
+            [UserLedgerEntry::TYPE_BONUS_INCOME, $bonus, UserLedgerEntry::STATUS_ACCEPTED],
+        ];
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        foreach ($entries as $entry) {
+            factory(UserLedgerEntry::class)->create([
+                'type' => $entry[0],
+                'amount' => $entry[1],
+                'status' => $entry[2],
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () {
+                $mock = $this->createMock(ExchangeRateReader::class);
+
+                $mock->method('fetchExchangeRate')
+                    ->willReturn(new ExchangeRate(new DateTime(), 1, 'XXX'));
+
+                return $mock;
+            }
+        );
+
+        $this->actingAs($user, 'api');
+
+        $campaignInputData = $this->campaignInputData();
+        $campaignInputData['basicInformation']['budget'] = $budget;
+        if ($hasDomainTargeting) {
+            $campaignInputData['targeting']['requires']['site']['domain'] = 'www.adshares.net';
+        }
+
+        $response1 = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response1->assertStatus(Response::HTTP_CREATED);
+        $id = $this->getIdFromLocation($response1->headers->get('Location'));
+
+        $response = $this->getJson(self::URI.'/'.$id);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['campaign' => ['basicInformation' => ['status' => $status]]]);
+    }
+
+    public function blockingTestProvider(): array
+    {
+        return [
+            [100, false, 100, 0, Campaign::STATUS_ACTIVE],
+            [100, false, 0, 100, Campaign::STATUS_ACTIVE],
+            [100, true, 100, 0, Campaign::STATUS_ACTIVE],
+            [100, true, 0, 100, Campaign::STATUS_SUSPENDED],
         ];
     }
 }
