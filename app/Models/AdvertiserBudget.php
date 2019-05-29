@@ -36,11 +36,6 @@ final class AdvertiserBudget
         $this->bonusable = $bonusable;
     }
 
-    public function addInt(int $total, int $bonusable): self
-    {
-        return new self($this->total + $total, $this->bonusable + $bonusable);
-    }
-
     public function add(self $budget): self
     {
         return new self($this->total + $budget->total, $this->bonusable + $budget->bonusable);

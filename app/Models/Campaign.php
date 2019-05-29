@@ -186,7 +186,7 @@ class Campaign extends Model
             ->map(static function (Collection $collection) {
                 return $collection->reduce(
                     static function (AdvertiserBudget $carry, Campaign $campaign) {
-                        return $carry->addInt($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
+                        return $carry->add($campaign->advertiserBudget());
                     },
                     new AdvertiserBudget()
                 );
@@ -206,7 +206,7 @@ class Campaign extends Model
 
         return $statics->reduce(
             static function (AdvertiserBudget $carry, Campaign $campaign) {
-                return $carry->addInt($campaign->budget, $campaign->isDirectDeal() ? 0 : $campaign->budget);
+                return $carry->add($campaign->advertiserBudget());
             },
             new AdvertiserBudget()
         );
@@ -326,12 +326,17 @@ class Campaign extends Model
 
     private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
-        if ($this->time_end != null
-            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
-            < DateUtils::getDateTimeRoundedToCurrentHour()) {
+        $timeEnd = DateTime::createFromFormat(DateTime::ATOM, $this->time_end);
+        $inFuture = $timeEnd < DateUtils::getDateTimeRoundedToCurrentHour();
+        if ($this->time_end !== null && $inFuture) {
             return new AdvertiserBudget();
         }
 
+        return $this->advertiserBudget();
+    }
+
+    public function advertiserBudget(): AdvertiserBudget
+    {
         return new AdvertiserBudget($this->budget, $this->isDirectDeal() ? 0 : $this->budget);
     }
 
