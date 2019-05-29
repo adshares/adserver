@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use function sprintf;
 
@@ -54,7 +55,14 @@ class AdSelectPaymentsExportCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $eventIdFirst = $this->exporterService->getLastPaidEventId() + 1;
+        try {
+            $eventIdFirst = $this->exporterService->getLastPaidEventId() + 1;
+        } catch (UnexpectedClientResponseException $exception) {
+            $this->error($exception->getMessage());
+
+            return;
+        }
+
         $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
             ->where('created_at', '<=', new DateTime('-10 minutes'))
             ->max('id');

@@ -33,6 +33,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Facades\Log;
 use function sprintf;
@@ -71,7 +72,15 @@ class AdSelectEventExportCommand extends BaseCommand
         }
 
         $this->info('[AdSelectEventExport] Start command '.$this->signature);
-        $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
+
+        try {
+            $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
+        } catch (UnexpectedClientResponseException $exception) {
+            $this->error($exception->getMessage());
+
+            return;
+        }
+
 
         $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
             ->where('created_at', '<=', new DateTime('-10 minutes'))
