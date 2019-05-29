@@ -54,6 +54,7 @@ var encodeZones = function (zone_data) {
 };
 
 var dwmthACL = [];
+var dwmthURLS = [];
 
 var replaceTag = function (oldTag, newTag) {
     for (var i = 0; i < oldTag.attributes.length; i++) {
@@ -132,13 +133,13 @@ var prepareInfoBox = function (context, banner, contextParam) {
 
 
     var div = document.createElement('div');
-    div.setAttribute('style', 'position: absolute; top: 0px; right: 0px;background-color: #fff');
+    div.setAttribute('style', 'position: absolute !important; top: 0px !important; right: 0px !important;background-color: #fff !important');
 
     var link = document.createElement('a');
     link.target = '_blank';
     link.href = url;
 
-    link.setAttribute('style', 'text-decoration: none');
+    link.setAttribute('style', 'text-decoration: none !important;background-color: #fff !important');
 
     link.innerHTML = '<svg style="width: 16px; height: 16px; display: block;" version="1.1" viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg">' +
         '<path d="m11.405 1.9861v6.798c0 0.0309-0.0019 0.0617-0.0037 0.0902a1.1895 1.1895 0 0 1 -0.3426 0.77162 1.1192 1.1192 0 0 1 -0.8315 0.35834h-0.0037q-0.48088 0-0.82718-0.35865a1.1988 1.1988 0 0 1 -0.3463 -0.86205v-2e-3c0-0.0253 0-0.0503 0.00187-0.0753-0.0028-0.67655-0.15649-1.2988-0.45989-1.8602a4.3519 4.3519 0 0 0 -0.77725 -1.0493q-0.15247-0.15432-0.31235-0.28796-1.1016-0.92595-2.5596-0.9528c-0.030893 0-0.059919-2e-3 -0.090438-2e-3q-1.8417 0-3.097 1.2186-1.2553 1.2185-1.255 3.0031v8e-3q0.0028 1.747 1.2546 2.9868 1.2519 1.2398 3.0248 1.2429 1.3062 0 2.3303-0.67687-0.14908-0.12593-0.29167-0.26667c-0.6852-0.67903-1.1074-1.4744-1.2608-2.3741a1.1111 1.1111 0 0 1 -0.78613 0.31018q-0.48119 0-0.82717-0.35864a1.1982 1.1982 0 0 1 -0.3463 -0.86369q0-0.51297 0.34229-0.8676a1.1111 1.1111 0 0 1 0.61112 -0.3352 1.2185 1.2185 0 0 1 0.22007 -0.0198 1.117 1.117 0 0 1 0.72038 0.24692c0.024733 0.0225 0.049092 0.0456 0.072798 0.0701a1.4213 1.4213 0 0 1 0.36853 0.66792 1.3917 1.3917 0 0 1 0.020066 0.23827 4.4245 4.4245 0 0 0 0.087078 0.87626c0.14044 0.78365 0.50895 1.4652 1.1173 2.0679 0.098147 0.0972 0.33334 0.30063 0.34846 0.31328q1.0781 0.90033 2.5 0.96638c0.07252 4e-3 0.14599 5e-3 0.21976 6e-3h0.0047c0.96607 0 2.0105-0.21236 3.0195-1.2389 1.009-1.0266 1.2503-2.1661 1.2503-2.9886v-6.7992zm-1.9874 5.9023a1.1093 1.1093 0 0 1 0.80588 -0.32964h0.0037a1.1161 1.1161 0 0 1 0.7386 0.26389v-3.2195a4.2837 4.2837 0 0 0 -0.66113 -0.0515c-0.02623 0-0.05124 3e-3 -0.07746 4e-3q-1.3581 0.0194-2.3923 0.70773 0.18519 0.15185 0.35772 0.32654c0.65742 0.66175 1.0676 1.4324 1.2247 2.2991z" fill="#5fb2f9" stroke-width=".030865"/>' +
@@ -204,10 +205,12 @@ function getBoundRect(el, overflow) {
     if(overflow) {
         var css = window.getComputedStyle(el);
         if (css.overflowX == 'visible') {
-            width = 100000;
+            width = 200000;
+            left = -100000;
         }
         if (css.overflowY == 'visible') {
-            height = 100000;
+            height = 200000;
+            top = -100000;
         }
     }
 
@@ -280,9 +283,11 @@ var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
     var url = serverOrigin + '/supply/register?iid=' + impressionId;
 
+    if(dwmthURLS[url]) return;
     var iframe = createIframeFromUrl(url);
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
+    dwmthURLS[url] = 1;
 };
 
 var createIframeFromUrl = function createIframeFromUrl(url) {
@@ -330,9 +335,6 @@ var getBrowserContext = function () {
 };
 
 domReady(function () {
-
-    aduserPixel(getImpressionId());
-
     var tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = tags.length;
 
@@ -343,6 +345,7 @@ domReady(function () {
     var param, params = [];
     params.push(getBrowserContext());
 
+    var valid = 0;
     for (var i = 0; i < n; i++) {
         var tag = tags[i];
         if(tag.__dwmth) {
@@ -361,8 +364,15 @@ domReady(function () {
         }
         if (param.zone) {
             params.push(param);
+            valid++;
         }
     }
+
+    if(valid == 0) {
+        return;
+    }
+
+    aduserPixel(getImpressionId());
 
     var data = encodeZones(params);
 
@@ -426,15 +436,18 @@ domReady(function () {
             }
             if (data.insertElem) {
                 data.insertElem.forEach(function (request) {
-                    if(dwmthACL.length >= 5) return;
+                    if(dwmthACL.length >= 5 * valid) return;
                     if(request.type == 'iframe') {
+                        if(dwmthURLS[request.url]) return;
                         var iframe = addTrackingIframe(request.url);
                         dwmthACL.push(iframe.contentWindow);
+                        dwmthURLS[request.url] = 1;
                     } else if(request.type == 'img') {
+                        if(dwmthURLS[request.url]) return;
                         addTrackingImage(request.url);
                         dwmthACL.push(null);
+                        dwmthURLS[request.url] = 1;
                     }
-
                 });
             }
         }
