@@ -22,32 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
-final class AdvertiserBudget
+use Adshares\Common\Exception\Exception;
+
+final class UserLedgerException extends Exception
 {
-    /** @var int */
-    private $total;
-
-    /** @var int */
-    private $bonusable;
-
-    public function __construct(int $total = 0, int $bonusable = 0)
-    {
-        $this->total = $total;
-        $this->bonusable = $bonusable;
-    }
-
-    public function add(self $budget): self
-    {
-        return new self($this->total + $budget->total, $this->bonusable + $budget->bonusable);
-    }
-
-    public function total(): int
-    {
-        return $this->total;
-    }
-
-    public function bonusable(): int
-    {
-        return $this->bonusable;
-    }
 }

@@ -23,9 +23,14 @@ namespace Adshares\Adserver\Tests\Http;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use function factory;
 
 final class CampaignsTest extends TestCase
 {
@@ -130,29 +135,31 @@ final class CampaignsTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id, 'budget' => $budget]);
+        $campaign = factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => $budget,
+        ]);
 
         $this->assertCount(1, Campaign::where('id', $campaign->id)->get());
 
-        $response =
-            $this->putJson(self::URI."/{$campaign->id}/status", ['campaign' => ['status' => Campaign::STATUS_ACTIVE]]);
+        $response = $this->putJson(
+            self::URI."/{$campaign->id}/status",
+            [
+                'campaign' => ['status' => Campaign::STATUS_ACTIVE],
+            ]
+        );
+
         $response->assertStatus($responseCode);
     }
 
     private function createCampaignForUser(User $user): int
     {
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id]);
-        $campaignId = $campaign->id;
-
-        return $campaignId;
+        return factory(Campaign::class)->create(['user_id' => $user->id])->id;
     }
 
     private function createBannerForCampaign(int $campaignId): int
     {
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaignId]);
-        $bannerId = $banner->id;
-
-        return $bannerId;
+        return factory(Banner::class)->create(['campaign_id' => $campaignId])->id;
     }
 
     public function testFailDeleteNotOwnedCampaign(): void
@@ -181,6 +188,71 @@ final class CampaignsTest extends TestCase
         return [
             [100, Response::HTTP_BAD_REQUEST],
             [0, Response::HTTP_NO_CONTENT],
+        ];
+    }
+
+    /** @dataProvider blockingTestProvider */
+    public function testAddCampaignWhenNoFunds(
+        int $budget,
+        bool $hasDomainTargeting,
+        int $currency,
+        int $bonus,
+        int $status
+    ): void {
+        $entries = [
+            [UserLedgerEntry::TYPE_DEPOSIT, $currency, UserLedgerEntry::STATUS_ACCEPTED],
+            [UserLedgerEntry::TYPE_BONUS_INCOME, $bonus, UserLedgerEntry::STATUS_ACCEPTED],
+        ];
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        foreach ($entries as $entry) {
+            factory(UserLedgerEntry::class)->create([
+                'type' => $entry[0],
+                'amount' => $entry[1],
+                'status' => $entry[2],
+                'user_id' => $user->id,
+            ]);
+        }
+
+        $this->app->bind(
+            ExchangeRateReader::class,
+            function () {
+                $mock = $this->createMock(ExchangeRateReader::class);
+
+                $mock->method('fetchExchangeRate')
+                    ->willReturn(new ExchangeRate(new DateTime(), 1, 'XXX'));
+
+                return $mock;
+            }
+        );
+
+        $this->actingAs($user, 'api');
+
+        $campaignInputData = $this->campaignInputData();
+        $campaignInputData['basicInformation']['budget'] = $budget;
+        $campaignInputData['basicInformation']['dateEnd'] = null;
+        if ($hasDomainTargeting) {
+            $campaignInputData['targeting']['requires']['site']['domain'] = 'www.adshares.net';
+        }
+
+        $response1 = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response1->assertStatus(Response::HTTP_CREATED);
+        $id = $this->getIdFromLocation($response1->headers->get('Location'));
+
+        $response = $this->getJson(self::URI.'/'.$id);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['campaign' => ['basicInformation' => ['status' => $status]]]);
+    }
+
+    public function blockingTestProvider(): array
+    {
+        // campaignBudget,isDirectDeal,ads,bonus,expectedCampaignStatus
+        return [
+            [100, false, 100, 0, Campaign::STATUS_ACTIVE],
+            [100, false, 0, 100, Campaign::STATUS_ACTIVE],
+            [100, true, 100, 0, Campaign::STATUS_ACTIVE],
+            [100, true, 0, 100, Campaign::STATUS_DRAFT],
         ];
     }
 }

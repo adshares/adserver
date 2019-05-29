@@ -41,6 +41,8 @@ final class GuzzleAdUserClient implements AdUser
     /** @var Client */
     private $client;
 
+    private const API_PATH = '/api/v1';
+
     public function __construct(Client $client)
     {
         $this->client = $client;
@@ -48,7 +50,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = '/api/v0/taxonomy';
+        $path = self::API_PATH.'/taxonomy';
         try {
             $response = $this->client->get($path);
             $taxonomy = json_decode((string)$response->getBody(), true);
@@ -67,7 +69,8 @@ final class GuzzleAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
         $path = sprintf(
-            '/api/v1/data/%s/%s',
+            '%s/data/%s/%s',
+            self::API_PATH,
             config('app.adserver_id'),
             $partialContext->trackingId()
         );
