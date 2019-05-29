@@ -77,18 +77,12 @@ class TargetingProcessor
                 continue;
             }
 
-            $shouldBeAdded = false;
-
             foreach ($schema as $availableValue) {
                 if ($value === $availableValue['value']) {
-                    $shouldBeAdded = true;
+                    $valuesProcessed[] = $value;
 
                     break;
                 }
-            }
-
-            if ($shouldBeAdded) {
-                $valuesProcessed[] = $value;
             }
         }
 
