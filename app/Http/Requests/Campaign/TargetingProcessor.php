@@ -83,7 +83,7 @@ class TargetingProcessor
     {
         $valuesProcessed = [];
 
-        foreach ($values as $value) {
+        foreach (array_unique($values) as $value) {
             if (!is_string($value)) {
                 continue;
             }
@@ -110,9 +110,9 @@ class TargetingProcessor
     {
         $inputsProcessed = [];
 
-        foreach ($inputs as $value) {
-            if (is_string($value)) {
-                $inputsProcessed[] = $value;
+        foreach (array_unique($inputs) as $input) {
+            if (is_string($input)) {
+                $inputsProcessed[] = $input;
             }
         }
 

@@ -131,12 +131,22 @@ JSON
         return $targeting;
     }
 
+    private function getTargetingInvalidRepeatedValues(): array
+    {
+        $targeting = $this->getTargetingValid();
+
+        array_push($targeting['user']['country'], 'af');
+
+        return $targeting;
+    }
+
     public function invalidTargetingProvider(): array
     {
         return [
             ['unknown category', $this->getTargetingInvalidUnknownCategory()],
             ['unknown group', $this->getTargetingInvalidUnknownGroup()],
             ['unknown value', $this->getTargetingInvalidUnknownValue()],
+            ['repeated values', $this->getTargetingInvalidRepeatedValues()],
         ];
     }
 
