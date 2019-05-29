@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Events\UserCreated;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\Email;
@@ -39,6 +40,8 @@ use Illuminate\Support\Facades\Hash;
  * @property int id
  * @property DateTime|null email_confirmed_at
  * @property string uuid
+ * @property string referral_id
+ * @property int|null referrer_user_id
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -111,6 +114,7 @@ class User extends Authenticatable
         'api_token',
         'is_email_confirmed',
         'adserver_wallet',
+        'referral_id',
     ];
 
     protected $traitAutomate = [
@@ -120,15 +124,25 @@ class User extends Authenticatable
     protected $appends = [
         'adserver_wallet',
         'is_email_confirmed',
+        'referral_id',
     ];
 
-    public static function register($data): User
+    public static function register(array $data): User
     {
         $user = new User($data);
         $user->password = $data['password'];
         $user->email = $data['email'];
         $user->is_advertiser = true;
         $user->is_publisher = true;
+
+        if (array_key_exists('referral_id', $data) && is_string($data['referral_id'])) {
+            $userReferrer = self::fetchByUuid(bin2hex(Utils::urlSafeBase64Decode($data['referral_id'])));
+
+            if (null !== $userReferrer) {
+                $user->referrer_user_id = $userReferrer->id;
+            }
+        }
+
         $user->save();
 
         return $user;
@@ -149,6 +163,11 @@ class User extends Authenticatable
             'total_funds_change' => 0,
             'last_payment_at' => 0,
         ];
+    }
+
+    public function getReferralIdAttribute(): string
+    {
+        return Utils::urlSafeBase64Encode(hex2bin($this->uuid));
     }
 
     public function setPasswordAttribute($value): void
