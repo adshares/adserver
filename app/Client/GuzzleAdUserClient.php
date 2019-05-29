@@ -48,7 +48,7 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = '/api/v0/taxonomy';
+        $path = '/api/v1/taxonomy';
         try {
             $response = $this->client->get($path);
             $taxonomy = json_decode((string)$response->getBody(), true);
