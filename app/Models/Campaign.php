@@ -298,14 +298,8 @@ class Campaign extends Model
 
         UserLedgerEntry::releaseBlockedAdExpense($this->user_id);
 
-        if ($total > UserLedgerEntry::getBalanceByUserId($this->user_id)) {
-            throw new InvalidArgumentException('Campaign budgets exceed account balance');
-        }
-
         try {
-            if ($total > 0) {
-                UserLedgerEntry::blockAdExpense($this->user_id, $total, $bonusable);
-            }
+            UserLedgerEntry::blockAdExpense($this->user_id, $total, $bonusable);
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
 
