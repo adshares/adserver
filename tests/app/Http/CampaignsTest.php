@@ -231,6 +231,7 @@ final class CampaignsTest extends TestCase
 
         $campaignInputData = $this->campaignInputData();
         $campaignInputData['basicInformation']['budget'] = $budget;
+        $campaignInputData['basicInformation']['dateEnd'] = null;
         if ($hasDomainTargeting) {
             $campaignInputData['targeting']['requires']['site']['domain'] = 'www.adshares.net';
         }
@@ -250,7 +251,7 @@ final class CampaignsTest extends TestCase
             [100, false, 100, 0, Campaign::STATUS_ACTIVE],
             [100, false, 0, 100, Campaign::STATUS_ACTIVE],
             [100, true, 100, 0, Campaign::STATUS_ACTIVE],
-            [100, true, 0, 100, Campaign::STATUS_SUSPENDED],
+            [100, true, 0, 100, Campaign::STATUS_DRAFT],
         ];
     }
 }

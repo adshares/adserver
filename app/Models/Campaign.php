@@ -321,8 +321,8 @@ class Campaign extends Model
     private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
         $timeEnd = DateTime::createFromFormat(DateTime::ATOM, $this->time_end);
-        $inFuture = $timeEnd < DateUtils::getDateTimeRoundedToCurrentHour();
-        if ($this->time_end !== null && $inFuture) {
+        $inPast = $timeEnd < DateUtils::getDateTimeRoundedToCurrentHour();
+        if ($this->time_end !== null && $inPast) {
             return new AdvertiserBudget();
         }
 
