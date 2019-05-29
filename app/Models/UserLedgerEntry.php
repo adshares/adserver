@@ -293,7 +293,7 @@ class UserLedgerEntry extends Model
         ]);
     }
 
-    public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus): array
+    public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
     {
         $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $totalAmount, $maxBonus);
 
