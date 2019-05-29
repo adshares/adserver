@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Event statistics reports for operators
-- Comparing campaign targeting with the schema 
+- Comparing campaign targeting with the schema
 ### Improved
 - Bonus spending scheme
 ### Fixed
