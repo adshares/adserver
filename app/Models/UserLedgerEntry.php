@@ -182,20 +182,38 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException("Negative Balance ($amount)");
+        }
+
+        return $amount;
     }
 
     public static function getWalletBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException('Negative Balance');
+        }
+
+        return $amount;
     }
 
     public static function getBonusBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException('Negative Balance');
+        }
+
+        return $amount;
     }
 
     public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
