@@ -249,10 +249,10 @@ final class CampaignsTest extends TestCase
     {
         // campaignBudget,isDirectDeal,ads,bonus,expectedCampaignStatus
         return [
-            [100, false, 100, 0, Campaign::STATUS_ACTIVE],
-            [100, false, 0, 100, Campaign::STATUS_ACTIVE],
-            [100, true, 100, 0, Campaign::STATUS_ACTIVE],
-            [100, true, 0, 100, Campaign::STATUS_DRAFT],
+            'not direct deal, has only crypto' => [100, false, 100, 0, Campaign::STATUS_ACTIVE],
+            'not direct deal, has only bonus' => [100, false, 0, 100, Campaign::STATUS_ACTIVE],
+            'direct deal, has only crypto' => [100, true, 100, 0, Campaign::STATUS_ACTIVE],
+            'direct deal, has only bonus' => [100, true, 0, 100, Campaign::STATUS_DRAFT],
         ];
     }
 }

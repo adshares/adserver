@@ -20,10 +20,12 @@
 
 namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
+use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Selector;
-use function base_path;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 
 final class TargetingProcessorTest extends TestCase
 {
@@ -169,10 +171,19 @@ JSON
         ];
     }
 
-    private function getTargetingSchema(): array
+    protected function setUp()
     {
-        $targetingSchema = file_get_contents(base_path('tests/app/targeting_schema.json'));
+        parent::setUp();
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
+            }
+        );
+    }
 
-        return json_decode($targetingSchema, true);
+    private function getTargetingSchema(): Selector
+    {
+        return $this->app->make(ConfigurationRepository::class)->fetchTargetingOptions();
     }
 }
