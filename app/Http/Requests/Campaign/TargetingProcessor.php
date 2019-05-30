@@ -22,14 +22,17 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Requests\Campaign;
 
+use Adshares\Adserver\ViewModel\OptionsSelector;
+use Adshares\Common\Application\Model\Selector;
+
 class TargetingProcessor
 {
     /** @var array */
     private $targetingSchema;
 
-    public function __construct(array $targetingSchema)
+    public function __construct(Selector $targetingSchema)
     {
-        $this->targetingSchema = $targetingSchema;
+        $this->targetingSchema = (new OptionsSelector($targetingSchema))->toArray();
     }
 
     public function processTargeting(?array $targeting): array

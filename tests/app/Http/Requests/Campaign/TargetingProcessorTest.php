@@ -20,14 +20,18 @@
 
 namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
+use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Model\Selector;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 
 final class TargetingProcessorTest extends TestCase
 {
     public function testWhileNoAvailableOptions(): void
     {
-        $targetingProcessor = new TargetingProcessor([]);
+        $targetingProcessor = new TargetingProcessor(new Selector());
 
         $result = $targetingProcessor->processTargeting($this->getTargetingValid());
 
@@ -56,10 +60,9 @@ final class TargetingProcessorTest extends TestCase
     /**
      * @dataProvider invalidTargetingProvider
      *
-     * @param string $testVariant
      * @param array $invalidTargeting
      */
-    public function testWhileTargetingInvalid(string $testVariant, array $invalidTargeting): void
+    public function testWhileTargetingInvalid(array $invalidTargeting): void
     {
         $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
 
@@ -161,17 +164,26 @@ JSON
     public function invalidTargetingProvider(): array
     {
         return [
-            ['unknown category', $this->getTargetingInvalidUnknownCategory()],
-            ['unknown group', $this->getTargetingInvalidUnknownGroup()],
-            ['unknown value', $this->getTargetingInvalidUnknownValue()],
-            ['repeated values', $this->getTargetingInvalidRepeatedValues()],
+            'unknown category' => [$this->getTargetingInvalidUnknownCategory()],
+            'unknown group' => [$this->getTargetingInvalidUnknownGroup()],
+            'unknown value' => [$this->getTargetingInvalidUnknownValue()],
+            'repeated values' => [$this->getTargetingInvalidRepeatedValues()],
         ];
     }
 
-    private function getTargetingSchema(): array
+    protected function setUp()
     {
-        $targetingSchema = file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'targeting_schema.json');
+        parent::setUp();
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
+            }
+        );
+    }
 
-        return json_decode($targetingSchema, true);
+    private function getTargetingSchema(): Selector
+    {
+        return $this->app->make(ConfigurationRepository::class)->fetchTargetingOptions();
     }
 }
