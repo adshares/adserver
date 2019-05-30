@@ -31,7 +31,6 @@ use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
 use Adshares\Adserver\Uploader\Zip\ZipUploader;
-use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -119,7 +118,7 @@ class CampaignsController extends Controller
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
 
-        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
 
         $input['targeting_requires'] = $targetingProcessor->processTargeting(
             $request->input('campaign.targeting.requires')
@@ -255,7 +254,7 @@ class CampaignsController extends Controller
 
         $input = $request->input('campaign');
 
-        $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
 
         $input['targeting_requires'] = $targetingProcessor->processTargeting(
             $request->input('campaign.targeting.requires')
@@ -420,10 +419,5 @@ class CampaignsController extends Controller
         $campaign->classification_tags = null;
 
         $campaign->update();
-    }
-
-    private function getTargetingSchema(): array
-    {
-        return (new OptionsSelector($this->configurationRepository->fetchTargetingOptions()))->toArray();
     }
 }
