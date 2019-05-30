@@ -22,13 +22,14 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Model\Selector;
 use function base_path;
 
 final class TargetingProcessorTest extends TestCase
 {
     public function testWhileNoAvailableOptions(): void
     {
-        $targetingProcessor = new TargetingProcessor([]);
+        $targetingProcessor = new TargetingProcessor(new Selector());
 
         $result = $targetingProcessor->processTargeting($this->getTargetingValid());
 

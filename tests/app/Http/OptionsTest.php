@@ -93,14 +93,18 @@ class OptionsTest extends TestCase
     {
         parent::setUp();
 
-        $this->app->bind(AdUser::class,
+        $this->app->bind(
+            AdUser::class,
             static function () {
-            return new DummyAdUserClient();
-        });
+                return new DummyAdUserClient();
+            }
+        );
 
-        $this->app->bind(AdClassify::class,
+        $this->app->bind(
+            AdClassify::class,
             static function () {
-            return new DummyAdClassifyClient();
-        });
+                return new DummyAdClassifyClient();
+            }
+        );
     }
 }
