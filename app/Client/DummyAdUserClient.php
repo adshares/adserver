@@ -27,6 +27,7 @@ use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use RuntimeException;
 use function base_path;
 use function file_get_contents;
 use function GuzzleHttp\json_decode;
@@ -44,6 +45,6 @@ final class DummyAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $context): UserContext
     {
-        throw new Exception('Method getUserContext() not implemented');
+        throw new RuntimeException('Method getUserContext() not implemented');
     }
 }
