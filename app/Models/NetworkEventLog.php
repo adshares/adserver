@@ -28,7 +28,9 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Models\Traits\Money;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\UserContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -40,10 +42,12 @@ use function hex2bin;
  * @property string case_id
  * @property string event_id
  * @property string user_id
+ * @property string $tracking_id
  * @property string banner_id
  * @property string publisher_id
  * @property string site_id
  * @property string zone_id
+ * @property string campaign_id
  * @property string event_type
  * @property string pay_from
  * @property string ip
@@ -83,7 +87,7 @@ class NetworkEventLog extends Model
     protected $fillable = [
         'case_id',
         'event_id',
-        'user_id',
+        'tracking_id',
         'banner_id',
         'zone_id',
         'publisher_id',
@@ -122,10 +126,12 @@ class NetworkEventLog extends Model
         'case_id' => 'BinHex',
         'event_id' => 'BinHex',
         'user_id' => 'BinHex',
+        'tracking_id' => 'BinHex',
         'banner_id' => 'BinHex',
         'publisher_id' => 'BinHex',
         'zone_id' => 'BinHex',
         'site_id' => 'BinHex',
+        'campaign_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
         'ip' => 'BinHex',
         'headers' => 'JsonValue',
@@ -137,11 +143,6 @@ class NetworkEventLog extends Model
         'license_fee' => 'Money',
         'operator_fee' => 'Money',
     ];
-
-    public static function fetchByCaseId(string $caseId): Collection
-    {
-        return self::where('case_id', hex2bin($caseId))->get();
-    }
 
     public static function fetchByEventId(string $eventId): ?NetworkEventLog
     {
@@ -183,12 +184,25 @@ class NetworkEventLog extends Model
             return;
         }
 
+        $banner = NetworkBanner::fetchByPublicIdWithCampaign($bannerId);
+
+        if (!$banner) {
+            return;
+        }
+
+        $campaignId = $banner->getAttribute('campaign')->uuid ?? null;
+
+        if (!$campaignId) {
+            return;
+        }
+
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
         $log->banner_id = $bannerId;
-        $log->user_id = $trackingId;
+        $log->tracking_id = $trackingId;
         $log->zone_id = $zoneId;
+        $log->campaign_id = $campaignId;
         $log->publisher_id = $publisherId;
         $log->site_id = $siteId;
         $log->pay_from = $payFrom;
@@ -206,5 +220,15 @@ class NetworkEventLog extends Model
         $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
         self::where('event_id', hex2bin($eventId))
             ->update(['is_view_clicked' => 1]);
+    }
+
+    public function updateWithUserContext(UserContext $userContext): void
+    {
+        $userId = $userContext->userId();
+        if ($userId) {
+            $this->user_id = Uuid::fromString($userId)->hex();
+        }
+        $this->human_score = $userContext->humanScore();
+        $this->our_userdata = $userContext->keywords();
     }
 }

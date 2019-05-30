@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,25 +18,27 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+declare(strict_types = 1);
+
 namespace Adshares\Adserver\Tests\Console;
 
-use Adshares\Adserver\Tests\TestCase;
-use Adshares\Supply\Application\Service\AdSelect;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Tests\TestCase as AdsharesTestCase;
 
-class AdSelectInventoryExporterCommandTest extends TestCase
+class TestCase extends AdsharesTestCase
 {
-    use RefreshDatabase;
-
-    public function testExport(): void
+    protected function setUp()
     {
-        $this->app->bind(AdSelect::class, function () {
-            $adSelect = $this->createMock(AdSelect::class);
+        parent::setUp();
 
-            return $adSelect;
-        });
+        $this->app->bind(
+            Locker::class,
+            function () {
+                $locker = $this->createMock(Locker::class);
+                $locker->method('lock')->willReturn(true);
 
-        $this->artisan('ops:adselect:inventory:export')
-            ->assertExitCode(0);
+                return $locker;
+            }
+        );
     }
 }

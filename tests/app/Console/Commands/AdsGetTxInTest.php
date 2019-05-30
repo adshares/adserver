@@ -1,13 +1,13 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetLogCommand;
@@ -27,7 +27,7 @@ use Adshares\Ads\Response\GetLogResponse;
 use Adshares\Adserver\Console\Commands\AdsGetTxIn;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Tests\Console\TestCase;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -47,7 +47,7 @@ class AdsGetTxInTest extends TestCase
                             if (null === $d) {
                                 $ts = 0;
                             } else {
-                                /** @var $d \DateTime */
+                                /** @var $d DateTime */
                                 $ts = $d->getTimestamp();
                             }
                             switch ($ts) {
@@ -551,7 +551,7 @@ class AdsGetTxInTest extends TestCase
             AdsClient::class,
             function () {
                 $adsClient = $this->createMock(AdsClient::class);
-                $command = new GetLogCommand(new \DateTime());
+                $command = new GetLogCommand(new DateTime());
                 $exception = new CommandException($command, 'Process timed out');
                 $adsClient->method('getLog')->willThrowException($exception);
 

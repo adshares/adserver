@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use DateTime;
 use stdClass;
 
 class EventMapper
@@ -35,12 +36,17 @@ class EventMapper
         }
 
         $mappedEvent = [
+            'id' => $event['id'],
             'keywords' => $keywords,
             'publisher_id' => $event['publisher_id'],
             'banner_id' => $event['banner_id'],
-            'user_id' => $event['user_id'],
+            'user_id' => $event['user_id'] ?? $event['tracking_id'],
+            'campaign_id' => $event['campaign_id'],
             'event_id' => $event['event_id'],
-            'event_type' => $event['event_type'],
+            'type' => $event['event_type'],
+            'zone_id' => $event['zone_id'],
+            'case_id' => $event['case_id'],
+            'time' => DateTime::createFromFormat('Y-m-d H:i:s', $event['created_at'])->format(DateTime::ATOM),
         ];
 
         return $mappedEvent;

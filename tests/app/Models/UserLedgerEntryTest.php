@@ -37,8 +37,12 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
+        $this->expectExceptionMessage('Negative Balance (-195)');
         self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
+
+        $this->expectExceptionMessage('Negative Balance (-325)');
         self::assertEquals(-325, UserLedgerEntry::getWalletBalanceByUserId($user->id));
+
         self::assertEquals(130, UserLedgerEntry::getBonusBalanceByUserId($user->id));
     }
 
@@ -90,7 +94,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Insufficient funds for User.*/');
+        $this->expectExceptionMessage('Negative Balance');
         UserLedgerEntry::blockAdExpense($user->id, 10);
     }
 
@@ -100,7 +104,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createSomeEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Amount needs to be non-negative.*/');
+        $this->expectExceptionMessageRegExp('/Values need to be non-negative.*/');
         UserLedgerEntry::blockAdExpense($user->id, -10);
     }
 
@@ -139,7 +143,7 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createSomeEntries($user);
 
-        $this->expectExceptionMessageRegExp('/Amount needs to be non-negative.*/');
+        $this->expectExceptionMessageRegExp('/Values need to be non-negative.*/');
         UserLedgerEntry::processAdExpense($user->id, -10);
     }
 
@@ -151,14 +155,21 @@ final class UserLedgerEntryTest extends TestCase
 
         UserLedgerEntry::pushBlockedToProcessing();
 
+        $this->expectExceptionMessage('Negative Balance (-195)');
         self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
+        $this->expectExceptionMessage('Negative Balance (-325)');
         self::assertEquals(-325, UserLedgerEntry::getWalletBalanceByUserId($user->id));
+
         self::assertEquals(130, UserLedgerEntry::getBonusBalanceByUserId($user->id));
 
         UserLedgerEntry::removeProcessingExpenses();
 
+        $this->expectExceptionMessage('Negative Balance (-145)');
         self::assertEquals(-145, UserLedgerEntry::getBalanceByUserId($user->id));
+
+        $this->expectExceptionMessage('Negative Balance (-295)');
         self::assertEquals(-295, UserLedgerEntry::getWalletBalanceByUserId($user->id));
+
         self::assertEquals(150, UserLedgerEntry::getBonusBalanceByUserId($user->id));
     }
 
@@ -170,8 +181,12 @@ final class UserLedgerEntryTest extends TestCase
 
         UserLedgerEntry::removeProcessingExpenses();
 
+        $this->expectExceptionMessage('Negative Balance (-170)');
         self::assertEquals(-170, UserLedgerEntry::getBalanceByUserId($user->id));
+
+        $this->expectExceptionMessage('Negative Balance (-310)');
         self::assertEquals(-310, UserLedgerEntry::getWalletBalanceByUserId($user->id));
+
         self::assertEquals(140, UserLedgerEntry::getBonusBalanceByUserId($user->id));
     }
 

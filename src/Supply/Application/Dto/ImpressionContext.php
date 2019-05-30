@@ -23,7 +23,10 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Dto;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use stdClass;
@@ -51,6 +54,31 @@ final class ImpressionContext
         $this->site = $site;
         $this->device = $device;
         $this->user = $user;
+    }
+
+    public static function fromEventData($headers, string $ip, string $trackingId): self
+    {
+        $headersArray = get_object_vars($headers);
+
+        $refererList = $headersArray['referer'] ?? [];
+        $domain = $refererList[0] ?? '';
+
+        $ip = inet_ntop(hex2bin($ip));
+
+        $ua = $headersArray['user-agent'][0] ?? '';
+
+        try {
+            $trackingId = Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($trackingId));
+        } catch (RuntimeException $e) {
+            Log::warning(sprintf('%s %s', $e->getMessage(), $trackingId));
+            $trackingId = '';
+        }
+
+        return new self(
+            ['domain' => $domain, 'page' => $domain],
+            ['ip' => $ip, 'ua' => $ua],
+            ['tid' => $trackingId]
+        );
     }
 
     public function withUserDataReplacedBy(array $userData): self
@@ -88,26 +116,13 @@ final class ImpressionContext
     {
         $params = [];
 
-        try {
-            $trackingId = $this->trackingId();
-        } catch (ImpressionContextException $e) {
-            Log::warning(sprintf(
-                '%s:%s > %s',
-                __METHOD__,
-                __LINE__,
-                $e->getMessage()
-            ));
-
-            $trackingId = '';
-        }
-
         foreach ($zones as $requestId => $zone) {
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $trackingId,
+                'user_id' => $this->userId(),
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -159,6 +174,26 @@ final class ImpressionContext
         }
 
         return $trackingId;
+    }
+
+    public function userId(): string
+    {
+        $userId = $this->user['uid'] ?? '';
+
+        if ($userId) {
+            return Uuid::fromString($userId)->hex();
+        }
+
+        Log::warning(sprintf(
+            '%s:%s Missing UID - {"user":%s,"cookies":%s,"oldUser":%s}',
+            __METHOD__,
+            __LINE__,
+            json_encode($this->user) ?: 'null',
+            json_encode($this->cookies()) ?: 'null',
+            json_encode($this->originalUser) ?: 'null'
+        ));
+
+        return '';
     }
 
     private function flatHeaders(): array

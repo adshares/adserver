@@ -299,13 +299,16 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $isAdmin = $user->isAdmin();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsPublisher($user);
+        if (!$isAdmin) {
+            $this->validateUserAsPublisher($user);
+        }
 
         try {
             $input = new PublisherStatsInput(
-                $user->uuid,
+                $isAdmin ? null : $user->uuid,
                 $from,
                 $to,
                 $siteId
@@ -319,7 +322,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, config('app.name')))->response();
+        return (new PublisherReportResponse($data, $name, config('app.name'), $isAdmin))->response();
     }
 
     public function advertiserReport(
@@ -333,13 +336,16 @@ class StatsController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
+        $isAdmin = $user->isAdmin();
 
         $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
+        if (!$isAdmin) {
+            $this->validateUserAsAdvertiser($user);
+        }
 
         try {
             $input = new AdvertiserStatsInput(
-                $user->uuid,
+                $isAdmin ? null : $user->uuid,
                 $from,
                 $to,
                 $campaignId
@@ -353,7 +359,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromAdvertiserData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, config('app.name')))->response();
+        return (new AdvertiserReportResponse($data, $name, config('app.name'), $isAdmin))->response();
     }
 
     public function publisherStatsWithTotal(
@@ -392,6 +398,12 @@ class StatsController extends Controller
 
     private function transformPublicIdToPrivateId(array $item): array
     {
+        if (isset($item['advertiserId'])) {
+            $user = User::fetchByUuid($item['advertiserId']);
+            $item['advertiserId'] = $user->id ?? null;
+            $item['advertiser'] = $user->email ?? null;
+        }
+
         if (isset($item['campaignId'])) {
             $campaign = Campaign::fetchByUuid($item['campaignId']);
             $item['campaignId'] = $campaign->id ?? null;
@@ -402,6 +414,12 @@ class StatsController extends Controller
             $banner = Banner::fetchBanner($item['bannerId']);
             $item['bannerId'] = $banner->id ?? null;
             $item['bannerName'] = $banner->name ?? null;
+        }
+
+        if (isset($item['publisherId'])) {
+            $user = User::fetchByUuid($item['publisherId']);
+            $item['publisherId'] = $user->id ?? null;
+            $item['publisher'] = $user->email ?? null;
         }
 
         if (isset($item['siteId'])) {

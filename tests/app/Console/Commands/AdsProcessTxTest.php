@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console;
+namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetBlockIdsCommand;
@@ -33,14 +33,16 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\TestCase;
+use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
 class AdsProcessTxTest extends TestCase
 {
@@ -118,7 +120,7 @@ class AdsProcessTxTest extends TestCase
             $log = new NetworkEventLog();
             $log->case_id = Uuid::caseId();
             $log->event_id = $paymentDetail['event_id'];
-            $log->user_id = (string)UUID::v4();
+            $log->tracking_id = (string)UUID::v4();
             $log->site_id = (string)Uuid::v4();
             $log->banner_id = $paymentDetail['banner_id'];
             $log->zone_id = $paymentDetail['zone_id'];
@@ -231,7 +233,7 @@ class AdsProcessTxTest extends TestCase
             function () {
                 $adsClient = $this->createMock(AdsClient::class);
                 // getBlockIds
-                $getBlockIdsStub = new \PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls(
+                $getBlockIdsStub = new ConsecutiveCalls(
                     [
                         $this->getBlockIds1(),
                         $this->getBlockIds2(),
@@ -383,7 +385,7 @@ JSON
      * @param string $txid
      *
      * @return GetTransactionResponse
-     * @throws \Exception
+     * @throws Exception
      */
     private function getTx(string $txid): GetTransactionResponse
     {
@@ -399,7 +401,7 @@ JSON
                 break;
 
             default:
-                throw new \Exception();
+                throw new Exception();
         }
 
         return new GetTransactionResponse(json_decode($response, true));

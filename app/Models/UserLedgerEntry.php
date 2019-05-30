@@ -25,10 +25,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
+use function array_filter;
 use function array_merge;
 use function in_array;
 use function min;
 use function sprintf;
+use const PHP_INT_MAX;
 
 /**
  * @mixin Builder
@@ -180,20 +182,38 @@ class UserLedgerEntry extends Model
 
     public static function getBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException("Negative Balance ($amount)");
+        }
+
+        return $amount;
     }
 
     public static function getWalletBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException('Negative Balance');
+        }
+
+        return $amount;
     }
 
     public static function getBonusBalanceByUserId(int $userId): int
     {
-        return (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
+        $amount = (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
             ->sum('amount');
+
+        if ($amount < 0) {
+            throw new UserLedgerException('Negative Balance');
+        }
+
+        return $amount;
     }
 
     public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
@@ -268,49 +288,33 @@ class UserLedgerEntry extends Model
         return self::blockedEntries()->where('user_id', $userId);
     }
 
-    private static function addAdExpense(int $status, int $userId, int $amount): array
+    private static function addAdExpense(int $status, int $userId, int $total, int $maxBonus): array
     {
-        if ($amount < 0) {
+        if ($total < 0 || $maxBonus < 0) {
             throw new InvalidArgumentException(
-                sprintf('Amount needs to be non-negative - User [%s].', $userId)
+                sprintf('Values need to be non-negative - User [%s].', $userId)
             );
         }
 
-        if (self::getBalanceByUserId($userId) < $amount) {
+        $bonusableAmount = (int)max(min($total, $maxBonus, self::getBonusBalanceByUserId($userId)), 0);
+        $payableAmount = (int)max(min($total - $bonusableAmount, self::getWalletBalanceByUserId($userId)), 0);
+
+        if ($total > $bonusableAmount + $payableAmount) {
             throw new InvalidArgumentException(
                 sprintf('Insufficient funds for User [%s] when adding ad expense.', $userId)
             );
         }
 
-        $entries = [];
-        $bonus = self::getBonusBalanceByUserId($userId);
-        if ($bonus > 0) {
-            $obj = self::construct(
-                $userId,
-                -min($bonus, $amount),
-                $status,
-                self::TYPE_BONUS_EXPENSE
-            );
-            $obj->save();
-            $entries[] = $obj;
-        }
-        if ($amount > $bonus) {
-            $obj = self::construct(
-                $userId,
-                -($amount - $bonus),
-                $status,
-                self::TYPE_AD_EXPENSE
-            );
-            $obj->save();
-            $entries[] = $obj;
-        }
-
-        return $entries;
+        return array_filter([
+            self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
+            self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
+        ]);
     }
 
-    public static function blockAdExpense(int $userId, int $nonNegativeAmount): array
+    public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
     {
-        $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $nonNegativeAmount);
+        $adExpenses = self::addAdExpense(self::STATUS_BLOCKED, $userId, $totalAmount, $maxBonus);
+
         foreach ($adExpenses as $adExpense) {
             /** @var UserLedgerEntry $adExpense */
             Log::debug(
@@ -334,9 +338,9 @@ class UserLedgerEntry extends Model
         Log::debug(sprintf('[UserLedgerEntry] Release blocked %d clicks', $amount));
     }
 
-    public static function processAdExpense(int $userId, int $nonNegativeAmount): array
+    public static function processAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
     {
-        return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $nonNegativeAmount);
+        return self::addAdExpense(self::STATUS_ACCEPTED, $userId, $totalAmount, $maxBonus);
     }
 
     public static function awardBonusToUser(User $user, int $amount): void
@@ -351,6 +355,23 @@ class UserLedgerEntry extends Model
             self::STATUS_ACCEPTED,
             self::TYPE_BONUS_INCOME
         )->save();
+    }
+
+    private static function insertAdExpense(int $status, int $userId, int $amount, int $type): ?self
+    {
+        if ($amount === 0) {
+            return null;
+        }
+
+        $obj = self::construct(
+            $userId,
+            -$amount,
+            $status,
+            $type
+        );
+        $obj->save();
+
+        return $obj;
     }
 
     public function setStatusAttribute(int $status): void

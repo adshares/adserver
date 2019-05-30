@@ -22,36 +22,49 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\Exception;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Application\Dto\ImpressionContextException;
+use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use DateTime;
-use Illuminate\Console\Command;
-use Symfony\Component\Console\Command\LockableTrait;
+use Illuminate\Support\Facades\Log;
 use function sprintf;
 
-class AdSelectEventExportCommand extends Command
+class AdSelectEventExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-    use LockableTrait;
-
     protected $signature = 'ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
 
     protected $exporterService;
 
-    public function __construct(AdSelectEventExporter $exporterService)
-    {
-        $this->exporterService = $exporterService;
+    private $adUser;
 
-        parent::__construct();
+    private $eventRepository;
+
+    public function __construct(
+        Locker $locker,
+        AdSelectEventExporter $exporterService,
+        AdUser $adUser,
+        NetworkEventRepository $eventRepository
+    ) {
+        $this->exporterService = $exporterService;
+        $this->adUser = $adUser;
+        $this->eventRepository = $eventRepository;
+
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
-        $lockId = config('app.adserver_id').$this->getName();
-        if (!$this->lock($lockId)) {
+        if (!$this->lock()) {
             $this->info('[AdSelectEventExport] Command '.$this->signature.' already running.');
 
             return;
@@ -66,15 +79,114 @@ class AdSelectEventExportCommand extends Command
             $lastExportDate->format(DateTime::ATOM)
         ));
 
-        $exported = $this->exporterService->exportUnpaidEvents($lastExportDate);
+//        TODO SRV-356 fetch NetworkEventLog uuid from adselect
+//        $eventUuid =
+//        $eventIdFirst = NetworkEventLog::fetchByEventId($eventUuid);
+        $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
+
+        if (null === $eventIdFirst) {
+            $this->info('[ADSELECT] No events to export');
+
+            return;
+        }
+
+        $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
+            ->where('created_at', '<=', new DateTime('-10 minutes'))
+            ->max('id');
+
+        if (null === $eventIdLast) {
+            $this->info('[ADSELECT] No events to export');
+
+            return;
+        }
+
+        $updated = $this->updateNetworkEventsWithAdUserData($eventIdFirst, $eventIdLast);
+
+        $this->info(sprintf(
+            '[ADSELECT] Updated %s unpaid events',
+            $updated
+        ));
+
+        $exported = $this->exporterService->exportUnpaidEvents($eventIdFirst, $eventIdLast);
 
         $this->info(sprintf(
             '[ADSELECT] Exported %s unpaid events',
             $exported
         ));
 
-        Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, new DateTime());
+        // TODO SRV-356 remove storing last export time and delete key from Config (model and database)
+        $dateTime = new DateTime();
+        Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, $dateTime);
 
         $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
+    }
+
+    private function updateNetworkEventsWithAdUserData(int $eventIdFirst, int $eventIdLast): int
+    {
+        $limit = NetworkEventRepository::PACKAGE_SIZE;
+        $offset = 0;
+        $updated = 0;
+
+        do {
+            $events =
+                NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])->whereNull('event_value')->take(
+                    $limit
+                )->skip($offset)->get();
+
+            foreach ($events as $event) {
+                /** @var $event NetworkEventLog */
+
+                if ($event->human_score !== null && $event->our_userdata !== null) {
+                    continue;
+                }
+
+                try {
+                    $event->updateWithUserContext($this->userContext($this->adUser, $event));
+                    $event->save();
+                    $updated++;
+                } catch (ImpressionContextException|RuntimeException $e) {
+                    Log::error(
+                        sprintf(
+                            '%s {"command":"%s","event":"%d","error":"%s"}',
+                            get_class($e),
+                            $this->signature,
+                            $event->id,
+                            Exception::cleanMessage($e->getMessage())
+                        )
+                    );
+                }
+            }
+
+            $offset += NetworkEventRepository::PACKAGE_SIZE;
+        } while (count($events) === NetworkEventRepository::PACKAGE_SIZE);
+
+        return $updated;
+    }
+
+    private function userContext(AdUser $adUser, NetworkEventLog $event): UserContext
+    {
+        static $userInfoCache = [];
+
+        $impressionContext = ImpressionContext::fromEventData($event->headers, $event->ip, $event->tracking_id);
+        $trackingId = $impressionContext->trackingId();
+
+        if (isset($userInfoCache[$trackingId])) {
+            return $userInfoCache[$trackingId];
+        }
+
+        $userContext = $adUser->getUserContext($impressionContext);
+
+        Log::debug(sprintf(
+            '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"trackingId":%s,"context": %s}',
+            __FUNCTION__,
+            $userContext->humanScore(),
+            $event->id,
+            $event->tracking_id,
+            $userContext->toString()
+        ));
+
+        $userInfoCache[$trackingId] = $userContext;
+
+        return $userContext;
     }
 }

@@ -20,36 +20,39 @@
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Console\LineFormatterTrait;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use DateTime;
-use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
-class DemandBlockRequiredAmount extends Command
+class DemandBlockRequiredAmount extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:demand:payments:block';
 
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader)
+    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
     {
         $this->exchangeRateReader = $exchangeRateReader;
 
-        parent::__construct();
+        parent::__construct($locker);
     }
 
     public function handle(): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
@@ -58,21 +61,24 @@ class DemandBlockRequiredAmount extends Command
 
         UserLedgerEntry::pushBlockedToProcessing();
 
-        $blockade = Campaign::fetchRequiredBudgetsPerUser();
-        $this->info('Attempt to create '.count($blockade).' blockades.');
-        $this->blockAmountOrSuspendCampaigns($blockade, $exchangeRate);
+        $blockades = Campaign::fetchRequiredBudgetsPerUser();
+        $this->info('Attempt to create '.count($blockades).' blockades.');
+        $this->blockAmountOrSuspendCampaigns($blockades, $exchangeRate);
 
         DB::commit();
 
-        $this->info('Created '.count($blockade).' new blocking Ledger entries.');
+        $this->info('Created '.count($blockades).' new blocking Ledger entries.');
     }
 
     private function blockAmountOrSuspendCampaigns(Collection $blockade, ExchangeRate $exchangeRate): void
     {
-        $blockade->each(function ($sum, $userId) use ($exchangeRate) {
-            $amount = $exchangeRate->toClick((int)$sum);
+        $blockade->each(static function (AdvertiserBudget $budget, int $userId) use ($exchangeRate) {
             try {
-                UserLedgerEntry::blockAdExpense((int)$userId, $amount);
+                UserLedgerEntry::blockAdExpense(
+                    $userId,
+                    $exchangeRate->toClick($budget->total()),
+                    $exchangeRate->toClick($budget->bonusable())
+                );
             } catch (InvalidArgumentException $e) {
                 Log::warning($e->getMessage());
 

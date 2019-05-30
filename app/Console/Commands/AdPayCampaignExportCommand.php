@@ -22,23 +22,25 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
-use Adshares\Adserver\Console\LineFormatterTrait;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
-use Illuminate\Console\Command;
 
-class AdPayCampaignExportCommand extends Command
+class AdPayCampaignExportCommand extends BaseCommand
 {
-    use LineFormatterTrait;
-
     protected $signature = 'ops:adpay:campaign:export';
 
     protected $description = 'Exports campaign data to AdPay';
 
     public function handle(AdPay $adPay): void
     {
+        if (!$this->lock()) {
+            $this->info('Command '.$this->signature.' already running');
+
+            return;
+        }
+
         $this->info('Start command '.$this->signature);
 
         $now = new DateTime();
