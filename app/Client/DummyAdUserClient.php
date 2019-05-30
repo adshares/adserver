@@ -35,7 +35,7 @@ final class DummyAdUserClient implements AdUser
 {
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
+        $path = file_get_contents(base_path('tests/app/targeting_schema.json'));
         $var = file_get_contents($path);
         $taxonomy = json_decode($var, true);
 

@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
+use function base_path;
 
 final class TargetingProcessorTest extends TestCase
 {
@@ -56,10 +57,9 @@ final class TargetingProcessorTest extends TestCase
     /**
      * @dataProvider invalidTargetingProvider
      *
-     * @param string $testVariant
      * @param array $invalidTargeting
      */
-    public function testWhileTargetingInvalid(string $testVariant, array $invalidTargeting): void
+    public function testWhileTargetingInvalid(array $invalidTargeting): void
     {
         $targetingProcessor = new TargetingProcessor($this->getTargetingSchema());
 
@@ -161,16 +161,16 @@ JSON
     public function invalidTargetingProvider(): array
     {
         return [
-            ['unknown category', $this->getTargetingInvalidUnknownCategory()],
-            ['unknown group', $this->getTargetingInvalidUnknownGroup()],
-            ['unknown value', $this->getTargetingInvalidUnknownValue()],
-            ['repeated values', $this->getTargetingInvalidRepeatedValues()],
+            'unknown category' => [$this->getTargetingInvalidUnknownCategory()],
+            'unknown group' => [$this->getTargetingInvalidUnknownGroup()],
+            'unknown value' => [$this->getTargetingInvalidUnknownValue()],
+            'repeated values' => [$this->getTargetingInvalidRepeatedValues()],
         ];
     }
 
     private function getTargetingSchema(): array
     {
-        $targetingSchema = file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'targeting_schema.json');
+        $targetingSchema = file_get_contents(base_path('tests/app/targeting_schema.json'));
 
         return json_decode($targetingSchema, true);
     }
