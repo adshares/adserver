@@ -89,7 +89,7 @@ final class TargetingProcessorTest extends TestCase
                     'gw',
                 ],
                 'language' => [
-                    'ak', 
+                    'ak',
                 ],
             ],
             'site' => [
