@@ -352,7 +352,7 @@ class GuzzleAdSelectClient implements AdSelect
             ));
         }
 
-        if ($type === 'paid' ) {
+        if ($type === 'paid') {
             return (int)$item['payment_id'];
         }
 
