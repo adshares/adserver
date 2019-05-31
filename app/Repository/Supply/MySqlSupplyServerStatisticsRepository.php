@@ -30,8 +30,8 @@ class MySqlSupplyServerStatisticsRepository
     private const QUERY_STATISTICS = <<<SQL
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")               AS date,
-  SUM(views)                                              AS supply_impressions,
-  ROUND((SUM(e.revenue) / 100000000000) / #fee_coefficient, 2) AS supply_volume
+  SUM(views)                                              AS impressions,
+  ROUND((SUM(e.revenue) / 100000000000) / #fee_coefficient, 2) AS volume
 FROM network_event_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY

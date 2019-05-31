@@ -29,8 +29,8 @@ class MySqlDemandServerStatisticsRepository
     private const QUERY_STATISTICS = <<<SQL
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d") AS date,
-  SUM(views)                                AS demand_impressions,
-  ROUND(SUM(e.cost) / 100000000000, 2)      AS demand_volume
+  SUM(views)                                AS impressions,
+  ROUND(SUM(e.cost) / 100000000000, 2)      AS volume
 FROM event_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
