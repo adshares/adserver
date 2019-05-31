@@ -80,21 +80,29 @@ class TargetingProcessor
     {
         $valuesProcessed = [];
 
+        $availableValuesByValue = $this->extractAvailableValuesByValue($schema);
+
         foreach (array_unique($values) as $value) {
-            if (!is_string($value)) {
+            if (!is_string($value) || !isset($availableValuesByValue[$value])) {
                 continue;
             }
 
-            foreach ($schema as $availableValue) {
-                if ($value === $availableValue['value']) {
-                    $valuesProcessed[] = $value;
-
-                    break;
-                }
-            }
+            $valuesProcessed[] = $value;
         }
 
         return $valuesProcessed;
+    }
+
+    private function extractAvailableValuesByValue(array $schema): array
+    {
+        $availableValues = [];
+
+        foreach ($schema as $availableValue) {
+            $value = $availableValue['value'];
+            $availableValues[$value] = $value;
+        }
+
+        return $availableValues;
     }
 
     private function processInputs(array $inputs): array
