@@ -74,6 +74,9 @@ final class Info
     /** @var float|null */
     private $supplyFee;
 
+    /** @var InfoStatistics|null */
+    private $statistics;
+
     public function __construct(
         string $module,
         string $name,
@@ -135,6 +138,10 @@ final class Info
             $info->setSupplyFee($data['supplyFee']);
         }
 
+        if (isset($data['statistics'])) {
+            $info->setStatistics(InfoStatistics::fromArray($data['statistics']));
+        }
+
         return $info;
     }
 
@@ -162,6 +169,10 @@ final class Info
 
         if (null !== $this->supplyFee) {
             $data['supplyFee'] = $this->supplyFee;
+        }
+
+        if (null !== $this->statistics) {
+            $data['statistics'] = $this->statistics->toArray();
         }
 
         return $data;
@@ -213,5 +224,10 @@ final class Info
         }
 
         $this->supplyFee = $supplyFee;
+    }
+
+    public function setStatistics(InfoStatistics $statistics): void
+    {
+        $this->statistics = $statistics;
     }
 }

@@ -22,6 +22,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Illuminate\Database\Seeder;
 
 class MockDataNetworkHostsSeeder extends Seeder
@@ -45,6 +46,7 @@ class MockDataNetworkHostsSeeder extends Seeder
 
         $info->setDemandFee(0.01);
         $info->setSupplyFee(0.01);
+        $info->setStatistics(new InfoStatistics(1, 1, 1));
 
         NetworkHost::registerHost('0001-00000001-0001', $info, new DateTime());
     }

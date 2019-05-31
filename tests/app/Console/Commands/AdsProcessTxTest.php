@@ -38,6 +38,7 @@ use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Exception;
@@ -110,6 +111,7 @@ class AdsProcessTxTest extends TestCase
         );
 
         $info->setSupplyFee(0.01);
+        $info->setStatistics(new InfoStatistics(1, 1, 1));
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 

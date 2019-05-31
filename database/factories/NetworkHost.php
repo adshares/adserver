@@ -23,6 +23,7 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Faker\Generator as Faker;
 
 $factory->define(
@@ -56,6 +57,7 @@ $factory->define(
 
         $info->setDemandFee(0.01);
         $info->setSupplyFee(0.01);
+        $info->setStatistics(new InfoStatistics(1, 1, 1));
 
         return [
             'address' => $faker->randomElement($addresses),

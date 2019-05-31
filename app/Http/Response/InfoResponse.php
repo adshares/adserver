@@ -27,6 +27,7 @@ use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
@@ -39,6 +40,11 @@ final class InfoResponse implements Arrayable
     public function __construct(Info $info)
     {
         $this->info = $info;
+    }
+
+    public function updateWithStatistics(InfoStatistics $statistics): void
+    {
+        $this->info->setStatistics($statistics);
     }
 
     public function toArray(): array

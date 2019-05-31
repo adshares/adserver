@@ -25,13 +25,26 @@ namespace Adshares\Adserver\Http\Controllers;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
 use Illuminate\View\View;
 
 class InfoController extends Controller
 {
+    private $adserverStatisticsRepository;
+
+    public function __construct(MySqlServerStatisticsRepository $adserverStatisticsRepository)
+    {
+        $this->adserverStatisticsRepository = $adserverStatisticsRepository;
+    }
+
     public function info(): InfoResponse
     {
-        return InfoResponse::defaults();
+        $response = InfoResponse::defaults();
+
+        $statistics = $this->adserverStatisticsRepository->fetchInfoStatistics();
+        $response->updateWithStatistics($statistics);
+
+        return $response;
     }
 
     public function privacyPolicy(): View
