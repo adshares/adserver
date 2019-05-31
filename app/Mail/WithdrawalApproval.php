@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Mail;
 
+use Adshares\Ads\Util\AdsConverter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -49,8 +50,9 @@ class WithdrawalApproval extends Mailable
     {
         $variables = [
             'url' => config('app.adpanel_url')."/auth/withdrawal-confirmation/{$this->tokenId}",
-            'amount' => $this->amount,
-            'fee' => $this->fee,
+            'amount' => AdsConverter::clicksToAds($this->amount),
+            'fee' => AdsConverter::clicksToAds($this->fee),
+            'total' => AdsConverter::clicksToAds($this->amount + $this->fee),
             'target' => $this->target,
         ];
 
