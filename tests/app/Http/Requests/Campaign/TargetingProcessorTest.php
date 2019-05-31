@@ -82,36 +82,30 @@ final class TargetingProcessorTest extends TestCase
 
     private function getTargetingValid(): array
     {
-        return json_decode(
-            <<<JSON
-{
-    "user": {
-        "country": [
-            "af",
-            "gw"
-        ],
-        "language": [
-            "ak"
-        ]
-    },
-    "site": {
-        "domain": [
-            "www.a.pl"
-        ]
-    },
-    "device": {
-        "os": [
-            "windows"
-        ],
-        "browser": [
-            "opera"
-        ]
-    }
-}
-JSON
-            ,
-            true
-        );
+        return [
+            'user' => [
+                'country' => [
+                    'af',
+                    'gw',
+                ],
+                'language' => [
+                    'ak', 
+                ],
+            ],
+            'site' => [
+                'domain' => [
+                    'www.a.pl',
+                ],
+            ],
+            'device' => [
+                'os' => [
+                    'windows',
+                ],
+                'browser' => [
+                    'opera',
+                ],
+            ],
+        ];
     }
 
     private function getTargetingInvalidUnknownCategory(): array
