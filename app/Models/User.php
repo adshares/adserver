@@ -135,7 +135,7 @@ class User extends Authenticatable
         $user->is_advertiser = true;
         $user->is_publisher = true;
 
-        if (array_key_exists('referral_id', $data) && is_string($data['referral_id'])) {
+        if (isset($data['referral_id'])) {
             $userReferrer = self::fetchByUuid(bin2hex(Utils::urlSafeBase64Decode($data['referral_id'])));
 
             if (null !== $userReferrer) {
