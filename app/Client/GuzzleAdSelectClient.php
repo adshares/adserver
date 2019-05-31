@@ -300,17 +300,17 @@ class GuzzleAdSelectClient implements AdSelect
         }
     }
 
-    public function getLastPaidEventId(): int
+    public function getLastPaidPaymentId(): int
     {
-        return $this->getLastEventId('paid');
+        return $this->getLastId('paid');
     }
 
     public function getLastUnpaidEventId(): int
     {
-        return $this->getLastEventId('unpaid');
+        return $this->getLastId('unpaid');
     }
 
-    private function getLastEventId(string $type): int
+    private function getLastId(string $type): int
     {
         try {
             $uri = sprintf('/api/v1/events/%s/last', $type);

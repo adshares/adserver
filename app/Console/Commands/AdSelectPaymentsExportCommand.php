@@ -55,7 +55,7 @@ class AdSelectPaymentsExportCommand extends BaseCommand
         $this->info('Start command '.$this->signature);
 
         try {
-            $eventPaymentIdFirst = $this->exporterService->getLastPaidEventId() + 1;
+            $eventPaymentIdFirst = $this->exporterService->getLastPaidPaymentId() + 1;
         } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
 

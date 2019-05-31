@@ -277,7 +277,7 @@ final class JsonRpcAdSelectClient implements AdSelect
         }
     }
 
-    public function getLastPaidEventId(): int
+    public function getLastPaidPaymentId(): int
     {
         return 0;
     }

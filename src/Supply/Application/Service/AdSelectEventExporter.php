@@ -85,8 +85,8 @@ class AdSelectEventExporter
         return $this->client->getLastUnpaidEventId();
     }
 
-    public function getLastPaidEventId(): int
+    public function getLastPaidPaymentId(): int
     {
-        return $this->client->getLastPaidEventId();
+        return $this->client->getLastPaidPaymentId();
     }
 }
