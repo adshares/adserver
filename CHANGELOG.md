@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.9.0] - 2019-05-30
 ### Added
 - Event statistics reports for operators
+- User referrer
 ### Improved
 - Bonus spending scheme
 ### Fixed
