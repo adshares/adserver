@@ -58,15 +58,14 @@ class OptionsTest extends TestCase
             if ($item['children'] ?? false) {
                 self::assertNotEmpty($item['children']);
                 self::assertFalse($item['values'] ?? false);
-                self::assertFalse($item['valueType'] ?? false);
                 self::assertFalse($item['allowInput'] ?? false);
             } else {
-                self::assertInternalType('array', $item['values'] ?? []);
-                self::assertInternalType('string', $item['valueType']);
-                self::assertInternalType('bool', $item['allowInput']);
+                self::assertIsArray($item['values']);
+                self::assertIsBool($item['allowInput']);
             }
-            self::assertInternalType('string', $item['key']);
-            self::assertInternalType('string', $item['label']);
+            self::assertIsString($item['valueType']);
+            self::assertIsString($item['key']);
+            self::assertIsString($item['label']);
         }
     }
 
@@ -93,12 +92,18 @@ class OptionsTest extends TestCase
     {
         parent::setUp();
 
-        $this->app->bind(AdUser::class, function () {
-            return new DummyAdUserClient();
-        });
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
+            }
+        );
 
-        $this->app->bind(AdClassify::class, function () {
-            return new DummyAdClassifyClient();
-        });
+        $this->app->bind(
+            AdClassify::class,
+            static function () {
+                return new DummyAdClassifyClient();
+            }
+        );
     }
 }

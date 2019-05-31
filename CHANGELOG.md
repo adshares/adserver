@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Comparing campaign targeting with the schema
+- User referrer
 - Statistics and operator fees to server information (info.json)
 
 ## [0.9.0] - 2019-05-30

@@ -39,9 +39,9 @@ final class Selector
 
     public static function fromTaxonomy(Taxonomy $taxonomy): Selector
     {
-        return new Selector(...array_map(
-            function (Item $item) {
-                    return $item->toSelectorOption();
+        return new self(...array_map(
+            static function (Item $item) {
+                return $item->toSelectorOption();
             },
             $taxonomy->toArray()
         ));
@@ -50,7 +50,7 @@ final class Selector
     public function toArrayRecursiveWithoutEmptyFields(): array
     {
         return array_map(
-            function (Option $option) {
+            static function (Option $option) {
                 return $option->toArrayRecursiveWithoutEmptyFields();
             },
             $this->onlyViewable()
@@ -66,7 +66,7 @@ final class Selector
     {
         return array_values(array_filter(
             $this->options,
-            function (Option $option) {
+            static function (Option $option) {
                 return $option->isViewable();
             }
         ));
