@@ -48,27 +48,32 @@ class TargetingProcessor
     {
         $groupsProcessed = [];
 
+        $groupSchemaByKey = $this->createGroupSchemaByKey($schema);
+
         foreach ($groups as $key => $group) {
-            if (!is_array($group)) {
+            if (!is_array($group) || !isset($groupSchemaByKey[$key])) {
                 continue;
             }
 
-            foreach ($schema as $availableGroup) {
-                if ($key !== $availableGroup['key']) {
-                    continue;
-                }
+            $processed = $this->processRegardlessType($group, $groupSchemaByKey[$key]);
 
-                $processed = $this->processRegardlessType($group, $availableGroup);
-
-                if (count($processed) > 0) {
-                    $groupsProcessed[$key] = $processed;
-                }
-
-                break;
+            if (count($processed) > 0) {
+                $groupsProcessed[$key] = $processed;
             }
         }
 
         return $groupsProcessed;
+    }
+
+    private function createGroupSchemaByKey(array $schema): array
+    {
+        $schemaByKey = [];
+
+        foreach ($schema as $availableGroup) {
+            $schemaByKey[$availableGroup['key']] = $availableGroup;
+        }
+
+        return $schemaByKey;
     }
 
     private function processValues(array $values, array $schema): array
