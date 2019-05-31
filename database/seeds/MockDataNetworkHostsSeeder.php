@@ -43,6 +43,9 @@ class MockDataNetworkHostsSeeder extends Seeder
             'PUB', 'ADV'
         );
 
+        $info->setDemandFee(0.01);
+        $info->setSupplyFee(0.01);
+
         NetworkHost::registerHost('0001-00000001-0001', $info, new DateTime());
     }
 }

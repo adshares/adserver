@@ -109,6 +109,8 @@ class AdsProcessTxTest extends TestCase
             'PUB'
         );
 
+        $info->setSupplyFee(0.01);
+
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
         $demandClient = new DummyDemandClient();

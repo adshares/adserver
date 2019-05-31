@@ -48,7 +48,7 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        return new self(new Info(
+        $info = new Info(
             self::ADSHARES_MODULE_NAME,
             (string)config('app.name'),
             (string)config('app.version'),
@@ -60,6 +60,14 @@ final class InfoResponse implements Arrayable
             new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
             Info::CAPABILITY_ADVERTISER,
             Info::CAPABILITY_PUBLISHER
-        ));
+        );
+
+        $demandFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $info->setDemandFee($demandFee);
+
+        $supplyFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        $info->setSupplyFee($supplyFee);
+
+        return new self($info);
     }
 }

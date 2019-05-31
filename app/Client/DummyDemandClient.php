@@ -175,7 +175,7 @@ final class DummyDemandClient implements DemandClient
 
     public function fetchInfo(UrlInterface $infoUrl): Info
     {
-        return new Info(
+        $info = new Info(
             'ADSERVER',
             'ADSERVER DEMAND',
             '0.1',
@@ -188,5 +188,10 @@ final class DummyDemandClient implements DemandClient
             'PUB',
             'ADV'
         );
+
+        $info->setDemandFee(0.01);
+        $info->setSupplyFee(0.01);
+
+        return $info;
     }
 }

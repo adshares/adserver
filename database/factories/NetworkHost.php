@@ -54,6 +54,9 @@ $factory->define(
             'ADV'
         );
 
+        $info->setDemandFee(0.01);
+        $info->setSupplyFee(0.01);
+
         return [
             'address' => $faker->randomElement($addresses),
             'host' => $host,

@@ -68,6 +68,12 @@ final class Info
     /** @var Email|null */
     private $supportEmail;
 
+    /** @var float|null */
+    private $demandFee;
+
+    /** @var float|null */
+    private $supplyFee;
+
     public function __construct(
         string $module,
         string $name,
@@ -108,7 +114,7 @@ final class Info
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
 
-        return new self(
+        $info = new self(
             $data['module'] ?? $data['serviceType'],
             $data['name'],
             $data['version'] ?? $data['softwareVersion'],
@@ -120,6 +126,16 @@ final class Info
             $email,
             ...$data['capabilities'] ?? $data['supported']
         );
+
+        if (isset($data['demandFee'])) {
+            $info->setDemandFee($data['demandFee']);
+        }
+
+        if (isset($data['supplyFee'])) {
+            $info->setSupplyFee($data['supplyFee']);
+        }
+
+        return $info;
     }
 
     public function toArray(): array
@@ -138,6 +154,14 @@ final class Info
 
         if (null !== $this->supportEmail) {
             $data['supportEmail'] = $this->supportEmail->toString();
+        }
+
+        if (null !== $this->demandFee) {
+            $data['demandFee'] = $this->demandFee;
+        }
+
+        if (null !== $this->supplyFee) {
+            $data['supplyFee'] = $this->supplyFee;
         }
 
         return $data;
@@ -171,5 +195,23 @@ final class Info
     public function getInventoryUrl(): string
     {
         return $this->inventoryUrl->toString();
+    }
+
+    public function setDemandFee(float $demandFee): void
+    {
+        if (!in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true)) {
+            throw new RuntimeException('Cannot set fee for unsupported capability: Advertiser');
+        }
+
+        $this->demandFee = $demandFee;
+    }
+
+    public function setSupplyFee(float $supplyFee): void
+    {
+        if (!in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true)) {
+            throw new RuntimeException('Cannot set fee for unsupported capability: Publisher');
+        }
+
+        $this->supplyFee = $supplyFee;
     }
 }
