@@ -113,19 +113,11 @@ class CampaignsController extends Controller
 
         $this->validateRequestObject($request, 'campaign', Campaign::$rules);
         $input = $request->input('campaign');
+        $input = $this->processTargeting($input);
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
-
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
-
-        $input['targeting_requires'] = $targetingProcessor->processTargeting(
-            $request->input('campaign.targeting.requires')
-        );
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting(
-            $request->input('campaign.targeting.excludes')
-        );
 
         $banners = [];
 
@@ -253,15 +245,7 @@ class CampaignsController extends Controller
         );
 
         $input = $request->input('campaign');
-
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
-
-        $input['targeting_requires'] = $targetingProcessor->processTargeting(
-            $request->input('campaign.targeting.requires')
-        );
-        $input['targeting_excludes'] = $targetingProcessor->processTargeting(
-            $request->input('campaign.targeting.excludes')
-        );
+        $input = $this->processTargeting($input);
 
         unset($input['status']); // Client cannot change status in EDIT action
 
@@ -419,5 +403,15 @@ class CampaignsController extends Controller
         $campaign->classification_tags = null;
 
         $campaign->update();
+    }
+    
+    private function processTargeting(array $input): array
+    {
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+
+        $input['targeting_requires'] = $targetingProcessor->processTargeting($input['targeting']['requires'] ?? []);
+        $input['targeting_excludes'] = $targetingProcessor->processTargeting($input['targeting']['excludes'] ?? []);
+
+        return $input;
     }
 }
