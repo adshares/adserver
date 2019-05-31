@@ -34,7 +34,6 @@ class NetworkEventRepository implements EventRepository
         int $offset = 0
     ): array {
         $events = NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])
-            ->whereNull('event_value')
             ->take($limit)
             ->skip($offset)
             ->get();
@@ -43,13 +42,12 @@ class NetworkEventRepository implements EventRepository
     }
 
     public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $eventIdFirst,
-        int $eventIdLast,
+        int $eventPaymentIdFirst,
+        int $eventPaymentIdLast,
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array {
-        $events = NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])
-            ->whereNotNull('event_value')
+        $events = NetworkEventLog::whereBetween('ads_payment_id', [$eventPaymentIdFirst, $eventPaymentIdLast])
             ->take($limit)
             ->skip($offset)
             ->get();

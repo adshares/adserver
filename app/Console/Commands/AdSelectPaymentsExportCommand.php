@@ -27,7 +27,6 @@ use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use function sprintf;
 
 class AdSelectPaymentsExportCommand extends BaseCommand
@@ -56,18 +55,17 @@ class AdSelectPaymentsExportCommand extends BaseCommand
         $this->info('Start command '.$this->signature);
 
         try {
-            $eventIdFirst = $this->exporterService->getLastPaidEventId() + 1;
+            $eventPaymentIdFirst = $this->exporterService->getLastPaidEventId() + 1;
         } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
 
             return;
         }
 
-        $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', new DateTime('-10 minutes'))
-            ->max('id');
+        $eventPaymentIdLast = NetworkEventLog::where('ads_payment_id', '>=', $eventPaymentIdFirst)
+            ->max('ads_payment_id');
 
-        if (null === $eventIdLast) {
+        if (null === $eventPaymentIdLast) {
             $this->info('[ADSELECT] No events to export');
 
             return;
@@ -76,12 +74,12 @@ class AdSelectPaymentsExportCommand extends BaseCommand
         $this->info(
             sprintf(
                 '[ADSELECT] Trying to export paid events with event ids <%d;%d>',
-                $eventIdFirst,
-                $eventIdLast
+                $eventPaymentIdFirst,
+                $eventPaymentIdLast
             )
         );
 
-        $exported = $this->exporterService->exportPaidEvents($eventIdFirst, $eventIdLast);
+        $exported = $this->exporterService->exportPaidEvents($eventPaymentIdFirst, $eventPaymentIdLast);
         $this->info(
             sprintf(
                 '[ADSELECT] Exported %s paid events',

@@ -39,6 +39,8 @@ use function sprintf;
 
 class AdSelectEventExportCommand extends BaseCommand
 {
+    private const TIME_NEEDED_FOR_ADUSER_USER_MERGE = '-10 minutes';
+
     protected $signature = 'ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
@@ -81,7 +83,7 @@ class AdSelectEventExportCommand extends BaseCommand
         }
 
         $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', new DateTime('-10 minutes'))
+            ->where('created_at', '<=', new DateTime(self::TIME_NEEDED_FOR_ADUSER_USER_MERGE))
             ->max('id');
 
         if (null === $eventIdLast) {
@@ -115,9 +117,10 @@ class AdSelectEventExportCommand extends BaseCommand
 
         do {
             $events =
-                NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])->whereNull('event_value')->take(
-                    $limit
-                )->skip($offset)->get();
+                NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])
+                    ->take($limit)
+                    ->skip($offset)
+                    ->get();
 
             foreach ($events as $event) {
                 /** @var $event NetworkEventLog */

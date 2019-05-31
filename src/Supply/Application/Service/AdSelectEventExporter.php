@@ -58,15 +58,15 @@ class AdSelectEventExporter
         return $exported;
     }
 
-    public function exportPaidEvents(int $eventIdFirst, int $eventIdLast): int
+    public function exportPaidEvents(int $paymentIdFirst, int $paymentIdLast): int
     {
         $offset = 0;
         $exported = 0;
 
         do {
             $events = $this->eventRepository->fetchPaidEventsUpdatedAfterAdsPaymentId(
-                $eventIdFirst,
-                $eventIdLast,
+                $paymentIdFirst,
+                $paymentIdLast,
                 EventRepository::PACKAGE_SIZE,
                 $offset
             );

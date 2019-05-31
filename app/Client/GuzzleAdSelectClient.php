@@ -343,13 +343,17 @@ class GuzzleAdSelectClient implements AdSelect
             ));
         }
 
-        if (!isset($item['id'])) {
-            throw new UnexpectedClientResponseException(
+        if (!isset($item['id']) || !array_key_exists('payment_id', $item)) {
+            throw new UnexpectedClientResponseException(sprintf(
                 '[ADSELECT] Could not fetch last %s event from adselect (%s). Event id is required, given: %s.',
                 $type,
                 $this->client->getConfig()['base_uri'],
                 $body
-            );
+            ));
+        }
+
+        if ($type === 'paid' ) {
+            return (int)$item['payment_id'];
         }
 
         return (int)$item['id'];
