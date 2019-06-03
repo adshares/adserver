@@ -54,11 +54,15 @@ SQL;
     private const QUERY_CAMPAIGNS = <<<SQL
 SELECT
   SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(c.landing_url, '/', 3), '://', -1), '/', 1), '?',
-                  1)                                                      AS name,
-  SUM(IFNULL(e.views, 0))                                                 AS impressions,
-  ROUND(SUM(IFNULL(e.cost, 0)), 2)                                        AS cost,
-  ROUND(1000 * IFNULL(SUM(e.cost) / SUM(e.views), 0), 2)                  AS cpm,
-  GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height)) AS sizes
+                  1)                                     AS name,
+  SUM(IFNULL(e.views, 0))                                AS impressions,
+  ROUND(SUM(IFNULL(e.cost, 0)), 2)                       AS cost,
+  ROUND(1000 * IFNULL(SUM(e.cost) / SUM(e.views), 0), 2) AS cpm,
+  GROUP_CONCAT((
+    SELECT GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height))
+    FROM banners b
+    WHERE b.campaign_id = c.id
+  ))                                                     AS sizes
 FROM campaigns c
        LEFT JOIN (
     SELECT e.campaign_id, SUM(e.views) AS views, SUM(e.cost) / 100000000000 AS cost
@@ -67,7 +71,6 @@ FROM campaigns c
       AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
   ) AS e ON e.campaign_id = c.uuid
-       LEFT JOIN banners b ON b.campaign_id = c.id
 WHERE c.status = 2
   AND c.deleted_at IS NULL
   AND c.time_start <= NOW()
