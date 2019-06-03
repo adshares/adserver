@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
 
@@ -64,8 +65,8 @@ class StatisticsGlobalController extends Controller
 
     public function fetchSupplyStatistics()
     {
-        $operatorFee = 0.01;
-        $licenseFee = 0.05;
+        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        $licenseFee = Config::fetchFloatOrFail(Config::LICENCE_RX_FEE);
 
         return $this->supplyRepository->fetchStatistics($operatorFee, $licenseFee);
     }
