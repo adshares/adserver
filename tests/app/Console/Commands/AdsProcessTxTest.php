@@ -99,7 +99,7 @@ class AdsProcessTxTest extends TestCase
     public function testAdsProcessEventPayment(): void
     {
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             'AdServer',
             '0.1',
             new Url('http://127.0.0.1'),

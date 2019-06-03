@@ -189,6 +189,11 @@ final class Info
         return $data;
     }
 
+    public function getModule(): string
+    {
+        return $this->module;
+    }
+
     public function getTermsUrl(): string
     {
         return $this->termsUrl->toString();

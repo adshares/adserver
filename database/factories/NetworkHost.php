@@ -42,7 +42,7 @@ $factory->define(
 
         $host = 'https://'.parse_url($faker->url, PHP_URL_HOST);
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             $faker->domainWord,
             '0.1',
             new Url($host),

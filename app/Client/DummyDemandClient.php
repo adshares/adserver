@@ -178,7 +178,7 @@ final class DummyDemandClient implements DemandClient
     public function fetchInfo(UrlInterface $infoUrl): Info
     {
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             'ADSERVER DEMAND',
             '0.1',
             new Url('https://server.example.com/'),

@@ -27,9 +27,11 @@ use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Entity\Broadcast;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Network\BroadcastableUrl;
+use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Illuminate\Support\Facades\Log;
@@ -152,6 +154,8 @@ class AdsFetchHosts extends BaseCommand
 
             $info = $this->client->fetchInfo($url);
 
+            $this->validateInfo($info, $address);
+
             Log::debug("Got {$url->toString()}");
 
             $host = NetworkHost::registerHost($address, $info, $time);
@@ -160,6 +164,25 @@ class AdsFetchHosts extends BaseCommand
         } catch (RuntimeException|UnexpectedClientResponseException $exception) {
             $url = $url ?? '';
             Log::debug("[$url] {$exception->getMessage()}");
+        }
+    }
+
+    private function validateInfo(Info $info, string $address): void
+    {
+        if (InfoResponse::ADSHARES_MODULE_NAME !== $info->getModule()) {
+            throw new RuntimeException(sprintf('Info for invalid module: %s', $info->getModule()));
+        }
+
+        $adsAddress = $info->getAdsAddress();
+
+        if (!$adsAddress) {
+            throw new RuntimeException('Info has empty address');
+        }
+
+        if ($adsAddress !== $address) {
+            throw new RuntimeException(
+                sprintf('Info has different address than broadcast: %s !== %s', $adsAddress, $address)
+            );
         }
     }
 }

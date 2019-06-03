@@ -33,7 +33,7 @@ class MockDataNetworkHostsSeeder extends Seeder
         $this->command->info('[mock] seeding: network_hosts');
 
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             'ADSERVER DEMAND',
             '0.1',
             new Url('http://webserver'),
