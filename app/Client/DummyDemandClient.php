@@ -25,6 +25,7 @@ use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -175,7 +176,7 @@ final class DummyDemandClient implements DemandClient
 
     public function fetchInfo(UrlInterface $infoUrl): Info
     {
-        return new Info(
+        $info = new Info(
             'ADSERVER',
             'ADSERVER DEMAND',
             '0.1',
@@ -188,5 +189,11 @@ final class DummyDemandClient implements DemandClient
             'PUB',
             'ADV'
         );
+
+        $info->setDemandFee(0.01);
+        $info->setSupplyFee(0.01);
+        $info->setStatistics(new InfoStatistics(7, 1, 0));
+
+        return $info;
     }
 }
