@@ -44,18 +44,14 @@ class AdsFetchHosts extends BaseCommand
     const BLOCK_TIME = 512;
 
     /**
-     * Period is seconds which will be searched for broadcast
+     * Period in seconds which will be searched for broadcast
      */
     const PERIOD = 43200;//12 hours = 12 * 60 * 60 s
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $signature = 'ads:fetch-hosts';
 
-    /**
-     * @var string
-     */
+    /** @var string */
     protected $description = 'Fetches Demand AdServers';
 
     /** @var DemandClient */
@@ -68,9 +64,6 @@ class AdsFetchHosts extends BaseCommand
         parent::__construct($locker);
     }
 
-    /**
-     * @param AdsClient $adsClient
-     */
     public function handle(AdsClient $adsClient): void
     {
         if (!$this->lock()) {
@@ -98,11 +91,6 @@ class AdsFetchHosts extends BaseCommand
         $this->info('Finished command '.$this->signature);
     }
 
-    /**
-     * @param int $timeNow
-     *
-     * @return int
-     */
     private function getTimeOfFirstBlock(int $timeNow): int
     {
         $timeStart = $timeNow - self::PERIOD;
@@ -117,10 +105,6 @@ class AdsFetchHosts extends BaseCommand
         return $timeBlock;
     }
 
-    /**
-     * @param AdsClient $adsClient
-     * @param string $blockId
-     */
     private function handleBlock(AdsClient $adsClient, string $blockId): void
     {
         try {
@@ -140,9 +124,6 @@ class AdsFetchHosts extends BaseCommand
         }
     }
 
-    /**
-     * @param $broadcast
-     */
     private function handleBroadcast(Broadcast $broadcast): void
     {
         $address = $broadcast->getAddress();
