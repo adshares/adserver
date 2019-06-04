@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
@@ -33,6 +32,7 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,7 +50,7 @@ class AdPayGetPaymentsTest extends TestCase
 
         $this->app->bind(
             ExchangeRateRepository::class,
-            function () use ($dummyExchangeRateRepository) {
+            static function () use ($dummyExchangeRateRepository) {
                 return $dummyExchangeRateRepository;
             }
         );

@@ -20,34 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Mock\Client;
 
-final class AdvertiserBudget
+use Adshares\Adserver\Utilities\DateUtils;
+use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Application\Service\ExchangeRateRepository;
+use DateTime;
+
+class DummyExchangeRateRepository implements ExchangeRateRepository
 {
-    /** @var int */
-    private $total;
+    private const STABLE_RATE = 0.3333;
 
-    /** @var int */
-    private $bonusable;
-
-    public function __construct(int $total = 0, int $bonusable = 0)
+    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
     {
-        $this->total = $total;
-        $this->bonusable = $bonusable;
-    }
+        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
 
-    public function add(self $budget): self
-    {
-        return new self($this->total + $budget->total, $this->bonusable + $budget->bonusable);
-    }
-
-    public function total(): int
-    {
-        return $this->total;
-    }
-
-    public function bonusable(): int
-    {
-        return $this->bonusable;
+        return new ExchangeRate($date, self::STABLE_RATE, $currency);
     }
 }

@@ -53,6 +53,7 @@
     "autoload-dev": {
         "psr-4": {
             "Adshares\\Adserver\\Tests\\": "tests/app",
+            "Adshares\\Mock\\": "tests/mock",
             "Adshares\\Tests\\": "tests/src"
         }
     },

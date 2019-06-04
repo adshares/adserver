@@ -25,8 +25,6 @@ use Adshares\Ads\Command\GetBlockIdsCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
-use Adshares\Adserver\Client\DummyAdSelectClient;
-use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkEventLog;
@@ -34,10 +32,10 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Common\Domain\ValueObject\Email;
-use Adshares\Common\Domain\ValueObject\Url;
+use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Application\Dto\Info;
+use Adshares\Mock\Client\DummyAdSelectClient;
+use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Exception;
@@ -96,22 +94,12 @@ class AdsProcessTxTest extends TestCase
 
     public function testAdsProcessEventPayment(): void
     {
-        $info = new Info(
-            'ADSERVER',
-            'AdServer',
-            '0.1',
-            new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1'),
-            new Url('http://127.0.0.1'),
-            new Email('mail@example.com'),
-            'PUB'
-        );
+        $demandClient = new DummyDemandClient();
+        
+        $info = $demandClient->fetchInfo(new NullUrl());
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        $demandClient = new DummyDemandClient();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '');
         $context = $this->getContext();
         $totalEventValue = 0;

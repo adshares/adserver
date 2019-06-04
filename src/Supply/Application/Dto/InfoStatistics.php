@@ -20,34 +20,40 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Supply\Application\Dto;
 
-final class AdvertiserBudget
+final class InfoStatistics
 {
     /** @var int */
-    private $total;
+    private $users;
 
     /** @var int */
-    private $bonusable;
+    private $campaigns;
 
-    public function __construct(int $total = 0, int $bonusable = 0)
-    {
-        $this->total = $total;
-        $this->bonusable = $bonusable;
+    /** @var int */
+    private $sites;
+
+    public function __construct(
+        int $users,
+        int $campaigns,
+        int $sites
+    ) {
+        $this->users = $users;
+        $this->campaigns = $campaigns;
+        $this->sites = $sites;
     }
 
-    public function add(self $budget): self
+    public static function fromArray(array $data): self
     {
-        return new self($this->total + $budget->total, $this->bonusable + $budget->bonusable);
+        return new self($data['users'], $data['campaigns'], $data['sites']);
     }
 
-    public function total(): int
+    public function toArray(): array
     {
-        return $this->total;
-    }
-
-    public function bonusable(): int
-    {
-        return $this->bonusable;
+        return [
+            'users' => $this->users,
+            'campaigns' => $this->campaigns,
+            'sites' => $this->sites,
+        ];
     }
 }

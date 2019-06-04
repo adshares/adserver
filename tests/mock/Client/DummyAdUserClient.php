@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,13 +20,14 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Mock\Client;
 
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use RuntimeException;
 use function base_path;
 use function file_get_contents;
 use function GuzzleHttp\json_decode;
@@ -35,7 +36,7 @@ final class DummyAdUserClient implements AdUser
 {
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = base_path('docs/schemas/taxonomy/v0.1/targeting-example.json');
+        $path = base_path('tests/app/targeting_schema.json');
         $var = file_get_contents($path);
         $taxonomy = json_decode($var, true);
 
@@ -44,6 +45,6 @@ final class DummyAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $context): UserContext
     {
-        throw new Exception('Method getUserContext() not implemented');
+        throw new RuntimeException('Method getUserContext() not implemented');
     }
 }

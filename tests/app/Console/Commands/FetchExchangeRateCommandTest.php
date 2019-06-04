@@ -20,11 +20,11 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyExchangeRateRepository;
 
 final class FetchExchangeRateCommandTest extends TestCase
 {

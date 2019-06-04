@@ -20,21 +20,29 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Adserver\Utilities\DateUtils;
-use Adshares\Common\Application\Dto\ExchangeRate;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use DateTime;
-
-class DummyExchangeRateRepository implements ExchangeRateRepository
+class AddReferrerUserIdToUsersTable extends Migration
 {
-    private const STABLE_RATE = 0.3333;
-
-    public function fetchExchangeRate(DateTime $dateTime = null, string $currency = 'USD'): ExchangeRate
+    public function up(): void
     {
-        $date = DateUtils::getDateTimeRoundedToCurrentHour($dateTime);
+        Schema::table(
+            'users',
+            function (Blueprint $table) {
+                $table->bigInteger('referrer_user_id')->nullable(true);
+            }
+        );
+    }
 
-        return new ExchangeRate($date, self::STABLE_RATE, $currency);
+    public function down(): void
+    {
+        Schema::table(
+            'users',
+            function (Blueprint $table) {
+                $table->dropColumn('referrer_user_id');
+            }
+        );
     }
 }
