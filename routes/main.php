@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\StatisticsGlobalController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [InfoController::class, 'info'])
@@ -31,6 +32,14 @@ Route::get('/info.json', [InfoController::class, 'info'])
     ->name('app.infoEndpoint');
 Route::get('/upload-preview/{type}/{name}', [CampaignsController::class, 'uploadPreview'])
     ->name('app.campaigns.upload_preview');
+
+Route::get('/stats/demand/statistics', [StatisticsGlobalController::class, 'fetchDemandStatistics']);
+Route::get('/stats/demand/domains', [StatisticsGlobalController::class, 'fetchDemandDomains']);
+Route::get('/stats/demand/campaigns', [StatisticsGlobalController::class, 'fetchDemandCampaigns']);
+Route::get('/stats/demand/banners/sizes', [StatisticsGlobalController::class, 'fetchDemandBannersSizes']);
+
+Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetchSupplyStatistics']);
+Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fetchSupplyZonesSizes']);
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
