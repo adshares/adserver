@@ -25,11 +25,13 @@ use Illuminate\Database\Migrations\Migration;
 class ChangeConfigEntryForAdselectExport extends Migration
 {
     private const DATABASE_DATETIME_FORMAT = 'Y-m-d H:i:s';
+    private const ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID = 'adselect-payment-export';
+
 
     public function up(): void
     {
         $adselectPaymentExportDate = DB::table('configs')
-            ->where('key', Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
+            ->where('key', self::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->first();
 
         if (null === $adselectPaymentExportDate) {
@@ -50,7 +52,7 @@ class ChangeConfigEntryForAdselectExport extends Migration
         }
 
         DB::table('configs')
-            ->where('key', Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
+            ->where('key', self::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->update(
                 [
                     'value' => $adsPaymentId,
@@ -62,7 +64,7 @@ class ChangeConfigEntryForAdselectExport extends Migration
     public function down(): void
     {
         $adselectPaymentExportAdsPaymentId = DB::table('configs')
-            ->where('key', Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
+            ->where('key', self::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->first();
 
         if (null === $adselectPaymentExportAdsPaymentId) {
@@ -82,7 +84,7 @@ class ChangeConfigEntryForAdselectExport extends Migration
         $dateTime = DateTime::createFromFormat(self::DATABASE_DATETIME_FORMAT, $updatedAt);
 
         DB::table('configs')
-            ->where('key', Config::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
+            ->where('key', self::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->update(
                 [
                     'value' => $dateTime->format(DateTime::ATOM),

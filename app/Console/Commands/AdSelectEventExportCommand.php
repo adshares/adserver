@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
 use Adshares\Common\Application\Service\AdUser;
@@ -33,12 +32,15 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Facades\Log;
 use function sprintf;
 
 class AdSelectEventExportCommand extends BaseCommand
 {
+    private const TIME_NEEDED_FOR_ADUSER_USER_MERGE = '-10 minutes';
+
     protected $signature = 'ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
@@ -72,26 +74,16 @@ class AdSelectEventExportCommand extends BaseCommand
 
         $this->info('[AdSelectEventExport] Start command '.$this->signature);
 
-        $lastExportDate = Config::fetchDateTime(Config::ADSELECT_EVENT_EXPORT_TIME);
-
-        $this->info(sprintf(
-            '[ADSELECT] Trying to export unpaid events from %s',
-            $lastExportDate->format(DateTime::ATOM)
-        ));
-
-//        TODO SRV-356 fetch NetworkEventLog uuid from adselect
-//        $eventUuid =
-//        $eventIdFirst = NetworkEventLog::fetchByEventId($eventUuid);
-        $eventIdFirst = NetworkEventLog::where('created_at', '>=', $lastExportDate)->min('id');
-
-        if (null === $eventIdFirst) {
-            $this->info('[ADSELECT] No events to export');
+        try {
+            $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
+        } catch (UnexpectedClientResponseException|RuntimeException $exception) {
+            $this->error($exception->getMessage());
 
             return;
         }
 
         $eventIdLast = NetworkEventLog::where('id', '>=', $eventIdFirst)
-            ->where('created_at', '<=', new DateTime('-10 minutes'))
+            ->where('created_at', '<=', new DateTime(self::TIME_NEEDED_FOR_ADUSER_USER_MERGE))
             ->max('id');
 
         if (null === $eventIdLast) {
@@ -114,10 +106,6 @@ class AdSelectEventExportCommand extends BaseCommand
             $exported
         ));
 
-        // TODO SRV-356 remove storing last export time and delete key from Config (model and database)
-        $dateTime = new DateTime();
-        Config::upsertDateTime(Config::ADSELECT_EVENT_EXPORT_TIME, $dateTime);
-
         $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
     }
 
@@ -129,9 +117,10 @@ class AdSelectEventExportCommand extends BaseCommand
 
         do {
             $events =
-                NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])->whereNull('event_value')->take(
-                    $limit
-                )->skip($offset)->get();
+                NetworkEventLog::whereBetween('id', [$eventIdFirst, $eventIdLast])
+                    ->take($limit)
+                    ->skip($offset)
+                    ->get();
 
             foreach ($events as $event) {
                 /** @var $event NetworkEventLog */
