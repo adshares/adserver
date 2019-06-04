@@ -20,8 +20,8 @@
 
 namespace Adshares\Test\Supply\Application\Service;
 
-use Adshares\Adserver\Client\DummyDemandClient;
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\ClassifyVerifier;

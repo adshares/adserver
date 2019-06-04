@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
-use Adshares\Adserver\Client\DummyExchangeRateRepository;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
@@ -30,6 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;

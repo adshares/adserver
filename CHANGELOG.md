@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2019-06-04
+### Added
+- Comparing campaign targeting with the schema
+- User referrer
+- ADS address, statistics and operator fees to server information (info.json)
+
 ## [0.9.0] - 2019-05-30
 ### Added
 - Event statistics reports for operators
@@ -151,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.9.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.10.0...develop
+[0.10.0]: https://github.com/adshares/adserver/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/adshares/adserver/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/adshares/adserver/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/adshares/adserver/compare/v0.7.3...v0.8.0

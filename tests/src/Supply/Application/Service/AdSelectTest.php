@@ -22,8 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Supply\Application\Service;
 
-use Adshares\Adserver\Client\DummyAdSelectClient;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
