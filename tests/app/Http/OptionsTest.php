@@ -21,12 +21,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Mock\Client\DummyAdClassifyClient;
+use Adshares\Mock\Client\DummyAdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class OptionsTest extends TestCase
