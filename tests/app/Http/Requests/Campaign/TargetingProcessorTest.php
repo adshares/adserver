@@ -20,12 +20,12 @@
 
 namespace Adshares\Adserver\Tests\Http\Requests\Campaign;
 
-use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Mock\Client\DummyAdUserClient;
 
 final class TargetingProcessorTest extends TestCase
 {

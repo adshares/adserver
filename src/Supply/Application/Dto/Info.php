@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Domain\Id;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
@@ -65,6 +68,9 @@ final class Info
     /** @var UrlInterface */
     private $serverUrl;
 
+    /** @var Id */
+    private $adsAddress;
+
     /** @var Email|null */
     private $supportEmail;
 
@@ -86,6 +92,7 @@ final class Info
         UrlInterface $privacyUrl,
         UrlInterface $termsUrl,
         UrlInterface $inventoryUrl,
+        Id $adsAddress,
         ?Email $supportEmail,
         string ...$capabilities
     ) {
@@ -100,6 +107,7 @@ final class Info
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
         $this->serverUrl = $serverUrl;
+        $this->adsAddress = $adsAddress;
         $this->supportEmail = $supportEmail;
     }
 
@@ -116,6 +124,7 @@ final class Info
     public static function fromArray(array $data): self
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
+        $adsAddress = isset($data['adsAddress']) ? new AccountId($data['adsAddress']) : new EmptyAccountId();
 
         $info = new self(
             $data['module'] ?? $data['serviceType'],
@@ -126,6 +135,7 @@ final class Info
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
+            $adsAddress,
             $email,
             ...$data['capabilities'] ?? $data['supported']
         );
@@ -157,6 +167,7 @@ final class Info
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
+            'adsAddress' => $this->adsAddress->toString(),
         ];
 
         if (null !== $this->supportEmail) {
@@ -176,6 +187,11 @@ final class Info
         }
 
         return $data;
+    }
+
+    public function getModule(): string
+    {
+        return $this->module;
     }
 
     public function getTermsUrl(): string
@@ -206,6 +222,11 @@ final class Info
     public function getInventoryUrl(): string
     {
         return $this->inventoryUrl->toString();
+    }
+
+    public function getAdsAddress(): string
+    {
+        return $this->adsAddress->toString();
     }
 
     public function setDemandFee(float $demandFee): void

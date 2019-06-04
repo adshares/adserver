@@ -42,7 +42,7 @@ $factory->define(
 
         $host = 'https://'.parse_url($faker->url, PHP_URL_HOST);
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             $faker->domainWord,
             '0.1',
             new Url($host),
@@ -50,6 +50,7 @@ $factory->define(
             new Url($host.'/policies/privacy.html'),
             new Url($host.'/policies/terms.html'),
             new Url($host.'/adshares/inventory/list'),
+            new AccountId('0001-00000004-DBEB'),
             new Email($faker->companyEmail),
             'PUB',
             'ADV'

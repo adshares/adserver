@@ -1,13 +1,13 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
  * AdServer is free software: you can redistribute and/or modify it
  * under the terms of the GNU General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
  * AdServer is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty
@@ -18,8 +18,9 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Client;
+namespace Adshares\Mock\Client;
 
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -177,7 +178,7 @@ final class DummyDemandClient implements DemandClient
     public function fetchInfo(UrlInterface $infoUrl): Info
     {
         $info = new Info(
-            'ADSERVER',
+            'adserver',
             'ADSERVER DEMAND',
             '0.1',
             new Url('https://server.example.com/'),
@@ -185,6 +186,7 @@ final class DummyDemandClient implements DemandClient
             new Url('https://example.com/privacy'),
             new Url('https://example.com/terms'),
             new Url('https://inventory.example.com/import'),
+            new AccountId('0001-00000004-DBEB'),
             new Email('mail@example.com'),
             'PUB',
             'ADV'
