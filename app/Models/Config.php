@@ -157,6 +157,10 @@ class Config extends Model
 
     public static function fetchFloatOrFail(string $key): float
     {
+        if (in_array($key, [Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE, Config::LICENCE_ACCOUNT], true)) {
+            throw new RuntimeException(sprintf('These value %s need to be taken from a license reader', $key));
+        }
+
         return (float)self::fetchByKeyOrFail($key)->value;
     }
 
