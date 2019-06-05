@@ -22,7 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Dto;
 
+use Adshares\Common\Domain\Id;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
+use Adshares\Common\Domain\ValueObject\EmptyAccountId;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\UrlInterface;
@@ -65,8 +68,20 @@ final class Info
     /** @var UrlInterface */
     private $serverUrl;
 
+    /** @var Id */
+    private $adsAddress;
+
     /** @var Email|null */
     private $supportEmail;
+
+    /** @var float|null */
+    private $demandFee;
+
+    /** @var float|null */
+    private $supplyFee;
+
+    /** @var InfoStatistics|null */
+    private $statistics;
 
     public function __construct(
         string $module,
@@ -77,6 +92,7 @@ final class Info
         UrlInterface $privacyUrl,
         UrlInterface $termsUrl,
         UrlInterface $inventoryUrl,
+        Id $adsAddress,
         ?Email $supportEmail,
         string ...$capabilities
     ) {
@@ -91,6 +107,7 @@ final class Info
         $this->termsUrl = $termsUrl;
         $this->inventoryUrl = $inventoryUrl;
         $this->serverUrl = $serverUrl;
+        $this->adsAddress = $adsAddress;
         $this->supportEmail = $supportEmail;
     }
 
@@ -107,8 +124,9 @@ final class Info
     public static function fromArray(array $data): self
     {
         $email = isset($data['supportEmail']) ? new Email($data['supportEmail']) : null;
+        $adsAddress = isset($data['adsAddress']) ? new AccountId($data['adsAddress']) : new EmptyAccountId();
 
-        return new self(
+        $info = new self(
             $data['module'] ?? $data['serviceType'],
             $data['name'],
             $data['version'] ?? $data['softwareVersion'],
@@ -117,9 +135,24 @@ final class Info
             new Url($data['privacyUrl']),
             new Url($data['termsUrl']),
             new Url($data['inventoryUrl']),
+            $adsAddress,
             $email,
             ...$data['capabilities'] ?? $data['supported']
         );
+
+        if (isset($data['demandFee'])) {
+            $info->setDemandFee($data['demandFee']);
+        }
+
+        if (isset($data['supplyFee'])) {
+            $info->setSupplyFee($data['supplyFee']);
+        }
+
+        if (isset($data['statistics'])) {
+            $info->setStatistics(InfoStatistics::fromArray($data['statistics']));
+        }
+
+        return $info;
     }
 
     public function toArray(): array
@@ -134,13 +167,31 @@ final class Info
             'privacyUrl' => $this->privacyUrl->toString(),
             'termsUrl' => $this->termsUrl->toString(),
             'inventoryUrl' => $this->inventoryUrl->toString(),
+            'adsAddress' => $this->adsAddress->toString(),
         ];
 
         if (null !== $this->supportEmail) {
             $data['supportEmail'] = $this->supportEmail->toString();
         }
 
+        if (null !== $this->demandFee) {
+            $data['demandFee'] = $this->demandFee;
+        }
+
+        if (null !== $this->supplyFee) {
+            $data['supplyFee'] = $this->supplyFee;
+        }
+
+        if (null !== $this->statistics) {
+            $data['statistics'] = $this->statistics->toArray();
+        }
+
         return $data;
+    }
+
+    public function getModule(): string
+    {
+        return $this->module;
     }
 
     public function getTermsUrl(): string
@@ -171,5 +222,33 @@ final class Info
     public function getInventoryUrl(): string
     {
         return $this->inventoryUrl->toString();
+    }
+
+    public function getAdsAddress(): string
+    {
+        return $this->adsAddress->toString();
+    }
+
+    public function setDemandFee(float $demandFee): void
+    {
+        if (!in_array(self::CAPABILITY_ADVERTISER, $this->capabilities, true)) {
+            throw new RuntimeException('Cannot set fee for unsupported capability: Advertiser');
+        }
+
+        $this->demandFee = $demandFee;
+    }
+
+    public function setSupplyFee(float $supplyFee): void
+    {
+        if (!in_array(self::CAPABILITY_PUBLISHER, $this->capabilities, true)) {
+            throw new RuntimeException('Cannot set fee for unsupported capability: Publisher');
+        }
+
+        $this->supplyFee = $supplyFee;
+    }
+
+    public function setStatistics(InfoStatistics $statistics): void
+    {
+        $this->statistics = $statistics;
     }
 }

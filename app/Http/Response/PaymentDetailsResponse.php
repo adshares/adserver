@@ -40,6 +40,7 @@ final class PaymentDetailsResponse implements Arrayable
             $data = $entry->toArray();
 
             return [
+                'case_id' => $data['case_id'],
                 'event_id' => $data['event_id'],
                 'event_type' => $data['event_type'],
                 'banner_id' => $data['banner_id'],

@@ -23,10 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Response;
 
 use Adshares\Adserver\Models\Config;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Url;
 use Adshares\Supply\Application\Dto\Info;
+use Adshares\Supply\Application\Dto\InfoStatistics;
 use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
@@ -41,6 +43,11 @@ final class InfoResponse implements Arrayable
         $this->info = $info;
     }
 
+    public function updateWithStatistics(InfoStatistics $statistics): void
+    {
+        $this->info->setStatistics($statistics);
+    }
+
     public function toArray(): array
     {
         return $this->info->toArray();
@@ -48,7 +55,7 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        return new self(new Info(
+        $info = new Info(
             self::ADSHARES_MODULE_NAME,
             (string)config('app.name'),
             (string)config('app.version'),
@@ -57,9 +64,18 @@ final class InfoResponse implements Arrayable
             new SecureUrl((string)config('app.privacy_url')),
             new SecureUrl((string)config('app.terms_url')),
             new SecureUrl(route('demand-inventory')),
+            new AccountId((string)config('app.adshares_address')),
             new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
             Info::CAPABILITY_ADVERTISER,
             Info::CAPABILITY_PUBLISHER
-        ));
+        );
+
+        $demandFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $info->setDemandFee($demandFee);
+
+        $supplyFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        $info->setSupplyFee($supplyFee);
+
+        return new self($info);
     }
 }

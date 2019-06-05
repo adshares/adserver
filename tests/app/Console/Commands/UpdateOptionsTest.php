@@ -22,10 +22,10 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\DummyAdUserClient;
 use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Mock\Client\DummyAdUserClient;
 
 class UpdateOptionsTest extends TestCase
 {
