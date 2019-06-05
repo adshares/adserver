@@ -33,8 +33,6 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
 {
-    private const FEE_PRECISION_MAXIMUM = 4;
-
     /** @var Info */
     private $info;
 
@@ -43,6 +41,16 @@ final class InfoResponse implements Arrayable
     public function __construct(Info $info)
     {
         $this->info = $info;
+    }
+
+    public function updateWithDemandFee(float $fee): void
+    {
+        $this->info->setDemandFee($fee);
+    }
+
+    public function updateWithSupplyFee(float $fee): void
+    {
+        $this->info->setSupplyFee($fee);
     }
 
     public function updateWithStatistics(InfoStatistics $statistics): void
@@ -57,36 +65,21 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        $info = new Info(
-            self::ADSHARES_MODULE_NAME,
-            (string)config('app.name'),
-            (string)config('app.version'),
-            new SecureUrl((string)config('app.url')),
-            new Url((string)config('app.adpanel_url')),
-            new SecureUrl((string)config('app.privacy_url')),
-            new SecureUrl((string)config('app.terms_url')),
-            new SecureUrl(route('demand-inventory')),
-            new AccountId((string)config('app.adshares_address')),
-            new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
-            Info::CAPABILITY_ADVERTISER,
-            Info::CAPABILITY_PUBLISHER
+        return new self(
+            new Info(
+                self::ADSHARES_MODULE_NAME,
+                (string)config('app.name'),
+                (string)config('app.version'),
+                new SecureUrl((string)config('app.url')),
+                new Url((string)config('app.adpanel_url')),
+                new SecureUrl((string)config('app.privacy_url')),
+                new SecureUrl((string)config('app.terms_url')),
+                new SecureUrl(route('demand-inventory')),
+                new AccountId((string)config('app.adshares_address')),
+                new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
+                Info::CAPABILITY_ADVERTISER,
+                Info::CAPABILITY_PUBLISHER
+            )
         );
-
-        $licenseTxFee = Config::fetchFloatOrFail(Config::LICENCE_TX_FEE);
-        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-
-        $info->setDemandFee(self::calculateTotalFee($licenseTxFee, $operatorTxFee));
-
-        $licenseRxFee = Config::fetchFloatOrFail(Config::LICENCE_RX_FEE);
-        $operatorRxFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-
-        $info->setSupplyFee(self::calculateTotalFee($licenseRxFee, $operatorRxFee));
-
-        return new self($info);
-    }
-
-    private static function calculateTotalFee(float $licenseFee, float $operatorFee): float
-    {
-        return round($licenseFee + (1 - $licenseFee) * $operatorFee, self::FEE_PRECISION_MAXIMUM);
     }
 }

@@ -26,9 +26,13 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 
 class StatisticsGlobalController extends Controller
 {
+    /** @var LicenseReader */
+    private $licenseReader;
+
     /** @var MySqlDemandServerStatisticsRepository */
     private $demandRepository;
 
@@ -36,9 +40,11 @@ class StatisticsGlobalController extends Controller
     private $supplyRepository;
 
     public function __construct(
+        LicenseReader $licenseReader,
         MySqlDemandServerStatisticsRepository $demandRepository,
         MySqlSupplyServerStatisticsRepository $supplyRepository
     ) {
+        $this->licenseReader = $licenseReader;
         $this->demandRepository = $demandRepository;
         $this->supplyRepository = $supplyRepository;
     }
@@ -66,7 +72,7 @@ class StatisticsGlobalController extends Controller
     public function fetchSupplyStatistics()
     {
         $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        $licenseFee = Config::fetchFloatOrFail(Config::LICENCE_RX_FEE);
+        $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
 
         return $this->supplyRepository->fetchStatistics($operatorFee, $licenseFee);
     }

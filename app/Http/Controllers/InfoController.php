@@ -24,16 +24,27 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Regulation;
 use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Illuminate\View\View;
 
 class InfoController extends Controller
 {
+    private const FEE_PRECISION_MAXIMUM = 4;
+
+    /** @var LicenseReader */
+    private $licenseReader;
+
+    /** @var MySqlServerStatisticsRepository */
     private $adserverStatisticsRepository;
 
-    public function __construct(MySqlServerStatisticsRepository $adserverStatisticsRepository)
-    {
+    public function __construct(
+        LicenseReader $licenseReader,
+        MySqlServerStatisticsRepository $adserverStatisticsRepository
+    ) {
+        $this->licenseReader = $licenseReader;
         $this->adserverStatisticsRepository = $adserverStatisticsRepository;
     }
 
@@ -44,7 +55,20 @@ class InfoController extends Controller
         $statistics = $this->adserverStatisticsRepository->fetchInfoStatistics();
         $response->updateWithStatistics($statistics);
 
+        $licenseTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+        $response->updateWithDemandFee($this->calculateTotalFee($licenseTxFee, $operatorTxFee));
+
+        $licenseRxFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
+        $operatorRxFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        $response->updateWithSupplyFee($this->calculateTotalFee($licenseRxFee, $operatorRxFee));
+
         return $response;
+    }
+
+    private function calculateTotalFee(float $licenseFee, float $operatorFee): float
+    {
+        return round($licenseFee + (1 - $licenseFee) * $operatorFee, self::FEE_PRECISION_MAXIMUM);
     }
 
     public function privacyPolicy(): View
