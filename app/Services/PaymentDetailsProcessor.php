@@ -22,12 +22,18 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
+use Adshares\Ads\AdsClient;
+use Adshares\Ads\Command\SendOneCommand;
+use Adshares\Ads\Driver\CommandError;
+use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Exception;
@@ -36,6 +42,9 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentDetailsProcessor
 {
+    /** @var AdsClient */
+    private $adsClient;
+
     /** @var string */
     private $adServerAddress;
 
@@ -45,25 +54,31 @@ class PaymentDetailsProcessor
     /** @var LicenseReader */
     private $licenseReader;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader, LicenseReader $licenseReader)
-    {
+    public function __construct(
+        AdsClient $adsClient,
+        ExchangeRateReader $exchangeRateReader,
+        LicenseReader $licenseReader
+    ) {
+        $this->adsClient = $adsClient;
         $this->adServerAddress = (string)config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
         $this->licenseReader = $licenseReader;
     }
 
     /**
-     * @param string $senderAddress
-     * @param int $adsPaymentId
+     * @param AdsPayment $adsPayment
      * @param array $paymentDetails
      *
      * @throws MissingInitialConfigurationException
      */
-    public function processPaymentDetails(string $senderAddress, int $adsPaymentId, array $paymentDetails): void
+    public function processPaymentDetails(AdsPayment $adsPayment, array $paymentDetails): void
     {
+        $senderAddress = $adsPayment->address;
+        $adsPaymentId = $adsPayment->id;
+
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
-        $amountReceived = $this->getPaymentAmount($adsPaymentId);
+        $amountReceived = (int)$adsPayment->amount;
 
         try {
             $licenseAccount = $this->licenseReader->getAddress()->toString();
@@ -130,27 +145,24 @@ class PaymentDetailsProcessor
                 $totalLicenceFee += $paymentDetail['license_fee'];
             }
 
-            NetworkPayment::registerNetworkPayment(
+            $licensePayment = NetworkPayment::registerNetworkPayment(
                 $licenseAccount,
                 $this->adServerAddress,
                 $totalLicenceFee,
                 $adsPaymentId
             );
 
+            $this->addAdIncomeToUserLedger($adsPayment);
+
             DB::commit();
+
+            $this->sendLicensePayment($licensePayment);
         } catch (Exception $e) {
             DB::rollBack();
 
             throw $e;
         }
         // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
-    }
-
-    private function getPaymentAmount(int $adsPaymentId): int
-    {
-        $adsPayment = AdsPayment::find($adsPaymentId);
-
-        return (int)$adsPayment->amount;
     }
 
     private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
@@ -183,5 +195,73 @@ class PaymentDetailsProcessor
         }
 
         return $weightSum;
+    }
+
+    private function sendLicensePayment(NetworkPayment $payment): void
+    {
+        $amount = $payment->amount;
+        $receiverAddress = $payment->receiver_address;
+
+        try {
+            if ($amount > 0) {
+                $command = new SendOneCommand($receiverAddress, $amount);
+                $response = $this->adsClient->runTransaction($command);
+                $responseTx = $response->getTx();
+
+                $payment->tx_id = $responseTx->getId();
+                $payment->tx_time = $responseTx->getTime()->getTimestamp();
+            }
+
+            $payment->processed = '1';
+            $payment->save();
+        } catch (Exception $exception) {
+            if ($exception instanceof CommandException && $exception->getCode() === CommandError::LOW_BALANCE) {
+                $exceptionMessage = 'Insufficient funds on Operator Account.';
+            } else {
+                $exceptionMessage = sprintf('Unexpected Error (%s).', $exception->getMessage());
+            }
+
+            $message = '[Supply] (PaymentDetailsProcessor) %s ';
+            $message .= 'Could not send a license fee to %s. NetworkPayment id %s. Amount %s.';
+
+            Log::error(sprintf($message, $exceptionMessage, $receiverAddress, $payment->id, $amount));
+        }
+    }
+
+    private function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
+    {
+        $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
+
+        foreach ($splitPayments as $splitPayment) {
+            $userUuid = $splitPayment->publisher_id;
+            $amount = (int)$splitPayment->paid_amount;
+
+            $user = User::fetchByUuid($userUuid);
+
+            if (null === $user) {
+                Log::error(
+                    sprintf(
+                        '[Supply] (SupplySendPayments) User %s does not exist. AdsPayment id %s. Amount %s.',
+                        $userUuid,
+                        $adsPayment->id,
+                        $amount
+                    )
+                );
+
+                continue;
+            }
+
+            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+                $user->id,
+                $amount,
+                UserLedgerEntry::STATUS_ACCEPTED,
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $adsPayment->address,
+                $this->adServerAddress,
+                $adsPayment->txid
+            );
+
+            $userLedgerEntry->save();
+        }
     }
 }
