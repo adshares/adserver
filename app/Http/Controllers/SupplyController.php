@@ -120,26 +120,6 @@ class SupplyController extends Controller
 
         $response->headers->set('Content-Type', 'text/javascript');
 
-        return $this->modifyCaching($request, $response);
-    }
-
-    private function modifyCaching(Request $request, StreamedResponse $response): StreamedResponse
-    {
-//        $response->setCache(
-//            [
-//                'etag' => md5(md5_file($jsPath).implode(':', $params)),
-//                'last_modified' => new \DateTime('@'.filemtime($jsPath)),
-//                'max_age' => 3600 * 24 * 30,
-//                's_maxage' => 3600 * 24 * 30,
-//                'private' => false,
-//                'public' => true,
-//            ]
-//        );
-
-        if (!$response->isNotModified($request)) {
-            // TODO: ask Jacek
-        }
-
         return $response;
     }
 
