@@ -93,7 +93,7 @@ class SupplyController extends Controller
         return self::json($bannerFinder->findBanners($zones, $context));
     }
 
-    public function findScript(Request $request): StreamedResponse
+    public function findScript(): StreamedResponse
     {
         $params = [
             config('app.url'),
@@ -105,7 +105,7 @@ class SupplyController extends Controller
 
         $response = new StreamedResponse();
         $response->setCallback(
-            function () use ($jsPath, $params) {
+            static function () use ($jsPath, $params) {
                 echo str_replace(
                     [
                         '{{ ORIGIN }}',
