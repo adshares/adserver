@@ -24,28 +24,25 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Regulation;
 use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
-use Adshares\Common\Infrastructure\Service\LicenseReader;
+use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Illuminate\View\View;
 
 class InfoController extends Controller
 {
-    private const FEE_PRECISION_MAXIMUM = 4;
-
-    /** @var LicenseReader */
-    private $licenseReader;
-
     /** @var MySqlServerStatisticsRepository */
     private $adserverStatisticsRepository;
 
+    /** @var TotalFeeReader */
+    private $totalFeeReader;
+
     public function __construct(
-        LicenseReader $licenseReader,
-        MySqlServerStatisticsRepository $adserverStatisticsRepository
+        MySqlServerStatisticsRepository $adserverStatisticsRepository,
+        TotalFeeReader $totalFeeReader
     ) {
-        $this->licenseReader = $licenseReader;
         $this->adserverStatisticsRepository = $adserverStatisticsRepository;
+        $this->totalFeeReader = $totalFeeReader;
     }
 
     public function info(): InfoResponse
@@ -55,20 +52,10 @@ class InfoController extends Controller
         $statistics = $this->adserverStatisticsRepository->fetchInfoStatistics();
         $response->updateWithStatistics($statistics);
 
-        $licenseTxFee = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-        $response->updateWithDemandFee($this->calculateTotalFee($licenseTxFee, $operatorTxFee));
-
-        $licenseRxFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
-        $operatorRxFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        $response->updateWithSupplyFee($this->calculateTotalFee($licenseRxFee, $operatorRxFee));
+        $response->updateWithDemandFee($this->totalFeeReader->getTotalFeeDemand());
+        $response->updateWithSupplyFee($this->totalFeeReader->getTotalFeeSupply());
 
         return $response;
-    }
-
-    private function calculateTotalFee(float $licenseFee, float $operatorFee): float
-    {
-        return round($licenseFee + (1 - $licenseFee) * $operatorFee, self::FEE_PRECISION_MAXIMUM);
     }
 
     public function privacyPolicy(): View

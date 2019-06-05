@@ -29,9 +29,9 @@ class MySqlSupplyServerStatisticsRepository
 {
     private const QUERY_STATISTICS = <<<SQL
 SELECT
-  DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")               AS date,
-  SUM(views)                                              AS impressions,
-  ROUND((SUM(e.revenue) / 100000000000) / #fee_coefficient, 2) AS volume
+  DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")                       AS date,
+  SUM(views)                                                      AS impressions,
+  ROUND((SUM(e.revenue) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_event_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
@@ -57,15 +57,15 @@ WHERE z.status = 1
 GROUP BY 1;
 SQL;
 
-    public function fetchStatistics(float $operatorFee, float $licenseFee): array
+    public function fetchStatistics(float $totalFee): array
     {
-        if ($operatorFee >= 1 || $licenseFee >= 1) {
+        if ($totalFee >= 1) {
             throw new RuntimeException('Fee coefficient is greater or equal 1.');
         }
 
-        $feeCoefficient = (1 - $operatorFee) * (1 - $licenseFee);
+        $volumeCoefficient = 1 - $totalFee;
 
-        $query = str_replace('#fee_coefficient', $feeCoefficient, self::QUERY_STATISTICS);
+        $query = str_replace('#volume_coefficient', $volumeCoefficient, self::QUERY_STATISTICS);
 
         return DB::select($query);
     }
