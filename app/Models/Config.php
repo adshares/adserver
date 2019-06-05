@@ -155,9 +155,15 @@ class Config extends Model
         return (int)self::fetchByKeyOrDefault($key, (string)$default);
     }
 
-    public static function fetchFloatOrFail(string $key): float
+    public static function fetchFloatOrFail(string $key, bool $allowDefaults = false): float
     {
-        if (in_array($key, [Config::LICENCE_RX_FEE, Config::LICENCE_TX_FEE, Config::LICENCE_ACCOUNT], true)) {
+        $licenseKeys = [
+            self::LICENCE_RX_FEE,
+            self::LICENCE_TX_FEE,
+            self::LICENCE_ACCOUNT,
+        ];
+
+        if (!$allowDefaults && in_array($key, $licenseKeys, true)) {
             throw new RuntimeException(sprintf('These value %s need to be taken from a license reader', $key));
         }
 
