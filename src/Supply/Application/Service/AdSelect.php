@@ -36,4 +36,8 @@ interface AdSelect
     public function exportEvents(array $events): void;
 
     public function exportEventsPayments(array $events): void;
+
+    public function getLastPaidPaymentId(): int;
+
+    public function getLastUnpaidEventId(): int;
 }
