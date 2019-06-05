@@ -33,6 +33,8 @@ use Illuminate\Contracts\Support\Arrayable;
 
 final class InfoResponse implements Arrayable
 {
+    private const FEE_PRECISION_MAXIMUM = 4;
+
     /** @var Info */
     private $info;
 
@@ -70,12 +72,21 @@ final class InfoResponse implements Arrayable
             Info::CAPABILITY_PUBLISHER
         );
 
-        $demandFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-        $info->setDemandFee($demandFee);
+        $licenseTxFee = Config::fetchFloatOrFail(Config::LICENCE_TX_FEE);
+        $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
-        $supplyFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        $info->setSupplyFee($supplyFee);
+        $info->setDemandFee(self::calculateTotalFee($licenseTxFee, $operatorTxFee));
+
+        $licenseRxFee = Config::fetchFloatOrFail(Config::LICENCE_RX_FEE);
+        $operatorRxFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+
+        $info->setSupplyFee(self::calculateTotalFee($licenseRxFee, $operatorRxFee));
 
         return new self($info);
+    }
+
+    private static function calculateTotalFee(float $licenseFee, float $operatorFee): float
+    {
+        return round($licenseFee + (1 - $licenseFee) * $operatorFee, self::FEE_PRECISION_MAXIMUM);
     }
 }
