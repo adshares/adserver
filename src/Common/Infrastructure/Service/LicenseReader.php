@@ -74,7 +74,7 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return Config::fetchFloatOrFail($type, true); // default fees are fetched from DB
+            return Config::fetchFloatOrFail($type, true);
         }
 
         if ($type === Config::LICENCE_TX_FEE) {
