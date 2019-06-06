@@ -28,6 +28,7 @@ class EventPaymentMapper
     {
         $mappedEvent = EventMapper::map($event);
         $mappedEvent['paid_amount'] = $event['event_value'];
+        $mappedEvent['payment_id'] = $event['ads_payment_id'];
 
         return $mappedEvent;
     }
