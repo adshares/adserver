@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
 
@@ -35,12 +35,17 @@ class StatisticsGlobalController extends Controller
     /** @var MySqlSupplyServerStatisticsRepository */
     private $supplyRepository;
 
+    /** @var TotalFeeReader */
+    private $totalFeeReader;
+
     public function __construct(
         MySqlDemandServerStatisticsRepository $demandRepository,
-        MySqlSupplyServerStatisticsRepository $supplyRepository
+        MySqlSupplyServerStatisticsRepository $supplyRepository,
+        TotalFeeReader $totalFeeReader
     ) {
         $this->demandRepository = $demandRepository;
         $this->supplyRepository = $supplyRepository;
+        $this->totalFeeReader = $totalFeeReader;
     }
 
     public function fetchDemandStatistics()
@@ -65,10 +70,9 @@ class StatisticsGlobalController extends Controller
 
     public function fetchSupplyStatistics()
     {
-        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        $licenseFee = Config::fetchFloatOrFail(Config::LICENCE_RX_FEE);
+        $totalFee = $this->totalFeeReader->getTotalFeeSupply();
 
-        return $this->supplyRepository->fetchStatistics($operatorFee, $licenseFee);
+        return $this->supplyRepository->fetchStatistics($totalFee);
     }
 
     public function fetchSupplyZonesSizes()
