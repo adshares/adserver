@@ -49,7 +49,7 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return new AccountId(Config::fetchStringOrFail(Config::LICENCE_ACCOUNT));
+            return new AccountId(Config::fetchStringOrFail(Config::LICENCE_ACCOUNT, true));
         }
 
         $value = $license->getPaymentAddress();
@@ -74,7 +74,7 @@ class LicenseReader
         try {
             $license = $this->licenseVault->read();
         } catch (RuntimeException $exception) {
-            return Config::fetchFloatOrFail($type); // default fees are fetched from DB
+            return Config::fetchFloatOrFail($type, true);
         }
 
         if ($type === Config::LICENCE_TX_FEE) {

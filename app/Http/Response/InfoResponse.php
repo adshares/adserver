@@ -43,6 +43,16 @@ final class InfoResponse implements Arrayable
         $this->info = $info;
     }
 
+    public function updateWithDemandFee(float $fee): void
+    {
+        $this->info->setDemandFee($fee);
+    }
+
+    public function updateWithSupplyFee(float $fee): void
+    {
+        $this->info->setSupplyFee($fee);
+    }
+
     public function updateWithStatistics(InfoStatistics $statistics): void
     {
         $this->info->setStatistics($statistics);
@@ -55,27 +65,21 @@ final class InfoResponse implements Arrayable
 
     public static function defaults(): self
     {
-        $info = new Info(
-            self::ADSHARES_MODULE_NAME,
-            (string)config('app.name'),
-            (string)config('app.version'),
-            new SecureUrl((string)config('app.url')),
-            new Url((string)config('app.adpanel_url')),
-            new SecureUrl((string)config('app.privacy_url')),
-            new SecureUrl((string)config('app.terms_url')),
-            new SecureUrl(route('demand-inventory')),
-            new AccountId((string)config('app.adshares_address')),
-            new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
-            Info::CAPABILITY_ADVERTISER,
-            Info::CAPABILITY_PUBLISHER
+        return new self(
+            new Info(
+                self::ADSHARES_MODULE_NAME,
+                (string)config('app.name'),
+                (string)config('app.version'),
+                new SecureUrl((string)config('app.url')),
+                new Url((string)config('app.adpanel_url')),
+                new SecureUrl((string)config('app.privacy_url')),
+                new SecureUrl((string)config('app.terms_url')),
+                new SecureUrl(route('demand-inventory')),
+                new AccountId((string)config('app.adshares_address')),
+                new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]),
+                Info::CAPABILITY_ADVERTISER,
+                Info::CAPABILITY_PUBLISHER
+            )
         );
-
-        $demandFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-        $info->setDemandFee($demandFee);
-
-        $supplyFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        $info->setSupplyFee($supplyFee);
-
-        return new self($info);
     }
 }
