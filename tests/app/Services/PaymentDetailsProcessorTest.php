@@ -60,27 +60,31 @@ final class PaymentDetailsProcessorTest extends TestCase
     public function testProcessingDetails(): void
     {
         $totalPayment = 10000;
-        
+        $paidEventsCount = 2;
+
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
         $user = factory(User::class)->create();
         $userUuid = $user->uuid;
 
-        $networkEvent = factory(NetworkEventLog::class)->create(['event_value' => null, 'publisher_id' => $userUuid]);
+        $networkEvents = factory(NetworkEventLog::class)->times($paidEventsCount)->create(
+            ['event_value' => null, 'publisher_id' => $userUuid]
+        );
 
         $adsPayment = $this->createAdsPayment($totalPayment);
 
-        $paymentDetails = [
-            [
+        $paymentDetails = [];
+        foreach ($networkEvents as $networkEvent) {
+            $paymentDetails[] = [
                 'case_id' => $networkEvent->case_id,
                 'event_id' => $networkEvent->event_id,
                 'event_type' => $networkEvent->event_type,
                 'banner_id' => $networkEvent->banner_id,
                 'zone_id' => $networkEvent->zone_id,
                 'publisher_id' => $userUuid,
-                'event_value' => $totalPayment,
-            ],
-        ];
+                'event_value' => $totalPayment / $paidEventsCount,
+            ];
+        }
 
         $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails);
 
