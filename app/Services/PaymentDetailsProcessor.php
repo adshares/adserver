@@ -75,10 +75,9 @@ class PaymentDetailsProcessor
     {
         $senderAddress = $adsPayment->address;
         $adsPaymentId = $adsPayment->id;
+        $amountReceived = $adsPayment->amount;
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-
-        $amountReceived = (int)$adsPayment->amount;
 
         try {
             $licenseAccount = $this->licenseReader->getAddress()->toString();
