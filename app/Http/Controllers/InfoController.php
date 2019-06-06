@@ -26,15 +26,23 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
 use Adshares\Adserver\Models\Regulation;
 use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
+use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Illuminate\View\View;
 
 class InfoController extends Controller
 {
+    /** @var MySqlServerStatisticsRepository */
     private $adserverStatisticsRepository;
 
-    public function __construct(MySqlServerStatisticsRepository $adserverStatisticsRepository)
-    {
+    /** @var TotalFeeReader */
+    private $totalFeeReader;
+
+    public function __construct(
+        MySqlServerStatisticsRepository $adserverStatisticsRepository,
+        TotalFeeReader $totalFeeReader
+    ) {
         $this->adserverStatisticsRepository = $adserverStatisticsRepository;
+        $this->totalFeeReader = $totalFeeReader;
     }
 
     public function info(): InfoResponse
@@ -43,6 +51,9 @@ class InfoController extends Controller
 
         $statistics = $this->adserverStatisticsRepository->fetchInfoStatistics();
         $response->updateWithStatistics($statistics);
+
+        $response->updateWithDemandFee($this->totalFeeReader->getTotalFeeDemand());
+        $response->updateWithSupplyFee($this->totalFeeReader->getTotalFeeSupply());
 
         return $response;
     }
