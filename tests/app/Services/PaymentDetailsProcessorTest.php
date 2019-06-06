@@ -88,8 +88,14 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails);
 
-        $expectedLicenseAmount = (int)(self::LICENSE_FEE * $totalPayment);
-        $expectedOperatorAmount = (int)(self::OPERATOR_FEE * ($totalPayment - $expectedLicenseAmount));
+        $expectedLicenseAmount = 0;
+        $expectedOperatorAmount = 0;
+        foreach ($paymentDetails as $paymentDetail) {
+            $eventValue = $paymentDetail['event_value'];
+            $eventLicenseAmount = (int)floor(self::LICENSE_FEE * $eventValue);
+            $expectedLicenseAmount += $eventLicenseAmount;
+            $expectedOperatorAmount += (int)floor(self::OPERATOR_FEE * ($eventValue - $eventLicenseAmount));
+        }
         $expectedAdIncome = $totalPayment - $expectedLicenseAmount - $expectedOperatorAmount;
 
         $this->assertCount(1, NetworkPayment::all());
@@ -115,13 +121,14 @@ final class PaymentDetailsProcessorTest extends TestCase
     private function getTransactionResponseData(): array
     {
         return json_decode(
-            <<<JSON
-{
+            '{
     "current_block_time": "1559801856",
     "previous_block_time": "1559801344",
     "tx": {
-        "data": "040200080000003727000023B0F85C02000800000000E87648170000000000000000000000000000000000000000000000000000000000000000000000",
-        "signature": "79C325C5924A8D15ECADD8A53F6E021C08D36F47E068AA9826F1882AC54DCA97B5EF9DF50D7985483EE3C78CACF7DC6E6E0F2CCB23627CB5B87C088CAFC3F607",
+        "data": "040200080000003727000023B0F85C02000800000000E8764817000000000'
+            .'0000000000000000000000000000000000000000000000000000000000000",
+        "signature": "79C325C5924A8D15ECADD8A53F6E021C08D36F47E068AA9826F1882AC54DCA97'
+            .'B5EF9DF50D7985483EE3C78CACF7DC6E6E0F2CCB23627CB5B87C088CAFC3F607",
         "time": "1559801891",
         "account_msid": "10039",
         "account_hashin": "9EF7CD266CBA177E85EB5AAB95C29F92114607E4236DCC3B7E43A6D8F46ABE18",
@@ -148,9 +155,7 @@ final class PaymentDetailsProcessorTest extends TestCase
         "public_key": "9EC3D9A90134000DFAA6317D569FF3C5E7B4A175E31E04B3F712A760F5241715",
         "hash": "E10542FA6080FDFE14E8987ED91302CD27BC4B209E2648EDAAFC80FA80FAFCDB"
     }
-}
-JSON
-            ,
+}',
             true
         );
     }
