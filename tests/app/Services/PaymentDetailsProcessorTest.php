@@ -42,6 +42,10 @@ final class PaymentDetailsProcessorTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const LICENSE_FEE = 0.01;
+
+    private const OPERATOR_FEE = 0.01;
+
     public function testProcessingEmptyDetails(): void
     {
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
@@ -55,6 +59,8 @@ final class PaymentDetailsProcessorTest extends TestCase
 
     public function testProcessingDetails(): void
     {
+        $totalPayment = 10000;
+        
         $paymentDetailsProcessor = $this->getPaymentDetailsProcessor();
 
         $user = factory(User::class)->create();
@@ -62,7 +68,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $networkEvent = factory(NetworkEventLog::class)->create(['event_value' => null, 'publisher_id' => $userUuid]);
 
-        $adsPayment = $this->createAdsPayment(10000);
+        $adsPayment = $this->createAdsPayment($totalPayment);
 
         $paymentDetails = [
             [
@@ -72,19 +78,23 @@ final class PaymentDetailsProcessorTest extends TestCase
                 'banner_id' => $networkEvent->banner_id,
                 'zone_id' => $networkEvent->zone_id,
                 'publisher_id' => $userUuid,
-                'event_value' => 10000,
+                'event_value' => $totalPayment,
             ],
         ];
 
         $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails);
 
+        $expectedLicenseAmount = (int)(self::LICENSE_FEE * $totalPayment);
+        $expectedOperatorAmount = (int)(self::OPERATOR_FEE * ($totalPayment - $expectedLicenseAmount));
+        $expectedAdIncome = $totalPayment - $expectedLicenseAmount - $expectedOperatorAmount;
+
         $this->assertCount(1, NetworkPayment::all());
         $licensePayment = NetworkPayment::first();
-        $this->assertEquals(100, $licensePayment->amount);
+        $this->assertEquals($expectedLicenseAmount, $licensePayment->amount);
 
         $this->assertCount(1, UserLedgerEntry::all());
         $userLedgerEntry = UserLedgerEntry::first();
-        $this->assertEquals(9801, $userLedgerEntry->amount);
+        $this->assertEquals($expectedAdIncome, $userLedgerEntry->amount);
     }
 
     private function getAdsClient(): AdsClient
@@ -156,7 +166,7 @@ JSON
     {
         $licenseReader = $this->createMock(LicenseReader::class);
         $licenseReader->method('getAddress')->willReturn(new AccountId('0001-00000000-9B6F'));
-        $licenseReader->method('getFee')->willReturn(0.01);
+        $licenseReader->method('getFee')->willReturn(self::LICENSE_FEE);
 
         /** @var LicenseReader $licenseReader */
         return $licenseReader;
