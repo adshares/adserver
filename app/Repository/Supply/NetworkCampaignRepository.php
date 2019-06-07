@@ -36,19 +36,30 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use function hex2bin;
+use function json_encode;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
+
     private const BANNER_CLICK_URL_FIELD = 'click_url';
+
     private const BANNER_SERVE_URL_FIELD = 'serve_url';
+
     private const BANNER_VIEW_URL_FIELD = 'view_url';
+
     private const BANNER_UUID_FIELD = 'uuid';
+
     private const BANNER_ID_FIELD = 'id';
+
     private const BANNER_DEMAND_BANNER_ID_FIELD = 'demand_banner_id';
+
     private const BANNER_TYPE_FIELD = 'type';
+
     private const BANNER_WIDTH_FIELD = 'width';
+
     private const BANNER_HEIGHT_FIELD = 'height';
+
     private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
     public function markedAsDeletedByHost(string $host): void
@@ -87,7 +98,10 @@ class NetworkCampaignRepository implements CampaignRepository
         try {
             $networkCampaign->save();
         } catch (QueryException $exception) {
-            Log::debug($exception->getSql());
+            Log::debug(sprintf('%s - %s %s',
+                $exception->getMessage(),
+                $exception->getSql(),
+                json_encode($exception->getBindings())));
         }
 
         $banners = $campaign->getBanners();
