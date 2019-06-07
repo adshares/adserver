@@ -286,7 +286,7 @@ class DemandController extends Controller
                 '',
                 new DateTime(),
                 $impressionId
-            );Highest
+            );
         } else {
             $tid = $request->cookies->get('tid');
         }
