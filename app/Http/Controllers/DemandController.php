@@ -35,7 +35,6 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
-use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +44,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use DateTime;
+use function bin2hex;
+use function inet_pton;
 use function json_decode;
 use function sprintf;
 
@@ -284,7 +286,7 @@ class DemandController extends Controller
                 '',
                 new DateTime(),
                 $impressionId
-            );
+            );Highest
         } else {
             $tid = $request->cookies->get('tid');
         }
@@ -347,6 +349,12 @@ class DemandController extends Controller
         );
 
         return $response;
+    }
+
+    public function conversion(Request $request): Response
+    {
+        $response = new Response();
+        $response->send();
     }
 
     private function validateEventRequest(Request $request): void

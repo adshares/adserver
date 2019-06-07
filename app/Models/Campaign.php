@@ -217,6 +217,11 @@ class Campaign extends Model
         return $this->hasMany(Banner::class);
     }
 
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(Conversion::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

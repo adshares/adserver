@@ -20,7 +20,23 @@
         "max_cpc": 100000000000,
         "budget_per_hour": 100000000000,
         "classification_status": 2,
-        "classification_tags": "tea"
+        "classification_tags": "tea",
+        "conversion": [
+          {
+              "name" : "Conversion #1",
+              "budget_type": "in_budget",
+              "event_type": "register",
+              "type": "basic"
+          },
+          {
+            "name" : "Conversion #2",
+            "budget_type": "out_of_budget",
+            "event_type": "purchase",
+            "type": "advanced",
+            "value": "100000000000",
+            "limit": "10000000000000"
+          }
+        ]
       },
       {
         "code": "travel",

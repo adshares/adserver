@@ -1,0 +1,371 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+*, body, html {
+	margin: 0;
+	padding: 0
+}
+
+h1, h2, h3, h4, h5 {
+	font-weight: 400
+}
+
+#Outer, h4, h5 {
+	text-align: center
+}
+
+#bannerL, #bannerR {
+	position: absolute;
+	top: 0;
+	width: 160px
+}
+
+#Languages, #Panes>br, hr {
+	clear: both
+}
+
+#Languages img, td {
+	vertical-align: middle
+}
+
+#Languages a.xx, #Partner, *, body, html {
+	padding: 0
+}
+
+#Partner h1, h2 {
+	line-height: 24px
+}
+
+#Partner h2, h4 {
+	line-height: 18px
+}
+
+body, html {
+	font-family: 'Open Sans', Arial, sans-serif;
+	font-size: 100%;
+	font-size: 14px;
+	line-height: 20px;
+	-webkit-text-size-adjust: none
+}
+
+body {
+	background: #fff
+}
+
+p {
+	text-align: justify;
+	margin: 0 0 15px
+}
+
+h1, h2 {
+	font-family: 'Open Sans', Arial, sans-serif;
+}
+
+#generated, h3 {
+	font-weight: 700;
+	text-align: left
+}
+
+input, textarea {
+	font-size: 14px;
+	font-family: 'Open Sans', Arial, sans-serif
+}
+
+h1 {
+	font-size: 70px;
+	line-height: 90px
+}
+
+h2 {
+	font-size: 24px;
+	text-align: left;
+	margin-bottom: 10px
+}
+
+h3, h4 {
+	font-size: 14px
+}
+
+h3 {
+	margin: 15px 0
+}
+
+h4 {
+	margin: 10px 10px 5px;
+	font-style: italic
+}
+
+h5 {
+	margin: 5px 10px 20px;
+	font-size: 12px;
+	line-height: 14px
+}
+
+hr {
+	border: 0;
+	height: 1px;
+	background-image: linear-gradient(to right, rgba(0, 0, 0, 0),
+		rgba(0, 0, 0, .75), rgba(0, 0, 0, 0))
+}
+
+#Inner {
+	width: 960px;
+	margin: 0 auto
+}
+
+#Content {
+	position: relative
+}
+
+#bannerL {
+	left: -160px;
+	text-align: right
+}
+
+#bannerR {
+	right: -160px;
+	text-align: left
+}
+
+.banner {
+	margin: 15px auto
+}
+
+#Translation {
+	text-align: left;
+	margin: 0 3%
+}
+
+#Languages {
+	margin: 20px 15px 5px
+}
+
+#Languages a {
+	padding: 1px 6px 1px 22px;
+	font-size: 12px;
+	line-height: 20px
+}
+
+#Languages a.zz, #Languages a.zz:hover {
+	text-decoration: none;
+	color: #000
+}
+
+#Languages img {
+	margin-right: 4px
+}
+
+div#Panes {
+	margin-top: 15px
+}
+
+#Panes>div {
+	width: 45.5%;
+	text-align: left
+}
+
+.lc, .rc {
+	width: 348px
+}
+
+#Panes>div:nth-of-type(odd) {
+	float: left;
+	margin: 0 1.5% 0 3%
+}
+
+#Panes>div:nth-of-type(even) {
+	float: right;
+	margin: 0 3% 0 1.5%
+}
+
+a:active, a:link, a:visited {
+	color: #000
+}
+
+a:hover {
+	color: red
+}
+
+#Packages a {
+	margin: 0 5px
+}
+
+#Footer a {
+	margin: 10px;
+	color: grey;
+	white-space: nowrap
+}
+
+#Footer {
+	margin-bottom: 10px
+}
+
+.lc {
+	clear: left;
+	float: left
+}
+
+.rc {
+	clear: right;
+	float: right
+}
+
+.lc div, .rc div {
+	float: left;
+	text-align: left
+}
+
+input#amount, input#generate, td {
+	text-align: center
+}
+
+#lipsum {
+	text-align: justify
+}
+
+#lipsumTextarea {
+	height: 300px;
+	width: 98%;
+	padding: 3px 5px;
+	border: 1px solid #888;
+	margin: 5px 0
+}
+
+#cafepress {
+	float: right;
+	margin: 0 0 15px 15px
+}
+
+#cafepress img {
+	margin: 0
+}
+
+.boxed {
+	clear: both;
+	margin: 10px 3%
+}
+
+.boxed img {
+	margin: 10px 5px 0
+}
+
+.boxedTight {
+	clear: both;
+	margin: 10px 3%
+}
+
+.boxedTight img {
+	margin: 0
+}
+
+#Partner h1, #Partner h2 {
+	font-family: 'Open Sans', Arial, sans-serif;
+	font-weight: 700;
+	margin: 10px 0
+}
+
+a.lnk:active, a.lnk:hover, a.lnk:link, a.lnk:visited {
+	font-weight: 700;
+	color: red
+}
+
+form {
+	margin-bottom: 10px
+}
+
+input {
+	margin: 3px 6px
+}
+
+input#amount {
+	width: 30px;
+	padding: 3px 5px;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #666 #ccc #ccc #666
+}
+
+input#generate {
+	margin: 10px 0 0;
+	padding: 3px 10px;
+	border: 1px solid #999;
+	background: #eee;
+	border-radius: 4px
+}
+
+input#generate:hover {
+	background: #ccc;
+	border: 1px solid #666
+}
+
+label {
+	cursor: pointer
+}
+
+td td {
+	text-align: left
+}
+
+#Partner {
+	text-align: left;
+	margin: 0 3%
+}
+
+#Partner h1 {
+	font-size: 20px
+}
+
+#Partner h2 {
+	font-size: 14px
+}
+
+.ltr {
+	direction: ltr;
+	unicode-bidi: embed
+}
+
+@media screen and (max-width:1280px) {
+	#bannerL, #bannerR {
+		display: none
+	}
+}
+
+@media screen and (max-width:980px) {
+	#Inner {
+		width: 100%
+	}
+}
+
+@media screen and (max-width:480px) {
+	h1 {
+		font-size: 64px
+	}
+	#Panes>div {
+		width: 94%;
+		clear: both;
+		float: none
+	}
+	#Panes>div:nth-of-type(even), #Panes>div:nth-of-type(odd) {
+		float: none;
+		margin: 0 3%
+	}
+	#Panes>br {
+		display: none
+	}
+}
+
+@media screen and (max-width:350px) {
+	#Inner {
+		width: 320px
+	}
+	h1 {
+		font-size: 58px
+	}
+	#Languages a {
+		background: 0 0;
+		line-height: 10px;
+		padding-left: 0
+	}
+	#Languages img {
+		display: none
+	}
+}

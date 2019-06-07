@@ -83,6 +83,8 @@ class EventLog extends Model
 
     public const TYPE_CLICK = 'click';
 
+    public const TYPE_CONVERSION = 'conversion';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -98,6 +100,7 @@ class EventLog extends Model
         'publisher_id',
         'advertiser_id',
         'campaign_id',
+        'conversion_id',
         'event_type',
         'pay_to',
         'ip',
@@ -179,7 +182,8 @@ class EventLog extends Model
         $headers,
         array $context,
         string $userData,
-        $type
+        $type,
+        ?int $conversionId
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
 
@@ -202,6 +206,10 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
+
+        if ($conversionId) {
+            $log->conversion_id = $conversionId;
+        }
 
         if ($type === self::TYPE_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
