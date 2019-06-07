@@ -101,7 +101,7 @@ class NetworkCampaignRepository implements CampaignRepository
             Log::debug(sprintf('%s - %s %s',
                 $exception->getMessage(),
                 $exception->getSql(),
-                json_encode($exception->getBindings())));
+                addslashes(json_encode($exception->getBindings()))));
         }
 
         $banners = $campaign->getBanners();
