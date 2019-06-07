@@ -42,15 +42,11 @@
 
     const button = document.getElementById("conversionButton");
     button.addEventListener("click",function(e){
-        // button.disabled = "true";
-
         const url = document.getElementById("conversionValue").value;
 
         if (url) {
             button.appendChild(createIframeFromUrl(url));
         }
-
-        // button.disabled = "false";
     },false);
 </script>
 </html>
