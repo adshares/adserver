@@ -33,6 +33,8 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\ValueObject\Status;
 use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 use function hex2bin;
 
 class NetworkCampaignRepository implements CampaignRepository
@@ -81,7 +83,12 @@ class NetworkCampaignRepository implements CampaignRepository
         }
 
         $networkCampaign->fill($campaignArray);
-        $networkCampaign->save();
+
+        try {
+            $networkCampaign->save();
+        } catch (QueryException $exception) {
+            Log::debug($exception->getSql());
+        }
 
         $banners = $campaign->getBanners();
         $networkBanners = [];
