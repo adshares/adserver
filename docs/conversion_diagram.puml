@@ -5,9 +5,10 @@ class Conversion
     +id
     +campaign_id
     +{field} budget_type (in_budget, out_of_budget)
-    +{field} type (click, register, buy)
-    +link
+    +{field} event_type (click, register, buy)
+    +type
     +value
+    +limit
     +date
 }
 
@@ -16,11 +17,6 @@ class Event
 {
     +conversion_id
     +event_type - click,view,conversion
-}
-
-class Campaign
-{
-    +has_convertion
 }
 
 @enduml
