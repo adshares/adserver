@@ -36,7 +36,6 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 use function hex2bin;
-use function json_encode;
 
 class NetworkCampaignRepository implements CampaignRepository
 {
@@ -98,10 +97,11 @@ class NetworkCampaignRepository implements CampaignRepository
         try {
             $networkCampaign->save();
         } catch (QueryException $exception) {
-            Log::debug(sprintf('%s - %s %s',
+            Log::debug(sprintf(
+                '%s - %s',
                 $exception->getMessage(),
-                $exception->getSql(),
-                addslashes(json_encode($exception->getBindings()))));
+                $exception->getSql()
+            ));
         }
 
         $banners = $campaign->getBanners();
