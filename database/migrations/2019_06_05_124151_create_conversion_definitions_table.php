@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateConversionTable extends Migration
+class CreateConversionDefinitionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateConversionTable extends Migration
      */
     public function up()
     {
-        Schema::create('conversions', static function (Blueprint $table) {
+        Schema::create('conversion_definitions', static function (Blueprint $table) {
             $table->increments('id');
             $table->bigInteger('campaign_id')->unsigned();
             $table->string('name', 255);
@@ -36,6 +36,6 @@ class CreateConversionTable extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('conversion');
+        Schema::dropIfExists('conversion_definitions');
     }
 }
