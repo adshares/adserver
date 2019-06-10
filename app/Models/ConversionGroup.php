@@ -45,5 +45,4 @@ class ConversionGroup extends Model
     {
         return $this->belongsTo(ConversionDefinition::class);
     }
-
 }
