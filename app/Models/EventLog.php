@@ -182,8 +182,7 @@ class EventLog extends Model
         $headers,
         array $context,
         string $userData,
-        $type,
-        ?int $conversionId
+        $type
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
 
@@ -206,10 +205,6 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
-
-        if ($conversionId) {
-            $log->conversion_id = $conversionId;
-        }
 
         if ($type === self::TYPE_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
