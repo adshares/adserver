@@ -25,6 +25,7 @@ use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use function array_merge;
+use function in_array;
 use function sprintf;
 
 /**
@@ -151,13 +152,26 @@ class Config extends Model
         return (int)self::fetchByKeyOrDefault($key, (string)$default);
     }
 
-    public static function fetchFloatOrFail(string $key): float
+    public static function fetchFloatOrFail(string $key, bool $allowLicenseKeys = false): float
     {
+        $licenseKeys = [
+            self::LICENCE_RX_FEE,
+            self::LICENCE_TX_FEE,
+        ];
+
+        if (!$allowLicenseKeys && in_array($key, $licenseKeys, true)) {
+            throw new RuntimeException(sprintf('These value %s need to be taken from a license reader', $key));
+        }
+
         return (float)self::fetchByKeyOrFail($key)->value;
     }
 
-    public static function fetchStringOrFail(string $key): string
+    public static function fetchStringOrFail(string $key, bool $allowLicenseKeys = false): string
     {
+        if (!$allowLicenseKeys && $key === self::LICENCE_ACCOUNT) {
+            throw new RuntimeException(sprintf('This value %s needs to be taken from a license reader', $key));
+        }
+
         return (string)self::fetchByKeyOrFail($key)->value;
     }
 
