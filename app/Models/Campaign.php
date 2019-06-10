@@ -219,7 +219,7 @@ class Campaign extends Model
 
     public function conversions(): HasMany
     {
-        return $this->hasMany(Conversion::class);
+        return $this->hasMany(ConversionDefinition::class);
     }
 
     public function user()

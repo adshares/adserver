@@ -26,10 +26,11 @@ use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function route;
 
-class Conversion extends Model
+class ConversionDefinition extends Model
 {
     use Ownership;
     use SoftDeletes;
@@ -43,11 +44,13 @@ class Conversion extends Model
     ];
 
     protected $fillable = [
+        'campaign_id',
         'name',
         'budget_type',
+        'event_type',
         'type',
-        'campaign_id',
         'value',
+        'limit',
     ];
 
     protected $visible = [
@@ -55,8 +58,10 @@ class Conversion extends Model
         'campaign_id',
         'name',
         'budget_type',
+        'event_type',
         'type',
         'value',
+        'limit',
     ];
 
     public function campaign(): BelongsTo
@@ -64,10 +69,15 @@ class Conversion extends Model
         return $this->belongsTo(Campaign::class);
     }
 
-    public static function generateLink(int $conversionId): string
+    public function conversionGroups(): HasMany
+    {
+        return $this->hasMany(ConversionGroup::class);
+    }
+
+    public static function generateLink(int $definitionConvertionId): string
     {
         $params = [
-            'conversion_id' => $conversionId,
+            'conversion_id' => $definitionConvertionId,
             'cid' => '',
             'value' => '',
             'tnonce' => '',
