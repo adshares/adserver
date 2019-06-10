@@ -100,7 +100,6 @@ class EventLog extends Model
         'publisher_id',
         'advertiser_id',
         'campaign_id',
-        'conversion_id',
         'event_type',
         'pay_to',
         'ip',
