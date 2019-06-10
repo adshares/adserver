@@ -65,8 +65,8 @@ class MockDataCampaignsSeeder extends Seeder
             foreach ($mockCampaign->campaigns as $cr) {
                 $campaign = $this->createCampaign($user, $cr);
 
-                if (isset($cr->conversion)) {
-                    foreach ($cr->conversion as $conversionData) {
+                if (isset($cr->conversions)) {
+                    foreach ($cr->conversions as $conversionData) {
                         $name = $campaign->name . 'Conversion';
 
                         $conversion = new ConversionDefinition();

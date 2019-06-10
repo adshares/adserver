@@ -21,7 +21,7 @@
         "budget_per_hour": 100000000000,
         "classification_status": 2,
         "classification_tags": "tea",
-        "conversion": [
+        "conversions": [
           {
               "name" : "Conversion #1",
               "budget_type": "in_budget",
