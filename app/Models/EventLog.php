@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 
 /**
@@ -247,5 +248,10 @@ class EventLog extends Model
         }
         $this->human_score = $userContext->humanScore();
         $this->our_userdata = $userContext->keywords();
+    }
+
+    public function conversionGroups(): HasMany
+    {
+        return $this->hasMany(ConversionGroup::class);
     }
 }

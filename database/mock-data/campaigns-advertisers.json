@@ -26,7 +26,8 @@
               "name" : "Conversion #1",
               "budget_type": "in_budget",
               "event_type": "register",
-              "type": "basic"
+              "type": "basic",
+              "value": "22222222222"
           },
           {
             "name" : "Conversion #2",

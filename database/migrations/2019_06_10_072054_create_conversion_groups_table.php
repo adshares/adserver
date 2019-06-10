@@ -33,10 +33,18 @@ class CreateConversionGroupsTable extends Migration
     {
         Schema::create('conversion_groups', static function (Blueprint $table) {
             $table->increments('id');
+            $table->bigInteger('event_logs_id')->unsigned();
             $table->binary('group_id', 16);
             $table->bigInteger('conversion_definition_id')->unsigned();
             $table->bigInteger('value')->unsigned()->nullable();
             $table->decimal('weight', 3, 2);
+
+            $table
+                ->foreign('event_logs_id')
+                ->references('id')
+                ->on('event_logs')
+                ->onUpdate('RESTRICT')
+                ->onDelete('CASCADE');
         });
 
         if (DB::isMysql()) {

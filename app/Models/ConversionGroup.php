@@ -29,6 +29,7 @@ class ConversionGroup extends Model
 {
     protected $fillable = [
         'group_id',
+        'event_logs_id',
         'conversion_definition_id',
         'value',
         'weight',
@@ -36,6 +37,7 @@ class ConversionGroup extends Model
 
     protected $visible = [
         'group_id',
+        'event_logs_id',
         'conversion_definition_id',
         'value',
         'weight',
@@ -44,5 +46,10 @@ class ConversionGroup extends Model
     public function conversionDefinition(): BelongsTo
     {
         return $this->belongsTo(ConversionDefinition::class);
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(EventLog::class);
     }
 }
