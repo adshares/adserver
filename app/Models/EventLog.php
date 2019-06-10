@@ -36,6 +36,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int created_at
@@ -250,8 +251,8 @@ class EventLog extends Model
         $this->our_userdata = $userContext->keywords();
     }
 
-    public function conversionGroups(): HasMany
+    public function group(): HasOne
     {
-        return $this->hasMany(ConversionGroup::class);
+        return $this->hasOne(ConversionGroup::class);
     }
 }
