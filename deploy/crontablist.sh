@@ -22,6 +22,10 @@ echo -n "php ${SERVICE_DIR}/artisan ops:adselect:inventory:export ${_REDIRECTION
 echo ""
 
 echo -n "* * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:adselect:event:export ${_REDIRECTION}"
+echo ""
+
+echo -n "* * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:adpay:campaign:export ${_REDIRECTION}"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:adpay:event:export ${_REDIRECTION}"

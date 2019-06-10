@@ -4,6 +4,8 @@
 
 * * * * * cd /opt/adshares/adserver && bash docker/cron/ops-inventory.sh >> /dev/null 2>&1
 
+* * * * * cd /opt/adshares/adserver && bash docker/cron/adselect-export.sh >> /dev/null 2>&1
+
 * * * * * cd /opt/adshares/adserver && bash docker/cron/adpay-export.sh >> /dev/null 2>&1
 
 59 * * * * /opt/adshares/adserver/artisan ops:demand:payments:block >> /dev/null 2>&1
