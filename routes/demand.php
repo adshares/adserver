@@ -51,3 +51,5 @@ Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'previ
     ->name('banner-preview');
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
+
+Route::get('/conversion', [DemandController::class, 'conversion'])->name('conversion');

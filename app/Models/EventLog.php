@@ -34,7 +34,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int created_at
@@ -82,6 +84,8 @@ class EventLog extends Model
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
+
+    public const TYPE_CONVERSION = 'conversion';
 
     /**
      * The attributes that are mass assignable.
@@ -245,5 +249,10 @@ class EventLog extends Model
         }
         $this->human_score = $userContext->humanScore();
         $this->our_userdata = $userContext->keywords();
+    }
+
+    public function group(): HasOne
+    {
+        return $this->hasOne(ConversionGroup::class);
     }
 }

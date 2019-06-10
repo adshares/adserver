@@ -1,0 +1,22 @@
+@startuml
+
+class Conversion
+{
+    +id
+    +campaign_id
+    +{field} budget_type (in_budget, out_of_budget)
+    +{field} event_type (click, register, buy)
+    +type
+    +value
+    +limit
+    +date
+}
+
+
+class Event
+{
+    +conversion_id
+    +event_type - click,view,conversion
+}
+
+@enduml

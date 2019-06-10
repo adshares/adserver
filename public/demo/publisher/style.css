@@ -1,0 +1,570 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+*, body, html {
+    margin: 0;
+    padding: 0
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: 400
+}
+
+#Outer, h4, h5 {
+    text-align: center
+}
+
+#bannerL, #bannerR {
+    position: sticky;
+    top: 20px;
+    width: 160px;
+    height: 10px
+}
+
+#bannerR {
+    width: 300px;
+}
+
+hr, table, td, th {
+    border: 0
+}
+
+#Languages, #Panes > br, hr {
+    clear: both
+}
+
+#Languages img, td {
+    vertical-align: middle
+}
+
+#Partner h1, h2 {
+    line-height: 24px
+}
+
+#Partner h2, h4 {
+    line-height: 18px
+}
+
+@font-face {
+    font-family: DauphinPlain;
+    src: url(/fonts/DauphinPlain.eot?#iefix) format('embedded-opentype'), url(/fonts/DauphinPlain.woff) format('woff'), url(/fonts/DauphinPlain.ttf) format('truetype'), url(/fonts/DauphinPlain.svg#DauphinPlain) format('svg');
+    font-weight: 400;
+    font-style: normal
+}
+
+body, html {
+    font-family: 'Open Sans', Arial, sans-serif;
+    font-size: 100%;
+    font-size: 14px;
+    line-height: 20px;
+    -webkit-text-size-adjust: none
+}
+
+body {
+    background: #fff
+}
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0
+}
+
+p {
+    text-align: justify;
+    margin: 0 0 15px
+}
+
+h1, h2 {
+    font-family: DauphinPlain
+}
+
+#generated, h3 {
+    font-weight: 700;
+    text-align: left
+}
+
+input, textarea {
+    font-size: 14px;
+    font-family: 'Open Sans', Arial, sans-serif
+}
+
+h1 {
+    font-size: 70px;
+    line-height: 90px
+}
+
+h2 {
+    font-size: 24px;
+    text-align: left;
+    margin-bottom: 10px
+}
+
+h3, h4 {
+    font-size: 14px
+}
+
+h3 {
+    margin: 15px 0
+}
+
+h4 {
+    margin: 10px 10px 5px;
+    font-style: italic
+}
+
+h5 {
+    margin: 5px 10px 20px;
+    font-size: 12px;
+    line-height: 14px
+}
+
+hr {
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, .75), rgba(0, 0, 0, 0))
+}
+
+#Inner {
+    width: 960px;
+    margin: 0 auto
+}
+
+#Content {
+    position: relative
+}
+
+#bannerL {
+    position: -webkit-sticky;
+    margin-left: -160px;
+    float: left;
+    text-align: right
+}
+
+#bannerR {
+    position: -webkit-sticky;
+    margin-right: -160px;
+    float: right;
+    text-align: left
+}
+
+.banner {
+    margin: 15px auto;
+    text-align: center;
+}
+
+#Translation {
+    text-align: left;
+    margin: 0 3%
+}
+
+#Languages {
+    margin: 20px 15px 5px
+}
+
+#Languages a {
+    padding: 1px 6px 1px 22px;
+    font-size: 12px;
+    line-height: 20px;
+    background-image: url(/images/170417.png);
+    background-repeat: no-repeat
+}
+
+#Languages a.xx, #Partner, td, th {
+    padding: 0
+}
+
+#Languages a.zz, #Languages a.zz:hover {
+    text-decoration: none;
+    color: #000
+}
+
+#Languages img {
+    margin-right: 4px;
+    border: 0
+}
+
+div#Panes {
+    margin-top: 15px
+}
+
+#Panes > div {
+    width: 45.5%;
+    text-align: left
+}
+
+.lc, .rc {
+    width: 348px
+}
+
+#Panes > div:nth-of-type(odd) {
+    float: left;
+    margin: 0 1.5% 0 3%
+}
+
+#Panes > div:nth-of-type(even) {
+    float: right;
+    margin: 0 3% 0 1.5%
+}
+
+a:active, a:link, a:visited {
+    color: #000
+}
+
+a:hover {
+    color: red
+}
+
+a.hy {
+    background-position: 0 -400px
+}
+
+a.sq {
+    background-position: 0 -760px
+}
+
+a.ar {
+    background-position: 0 -40px
+}
+
+a.bg {
+    background-position: 0 -80px
+}
+
+a.ca {
+    background-position: 0 -120px
+}
+
+a.cn {
+    background-position: 0 -920px
+}
+
+a.hr {
+    background-position: 0 -360px
+}
+
+a.cs {
+    background-position: 0 -140px
+}
+
+a.da {
+    background-position: 0 -160px
+}
+
+a.nl {
+    background-position: 0 -560px
+}
+
+a.en {
+    background-position: 0 -220px
+}
+
+a.et {
+    background-position: 0 -260px
+}
+
+a.ph {
+    background-position: 0 -960px
+}
+
+a.fi {
+    background-position: 0 -300px
+}
+
+a.fr {
+    background-position: 0 -320px
+}
+
+a.ka {
+    background-position: 0 -460px
+}
+
+a.de {
+    background-position: 0 -180px
+}
+
+a.el {
+    background-position: 0 -200px
+}
+
+a.he {
+    background-position: 0 -340px
+}
+
+a.hi {
+    background-position: 0 -980px
+}
+
+a.hu {
+    background-position: 0 -380px
+}
+
+a.id {
+    background-position: 0 -420px
+}
+
+a.it {
+    background-position: 0 -440px
+}
+
+a.lv {
+    background-position: 0 -500px
+}
+
+a.lt {
+    background-position: 0 -480px
+}
+
+a.mk {
+    background-position: 0 -520px
+}
+
+a.ms {
+    background-position: 0 -540px
+}
+
+a.no {
+    background-position: 0 -580px
+}
+
+a.pl {
+    background-position: 0 -600px
+}
+
+a.pt {
+    background-position: 0 -620px
+}
+
+a.ro {
+    background-position: 0 -640px
+}
+
+a.ru {
+    background-position: 0 -660px
+}
+
+a.sr {
+    background-position: 0 -780px
+}
+
+a.sk {
+    background-position: 0 -700px
+}
+
+a.sl {
+    background-position: 0 -720px
+}
+
+a.es {
+    background-position: 0 -240px
+}
+
+a.sv {
+    background-position: 0 -800px
+}
+
+a.th {
+    background-position: 0 -840px
+}
+
+a.tr {
+    background-position: 0 -860px
+}
+
+a.uk {
+    background-position: 0 -880px
+}
+
+a.vi {
+    background-position: 0 -900px
+}
+
+#Packages a {
+    margin: 0 5px
+}
+
+#Footer a {
+    margin: 10px;
+    color: grey;
+    white-space: nowrap
+}
+
+#Footer {
+    margin-bottom: 10px
+}
+
+.lc {
+    clear: left;
+    float: left
+}
+
+.rc {
+    clear: right;
+    float: right
+}
+
+.lc div, .rc div {
+    float: left;
+    text-align: left
+}
+
+input#amount, input#generate, td {
+    text-align: center
+}
+
+#lipsum {
+    text-align: justify
+}
+
+#lipsumTextarea {
+    height: 300px;
+    width: 98%;
+    padding: 3px 5px;
+    border: 1px solid #888;
+    margin: 5px 0
+}
+
+#cafepress {
+    float: right;
+    margin: 0 0 15px 15px
+}
+
+#cafepress img {
+    margin: 0
+}
+
+.boxed {
+    clear: both;
+    margin: 10px 3%
+}
+
+.boxed img {
+    margin: 10px 5px 0;
+    border: 0
+}
+
+.boxedTight {
+    clear: both;
+    margin: 10px 3%
+}
+
+.boxedTight img {
+    margin: 0;
+    border: 0
+}
+
+#Partner h1, #Partner h2 {
+    font-family: 'Open Sans', Arial, sans-serif;
+    font-weight: 700;
+    margin: 10px 0
+}
+
+a.lnk:active, a.lnk:hover, a.lnk:link, a.lnk:visited {
+    font-weight: 700;
+    color: red
+}
+
+form {
+    margin-bottom: 10px
+}
+
+input {
+    margin: 3px 6px
+}
+
+input#amount {
+    width: 30px;
+    padding: 3px 5px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #666 #ccc #ccc #666
+}
+
+input#generate {
+    margin: 10px 0 0;
+    padding: 3px 10px;
+    border: 1px solid #999;
+    background: #eee;
+    border-radius: 4px
+}
+
+input#generate:hover {
+    background: #ccc;
+    border: 1px solid #666
+}
+
+label {
+    cursor: pointer
+}
+
+td td {
+    text-align: left
+}
+
+#Partner {
+    text-align: left;
+    margin: 0 3%
+}
+
+#Partner h1 {
+    font-size: 20px
+}
+
+#Partner h2 {
+    font-size: 14px
+}
+
+.ltr {
+    direction: ltr;
+    unicode-bidi: embed
+}
+
+@media screen and (max-width: 1280px) {
+    #bannerL, #bannerR {
+        display: none
+    }
+}
+
+@media screen and (max-width: 980px) {
+    #Inner {
+        width: 100%
+    }
+}
+
+@media screen and (max-width: 480px) {
+    h1 {
+        font-size: 64px
+    }
+
+    #Panes > div {
+        width: 94%;
+        clear: both;
+        float: none
+    }
+
+    #Panes > div:nth-of-type(even), #Panes > div:nth-of-type(odd) {
+        float: none;
+        margin: 0 3%
+    }
+
+    #Panes > br {
+        display: none
+    }
+}
+
+@media screen and (max-width: 350px) {
+    #Inner {
+        width: 320px
+    }
+
+    h1 {
+        font-size: 58px
+    }
+
+    #Languages a {
+        background: 0 0;
+        line-height: 10px;
+        padding-left: 0
+    }
+
+    #Languages img {
+        display: none
+    }
+}

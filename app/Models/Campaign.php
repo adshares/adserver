@@ -32,6 +32,7 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -128,6 +129,7 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
+        'conversions'
     ];
 
     protected $traitAutomate = [
@@ -217,7 +219,12 @@ class Campaign extends Model
         return $this->hasMany(Banner::class);
     }
 
-    public function user()
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(ConversionDefinition::class);
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
