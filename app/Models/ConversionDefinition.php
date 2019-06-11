@@ -94,8 +94,8 @@ class ConversionDefinition extends Model
     public static function rules(string $type): array
     {
         $rules = [
-            'id' => 'integer:nullable',
-            'campaign_id' => 'required:integer',
+            'id' => 'integer|nullable',
+            'campaign_id' => 'required|integer',
             'name' => 'required|max:255',
             'event_type' => 'required|max:20',
             'type' => 'in:basic,advanced',
