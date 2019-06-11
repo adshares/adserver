@@ -311,7 +311,8 @@ class CampaignsController extends Controller
 
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
-                Log::debug("Notify user [{$campaign->user_id}]"
+                Log::debug(
+                    "Notify user [{$campaign->user_id}]"
                     ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
                     ." {$e->getMessage()}"
                 );
@@ -323,8 +324,7 @@ class CampaignsController extends Controller
 
     private function validateConversions(int $campaignId, array $conversions): void
     {
-        foreach ($conversions as $conversion)
-        {
+        foreach ($conversions as $conversion) {
             $type = $conversion['type'] ?? '';
             $allowedTypes = ConversionDefinition::ALLOWED_TYPES;
             if (!in_array($type, $allowedTypes, true)) {
