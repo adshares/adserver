@@ -41,7 +41,6 @@ class CreateConversionDefinitionsTable extends Migration
             $table->bigInteger('value')->nullable();
             $table->bigInteger('limit')->nullable();
             $table->timestamps();
-            $table->softDeletes();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
