@@ -293,7 +293,13 @@ class CampaignsController extends Controller
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
         }
 
-        $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete, $conversions);
+        $this->campaignRepository->update(
+            $campaign,
+            $bannersToInsert,
+            $bannersToUpdate,
+            $bannersToDelete,
+            $conversions
+        );
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
@@ -307,7 +313,8 @@ class CampaignsController extends Controller
             } catch (InvalidArgumentException $e) {
                 Log::debug("Notify user [{$campaign->user_id}]"
                     ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
-                    ." {$e->getMessage()}");
+                    ." {$e->getMessage()}"
+                );
             }
         }
 
