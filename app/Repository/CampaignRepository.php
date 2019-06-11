@@ -132,10 +132,7 @@ class CampaignRepository
                 ConversionDefinition::removeWithoutGivenIds($existedConversions);
 
                 foreach ($conversions as $conversionInput) {
-                    $id = $conversionInput['id'];
-                    $existedRow = ConversionDefinition::find($id);
-
-                    if (isset($id) && $existedRow) {
+                    if (isset($conversionInput['id']) && ConversionDefinition::find($conversionInput['id'])) {
                         continue;
                     }
 

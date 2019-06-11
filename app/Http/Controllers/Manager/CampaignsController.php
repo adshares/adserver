@@ -257,7 +257,7 @@ class CampaignsController extends Controller
         $banners = Collection::make($ads);
 
         $conversions = $input['conversions'] ?? [];
-        $this->validateConversions($conversions);
+        $this->validateConversions($campaignId, $conversions);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
@@ -321,7 +321,7 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    private function validateConversions(array $conversions): void
+    private function validateConversions(int $campaignId, array $conversions): void
     {
         foreach ($conversions as $conversion)
         {
@@ -338,6 +338,7 @@ class CampaignsController extends Controller
                 ));
             }
 
+            $conversion['campaign_id'] = $campaignId;
             $validator = Validator::make($conversion, ConversionDefinition::rules($type));
 
             if ($validator->fails()) {
