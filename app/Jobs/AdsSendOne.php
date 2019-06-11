@@ -114,7 +114,9 @@ class AdsSendOne implements ShouldQueue
             if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
                 $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
                 $message .= ' Will be tried again later. Exception code (%s)';
-                Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode()));
+                Log::info(
+                    sprintf($message, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
+                );
 
                 self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
                     ->delay(self::QUEUE_TRY_AGAIN_INTERVAL);
