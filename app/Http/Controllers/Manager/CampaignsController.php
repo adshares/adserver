@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Uploader\Factory;
@@ -317,35 +318,20 @@ class CampaignsController extends Controller
     {
         foreach ($conversions as $conversion)
         {
-            $type = $conversion['type'] ?? null;
-
-            if ($type !== 'basic' && $type !== 'advanced') {
+            $type = $conversion['type'] ?? '';
+            $allowedTypes = ConversionDefinition::ALLOWED_TYPES;
+            if (!in_array($type, $allowedTypes, true)) {
                 throw new HttpResponseException(response()->json(
                     [
-                        'errors' => ['type' => 'Only `basic` and `advanced` values ares supported.'],
+                        'errors' => [
+                            'type' => sprintf('Only %s values ares supported.', implode(', ', $allowedTypes))
+                        ],
                     ],
                     JsonResponse::HTTP_BAD_REQUEST
                 ));
             }
 
-            $rules = [
-                'id' => 'integer:nullable',
-                'campaign_id' => 'required:integer',
-                'name' => 'required|max:255',
-                'event_type' => 'required|max:20',
-                'type' => 'in:basic,advanced',
-                'value' => 'integer|nullable',
-                'limit' => 'integer|nullable',
-            ];
-
-            if ($type === 'basic') {
-                $rules['budget_type'] = 'in:in_budget';
-            } else {
-                $rules['budget_type'] = 'in:in_budget,out_of_budget';
-            }
-
-
-            $validator = Validator::make($conversion, $rules);
+            $validator = Validator::make($conversion, ConversionDefinition::rules($type));
 
             if ($validator->fails()) {
                 $errors = $validator->errors()->toArray();

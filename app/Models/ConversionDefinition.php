@@ -33,9 +33,12 @@ class ConversionDefinition extends Model
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
 
-    private const ALLOWED_BUDGET_TYPES = [
-        self::IN_BUDGET,
-        self::OUT_OF_BUDGET,
+    public const BASIC_TYPE = 'basic';
+    public const ADVANCED_TYPE = 'advanced';
+
+    public const ALLOWED_TYPES = [
+        self::BASIC_TYPE,
+        self::ADVANCED_TYPE,
     ];
 
     protected $fillable = [
@@ -83,8 +86,29 @@ class ConversionDefinition extends Model
         return (new SecureUrl(route('conversion', $params)))->toString();
     }
 
-    public static function removeWithoutGiven(array $ids): void
+    public static function removeWithoutGivenIds(array $ids): void
     {
         self::whereNotIn('id', $ids)->delete();
+    }
+
+    public static function rules(string $type): array
+    {
+        $rules = [
+            'id' => 'integer:nullable',
+            'campaign_id' => 'required:integer',
+            'name' => 'required|max:255',
+            'event_type' => 'required|max:20',
+            'type' => 'in:basic,advanced',
+            'value' => 'integer|nullable',
+            'limit' => 'integer|nullable',
+        ];
+
+        if ($type === self::BASIC_TYPE) {
+            $rules['budget_type'] = 'in:in_budget';
+        } else {
+            $rules['budget_type'] = 'in:in_budget,out_of_budget';
+        }
+
+        return $rules;
     }
 }
