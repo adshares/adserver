@@ -34,6 +34,7 @@ class CreateConversionDefinitionsTable extends Migration
         Schema::create('conversion_definitions', static function (Blueprint $table) {
             $table->increments('id');
             $table->bigInteger('campaign_id')->unsigned();
+//            $table->bigInteger('user_id')->unsigned();
             $table->string('name', 255);
             $table->string('budget_type', 20); // in_budget, out_of_budget
             $table->string('event_type', 50); // e.g. register, click, buy
@@ -41,9 +42,10 @@ class CreateConversionDefinitionsTable extends Migration
             $table->bigInteger('value')->nullable();
             $table->bigInteger('limit')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
-
+//            $table->foreign('user_id')->references('id')->on('users')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
     }
 

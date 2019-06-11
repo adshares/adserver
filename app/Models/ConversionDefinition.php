@@ -32,8 +32,8 @@ use function route;
 
 class ConversionDefinition extends Model
 {
-    use Ownership;
-    use SoftDeletes;
+//    use Ownership;
+//    use SoftDeletes;
 
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
@@ -44,6 +44,7 @@ class ConversionDefinition extends Model
     ];
 
     protected $fillable = [
+        'id',
         'campaign_id',
         'name',
         'budget_type',

@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;
 
 class CampaignRepository
@@ -48,6 +49,11 @@ class CampaignRepository
     public function fetchCampaignById(int $campaignId): Campaign
     {
         return (new Campaign())->findOrFail($campaignId);
+    }
+
+    public function fetchCampaignByIdWithConversions(int $campaignId): Campaign
+    {
+        return (new Campaign())->with('conversions')->findOrFail($campaignId);
     }
 
     /**
@@ -95,7 +101,8 @@ class CampaignRepository
         Campaign $campaign,
         array $bannersToInsert = [],
         array $bannersToUpdate = [],
-        array $bannersToDelete = []
+        array $bannersToDelete = [],
+        array $conversions = []
     ): void {
         DB::beginTransaction();
 
@@ -117,6 +124,30 @@ class CampaignRepository
             if ($bannersToDelete) {
                 foreach ($bannersToDelete as $banner) {
                     $banner->delete();
+                }
+            }
+
+            if ($conversions) {
+                $conversionsToNotDelete = [];
+
+                foreach ($conversions as $conversion) {
+                    if (isset($conversion['id'])) {
+                        $conversionsToNotDelete[] = $conversion['id'];
+                    }
+                }
+
+                ConversionDefinition::whereNotIn('id', $conversionsToNotDelete)->delete();
+
+                foreach ($conversions as $conversionInput) {
+                    if (isset($conversionInput['id'] ) && ConversionDefinition::find($conversionInput['id'])) {
+                        continue;
+                    }
+
+
+                    $conversion = new ConversionDefinition();
+                    $conversion->fill($conversionInput);
+
+                    $campaign->conversions()->save($conversion);
                 }
             }
         } catch (\Exception $ex) {

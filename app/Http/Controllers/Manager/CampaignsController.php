@@ -34,6 +34,7 @@ use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,10 +43,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use InvalidArgumentException;
+use function response;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
+use Validator;
 
 class CampaignsController extends Controller
 {
@@ -252,6 +255,9 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
+        $conversions = $input['conversions'] ?? [];
+        $this->validateConversions($conversions);
+
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
         $campaign->fill($input);
@@ -286,7 +292,7 @@ class CampaignsController extends Controller
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
         }
 
-        $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
+        $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete, $conversions);
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
@@ -305,6 +311,52 @@ class CampaignsController extends Controller
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    private function validateConversions(array $conversions): void
+    {
+        foreach ($conversions as $conversion)
+        {
+            $type = $conversion['type'] ?? null;
+
+            if ($type !== 'basic' && $type !== 'advanced') {
+                throw new HttpResponseException(response()->json(
+                    [
+                        'errors' => ['type' => 'Only `basic` and `advanced` values ares supported.'],
+                    ],
+                    JsonResponse::HTTP_BAD_REQUEST
+                ));
+            }
+
+            $rules = [
+                'id' => 'integer:nullable',
+                'campaign_id' => 'required:integer',
+                'name' => 'required|max:255',
+                'event_type' => 'required|max:20',
+                'type' => 'in:basic,advanced',
+                'value' => 'integer|nullable',
+                'limit' => 'integer|nullable',
+            ];
+
+            if ($type === 'basic') {
+                $rules['budget_type'] = 'in:in_budget';
+            } else {
+                $rules['budget_type'] = 'in:in_budget,out_of_budget';
+            }
+
+
+            $validator = Validator::make($conversion, $rules);
+
+            if ($validator->fails()) {
+                $errors = $validator->errors()->toArray();
+                throw new HttpResponseException(response()->json(
+                    [
+                        'errors' => $errors,
+                    ],
+                    JsonResponse::HTTP_BAD_REQUEST
+                ));
+            }
+        }
     }
 
     public function changeStatus(Campaign $campaign, Request $request): JsonResponse
@@ -369,7 +421,7 @@ class CampaignsController extends Controller
 
     public function read(int $campaignId): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
     }
