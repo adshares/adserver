@@ -42,7 +42,7 @@ SQL;
 SELECT
   CONCAT(z.width, "x", z.height) AS size,
   IFNULL(SUM(e.views), 0)        AS impressions,
-  COUNT(*)                       AS count
+  COUNT(*)                       AS number
 FROM zones z
        JOIN sites s ON s.id = z.site_id AND s.status = 2 AND s.deleted_at IS NULL
        LEFT JOIN (
