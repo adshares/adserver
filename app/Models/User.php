@@ -236,7 +236,10 @@ class User extends Authenticatable
 
     public function getWalletBalance(): int
     {
-        return UserLedgerEntry::getWalletBalanceByUserId($this->id);
+        try {
+            return UserLedgerEntry::getWalletBalanceByUserId($this->id);
+        } catch (UserLedgerException $e) {
+        }
     }
 
     public function getBonusBalance(): int
