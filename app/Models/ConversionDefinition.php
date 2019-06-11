@@ -22,19 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use function route;
 
 class ConversionDefinition extends Model
 {
-//    use Ownership;
-//    use SoftDeletes;
-
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
 
@@ -86,5 +81,10 @@ class ConversionDefinition extends Model
         ];
 
         return (new SecureUrl(route('conversion', $params)))->toString();
+    }
+
+    public static function removeWithoutGiven(array $ids): void
+    {
+        self::whereNotIn('id', $ids)->delete();
     }
 }

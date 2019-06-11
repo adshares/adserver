@@ -128,21 +128,13 @@ class CampaignRepository
             }
 
             if ($conversions) {
-                $conversionsToNotDelete = [];
-
-                foreach ($conversions as $conversion) {
-                    if (isset($conversion['id'])) {
-                        $conversionsToNotDelete[] = $conversion['id'];
-                    }
-                }
-
-                ConversionDefinition::whereNotIn('id', $conversionsToNotDelete)->delete();
+                $existedConversions = $this->findConversionsWhichMustStay($conversions);
+                ConversionDefinition::removeWithoutGiven($existedConversions);
 
                 foreach ($conversions as $conversionInput) {
                     if (isset($conversionInput['id'] ) && ConversionDefinition::find($conversionInput['id'])) {
                         continue;
                     }
-
 
                     $conversion = new ConversionDefinition();
                     $conversion->fill($conversionInput);
@@ -156,5 +148,12 @@ class CampaignRepository
         }
 
         DB::commit();
+    }
+
+    private function findConversionsWhichMustStay(array $conversions): array
+    {
+        return array_filter($conversions, static function($item) {
+            return isset($item['id']);
+        });
     }
 }
