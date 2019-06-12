@@ -37,22 +37,22 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use InvalidArgumentException;
-use Log;
 use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
+use Log;
+use Symfony\Component\HttpFoundation\Response;
 use function array_map;
+use function config;
 use function GuzzleHttp\json_decode;
 use function iterator_to_array;
 use function json_encode;
-use function config;
 use function route;
 use function sprintf;
 use function strtolower;
-use Symfony\Component\HttpFoundation\Response;
 
 class GuzzleAdSelectClient implements AdSelect
 {
@@ -207,7 +207,7 @@ class GuzzleAdSelectClient implements AdSelect
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
-                    '[ADSELECT] Export paid events from %s failed (%s).',
+                    '[ADSELECT] Export paid events to %s failed (%s).',
                     $this->client->getConfig()['base_uri'],
                     $exception->getMessage()
                 ),
