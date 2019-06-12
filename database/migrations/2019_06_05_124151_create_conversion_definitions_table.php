@@ -43,7 +43,6 @@ class CreateConversionDefinitionsTable extends Migration
             $table->timestamps();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
-
         });
     }
 

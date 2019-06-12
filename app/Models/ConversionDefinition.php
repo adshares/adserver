@@ -22,28 +22,30 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\Rule;
 use function route;
 
 class ConversionDefinition extends Model
 {
-    use Ownership;
-    use SoftDeletes;
-
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
 
-    private const ALLOWED_BUDGET_TYPES = [
-        self::IN_BUDGET,
-        self::OUT_OF_BUDGET,
+    public const BASIC_TYPE = 'basic';
+    public const ADVANCED_TYPE = 'advanced';
+
+    public const ALLOWED_TYPES = [
+        self::BASIC_TYPE,
+        self::ADVANCED_TYPE,
     ];
 
+    private const CLICK_CONVERSION = 'click';
+
     protected $fillable = [
+        'id',
         'campaign_id',
         'name',
         'budget_type',
@@ -85,5 +87,40 @@ class ConversionDefinition extends Model
         ];
 
         return (new SecureUrl(route('conversion', $params)))->toString();
+    }
+
+    public static function removeFromCampaignWithoutGivenIds(int $campaignId, array $ids): void
+    {
+        self::where('campaign_id', $campaignId)
+            ->whereNotIn('id', $ids)->delete();
+    }
+
+    public static function rules(array $conversion): array
+    {
+        $type = $conversion['type'] ?? null;
+        $eventType = $conversion['event_type'] ?? null;
+        $rules = [
+            'id' => 'integer|nullable',
+            'campaign_id' => 'required|integer',
+            'name' => 'required|max:255',
+            'event_type' => 'required|max:50',
+            'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),
+            'value' => [
+                'integer',
+                'nullable',
+                Rule::requiredIf(static function () use ($type, $eventType) {
+                    return $type === self::BASIC_TYPE && $eventType !== self::CLICK_CONVERSION;
+                }),
+            ],
+            'limit' => 'integer|nullable',
+        ];
+
+        if ($type === self::BASIC_TYPE) {
+            $rules['budget_type'] = 'in:'.self::IN_BUDGET;
+        } elseif ($type === self::ADVANCED_TYPE) {
+            $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
+        }
+
+        return $rules;
     }
 }
