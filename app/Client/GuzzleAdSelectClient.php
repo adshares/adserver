@@ -37,18 +37,19 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use InvalidArgumentException;
-use Log;
 use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
+use Log;
+use Symfony\Component\HttpFoundation\Response;
 use function array_map;
+use function config;
 use function GuzzleHttp\json_decode;
 use function iterator_to_array;
 use function json_encode;
-use function config;
 use function route;
 use function sprintf;
 use function strtolower;
@@ -199,7 +200,6 @@ class GuzzleAdSelectClient implements AdSelect
             $mapped[] = EventPaymentMapper::map($event);
         }
 
-
         try {
             $this->client->post('/api/v1/events/paid', [
                 RequestOptions::JSON => ['events' => $mapped],
@@ -207,7 +207,7 @@ class GuzzleAdSelectClient implements AdSelect
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
-                    '[ADSELECT] Export paid events from %s failed (%s).',
+                    '[ADSELECT] Export paid events to %s failed (%s).',
                     $this->client->getConfig()['base_uri'],
                     $exception->getMessage()
                 ),
@@ -298,5 +298,64 @@ class GuzzleAdSelectClient implements AdSelect
                 }
             }
         }
+    }
+
+    public function getLastPaidPaymentId(): int
+    {
+        return $this->getLastId('paid');
+    }
+
+    public function getLastUnpaidEventId(): int
+    {
+        return $this->getLastId('unpaid');
+    }
+
+    private function getLastId(string $type): int
+    {
+        try {
+            $uri = sprintf('/api/v1/events/%s/last', $type);
+            $response = $this->client->get($uri);
+        } catch (RequestException $exception) {
+            if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
+                return 0;
+            }
+
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADSELECT] Fetch last %s event id from %s failed (%s).',
+                    $type,
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+
+        $body = (string)$response->getBody();
+        try {
+            $item = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new DomainRuntimeException(sprintf(
+                '[ADSELECT] Fetch last %s events. Invalid json data (%s).',
+                $type,
+                $body
+            ));
+        }
+
+        if (!isset($item['id']) || !array_key_exists('payment_id', $item)) {
+            throw new UnexpectedClientResponseException(sprintf(
+                '[ADSELECT] Could not fetch last %s event from adselect (%s). Event id is required, given: %s.',
+                $type,
+                $this->client->getConfig()['base_uri'],
+                $body
+            ));
+        }
+
+        if ($type === 'paid') {
+            return (int)$item['payment_id'];
+        }
+
+        return (int)$item['id'];
     }
 }
