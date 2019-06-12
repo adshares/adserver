@@ -129,7 +129,7 @@ class CampaignRepository
 
             if ($conversions) {
                 $existedConversions = $this->findConversionsWhichMustStay($conversions);
-                ConversionDefinition::removeWithoutGivenIds($existedConversions);
+                ConversionDefinition::removeFromCampaignWithoutGivenIds($campaign->id, $existedConversions);
 
                 foreach ($conversions as $conversionInput) {
                     if (isset($conversionInput['id']) && ConversionDefinition::find($conversionInput['id'])) {

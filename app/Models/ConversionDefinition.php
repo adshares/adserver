@@ -86,9 +86,10 @@ class ConversionDefinition extends Model
         return (new SecureUrl(route('conversion', $params)))->toString();
     }
 
-    public static function removeWithoutGivenIds(array $ids): void
+    public static function removeFromCampaignWithoutGivenIds(int $campaignId, array $ids): void
     {
-        self::whereNotIn('id', $ids)->delete();
+        self::where('campaign_id', $campaignId)
+            ->whereNotIn('id', $ids)->delete();
     }
 
     public static function rules(string $type): array
@@ -98,15 +99,15 @@ class ConversionDefinition extends Model
             'campaign_id' => 'required|integer',
             'name' => 'required|max:255',
             'event_type' => 'required|max:20',
-            'type' => 'in:basic,advanced',
+            'type' => sprintf('in:%s', implode(',', self::ALLOWED_TYPES)),
             'value' => 'integer|nullable',
             'limit' => 'integer|nullable',
         ];
 
         if ($type === self::BASIC_TYPE) {
-            $rules['budget_type'] = 'in:in_budget';
+            $rules['budget_type'] = 'in:'.self::IN_BUDGET;
         } else {
-            $rules['budget_type'] = 'in:in_budget,out_of_budget';
+            $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
         }
 
         return $rules;
