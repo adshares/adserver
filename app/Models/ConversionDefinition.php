@@ -100,7 +100,6 @@ class ConversionDefinition extends Model
         return (bool) self::where('campaign_id', $campaignId)
             ->where('event_type', self::CLICK_CONVERSION)
             ->first();
-
     }
 
     public static function rules(array $conversion): array
