@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -244,6 +245,10 @@ class DemandController extends Controller
         $keywords = $context['page']['keywords'];
 
         $response->send();
+
+        if (ConversionDefinition::isClickConversionForCampaign($campaign->id)) {
+            return $response;
+        }
 
         $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
