@@ -102,6 +102,8 @@ class NetworkCampaignRepository implements CampaignRepository
                 $exception->getMessage(),
                 $exception->getSql()
             ));
+
+            throw $exception;
         }
 
         $banners = $campaign->getBanners();
