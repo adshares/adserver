@@ -325,21 +325,8 @@ class CampaignsController extends Controller
     private function validateConversions(int $campaignId, array $conversions): void
     {
         foreach ($conversions as $conversion) {
-            $type = $conversion['type'] ?? '';
-            $allowedTypes = ConversionDefinition::ALLOWED_TYPES;
-            if (!in_array($type, $allowedTypes, true)) {
-                throw new HttpResponseException(response()->json(
-                    [
-                        'errors' => [
-                            'type' => sprintf('Only %s values ares supported.', implode(', ', $allowedTypes))
-                        ],
-                    ],
-                    JsonResponse::HTTP_BAD_REQUEST
-                ));
-            }
-
             $conversion['campaign_id'] = $campaignId;
-            $validator = Validator::make($conversion, ConversionDefinition::rules($type));
+            $validator = Validator::make($conversion, ConversionDefinition::rules($conversion));
 
             if ($validator->fails()) {
                 $errors = $validator->errors()->toArray();

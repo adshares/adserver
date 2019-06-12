@@ -26,6 +26,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Validation\Rule;
 use function route;
 
 class ConversionDefinition extends Model
@@ -40,6 +41,8 @@ class ConversionDefinition extends Model
         self::BASIC_TYPE,
         self::ADVANCED_TYPE,
     ];
+
+    private const CLICK_CONVERSION = 'click';
 
     protected $fillable = [
         'id',
@@ -92,21 +95,28 @@ class ConversionDefinition extends Model
             ->whereNotIn('id', $ids)->delete();
     }
 
-    public static function rules(string $type): array
+    public static function rules(array $conversion): array
     {
+        $type = $conversion['type'] ?? null;
+        $eventType = $conversion['event_type'] ?? null;
         $rules = [
             'id' => 'integer|nullable',
             'campaign_id' => 'required|integer',
             'name' => 'required|max:255',
-            'event_type' => 'required|max:20',
-            'type' => sprintf('in:%s', implode(',', self::ALLOWED_TYPES)),
-            'value' => 'integer|nullable',
+            'event_type' => 'required|max:50',
+            'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),
+            'value' => [
+                'integer',
+                Rule::requiredIf(static function () use ($type, $eventType) {
+                    return $type === self::BASIC_TYPE && $eventType === self::CLICK_CONVERSION;
+                }),
+            ],
             'limit' => 'integer|nullable',
         ];
 
         if ($type === self::BASIC_TYPE) {
             $rules['budget_type'] = 'in:'.self::IN_BUDGET;
-        } else {
+        } elseif ($type === self::ADVANCED_TYPE) {
             $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
         }
 
