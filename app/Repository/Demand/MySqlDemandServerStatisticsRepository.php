@@ -39,7 +39,7 @@ SQL;
 
     private const QUERY_DOMAINS = <<<SQL
 SELECT
-    e.domain AS name,
+    SUBSTRING_INDEX(e.domain, "www.", -1) AS name,
     SUM(e.views) AS impressions,
     ROUND(SUM(e.cost)/100000000000, 2) AS cost,
     ROUND(1000 * IFNULL((SUM(e.cost)/100000000000)/SUM(e.views), 0), 2) AS cpm,
@@ -53,28 +53,30 @@ SQL;
 
     private const QUERY_CAMPAIGNS = <<<SQL
 SELECT
-  SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(c.landing_url, '/', 3), '://', -1), '/', 1), '?',
-                  1)                                     AS name,
-  SUM(IFNULL(e.views, 0))                                AS impressions,
-  ROUND(SUM(IFNULL(e.cost, 0)), 2)                       AS cost,
-  ROUND(1000 * IFNULL(SUM(e.cost) / SUM(e.views), 0), 2) AS cpm,
-  GROUP_CONCAT((
-    SELECT GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height))
-    FROM banners b
-    WHERE b.campaign_id = c.id
-  ))                                                     AS sizes
-FROM campaigns c
-       LEFT JOIN (
-    SELECT e.campaign_id, SUM(e.views) AS views, SUM(e.cost) / 100000000000 AS cost
+    c.name,
+    SUM(IFNULL(e.views, 0)) AS impressions,
+    ROUND(SUM(IFNULL(e.cost, 0)), 2) AS cost,
+    ROUND(1000 * IFNULL(SUM(e.cost)/SUM(e.views), 0), 2) AS cpm,
+    GROUP_CONCAT(c.sizes) AS sizes
+FROM (
+    SELECT e.campaign_id, SUM(e.views) AS views, SUM(e.cost)/100000000000 AS cost
     FROM event_logs_hourly e
-    WHERE e.hour_timestamp < DATE(NOW())
-      AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
+    WHERE e.hour_timestamp < DATE(NOW()) AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
-  ) AS e ON e.campaign_id = c.uuid
-WHERE c.status = 2
-  AND c.deleted_at IS NULL
-  AND c.time_start <= NOW()
-  AND (c.time_end IS NULL OR c.time_end > NOW())
+) e
+JOIN (
+    SELECT 
+        c.uuid AS campaign_id,
+        GROUP_CONCAT(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(
+          SUBSTRING_INDEX(SUBSTRING_INDEX(c.landing_url, '/', 3), '://', -1), '/', 1), '?', 1), "www.", -1)) AS name,
+        GROUP_CONCAT((
+            SELECT GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height))
+            FROM banners b
+            WHERE b.campaign_id = c.id
+        )) AS sizes
+    FROM campaigns c
+    GROUP BY 1
+) c ON c.campaign_id = e.campaign_id
 GROUP BY 1;
 SQL;
 
@@ -82,7 +84,7 @@ SQL;
 SELECT
   CONCAT(b.creative_width, "x", b.creative_height) AS size,
   IFNULL(SUM(e.views), 0)                          AS impressions,
-  COUNT(*)                                         AS count
+  COUNT(*)                                         AS number
 FROM banners b
        JOIN campaigns c ON c.id = b.campaign_id AND c.status = 2 AND c.deleted_at IS NULL AND c.time_start <= NOW() AND
                            (c.time_end IS NULL OR c.time_end > NOW())
