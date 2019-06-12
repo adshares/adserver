@@ -107,6 +107,7 @@ class ConversionDefinition extends Model
             'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),
             'value' => [
                 'integer',
+                'nullable',
                 Rule::requiredIf(static function () use ($type, $eventType) {
                     return $type === self::BASIC_TYPE && $eventType !== self::CLICK_CONVERSION;
                 }),
