@@ -108,7 +108,7 @@ class ConversionDefinition extends Model
             'value' => [
                 'integer',
                 Rule::requiredIf(static function () use ($type, $eventType) {
-                    return $type === self::BASIC_TYPE && $eventType === self::CLICK_CONVERSION;
+                    return $type === self::BASIC_TYPE && $eventType !== self::CLICK_CONVERSION;
                 }),
             ],
             'limit' => 'integer|nullable',
