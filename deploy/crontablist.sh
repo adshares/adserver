@@ -3,6 +3,8 @@ set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
 SERVICE_NAME=$(basename ${SERVICE_DIR})
+BACKUP_DIR=$(dirname ${SERVICE_DIR})/.backup
+
 LOG_DIR=${LOG_DIR:-""}
 
 if [[ -z ${LOG_DIR} ]]
@@ -60,30 +62,8 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
-_CREDENTIALS="--user=${VENDOR_USER} --password=${VENDOR_USER}"
-
-_DB="${VENDOR_NAME}_${SERVICE_NAME}"
-
-__DATE=$(mysql ${_CREDENTIALS} -e "SELECT CURRENT_DATE - INTERVAL 32 DAY" --batch | tail -1)
-_CONDITION="created_at < '${__DATE}'"
-
-_FILE_DIR="${VENDOR_DIR}/.backup"
-
-_TABLE="network_event_logs"
-_FILE="${_FILE_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
-
-echo -n "0 1 * * * "
-echo -n "mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where=\"${_CONDITION}\" --result-file=${_FILE} ${_DB} ${_TABLE}"
-echo -n " && "
-echo -n "mysql ${_CREDENTIALS} --execute=\"DELETE FROM ${_TABLE} WHERE ${_CONDITION}\"" ${_DB}
-
-_TABLE="event_logs"
-_FILE="${_FILE_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
-
-echo -n " && "
-echo -n "mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where=\"${_CONDITION}\" --result-file=${_FILE} ${_DB} ${_TABLE}"
-echo -n " && "
-echo -n "mysql ${_CREDENTIALS} --execute=\"DELETE FROM ${_TABLE} WHERE ${_CONDITION}\"" ${_DB}
+echo -n "15 1 * * * "
+echo -n "${SERVICE_DIR}/bin/archive_events.sh"
 echo ""
 
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
