@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -eux
 
 SERVICE_DIR=$(dirname $(dirname $(readlink -f $0)))
 SERVICE_NAME=$(basename ${SERVICE_DIR})
@@ -16,13 +16,13 @@ __DATE=$(mysql ${_CREDENTIALS} -e "SELECT CURRENT_DATE - INTERVAL 32 DAY" --batc
 _CONDITION="created_at < '${__DATE}'"
 
 _TABLE="network_event_logs"
-_FILE="${BACKUP_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
+_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds).sql"
 
 mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where="${_CONDITION}" --result-file=${_FILE} ${_DB} ${_TABLE}
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
 
 _TABLE="event_logs"
-_FILE="${BACKUP_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
+_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds).sql"
 
 mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where="${_CONDITION}" --result-file=${_FILE} ${_DB} ${_TABLE}
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
