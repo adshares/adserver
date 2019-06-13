@@ -18,21 +18,18 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 class CreateConversionDefinitionsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
         Schema::create('conversion_definitions', static function (Blueprint $table) {
             $table->increments('id');
+            $table->binary('uuid', 16);
             $table->bigInteger('campaign_id')->unsigned();
             $table->string('name', 255);
             $table->string('budget_type', 20); // in_budget, out_of_budget
@@ -44,13 +41,16 @@ class CreateConversionDefinitionsTable extends Migration
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });
+
+        if (DB::isMysql()) {
+            DB::statement('ALTER TABLE conversion_definitions MODIFY uuid varbinary(16)');
+        }
+
+        Schema::table('conversion_definitions', static function (Blueprint $table) {
+            $table->unique('uuid');
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down(): void
     {
         Schema::dropIfExists('conversion_definitions');

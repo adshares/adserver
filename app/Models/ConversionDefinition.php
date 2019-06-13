@@ -22,6 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,6 +34,9 @@ use function route;
 
 class ConversionDefinition extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
 
@@ -64,6 +70,14 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'limit',
+    ];
+
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
     ];
 
     public function campaign(): BelongsTo
