@@ -67,11 +67,11 @@ _DB="${VENDOR_NAME}_${SERVICE_NAME}"
 _TABLE="network_event_logs"
 _CONDITION="created_at < CURRENT_DATE - INTERVAL 32 DAY"
 _FILE="${BACKUP_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
-
+_CREDENTIALS="--user ${VENDOR_USER} --password ${VENDOR_USER}"
 echo -n "30 0 * * * "
-echo -n "mysqldump --user ${VENDOR_USER} --password ${VENDOR_USER} --no-tablespaces --no-create-db --no-create-info --where=\"${_CONDITION}\" --result-file=${_FILE} ${_DB} ${_TABLE}"
+echo -n "mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where=\"${_CONDITION}\" --result-file=${_FILE} ${_DB} ${_TABLE}"
 echo -n " && "
-echo -n "mysql --user ${VENDOR_USER} --password ${VENDOR_USER} --execute=\"DELETE FROM ${_TABLE} WHERE ${_CONDITION}\"" ${_DB}
+echo -n "mysql ${_CREDENTIALS} --execute=\"DELETE FROM ${_TABLE} WHERE ${_CONDITION}\"" ${_DB}
 echo ""
 
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
