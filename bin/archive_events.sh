@@ -23,7 +23,7 @@ mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --whe
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
 
 _TABLE="event_logs"
-_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds).sql"
+_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds)-before_${__DATE}.sql"
 
 mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where="${_CONDITION}" --result-file=${_FILE} ${_DB} ${_TABLE}
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
