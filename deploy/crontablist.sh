@@ -61,6 +61,8 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
+env
+
 _DB="${VENDOR_NAME}_${SERVICE}"
 _TABLE="network_event_logs"
 _CONDITION="created_at < CURRENT_DATE - INTERVAL 32 DAY"
