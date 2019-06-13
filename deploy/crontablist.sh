@@ -2,6 +2,7 @@
 set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
+SERVICE_NAME=$(basename ${SERVICE_DIR})
 LOG_DIR=${LOG_DIR:-""}
 
 if [[ -z ${LOG_DIR} ]]
@@ -61,6 +62,19 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
+_DB="${VENDOR_NAME}_${SERVICE_NAME}"
+_TABLE="network_event_logs"
+_CONDITION="created_at < CURRENT_DATE - INTERVAL 32 DAY"
+_FILE_DIR="${VENDOR_DIR}/.backup"
+_FILE="${_FILE_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
+_CREDENTIALS="--user=${VENDOR_USER} --password=${VENDOR_USER}"
+
+echo -n "30 0 * * * "
+echo -n "mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where=\"${_CONDITION}\" --result-file=${_FILE} ${_DB} ${_TABLE}"
+echo -n " && "
+echo -n "mysql ${_CREDENTIALS} --execute=\"DELETE FROM ${_TABLE} WHERE ${_CONDITION}\"" ${_DB}
+echo ""
+
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
 {
     echo -n "*/30 * * * * "
@@ -83,3 +97,4 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo -n "php ${SERVICE_DIR}/artisan ads:fetch-hosts"
     echo ""
 }
+
