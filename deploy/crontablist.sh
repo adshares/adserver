@@ -2,7 +2,7 @@
 set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
-SERVICE_NAME=$(dirname ${SERVICE_DIR})
+SERVICE_NAME=$(basename ${SERVICE_DIR})
 LOG_DIR=${LOG_DIR:-""}
 
 if [[ -z ${LOG_DIR} ]]
