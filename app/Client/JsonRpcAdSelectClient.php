@@ -28,6 +28,7 @@ use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -279,11 +280,11 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     public function getLastPaidPaymentId(): int
     {
-        return 0;
+        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_EVENT_ID_PAID);
     }
 
     public function getLastUnpaidEventId(): int
     {
-        return 0;
+        return PHP_INT_MAX;
     }
 }
