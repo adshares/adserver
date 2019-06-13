@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 
 _INTERVAL_DAYS=${1:-32}
 SERVICE_DIR=$(dirname $(dirname $(readlink -f $0)))
