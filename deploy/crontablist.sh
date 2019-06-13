@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eu
+set -eux
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
 SERVICE_NAME=$(basename ${SERVICE_DIR})
@@ -62,10 +62,6 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
-echo -n "15 1 * * * "
-echo -n "${SERVICE_DIR}/bin/archive_events.sh"
-echo ""
-
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
 {
     echo -n "*/30 * * * * "
@@ -88,4 +84,8 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo -n "php ${SERVICE_DIR}/artisan ads:fetch-hosts"
     echo ""
 }
+
+echo -n "15 1 * * * "
+echo -n "${SERVICE_DIR}/bin/archive_events.sh"
+echo ""
 
