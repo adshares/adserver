@@ -30,10 +30,12 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Services\ConversionValidator;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -46,6 +48,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use DateTime;
+use function base64_decode;
 use function bin2hex;
 use function inet_pton;
 use function json_decode;
@@ -55,11 +58,16 @@ class DemandController extends Controller
 {
     private const CONTENT_TYPE = 'Content-Type';
 
+    private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
     /** @var CampaignRepository */
     private $campaignRepository;
+
+    /** @var ConversionValidator */
+    private $conversionValidator;
 
     /** @var LicenseReader */
     private $licenseReader;
@@ -67,10 +75,12 @@ class DemandController extends Controller
     public function __construct(
         PaymentDetailsVerify $paymentDetailsVerify,
         CampaignRepository $campaignRepository,
+        ConversionValidator $conversionValidator,
         LicenseReader $licenseReader
     ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
+        $this->conversionValidator = $conversionValidator;
         $this->licenseReader = $licenseReader;
     }
 
@@ -356,10 +366,63 @@ class DemandController extends Controller
         return $response;
     }
 
-    public function conversion(Request $request): Response
+    public function conversion(string $uuid, Request $request): JsonResponse
     {
-        $response = new Response();
-        $response->send();
+        return self::json(['status' => 'OK'], Response::HTTP_OK);
+    }
+
+    public function conversionGif(string $uuid, Request $request): Response
+    {
+        if (32 !== strlen($uuid)) {
+            throw new BadRequestHttpException();
+        }
+
+        $conversionDefinition = ConversionDefinition::fetchByUuid($uuid);
+        if (!$conversionDefinition) {
+            throw new NotFoundHttpException();
+        }
+
+        if ($conversionDefinition->isAdvanced()) {
+            $cid = $request->input('cid');
+            //TODO cid can be null - for gif
+            $cookies = $request->cookies;
+            $tid = $request->cookies->get('tid');
+            $tid2 = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid')) : null;
+
+            $value = $request->input('value');
+            
+            if (null === $value) {
+                $value = $conversionDefinition->value;
+            }
+            //TODO value cannot be null
+
+            //TODO nonce
+            $nonce = '';
+            $sig = $request->input('sig');
+            //TODO sig cannot be null
+
+            $timestampCreated = $request->input('ts');
+            //TODO $timestampCreated cannot be null
+
+            $secret = $conversionDefinition->secret;
+
+            try {
+                $isSignatureValid = $this->conversionValidator->validateSignature((string)$sig, (string)$nonce, (int)$timestampCreated, $secret);
+            } catch (RuntimeException $exception) {
+                Log::warning(sprintf('[DemandController] Conversion has an error: %s', $exception->getMessage()));
+
+                $isSignatureValid = false;
+            }
+
+            if (!$isSignatureValid) {
+                throw new BadRequestHttpException();
+            }
+        }
+
+        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
+        $response->headers->set('Content-Type', 'image/gif');
+
+        return $response;
     }
 
     private function validateEventRequest(Request $request): void
@@ -377,8 +440,7 @@ class DemandController extends Controller
     {
         $response = new Response();
 
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
+        $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         $response->send();
 

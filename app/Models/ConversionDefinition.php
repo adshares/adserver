@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\ConversionDefinitionCreating;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -33,15 +34,29 @@ use Illuminate\Validation\Rule;
 use function hex2bin;
 use function route;
 
+/**
+ * @property int id
+ * @property string uuid
+ * @property int campaign_id
+ * @property string name
+ * @property string budget_type
+ * @property string event_type
+ * @property string type
+ * @property int|null value
+ * @property int|null limit
+ * @property string secret
+ */
 class ConversionDefinition extends Model
 {
     use AutomateMutators;
     use BinHex;
 
     private const IN_BUDGET = 'in_budget';
+
     private const OUT_OF_BUDGET = 'out_of_budget';
 
     public const BASIC_TYPE = 'basic';
+
     public const ADVANCED_TYPE = 'advanced';
 
     public const ALLOWED_TYPES = [
@@ -70,6 +85,12 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'limit',
+        'link',
+        'secret',
+    ];
+
+    protected $appends = [
+        'link',
     ];
 
     protected $traitAutomate = [
@@ -77,7 +98,7 @@ class ConversionDefinition extends Model
     ];
 
     protected $dispatchesEvents = [
-        'creating' => GenerateUUID::class,
+        'creating' => ConversionDefinitionCreating::class,
     ];
 
     public static function fetchByUuid(string $uuid): ?self
@@ -95,17 +116,29 @@ class ConversionDefinition extends Model
         return $this->hasMany(ConversionGroup::class);
     }
 
-    public static function generateLink(int $definitionConvertionId): string
+    public function getLinkAttribute()
     {
         $params = [
-            'conversion_id' => $definitionConvertionId,
-            'cid' => '',
-            'value' => '',
-            'tnonce' => '',
-            'sig' => '',
+            'uuid' => $this->uuid,
         ];
 
-        return (new SecureUrl(route('conversion', $params)))->toString();
+        if (self::ADVANCED_TYPE === $this->type) {
+            $params = array_merge(
+                $params, 
+                [
+                    'cid' => '',
+                    'value' => '',
+                    'tnonce' => '',
+                    'sig' => '',
+                ]
+            );
+        }
+
+        return (new SecureUrl(route('conversion.gif', $params)))->toString();
+    }
+
+    public function isAdvanced() {
+        return self::ADVANCED_TYPE === $this->type;
     }
 
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
