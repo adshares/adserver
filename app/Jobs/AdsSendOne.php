@@ -27,6 +27,7 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Exceptions\JobException;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Models\UserLedgerException;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -40,10 +41,15 @@ class AdsSendOne implements ShouldQueue
 
     const QUEUE_NAME = 'ads';
 
-    const QUEUE_TRY_AGAIN_INTERVAL = 600;
+    private const QUEUE_TRY_AGAIN_INTERVAL = 600;
+
+    private const QUEUE_TRY_AGAIN_EXCEPTION_CODES = [
+        CommandError::LOW_BALANCE,
+        CommandError::LOCK_USER_FAILED,
+    ];
 
     /**
-     * @var string recipent address
+     * @var string recipient address
      */
     private $addressTo;
 
@@ -84,7 +90,7 @@ class AdsSendOne implements ShouldQueue
      *
      * @param AdsClient $adsClient
      *
-     * @throws CommandException
+     * @throws UserLedgerException
      * @throws JobException
      */
     public function handle(AdsClient $adsClient): void
@@ -105,10 +111,12 @@ class AdsSendOne implements ShouldQueue
         try {
             $response = $adsClient->runTransaction($command);
         } catch (CommandException $exception) {
-            if ($exception->getCode() === CommandError::LOW_BALANCE) {
+            if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
                 $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
-                $message .= ' Operator does not have enough money. Will be tried again later.';
-                Log::info(sprintf($message, $this->addressTo, $this->amount, $this->message ?? ''));
+                $message .= ' Will be tried again later. Exception code (%s)';
+                Log::info(
+                    sprintf($message, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
+                );
 
                 self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
                     ->delay(self::QUEUE_TRY_AGAIN_INTERVAL);
@@ -116,9 +124,11 @@ class AdsSendOne implements ShouldQueue
                 return;
             }
 
+            Log::error(sprintf('[ADS] Send command exception: %s', $exception->getMessage()));
+
             $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
 
-            Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message));
+            Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message ?? ''));
 
             $this->userLedger->status = UserLedgerEntry::STATUS_NET_ERROR;
 

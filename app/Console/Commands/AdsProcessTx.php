@@ -232,7 +232,6 @@ class AdsProcessTx extends BaseCommand
 
         $host = $networkHost->host;
         $txid = $dbTx->txid;
-        $adsPaymentId = $dbTx->id;
 
         try {
             $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
@@ -247,7 +246,7 @@ class AdsProcessTx extends BaseCommand
         }
 
         try {
-            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $adsPaymentId, $paymentDetails);
+            $this->paymentDetailsProcessor->processPaymentDetails($dbTx, $paymentDetails);
         } catch (MissingInitialConfigurationException $exception) {
             $this->error('Missing initial configuration: '.$exception->getMessage());
 
