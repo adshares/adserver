@@ -61,9 +61,9 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
-env
+env | sort
 
-_DB="${VENDOR_NAME}_${SERVICE}"
+_DB="${VENDOR_NAME}_${SERVICE_NAME}"
 _TABLE="network_event_logs"
 _CONDITION="created_at < CURRENT_DATE - INTERVAL 32 DAY"
 _FILE="${BACKUP_DIR}/${_TABLE}-\$(date -u -Iseconds).sql"
