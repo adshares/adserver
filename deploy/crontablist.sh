@@ -63,8 +63,10 @@ echo ""
 _CREDENTIALS="--user=${VENDOR_USER} --password=${VENDOR_USER}"
 
 _DB="${VENDOR_NAME}_${SERVICE_NAME}"
+
 __DATE=$(mysql ${_CREDENTIALS} -e "SELECT CURRENT_DATE - INTERVAL 32 DAY" --batch | tail -1)
 _CONDITION="created_at < '${__DATE}'"
+
 _FILE_DIR="${VENDOR_DIR}/.backup"
 
 _TABLE="network_event_logs"
