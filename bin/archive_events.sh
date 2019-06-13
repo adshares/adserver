@@ -16,14 +16,18 @@ _CREDENTIALS="--user=${VENDOR_NAME} --password=${VENDOR_NAME}"
 __DATE=$(mysql ${_CREDENTIALS} -e "SELECT CURRENT_DATE - INTERVAL ${_INTERVAL_DAYS} DAY" --batch | tail -1)
 _CONDITION="created_at < '${__DATE}'"
 
+__TS=$(date -u -Iseconds)
+
+# ===
+
 _TABLE="network_event_logs"
-_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds)-before_${__DATE}.sql"
+_FILE="${BACKUP_DIR}/${_TABLE}-${__TS}-before_${__DATE}.sql"
 
 mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where="${_CONDITION}" --result-file=${_FILE} ${_DB} ${_TABLE}
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
 
 _TABLE="event_logs"
-_FILE="${BACKUP_DIR}/${_TABLE}-$(date -u -Iseconds)-before_${__DATE}.sql"
+_FILE="${BACKUP_DIR}/${_TABLE}-${__TS}-before_${__DATE}.sql"
 
 mysqldump ${_CREDENTIALS} --no-tablespaces --no-create-db --no-create-info --where="${_CONDITION}" --result-file=${_FILE} ${_DB} ${_TABLE}
 mysql ${_CREDENTIALS} --execute="DELETE FROM ${_TABLE} WHERE ${_CONDITION}" ${_DB}
