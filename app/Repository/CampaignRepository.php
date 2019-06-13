@@ -129,14 +129,15 @@ class CampaignRepository
 
             if ($conversions) {
                 $existedConversions = $this->findConversionsWhichMustStay($conversions);
-                ConversionDefinition::removeFromCampaignWithoutGivenIds($campaign->id, $existedConversions);
+                ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
 
                 foreach ($conversions as $conversionInput) {
-                    if (isset($conversionInput['id']) && ConversionDefinition::find($conversionInput['id'])) {
+                    if (isset($conversionInput['uuid'])
+                        && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
                         continue;
                     }
 
-                    unset($conversionInput['id']);
+                    unset($conversionInput['uuid']);
                     $conversion = new ConversionDefinition();
                     $conversion->fill($conversionInput);
 
@@ -153,13 +154,13 @@ class CampaignRepository
 
     private function findConversionsWhichMustStay(array $conversions): array
     {
-        $ids = [];
+        $uuids = [];
         foreach ($conversions as $conversion) {
-            if (isset($conversion['id'])) {
-                $ids[] = $conversion['id'];
+            if (isset($conversion['uuid'])) {
+                $uuids[] = $conversion['uuid'];
             }
         }
 
-        return $ids;
+        return $uuids;
     }
 }

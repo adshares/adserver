@@ -22,15 +22,22 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\Rule;
+use function hex2bin;
 use function route;
 
 class ConversionDefinition extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+
     private const IN_BUDGET = 'in_budget';
     private const OUT_OF_BUDGET = 'out_of_budget';
 
@@ -45,7 +52,6 @@ class ConversionDefinition extends Model
     private const CLICK_CONVERSION = 'click';
 
     protected $fillable = [
-        'id',
         'campaign_id',
         'name',
         'budget_type',
@@ -56,7 +62,7 @@ class ConversionDefinition extends Model
     ];
 
     protected $visible = [
-        'id',
+        'uuid',
         'campaign_id',
         'name',
         'budget_type',
@@ -65,6 +71,19 @@ class ConversionDefinition extends Model
         'value',
         'limit',
     ];
+
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
+
+    public static function fetchByUuid(string $uuid): ?self
+    {
+        return self::where('uuid', hex2bin($uuid))->first();
+    }
 
     public function campaign(): BelongsTo
     {
@@ -89,10 +108,17 @@ class ConversionDefinition extends Model
         return (new SecureUrl(route('conversion', $params)))->toString();
     }
 
-    public static function removeFromCampaignWithoutGivenIds(int $campaignId, array $ids): void
+    public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
     {
+        $binaryUuids = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $uuids
+        );
+
         self::where('campaign_id', $campaignId)
-            ->whereNotIn('id', $ids)->delete();
+            ->whereNotIn('uuid', $binaryUuids)->delete();
     }
 
     public static function isClickConversionForCampaign(int $campaignId): bool
@@ -107,7 +133,7 @@ class ConversionDefinition extends Model
         $type = $conversion['type'] ?? null;
         $eventType = $conversion['event_type'] ?? null;
         $rules = [
-            'id' => 'integer|nullable',
+            'uuid' => 'string|nullable',
             'campaign_id' => 'required|integer',
             'name' => 'required|max:255',
             'event_type' => 'required|max:50',
