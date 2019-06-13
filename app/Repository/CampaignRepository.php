@@ -132,7 +132,8 @@ class CampaignRepository
                 ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
 
                 foreach ($conversions as $conversionInput) {
-                    if (isset($conversionInput['uuid']) && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
+                    if (isset($conversionInput['uuid'])
+                        && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
                         continue;
                     }
 
