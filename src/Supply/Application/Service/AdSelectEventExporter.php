@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Supply\Application\Service;
 
 use Adshares\Supply\Domain\Repository\EventRepository;
+use DateTime;
 
 class AdSelectEventExporter
 {
@@ -82,11 +83,23 @@ class AdSelectEventExporter
 
     public function getLastUnpaidEventId(): int
     {
-        return $this->client->getLastUnpaidEventId();
+        $eventId = $this->client->getLastUnpaidEventId();
+
+        if ($eventId > 0) {
+            return $eventId;
+        }
+
+        return $this->eventRepository->fetchLastPaidEventsByDate(new DateTime('-7 days'));
     }
 
     public function getLastPaidPaymentId(): int
     {
-        return $this->client->getLastPaidPaymentId();
+        $eventId = $this->client->getLastPaidPaymentId();
+
+        if ($eventId > 0) {
+            return $eventId;
+        }
+
+        return $this->eventRepository->fetchLastUnPaidEventsByDate(new DateTime('-7 days'));
     }
 }
