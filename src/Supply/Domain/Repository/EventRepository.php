@@ -22,8 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\Repository;
 
-use DateTime;
-
 interface EventRepository
 {
     public const PACKAGE_SIZE = 500;
@@ -41,7 +39,4 @@ interface EventRepository
         int $limit = self::PACKAGE_SIZE,
         int $offset = 0
     ): array;
-
-    public function fetchLastUnpaidEventsByDate(DateTime $date): int;
-    public function fetchLastPaidEventsByDate(DateTime $date): int;
 }
