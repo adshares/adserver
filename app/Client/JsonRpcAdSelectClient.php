@@ -127,22 +127,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     public function exportEvents(array $eventsInput): void
     {
-        $events = [];
-
-        foreach ($eventsInput as $event) {
-            $events[] = EventMapper::map($event);
-        }
-
-        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
-
-        $this->client->call($procedure)->isTrue();
-
-        Log::debug(sprintf(
-            '%s:%s %s',
-            __METHOD__,
-            __LINE__,
-            $procedure->toJson()
-        ));
+        // Intentionally empty - python adselect works without unpaid events
     }
 
     public function exportEventsPayments(array $eventsInput): void
@@ -280,11 +265,11 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     public function getLastPaidPaymentId(): int
     {
-        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_EVENT_ID_PAID);
+        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID);
     }
 
     public function getLastUnpaidEventId(): int
     {
-        return PHP_INT_MAX;
+        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID);
     }
 }

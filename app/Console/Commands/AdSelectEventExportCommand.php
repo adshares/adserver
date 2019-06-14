@@ -107,7 +107,7 @@ class AdSelectEventExportCommand extends BaseCommand
             $exported
         ));
 
-        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_EVENT_ID_PAID, $eventIdLast);
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID, $eventIdLast);
 
         $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
     }

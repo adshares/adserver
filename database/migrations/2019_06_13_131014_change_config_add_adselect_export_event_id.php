@@ -23,34 +23,36 @@ use Illuminate\Database\Migrations\Migration;
 
 class ChangeConfigAddAdselectExportEventId extends Migration
 {
-    private const CONFIG_KEY_ADSELECT_PAID_EVENT_ID = 'adselect-payment-export';
-
     public function up(): void
     {
-        $config = DB::table('configs')
-            ->where('key', self::CONFIG_KEY_ADSELECT_PAID_EVENT_ID)
-            ->first();
+        $keys = ['adselect-event-export', 'adselect-payment-export'];
 
-        if (null !== $config) {
-            return;
+        foreach ($keys as $key) {
+            $config = DB::table('configs')->where('key', $key)->first();
+
+            if (null !== $config) {
+                continue;
+            }
+
+            DB::table('configs')->insert(
+                [
+                    'key' => $key,
+                    'value' => $this->getLastExportedId($key),
+                    'created_at' => new DateTime(),
+                ]
+            );
         }
-
-        DB::table('configs')->insert(
-            [
-                'key' => self::CONFIG_KEY_ADSELECT_PAID_EVENT_ID,
-                'value' => $this->getLastNetworkEventId(),
-                'created_at' => new DateTime(),
-            ]
-        );
     }
 
     public function down(): void
     {
-        DB::table('configs')->where('key', self::CONFIG_KEY_ADSELECT_PAID_EVENT_ID)->delete();
+        DB::table('configs')->whereIn('key', ['adselect-event-export', 'adselect-payment-export'])->delete();
     }
 
-    private function getLastNetworkEventId(): int
+    private function getLastExportedId(string $key): int
     {
-        return DB::table('network_event_logs')->max('id') ?? 0;
+        $column = ('adselect-payment-export' === $key) ? 'ads_payment_id' : 'id';
+
+        return DB::table('network_event_logs')->max($column) ?? 0;
     }
 }

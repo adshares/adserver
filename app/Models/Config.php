@@ -51,7 +51,9 @@ class Config extends Model
 
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
 
-    public const ADSELECT_LAST_EXPORTED_EVENT_ID_PAID = 'adselect-event-export';
+    public const ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID = 'adselect-payment-export';
+
+    public const ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID = 'adselect-event-export';
 
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';
 
