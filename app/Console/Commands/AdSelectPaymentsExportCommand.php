@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelectEventExporter;
@@ -86,6 +87,8 @@ class AdSelectPaymentsExportCommand extends BaseCommand
                 $exported
             )
         );
+
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID, $eventPaymentIdLast);
 
         $this->info('Finished exporting event payments to AdSelect');
     }
