@@ -4,6 +4,8 @@
 
 * * * * * cd /var/www/adserver && bash docker/cron/ops-inventory.sh >> /dev/null 2>&1
 
+* * * * * cd /var/www/adserver && bash docker/cron/adselect-export.sh >> /dev/null 2>&1
+
 * * * * * cd /var/www/adserver && bash docker/cron/adpay-export.sh >> /dev/null 2>&1
 
 59 * * * * /var/www/adserver/artisan ops:demand:payments:block >> /dev/null 2>&1

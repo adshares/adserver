@@ -4,6 +4,8 @@
 
 #* * * * * cd /adserver && bash docker/cron/ops-inventory.sh > /proc/1/fd/1 2>/proc/1/fd/2
 
+#* * * * * cd /adserver && bash docker/cron/adselect-export.sh > /proc/1/fd/1 2>/proc/1/fd/2
+
 #* * * * * cd /adserver && bash docker/cron/adpay-export.sh > /proc/1/fd/1 2>/proc/1/fd/2
 
 #30 * * * * cd /adserver && bash docker/cron/ops-payments.sh > /proc/1/fd/1 2>/proc/1/fd/2
