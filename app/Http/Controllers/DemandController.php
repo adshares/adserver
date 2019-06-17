@@ -20,17 +20,21 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\ConversionGroup;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\ConversionValidator;
+use Adshares\Adserver\Services\EventCaseFinder;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -38,6 +42,7 @@ use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
+use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -47,7 +52,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use DateTime;
 use function base64_decode;
 use function bin2hex;
 use function inet_pton;
@@ -69,6 +73,9 @@ class DemandController extends Controller
     /** @var ConversionValidator */
     private $conversionValidator;
 
+    /** @var EventCaseFinder */
+    private $eventCaseFinder;
+
     /** @var LicenseReader */
     private $licenseReader;
 
@@ -76,11 +83,13 @@ class DemandController extends Controller
         PaymentDetailsVerify $paymentDetailsVerify,
         CampaignRepository $campaignRepository,
         ConversionValidator $conversionValidator,
+        EventCaseFinder $eventCaseFinder,
         LicenseReader $licenseReader
     ) {
         $this->paymentDetailsVerify = $paymentDetailsVerify;
         $this->campaignRepository = $campaignRepository;
         $this->conversionValidator = $conversionValidator;
+        $this->eventCaseFinder = $eventCaseFinder;
         $this->licenseReader = $licenseReader;
     }
 
@@ -368,59 +377,19 @@ class DemandController extends Controller
 
     public function conversion(string $uuid, Request $request): JsonResponse
     {
-        return self::json(['status' => 'OK'], Response::HTTP_OK);
+        $response = self::json(['status' => 'OK'], Response::HTTP_OK);
+
+        $this->processConversion($uuid, $request, $response);
+
+        return $response;
     }
 
     public function conversionGif(string $uuid, Request $request): Response
     {
-        if (32 !== strlen($uuid)) {
-            throw new BadRequestHttpException();
-        }
-
-        $conversionDefinition = ConversionDefinition::fetchByUuid($uuid);
-        if (!$conversionDefinition) {
-            throw new NotFoundHttpException();
-        }
-
-        if ($conversionDefinition->isAdvanced()) {
-            $cid = $request->input('cid');
-            //TODO cid can be null - for gif
-            $cookies = $request->cookies;
-            $tid = $request->cookies->get('tid');
-            $tid2 = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid')) : null;
-
-            $value = $request->input('value');
-            
-            if (null === $value) {
-                $value = $conversionDefinition->value;
-            }
-            //TODO value cannot be null
-
-            //TODO nonce
-            $nonce = '';
-            $sig = $request->input('sig');
-            //TODO sig cannot be null
-
-            $timestampCreated = $request->input('ts');
-            //TODO $timestampCreated cannot be null
-
-            $secret = $conversionDefinition->secret;
-
-            try {
-                $isSignatureValid = $this->conversionValidator->validateSignature((string)$sig, (string)$nonce, (int)$timestampCreated, $secret);
-            } catch (RuntimeException $exception) {
-                Log::warning(sprintf('[DemandController] Conversion has an error: %s', $exception->getMessage()));
-
-                $isSignatureValid = false;
-            }
-
-            if (!$isSignatureValid) {
-                throw new BadRequestHttpException();
-            }
-        }
-
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
+
+        $this->processConversion($uuid, $request, $response);
 
         return $response;
     }
@@ -555,5 +524,215 @@ class DemandController extends Controller
         $bannerHost = config('app.adserver_banner_host');
 
         return str_replace($currentHost, $bannerHost, $url);
+    }
+
+    private function validateConversionAdvanced(Request $request, string $secret): void
+    {
+        $signature = $request->input('sig');
+        if (null === $signature) {
+            throw new BadRequestHttpException('No signature provided');
+        }
+
+        $nonce = $request->input('nonce');
+        if (null === $nonce) {
+            throw new BadRequestHttpException('No nonce provided');
+        }
+
+        $timestampCreated = $request->input('ts');
+        if (null === $timestampCreated) {
+            throw new BadRequestHttpException('No timestamp provided');
+        }
+
+        $timestampCreated = (int)$timestampCreated;
+        if ($timestampCreated <= 0) {
+            throw new BadRequestHttpException('Invalid timestamp');
+        }
+
+        try {
+            $isSignatureValid = $this->conversionValidator->validateSignature(
+                $signature,
+                $nonce,
+                $timestampCreated,
+                $secret
+            );
+        } catch (RuntimeException $exception) {
+            Log::warning(sprintf('[DemandController] Conversion has an error: %s', $exception->getMessage()));
+
+            $isSignatureValid = false;
+        }
+
+        if (!$isSignatureValid) {
+            throw new BadRequestHttpException('Invalid signature');
+        }
+    }
+
+    private function processConversion(string $uuid, Request $request, Response $response): void
+    {
+        $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
+
+        $isAdvanced = $conversionDefinition->isAdvanced();
+
+        $value = $this->getConversionDefinitionValue($request, $conversionDefinition);
+
+        if ($isAdvanced) {
+            $secret = $conversionDefinition->secret;
+
+            $this->validateConversionAdvanced($request, $secret);
+        }
+
+        $conversionDefinitionId = $conversionDefinition->id;
+        $campaign = Campaign::find($conversionDefinition->campaign_id);
+        $campaignPublicId = $campaign->uuid;
+
+        $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
+
+        if (!$conversionDefinition->isRepeatable()) {
+            $caseIds = array_keys($cases);
+
+            if (ConversionGroup::containsConversionMatchingCaseIds($conversionDefinitionId, $caseIds)) {
+                throw new BadRequestHttpException('Repeated conversion');
+            }
+        }
+
+        $response->send();
+
+        $advertiserId = $campaign->user->uuid;
+        $groupId = Uuid::v4()->toString();
+        $headers = $request->headers->all();
+        $ip = bin2hex(inet_pton($request->getClientIp()));
+        $impressionContext = Utils::getImpressionContextArray($request);
+
+        $viewEventsData = $this->getViewEventsData($cases);
+
+        DB::beginTransaction();
+
+        foreach ($cases as $caseId => $weight) {
+            $viewEventData = $viewEventsData[$caseId];
+            $isClickConversion = $conversionDefinition->isClickConversion();
+            if ($isClickConversion) {
+                $eventType = EventLog::TYPE_CLICK;
+                $eventPublicId = Utils::createCaseIdContainingEventType($caseId, $eventType);
+            } else {
+                $eventType = EventLog::TYPE_CONVERSION;
+                $eventPublicId = Uuid::v4()->toString();
+            }
+
+            $partialValue = (int)floor($value * $weight);
+
+            EventLog::create(
+                $caseId,
+                $eventPublicId,
+                $viewEventData['bannerId'],
+                $viewEventData['zoneId'],
+                $viewEventData['trackingId'],
+                $viewEventData['publisherId'],
+                $campaignPublicId,
+                $advertiserId,
+                $viewEventData['payTo'],
+                $ip,
+                $headers,
+                $impressionContext,
+                '',
+                $eventType
+            );
+
+            if ($isClickConversion) {
+                EventLog::eventClicked($caseId);
+            }
+
+            $event = EventLog::fetchOneByEventId($eventPublicId);
+
+            if (null !== $viewEventData['humanScore'] && null !== $viewEventData['ourUserdata']) {
+                $event->updateWithUserData($viewEventData['humanScore'], $viewEventData['ourUserdata']);
+                $event->save();
+            }
+
+            $eventId = $event->id;
+            ConversionGroup::register($caseId, $groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
+        }
+
+        DB::commit();
+    }
+
+    private function fetchConversionDefinitionOrFail(string $uuid): ConversionDefinition
+    {
+        if (32 !== strlen($uuid)) {
+            throw new BadRequestHttpException('Invalid conversion id');
+        }
+
+        $conversionDefinition = ConversionDefinition::fetchByUuid($uuid);
+        if (!$conversionDefinition) {
+            throw new NotFoundHttpException('No conversion found');
+        }
+
+        return $conversionDefinition;
+    }
+
+    private function getConversionDefinitionValue(Request $request, ConversionDefinition $conversionDefinition): int
+    {
+        if (!$conversionDefinition->isAdvanced()) {
+            return $conversionDefinition->value;
+        }
+
+        $value = $request->input('value') ? $request->input('value') : $conversionDefinition->value;
+        if (null === $value) {
+            throw new BadRequestHttpException('No value provided');
+        }
+
+        $value = (int)$value;
+        if ($value <= 0) {
+            throw new BadRequestHttpException('Invalid value');
+        }
+
+        return $value;
+    }
+
+    private function findCasesConnectedWithConversion(Request $request, string $campaignPublicId): array
+    {
+        $cid = $request->input('cid');
+        if (null !== $cid) {
+            $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, $cid);
+        } else {
+            $tid = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum(
+                $request->cookies->get('tid')
+            ) : null;
+
+            if (null === $tid) {
+                throw new BadRequestHttpException('Missing case id');
+            }
+
+            $results = $this->eventCaseFinder->findByTrackingId($campaignPublicId, $tid);
+        }
+
+        if (0 === count($results)) {
+            throw new NotFoundHttpException('No matching case found');
+        }
+
+        return $results;
+    }
+
+    private function getViewEventsData(array $cases): array
+    {
+        $viewEventsData = [];
+        $eventPublicIds = [];
+        foreach ($cases as $caseId => $weight) {
+            $eventPublicIds[] = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
+        }
+        $viewEvents = EventLog::fetchByEventIds($eventPublicIds);
+
+        foreach ($viewEvents as $viewEvent) {
+            /** @var $viewEvent EventLog */
+            $viewEventsData[$viewEvent->case_id] = [
+                'bannerId' => $viewEvent->banner_id,
+                'zoneId' => $viewEvent->zone_id,
+                'trackingId' => $viewEvent->tracking_id,
+                'publisherId' => $viewEvent->publisher_id,
+                'payTo' => $viewEvent->pay_to,
+                'humanScore' => null !== $viewEvent->human_score ? (float)$viewEvent->human_score : null,
+                'ourUserdata' => $viewEvent->our_userdata,
+            ];
+        }
+
+        return $viewEventsData;
     }
 }

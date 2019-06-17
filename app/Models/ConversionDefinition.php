@@ -44,6 +44,7 @@ use function route;
  * @property string type
  * @property int|null value
  * @property int|null limit
+ * @property bool is_repeatable
  * @property string secret
  */
 class ConversionDefinition extends Model
@@ -74,6 +75,7 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'limit',
+        'is_repeatable',
     ];
 
     protected $visible = [
@@ -85,6 +87,7 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'limit',
+        'is_repeatable',
         'link',
         'secret',
     ];
@@ -139,6 +142,15 @@ class ConversionDefinition extends Model
 
     public function isAdvanced() {
         return self::ADVANCED_TYPE === $this->type;
+    }
+
+    public function isClickConversion() {
+        return self::CLICK_CONVERSION === $this->event_type;
+    }
+
+    public function isRepeatable(): bool
+    {
+        return (bool)$this->is_repeatable;
     }
 
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void

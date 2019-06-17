@@ -37,6 +37,7 @@ class CreateConversionDefinitionsTable extends Migration
             $table->string('type')->default('basic'); // basic, advanced
             $table->bigInteger('value')->nullable();
             $table->bigInteger('limit')->nullable();
+            $table->boolean('is_repeatable')->default(0);
             $table->string('secret', 22);
             $table->timestamps();
 

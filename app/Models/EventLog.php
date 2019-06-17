@@ -34,9 +34,9 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use function hex2bin;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use function hex2bin;
+use stdClass;
 
 /**
  * @property int created_at
@@ -56,7 +56,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string headers
  * @property string our_context
  * @property string their_context
- * @property int human_score
+ * @property float human_score
  * @property string our_userdata
  * @property string their_userdata
  * @property int $event_value_currency
@@ -229,6 +229,27 @@ class EventLog extends Model
         return $event;
     }
 
+    public static function fetchByEventIds(array $eventIds): Collection
+    {
+        $binEventIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $eventIds
+        );
+
+        return self::whereIn('event_id', $binEventIds)->get();
+    }
+
+    public static function fetchLastByTrackingId(string $campaignPublicId, string $trackingId): ?self
+    {
+        return self::where('campaign_id', hex2bin($campaignPublicId))
+            ->where('tracking_id', hex2bin($trackingId))
+            ->orderBy('id', 'desc')
+            ->limit(1)
+            ->first();
+    }
+
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
@@ -249,6 +270,12 @@ class EventLog extends Model
         }
         $this->human_score = $userContext->humanScore();
         $this->our_userdata = $userContext->keywords();
+    }
+
+    public function updateWithUserData(float $humanScore, stdClass $userData): void
+    {
+        $this->human_score = $humanScore;
+        $this->our_userdata = $userData;
     }
 
     public function group(): HasOne
