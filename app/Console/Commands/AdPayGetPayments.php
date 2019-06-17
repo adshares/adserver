@@ -96,11 +96,17 @@ class AdPayGetPayments extends BaseCommand
         return $exchangeRate;
     }
 
-    private function getUnpaidEvents(Collection $eventIds): Collection
+    private function getUnpaidEvents(Collection $eventIds, int $chunkSize = 500): Collection
     {
-        return EventLog::whereIn('event_id', $eventIds)
-            ->whereNull('event_value_currency')
-            ->get();
+        $eventIds
+            ->chunk($chunkSize)
+            ->flatMap(
+                static function (Collection $eventIds) {
+                    return EventLog::whereIn('event_id', $eventIds)
+                        ->whereNull('event_value_currency')
+                        ->get();
+                }
+            );
     }
 
     private function getCalculations(AdPay $adPay): Collection
