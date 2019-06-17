@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends BaseCommand
 {
-    protected $signature = 'ops:demand:payments:prepare';
+    protected $signature = 'ops:demand:payments:prepare {--c|chunkSize=10000}';
 
     /** @var LicenseReader */
     private $licenseReader;
@@ -53,60 +53,62 @@ class DemandPreparePayments extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $events = EventLog::fetchUnpaidEvents();
+        while (true) {
+            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'));
 
-        $eventCount = count($events);
-        $this->info("Found $eventCount payable events.");
+            $eventCount = count($events);
+            $this->info("Found $eventCount payable events.");
 
-        if (!$eventCount) {
-            return;
+            if (!$eventCount) {
+                return;
+            }
+
+            $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+            $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+            $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+            $groupedEvents = $this->processAndGroupByRecipient(
+                $events,
+                $demandLicenseFeeCoefficient,
+                $demandOperatorFeeCoefficient
+            );
+
+            $this->info('In that, there are '.count($groupedEvents).' recipients,');
+
+            DB::beginTransaction();
+
+            $payments = $groupedEvents
+                ->map(static function (Collection $paymentGroup, string $key) {
+                    return [
+                        'events' => $paymentGroup,
+                        'account_address' => $key,
+                        'state' => Payment::STATE_NEW,
+                        'completed' => 0,
+                    ];
+                })->map(static function (array $paymentData) {
+                    $payment = new Payment();
+                    $payment->fill($paymentData);
+                    $payment->push();
+                    $payment->events()->saveMany($paymentData['events']);
+
+                    return $payment;
+                });
+
+            $licencePayment = new Payment([
+                'account_address' => $licenseAccountAddress,
+                'state' => Payment::STATE_NEW,
+                'completed' => 0,
+                'fee' => $payments->sum(static function (Payment $payment) {
+                    return $payment->totalLicenceFee();
+                }),
+            ]);
+
+            $licencePayment->save();
+
+            DB::commit();
+
+            $this->info("and a licence fee of {$licencePayment->fee} clicks"
+                ." payable to {$licencePayment->account_address}.");
         }
-
-        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
-        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-        $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-        $groupedEvents = $this->processAndGroupByRecipient(
-            $events,
-            $demandLicenseFeeCoefficient,
-            $demandOperatorFeeCoefficient
-        );
-
-        $this->info('In that, there are '.count($groupedEvents).' recipients,');
-
-        DB::beginTransaction();
-
-        $payments = $groupedEvents
-            ->map(static function (Collection $paymentGroup, string $key) {
-                return [
-                    'events' => $paymentGroup,
-                    'account_address' => $key,
-                    'state' => Payment::STATE_NEW,
-                    'completed' => 0,
-                ];
-            })->map(static function (array $paymentData) {
-                $payment = new Payment();
-                $payment->fill($paymentData);
-                $payment->push();
-                $payment->events()->saveMany($paymentData['events']);
-
-                return $payment;
-            });
-
-        $licencePayment = new Payment([
-            'account_address' => $licenseAccountAddress,
-            'state' => Payment::STATE_NEW,
-            'completed' => 0,
-            'fee' => $payments->sum(static function (Payment $payment) {
-                return $payment->totalLicenceFee();
-            }),
-        ]);
-
-        $licencePayment->save();
-
-        DB::commit();
-
-        $this->info("and a licence fee of {$licencePayment->fee} clicks"
-            ." payable to {$licencePayment->account_address}.");
     }
 
     private function processAndGroupByRecipient(

@@ -46,7 +46,7 @@ class AdPayGetPayments extends BaseCommand
 
     public const NORMAL = 'normal';
 
-    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--chunkSize=250}';
+    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--c|chunkSize=250}';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
