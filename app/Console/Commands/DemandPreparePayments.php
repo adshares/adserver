@@ -65,8 +65,57 @@ class DemandPreparePayments extends BaseCommand
         $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
         $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
         $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-        $groupedEvents = $events->each(
-            function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
+        $groupedEvents = $this->processAndGroupByRecipient(
+            $events,
+            $demandLicenseFeeCoefficient,
+            $demandOperatorFeeCoefficient
+        );
+
+        $this->info('In that, there are '.count($groupedEvents).' recipients,');
+
+        DB::beginTransaction();
+
+        $payments = $groupedEvents
+            ->map(static function (Collection $paymentGroup, string $key) {
+                return [
+                    'events' => $paymentGroup,
+                    'account_address' => $key,
+                    'state' => Payment::STATE_NEW,
+                    'completed' => 0,
+                ];
+            })->map(static function (array $paymentData) {
+                $payment = new Payment();
+                $payment->fill($paymentData);
+                $payment->push();
+                $payment->events()->saveMany($paymentData['events']);
+
+                return $payment;
+            });
+
+        $licencePayment = new Payment([
+            'account_address' => $licenseAccountAddress,
+            'state' => Payment::STATE_NEW,
+            'completed' => 0,
+            'fee' => $payments->sum(static function (Payment $payment) {
+                return $payment->totalLicenceFee();
+            }),
+        ]);
+
+        $licencePayment->save();
+
+        DB::commit();
+
+        $this->info("and a licence fee of {$licencePayment->fee} clicks"
+            ." payable to {$licencePayment->account_address}.");
+    }
+
+    private function processAndGroupByRecipient(
+        \Illuminate\Database\Eloquent\Collection $events,
+        float $demandLicenseFeeCoefficient,
+        float $demandOperatorFeeCoefficient
+    ): Collection {
+        return $events->each(
+            static function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
                 $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
                 $entry->license_fee = $licenseFee;
 
@@ -77,41 +126,5 @@ class DemandPreparePayments extends BaseCommand
                 $entry->paid_amount = $amountAfterFee - $operatorFee;
             }
         )->groupBy('pay_to');
-
-        $this->info('In that, there are '.count($groupedEvents).' recipients,');
-
-        DB::beginTransaction();
-
-        $payments = $groupedEvents->map(function (Collection $paymentGroup, string $key) {
-            return [
-                'events' => $paymentGroup,
-                'account_address' => $key,
-                'state' => Payment::STATE_NEW,
-                'completed' => 0,
-            ];
-        })->map(function (array $paymentData) {
-            $payment = new Payment();
-            $payment->fill($paymentData);
-            $payment->push();
-            $payment->events()->saveMany($paymentData['events']);
-
-            return $payment;
-        });
-
-        $licencePayment = new Payment([
-            'account_address' => $licenseAccountAddress,
-            'state' => Payment::STATE_NEW,
-            'completed' => 0,
-            'fee' => $payments->sum(function (Payment $payment) {
-                return $payment->totalLicenceFee();
-            }),
-        ]);
-
-        $licencePayment->save();
-
-        $this->info("and a licence fee of {$licencePayment->fee} clicks"
-            ." payable to {$licencePayment->account_address}.");
-
-        DB::commit();
     }
 }
