@@ -116,7 +116,7 @@ class Payment extends Model
 
     public function totalLicenceFee(): int
     {
-        return $this->events->sum(function (EventLog $entry) {
+        return $this->events->sum(static function (EventLog $entry) {
             return $entry->license_fee;
         });
     }

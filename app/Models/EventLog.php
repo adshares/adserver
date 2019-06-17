@@ -147,13 +147,17 @@ class EventLog extends Model
         'their_userdata' => 'JsonValue',
     ];
 
-    public static function fetchUnpaidEvents(): Collection
+    public static function fetchUnpaidEvents(int $limit = null): Collection
     {
         $query = self::whereNotNull('event_value_currency')
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->where('created_at', '>', (new DateTime())->modify('-12 hour'));
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
 
         return $query->get();
     }
