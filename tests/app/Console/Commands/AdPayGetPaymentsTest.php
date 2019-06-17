@@ -67,7 +67,7 @@ class AdPayGetPaymentsTest extends TestCase
         $bannerUuid = $banner->uuid;
 
         /** @var Collection|EventLog[] $events */
-        $events = factory(EventLog::class)->times(3)->create([
+        $events = factory(EventLog::class)->times(600)->create([
             'event_value_currency' => null,
             'advertiser_id' => $userUuid,
             'campaign_id' => $campaignUuid,

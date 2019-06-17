@@ -46,7 +46,7 @@ class AdPayGetPayments extends BaseCommand
 
     public const NORMAL = 'normal';
 
-    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force}';
+    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--chunkSize=250}';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
@@ -96,10 +96,10 @@ class AdPayGetPayments extends BaseCommand
         return $exchangeRate;
     }
 
-    private function getUnpaidEvents(Collection $eventIds, int $chunkSize = 500): Collection
+    private function getUnpaidEvents(Collection $eventIds): Collection
     {
-        $eventIds
-            ->chunk($chunkSize)
+        return $eventIds
+            ->chunk((int)$this->option('chunkSize'))
             ->flatMap(
                 static function (Collection $eventIds) {
                     return EventLog::whereIn('event_id', $eventIds)
