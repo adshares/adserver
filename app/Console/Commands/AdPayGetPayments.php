@@ -46,7 +46,7 @@ class AdPayGetPayments extends BaseCommand
 
     public const NORMAL = 'normal';
 
-    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--chunkSize=250}';
+    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--c|chunkSize=250}';
 
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
@@ -122,8 +122,12 @@ class AdPayGetPayments extends BaseCommand
         Collection $calculations,
         ExchangeRate $exchangeRate
     ): void {
-        $unpaidEvents->each(static function (EventLog $entry) use ($calculations, $exchangeRate) {
-            $calculation = $calculations->firstWhere('event_id', $entry->event_id);
+        $mappedCalculations = $calculations->mapWithKeys(static function ($value) {
+            return [$value['event_id'] => $value];
+        })->all();
+
+        $unpaidEvents->each(static function (EventLog $entry) use ($mappedCalculations, $exchangeRate) {
+            $calculation = $mappedCalculations[$entry->event_id];
             $amount = $calculation['amount'];
 
             $entry->event_value_currency = $amount;
@@ -137,6 +141,8 @@ class AdPayGetPayments extends BaseCommand
     {
         return $unpaidEvents->groupBy('campaign_id')
             ->mapToGroups(static function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
+                Log::debug(sprintf('%s CampaignId %s', __FUNCTION__, $campaignPublicId));
+
                 $campaign = Campaign::fetchByUuid($campaignPublicId);
 
                 if (!$campaign) {
@@ -163,6 +169,8 @@ class AdPayGetPayments extends BaseCommand
     {
         return $unpaidEvents->groupBy('advertiser_id')
             ->map(function (Collection $events, string $userPublicId) use ($exchangeRate) {
+                Log::debug(sprintf('%s UserId %s', __FUNCTION__, $userPublicId));
+
                 $user = User::fetchByUuid($userPublicId);
 
                 if (!$user) {
