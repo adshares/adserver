@@ -526,7 +526,7 @@ class DemandController extends Controller
         return str_replace($currentHost, $bannerHost, $url);
     }
 
-    private function validateConversionAdvanced(Request $request, string $secret): void
+    private function validateConversionAdvanced(Request $request, string $secret, string $conversionUuid): void
     {
         $signature = $request->input('sig');
         if (null === $signature) {
@@ -548,11 +548,15 @@ class DemandController extends Controller
             throw new BadRequestHttpException('Invalid timestamp');
         }
 
+        $value = $request->input('value', '');
+
         try {
             $isSignatureValid = $this->conversionValidator->validateSignature(
                 $signature,
+                $conversionUuid,
                 $nonce,
                 $timestampCreated,
+                $value,
                 $secret
             );
         } catch (RuntimeException $exception) {
@@ -577,7 +581,7 @@ class DemandController extends Controller
         if ($isAdvanced) {
             $secret = $conversionDefinition->secret;
 
-            $this->validateConversionAdvanced($request, $secret);
+            $this->validateConversionAdvanced($request, $secret, $uuid);
         }
 
         $conversionDefinitionId = $conversionDefinition->id;

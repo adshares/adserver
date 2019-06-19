@@ -30,8 +30,14 @@ class ConversionValidator
 {
     private const CACHE_ITEM_TTL_IN_MINUTES = 5;
 
-    public function validateSignature(string $signature, string $nonce, int $timestampCreated, string $secret): bool
-    {
+    public function validateSignature(
+        string $signature,
+        string $conversionUuid,
+        string $nonce,
+        int $timestampCreated,
+        string $value,
+        string $secret
+    ): bool {
         $timestampCurrent = time();
 
         if ($timestampCreated > $timestampCurrent) {
@@ -50,10 +56,9 @@ class ConversionValidator
 
         Cache::put($cacheKey, 1, self::CACHE_ITEM_TTL_IN_MINUTES);
 
-        $expected =
-            Utils::urlSafeBase64Encode(
-                hash('sha512', Utils::urlSafeBase64Decode($nonce).$timestampCreated.$secret, true)
-            );
+        $expected = Utils::urlSafeBase64Encode(
+            hash('sha512', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
+        );
 
         return hash_equals($expected, $signature);
     }
