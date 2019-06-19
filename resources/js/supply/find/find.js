@@ -65,7 +65,23 @@ var replaceTag = function (oldTag, newTag) {
     }
     newTag.style.overflow = 'hidden';
     newTag.style.position = 'relative';
+
+    // ios 12 fix
+    var el = [];
+    while(newTag.firstChild){
+        el.push(newTag.removeChild(newTag.firstChild));
+    }
+    // ios 12 fix
+
     oldTag.parentNode.replaceChild(newTag, oldTag);
+
+    // ios 12 fix
+    setTimeout(function(){
+        while(el.length > 0) {
+            newTag.appendChild(el.shift());
+        }
+    }, 0);
+    // ios 12 fix
 };
 
 var prepareElement = function (context, banner, element, contextParam) {
