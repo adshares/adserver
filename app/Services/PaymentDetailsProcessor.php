@@ -27,7 +27,6 @@ use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
@@ -105,50 +104,41 @@ class PaymentDetailsProcessor
         $currentEventValueSum = 0;
 
         $exchangeRateValue = $exchangeRate->getValue();
-        try {
-            DB::beginTransaction();
 
-            foreach ($paymentDetails as $paymentDetail) {
-                $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $currentEventValueSum);
-                $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
-                if ($event === null) {
-                    continue;
-                }
-
-                $event->pay_from = $senderAddress;
-                $event->ads_payment_id = $adsPaymentId;
-                $event->event_value = min($spendableAmount, $paymentDetail['event_value']);
-                $event->license_fee = $paymentDetail['license_fee'];
-                $event->operator_fee = $paymentDetail['operator_fee'];
-                $event->paid_amount = $paymentDetail['paid_amount'];
-                $event->exchange_rate = $exchangeRateValue;
-                $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
-
-                $event->save();
-
-                $totalLicenceFee += $paymentDetail['license_fee'];
-                $currentEventValueSum += $event->event_value;
+        foreach ($paymentDetails as $paymentDetail) {
+            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $currentEventValueSum);
+            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
+            if ($event === null) {
+                continue;
             }
 
-            $licensePayment = NetworkPayment::registerNetworkPayment(
-                $this->fetchLicenceAccount(),
-                $this->adServerAddress,
-                $totalLicenceFee,
-                $adsPaymentId
-            );
+            $event->pay_from = $senderAddress;
+            $event->ads_payment_id = $adsPaymentId;
+            $event->event_value = min($spendableAmount, $paymentDetail['event_value']);
+            $event->license_fee = $paymentDetail['license_fee'];
+            $event->operator_fee = $paymentDetail['operator_fee'];
+            $event->paid_amount = $paymentDetail['paid_amount'];
+            $event->exchange_rate = $exchangeRateValue;
+            $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
 
-            $this->addAdIncomeToUserLedger($adsPayment);
+            $event->save();
 
-            DB::commit();
-
-            $this->sendLicensePayment($licensePayment);
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            throw $e;
+            $totalLicenceFee += $paymentDetail['license_fee'];
+            $currentEventValueSum += $event->event_value;
         }
 
-        // TODO log operator income $totalOperatorFee = $spendableAmount - $totalPaidAmount - $totalLicenceFee;
+        $licensePayment = NetworkPayment::registerNetworkPayment(
+            $this->fetchLicenceAccount(),
+            $this->adServerAddress,
+            $totalLicenceFee,
+            $adsPaymentId
+        );
+
+        $this->addAdIncomeToUserLedger($adsPayment);
+
+        $this->sendLicensePayment($licensePayment);
+
+        //TODO log operator income $totalOperatorFee = $spendableAmount - $totalPaidAmount - $totalLicenceFee;
 
         return $currentEventValueSum;
     }
@@ -173,16 +163,6 @@ class PaymentDetailsProcessor
         }
 
         return $paymentDetails;
-    }
-
-    private function getPaymentDetailsTotalWeight(array $paymentDetails): int
-    {
-        $weightSum = 0;
-        foreach ($paymentDetails as $paymentDetail) {
-            $weightSum += $paymentDetail['event_value'];
-        }
-
-        return $weightSum;
     }
 
     private function sendLicensePayment(NetworkPayment $payment): void
