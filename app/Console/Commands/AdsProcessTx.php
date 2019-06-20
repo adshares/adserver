@@ -233,7 +233,7 @@ class AdsProcessTx extends BaseCommand
     {
         $networkHost = NetworkHost::fetchByAddress($incomingPayment->address);
 
-        $rollingEventValueSum = 0;
+        $resultsCollection = new ResultsCollection();
 
         if ($networkHost === null) {
             return false;
@@ -257,11 +257,11 @@ class AdsProcessTx extends BaseCommand
             }
 
             try {
-                $rollingEventValueSum += $this->paymentDetailsProcessor->processPaymentDetails(
+                $resultsCollection->add($this->paymentDetailsProcessor->processPaymentDetails(
                     $incomingPayment,
                     $paymentDetails,
-                    $rollingEventValueSum
-                );
+                    $resultsCollection->lastSum()
+                ));
             } catch (MissingInitialConfigurationException $exception) {
                 $this->error('Missing initial configuration: '.$exception->getMessage());
 
@@ -275,6 +275,8 @@ class AdsProcessTx extends BaseCommand
             $incomingPayment->last_offset = $offset;
             $incomingPayment->save();
         }
+
+        $resultsCollection->sendLicencePayments();
 
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $incomingPayment->save();

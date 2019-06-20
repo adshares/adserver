@@ -23,9 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Ads\Command\SendOneCommand;
-use Adshares\Ads\Driver\CommandError;
-use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
@@ -35,7 +32,6 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use function max;
@@ -75,8 +71,11 @@ class PaymentDetailsProcessor
         return $operatorFee;
     }
 
-    public function processPaymentDetails(AdsPayment $adsPayment, array $paymentDetails, int $carriedEventValueSum): int
-    {
+    public function processPaymentDetails(
+        AdsPayment $adsPayment,
+        array $paymentDetails,
+        int $carriedEventValueSum
+    ): PaymentProcessingResult {
         $senderAddress = $adsPayment->address;
         $adsPaymentId = $adsPayment->id;
 
@@ -86,7 +85,7 @@ class PaymentDetailsProcessor
         if (count($paymentDetails) === 0) {
             Log::warning('[PaymentDetailsProcessor] None of received events exist in DB');
 
-            return 0;
+            return PaymentProcessingResult::zero();
         }
 
         $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenceFee(), self::fetchOperatorFee());
@@ -127,20 +126,16 @@ class PaymentDetailsProcessor
             $currentEventValueSum += $event->event_value;
         }
 
-        $licensePayment = NetworkPayment::registerNetworkPayment(
+        $this->addAdIncomeToUserLedger($adsPayment);
+
+        //TODO log operator income $totalOperatorFee = $spendableAmount - $totalPaidAmount - $totalLicenceFee;
+
+        return new PaymentProcessingResult($currentEventValueSum, NetworkPayment::registerNetworkPayment(
             $this->fetchLicenceAccount(),
             $this->adServerAddress,
             $totalLicenceFee,
             $adsPaymentId
-        );
-
-        $this->addAdIncomeToUserLedger($adsPayment);
-
-        $this->sendLicensePayment($licensePayment);
-
-        //TODO log operator income $totalOperatorFee = $spendableAmount - $totalPaidAmount - $totalLicenceFee;
-
-        return $currentEventValueSum;
+        ));
     }
 
     private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
@@ -163,37 +158,6 @@ class PaymentDetailsProcessor
         }
 
         return $paymentDetails;
-    }
-
-    private function sendLicensePayment(NetworkPayment $payment): void
-    {
-        $amount = $payment->amount;
-        $receiverAddress = $payment->receiver_address;
-
-        try {
-            if ($amount > 0) {
-                $command = new SendOneCommand($receiverAddress, $amount);
-                $response = $this->adsClient->runTransaction($command);
-                $responseTx = $response->getTx();
-
-                $payment->tx_id = $responseTx->getId();
-                $payment->tx_time = $responseTx->getTime()->getTimestamp();
-            }
-
-            $payment->processed = '1';
-            $payment->save();
-        } catch (Exception $exception) {
-            if ($exception instanceof CommandException && $exception->getCode() === CommandError::LOW_BALANCE) {
-                $exceptionMessage = 'Insufficient funds on Operator Account.';
-            } else {
-                $exceptionMessage = sprintf('Unexpected Error (%s).', $exception->getMessage());
-            }
-
-            $message = '[Supply] (PaymentDetailsProcessor) %s ';
-            $message .= 'Could not send a license fee to %s. NetworkPayment id %s. Amount %s.';
-
-            Log::error(sprintf($message, $exceptionMessage, $receiverAddress, $payment->id, $amount));
-        }
     }
 
     private function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
