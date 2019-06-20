@@ -27,7 +27,6 @@ use Adshares\Ads\Command\SendOneCommand;
 use Adshares\Ads\Driver\CommandError;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
@@ -114,47 +113,38 @@ class PaymentDetailsProcessor
 
         $exchangeRateValue = $exchangeRate->getValue();
 
-        try {
-            DB::beginTransaction();
-
-            foreach ($paymentDetails as $paymentDetail) {
-                $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
-                if ($event === null) {
-                    continue;
-                }
-
-                $event->pay_from = $senderAddress;
-                $event->ads_payment_id = $adsPaymentId;
-                $event->event_value = $paymentDetail['event_value'];
-                $event->license_fee = $paymentDetail['license_fee'];
-                $event->operator_fee = $paymentDetail['operator_fee'];
-                $event->paid_amount = $paymentDetail['paid_amount'];
-                $event->exchange_rate = $exchangeRateValue;
-                $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
-
-                $event->save();
-
-                $totalPaidAmount += $paymentDetail['paid_amount'];
-                $totalLicenceFee += $paymentDetail['license_fee'];
+        foreach ($paymentDetails as $paymentDetail) {
+            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
+            if ($event === null) {
+                continue;
             }
 
-            $licensePayment = NetworkPayment::registerNetworkPayment(
-                $licenseAccount,
-                $this->adServerAddress,
-                $totalLicenceFee,
-                $adsPaymentId
-            );
+            $event->pay_from = $senderAddress;
+            $event->ads_payment_id = $adsPaymentId;
+            $event->event_value = $paymentDetail['event_value'];
+            $event->license_fee = $paymentDetail['license_fee'];
+            $event->operator_fee = $paymentDetail['operator_fee'];
+            $event->paid_amount = $paymentDetail['paid_amount'];
+            $event->exchange_rate = $exchangeRateValue;
+            $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
 
-            $this->addAdIncomeToUserLedger($adsPayment);
+            $event->save();
 
-            DB::commit();
-
-            $this->sendLicensePayment($licensePayment);
-        } catch (Exception $e) {
-            DB::rollBack();
-
-            throw $e;
+            $totalPaidAmount += $paymentDetail['paid_amount'];
+            $totalLicenceFee += $paymentDetail['license_fee'];
         }
+
+        $licensePayment = NetworkPayment::registerNetworkPayment(
+            $licenseAccount,
+            $this->adServerAddress,
+            $totalLicenceFee,
+            $adsPaymentId
+        );
+
+        $this->addAdIncomeToUserLedger($adsPayment);
+
+        $this->sendLicensePayment($licensePayment);
+
         // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
 
         return PaymentProcessingResult::empty();
