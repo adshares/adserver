@@ -153,7 +153,7 @@ final class DummyDemandClient implements DemandClient
         return new CampaignCollection(...$this->campaigns);
     }
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array
+    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
         return [
             [

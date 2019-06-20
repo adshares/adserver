@@ -162,9 +162,11 @@ class EventLog extends Model
         return $query->get();
     }
 
-    public static function fetchEvents(Arrayable $paymentIds): Collection
+    public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection
     {
         return self::whereIn('payment_id', $paymentIds)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
     }
 

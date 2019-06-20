@@ -49,7 +49,7 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}';
+    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}?limit={limit}&offset={offset}';
 
     /** @var SignatureVerifier */
     private $signatureVerifier;
@@ -107,7 +107,7 @@ final class GuzzleDemandClient implements DemandClient
         return $campaignsCollection;
     }
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array
+    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
         $client = new Client($this->requestParameters($host));
 
@@ -124,12 +124,16 @@ final class GuzzleDemandClient implements DemandClient
                 '{accountAddress}',
                 '{date}',
                 '{signature}',
+                '{limit}',
+                '{offset}',
             ],
             [
                 $transactionId,
                 $accountAddress,
                 $dateFormatted,
                 $signature,
+                $limit,
+                $offset,
             ],
             self::PAYMENT_DETAILS_ENDPOINT
         );
@@ -311,7 +315,7 @@ final class GuzzleDemandClient implements DemandClient
                 $bannerDemandIds[] = $banner['id'];
             }
         }
-        
+
         return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds);
     }
 }

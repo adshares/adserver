@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
+use Adshares\Adserver\Services\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -51,6 +52,8 @@ class AdsProcessTx extends BaseCommand
     public const EXIT_CODE_CANNOT_GET_BLOCK_IDS = 1;
 
     public const EXIT_CODE_LOCKED = 2;
+
+    private const MAX_PAYMENT_EVENTS = 5000;
 
     protected $signature = 'ads:process-tx';
 
@@ -107,7 +110,17 @@ class AdsProcessTx extends BaseCommand
         $dbTxs = AdsPayment::where('status', AdsPayment::STATUS_NEW)->get();
 
         foreach ($dbTxs as $dbTx) {
-            $this->handleDbTx($adsClient, $dbTx);
+            try {
+                DB::beginTransaction();
+
+                $this->handleDbTx($adsClient, $dbTx);
+
+                DB::commit();
+            } catch (Exception $e) {
+                DB::rollBack();
+
+                throw $e;
+            }
         }
 
         $this->info('Finish processing incoming txs');
@@ -214,51 +227,70 @@ class AdsProcessTx extends BaseCommand
     {
         $coldWalletAddress = config('app.adshares_wallet_cold_address');
 
-        if ($dbTx->address === $coldWalletAddress) {
-            return true;
-        }
-
-        return false;
+        return $dbTx->address === $coldWalletAddress;
     }
 
     private function handleIfEventPayment(AdsPayment $dbTx): bool
     {
-        $senderAddress = $dbTx->address;
-        $networkHost = NetworkHost::fetchByAddress($senderAddress);
+        $networkHost = NetworkHost::fetchByAddress($dbTx->address);
+
+        /** @var PaymentProcessingResult $finalProcessingResult */
+        $finalProcessingResult = PaymentProcessingResult::empty();
 
         if ($networkHost === null) {
             return false;
         }
 
-        $host = $networkHost->host;
-        $txid = $dbTx->txid;
-
-        try {
-            $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
-        } catch (EmptyInventoryException $exception) {
-            return false;
-        } catch (UnexpectedClientResponseException $exception) {
-            if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
+        for ($offset = $dbTx->last_offset ?? 0, $paymentDetailsSize = self::MAX_PAYMENT_EVENTS;
+            $paymentDetailsSize === self::MAX_PAYMENT_EVENTS;
+            $offset += self::MAX_PAYMENT_EVENTS) {
+            try {
+                $paymentDetails = $this->demandClient->fetchPaymentDetails(
+                    $networkHost->host,
+                    $dbTx->txid,
+                    self::MAX_PAYMENT_EVENTS,
+                    $offset
+                );
+                $paymentDetailsSize = count($paymentDetails);
+            } catch (EmptyInventoryException $exception) {
                 return false;
+            } catch (UnexpectedClientResponseException $exception) {
+                return !($exception->getCode() === Response::HTTP_NOT_FOUND);
             }
 
-            return true;
-        }
+            try {
+                $processingResult = $this->paymentDetailsProcessor->processPaymentDetails(
+                    $dbTx->address,
+                    $dbTx->id,
+                    $paymentDetails,
+                    AdsPayment::amountForId($dbTx->id) - $finalProcessingResult->paidAmount()
+                );
 
-        try {
-            $this->paymentDetailsProcessor->processPaymentDetails($dbTx, $paymentDetails);
-        } catch (MissingInitialConfigurationException $exception) {
-            $this->error('Missing initial configuration: '.$exception->getMessage());
+                if ($processingResult) {
+                    if ($finalProcessingResult === null) {
+                        $finalProcessingResult = $processingResult;
+                    } else {
+                        $finalProcessingResult = $finalProcessingResult->add($processingResult);
+                    }
+                }
+            } catch (MissingInitialConfigurationException $exception) {
+                $this->error('Missing initial configuration: '.$exception->getMessage());
 
-            return true;
-        } catch (Exception $exception) {
-            $this->error('Unexpected error: '.$exception->getMessage());
+                return true;
+            } catch (Exception $exception) {
+                $this->error('Unexpected error: '.$exception->getMessage());
 
-            return true;
+                return true;
+            }
+
+            $dbTx->last_offset = $offset;
+            $dbTx->save();
         }
 
         $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $dbTx->save();
+
+        $finalProcessingResult->sendLicenseFee();
 
         return true;
     }
@@ -327,9 +359,9 @@ class AdsProcessTx extends BaseCommand
         $requiredBalance = $exchangeRate->toClick($requiredBudget);
 
         if ($balance >= $requiredBalance) {
-            $campaigns->filter(function (Campaign $campaign) {
+            $campaigns->filter(static function (Campaign $campaign) {
                 return $campaign->status === Campaign::STATUS_SUSPENDED;
-            })->each(function (Campaign $campaign) use ($exchangeRate) {
+            })->each(static function (Campaign $campaign) use ($exchangeRate) {
                 $campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate);
                 $campaign->save();
             });

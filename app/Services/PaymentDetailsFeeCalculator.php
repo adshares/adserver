@@ -59,6 +59,8 @@ class PaymentDetailsFeeCalculator
         $operatorFee = (int)floor($this->operatorFeeCoefficient * $transferAmountBeforeOperatorFee);
         $amountAfterFees = $transferAmountBeforeOperatorFee - $operatorFee;
 
+        //TODO: normalizacji nie będzie, wartości eventów mają się zgadzać z tym co przyszło w transakcji,
+        // bo zapłaca się tylko pierwsze eventy, na które wystarczy hajsu
         return [
             'event_value' => $amountBeforeFees,
             'license_fee' => $licenseFee,

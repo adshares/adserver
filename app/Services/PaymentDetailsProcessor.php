@@ -65,13 +65,7 @@ class PaymentDetailsProcessor
         $this->licenseReader = $licenseReader;
     }
 
-    /**
-     * @param AdsPayment $adsPayment
-     * @param array $paymentDetails
-     *
-     * @throws MissingInitialConfigurationException
-     */
-    public function processPaymentDetails(AdsPayment $adsPayment, array $paymentDetails): void
+    public function processPaymentDetails(AdsPayment $adsPayment, array $paymentDetails): PaymentProcessingResult
     {
         $senderAddress = $adsPayment->address;
         $adsPaymentId = $adsPayment->id;
@@ -162,6 +156,8 @@ class PaymentDetailsProcessor
             throw $e;
         }
         // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
+
+        return PaymentProcessingResult::empty();
     }
 
     private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array

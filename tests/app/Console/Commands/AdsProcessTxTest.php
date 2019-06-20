@@ -95,12 +95,12 @@ class AdsProcessTxTest extends TestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-        
+
         $info = $demandClient->fetchInfo(new NullUrl());
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        $paymentDetails = $demandClient->fetchPaymentDetails('', '');
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 10000, 0);
         $context = $this->getContext();
         $totalEventValue = 0;
 
