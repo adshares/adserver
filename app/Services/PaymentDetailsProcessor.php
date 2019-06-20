@@ -101,7 +101,6 @@ class PaymentDetailsProcessor
             $paymentDetails[$key] = $paymentDetail;
         }
 
-        $totalPaidAmount = 0;
         $totalLicenceFee = 0;
         $currentEventValueSum = 0;
 
@@ -127,7 +126,6 @@ class PaymentDetailsProcessor
 
                 $event->save();
 
-                $totalPaidAmount += $paymentDetail['paid_amount'];
                 $totalLicenceFee += $paymentDetail['license_fee'];
                 $currentEventValueSum += $event->event_value;
             }
