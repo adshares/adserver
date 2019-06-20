@@ -24,12 +24,6 @@ namespace Adshares\Adserver\Services;
 
 class PaymentDetailsFeeCalculator
 {
-    /** @var int $totalAmount */
-    private $totalAmount;
-
-    /** @var int $totalWeight */
-    private $totalWeight;
-
     /** @var float $licenseFeeCoefficient */
     private $licenseFeeCoefficient;
 
@@ -37,30 +31,21 @@ class PaymentDetailsFeeCalculator
     private $operatorFeeCoefficient;
 
     public function __construct(
-        int $totalAmount,
-        int $totalWeight,
         float $licenseFeeCoefficient,
         float $operatorFeeCoefficient
     ) {
-        $this->totalAmount = $totalAmount;
-        $this->totalWeight = $totalWeight;
         $this->licenseFeeCoefficient = $licenseFeeCoefficient;
         $this->operatorFeeCoefficient = $operatorFeeCoefficient;
     }
 
-    public function calculateFee(int $weight): array
+    public function calculateFee(int $amountBeforeFees): array
     {
-        $normalizationFactor = (float)$weight / $this->totalWeight;
-        $amountBeforeFees = (int)floor($this->totalAmount * $normalizationFactor);
-
         $licenseFee = (int)floor($this->licenseFeeCoefficient * $amountBeforeFees);
         $transferAmountBeforeOperatorFee = $amountBeforeFees - $licenseFee;
 
         $operatorFee = (int)floor($this->operatorFeeCoefficient * $transferAmountBeforeOperatorFee);
         $amountAfterFees = $transferAmountBeforeOperatorFee - $operatorFee;
 
-        //TODO: normalizacji nie będzie, wartości eventów mają się zgadzać z tym co przyszło w transakcji,
-        // bo zapłaca się tylko pierwsze eventy, na które wystarczy hajsu
         return [
             'event_value' => $amountBeforeFees,
             'license_fee' => $licenseFee,

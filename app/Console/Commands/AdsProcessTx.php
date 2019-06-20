@@ -35,7 +35,6 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
-use Adshares\Adserver\Services\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
@@ -230,24 +229,23 @@ class AdsProcessTx extends BaseCommand
         return $dbTx->address === $coldWalletAddress;
     }
 
-    private function handleIfEventPayment(AdsPayment $dbTx): bool
+    private function handleIfEventPayment(AdsPayment $incomingPayment): bool
     {
-        $networkHost = NetworkHost::fetchByAddress($dbTx->address);
+        $networkHost = NetworkHost::fetchByAddress($incomingPayment->address);
 
-        /** @var PaymentProcessingResult $finalProcessingResult */
-        $finalProcessingResult = PaymentProcessingResult::empty();
+        $rollingEventValueSum = 0;
 
         if ($networkHost === null) {
             return false;
         }
 
-        for ($offset = $dbTx->last_offset ?? 0, $paymentDetailsSize = self::MAX_PAYMENT_EVENTS;
+        for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = self::MAX_PAYMENT_EVENTS;
             $paymentDetailsSize === self::MAX_PAYMENT_EVENTS;
             $offset += self::MAX_PAYMENT_EVENTS) {
             try {
                 $paymentDetails = $this->demandClient->fetchPaymentDetails(
                     $networkHost->host,
-                    $dbTx->txid,
+                    $incomingPayment->txid,
                     self::MAX_PAYMENT_EVENTS,
                     $offset
                 );
@@ -259,20 +257,11 @@ class AdsProcessTx extends BaseCommand
             }
 
             try {
-                $processingResult = $this->paymentDetailsProcessor->processPaymentDetails(
-                    $dbTx->address,
-                    $dbTx->id,
+                $rollingEventValueSum += $this->paymentDetailsProcessor->processPaymentDetails(
+                    $incomingPayment,
                     $paymentDetails,
-                    AdsPayment::amountForId($dbTx->id) - $finalProcessingResult->paidAmount()
+                    $rollingEventValueSum
                 );
-
-                if ($processingResult) {
-                    if ($finalProcessingResult === null) {
-                        $finalProcessingResult = $processingResult;
-                    } else {
-                        $finalProcessingResult = $finalProcessingResult->add($processingResult);
-                    }
-                }
             } catch (MissingInitialConfigurationException $exception) {
                 $this->error('Missing initial configuration: '.$exception->getMessage());
 
@@ -283,14 +272,12 @@ class AdsProcessTx extends BaseCommand
                 return true;
             }
 
-            $dbTx->last_offset = $offset;
-            $dbTx->save();
+            $incomingPayment->last_offset = $offset;
+            $incomingPayment->save();
         }
 
-        $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
-        $dbTx->save();
-
-        $finalProcessingResult->sendLicenseFee();
+        $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
+        $incomingPayment->save();
 
         return true;
     }

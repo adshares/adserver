@@ -52,7 +52,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $adsPayment = $this->createAdsPayment(10000);
 
-        $paymentDetailsProcessor->processPaymentDetails($adsPayment, []);
+        $paymentDetailsProcessor->processPaymentDetails($adsPayment, [], 0);
 
         $this->assertCount(0, NetworkPayment::all());
     }
@@ -86,7 +86,7 @@ final class PaymentDetailsProcessorTest extends TestCase
             ];
         }
 
-        $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails);
+        $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
