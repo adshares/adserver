@@ -34,6 +34,7 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use function max;
+use function min;
 
 class PaymentDetailsProcessor
 {
