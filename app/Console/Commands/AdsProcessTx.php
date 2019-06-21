@@ -45,6 +45,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use function sprintf;
 
 class AdsProcessTx extends BaseCommand
 {
@@ -82,8 +83,7 @@ class AdsProcessTx extends BaseCommand
         ExchangeRateReader $exchangeRateReader,
         AdsClient $adsClient,
         LicenseReader $licenseReader
-    )
-    {
+    ) {
         parent::__construct($locker);
         $this->adServerAddress = config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
@@ -293,7 +293,13 @@ class AdsProcessTx extends BaseCommand
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $incomingPayment->save();
 
-        $resultsCollection->sendAllLicencePayments();
+        $licensePayment = $resultsCollection->sendAllLicencePayments();
+        $this->info(sprintf(
+            'TX_Id: %s. Sent %d to %s',
+            $licensePayment->tx_id,
+            $licensePayment->amount,
+            $licensePayment->receiver_address
+        ));
 
         return true;
     }

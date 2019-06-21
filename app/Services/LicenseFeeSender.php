@@ -66,7 +66,8 @@ final class LicenseFeeSender
 
     public function eventValueSum(): int
     {
-        return (int)array_reduce($this->results,
+        return (int)array_reduce(
+            $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->eventValuePartialSum();
             },
@@ -76,7 +77,8 @@ final class LicenseFeeSender
 
     public function licenceFeeSum(): int
     {
-        return (int)array_reduce($this->results,
+        return (int)array_reduce(
+            $this->results,
             static function (int $carry, PaymentProcessingResult $result) {
                 return $carry + $result->licenseFeePartialSum();
             },
@@ -84,14 +86,17 @@ final class LicenseFeeSender
         );
     }
 
-    public function sendAllLicencePayments(): void
+    public function sendAllLicencePayments(): NetworkPayment
     {
-        $this->sendSingleLicensePayment(NetworkPayment::registerNetworkPayment(
+        $payment = NetworkPayment::registerNetworkPayment(
             $this->fetchLicenceAccount(),
             (string)config('app.adshares_address'),
             $this->licenceFeeSum(),
             $this->adsPayment
-        ));
+        );
+        $this->sendSingleLicensePayment($payment);
+
+        return $payment;
     }
 
     private function sendSingleLicensePayment(NetworkPayment $payment): void
@@ -118,11 +123,13 @@ final class LicenseFeeSender
             $message = '[Supply] (PaymentDetailsProcessor) %s ';
             $message .= 'Could not send a license fee to %s. NetworkPayment id %s. Amount %s.';
 
-            Log::error(sprintf($message,
+            Log::error(sprintf(
+                $message,
                 $exceptionMessage,
                 $payment->receiver_address,
                 $payment->id,
-                $payment->amount));
+                $payment->amount
+            ));
         }
     }
 

@@ -127,7 +127,8 @@ final class PaymentDetailsProcessorTest extends TestCase
     private function getPaymentDetailsProcessor(): PaymentDetailsProcessor
     {
         return new PaymentDetailsProcessor(
-            $this->getExchangeRateReader(), $this->getLicenseReader()
+            $this->getExchangeRateReader(),
+            $this->getLicenseReader()
         );
     }
 
