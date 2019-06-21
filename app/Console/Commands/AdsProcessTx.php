@@ -255,13 +255,6 @@ class AdsProcessTx extends BaseCommand
         for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = $limit;
             $paymentDetailsSize === $limit;
             $offset += $limit) {
-            Log::debug(sprintf(
-                '%s: offset=%d, paymentDetailsSize=%d',
-                __FUNCTION__,
-                $offset,
-                $paymentDetailsSize
-            ));
-
             try {
                 $paymentDetails = $this->demandClient->fetchPaymentDetails(
                     $networkHost->host,
@@ -270,6 +263,12 @@ class AdsProcessTx extends BaseCommand
                     $offset
                 );
                 $paymentDetailsSize = count($paymentDetails);
+                Log::debug(sprintf(
+                    '%s: offset=%d, paymentDetailsSize=%d',
+                    __FUNCTION__,
+                    $offset,
+                    $paymentDetailsSize
+                ));
             } catch (EmptyInventoryException $exception) {
                 return false;
             } catch (UnexpectedClientResponseException $exception) {
