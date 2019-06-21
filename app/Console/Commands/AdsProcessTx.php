@@ -55,7 +55,7 @@ class AdsProcessTx extends BaseCommand
 
     public const EXIT_CODE_LOCKED = 2;
 
-    private const MAX_PAYMENT_EVENTS = 5000;
+    private const MAX_PAYMENT_EVENTS = 2;
 
     protected $signature = 'ads:process-tx';
 
