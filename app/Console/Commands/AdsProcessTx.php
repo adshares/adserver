@@ -295,7 +295,7 @@ class AdsProcessTx extends BaseCommand
 
         $licensePayment = $resultsCollection->sendAllLicencePayments();
         $this->info(sprintf(
-            'TX_Id: %s. Sent %d to %s',
+            'License TX_ID: %s. Sent %d to %s.',
             $licensePayment->tx_id,
             $licensePayment->amount,
             $licensePayment->receiver_address
