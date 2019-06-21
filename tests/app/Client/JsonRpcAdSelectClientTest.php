@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -132,7 +133,7 @@ class JsonRpcAdSelectClientTest extends TestCase
             ['zone' => $ZONE_UUID_DOUBLE_BILLBOARD],
         ];
 
-        $context = new ImpressionContext([], [], ['keywords' => []]);
+        $context = new ImpressionContext([], [], ['keywords' => [], 'tid' => (Uuid::v4())->toString()]);
         $foundBanners = $jsonRpcAdSelectClient->findBanners($requestedZones, $context);
 
         $this->assertCount(3, $foundBanners);
