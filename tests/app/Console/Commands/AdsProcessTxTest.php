@@ -100,7 +100,7 @@ class AdsProcessTxTest extends TestCase
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 10000, 0);
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 3333, 0);
         $context = $this->getContext();
         $totalEventValue = 0;
 

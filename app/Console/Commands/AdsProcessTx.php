@@ -256,6 +256,13 @@ class AdsProcessTx extends BaseCommand
         for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = self::MAX_PAYMENT_EVENTS;
             $paymentDetailsSize === self::MAX_PAYMENT_EVENTS;
             $offset += self::MAX_PAYMENT_EVENTS) {
+            Log::debug(sprintf(
+                '%s: offset=%d, paymentDetailsSize=%d',
+                __FUNCTION__,
+                $offset,
+                $paymentDetailsSize
+            ));
+
             try {
                 $paymentDetails = $this->demandClient->fetchPaymentDetails(
                     $networkHost->host,
@@ -271,11 +278,12 @@ class AdsProcessTx extends BaseCommand
             }
 
             try {
-                $resultsCollection->add($this->paymentDetailsProcessor->processPaymentDetails(
+                $processPaymentDetails = $this->paymentDetailsProcessor->processPaymentDetails(
                     $incomingPayment,
                     $paymentDetails,
                     $resultsCollection->eventValueSum()
-                ));
+                );
+                $resultsCollection->add($processPaymentDetails);
             } catch (MissingInitialConfigurationException $exception) {
                 $this->error('Missing initial configuration: '.$exception->getMessage());
 
