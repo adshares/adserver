@@ -22,8 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Utilities;
 
-use Adshares\Ads\AdsClient;
-use Adshares\Ads\Response\TransactionResponse;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkPayment;
@@ -86,7 +84,7 @@ final class PaymentDetailsProcessorTest extends TestCase
             ];
         }
 
-        $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails, 0);
+        $result = $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
@@ -98,66 +96,11 @@ final class PaymentDetailsProcessorTest extends TestCase
         }
         $expectedAdIncome = $totalPayment - $expectedLicenseAmount - $expectedOperatorAmount;
 
-        $this->assertCount(1, NetworkPayment::all());
-        $licensePayment = NetworkPayment::first();
-        $this->assertEquals($expectedLicenseAmount, $licensePayment->amount);
+        $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
 
         $this->assertCount(1, UserLedgerEntry::all());
         $userLedgerEntry = UserLedgerEntry::first();
         $this->assertEquals($expectedAdIncome, $userLedgerEntry->amount);
-    }
-
-    private function getAdsClient(): AdsClient
-    {
-        $transactionResponse = new TransactionResponse($this->getTransactionResponseData());
-
-        $adsClient = $this->createMock(AdsClient::class);
-        $adsClient->method('runTransaction')->willReturn($transactionResponse);
-
-        /** @var AdsClient $adsClient */
-        return $adsClient;
-    }
-
-    private function getTransactionResponseData(): array
-    {
-        return json_decode(
-            '{
-    "current_block_time": "1559801856",
-    "previous_block_time": "1559801344",
-    "tx": {
-        "data": "040200080000003727000023B0F85C02000800000000E8764817000000000'
-            .'0000000000000000000000000000000000000000000000000000000000000",
-        "signature": "79C325C5924A8D15ECADD8A53F6E021C08D36F47E068AA9826F1882AC54DCA97'
-            .'B5EF9DF50D7985483EE3C78CACF7DC6E6E0F2CCB23627CB5B87C088CAFC3F607",
-        "time": "1559801891",
-        "account_msid": "10039",
-        "account_hashin": "9EF7CD266CBA177E85EB5AAB95C29F92114607E4236DCC3B7E43A6D8F46ABE18",
-        "account_hashout": "E10542FA6080FDFE14E8987ED91302CD27BC4B209E2648EDAAFC80FA80FAFCDB",
-        "deduct": "1.00050000000",
-        "fee": "0.00050000000",
-        "node_msid": "12587",
-        "node_mpos": "1",
-        "id": "0002:0000312B:0001"
-    },
-    "account": {
-        "address": "0002-00000008-F4B5",
-        "node": "2",
-        "id": "8",
-        "msid": "10040",
-        "time": "1559801891",
-        "date": "2019-06-06 08:18:11",
-        "status": "0",
-        "paired_node": "0",
-        "paired_id": "0",
-        "local_change": "1559801856",
-        "remote_change": "1559038976",
-        "balance": "8569.63805524856",
-        "public_key": "9EC3D9A90134000DFAA6317D569FF3C5E7B4A175E31E04B3F712A760F5241715",
-        "hash": "E10542FA6080FDFE14E8987ED91302CD27BC4B209E2648EDAAFC80FA80FAFCDB"
-    }
-}',
-            true
-        );
     }
 
     private function getExchangeRateReader(): ExchangeRateReader
