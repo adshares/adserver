@@ -49,7 +49,8 @@ final class GuzzleDemandClient implements DemandClient
 {
     private const VERSION = '0.1';
 
-    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}?limit={limit}&offset={offset}';
+    private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
+    .'?limit={limit}&offset={offset}';
 
     /** @var SignatureVerifier */
     private $signatureVerifier;
