@@ -20,17 +20,34 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Services;
-
-use Adshares\Adserver\Models\NetworkPayment;
+namespace Adshares\Adserver\Services\Dto;
 
 final class PaymentProcessingResult
 {
-    public function __construct(int $currentEventValueSum, NetworkPayment $adsPayment)
+    /** @var int */
+    private $currentEventValueSum;
+
+    /** @var int */
+    private $currentLicenseFeeSum;
+
+    public function __construct(int $currentEventValueSum, int $currentLicenseFeeSum)
     {
+        $this->currentEventValueSum = $currentEventValueSum;
+        $this->currentLicenseFeeSum = $currentLicenseFeeSum;
     }
 
     public static function zero(): self
     {
+        return new self(0, 0);
+    }
+
+    public function eventValuePartialSum(): int
+    {
+        return $this->currentEventValueSum;
+    }
+
+    public function licenseFeePartialSum(): int
+    {
+        return $this->currentLicenseFeeSum;
     }
 }

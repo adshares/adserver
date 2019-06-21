@@ -34,8 +34,10 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -69,15 +71,27 @@ class AdsProcessTx extends BaseCommand
     /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
     private $paymentDetailsProcessor;
 
-    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
+    /** @var AdsClient */
+    private $adsClient;
+
+    /** @var LicenseReader */
+    private $licenseReader;
+
+    public function __construct(
+        Locker $locker,
+        ExchangeRateReader $exchangeRateReader,
+        AdsClient $adsClient,
+        LicenseReader $licenseReader
+    )
     {
         parent::__construct($locker);
         $this->adServerAddress = config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
+        $this->adsClient = $adsClient;
+        $this->licenseReader = $licenseReader;
     }
 
     public function handle(
-        AdsClient $adsClient,
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
@@ -93,7 +107,7 @@ class AdsProcessTx extends BaseCommand
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 
         try {
-            $this->updateBlockIds($adsClient);
+            $this->updateBlockIds($this->adsClient);
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
@@ -112,7 +126,7 @@ class AdsProcessTx extends BaseCommand
             try {
                 DB::beginTransaction();
 
-                $this->handleDbTx($adsClient, $dbTx);
+                $this->handleDbTx($dbTx);
 
                 DB::commit();
             } catch (Exception $e) {
@@ -150,11 +164,11 @@ class AdsProcessTx extends BaseCommand
         }
     }
 
-    private function handleDbTx(AdsClient $adsClient, $dbTx): void
+    private function handleDbTx($dbTx): void
     {
         try {
             $txid = $dbTx->txid;
-            $transaction = $adsClient->getTransaction($txid)->getTxn();
+            $transaction = $this->adsClient->getTransaction($txid)->getTxn();
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
@@ -233,7 +247,7 @@ class AdsProcessTx extends BaseCommand
     {
         $networkHost = NetworkHost::fetchByAddress($incomingPayment->address);
 
-        $resultsCollection = new ResultsCollection();
+        $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
 
         if ($networkHost === null) {
             return false;
@@ -260,7 +274,7 @@ class AdsProcessTx extends BaseCommand
                 $resultsCollection->add($this->paymentDetailsProcessor->processPaymentDetails(
                     $incomingPayment,
                     $paymentDetails,
-                    $resultsCollection->lastSum()
+                    $resultsCollection->eventValueSum()
                 ));
             } catch (MissingInitialConfigurationException $exception) {
                 $this->error('Missing initial configuration: '.$exception->getMessage());
@@ -276,10 +290,10 @@ class AdsProcessTx extends BaseCommand
             $incomingPayment->save();
         }
 
-        $resultsCollection->sendLicencePayments();
-
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
         $incomingPayment->save();
+
+        $resultsCollection->sendAllLicencePayments();
 
         return true;
     }
