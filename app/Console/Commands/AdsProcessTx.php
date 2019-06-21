@@ -55,9 +55,7 @@ class AdsProcessTx extends BaseCommand
 
     public const EXIT_CODE_LOCKED = 2;
 
-    private const MAX_PAYMENT_EVENTS = 5000;
-
-    protected $signature = 'ads:process-tx';
+    protected $signature = 'ads:process-tx {--c|chunkSize=5000}';
 
     protected $description = 'Processes incoming txs';
 
@@ -253,9 +251,10 @@ class AdsProcessTx extends BaseCommand
             return false;
         }
 
-        for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = self::MAX_PAYMENT_EVENTS;
-            $paymentDetailsSize === self::MAX_PAYMENT_EVENTS;
-            $offset += self::MAX_PAYMENT_EVENTS) {
+        $limit = (int)$this->option('chunkSize');
+        for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = $limit;
+            $paymentDetailsSize === $limit;
+            $offset += $limit) {
             Log::debug(sprintf(
                 '%s: offset=%d, paymentDetailsSize=%d',
                 __FUNCTION__,
@@ -267,7 +266,7 @@ class AdsProcessTx extends BaseCommand
                 $paymentDetails = $this->demandClient->fetchPaymentDetails(
                     $networkHost->host,
                     $incomingPayment->txid,
-                    self::MAX_PAYMENT_EVENTS,
+                    $limit,
                     $offset
                 );
                 $paymentDetailsSize = count($paymentDetails);
