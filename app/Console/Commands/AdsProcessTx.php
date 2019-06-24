@@ -227,11 +227,11 @@ class AdsProcessTx extends BaseCommand
     {
         if ($this->checkIfColdWalletTransaction($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
-            $dbTx->save();
         } elseif (!$this->handleIfEventPayment($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_RESERVED;
-            $dbTx->save();
         }
+
+        $dbTx->save();
     }
 
     private function checkIfColdWalletTransaction(AdsPayment $dbTx): bool
@@ -293,11 +293,9 @@ class AdsProcessTx extends BaseCommand
             }
 
             $incomingPayment->last_offset = $offset;
-            $incomingPayment->save();
         }
 
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
-        $incomingPayment->save();
 
         $licensePayment = $resultsCollection->sendAllLicencePayments();
         $this->info(sprintf(
