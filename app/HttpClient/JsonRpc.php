@@ -38,7 +38,12 @@ class JsonRpc
         $this->client = $client;
     }
 
-    public function call(Procedure $procedure): Result
+    public function callAndFailIfUnsuccessful(Procedure $procedure): void
+    {
+        $this->callAndAlwaysGetResult($procedure)->isTrue();
+    }
+
+    public function callAndAlwaysGetResult(Procedure $procedure): Result
     {
         $body = $procedure->toJson();
 

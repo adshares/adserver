@@ -45,11 +45,6 @@ final class BoolResult implements Result
         throw new ResultException('This is a `bool');
     }
 
-    public function getCount(): int
-    {
-        throw new ResultException('This is a `bool');
-    }
-
     public function failed(): bool
     {
         return false;

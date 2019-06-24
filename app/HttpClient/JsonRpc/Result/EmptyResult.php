@@ -40,9 +40,4 @@ final class EmptyResult implements Result
     {
         return false;
     }
-
-    public function getCount(): int
-    {
-        return 0;
-    }
 }
