@@ -52,7 +52,7 @@ class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (Throwable $e) {
-            return new Result\FailedResult($procedure->toString(5), $e);
+            return new Result\FailedResult(__FUNCTION__, $e);
         }
     }
 }
