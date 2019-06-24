@@ -84,7 +84,7 @@ class AdPayEventExportCommand extends BaseCommand
                 $exportedCount = $adPay->addEvents($events);
 
                 $this->info(sprintf(
-                    '[AdPayEventExport] Exported [%d] events.',
+                    '[AdPayEventExport] Really exported %d events.',
                     $exportedCount
                 ));
 
@@ -92,6 +92,7 @@ class AdPayEventExportCommand extends BaseCommand
                 if ($eventIdLastExported > $configEventIdFirst) {
                     Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
                 }
+
                 $eventIdFirst = $eventIdLastExported + 1;
             }
         } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));

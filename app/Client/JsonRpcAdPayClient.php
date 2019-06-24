@@ -74,7 +74,7 @@ final class JsonRpcAdPayClient implements AdPay
             }
         ));
 
-        if (count($filteredEvents) === 0) {
+        if (empty($filteredEvents)) {
             return 0;
         }
 
@@ -83,7 +83,14 @@ final class JsonRpcAdPayClient implements AdPay
             $filteredEvents
         );
 
-        return $this->client->call($procedure)->getCount();
+        $result = $this->client->call($procedure);
+
+        //TODO: refactor
+        if ($result->failed()) {
+            $result->isTrue();
+        }
+
+        return count($filteredEvents);
     }
 
     public function getPayments(int $timestamp, bool $force): array
