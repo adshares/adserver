@@ -272,7 +272,7 @@ class AdsProcessTx extends BaseCommand
             } catch (EmptyInventoryException $exception) {
                 return false;
             } catch (UnexpectedClientResponseException $exception) {
-                return !($exception->getCode() === Response::HTTP_NOT_FOUND);
+                return $exception->getCode() !== Response::HTTP_NOT_FOUND;
             }
 
             try {
