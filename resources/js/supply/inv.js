@@ -246,7 +246,9 @@ function fetchURL(url, options) {
 
     if (!xdr) {
         try {
-            xhr.withCredentials = true;
+            if(!options.noCredentials) {
+                xhr.withCredentials = true;
+            }
         } catch (e) {
         }
     }
