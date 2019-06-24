@@ -31,7 +31,6 @@ class TestCase extends AdsharesTestCase
     {
         parent::setUp();
 
-
         $this->app->bind(
             Locker::class,
             function () {
