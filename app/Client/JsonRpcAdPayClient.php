@@ -80,7 +80,7 @@ final class JsonRpcAdPayClient implements AdPay
 
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
-            $filteredEvents
+            array_values($filteredEvents)
         );
 
         $this->client->call($procedure);
