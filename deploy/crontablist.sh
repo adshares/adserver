@@ -2,6 +2,9 @@
 set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
+SERVICE_NAME=$(basename ${SERVICE_DIR})
+BACKUP_DIR=$(dirname ${SERVICE_DIR})/.backup
+
 LOG_DIR=${LOG_DIR:-""}
 
 if [[ -z ${LOG_DIR} ]]
@@ -50,8 +53,6 @@ echo -n "php ${SERVICE_DIR}/artisan ads:get-tx-in"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ads:process-tx"
 echo -n " && "
-echo -n "php ${SERVICE_DIR}/artisan ops:supply:payments:send"
-echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:adselect:payment:export"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:stats:aggregate:publisher"
@@ -83,3 +84,8 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo -n "php ${SERVICE_DIR}/artisan ads:fetch-hosts"
     echo ""
 }
+
+echo -n "15 1 * * * "
+echo -n "${SERVICE_DIR}/bin/archive_events.sh"
+echo ""
+

@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
 use Adshares\Common\Application\Service\AdUser;
@@ -105,6 +106,8 @@ class AdSelectEventExportCommand extends BaseCommand
             '[ADSELECT] Exported %s unpaid events',
             $exported
         ));
+
+        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID, $eventIdLast);
 
         $this->info('[AdSelectEventExport] Finished exporting events to AdSelect.');
     }

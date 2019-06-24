@@ -34,8 +34,10 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -43,6 +45,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use function sprintf;
 
 class AdsProcessTx extends BaseCommand
 {
@@ -52,7 +55,7 @@ class AdsProcessTx extends BaseCommand
 
     public const EXIT_CODE_LOCKED = 2;
 
-    protected $signature = 'ads:process-tx';
+    protected $signature = 'ads:process-tx {--c|chunkSize=5000}';
 
     protected $description = 'Processes incoming txs';
 
@@ -67,15 +70,26 @@ class AdsProcessTx extends BaseCommand
     /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
     private $paymentDetailsProcessor;
 
-    public function __construct(Locker $locker, ExchangeRateReader $exchangeRateReader)
-    {
+    /** @var AdsClient */
+    private $adsClient;
+
+    /** @var LicenseReader */
+    private $licenseReader;
+
+    public function __construct(
+        Locker $locker,
+        ExchangeRateReader $exchangeRateReader,
+        AdsClient $adsClient,
+        LicenseReader $licenseReader
+    ) {
         parent::__construct($locker);
         $this->adServerAddress = config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
+        $this->adsClient = $adsClient;
+        $this->licenseReader = $licenseReader;
     }
 
     public function handle(
-        AdsClient $adsClient,
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
@@ -91,7 +105,7 @@ class AdsProcessTx extends BaseCommand
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 
         try {
-            $this->updateBlockIds($adsClient);
+            $this->updateBlockIds($this->adsClient);
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
@@ -107,7 +121,17 @@ class AdsProcessTx extends BaseCommand
         $dbTxs = AdsPayment::where('status', AdsPayment::STATUS_NEW)->get();
 
         foreach ($dbTxs as $dbTx) {
-            $this->handleDbTx($adsClient, $dbTx);
+            try {
+                DB::beginTransaction();
+
+                $this->handleDbTx($dbTx);
+
+                DB::commit();
+            } catch (Exception $e) {
+                DB::rollBack();
+
+                throw $e;
+            }
         }
 
         $this->info('Finish processing incoming txs');
@@ -138,11 +162,11 @@ class AdsProcessTx extends BaseCommand
         }
     }
 
-    private function handleDbTx(AdsClient $adsClient, $dbTx): void
+    private function handleDbTx($dbTx): void
     {
         try {
             $txid = $dbTx->txid;
-            $transaction = $adsClient->getTransaction($txid)->getTxn();
+            $transaction = $this->adsClient->getTransaction($txid)->getTxn();
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
@@ -203,63 +227,82 @@ class AdsProcessTx extends BaseCommand
     {
         if ($this->checkIfColdWalletTransaction($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
-            $dbTx->save();
         } elseif (!$this->handleIfEventPayment($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_RESERVED;
-            $dbTx->save();
         }
+
+        $dbTx->save();
     }
 
     private function checkIfColdWalletTransaction(AdsPayment $dbTx): bool
     {
-        $coldWalletAddress = config('app.adshares_wallet_cold_address');
-
-        if ($dbTx->address === $coldWalletAddress) {
-            return true;
-        }
-
-        return false;
+        return $dbTx->address === config('app.adshares_wallet_cold_address');
     }
 
-    private function handleIfEventPayment(AdsPayment $dbTx): bool
+    private function handleIfEventPayment(AdsPayment $incomingPayment): bool
     {
-        $senderAddress = $dbTx->address;
-        $networkHost = NetworkHost::fetchByAddress($senderAddress);
+        $networkHost = NetworkHost::fetchByAddress($incomingPayment->address);
+
+        $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
 
         if ($networkHost === null) {
             return false;
         }
 
-        $host = $networkHost->host;
-        $txid = $dbTx->txid;
-        $adsPaymentId = $dbTx->id;
-
-        try {
-            $paymentDetails = $this->demandClient->fetchPaymentDetails($host, $txid);
-        } catch (EmptyInventoryException $exception) {
-            return false;
-        } catch (UnexpectedClientResponseException $exception) {
-            if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
+        $limit = (int)$this->option('chunkSize');
+        for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = $limit;
+            $paymentDetailsSize === $limit;
+            $offset += $limit) {
+            try {
+                $paymentDetails = $this->demandClient->fetchPaymentDetails(
+                    $networkHost->host,
+                    $incomingPayment->txid,
+                    $limit,
+                    $offset
+                );
+                $paymentDetailsSize = count($paymentDetails);
+                Log::debug(sprintf(
+                    '%s: offset=%d, paymentDetailsSize=%d',
+                    __FUNCTION__,
+                    $offset,
+                    $paymentDetailsSize
+                ));
+            } catch (EmptyInventoryException $exception) {
                 return false;
+            } catch (UnexpectedClientResponseException $exception) {
+                return $exception->getCode() !== Response::HTTP_NOT_FOUND;
             }
 
-            return true;
+            try {
+                $processPaymentDetails = $this->paymentDetailsProcessor->processPaymentDetails(
+                    $incomingPayment,
+                    $paymentDetails,
+                    $resultsCollection->eventValueSum()
+                );
+
+                $resultsCollection->add($processPaymentDetails);
+            } catch (MissingInitialConfigurationException $exception) {
+                $this->error('Missing initial configuration: '.$exception->getMessage());
+
+                return true;
+            } catch (Exception $exception) {
+                $this->error('Unexpected error: '.$exception->getMessage());
+
+                return true;
+            }
+
+            $incomingPayment->last_offset = $offset;
         }
 
-        try {
-            $this->paymentDetailsProcessor->processPaymentDetails($senderAddress, $adsPaymentId, $paymentDetails);
-        } catch (MissingInitialConfigurationException $exception) {
-            $this->error('Missing initial configuration: '.$exception->getMessage());
+        $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
 
-            return true;
-        } catch (Exception $exception) {
-            $this->error('Unexpected error: '.$exception->getMessage());
-
-            return true;
-        }
-
-        $dbTx->status = AdsPayment::STATUS_EVENT_PAYMENT;
-        $dbTx->save();
+        $licensePayment = $resultsCollection->sendAllLicensePayments();
+        $this->info(sprintf(
+            'LicensePayment TX_ID: %s. Sent %d to %s.',
+            $licensePayment->tx_id,
+            $licensePayment->amount,
+            $licensePayment->receiver_address
+        ));
 
         return true;
     }
@@ -328,9 +371,9 @@ class AdsProcessTx extends BaseCommand
         $requiredBalance = $exchangeRate->toClick($requiredBudget);
 
         if ($balance >= $requiredBalance) {
-            $campaigns->filter(function (Campaign $campaign) {
+            $campaigns->filter(static function (Campaign $campaign) {
                 return $campaign->status === Campaign::STATUS_SUSPENDED;
-            })->each(function (Campaign $campaign) use ($exchangeRate) {
+            })->each(static function (Campaign $campaign) use ($exchangeRate) {
                 $campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate);
                 $campaign->save();
             });

@@ -31,6 +31,8 @@ use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use function array_chunk;
+use function floor;
 
 final class DummyDemandClient implements DemandClient
 {
@@ -153,26 +155,35 @@ final class DummyDemandClient implements DemandClient
         return new CampaignCollection(...$this->campaigns);
     }
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array
+    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array
     {
-        return [
-            [
-                'event_id' => 'a98e2611cce44e6fb6ca82d9b9cbe017',
-                'event_type' => 'view',
-                'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
-                'zone_id' => 'a22e19a3874847f4a6287d26deacd208',
-                'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
-                'event_value' => 10,
-            ],
-            [
-                'event_id' => '95a1170d739546799b959a9d0ca9b7c8',
-                'event_type' => 'click',
-                'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
-                'zone_id' => '2c6edfaef7454af4a96cb434c85323ee',
-                'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
-                'event_value' => 100,
-            ],
-        ];
+        static $arr;
+
+        if ($arr === null) {
+            $arr = [];
+            for ($i = 0; $i < $limit; $i++) {
+                $arr[] = [
+                    'event_id' => Uuid::v4()->hex(),
+                    'event_type' => 'view',
+                    'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
+                    'zone_id' => 'a22e19a3874847f4a6287d26deacd208',
+                    'publisher_id' => 'fa9611d2d2f74e3f89c0e18b7c401891',
+                    'event_value' => 10,
+                ];
+                $arr[] = [
+                    'event_id' => Uuid::v4()->hex(),
+                    'event_type' => 'click',
+                    'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
+                    'zone_id' => '2c6edfaef7454af4a96cb434c85323ee',
+                    'publisher_id' => 'd5f5deefd010449ab0ee0e5e6b884090',
+                    'event_value' => 100,
+                ];
+            }
+        } else {
+            return array_chunk($arr, $limit, false)[(int)floor($offset / $limit)];
+        }
+
+        return $arr;
     }
 
     public function fetchInfo(UrlInterface $infoUrl): Info

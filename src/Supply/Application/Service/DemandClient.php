@@ -30,7 +30,7 @@ interface DemandClient
 {
     public function fetchAllInventory(string $sourceHost, string $inventoryHost): CampaignCollection;
 
-    public function fetchPaymentDetails(string $host, string $transactionId): array;
+    public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
 
     public function fetchInfo(UrlInterface $infoUrl): Info;
 }

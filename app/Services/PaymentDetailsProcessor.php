@@ -23,16 +23,18 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
-use Adshares\Adserver\Models\NetworkPayment;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
-use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
+use function max;
+use function min;
 
 class PaymentDetailsProcessor
 {
@@ -45,52 +47,43 @@ class PaymentDetailsProcessor
     /** @var LicenseReader */
     private $licenseReader;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader, LicenseReader $licenseReader)
-    {
+    public function __construct(
+        ExchangeRateReader $exchangeRateReader,
+        LicenseReader $licenseReader
+    ) {
         $this->adServerAddress = (string)config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
         $this->licenseReader = $licenseReader;
     }
 
-    /**
-     * @param string $senderAddress
-     * @param int $adsPaymentId
-     * @param array $paymentDetails
-     *
-     * @throws MissingInitialConfigurationException
-     */
-    public function processPaymentDetails(string $senderAddress, int $adsPaymentId, array $paymentDetails): void
+    private static function fetchOperatorFee(): float
     {
-        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-
-        $amountReceived = $this->getPaymentAmount($adsPaymentId);
-
-        try {
-            $licenseAccount = $this->licenseReader->getAddress()->toString();
-        } catch (ModelNotFoundException $modelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license account.');
-        }
-
-        try {
-            $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
-        } catch (ModelNotFoundException $modelNotFoundException) {
-            throw new MissingInitialConfigurationException('No config entry for license fee.');
-        }
-
         $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
         if ($operatorFee === null) {
             throw new MissingInitialConfigurationException('No config entry for operator fee.');
         }
 
+        return $operatorFee;
+    }
+
+    public function processPaymentDetails(
+        AdsPayment $adsPayment,
+        array $paymentDetails,
+        int $carriedEventValueSum
+    ): PaymentProcessingResult {
+        $senderAddress = $adsPayment->address;
+        $adsPaymentId = $adsPayment->id;
+
+        $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
+
         $paymentDetails = $this->getPaymentDetailsWhichExistInDb($paymentDetails);
         if (count($paymentDetails) === 0) {
             Log::warning('[PaymentDetailsProcessor] None of received events exist in DB');
 
-            return;
+            return PaymentProcessingResult::zero();
         }
 
-        $totalWeight = $this->getPaymentDetailsTotalWeight($paymentDetails);
-        $feeCalculator = new PaymentDetailsFeeCalculator($amountReceived, $totalWeight, $licenseFee, $operatorFee);
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), self::fetchOperatorFee());
         foreach ($paymentDetails as $key => $paymentDetail) {
             $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
             $paymentDetail['event_value'] = $calculatedFees['event_value'];
@@ -101,56 +94,36 @@ class PaymentDetailsProcessor
             $paymentDetails[$key] = $paymentDetail;
         }
 
-        $totalPaidAmount = 0;
-        $totalLicenceFee = 0;
+        $totalLicenseFee = 0;
+        $totalEventValue = 0;
 
         $exchangeRateValue = $exchangeRate->getValue();
 
-        try {
-            DB::beginTransaction();
-
-            foreach ($paymentDetails as $paymentDetail) {
-                $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
-                if ($event === null) {
-                    continue;
-                }
-
-                $event->pay_from = $senderAddress;
-                $event->ads_payment_id = $adsPaymentId;
-                $event->event_value = $paymentDetail['event_value'];
-                $event->license_fee = $paymentDetail['license_fee'];
-                $event->operator_fee = $paymentDetail['operator_fee'];
-                $event->paid_amount = $paymentDetail['paid_amount'];
-                $event->exchange_rate = $exchangeRateValue;
-                $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
-
-                $event->save();
-
-                $totalPaidAmount += $paymentDetail['paid_amount'];
-                $totalLicenceFee += $paymentDetail['license_fee'];
+        foreach ($paymentDetails as $paymentDetail) {
+            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
+            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
+            if ($event === null) {
+                continue;
             }
 
-            NetworkPayment::registerNetworkPayment(
-                $licenseAccount,
-                $this->adServerAddress,
-                $totalLicenceFee,
-                $adsPaymentId
-            );
+            $event->pay_from = $senderAddress;
+            $event->ads_payment_id = $adsPaymentId;
+            $event->event_value = min($spendableAmount, $paymentDetail['event_value']);
+            $event->license_fee = $paymentDetail['license_fee'];
+            $event->operator_fee = $paymentDetail['operator_fee'];
+            $event->paid_amount = $paymentDetail['paid_amount'];
+            $event->exchange_rate = $exchangeRateValue;
+            $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
 
-            DB::commit();
-        } catch (Exception $e) {
-            DB::rollBack();
+            $event->save();
 
-            throw $e;
+            $totalLicenseFee += $paymentDetail['license_fee'];
+            $totalEventValue += $event->event_value;
         }
-        // TODO log operator income $totalOperatorFee = $amountReceived - $totalPaidAmount - $totalLicenceFee;
-    }
 
-    private function getPaymentAmount(int $adsPaymentId): int
-    {
-        $adsPayment = AdsPayment::find($adsPaymentId);
+        $this->addAdIncomeToUserLedger($adsPayment);
 
-        return (int)$adsPayment->amount;
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee);
     }
 
     private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
@@ -175,13 +148,51 @@ class PaymentDetailsProcessor
         return $paymentDetails;
     }
 
-    private function getPaymentDetailsTotalWeight(array $paymentDetails): int
+    private function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
-        $weightSum = 0;
-        foreach ($paymentDetails as $paymentDetail) {
-            $weightSum += $paymentDetail['event_value'];
+        $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
+
+        foreach ($splitPayments as $splitPayment) {
+            $userUuid = $splitPayment->publisher_id;
+            $amount = (int)$splitPayment->paid_amount;
+
+            $user = User::fetchByUuid($userUuid);
+
+            if (null === $user) {
+                Log::error(
+                    sprintf(
+                        '[Supply] (SupplySendPayments) User %s does not exist. AdsPayment id %s. Amount %s.',
+                        $userUuid,
+                        $adsPayment->id,
+                        $amount
+                    )
+                );
+
+                continue;
+            }
+
+            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+                $user->id,
+                $amount,
+                UserLedgerEntry::STATUS_ACCEPTED,
+                UserLedgerEntry::TYPE_AD_INCOME,
+                $adsPayment->address,
+                $this->adServerAddress,
+                $adsPayment->txid
+            );
+
+            $userLedgerEntry->save();
+        }
+    }
+
+    private function fetchLicenseFee(): float
+    {
+        try {
+            $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);
+        } catch (ModelNotFoundException $modelNotFoundException) {
+            throw new MissingInitialConfigurationException('No config entry for license fee.');
         }
 
-        return $weightSum;
+        return $licenseFee;
     }
 }
