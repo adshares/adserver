@@ -236,9 +236,7 @@ class AdsProcessTx extends BaseCommand
 
     private function checkIfColdWalletTransaction(AdsPayment $dbTx): bool
     {
-        $coldWalletAddress = config('app.adshares_wallet_cold_address');
-
-        return $dbTx->address === $coldWalletAddress;
+        return $dbTx->address === config('app.adshares_wallet_cold_address');
     }
 
     private function handleIfEventPayment(AdsPayment $incomingPayment): bool
