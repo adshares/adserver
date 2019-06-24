@@ -51,7 +51,7 @@ final class JsonRpcAdPayClient implements AdPay
             $campaigns
         );
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
     }
 
     public function deleteCampaign(array $campaignIds): void
@@ -61,7 +61,7 @@ final class JsonRpcAdPayClient implements AdPay
             $campaignIds
         );
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
     }
 
     public function addEvents(array $events): void
@@ -71,7 +71,7 @@ final class JsonRpcAdPayClient implements AdPay
             $events
         );
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
     }
 
     public function getPayments(int $timestamp, bool $force): array
@@ -84,7 +84,7 @@ final class JsonRpcAdPayClient implements AdPay
                 ]
             );
 
-            $this->client->call($procedure)->isTrue();
+            $this->client->callAndFailIfUnsuccessful($procedure);
         }
 
         $procedure = new Procedure(
@@ -94,7 +94,7 @@ final class JsonRpcAdPayClient implements AdPay
             ]
         );
 
-        $responseArray = $this->client->call($procedure)->toArray();
+        $responseArray = $this->client->callAndAlwaysGetResult($procedure)->toArray();
 
         return $responseArray['payments'];
     }

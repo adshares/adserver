@@ -89,7 +89,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $context->adSelectRequestParams($existingZones)
         );
 
-        $items = $this->client->call($procedure)->toArray();
+        $items = $this->client->callAndAlwaysGetResult($procedure)->toArray();
 
         Log::debug(sprintf(
             '%s:%s %s',
@@ -112,7 +112,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             CampaignMapper::map($campaign)
         );
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
 
         Log::debug(sprintf(
             '%s:%s %s',
@@ -137,7 +137,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
         $procedure = new Procedure(self::METHOD_EVENT_PAYMENT_ADD, $events);
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
 
         Log::debug(sprintf(
             '%s:%s %s',
@@ -161,7 +161,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $mappedCampaigns
         );
 
-        $this->client->call($procedure)->isTrue();
+        $this->client->callAndFailIfUnsuccessful($procedure);
     }
 
     private function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
