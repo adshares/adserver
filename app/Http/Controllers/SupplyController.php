@@ -55,7 +55,6 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ($data) {
