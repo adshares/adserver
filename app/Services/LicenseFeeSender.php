@@ -75,7 +75,7 @@ final class LicenseFeeSender
         );
     }
 
-    public function licenceFeeSum(): int
+    public function licenseFeeSum(): int
     {
         return (int)array_reduce(
             $this->results,
@@ -86,12 +86,12 @@ final class LicenseFeeSender
         );
     }
 
-    public function sendAllLicencePayments(): NetworkPayment
+    public function sendAllLicensePayments(): NetworkPayment
     {
         $payment = NetworkPayment::registerNetworkPayment(
-            $this->fetchLicenceAccount(),
+            $this->fetchLicenseAccount(),
             (string)config('app.adshares_address'),
-            $this->licenceFeeSum(),
+            $this->licenseFeeSum(),
             $this->adsPayment
         );
         $this->sendSingleLicensePayment($payment);
@@ -133,7 +133,7 @@ final class LicenseFeeSender
         }
     }
 
-    private function fetchLicenceAccount(): string
+    private function fetchLicenseAccount(): string
     {
         try {
             $licenseAccount = $this->licenseReader->getAddress()->toString();

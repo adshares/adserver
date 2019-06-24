@@ -93,21 +93,21 @@ class DemandPreparePayments extends BaseCommand
                     return $payment;
                 });
 
-            $licencePayment = new Payment([
+            $licensePayment = new Payment([
                 'account_address' => $licenseAccountAddress,
                 'state' => Payment::STATE_NEW,
                 'completed' => 0,
                 'fee' => $payments->sum(static function (Payment $payment) {
-                    return $payment->totalLicenceFee();
+                    return $payment->totalLicenseFee();
                 }),
             ]);
 
-            $licencePayment->save();
+            $licensePayment->save();
 
             DB::commit();
 
-            $this->info("and a licence fee of {$licencePayment->fee} clicks"
-                ." payable to {$licencePayment->account_address}.");
+            $this->info("and a licence fee of {$licensePayment->fee} clicks"
+                ." payable to {$licensePayment->account_address}.");
         }
     }
 

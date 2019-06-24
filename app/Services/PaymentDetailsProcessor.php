@@ -83,7 +83,7 @@ class PaymentDetailsProcessor
             return PaymentProcessingResult::zero();
         }
 
-        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenceFee(), self::fetchOperatorFee());
+        $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), self::fetchOperatorFee());
         foreach ($paymentDetails as $key => $paymentDetail) {
             $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
             $paymentDetail['event_value'] = $calculatedFees['event_value'];
@@ -94,7 +94,7 @@ class PaymentDetailsProcessor
             $paymentDetails[$key] = $paymentDetail;
         }
 
-        $totalLicenceFee = 0;
+        $totalLicenseFee = 0;
         $totalEventValue = 0;
 
         $exchangeRateValue = $exchangeRate->getValue();
@@ -117,13 +117,13 @@ class PaymentDetailsProcessor
 
             $event->save();
 
-            $totalLicenceFee += $paymentDetail['license_fee'];
+            $totalLicenseFee += $paymentDetail['license_fee'];
             $totalEventValue += $event->event_value;
         }
 
         $this->addAdIncomeToUserLedger($adsPayment);
 
-        return new PaymentProcessingResult($totalEventValue, $totalLicenceFee);
+        return new PaymentProcessingResult($totalEventValue, $totalLicenseFee);
     }
 
     private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
@@ -185,7 +185,7 @@ class PaymentDetailsProcessor
         }
     }
 
-    private function fetchLicenceFee(): float
+    private function fetchLicenseFee(): float
     {
         try {
             $licenseFee = $this->licenseReader->getFee(Config::LICENCE_RX_FEE);

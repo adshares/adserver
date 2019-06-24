@@ -296,7 +296,7 @@ class AdsProcessTx extends BaseCommand
 
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
 
-        $licensePayment = $resultsCollection->sendAllLicencePayments();
+        $licensePayment = $resultsCollection->sendAllLicensePayments();
         $this->info(sprintf(
             'LicensePayment TX_ID: %s. Sent %d to %s.',
             $licensePayment->tx_id,
