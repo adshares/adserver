@@ -28,13 +28,14 @@ class AddIndexToCreatedAtForEvents extends Migration
     {
         Schema::table('event_logs',
             static function (Blueprint $table) {
-                $table->index('created_at');
+                $table->index('created_at', 'event_logs_created_at_index');
             });
 
         Schema::table('network_event_logs',
             static function (Blueprint $table) {
-                $table->index('created_at');
-                $table->index('updated_at');
+                $table->index('created_at', 'network_event_logs_created_at_index');
+                $table->index('updated_at', 'network_event_logs_updated_at_index');
+                $table->index('ads_payment_id', 'network_event_logs_ads_payment_id_index');
             });
     }
 
@@ -42,13 +43,14 @@ class AddIndexToCreatedAtForEvents extends Migration
     {
         Schema::table('event_logs',
             static function (Blueprint $table) {
-                $table->dropIndex('created_at');
+                $table->dropIndex('event_logs_created_at_index');
             });
 
         Schema::table('network_event_logs',
             static function (Blueprint $table) {
-                $table->dropIndex('created_at');
-                $table->dropIndex('updated_at');
+                $table->dropIndex('network_event_logs_created_at_index');
+                $table->dropIndex('network_event_logs_updated_at_index');
+                $table->dropIndex('network_event_logs_ads_payment_id_index');
             });
     }
 }
