@@ -36,6 +36,8 @@ final class JsonRpcAdPayClient implements AdPay
 
     private const METHOD_GET_PAYMENTS = 'get_payments';
 
+    private const METHOD_FORCE_RECALCULATION = 'debug_force_payment_recalculation';
+
     /** @var JsonRpc */
     private $rpcClient;
 
@@ -77,21 +79,17 @@ final class JsonRpcAdPayClient implements AdPay
     public function getPayments(int $timestamp, bool $force): array
     {
         if ($force) {
-            $procedure = new Procedure(
-                'debug_force_payment_recalculation',
-                [
-                    ['timestamp' => $timestamp],
-                ]
+            $debugProcedure = new Procedure(
+                self::METHOD_FORCE_RECALCULATION,
+                [['timestamp' => $timestamp]]
             );
 
-            $this->rpcClient->callAndFailIfUnsuccessful($procedure);
+            $this->rpcClient->callAndFailIfUnsuccessful($debugProcedure);
         }
 
         $procedure = new Procedure(
             self::METHOD_GET_PAYMENTS,
-            [
-                ['timestamp' => $timestamp],
-            ]
+            [['timestamp' => $timestamp]]
         );
 
         $responseArray = $this->rpcClient->callAndAlwaysGetResult($procedure)->toArray();
