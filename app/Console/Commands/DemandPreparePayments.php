@@ -106,7 +106,7 @@ class DemandPreparePayments extends BaseCommand
 
             DB::commit();
 
-            $this->info("and a licence fee of {$licensePayment->fee} clicks"
+            $this->info("and a license fee of {$licensePayment->fee} clicks"
                 ." payable to {$licensePayment->account_address}.");
         }
     }
