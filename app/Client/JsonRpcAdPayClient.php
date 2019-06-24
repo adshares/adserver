@@ -83,12 +83,7 @@ final class JsonRpcAdPayClient implements AdPay
             $filteredEvents
         );
 
-        $result = $this->client->call($procedure);
-
-        //TODO: refactor
-        if ($result->failed()) {
-            $result->isTrue();
-        }
+        $this->client->call($procedure)->isTrue();
 
         return count($filteredEvents);
     }
