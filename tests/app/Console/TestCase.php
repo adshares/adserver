@@ -24,8 +24,6 @@ namespace Adshares\Adserver\Tests\Console;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\TestCase as AdsharesTestCase;
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
 
 class TestCase extends AdsharesTestCase
 {
@@ -33,12 +31,6 @@ class TestCase extends AdsharesTestCase
     {
         parent::setUp();
 
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            static function () {
-                return new DummyExchangeRateRepository();
-            }
-        );
 
         $this->app->bind(
             Locker::class,

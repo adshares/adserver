@@ -20,9 +20,23 @@
 
 namespace Adshares\Adserver\Tests;
 
+use Adshares\Common\Application\Service\ExchangeRateRepository;
+use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
+
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->app->bind(
+            ExchangeRateRepository::class,
+            static function () {
+                return new DummyExchangeRateRepository();
+            }
+        );
+    }
 }
