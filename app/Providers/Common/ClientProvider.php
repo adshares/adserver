@@ -25,9 +25,9 @@ namespace Adshares\Adserver\Providers\Common;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
+use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
-use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
@@ -46,12 +46,10 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
-use function config;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
-use Illuminate\Log\Logger;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use function config;
 
 final class ClientProvider extends ServiceProvider
 {
@@ -77,15 +75,19 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             AdSelect::class,
             function () {
-                return new GuzzleAdSelectClient(
-                    new Client(
-                        [
-                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'base_uri' => config('app.adselect_endpoint'),
-                            'timeout' => 5,
-                        ]
-                    )
+                $client = new Client(
+                    [
+                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                        'base_uri' => config('app.adselect_endpoint'),
+                        'timeout' => 5,
+                    ]
                 );
+
+                if ('python' === (string)config('app.x_adselect_version')) {
+                    return new JsonRpcAdSelectClient(new JsonRpc($client));
+                }
+
+                return new GuzzleAdSelectClient($client);
             }
         );
 
