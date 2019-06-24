@@ -27,9 +27,13 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
+use function base64_decode;
+use function bin2hex;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use stdClass;
+use function str_replace;
+use function substr;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use function array_shift;
 use function json_encode;
@@ -117,12 +121,15 @@ final class ImpressionContext
         $params = [];
 
         foreach ($zones as $requestId => $zone) {
+            $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
+            $userId = $this->userId();
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->userId(),
+                'user_id' => !empty($userId) ? $userId : $trackingId,
+                'tracking_id' => $trackingId,
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
@@ -217,5 +224,27 @@ final class ImpressionContext
     private function cookies(): array
     {
         return HeaderUtils::combine(HeaderUtils::split($this->flatHeaders()['cookie'] ?? '', ';='));
+    }
+
+    private function hexUuidFromBase64UrlWithChecksum(string $trackingId): string
+    {
+        return bin2hex(substr($this->urlSafeBase64Decode($trackingId), 0, 16));
+    }
+
+    private function urlSafeBase64Decode(string $string): string
+    {
+        return base64_decode(
+            str_replace(
+                [
+                    '_',
+                    '-',
+                ],
+                [
+                    '/',
+                    '+',
+                ],
+                $string
+            )
+        );
     }
 }
