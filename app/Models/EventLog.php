@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
@@ -153,18 +154,24 @@ class EventLog extends Model
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-12 hour'));
+            ->where('created_at', '>', (new DateTime())->modify('-24 hour'));
 
         if ($limit !== null) {
             $query->limit($limit);
         }
 
+        if (DB::isMySql()) {
+            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX (created_at)');
+        }
+
         return $query->get();
     }
 
-    public static function fetchEvents(Arrayable $paymentIds): Collection
+    public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection
     {
         return self::whereIn('payment_id', $paymentIds)
+            ->limit($limit)
+            ->offset($offset)
             ->get();
     }
 

@@ -43,4 +43,11 @@ class AdsPayment extends Model
     protected $casts = [
         'amount' => 'int',
     ];
+
+    public static function amountForId(int $adsPaymentId): int
+    {
+        $adsPayment = self::find($adsPaymentId);
+
+        return (int)$adsPayment->amount;
+    }
 }
