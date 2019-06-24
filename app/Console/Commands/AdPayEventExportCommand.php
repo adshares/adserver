@@ -38,7 +38,7 @@ use function sprintf;
 
 class AdPayEventExportCommand extends BaseCommand
 {
-    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 100;
+    private const EVENTS_BUNDLE_MAXIMAL_SIZE = 500;
 
     protected $signature = 'ops:adpay:event:export {--first=} {--last=}';
 

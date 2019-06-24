@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
+use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 
 final class JsonRpcAdPayClient implements AdPay
@@ -66,9 +67,16 @@ final class JsonRpcAdPayClient implements AdPay
 
     public function addEvents(array $events): void
     {
+        $filteredEvents = array_filter(
+            $events,
+            static function (array $event) {
+                return $event['event_type'] !== EventLog::TYPE_REQUEST;
+            }
+        );
+        
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
-            $events
+            $filteredEvents
         );
 
         $this->client->call($procedure);
