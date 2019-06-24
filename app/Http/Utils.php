@@ -30,6 +30,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
+use function bin2hex;
 use function config;
 use function is_string;
 use function sha1;
@@ -282,7 +283,7 @@ class Utils
         return $partialImpressionContext;
     }
 
-    private static function binUserId(?string $nonce): string
+    private static function binUserId(?string $nonce = null): string
     {
         $input = [];
 
@@ -298,6 +299,11 @@ class Utils
         }
 
         return substr(sha1(implode(':', $input), true), 0, 16);
+    }
+
+    public static function hexUserId(): string
+    {
+        return bin2hex(self::binUserId());
     }
 
     private static function getOrCreateTrackingId(Request $request, ?string $impressionId): string
@@ -322,7 +328,7 @@ class Utils
         return substr($binTid, 16, 6) === self::checksum(substr($binTid, 0, 16));
     }
 
-    public static function base64UrlEncodeWithChecksumFromBinUuidString(string $id): ?string
+    public static function base64UrlEncodeWithChecksumFromBinUuidString(string $id): string
     {
         if (strlen($id) !== 16) {
             throw new RuntimeException('UserId should be a 16-byte binary format string.');
