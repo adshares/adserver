@@ -279,6 +279,7 @@ class AdsProcessTx extends BaseCommand
                     $paymentDetails,
                     $resultsCollection->eventValueSum()
                 );
+
                 $resultsCollection->add($processPaymentDetails);
             } catch (MissingInitialConfigurationException $exception) {
                 $this->error('Missing initial configuration: '.$exception->getMessage());

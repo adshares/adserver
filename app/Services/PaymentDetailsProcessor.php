@@ -123,8 +123,6 @@ class PaymentDetailsProcessor
 
         $this->addAdIncomeToUserLedger($adsPayment);
 
-        //TODO log operator income $totalOperatorFee = $spendableAmount - $totalPaidAmount - $totalLicenceFee;
-
         return new PaymentProcessingResult($totalEventValue, $totalLicenceFee);
     }
 
