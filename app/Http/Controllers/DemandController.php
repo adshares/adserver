@@ -127,7 +127,6 @@ class DemandController extends Controller
                 's_maxage' => 3600 * 24 * 30,
                 'private' => false,
                 'public' => true,
-                'immutable' => true,
             ]
         );
 
