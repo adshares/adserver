@@ -142,8 +142,6 @@ final class DemandControllerTest extends TestCase
 
     public function testConversion(): void
     {
-//        $this->disableCookiesEncryption('tid');
-
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
@@ -204,18 +202,5 @@ final class DemandControllerTest extends TestCase
     private function buildConversionUrl(string $uuid): string
     {
         return str_replace('{uuid}', $uuid, self::CONVERSION_URL_TEMPLATE);
-    }
-
-    protected function disableCookiesEncryption($name)
-    {
-        $this->app->resolving(
-            EncryptCookies::class,
-            function ($object) use ($name) {
-                /** @var EncryptCookies $object */
-                $object->disableFor($name);
-            }
-        );
-
-        return $this;
     }
 }
