@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
-use Adshares\Adserver\Client\Mapper\AdSelect\EventMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
@@ -90,9 +89,7 @@ final class JsonRpcAdSelectClient implements AdSelect
             $context->adSelectRequestParams($existingZones)
         );
 
-        $result = $this->client->call($procedure);
-
-        $items = $result->toArray();
+        $items = $this->client->call($procedure)->toArray();
 
         Log::debug(sprintf(
             '%s:%s %s',

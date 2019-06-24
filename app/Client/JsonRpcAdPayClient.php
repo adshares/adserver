@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 
 final class JsonRpcAdPayClient implements AdPay
@@ -52,7 +51,7 @@ final class JsonRpcAdPayClient implements AdPay
             $campaigns
         );
 
-        $this->client->call($procedure);
+        $this->client->call($procedure)->isTrue();
     }
 
     public function deleteCampaign(array $campaignIds): void
@@ -62,40 +61,39 @@ final class JsonRpcAdPayClient implements AdPay
             $campaignIds
         );
 
-        $this->client->call($procedure);
+        $this->client->call($procedure)->isTrue();
     }
 
-    public function addEvents(array $events): int
+    public function addEvents(array $events): void
     {
-        $filteredEvents = array_values(array_filter(
-            $events,
-            static function (array $event) {
-                return $event['event_type'] !== EventLog::TYPE_REQUEST;
-            }
-        ));
-
-        if (empty($filteredEvents)) {
-            return 0;
-        }
-
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
-            $filteredEvents
+            $events
         );
 
         $this->client->call($procedure)->isTrue();
-
-        return count($filteredEvents);
     }
 
     public function getPayments(int $timestamp, bool $force): array
     {
         if ($force) {
-            $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
-            $this->client->call($procedure);
+            $procedure = new Procedure(
+                'debug_force_payment_recalculation',
+                [
+                    ['timestamp' => $timestamp],
+                ]
+            );
+
+            $this->client->call($procedure)->isTrue();
         }
 
-        $procedure = new Procedure(self::METHOD_GET_PAYMENTS, [['timestamp' => $timestamp]]);
+        $procedure = new Procedure(
+            self::METHOD_GET_PAYMENTS,
+            [
+                ['timestamp' => $timestamp],
+            ]
+        );
+
         $responseArray = $this->client->call($procedure)->toArray();
 
         return $responseArray['payments'];
