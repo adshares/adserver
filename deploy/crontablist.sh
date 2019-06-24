@@ -2,8 +2,6 @@
 set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
-SERVICE_NAME=$(basename ${SERVICE_DIR})
-BACKUP_DIR=$(dirname ${SERVICE_DIR})/.backup
 
 LOG_DIR=${LOG_DIR:-""}
 
