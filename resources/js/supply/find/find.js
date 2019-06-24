@@ -534,7 +534,8 @@ var addTrackingImage = function (url, element) {
 
 var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {
-        binary: true
+        binary: true,
+        noCredentials: true
     }).then(function (data, xhr) {
         context.cid = getCid();
 
