@@ -65,7 +65,7 @@ final class JsonRpcAdPayClient implements AdPay
         $this->client->call($procedure);
     }
 
-    public function addEvents(array $events): void
+    public function addEvents(array $events): int
     {
         $filteredEvents = array_filter(
             $events,
@@ -73,13 +73,19 @@ final class JsonRpcAdPayClient implements AdPay
                 return $event['event_type'] !== EventLog::TYPE_REQUEST;
             }
         );
-        
+
+        if (count($filteredEvents) === 0) {
+            return 0;
+        }
+
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
             $filteredEvents
         );
 
         $this->client->call($procedure);
+
+        return count($filteredEvents);
     }
 
     public function getPayments(int $timestamp, bool $force): array
