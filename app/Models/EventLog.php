@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
@@ -159,7 +160,9 @@ class EventLog extends Model
             $query->limit($limit);
         }
 
-        $query->getQuery()->fromRaw($query->getQuery()->from . ' FORCE INDEX (created_at)');
+        if (DB::isMySql()) {
+            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX (created_at)');
+        }
 
         return $query->get();
     }
