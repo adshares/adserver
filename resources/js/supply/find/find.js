@@ -281,19 +281,35 @@ var isVisible = function (el) {
 var impressionId;
 var getImpressionId = function () {
     if (!impressionId) {
-        var d = new Date().getTime();
-
-        var chars = [];
-        for (var i = 0; i < 16; i++) {
-            var r = (d + Math.random() * 256) % 256 | 0;
-            d = Math.floor(d / 256);
-            chars.push(String.fromCharCode(r));
-        }
-
-        impressionId = UrlSafeBase64Encode(chars.join(''));
+        impressionId = UrlSafeBase64Encode(getRandId(16));
     }
     return impressionId;
 };
+
+var getCid = function() {
+    var i, l, n;
+    var s = getRandId(15) + '\0';
+    var o = '';
+    for (i = 0, l = s.length; i < l; i++) {
+        n = s.charCodeAt(i)
+            .toString(16)
+        o += n.length < 2 ? '0' + n : n
+    }
+    return o;
+}
+
+var getRandId = function(bytes) {
+    var d = new Date().getTime();
+
+    var chars = [];
+    for (var i = 0; i < bytes; i++) {
+        var r = (d + Math.random() * 256) % 256 | 0;
+        d = Math.floor(d / 256);
+        chars.push(String.fromCharCode(r));
+    }
+
+    return chars.join('');
+}
 
 var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
@@ -520,7 +536,7 @@ var fetchBanner = function (banner, context) {
     fetchURL(banner.serve_url, {
         binary: true
     }).then(function (data, xhr) {
-        context.cid = xhr.getResponseHeader('X-' + 'h:s:d:A'.split(':').reverse().join('') + 'ares' + '-_C_i_d'.split('_').join(''));
+        context.cid = getCid();
 
         context.page.zone = context.zone.zone;
         var contextParam = encodeZones([context.page]);
