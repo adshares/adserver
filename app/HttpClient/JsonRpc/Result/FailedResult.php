@@ -58,9 +58,4 @@ final class FailedResult implements Result
     {
         return true;
     }
-
-    public function getCount(): int
-    {
-        throw new RuntimeException(sprintf('%s %s', __CLASS__, $this->message));
-    }
 }

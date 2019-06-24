@@ -28,7 +28,5 @@ interface Result
 
     public function toArray(): array;
 
-    public function getCount(): int;
-
     public function failed(): bool;
 }
