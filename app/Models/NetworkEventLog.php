@@ -77,8 +77,6 @@ class NetworkEventLog extends Model
 
     public const INDEX_UPDATED_AT = 'network_event_logs_updated_at_index';
 
-    public const INDEX_ADS_PAYMENT_ID = 'network_event_logs_ads_payment_id_index';
-
     use AccountAddress;
     use AutomateMutators;
     use BinHex;

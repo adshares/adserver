@@ -38,7 +38,6 @@ class AddIndexToCreatedAtForEvents extends Migration
             static function (Blueprint $table) {
                 $table->index('created_at', NetworkEventLog::INDEX_CREATED_AT);
                 $table->index('updated_at', NetworkEventLog::INDEX_UPDATED_AT);
-                $table->index('ads_payment_id', NetworkEventLog::INDEX_ADS_PAYMENT_ID);
             });
     }
 
@@ -53,7 +52,6 @@ class AddIndexToCreatedAtForEvents extends Migration
             static function (Blueprint $table) {
                 $table->dropIndex(NetworkEventLog::INDEX_CREATED_AT);
                 $table->dropIndex(NetworkEventLog::INDEX_UPDATED_AT);
-                $table->dropIndex(NetworkEventLog::INDEX_ADS_PAYMENT_ID);
             });
     }
 }
