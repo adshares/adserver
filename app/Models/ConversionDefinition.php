@@ -129,10 +129,10 @@ class ConversionDefinition extends Model
             $params = array_merge(
                 $params, 
                 [
-                    'cid' => '',
-                    'value' => '',
-                    'tnonce' => '',
-                    'sig' => '',
+                    'value' => '{value}',
+                    'nonce' => '{nonce}',
+                    'ts' => '{timestamp}',
+                    'sig' => '{signature}',
                 ]
             );
         }
