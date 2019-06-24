@@ -65,21 +65,27 @@ final class JsonRpcAdPayClient implements AdPay
         $this->client->call($procedure);
     }
 
-    public function addEvents(array $events): void
+    public function addEvents(array $events): int
     {
-        $filteredEvents = array_filter(
+        $filteredEvents = array_values(array_filter(
             $events,
             static function (array $event) {
                 return $event['event_type'] !== EventLog::TYPE_REQUEST;
             }
-        );
-        
+        ));
+
+        if (empty($filteredEvents)) {
+            return 0;
+        }
+
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
             $filteredEvents
         );
 
-        $this->client->call($procedure);
+        $this->client->call($procedure)->isTrue();
+
+        return count($filteredEvents);
     }
 
     public function getPayments(int $timestamp, bool $force): array

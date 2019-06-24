@@ -76,20 +76,28 @@ class AdPayEventExportCommand extends BaseCommand
                 count($eventsToExport),
                 ++$counter
             ));
+
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
                 $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
-                $adPay->addEvents($events);
+                $exportedCount = $adPay->addEvents($events);
+
+                $this->info(sprintf(
+                    '[AdPayEventExport] Really exported %d events.',
+                    $exportedCount
+                ));
 
                 $eventIdLastExported = $eventsToExport->last()->id;
                 if ($eventIdLastExported > $configEventIdFirst) {
                     Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
                 }
+
                 $eventIdFirst = $eventIdLastExported + 1;
             }
         } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
+        $this->info(sprintf('[AdPayEventExport] LastExportedId %s', $eventIdLastExported ?? '<none>'));
         $this->info('[AdPayEventExport] Finish command '.$this->signature);
         $executionTime = microtime(true) - $timeStart;
         $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
