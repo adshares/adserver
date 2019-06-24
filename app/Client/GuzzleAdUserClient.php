@@ -68,6 +68,14 @@ final class GuzzleAdUserClient implements AdUser
 
     public function getUserContext(ImpressionContext $partialContext): UserContext
     {
+        if (!$partialContext->trackingId()) {
+            return new UserContext(
+                $partialContext->keywords(),
+                AdUser::HUMAN_SCORE_ON_MISSING_TID,
+                Utils::hexUserId()
+            );
+        }
+
         $path = sprintf(
             '%s/data/%s/%s',
             self::API_PATH,
@@ -80,15 +88,6 @@ final class GuzzleAdUserClient implements AdUser
                 $path,
                 ['form_params' => $partialContext->adUserRequestBody()]
             );
-
-//            Log::debug(sprintf(
-//                '%s {"url":"%s","path":"%s","request":%s,"response":%s}',
-//                __METHOD__,
-//                (string)$this->client->getConfig('base_uri'),
-//                $path,
-//                json_encode($partialContext->adUserRequestBody()),
-//                (string)$response->getBody()
-//            ));
 
             $body = json_decode((string)$response->getBody(), true);
 

@@ -153,8 +153,8 @@ final class ImpressionContext
             ?: ($this->cookies()['tid'] ?? false)
                 ?: ($this->originalUser['tid'] ?? '');
 
-        if (!$trackingId) {
-//            Log::warning(sprintf(
+//        if (!$trackingId) {
+//            throw new ImpressionContextException(sprintf(
 //                '%s:%s Missing TID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
 //                __METHOD__,
 //                __LINE__,
@@ -162,16 +162,7 @@ final class ImpressionContext
 //                json_encode($this->cookies()) ?: 'null',
 //                json_encode($this->originalUser) ?: 'null'
 //            ));
-
-            throw new ImpressionContextException(sprintf(
-                '%s:%s Missing TID - this should not happen {"user":%s,"cookies":%s,"oldUser":%s}',
-                __METHOD__,
-                __LINE__,
-                json_encode($this->user) ?: 'null',
-                json_encode($this->cookies()) ?: 'null',
-                json_encode($this->originalUser) ?: 'null'
-            ));
-        }
+//        }
 
         return $trackingId;
     }
