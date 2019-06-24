@@ -83,3 +83,7 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo -n "php ${SERVICE_DIR}/artisan ads:fetch-hosts"
     echo ""
 }
+
+echo -n "15 1 * * * "
+echo -n "${SERVICE_DIR}/bin/archive_events.sh"
+echo ""
