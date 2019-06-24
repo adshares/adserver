@@ -52,6 +52,10 @@ class DemandController extends Controller
 {
     private const CONTENT_TYPE = 'Content-Type';
 
+    private const PAYMENT_DETAILS_LIMIT_DEFAULT = 1000;
+
+    private const PAYMENT_DETAILS_LIMIT_MAX = 10000;
+
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
@@ -388,7 +392,8 @@ class DemandController extends Controller
         string $transactionId,
         string $accountAddress,
         string $date,
-        string $signature
+        string $signature,
+        Request $request
     ): PaymentDetailsResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
@@ -413,7 +418,16 @@ class DemandController extends Controller
             );
         }
 
-        return new PaymentDetailsResponse(EventLog::fetchEvents($payments->pluck('id')));
+        $limit = (int)$request->get('limit', self::PAYMENT_DETAILS_LIMIT_DEFAULT);
+        if ($limit > self::PAYMENT_DETAILS_LIMIT_MAX) {
+            throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
+        }
+
+        return new PaymentDetailsResponse(EventLog::fetchEvents(
+            $payments->pluck('id'),
+            $limit,
+            (int)$request->get('offset', 0)
+        ));
     }
 
     public function inventoryList(Request $request): JsonResponse
