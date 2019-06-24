@@ -121,13 +121,15 @@ final class ImpressionContext
         $params = [];
 
         foreach ($zones as $requestId => $zone) {
+            $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
+            $userId = $this->userId();
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => "{$zone->width}x{$zone->height}",
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'request_id' => $requestId,
-                'user_id' => $this->userId(),
-                'tracking_id' => $this->hexUuidFromBase64UrlWithChecksum($this->trackingId()),
+                'user_id' => !empty($userId) ? $userId : $trackingId,
+                'tracking_id' => $trackingId,
                 'banner_filters' => $this->getBannerFilters($zone),
             ];
         }
