@@ -153,11 +153,13 @@ class EventLog extends Model
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-12 hour'));
+            ->where('created_at', '>', (new DateTime())->modify('-24 hour'));
 
         if ($limit !== null) {
             $query->limit($limit);
         }
+
+        $query->getQuery()->fromRaw($query->getQuery()->from . ' FORCE INDEX (created_at)');
 
         return $query->get();
     }
