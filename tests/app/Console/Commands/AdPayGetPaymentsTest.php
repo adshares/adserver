@@ -59,7 +59,7 @@ class AdPayGetPaymentsTest extends TestCase
         $userId = $user->id;
         $userUuid = $user->uuid;
 
-        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 10000000000000000000]);
+        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 1000000000000000000]);
         $campaignId = $campaign->id;
         $campaignUuid = $campaign->uuid;
 
