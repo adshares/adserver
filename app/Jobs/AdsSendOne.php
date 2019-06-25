@@ -76,7 +76,7 @@ class AdsSendOne implements ShouldQueue
      * @param int $amount
      * @param null|string $message
      */
-    public function __construct(UserLedgerEntry $userLedger, string $addressTo, int $amount, ?string $message)
+    public function __construct(UserLedgerEntry $userLedger, string $addressTo, int $amount, ?string $message = null)
     {
         $this->userLedger = $userLedger;
         $this->addressTo = $addressTo;
@@ -90,7 +90,6 @@ class AdsSendOne implements ShouldQueue
      *
      * @param AdsClient $adsClient
      *
-     * @throws UserLedgerException
      * @throws JobException
      */
     public function handle(AdsClient $adsClient): void
@@ -99,9 +98,14 @@ class AdsSendOne implements ShouldQueue
             return;
         }
 
-        if (UserLedgerEntry::getWalletBalanceByUserId($this->userLedger->user_id) < 0) {
-            $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
-            $this->userLedger->save();
+        try {
+            if (UserLedgerEntry::getWalletBalanceByUserId($this->userLedger->user_id) < 0) {
+                $this->rejectTransactionDueToNegativeBalance();
+
+                return;
+            }
+        } catch (UserLedgerException $userLedgerException) {
+            $this->rejectTransactionDueToNegativeBalance();
 
             return;
         }
@@ -112,7 +116,7 @@ class AdsSendOne implements ShouldQueue
             $response = $adsClient->runTransaction($command);
         } catch (CommandException $exception) {
             if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
-                $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
+                $message = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
                 $message .= ' Will be tried again later. Exception code (%s)';
                 Log::info(
                     sprintf($message, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
@@ -124,9 +128,9 @@ class AdsSendOne implements ShouldQueue
                 return;
             }
 
-            Log::error(sprintf('[ADS] Send command exception: %s', $exception->getMessage()));
+            Log::error(sprintf('[AdsSendOne] Send command exception: %s', $exception->getMessage()));
 
-            $message = '[ADS] Send command to (%s) with amount (%s) failed (message: %s).';
+            $message = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
 
             Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message ?? ''));
 
@@ -143,12 +147,20 @@ class AdsSendOne implements ShouldQueue
             $this->userLedger->status = UserLedgerEntry::STATUS_SYS_ERROR;
             $this->userLedger->save();
 
-            throw new JobException("Invalid txid: ${txid}");
+            throw new JobException("[AdsSendOne] Invalid txid: ${txid}");
         }
 
         $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
         $this->userLedger->txid = $txid;
 
         $this->userLedger->save();
+    }
+
+    private function rejectTransactionDueToNegativeBalance(): void
+    {
+        $this->userLedger->status = UserLedgerEntry::STATUS_REJECTED;
+        $this->userLedger->save();
+
+        Log::error(sprintf('[AdsSendOne] User %d has negative balance', $this->userLedger->user_id));
     }
 }
