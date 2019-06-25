@@ -179,4 +179,19 @@ final class Campaign
     {
         return $this->sourceCampaign->getHost();
     }
+
+    public function getBudget(): int
+    {
+        return $this->budget->getBudget();
+    }
+
+    public function getMaxCpc(): ?int
+    {
+        return $this->budget->getMaxCpm();
+    }
+
+    public function getMaxCpm(): ?int
+    {
+        return $this->budget->getMaxCpm();
+    }
 }
