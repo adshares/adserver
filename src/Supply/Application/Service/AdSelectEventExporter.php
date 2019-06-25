@@ -86,7 +86,7 @@ class AdSelectEventExporter
         $eventId = $this->client->getLastUnpaidEventId();
 
         if ($eventId > 0) {
-            return $eventId;
+            return $eventId + 1;
         }
 
         return $this->eventRepository->fetchLastUnPaidEventsByDate(new DateTime('-7 days'));
@@ -97,7 +97,7 @@ class AdSelectEventExporter
         $eventId = $this->client->getLastPaidPaymentId();
 
         if ($eventId > 0) {
-            return $eventId;
+            return $eventId + 1;
         }
 
         return $this->eventRepository->fetchLastPaidEventsByDate(new DateTime('-7 days'));

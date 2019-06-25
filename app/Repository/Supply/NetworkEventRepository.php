@@ -57,15 +57,19 @@ class NetworkEventRepository implements EventRepository
 
     public function fetchLastUnpaidEventsByDate(DateTime $date): int
     {
-        $event = NetworkEventLog::where('created_at', '>=', $date)->first();
+        $event = NetworkEventLog::where('created_at', '>=', $date)
+            ->whereNull('ads_payment_id')
+            ->first();
 
         return $event->id ?? 0;
     }
 
     public function fetchLastPaidEventsByDate(DateTime $date): int
     {
-        $event = NetworkEventLog::where('created_at', '>=', $date)->first();
+        $event = NetworkEventLog::where('created_at', '>=', $date)
+            ->whereNotNull('ads_payment_id')
+            ->first();
 
-        return $event->id ?? 0;
+        return $event->ads_payment_id ?? 0;
     }
 }
