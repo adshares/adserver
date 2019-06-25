@@ -59,7 +59,7 @@ class AdPayGetPaymentsTest extends TestCase
         $userId = $user->id;
         $userUuid = $user->uuid;
 
-        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 1000000000000000000]);
+        $campaign = factory(Campaign::class)->create(['user_id' => $userId, 'budget' => 10 ** 7 * 10 ** 11]);
         $campaignId = $campaign->id;
         $campaignUuid = $campaign->uuid;
 
@@ -67,7 +67,7 @@ class AdPayGetPaymentsTest extends TestCase
         $bannerUuid = $banner->uuid;
 
         /** @var Collection|EventLog[] $events */
-        $events = factory(EventLog::class)->times(3)->create([
+        $events = factory(EventLog::class)->times(666)->create([
             'event_value_currency' => null,
             'advertiser_id' => $userUuid,
             'campaign_id' => $campaignUuid,
@@ -77,7 +77,7 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => random_int(0, 1000 * 10 ** 11),
+                'amount' => random_int(0, 100 * 10 ** 11),
                 'reason' => 0,
             ];
         });

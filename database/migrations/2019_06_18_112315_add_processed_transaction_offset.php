@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,24 +18,30 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Common\Application\Service\ExchangeRateRepository;
-use Adshares\Mock\Client\DummyExchangeRateRepository;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-
-abstract class TestCase extends BaseTestCase
+class AddProcessedTransactionOffset extends Migration
 {
-    use CreatesApplication;
-
-    protected function setUp()
+    public function up(): void
     {
-        parent::setUp();
+        Schema::table(
+            'ads_payments',
+            static function (Blueprint $table) {
+                $table->integer('last_offset')
+                    ->nullable(false)
+                    ->default(0);
+            }
+        );
+    }
 
-        $this->app->bind(
-            ExchangeRateRepository::class,
-            static function () {
-                return new DummyExchangeRateRepository();
+    public function down(): void
+    {
+        Schema::table(
+            'ads_payments',
+            static function (Blueprint $table) {
+                $table->dropColumn('last_offset');
             }
         );
     }

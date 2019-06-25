@@ -41,6 +41,7 @@ class EventMapper
             'publisher_id' => $event['publisher_id'],
             'banner_id' => $event['banner_id'],
             'user_id' => $event['user_id'] ?? $event['tracking_id'],
+            'tracking_id' => $event['tracking_id'],
             'campaign_id' => $event['campaign_id'],
             'event_id' => $event['event_id'],
             'type' => $event['event_type'],

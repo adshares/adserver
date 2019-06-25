@@ -76,14 +76,14 @@ class NetworkPayment extends Model
         string $receiverAddress,
         string $senderAddress,
         int $amount,
-        ?int $adsPaymentId = null
+        AdsPayment $adsPayment
     ): NetworkPayment {
         return self::create(
             [
                 'receiver_address' => $receiverAddress,
                 'sender_address' => $senderAddress,
                 'amount' => $amount,
-                'ads_payment_id' => $adsPaymentId,
+                'ads_payment_id' => $adsPayment->id,
             ]
         );
     }

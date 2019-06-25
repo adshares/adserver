@@ -28,6 +28,7 @@ use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -126,22 +127,7 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     public function exportEvents(array $eventsInput): void
     {
-        $events = [];
-
-        foreach ($eventsInput as $event) {
-            $events[] = EventMapper::map($event);
-        }
-
-        $procedure = new Procedure(self::METHOD_EVENT_UPDATE, $events);
-
-        $this->client->call($procedure)->isTrue();
-
-        Log::debug(sprintf(
-            '%s:%s %s',
-            __METHOD__,
-            __LINE__,
-            $procedure->toJson()
-        ));
+        // Intentionally empty - python adselect works without unpaid events
     }
 
     public function exportEventsPayments(array $eventsInput): void
@@ -279,11 +265,11 @@ final class JsonRpcAdSelectClient implements AdSelect
 
     public function getLastPaidPaymentId(): int
     {
-        return 0;
+        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID);
     }
 
     public function getLastUnpaidEventId(): int
     {
-        return 0;
+        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID);
     }
 }
