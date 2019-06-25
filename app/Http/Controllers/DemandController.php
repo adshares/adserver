@@ -571,7 +571,7 @@ class DemandController extends Controller
 
         $isAdvanced = $conversionDefinition->isAdvanced();
 
-        $value = $this->getConversionDefinitionValue($request, $conversionDefinition);
+        $value = $this->getConversionValue($request, $conversionDefinition);
 
         if ($isAdvanced) {
             $secret = $conversionDefinition->secret;
@@ -667,13 +667,17 @@ class DemandController extends Controller
         return $conversionDefinition;
     }
 
-    private function getConversionDefinitionValue(Request $request, ConversionDefinition $conversionDefinition): int
+    private function getConversionValue(Request $request, ConversionDefinition $conversionDefinition): int
     {
         if (!$conversionDefinition->isAdvanced()) {
             return $conversionDefinition->value;
         }
 
-        $value = $request->input('value') ? $request->input('value') : $conversionDefinition->value;
+        if ($request->has('value')) {
+            $value = is_numeric($request->input('value')) ? $request->input('value') * 10 ** 11 : null;
+        } else {
+            $value = $conversionDefinition->value;
+        }
         if (null === $value) {
             throw new BadRequestHttpException('No value provided');
         }
