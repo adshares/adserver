@@ -38,7 +38,12 @@ class JsonRpc
         $this->client = $client;
     }
 
-    public function call(Procedure $procedure): Result
+    public function callAndFailIfUnsuccessful(Procedure $procedure): void
+    {
+        $this->callAndAlwaysGetResult($procedure)->isTrue();
+    }
+
+    public function callAndAlwaysGetResult(Procedure $procedure): Result
     {
         $body = $procedure->toJson();
 
@@ -47,7 +52,7 @@ class JsonRpc
 
             return (new Response($response, $procedure))->result();
         } catch (Throwable $e) {
-            return new Result\FailedResult($procedure->toString(100), $e);
+            return new Result\FailedResult(__FUNCTION__, $e);
         }
     }
 }

@@ -34,6 +34,8 @@ use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use function array_filter;
+use function array_values;
 use function sprintf;
 
 class AdPayEventExportCommand extends BaseCommand
@@ -76,20 +78,29 @@ class AdPayEventExportCommand extends BaseCommand
                 count($eventsToExport),
                 ++$counter
             ));
+
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
                 $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
-                $adPay->addEvents($events);
+
+                $exportedCount = $this->exportWithoutRequestEvents($adPay, $events);
+
+                $this->info(sprintf(
+                    '[AdPayEventExport] Really exported %d events.',
+                    $exportedCount
+                ));
 
                 $eventIdLastExported = $eventsToExport->last()->id;
                 if ($eventIdLastExported > $configEventIdFirst) {
                     Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
                 }
+
                 $eventIdFirst = $eventIdLastExported + 1;
             }
         } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
+        $this->info(sprintf('[AdPayEventExport] LastExportedId %s', $eventIdLastExported ?? '<none>'));
         $this->info('[AdPayEventExport] Finish command '.$this->signature);
         $executionTime = microtime(true) - $timeStart;
         $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
@@ -161,5 +172,23 @@ class AdPayEventExportCommand extends BaseCommand
         $userInfoCache[$trackingId] = $userContext;
 
         return $userContext;
+    }
+
+    private function exportWithoutRequestEvents(AdPay $adPay, array $events): int
+    {
+        $filteredEvents = array_values(array_filter(
+            $events,
+            static function (array $event) {
+                return $event['event_type'] !== EventLog::TYPE_REQUEST;
+            }
+        ));
+
+        if (empty($filteredEvents)) {
+            return 0;
+        }
+
+        $adPay->addEvents($filteredEvents);
+
+        return count($filteredEvents);
     }
 }
