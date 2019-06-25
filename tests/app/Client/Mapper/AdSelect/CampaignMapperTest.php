@@ -119,6 +119,9 @@ final class CampaignMapperTest extends TestCase
                 'require' => new stdClass(),
                 'exclude' => new stdClass(),
             ],
+            'max_cpc' => 100000000000,
+            'max_cpm' => 100000000000,
+            'budget' => 1000000000000,
         ];
 
         $campaign = CampaignFactory::createFromArray($this->campaignData);
