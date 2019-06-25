@@ -127,12 +127,12 @@ class ConversionDefinition extends Model
 
         if (self::ADVANCED_TYPE === $this->type) {
             $params = array_merge(
-                $params, 
+                $params,
                 [
-                    'value' => '{value}',
-                    'nonce' => '{nonce}',
-                    'ts' => '{timestamp}',
-                    'sig' => '{signature}',
+                    'value' => 'value',
+                    'nonce' => 'nonce',
+                    'ts' => 'timestamp',
+                    'sig' => 'signature',
                 ]
             );
         }
