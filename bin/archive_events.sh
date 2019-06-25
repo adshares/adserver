@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
 set -eu
-source .env
 
 _INTERVAL_DAYS=${1:-32}
 SERVICE_DIR=$(dirname $(dirname $(readlink -f $0)))
 SERVICE_NAME=$(basename ${SERVICE_DIR})
 VENDOR_DIR=$(dirname ${SERVICE_DIR})
 VENDOR_NAME=$(basename ${VENDOR_DIR})
+
+source ${SERVICE_DIR}/.env
 
 BACKUP_DIR="${VENDOR_DIR}/.backup"
 
