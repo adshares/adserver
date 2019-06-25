@@ -187,7 +187,7 @@ final class Campaign
 
     public function getMaxCpc(): ?int
     {
-        return $this->budget->getMaxCpm();
+        return $this->budget->getMaxCpc();
     }
 
     public function getMaxCpm(): ?int
