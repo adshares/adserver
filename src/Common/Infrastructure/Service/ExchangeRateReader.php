@@ -73,8 +73,8 @@ class ExchangeRateReader
                     $exception->getMessage()
                 )
             );
-            if (null === $exchangeRateFromStorage) {
-                throw new ExchangeRateNotAvailableException();
+            if ($exchangeRateFromStorage === null) {
+                throw new ExchangeRateNotAvailableException($exception->getMessage());
             }
 
             $exchangeRateRemote = null;

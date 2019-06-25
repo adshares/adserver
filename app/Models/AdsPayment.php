@@ -39,4 +39,15 @@ class AdsPayment extends Model
     public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
 
     public const STATUS_RESERVED = 64;
+
+    protected $casts = [
+        'amount' => 'int',
+    ];
+
+    public static function amountForId(int $adsPaymentId): int
+    {
+        $adsPayment = self::find($adsPaymentId);
+
+        return (int)$adsPayment->amount;
+    }
 }

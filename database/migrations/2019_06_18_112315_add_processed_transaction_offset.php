@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,35 +18,31 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
-
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
-use Adshares\Adserver\HttpClient\JsonRpc\Result;
-
-final class BoolResult implements Result
+class AddProcessedTransactionOffset extends Migration
 {
-    /** @var bool */
-    private $value;
-
-    public function __construct(bool $value)
+    public function up(): void
     {
-        $this->value = $value;
+        Schema::table(
+            'ads_payments',
+            static function (Blueprint $table) {
+                $table->integer('last_offset')
+                    ->nullable(false)
+                    ->default(0);
+            }
+        );
     }
 
-    public function isTrue(): bool
+    public function down(): void
     {
-        return $this->value;
-    }
-
-    public function toArray(): array
-    {
-        throw new ResultException('This is a `bool');
-    }
-
-    public function failed(): bool
-    {
-        return false;
+        Schema::table(
+            'ads_payments',
+            static function (Blueprint $table) {
+                $table->dropColumn('last_offset');
+            }
+        );
     }
 }

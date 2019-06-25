@@ -109,7 +109,7 @@ return [
     'aduser_base_url' => env('ADUSER_BASE_URL', env('ADUSER_INTERNAL_LOCATION', env('ADUSER_EXTERNAL_LOCATION'))),
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
-    'x_adselect_version' => env('X_ADSELECT_VERSION', 'python'),
+    'x_adselect_version' => env('X_ADSELECT_VERSION', 'php'),
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'classify_public_key' => env('CLASSIFY_PUBLIC_KEY', ''),
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'default_classify_namespace'),

@@ -45,7 +45,7 @@ class MockDataUserLedgerSeeder extends Seeder
             $user = User::where('email', $user1->email)->first();
             if (empty($user)) {
                 DB::rollback();
-                throw new Exception("User not found <{$user->email}>");
+                throw new Exception("User not found <{$user1->email}>");
             }
 
             $userId = $user->id;

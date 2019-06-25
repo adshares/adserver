@@ -48,9 +48,4 @@ final class ArrayResult implements Result
     {
         return false;
     }
-
-    public function getCount(): int
-    {
-        return count($this->content);
-    }
 }

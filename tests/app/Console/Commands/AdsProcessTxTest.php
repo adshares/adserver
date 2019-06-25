@@ -95,12 +95,12 @@ class AdsProcessTxTest extends TestCase
     public function testAdsProcessEventPayment(): void
     {
         $demandClient = new DummyDemandClient();
-        
+
         $info = $demandClient->fetchInfo(new NullUrl());
 
         NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        $paymentDetails = $demandClient->fetchPaymentDetails('', '');
+        $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
         $context = $this->getContext();
         $totalEventValue = 0;
 
@@ -144,7 +144,7 @@ class AdsProcessTxTest extends TestCase
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+        $this->artisan('ads:process-tx', ['--chunkSize' => 500])->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalEventValue, NetworkEventLog::sum('event_value'));

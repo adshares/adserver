@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,33 +20,34 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\HttpClient\JsonRpc\Result;
+namespace Adshares\Adserver\Services\Dto;
 
-use Adshares\Adserver\HttpClient\JsonRpc\Exception\ResultException;
-use Adshares\Adserver\HttpClient\JsonRpc\Result;
-
-final class BoolResult implements Result
+final class PaymentProcessingResult
 {
-    /** @var bool */
-    private $value;
+    /** @var int */
+    private $currentEventValueSum;
 
-    public function __construct(bool $value)
+    /** @var int */
+    private $currentLicenseFeeSum;
+
+    public function __construct(int $currentEventValueSum, int $currentLicenseFeeSum)
     {
-        $this->value = $value;
+        $this->currentEventValueSum = $currentEventValueSum;
+        $this->currentLicenseFeeSum = $currentLicenseFeeSum;
     }
 
-    public function isTrue(): bool
+    public static function zero(): self
     {
-        return $this->value;
+        return new self(0, 0);
     }
 
-    public function toArray(): array
+    public function eventValuePartialSum(): int
     {
-        throw new ResultException('This is a `bool');
+        return $this->currentEventValueSum;
     }
 
-    public function failed(): bool
+    public function licenseFeePartialSum(): int
     {
-        return false;
+        return $this->currentLicenseFeeSum;
     }
 }

@@ -34,6 +34,8 @@ use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
+use function array_filter;
+use function array_values;
 use function sprintf;
 
 class AdPayEventExportCommand extends BaseCommand
@@ -81,7 +83,8 @@ class AdPayEventExportCommand extends BaseCommand
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
                 $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
-                $exportedCount = $adPay->addEvents($events);
+
+                $exportedCount = $this->exportWithoutRequestEvents($adPay, $events);
 
                 $this->info(sprintf(
                     '[AdPayEventExport] Really exported %d events.',
@@ -169,5 +172,23 @@ class AdPayEventExportCommand extends BaseCommand
         $userInfoCache[$trackingId] = $userContext;
 
         return $userContext;
+    }
+
+    private function exportWithoutRequestEvents(AdPay $adPay, array $events): int
+    {
+        $filteredEvents = array_values(array_filter(
+            $events,
+            static function (array $event) {
+                return $event['event_type'] !== EventLog::TYPE_REQUEST;
+            }
+        ));
+
+        if (empty($filteredEvents)) {
+            return 0;
+        }
+
+        $adPay->addEvents($filteredEvents);
+
+        return count($filteredEvents);
     }
 }

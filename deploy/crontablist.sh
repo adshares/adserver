@@ -2,6 +2,7 @@
 set -eu
 
 SERVICE_DIR=${SERVICE_DIR:-$(dirname $(dirname $(readlink -f $0)))}
+
 LOG_DIR=${LOG_DIR:-""}
 
 if [[ -z ${LOG_DIR} ]]
@@ -49,8 +50,6 @@ echo -n "*/8 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ads:get-tx-in"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ads:process-tx"
-echo -n " && "
-echo -n "php ${SERVICE_DIR}/artisan ops:supply:payments:send"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:adselect:payment:export"
 echo -n " && "
