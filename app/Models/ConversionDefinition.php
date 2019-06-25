@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\ConversionDefinitionCreating;
-use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -140,11 +139,13 @@ class ConversionDefinition extends Model
         return (new SecureUrl(route('conversion.gif', $params)))->toString();
     }
 
-    public function isAdvanced() {
+    public function isAdvanced(): bool
+    {
         return self::ADVANCED_TYPE === $this->type;
     }
 
-    public function isClickConversion() {
+    public function isClickConversion(): bool
+    {
         return self::CLICK_CONVERSION === $this->event_type;
     }
 
