@@ -29,7 +29,7 @@ use DateTime;
 
 class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
-    protected $signature = 'ops:stats:aggregate:advertiser {--hour=}';
+    protected $signature = 'ops:stats:aggregate:advertiser {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates events data for statistics';
 
@@ -55,15 +55,35 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         $this->info('Start command '.$this->getName());
 
         if ($hour !== null) {
-            if (false === ($from = DateTime::createFromFormat(DateTime::ATOM, $hour))) {
+            if (false === ($timestamp = strtotime($hour))) {
                 $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
 
                 return;
             }
+
+            $from = DateUtils::getDateTimeRoundedToCurrentHour((new DateTime())->setTimestamp($timestamp));
         } else {
             $from = DateUtils::getDateTimeRoundedToCurrentHour()->modify('-1 hour');
         }
 
+        $isBulk = $this->option('bulk');
+        $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
+
+        while ($currentHour > $from) {
+            $this->aggregateForHour($from);
+
+            if (!$isBulk) {
+                break;
+            }
+
+            $from = $from->modify('+1 hour');
+        }
+
+        $this->info('End command '.$this->getName());
+    }
+
+    private function aggregateForHour(DateTime $from): void
+    {
         $to = (clone $from)->setTime((int)$from->format('H'), 59, 59, 999);
 
         $this->info(
@@ -75,7 +95,5 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         );
 
         $this->statsRepository->aggregateStatistics($from, $to);
-
-        $this->info('End command '.$this->getName());
     }
 }

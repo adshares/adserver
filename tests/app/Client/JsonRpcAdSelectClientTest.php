@@ -118,7 +118,7 @@ class JsonRpcAdSelectClientTest extends TestCase
         );
 
         $mockJsonRpc = $this->createMock(JsonRpc::class);
-        $mockJsonRpc->expects($this->once())->method('call')->willReturnCallback(
+        $mockJsonRpc->expects($this->once())->method('callAndAlwaysGetResult')->willReturnCallback(
             function () use ($mockResult) {
                 return $mockResult;
             }
@@ -172,7 +172,7 @@ class JsonRpcAdSelectClientTest extends TestCase
         );
 
         $mockJsonRpc = $this->createMock(JsonRpc::class);
-        $mockJsonRpc->expects($this->once())->method('call')->willReturnCallback(
+        $mockJsonRpc->expects($this->once())->method('callAndAlwaysGetResult')->willReturnCallback(
             function () use ($mockResult) {
                 return $mockResult;
             }

@@ -24,12 +24,6 @@ namespace Adshares\Adserver\Services;
 
 class PaymentDetailsFeeCalculator
 {
-    /** @var int $totalAmount */
-    private $totalAmount;
-
-    /** @var int $totalWeight */
-    private $totalWeight;
-
     /** @var float $licenseFeeCoefficient */
     private $licenseFeeCoefficient;
 
@@ -37,22 +31,15 @@ class PaymentDetailsFeeCalculator
     private $operatorFeeCoefficient;
 
     public function __construct(
-        int $totalAmount,
-        int $totalWeight,
         float $licenseFeeCoefficient,
         float $operatorFeeCoefficient
     ) {
-        $this->totalAmount = $totalAmount;
-        $this->totalWeight = $totalWeight;
         $this->licenseFeeCoefficient = $licenseFeeCoefficient;
         $this->operatorFeeCoefficient = $operatorFeeCoefficient;
     }
 
-    public function calculateFee(int $weight): array
+    public function calculateFee(int $amountBeforeFees): array
     {
-        $normalizationFactor = (float)$weight / $this->totalWeight;
-        $amountBeforeFees = (int)floor($this->totalAmount * $normalizationFactor);
-
         $licenseFee = (int)floor($this->licenseFeeCoefficient * $amountBeforeFees);
         $transferAmountBeforeOperatorFee = $amountBeforeFees - $licenseFee;
 

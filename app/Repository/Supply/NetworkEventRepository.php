@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Supply;
 
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Supply\Domain\Repository\EventRepository;
+use DateTime;
 
 class NetworkEventRepository implements EventRepository
 {
@@ -52,5 +53,23 @@ class NetworkEventRepository implements EventRepository
             ->skip($offset)
             ->get();
         return $events->toArray();
+    }
+
+    public function fetchLastUnpaidEventsByDate(DateTime $date): int
+    {
+        $event = NetworkEventLog::where('created_at', '>=', $date)
+            ->whereNull('ads_payment_id')
+            ->first();
+
+        return $event->id ?? 0;
+    }
+
+    public function fetchLastPaidEventsByDate(DateTime $date): int
+    {
+        $event = NetworkEventLog::where('created_at', '>=', $date)
+            ->whereNotNull('ads_payment_id')
+            ->first();
+
+        return $event->ads_payment_id ?? 0;
     }
 }

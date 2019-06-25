@@ -64,7 +64,7 @@ final class ClientProvider extends ServiceProvider
                             [
                                 'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adpay_endpoint'),
-                                'timeout' => 7,
+                                'timeout' => 30,
                             ]
                         )
                     )
@@ -114,7 +114,7 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             DemandClient::class,
             function (Application $app) {
-                $timeoutForDemandService = 5;
+                $timeoutForDemandService = 15;
 
                 return new GuzzleDemandClient($app->make(SignatureVerifier::class), $timeoutForDemandService);
             }

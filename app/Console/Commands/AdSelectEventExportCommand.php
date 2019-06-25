@@ -76,7 +76,7 @@ class AdSelectEventExportCommand extends BaseCommand
         $this->info('[AdSelectEventExport] Start command '.$this->signature);
 
         try {
-            $eventIdFirst = $this->exporterService->getLastUnpaidEventId() + 1;
+            $eventIdFirst = $this->exporterService->getLastUnpaidEventId();
         } catch (UnexpectedClientResponseException|RuntimeException $exception) {
             $this->error($exception->getMessage());
 
