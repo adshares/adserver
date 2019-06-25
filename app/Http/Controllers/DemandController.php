@@ -89,10 +89,9 @@ class DemandController extends Controller
         }
 
         if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+            $response->headers->set('Access-Control-Allow-Origin', '*');
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ('OPTIONS' === $request->getRealMethod()) {
@@ -108,13 +107,6 @@ class DemandController extends Controller
         } else {
             $mime = 'image/png';
         }
-
-        $tid = Utils::attachOrProlongTrackingCookie(
-            $request,
-            $response,
-            $banner->creative_sha1,
-            $banner->updated_at
-        );
 
         $response->setCallback(
             function () use ($response, $banner, $isIECompat) {
@@ -135,28 +127,17 @@ class DemandController extends Controller
             }
         );
 
-        $caseId = (string)Uuid::caseId();
-        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_REQUEST);
-        $campaign = $banner->campaign;
-        $user = $campaign->user;
+        $response->setCache(
+            [
+                'last_modified' => $banner->updated_at,
+                'max_age' => 3600 * 24 * 30,
+                's_maxage' => 3600 * 24 * 30,
+                'private' => false,
+                'public' => true,
+            ]
+        );
 
-        $log = new EventLog();
-        $log->banner_id = $banner->uuid;
-        $log->case_id = $caseId;
-        $log->event_id = $eventId;
-        $log->tracking_id = Utils::hexUuidFromBase64UrlWithChecksum($tid);
-        $log->advertiser_id = $user->uuid;
-        $log->campaign_id = $campaign->uuid;
-        $log->ip = bin2hex(inet_pton($request->getClientIp()));
-        $log->headers = $request->headers->all();
-        $log->event_type = EventLog::TYPE_REQUEST;
-        $log->save();
-
-        $response->headers->set('X-Adshares-Cid', $caseId);
-
-        if (!$response->isNotModified($request)) {
-            $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
-        }
+        $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
 
         return $response;
     }

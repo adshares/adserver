@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Demand\Application\Service\AdPay;
 
 final class JsonRpcAdPayClient implements AdPay
@@ -37,12 +36,14 @@ final class JsonRpcAdPayClient implements AdPay
 
     private const METHOD_GET_PAYMENTS = 'get_payments';
 
-    /** @var JsonRpc */
-    private $client;
+    private const METHOD_FORCE_RECALCULATION = 'debug_force_payment_recalculation';
 
-    public function __construct(JsonRpc $client)
+    /** @var JsonRpc */
+    private $rpcClient;
+
+    public function __construct(JsonRpc $rpcClient)
     {
-        $this->client = $client;
+        $this->rpcClient = $rpcClient;
     }
 
     public function updateCampaign(array $campaigns): void
@@ -52,7 +53,7 @@ final class JsonRpcAdPayClient implements AdPay
             $campaigns
         );
 
-        $this->client->call($procedure);
+        $this->rpcClient->callAndFailIfUnsuccessful($procedure);
     }
 
     public function deleteCampaign(array $campaignIds): void
@@ -62,35 +63,36 @@ final class JsonRpcAdPayClient implements AdPay
             $campaignIds
         );
 
-        $this->client->call($procedure);
+        $this->rpcClient->callAndFailIfUnsuccessful($procedure);
     }
 
     public function addEvents(array $events): void
     {
-        $filteredEvents = array_filter(
-            $events,
-            static function (array $event) {
-                return $event['event_type'] !== EventLog::TYPE_REQUEST;
-            }
-        );
-        
         $procedure = new Procedure(
             self::METHOD_ADD_EVENTS,
-            $filteredEvents
+            $events
         );
 
-        $this->client->call($procedure);
+        $this->rpcClient->callAndFailIfUnsuccessful($procedure);
     }
 
     public function getPayments(int $timestamp, bool $force): array
     {
         if ($force) {
-            $procedure = new Procedure('debug_force_payment_recalculation', [['timestamp' => $timestamp]]);
-            $this->client->call($procedure);
+            $debugProcedure = new Procedure(
+                self::METHOD_FORCE_RECALCULATION,
+                [['timestamp' => $timestamp]]
+            );
+
+            $this->rpcClient->callAndFailIfUnsuccessful($debugProcedure);
         }
 
-        $procedure = new Procedure(self::METHOD_GET_PAYMENTS, [['timestamp' => $timestamp]]);
-        $responseArray = $this->client->call($procedure)->toArray();
+        $procedure = new Procedure(
+            self::METHOD_GET_PAYMENTS,
+            [['timestamp' => $timestamp]]
+        );
+
+        $responseArray = $this->rpcClient->callAndAlwaysGetResult($procedure)->toArray();
 
         return $responseArray['payments'];
     }

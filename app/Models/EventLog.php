@@ -88,6 +88,8 @@ class EventLog extends Model
 
     public const TYPE_CONVERSION = 'conversion';
 
+    public const INDEX_CREATED_AT = 'event_logs_created_at_index';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -165,7 +167,7 @@ class EventLog extends Model
         }
 
         if (DB::isMySql()) {
-            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX (created_at)');
+            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX ('.self::INDEX_CREATED_AT.')');
         }
 
         return $query->get();

@@ -55,7 +55,6 @@ class SupplyController extends Controller
             $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            $response->headers->set('Access-Control-Expose-Headers', 'X-Adshares-Cid');
         }
 
         if ($data) {
@@ -276,10 +275,15 @@ class SupplyController extends Controller
     {
         if (!$request->query->has('r')
             || !$request->query->has('ctx')
-            || !$request->query->has('cid')
+            || !$this->isCidValid($request->query->get('cid'))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
+    }
+
+    private function isCidValid($cid): bool
+    {
+        return is_string($cid) && 32 === strlen($cid);
     }
 
     /**
