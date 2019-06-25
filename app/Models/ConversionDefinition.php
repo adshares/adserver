@@ -45,7 +45,7 @@ use function route;
  * @property int|null value
  * @property int|null limit
  * @property bool is_repeatable
- * @property string secret
+ * @property string|null secret
  */
 class ConversionDefinition extends Model
 {

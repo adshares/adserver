@@ -38,7 +38,7 @@ class CreateConversionDefinitionsTable extends Migration
             $table->bigInteger('value')->nullable();
             $table->bigInteger('limit')->nullable();
             $table->boolean('is_repeatable')->default(0);
-            $table->string('secret', 22);
+            $table->string('secret', 22)->nullable();
             $table->timestamps();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');

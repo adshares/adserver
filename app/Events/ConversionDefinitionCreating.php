@@ -35,9 +35,14 @@ class ConversionDefinitionCreating
 
     public function __construct(ConversionDefinition $conversionDefinition)
     {
+        $isAdvanced = $conversionDefinition->isAdvanced();
+
         $conversionDefinition->uuid = UuidStringGenerator::v4();
-        $conversionDefinition->is_repeatable = $conversionDefinition->isAdvanced();
-        $conversionDefinition->secret = $this->generateSecret();
+        $conversionDefinition->is_repeatable = $isAdvanced;
+
+        if ($isAdvanced) {
+            $conversionDefinition->secret = $this->generateSecret();
+        }
     }
 
     private function generateSecret(): string
