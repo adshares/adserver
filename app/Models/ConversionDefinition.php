@@ -169,7 +169,7 @@ class ConversionDefinition extends Model
 
     public static function isClickConversionForCampaign(int $campaignId): bool
     {
-        return (bool) self::where('campaign_id', $campaignId)
+        return (bool)self::where('campaign_id', $campaignId)
             ->where('event_type', self::CLICK_CONVERSION)
             ->first();
     }
