@@ -555,7 +555,7 @@ class DemandController extends Controller
                 $secret
             );
         } catch (RuntimeException $exception) {
-            Log::warning(sprintf('[DemandController] Conversion has an error: %s', $exception->getMessage()));
+            Log::warning(sprintf('[DemandController] Conversion error: %s', $exception->getMessage()));
 
             $isSignatureValid = false;
         }
