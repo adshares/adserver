@@ -29,6 +29,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use function hex2bin;
 use function route;
@@ -53,6 +54,7 @@ class ConversionDefinition extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
 
     private const IN_BUDGET = 'in_budget';
 
