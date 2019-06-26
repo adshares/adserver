@@ -42,9 +42,12 @@ use function route;
  * @property string event_type
  * @property string type
  * @property int|null value
+ * @property bool is_value_mutable
  * @property int|null limit
  * @property bool is_repeatable
  * @property string|null secret
+ * @property int cost
+ * @property int occurrences
  */
 class ConversionDefinition extends Model
 {
@@ -73,6 +76,7 @@ class ConversionDefinition extends Model
         'event_type',
         'type',
         'value',
+        'is_value_mutable',
         'limit',
         'is_repeatable',
     ];
@@ -85,10 +89,13 @@ class ConversionDefinition extends Model
         'event_type',
         'type',
         'value',
+        'is_value_mutable',
         'limit',
         'is_repeatable',
         'link',
         'secret',
+        'cost',
+        'occurrences',
     ];
 
     protected $appends = [
@@ -177,7 +184,7 @@ class ConversionDefinition extends Model
     public static function rules(array $conversion): array
     {
         $type = $conversion['type'] ?? null;
-        $eventType = $conversion['event_type'] ?? null;
+        $isValueMutable = $conversion['is_value_mutable'] ?? null;
         $rules = [
             'uuid' => 'string|nullable',
             'campaign_id' => 'required|integer',
@@ -187,8 +194,8 @@ class ConversionDefinition extends Model
             'value' => [
                 'integer',
                 'nullable',
-                Rule::requiredIf(static function () use ($type, $eventType) {
-                    return $type === self::BASIC_TYPE && $eventType !== self::CLICK_CONVERSION;
+                Rule::requiredIf(static function () use ($isValueMutable) {
+                    return 0 === $isValueMutable;
                 }),
             ],
             'limit' => 'integer|nullable',
@@ -196,8 +203,12 @@ class ConversionDefinition extends Model
 
         if ($type === self::BASIC_TYPE) {
             $rules['budget_type'] = 'in:'.self::IN_BUDGET;
+            $rules['is_repeatable'] = 'required|in:0';
+            $rules['is_value_mutable'] = 'required|in:0';
         } elseif ($type === self::ADVANCED_TYPE) {
             $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
+            $rules['is_repeatable'] = 'required|in:0,1';
+            $rules['is_value_mutable'] = 'required|in:0,1';
         }
 
         return $rules;
