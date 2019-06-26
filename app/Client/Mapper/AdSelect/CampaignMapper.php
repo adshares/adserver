@@ -69,6 +69,9 @@ class CampaignMapper
                 'source_host' => $campaignArray['source_host'],
                 'adshares_address' => $campaignArray['source_address'],
             ],
+            'budget' => $campaign->getBudget(),
+            'max_cpc' => $campaign->getMaxCpc(),
+            'max_cpm' => $campaign->getMaxCpm(),
         ];
 
         $mapped['filters'] = $targeting;
