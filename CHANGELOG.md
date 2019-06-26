@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2019-06-25
+### Changed
+- Join supply payments commands
+- Update crontab generation
+- Retry withdraw when 'Lock user failed' exception occurs
+- Paginate payment report
+- Export events to AdSelect max from 7 days 
+
+### Added
+- Dump events older than 32 days
+- Send tracking_id field to AdSelect  
+- Send campaign's budget information to AdSelect
+
 ## [0.11.0] - 2019-06-12
 ### Changed
 - AdSelect internal client to reflect changes in [v0.2.0](https://github.com/adshares/adselect/releases/tag/v0.2)
@@ -161,7 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v0.11.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v0.12.0...develop
+[0.12.0]: https://github.com/adshares/adserver/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/adshares/adserver/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/adshares/adserver/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/adshares/adserver/compare/v0.8.1...v0.9.0
