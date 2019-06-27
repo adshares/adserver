@@ -332,7 +332,7 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
-            'supplyName' => config('app.adserver_info_name'),
+            'supplyName' => config('app.name'),
             'supplyTermsUrl' => config('app.terms_url'),
             'supplyPrivacyUrl' => config('app.privacy_url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
