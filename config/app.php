@@ -93,6 +93,7 @@ return [
     'adserver_secret' => env('APP_KEY'),
     'adserver_id' => env('APP_ID', env('ADSERVER_ID', 'a-name-that-does-not-collide')),
     'adserver_banner_host' => env('ADSERVER_BANNER_HOST', $appUrl),
+    'adserver_info_name' => env('ADSERVER_INFO_NAME', ''),
     'terms_url' => $appUrl.'/policies/terms.html',
     'privacy_url' => $appUrl.'/policies/privacy.html',
     'adshares_address' => env('ADSHARES_ADDRESS'),
