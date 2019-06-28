@@ -76,6 +76,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 '=',
                 'campaign.id'
             )
+            ->where('campaign.source_host', $host)
             ->where('campaign.'.self::STATUS_FIELD, Status::STATUS_TO_DELETE)
             ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
