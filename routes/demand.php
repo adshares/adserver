@@ -35,8 +35,9 @@ Route::group(
         Route::get('/view.js', [DemandController::class, 'viewScript'])
             ->name('demand-view.js');
 
-        Route::get('/serve/{id}.png', [DemandController::class, 'serve'])
+        Route::get('/serve/{id}.jpg', [DemandController::class, 'serve'])
             ->name('banner-serve');
+        Route::get('/serve/{id}.png', [DemandController::class, 'serve']);
         Route::get('/serve/{id}.doc', [DemandController::class, 'serve']);
         Route::get('/serve/{id}', [DemandController::class, 'serve']);
 
