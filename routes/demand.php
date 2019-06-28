@@ -32,8 +32,9 @@ Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'
 Route::get('/view.js', [DemandController::class, 'viewScript'])
     ->name('demand-view.js');
 
-Route::get('/serve/{id}.doc', [DemandController::class, 'serve'])
+Route::get('/serve/{id}.png', [DemandController::class, 'serve'])
     ->name('banner-serve');
+Route::get('/serve/{id}.doc', [DemandController::class, 'serve']);
 Route::get('/serve/{id}', [DemandController::class, 'serve']);
 
 Route::get('/view/{id}', [DemandController::class, 'view'])
