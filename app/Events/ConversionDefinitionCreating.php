@@ -49,7 +49,7 @@ class ConversionDefinitionCreating
     {
         try {
             $bytes = random_bytes(16);
-        } catch(Exception $exception) {
+        } catch (Exception $exception) {
             $bytes = hex2bin(UuidStringGenerator::v4());
         }
 
