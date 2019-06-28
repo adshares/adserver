@@ -129,9 +129,9 @@ class InventoryImporterCommand extends BaseCommand
             );
         }
     }
-    
-    public static function getLockName() {
-        return config('app.adserver_id').'SupplyInventoryProcessing';
 
+    public static function getLockName(): string
+    {
+        return config('app.adserver_id').'SupplyInventoryProcessing';
     }
 }
