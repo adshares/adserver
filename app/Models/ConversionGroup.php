@@ -73,6 +73,7 @@ class ConversionGroup extends Model
         $group->conversion_definition_id = $conversionDefinitionId;
         $group->value = $value;
         $group->weight = $weight;
+        $group->created_at = Carbon::now();
 
         $group->save();
     }
@@ -89,11 +90,6 @@ class ConversionGroup extends Model
         return null !== ConversionGroup::where('conversion_definition_id', $conversionDefinitionId)
             ->whereIn('case_id', $binaryCaseIds)
             ->first();
-    }
-
-    public function setCreatedAtAttribute($value): void
-    {
-        $this->attributes['created_at'] = Carbon::now();
     }
 
     public function conversionDefinition(): BelongsTo
