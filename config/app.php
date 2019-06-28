@@ -117,6 +117,8 @@ return [
     'license_url' => env('ADSHARES_LICENSE_SERVER_URL', 'https://account.adshares.pl'),
     'license_key' => env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')),
     'license_id' => substr(env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')), 0, 10),
+    'serve_domain' => env('SERVE_DOMAIN', $appUrl),
+    'main_js_domain' => env('MAIN_JS_DOMAIN', $appUrl),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
