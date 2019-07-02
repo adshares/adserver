@@ -66,7 +66,7 @@ class PaymentDetailsProcessor
         return $operatorFee;
     }
 
-    public function processPaymentDetails(
+    public function processPaidEvents(
         AdsPayment $adsPayment,
         array $paymentDetails,
         int $carriedEventValueSum
@@ -75,32 +75,13 @@ class PaymentDetailsProcessor
         $adsPaymentId = $adsPayment->id;
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-
-        $paymentDetails = $this->getPaymentDetailsWhichExistInDb($paymentDetails);
-        if (count($paymentDetails) === 0) {
-            Log::warning('[PaymentDetailsProcessor] None of received events exist in DB');
-
-            return PaymentProcessingResult::zero();
-        }
-
         $feeCalculator = new PaymentDetailsFeeCalculator($this->fetchLicenseFee(), self::fetchOperatorFee());
-        foreach ($paymentDetails as $key => $paymentDetail) {
-            $calculatedFees = $feeCalculator->calculateFee($paymentDetail['event_value']);
-            $paymentDetail['event_value'] = $calculatedFees['event_value'];
-            $paymentDetail['license_fee'] = $calculatedFees['license_fee'];
-            $paymentDetail['operator_fee'] = $calculatedFees['operator_fee'];
-            $paymentDetail['paid_amount'] = $calculatedFees['paid_amount'];
-
-            $paymentDetails[$key] = $paymentDetail;
-        }
-
         $totalLicenseFee = 0;
         $totalEventValue = 0;
 
         $exchangeRateValue = $exchangeRate->getValue();
 
         foreach ($paymentDetails as $paymentDetail) {
-            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
             $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
             if ($event === null) {
                 continue;
@@ -108,10 +89,15 @@ class PaymentDetailsProcessor
 
             $event->pay_from = $senderAddress;
             $event->ads_payment_id = $adsPaymentId;
-            $event->event_value = min($spendableAmount, $paymentDetail['event_value']);
-            $event->license_fee = $paymentDetail['license_fee'];
-            $event->operator_fee = $paymentDetail['operator_fee'];
-            $event->paid_amount = $paymentDetail['paid_amount'];
+
+            $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
+            $event_value = min($spendableAmount, $paymentDetail['event_value']);
+            $event->event_value = $event_value;
+            $calculatedFees = $feeCalculator->calculateFee($event_value);
+            $event->license_fee = $calculatedFees['license_fee'];
+            $event->operator_fee = $calculatedFees['operator_fee'];
+            $event->paid_amount = $calculatedFees['paid_amount'];
+
             $event->exchange_rate = $exchangeRateValue;
             $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
 
@@ -121,34 +107,10 @@ class PaymentDetailsProcessor
             $totalEventValue += $event->event_value;
         }
 
-        $this->addAdIncomeToUserLedger($adsPayment);
-
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee);
     }
 
-    private function getPaymentDetailsWhichExistInDb(array $paymentDetails): array
-    {
-        foreach ($paymentDetails as $key => $paymentDetail) {
-            $eventId = $paymentDetail['event_id'];
-
-            if (NetworkEventLog::fetchByEventId($eventId) !== null) {
-                continue;
-            }
-
-            Log::warning(
-                sprintf(
-                    '[PaymentDetailsProcessor] Demand Server sent event_id (%s) which cannot be found in Supply DB',
-                    $eventId
-                )
-            );
-
-            unset($paymentDetails[$key]);
-        }
-
-        return $paymentDetails;
-    }
-
-    private function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
+    public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
         $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
 
