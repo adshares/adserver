@@ -99,11 +99,11 @@ class PaymentDetailsProcessor
             $event->paid_amount = $calculatedFees['paid_amount'];
 
             $event->exchange_rate = $exchangeRateValue;
-            $event->paid_amount_currency = $exchangeRate->fromClick($paymentDetail['paid_amount']);
+            $event->paid_amount_currency = $exchangeRate->fromClick($calculatedFees['paid_amount']);
 
             $event->save();
 
-            $totalLicenseFee += $paymentDetail['license_fee'];
+            $totalLicenseFee += $calculatedFees['license_fee'];
             $totalEventValue += $event->event_value;
         }
 
