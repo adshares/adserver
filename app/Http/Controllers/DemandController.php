@@ -574,7 +574,7 @@ class DemandController extends Controller
         $value = $this->getConversionValue($request, $conversionDefinition);
 
         if ($isAdvanced) {
-            $secret = $conversionDefinition->secret;
+            $secret = '';//$conversionDefinition->secret;//TODO read secret from campaign
 
             $this->validateConversionAdvanced($request, $secret, $uuid);
         }

@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Events\CampaignCreating;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -58,6 +58,8 @@ use function hex2bin;
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
  * @property User user
+ * @property string secret
+ * @property int conversion_click
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder
@@ -80,6 +82,12 @@ class Campaign extends Model
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
+    private const CONVERSION_CLICK_NONE = 0;
+
+    private const CONVERSION_CLICK_BASIC = 1;
+
+    private const CONVERSION_CLICK_ADVANCED = 2;
+
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
@@ -100,7 +108,7 @@ class Campaign extends Model
     ];
 
     protected $dispatchesEvents = [
-        'creating' => GenerateUUID::class,
+        'creating' => CampaignCreating::class
     ];
 
     protected $fillable = [
@@ -117,6 +125,7 @@ class Campaign extends Model
         'targeting_excludes',
         'classification_status',
         'classification_tags',
+        'conversion_click',
     ];
 
     protected $visible = [
@@ -129,14 +138,15 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
-        'conversions'
+        'conversions',
+        'secret',
+        'conversion_click',
     ];
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
-
     ];
 
     protected $appends = ['basic_information', 'targeting', 'ads'];

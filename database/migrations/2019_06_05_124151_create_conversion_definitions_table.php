@@ -41,7 +41,6 @@ class CreateConversionDefinitionsTable extends Migration
             $table->bigInteger('cost')->default(0);
             $table->unsignedInteger('occurrences')->default(0);
             $table->boolean('is_repeatable')->default(0);
-            $table->string('secret', 22)->nullable();
             $table->timestamps();
             $table->softDeletes();
 

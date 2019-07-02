@@ -23,36 +23,18 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Exception;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ConversionDefinitionCreating
+class CampaignCreating
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(ConversionDefinition $conversionDefinition)
+    public function __construct(Campaign $campaign)
     {
-        $isAdvanced = $conversionDefinition->isAdvanced();
-
-        $conversionDefinition->uuid = UuidStringGenerator::v4();
-        $conversionDefinition->is_repeatable = $isAdvanced;
-
-        if ($isAdvanced) {
-            $conversionDefinition->secret = $this->generateSecret();
-        }
-    }
-
-    private function generateSecret(): string
-    {
-        try {
-            $bytes = random_bytes(16);
-        } catch (Exception $exception) {
-            $bytes = hex2bin(UuidStringGenerator::v4());
-        }
-
-        return Utils::urlSafeBase64Encode($bytes);
+        $campaign->uuid = UuidStringGenerator::v4();
+        $campaign->secret = Utils::base64Encoded16BytesSecret();
     }
 }

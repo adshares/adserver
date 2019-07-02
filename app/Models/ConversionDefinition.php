@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Events\ConversionDefinitionCreating;
+use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -46,7 +46,6 @@ use function route;
  * @property bool is_value_mutable
  * @property int|null limit
  * @property bool is_repeatable
- * @property string|null secret
  * @property int cost
  * @property int occurrences
  */
@@ -95,7 +94,6 @@ class ConversionDefinition extends Model
         'limit',
         'is_repeatable',
         'link',
-        'secret',
         'cost',
         'occurrences',
     ];
@@ -109,7 +107,7 @@ class ConversionDefinition extends Model
     ];
 
     protected $dispatchesEvents = [
-        'creating' => ConversionDefinitionCreating::class,
+        'creating' => GenerateUUID::class,
     ];
 
     public static function fetchByUuid(string $uuid): ?self
