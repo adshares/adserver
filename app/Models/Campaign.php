@@ -83,11 +83,11 @@ class Campaign extends Model
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
-    private const CONVERSION_CLICK_NONE = 0;
+    public const CONVERSION_CLICK_NONE = 0;
 
-    private const CONVERSION_CLICK_BASIC = 1;
+    public const CONVERSION_CLICK_BASIC = 1;
 
-    private const CONVERSION_CLICK_ADVANCED = 2;
+    public const CONVERSION_CLICK_ADVANCED = 2;
 
     public static $rules = [
 //        'name' => 'required|max:255',
@@ -391,5 +391,19 @@ class Campaign extends Model
     public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
+    }
+
+    public function hasClickConversion(): bool
+    {
+        return in_array(
+            $this->conversion_click,
+            [Campaign::CONVERSION_CLICK_BASIC, Campaign::CONVERSION_CLICK_ADVANCED],
+            true
+        );
+    }
+
+    public function hasClickConversionAdvanced(): bool
+    {
+        return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
     }
 }

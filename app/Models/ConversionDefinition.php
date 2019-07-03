@@ -151,11 +151,6 @@ class ConversionDefinition extends Model
         return self::ADVANCED_TYPE === $this->type;
     }
 
-    public function isClickConversion(): bool
-    {
-        return self::CLICK_CONVERSION === $this->event_type;
-    }
-
     public function isRepeatable(): bool
     {
         return (bool)$this->is_repeatable;
@@ -172,13 +167,6 @@ class ConversionDefinition extends Model
 
         self::where('campaign_id', $campaignId)
             ->whereNotIn('uuid', $binaryUuids)->delete();
-    }
-
-    public static function isClickConversionForCampaign(int $campaignId): bool
-    {
-        return (bool)self::where('campaign_id', $campaignId)
-            ->where('event_type', self::CLICK_CONVERSION)
-            ->first();
     }
 
     public static function rules(array $conversion): array

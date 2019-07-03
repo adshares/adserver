@@ -195,7 +195,7 @@ class EventLog extends Model
         $headers,
         array $context,
         string $userData,
-        $type
+        string $type
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
 
@@ -227,6 +227,61 @@ class EventLog extends Model
         }
 
         $log->save();
+    }
+
+    public static function createWithUserData(
+        string $caseId,
+        string $eventId,
+        string $bannerId,
+        ?string $zoneId,
+        string $trackingId,
+        string $publisherId,
+        string $campaignId,
+        string $advertiserId,
+        string $payTo,
+        $ip,
+        $headers,
+        array $context,
+        string $theirUserData,
+        string $type,
+        ?float $humanScore,
+        ?stdClass $ourUserData
+    ): self {
+        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
+
+        if ($existedEventLog) {
+            return $existedEventLog;
+        }
+
+        $log = new self();
+        $log->case_id = $caseId;
+        $log->event_id = $eventId;
+        $log->banner_id = $bannerId;
+        $log->tracking_id = $trackingId;
+        $log->zone_id = $zoneId;
+        $log->publisher_id = $publisherId;
+        $log->campaign_id = $campaignId;
+        $log->advertiser_id = $advertiserId;
+        $log->pay_to = $payTo;
+        $log->ip = $ip;
+        $log->headers = $headers;
+        $log->their_context = $context;
+        $log->their_userdata = $theirUserData;
+        $log->event_type = $type;
+
+        if ($type === self::TYPE_CLICK) {
+            $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
+            $viewEvent = self::where('event_id', hex2bin($eventId))->first();
+
+            $log->domain = $viewEvent->domain ?? null;
+        }
+
+        $log->human_score = $humanScore;
+        $log->our_userdata = $ourUserData;
+        
+        $log->save();
+        
+        return $log;
     }
 
     public static function fetchOneByEventId(string $eventId): self

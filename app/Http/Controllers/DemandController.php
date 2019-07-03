@@ -250,7 +250,7 @@ class DemandController extends Controller
 
         $response->send();
 
-        if (ConversionDefinition::isClickConversionForCampaign($campaign->id)) {
+        if ($campaign->hasClickConversion()) {
             return $response;
         }
 
@@ -381,13 +381,19 @@ class DemandController extends Controller
 
     public function conversionClick(string $campaignUuid, Request $request): JsonResponse
     {
-        return self::json(['status' => 'OK'], Response::HTTP_OK);
+        $response = self::json(['status' => 'OK'], Response::HTTP_OK);
+
+        $this->processConversionClick($campaignUuid, $request, $response);
+
+        return $response;
     }
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
+
+        $this->processConversionClick($campaignUuid, $request, $response);
 
         return $response;
     }
@@ -586,14 +592,15 @@ class DemandController extends Controller
 
         $value = $this->getConversionValue($request, $conversionDefinition);
 
+        $campaign = Campaign::find($conversionDefinition->campaign_id);
+
         if ($isAdvanced) {
-            $secret = '';//$conversionDefinition->secret;//TODO read secret from campaign
+            $secret = $campaign->secret;
 
             $this->validateConversionAdvanced($request, $secret, $uuid);
         }
 
         $conversionDefinitionId = $conversionDefinition->id;
-        $campaign = Campaign::find($conversionDefinition->campaign_id);
         $campaignPublicId = $campaign->uuid;
 
         $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
@@ -615,25 +622,15 @@ class DemandController extends Controller
         $impressionContext = Utils::getImpressionContextArray($request);
 
         $viewEventsData = $this->getViewEventsData($cases);
-        $isClickConversion = $conversionDefinition->isClickConversion();
 
         DB::beginTransaction();
 
         foreach ($cases as $caseId => $weight) {
             $viewEventData = $viewEventsData[$caseId];
-            if ($isClickConversion) {
-                $eventType = EventLog::TYPE_CLICK;
-                $eventPublicId = Utils::createCaseIdContainingEventType($caseId, $eventType);
-            } else {
-                $eventType = EventLog::TYPE_CONVERSION;
-                $eventPublicId = Uuid::v4()->toString();
-            }
 
-            $partialValue = (int)floor($value * $weight);
-
-            EventLog::create(
+            $event = EventLog::createWithUserData(
                 $caseId,
-                $eventPublicId,
+                Uuid::v4()->toString(),
                 $viewEventData['bannerId'],
                 $viewEventData['zoneId'],
                 $viewEventData['trackingId'],
@@ -645,22 +642,71 @@ class DemandController extends Controller
                 $headers,
                 $impressionContext,
                 '',
-                $eventType
+                EventLog::TYPE_CONVERSION,
+                $viewEventData['humanScore'],
+                $viewEventData['ourUserdata']
             );
 
-            if ($isClickConversion) {
-                EventLog::eventClicked($caseId);
-            }
-
-            $event = EventLog::fetchOneByEventId($eventPublicId);
-
-            if (null !== $viewEventData['humanScore'] && null !== $viewEventData['ourUserdata']) {
-                $event->updateWithUserData($viewEventData['humanScore'], $viewEventData['ourUserdata']);
-                $event->save();
-            }
-
             $eventId = $event->id;
+            $partialValue = (int)floor($value * $weight);
             ConversionGroup::register($caseId, $groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
+        }
+
+        DB::commit();
+    }
+
+    private function processConversionClick(string $campaignUuid, Request $request, Response $response): void
+    {
+        $campaign = Campaign::fetchByUuid($campaignUuid);
+
+        if (!$campaign->hasClickConversion()) {
+            throw new BadRequestHttpException('Click conversion not supported');
+        }
+
+        if ($campaign->hasClickConversionAdvanced()) {
+            $secret = $campaign->secret;
+
+            $this->validateConversionAdvanced($request, $secret, $campaignUuid);
+        }
+
+        $campaignPublicId = $campaign->uuid;
+
+        $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
+
+        $response->send();
+
+        $advertiserId = $campaign->user->uuid;
+        $headers = $request->headers->all();
+        $ip = bin2hex(inet_pton($request->getClientIp()));
+        $impressionContext = Utils::getImpressionContextArray($request);
+
+        $viewEventsData = $this->getViewEventsData($cases);
+
+        DB::beginTransaction();
+
+        foreach ($cases as $caseId => $weight) {
+            $viewEventData = $viewEventsData[$caseId];
+
+            EventLog::createWithUserData(
+                $caseId,
+                Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK),
+                $viewEventData['bannerId'],
+                $viewEventData['zoneId'],
+                $viewEventData['trackingId'],
+                $viewEventData['publisherId'],
+                $campaignPublicId,
+                $advertiserId,
+                $viewEventData['payTo'],
+                $ip,
+                $headers,
+                $impressionContext,
+                '',
+                EventLog::TYPE_CLICK,
+                $viewEventData['humanScore'],
+                $viewEventData['ourUserdata']
+            );
+
+            EventLog::eventClicked($caseId);
         }
 
         DB::commit();
