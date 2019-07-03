@@ -263,7 +263,7 @@ MYSCRIPT;
             if ($scheme) {
                 if ($scheme === 'data') {
                     continue;
-                } elseif (!$this->isWhitelisted($href)){
+                } elseif (!$this->isWhitelisted($href)) {
                     throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
@@ -463,7 +463,7 @@ MYSCRIPT;
             $contents = curl_exec($ch);
             $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
-            
+
             $this->assets[$name] = [
                 'contents' => $contents,
                 'type' => '',
