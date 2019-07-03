@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
@@ -141,6 +142,7 @@ class Campaign extends Model
         'conversions',
         'secret',
         'conversion_click',
+        'conversion_click_link',
     ];
 
     protected $traitAutomate = [
@@ -149,7 +151,12 @@ class Campaign extends Model
         'time_end' => 'DateAtom',
     ];
 
-    protected $appends = ['basic_information', 'targeting', 'ads'];
+    protected $appends = [
+        'conversion_click_link',
+        'basic_information', 
+        'targeting',
+        'ads',
+    ];
 
     public static function suspendAllForUserId(int $userId): void
     {
@@ -248,6 +255,36 @@ class Campaign extends Model
         }
 
         return $this->banners;
+    }
+
+    public function getConversionClickLinkAttribute(): ?string
+    {
+        switch ($this->conversion_click)
+        {
+            case self::CONVERSION_CLICK_BASIC:
+            {
+                $params = [
+                    'campaign_uuid' => $this->uuid,
+                ];
+
+                return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
+            }
+            case self::CONVERSION_CLICK_ADVANCED:
+            {
+                $params = [
+                    'campaign_uuid' => $this->uuid,
+                    'value' => 'value',
+                    'nonce' => 'nonce',
+                    'ts' => 'timestamp',
+                    'sig' => 'signature',
+                ];
+
+                return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
+            }
+            case self::CONVERSION_CLICK_NONE:
+            default:
+                return null;
+        }
     }
 
     public function getTargetingAttribute(): array

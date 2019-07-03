@@ -54,5 +54,7 @@ Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'previ
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
 
+Route::get('/conversion/click/{campaign_uuid}.gif', [DemandController::class, 'conversionClickGif'])->name('conversionClick.gif');
+Route::get('/conversion/click/{campaign_uuid}', [DemandController::class, 'conversionClick'])->name('conversionClick');
 Route::get('/conversion/{uuid}.gif', [DemandController::class, 'conversionGif'])->name('conversion.gif');
 Route::get('/conversion/{uuid}', [DemandController::class, 'conversion'])->name('conversion');

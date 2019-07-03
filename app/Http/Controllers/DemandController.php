@@ -379,6 +379,19 @@ class DemandController extends Controller
         return $response;
     }
 
+    public function conversionClick(string $campaignUuid, Request $request): JsonResponse
+    {
+        return self::json(['status' => 'OK'], Response::HTTP_OK);
+    }
+
+    public function conversionClickGif(string $campaignUuid, Request $request): Response
+    {
+        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
+        $response->headers->set('Content-Type', 'image/gif');
+
+        return $response;
+    }
+
     private function validateEventRequest(Request $request): void
     {
         if (!$request->query->has('ctx')
@@ -602,12 +615,12 @@ class DemandController extends Controller
         $impressionContext = Utils::getImpressionContextArray($request);
 
         $viewEventsData = $this->getViewEventsData($cases);
+        $isClickConversion = $conversionDefinition->isClickConversion();
 
         DB::beginTransaction();
 
         foreach ($cases as $caseId => $weight) {
             $viewEventData = $viewEventsData[$caseId];
-            $isClickConversion = $conversionDefinition->isClickConversion();
             if ($isClickConversion) {
                 $eventType = EventLog::TYPE_CLICK;
                 $eventPublicId = Utils::createCaseIdContainingEventType($caseId, $eventType);
