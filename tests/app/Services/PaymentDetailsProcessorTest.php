@@ -96,11 +96,9 @@ final class PaymentDetailsProcessorTest extends TestCase
         }
         $expectedAdIncome = $totalPayment - $expectedLicenseAmount - $expectedOperatorAmount;
 
+        $this->assertEquals($totalPayment, $result->eventValuePartialSum());
         $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
-
-        $this->assertCount(1, UserLedgerEntry::all());
-        $userLedgerEntry = UserLedgerEntry::first();
-        $this->assertEquals($expectedAdIncome, $userLedgerEntry->amount);
+        $this->assertEquals($expectedAdIncome, NetworkEventLog::sum('paid_amount'));
     }
 
     private function getExchangeRateReader(): ExchangeRateReader
