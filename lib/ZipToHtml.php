@@ -36,6 +36,11 @@ use function zip_read;
 
 class ZipToHtml
 {
+    const DOMAIN_WHITELIST = [
+        'googleapis.com',
+        'gstatic.com',
+    ];
+
     const MAX_ZIPPED_SIZE = 512 * 1024;
 
     const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
@@ -102,6 +107,16 @@ MYSCRIPT;
     public function __construct($filename)
     {
         $this->filename = $filename;
+    }
+
+    private function isWhitelisted($href) {
+        $domain = parse_url($href, PHP_URL_HOST);
+        foreach(self::DOMAIN_WHITELIST as $allow) {
+            if(preg_match('#' . preg_quote($allow, '#') . '$#i', $domain)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function getHtml()
@@ -212,7 +227,7 @@ MYSCRIPT;
 
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme !== 'data') {
+                if ($scheme !== 'data' && !$this->isWhitelisted($href)) {
                     throw new RuntimeException(
                         sprintf('Only local assets and data uri allowed (found %s)', $href)
                     );
@@ -243,7 +258,7 @@ MYSCRIPT;
             if ($scheme) {
                 if ($scheme === 'data') {
                     continue;
-                } else {
+                } else if (!$this->isWhitelisted($href)){
                     throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
@@ -270,7 +285,7 @@ MYSCRIPT;
             if ($scheme) {
                 if ($scheme === 'data') {
                     continue;
-                } else {
+                } else if (!$this->isWhitelisted($href)) {
                     throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
@@ -302,7 +317,7 @@ MYSCRIPT;
                     if ($scheme) {
                         if ($scheme === 'data') {
                             return $href.$match[2].($match[3] ?? '');
-                        } else {
+                        } else if (!$this->isWhitelisted($href)) {
                             throw new RuntimeException(
                                 sprintf("Only local assets and data uri allowed (found %s)", $href)
                             );
@@ -395,7 +410,7 @@ MYSCRIPT;
                 if ($scheme) {
                     if ($scheme === 'data') {
                         return $match[0];
-                    } else {
+                    } else if (!$this->isWhitelisted($match[1])) {
                         throw new RuntimeException(
                             sprintf("Only local assets and data uri allowed (found %s)", $match[1])
                         );
