@@ -40,7 +40,6 @@ final class MysqlStatsQueryBuilderTest extends TestCase
             ."SUM(IF(e.event_type IN ('click', 'view') AND e.event_value_currency IS NOT NULL AND e.reason = 0,"
             ." e.event_value_currency, 0)) AS cost,"
             ."e.campaign_id AS campaign_id FROM event_logs e "
-            ."INNER JOIN campaigns c ON c.uuid = e.campaign_id WHERE c.deleted_at is null "
             ."GROUP BY e.campaign_id HAVING clicks>0 OR views>0 OR cost>0";
 
         $this->assertEquals($expect, $query);

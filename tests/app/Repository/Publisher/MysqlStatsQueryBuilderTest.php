@@ -40,7 +40,6 @@ final class MysqlStatsQueryBuilderTest extends TestCase
             ."SUM(IF(e.event_type IN ('click', 'view') AND e.paid_amount_currency IS NOT NULL,"
             ." e.paid_amount_currency, 0)) AS revenue,"
             ."e.site_id AS site_id FROM network_event_logs e "
-            ."INNER JOIN sites s ON s.uuid = e.site_id WHERE s.deleted_at is null "
             ."GROUP BY e.site_id HAVING clicks>0 OR views>0 OR revenue>0";
 
         $this->assertEquals($expect, $query);
