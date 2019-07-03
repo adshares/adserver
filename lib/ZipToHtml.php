@@ -109,10 +109,11 @@ MYSCRIPT;
         $this->filename = $filename;
     }
 
-    private function isWhitelisted($href) {
+    private function isWhitelisted($href)
+    {
         $domain = parse_url($href, PHP_URL_HOST);
-        foreach(self::DOMAIN_WHITELIST as $allow) {
-            if(preg_match('#' . preg_quote($allow, '#') . '$#i', $domain)) {
+        foreach (self::DOMAIN_WHITELIST as $allow) {
+            if (preg_match('#' . preg_quote($allow, '#') . '$#i', $domain)) {
                 return true;
             }
         }
@@ -227,7 +228,7 @@ MYSCRIPT;
 
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if($this->isWhitelisted($href)) {
+                if ($this->isWhitelisted($href)) {
                     $href = $this->getAssetDataUriExternal($href);
                 } else {
                     if ($scheme !== 'data') {
@@ -262,7 +263,7 @@ MYSCRIPT;
             if ($scheme) {
                 if ($scheme === 'data') {
                     continue;
-                } else if (!$this->isWhitelisted($href)){
+                } elseif (!$this->isWhitelisted($href)){
                     throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
@@ -282,12 +283,12 @@ MYSCRIPT;
             }
         }
 
-        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
+        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]".
+                                "|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
         foreach ($media as $tag) {
-
-            if($tag->hasAttribute('src')) {
+            if ($tag->hasAttribute('src')) {
                 $attr = 'src';
-            } else if($tag->hasAttribute('source')) {
+            } elseif ($tag->hasAttribute('source')) {
                 $attr = 'source';
             }
             $href = $tag->getAttribute($attr);
@@ -295,7 +296,7 @@ MYSCRIPT;
             if ($scheme) {
                 if ($scheme === 'data') {
                     continue;
-                } else if (!$this->isWhitelisted($href)) {
+                } elseif (!$this->isWhitelisted($href)) {
                     throw new RuntimeException(
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
@@ -327,7 +328,7 @@ MYSCRIPT;
                     if ($scheme) {
                         if ($scheme === 'data') {
                             return $href.$match[2].($match[3] ?? '');
-                        } else if (!$this->isWhitelisted($href)) {
+                        } elseif (!$this->isWhitelisted($href)) {
                             throw new RuntimeException(
                                 sprintf("Only local assets and data uri allowed (found %s)", $href)
                             );
@@ -419,7 +420,7 @@ MYSCRIPT;
                 $href = $match[1];
                 $scheme = parse_url($href, PHP_URL_SCHEME);
                 if ($scheme) {
-                    if($this->isWhitelisted($href)) {
+                    if ($this->isWhitelisted($href)) {
                         $href = $this->getAssetDataUriExternal($href);
                         //$scheme = parse_url($href, PHP_URL_SCHEME);
                     } else {
@@ -450,21 +451,19 @@ MYSCRIPT;
 
     private function getAssetDataUriExternal($url)
     {
-        if(!$this->isWhitelisted($url)) {
+        if (!$this->isWhitelisted($url)) {
             throw new RuntimeException("URL is not whitelisted");
         }
 
         $name = sha1($url);
-        if(!isset($this->assets[$name])) {
-
+        if (!isset($this->assets[$name])) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_HEADER, 0);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $contents = curl_exec($ch);
             $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             curl_close($ch);
-
-
+            
             $this->assets[$name] = [
                 'contents' => $contents,
                 'type' => '',
