@@ -227,13 +227,17 @@ MYSCRIPT;
 
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
-                if ($scheme !== 'data' && !$this->isWhitelisted($href)) {
-                    throw new RuntimeException(
-                        sprintf('Only local assets and data uri allowed (found %s)', $href)
-                    );
-                }
+                if($this->isWhitelisted($href)) {
+                    $href = $this->getAssetDataUriExternal($href);
+                } else {
+                    if ($scheme !== 'data') {
+                        throw new RuntimeException(
+                            sprintf('Only local assets and data uri allowed (found %s)', $href)
+                        );
+                    }
 
-                continue;
+                    continue;
+                }
             }
 
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
@@ -278,9 +282,15 @@ MYSCRIPT;
             }
         }
 
-        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]|//source[@src]");
+        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
         foreach ($media as $tag) {
-            $href = $tag->getAttribute('src');
+
+            if($tag->hasAttribute('src')) {
+                $attr = 'src';
+            } else if($tag->hasAttribute('source')) {
+                $attr = 'source';
+            }
+            $href = $tag->getAttribute($attr);
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
                 if ($scheme === 'data') {
@@ -295,12 +305,12 @@ MYSCRIPT;
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
             if (isset($this->assets[$file])) {
                 if (isset($this->assets[$file]['used'])) {
-                    $tag->removeAttribute('src');
+                    $tag->removeAttribute($attr);
                     $tag->setAttribute('data-asset-src', $file);
                 } else {
                     $this->assets[$file]['used'] = true;
                     $tag->setAttribute('data-asset-org', $file);
-                    $tag->setAttribute('src', $this->getAssetDataUri($this->assets[$file]));
+                    $tag->setAttribute($attr, $this->getAssetDataUri($this->assets[$file]));
                 }
             } else {
                 $tag->removeAttribute('src');
@@ -406,18 +416,24 @@ MYSCRIPT;
         return preg_replace_callback(
             '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im',
             function ($match) use ($basedir) {
-                $scheme = parse_url($match[1], PHP_URL_SCHEME);
+                $href = $match[1];
+                $scheme = parse_url($href, PHP_URL_SCHEME);
                 if ($scheme) {
-                    if ($scheme === 'data') {
-                        return $match[0];
-                    } else if (!$this->isWhitelisted($match[1])) {
-                        throw new RuntimeException(
-                            sprintf("Only local assets and data uri allowed (found %s)", $match[1])
-                        );
+                    if($this->isWhitelisted($href)) {
+                        $href = $this->getAssetDataUriExternal($href);
+                        //$scheme = parse_url($href, PHP_URL_SCHEME);
+                    } else {
+                        if ($scheme === 'data') {
+                            return $match[0];
+                        } else {
+                            throw new RuntimeException(
+                                sprintf("Only local assets and data uri allowed (found %s)", $href)
+                            );
+                        }
                     }
                 }
 
-                return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$match[1]).'}*/';
+                return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$href).'}*/';
             },
             $css_text
         );
@@ -430,5 +446,33 @@ MYSCRIPT;
         }
 
         return $asset['data_uri'];
+    }
+
+    private function getAssetDataUriExternal($url)
+    {
+        if(!$this->isWhitelisted($url)) {
+            throw new RuntimeException("URL is not whitelisted");
+        }
+
+        $name = sha1($url);
+        if(!isset($this->assets[$name])) {
+
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            $contents = curl_exec($ch);
+            $mime = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            curl_close($ch);
+
+
+            $this->assets[$name] = [
+                'contents' => $contents,
+                'type' => '',
+                'mime_type' => $mime,
+                'data_uri' => null,
+
+            ];
+        }
+        return $name;
     }
 }
