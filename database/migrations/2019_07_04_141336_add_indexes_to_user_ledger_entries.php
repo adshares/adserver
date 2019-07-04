@@ -14,7 +14,7 @@ class AddIndexesToUserLedgerEntries extends Migration
      */
     public function up()
     {
-        Schema::table('ledger_entries', function (Blueprint $table) {
+        Schema::table('user_ledger_entries', function (Blueprint $table) {
             $table->index('user_id', UserLedgerEntry::INDEX_USER_ID);
             $table->index('created_at', UserLedgerEntry::INDEX_CREATED_AT);
         });
@@ -27,7 +27,7 @@ class AddIndexesToUserLedgerEntries extends Migration
      */
     public function down()
     {
-        Schema::table('ledger_entries', function (Blueprint $table) {
+        Schema::table('user_ledger_entries', function (Blueprint $table) {
             $table->dropIndex(UserLedgerEntry::INDEX_USER_ID);
             $table->dropIndex(UserLedgerEntry::INDEX_CREATED_AT);
         });
