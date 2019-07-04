@@ -118,6 +118,15 @@ class SupplyController extends Controller
         );
 
         $response->headers->set('Content-Type', 'text/javascript');
+        $response->setCache(
+            [
+                'last_modified' => new \DateTime(),
+                'max_age' => 3600 * 24 * 1,
+                's_maxage' => 3600 * 24 * 1,
+                'private' => false,
+                'public' => true,
+            ]
+        );
 
         return $response;
     }

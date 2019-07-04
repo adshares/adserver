@@ -185,9 +185,9 @@ class UserLedgerEntry extends Model
         $amount = (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
             ->sum('amount');
 
-        if ($amount < 0) {
-            throw new UserLedgerException("Negative Balance ($amount)");
-        }
+//        if ($amount < 0) {
+//            throw new UserLedgerException("Negative Balance ($amount)");
+//        }
 
         return $amount;
     }
@@ -197,9 +197,9 @@ class UserLedgerEntry extends Model
         $amount = (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
             ->sum('amount');
 
-        if ($amount < 0) {
-            throw new UserLedgerException('Negative Balance');
-        }
+//        if ($amount < 0) {
+//            throw new UserLedgerException('Negative Balance');
+//        }
 
         return $amount;
     }
@@ -209,9 +209,9 @@ class UserLedgerEntry extends Model
         $amount = (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
             ->sum('amount');
 
-        if ($amount < 0) {
-            throw new UserLedgerException('Negative Balance');
-        }
+//        if ($amount < 0) {
+//            throw new UserLedgerException('Negative Balance');
+//        }
 
         return $amount;
     }

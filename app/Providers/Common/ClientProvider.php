@@ -64,7 +64,7 @@ final class ClientProvider extends ServiceProvider
                             [
                                 'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
                                 'base_uri' => config('app.adpay_endpoint'),
-                                'timeout' => 30,
+                                'timeout' => 300,
                             ]
                         )
                     )

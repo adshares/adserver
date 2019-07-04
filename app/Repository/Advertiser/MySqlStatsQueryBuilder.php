@@ -51,7 +51,6 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->selectBaseColumns($type);
         $this->appendEventType($type);
-        $this->withoutRemovedCampaigns();
 
         parent::__construct($type);
     }
