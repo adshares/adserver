@@ -40,6 +40,10 @@ class UserLedgerEntry extends Model
 {
     use SoftDeletes;
 
+    public const INDEX_USER_ID = 'user_ledger_entry_user_id_index';
+
+    public const INDEX_CREATED_AT = 'user_ledger_entry_created_at_index';
+
     public const STATUS_ACCEPTED = 0;
 
     public const STATUS_PENDING = 1;
