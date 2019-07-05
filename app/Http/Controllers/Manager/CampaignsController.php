@@ -214,17 +214,7 @@ class CampaignsController extends Controller
 
     public function count(): JsonResponse
     {
-        //@TODO: create function data
-        $siteCount = [
-            'totalBudget' => 0,
-            'totalClicks' => 0,
-            'totalImpressions' => 0,
-            'averageCTR' => 0,
-            'averageCPC' => 0,
-            'totalCost' => 0,
-        ];
-
-        return self::json($siteCount);
+        throw new NotFoundHttpException('Endpoint removed');
     }
 
     public function edit(Request $request, int $campaignId): JsonResponse

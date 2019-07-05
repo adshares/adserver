@@ -53,6 +53,29 @@ final class DummyAdClassifyClient implements AdClassify
           "value": "image"
         }
       ]
+    },
+    {
+      "type": "dict",
+      "label": "Categories by Adshares",
+      "key": "adshares",
+      "list": [
+        {
+          "label": "Adult",
+          "value": "adult"
+        },
+        {
+          "label": "Crypto",
+          "value": "crypto"
+        },
+        {
+          "label": "Gambling",
+          "value": "gambling"
+        },
+        {
+          "label": "Drugs",
+          "value": "drugs"
+        }
+      ]
     }
   ]
 }

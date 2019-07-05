@@ -27,14 +27,17 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function hex2bin;
 use function in_array;
 
 /**
  * @property Campaign campaign
+ * @property BannerClassification[] classifications
  * @mixin Builder
  */
 class Banner extends Model
@@ -127,5 +130,26 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
+    {
+        $builder = Banner::whereDoesntHave(
+            'classifications',
+            function ($query) use ($classifier) {
+                $query->where('classifier', $classifier);
+            }
+        );
+
+        if ($bannerIds) {
+            $builder->whereIn('id', $bannerIds);
+        }
+
+        return $builder->get();
+    }
+
+    public function classifications(): HasMany
+    {
+        return $this->hasMany(BannerClassification::class);
     }
 }

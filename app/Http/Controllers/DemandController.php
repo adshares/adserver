@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
@@ -32,7 +33,6 @@ use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -414,7 +414,20 @@ class DemandController extends Controller
         $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
-        foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
+
+        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
+        
+        $bannerIds = [];
+        foreach ($activeCampaigns as $campaign) {
+            foreach ($campaign->ads as $banner) {
+                if (Banner::STATUS_ACTIVE === $banner->status) {
+                    $bannerIds[] = $banner->id;
+                }
+            }
+        }
+        $bannerClassifications = BannerClassification::fetchByBannerIds($bannerIds);
+
+        foreach ($activeCampaigns as $i => $campaign) {
             $banners = [];
 
             foreach ($campaign->ads as $banner) {
@@ -434,6 +447,7 @@ class DemandController extends Controller
                     'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
                     'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
                     'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    'classification' => $bannerClassifications[$banner->id] ?? [],
                 ];
             }
 
