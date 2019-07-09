@@ -30,7 +30,7 @@ Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'
     ->name('demand-inventory');
 
 Route::group(
-    ['domain' => config('app.serve_domain')],
+    ['domain' => config('app.serve_base_url')],
     function () {
         Route::get('/serve/{id}.jpg', [DemandController::class, 'serve'])
             ->name('banner-serve');

@@ -26,7 +26,7 @@ use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(
-    ['domain' => config('app.serve_domain')],
+    ['domain' => config('app.serve_base_url')],
     function () {
         Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])
             ->name('log-network-view');
@@ -36,7 +36,7 @@ Route::group(
 );
 
 Route::group(
-    ['domain' => config('app.main_js_domain')],
+    ['domain' => config('app.main_js_base_url')],
     function () {
         Route::get('/main.js', [SupplyController::class, 'findScript'])
             ->name('supply-find.js');
