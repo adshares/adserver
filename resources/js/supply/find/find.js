@@ -196,23 +196,22 @@ function isNumber(x)
     return !isNaN(1*x);
 }
 
-var DocElem = function( property )
-{
-    var t;
-    return ((t = document.documentElement) || (t = document.body.parentNode)) && isNumber( t[property] ) ? t : document.body
-};
+function viewSize() {
+    var doc = document, w = window;
+    var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
+        doc.documentElement: doc.body;
 
-var viewSize = function ()
-{
-    var doc = DocElem( 'clientWidth' ),
-        body = document.body,
-        w, h;
-    return isNumber( document.clientWidth ) ? { w : document.clientWidth, h : document.clientHeight } :
-        doc === body
-        || (w = Math.max( doc.clientWidth, body.clientWidth )) > self.innerWidth
-        || (h = Math.max( doc.clientHeight, body.clientHeight )) > self.innerHeight ? { w : body.clientWidth, h : body.clientHeight } :
-            { w : w, h : h }
-};
+    var width = docEl.clientWidth;
+    var height = docEl.clientHeight;
+
+    // mobile zoomed in?
+    if ( w.innerWidth && width > w.innerWidth ) {
+        width = w.innerWidth;
+        height = w.innerHeight;
+    }
+
+    return {w: width, h: height};
+}
 
 function getBoundRect(el, overflow) {
     var left = 0, top = 0;
