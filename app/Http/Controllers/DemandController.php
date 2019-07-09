@@ -129,6 +129,7 @@ class DemandController extends Controller
                 'public' => true,
             ]
         );
+        $response->headers->addCacheControlDirective('no-transform');
 
         $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
 

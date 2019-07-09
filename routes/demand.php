@@ -32,7 +32,7 @@ Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'
 Route::group(
     ['domain' => config('app.serve_base_url')],
     function () {
-        Route::get('/serve/{id}.jpg', [DemandController::class, 'serve'])
+        Route::get('/serve/x{id}.doc', [DemandController::class, 'serve'])
             ->name('banner-serve');
 
         Route::get('/view/{id}', [DemandController::class, 'view'])
@@ -45,8 +45,9 @@ Route::group(
 );
 Route::get('/view.js', [DemandController::class, 'viewScript']);
 
-Route::get('/serve/{id}.jpg', [DemandController::class, 'serve']);
+Route::get('/serve/x{id}.doc', [DemandController::class, 'serve']);
 Route::get('/serve/{id}.png', [DemandController::class, 'serve']);
+Route::get('/serve/{id}.jpg', [DemandController::class, 'serve']);
 Route::get('/serve/{id}.doc', [DemandController::class, 'serve']);
 Route::get('/serve/{id}', [DemandController::class, 'serve']);
 
