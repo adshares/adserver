@@ -440,16 +440,7 @@ domReady(function () {
                 return;
             }
 
-            if (isVisible(banner.destElement)) {
-                fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-            } else {
-                var timer = setInterval(function () {
-                    if (isVisible(banner.destElement)) {
-                        clearInterval(timer);
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-                    }
-                }, 200);
-            }
+            fetchBanner(banner, {page: params[0], zone: params[i + 1]});
         })
     });
 
@@ -557,7 +548,17 @@ var fetchBanner = function (banner, context) {
                 'iid': getImpressionId()
             });
 
-        var fn = function () {
+        var sendViewEvent = function(element) {
+            // record view if visible for 1 second
+            var timer = setInterval(function () {
+                if (isVisible(element)) {
+                    clearInterval(timer);
+                    dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                }
+            }, 1000);
+        };
+
+        var displayBanner = function () {
             var caller;
             if (data.type.indexOf('image/') != -1) {
                 caller = createImageFromData;
@@ -573,22 +574,37 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                sendViewEvent(element);
             });
         };
+
+        var displayIfVisible = function()
+        {
+            if (isVisible(banner.destElement)) {
+                displayBanner();
+            } else {
+                var timer = setInterval(function () {
+                    if (isVisible(banner.destElement)) {
+                        clearInterval(timer);
+                        displayBanner();
+                    }
+                }, 200);
+            }
+        };
+
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
                 if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
                     if(hash === 'NO_SUPPORT') {
                         console.log('warning: hash not checked');
                     }
-                    fn();
+                    displayIfVisible();
                 } else {
                     console.log('hash error', banner, hash);
                 }
             });
         } else {
-            fn();
+            displayIfVisible();
         }
     }, function () {
         console.log('could not fetch url', banner);
