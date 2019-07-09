@@ -223,6 +223,7 @@ class DemandController extends Controller
 
         $caseId = $request->query->get('cid');
 
+        $url = Utils::addUrlParameter($url, 'cid', $caseId);
         $response = new RedirectResponse($url);
         $impressionId = $request->query->get('iid');
 
