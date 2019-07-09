@@ -222,7 +222,6 @@ class DemandController extends Controller
         $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
         $response = new RedirectResponse($url);
         $impressionId = $request->query->get('iid');
@@ -250,11 +249,11 @@ class DemandController extends Controller
 
         $response->send();
 
-        if ($campaign->hasClickConversion()) {
-            return $response;
-        }
-
+        $hasCampaignClickConversion = $campaign->hasClickConversion();
+        $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
+        $eventId = Utils::createCaseIdContainingEventType($caseId, $eventType);
         $ip = bin2hex(inet_pton($request->getClientIp()));
+
         EventLog::create(
             $caseId,
             $eventId,
@@ -269,10 +268,12 @@ class DemandController extends Controller
             $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
-            EventLog::TYPE_CLICK
+            $eventType
         );
-
-        EventLog::eventClicked($caseId);
+        
+        if (!$hasCampaignClickConversion) {
+            EventLog::eventClicked($caseId);
+        }
 
         return $response;
     }

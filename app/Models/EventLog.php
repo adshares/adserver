@@ -85,6 +85,8 @@ class EventLog extends Model
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
+    
+    public const TYPE_SHADOW_CLICK = 'shadow-click';
 
     public const TYPE_CONVERSION = 'conversion';
 
@@ -219,7 +221,7 @@ class EventLog extends Model
         $log->their_userdata = $userData;
         $log->event_type = $type;
 
-        if ($type === self::TYPE_CLICK) {
+        if ($type === self::TYPE_CLICK || $type === self::TYPE_SHADOW_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
             $viewEvent = self::where('event_id', hex2bin($eventId))->first();
 
@@ -269,7 +271,7 @@ class EventLog extends Model
         $log->their_userdata = $theirUserData;
         $log->event_type = $type;
 
-        if ($type === self::TYPE_CLICK) {
+        if ($type === self::TYPE_CLICK || $type === self::TYPE_SHADOW_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
             $viewEvent = self::where('event_id', hex2bin($eventId))->first();
 

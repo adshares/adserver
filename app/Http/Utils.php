@@ -248,6 +248,10 @@ class Utils
             return $caseId.'03';
         }
 
+        if ($eventType === 'shadow-click') {
+            return $caseId.'04';
+        }
+
         throw new RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
     }
 
