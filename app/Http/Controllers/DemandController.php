@@ -96,7 +96,7 @@ class DemandController extends Controller
         $isIECompat = $request->query->has('xdr');
 
         if ('html' === $banner->creative_type) {
-            $mime = 'application/octet-stream';
+            $mime = 'image/png';
         } else {
             $mime = 'image/png';
         }
