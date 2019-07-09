@@ -28,21 +28,10 @@ use Illuminate\Support\Facades\Route;
 Route::group(
     ['domain' => config('app.serve_domain')],
     function () {
-        Route::get('/supply/find', [SupplyController::class, 'find'])
-            ->name('supply-find');
-        Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
-        Route::post('/supply/find', [SupplyController::class, 'find']);
-
-        Route::get('/supply/register', [SupplyController::class, 'register'])
-            ->name('supply-register');
-
         Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])
             ->name('log-network-view');
         Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])
             ->name('log-network-click');
-
-        # WHY PAGE
-        Route::get('/supply/why', [SupplyController::class, 'why']);
     }
 );
 
@@ -51,11 +40,24 @@ Route::group(
     function () {
         Route::get('/main.js', [SupplyController::class, 'findScript'])
             ->name('supply-find.js');
-        Route::get('/supply/find.js', [SupplyController::class, 'findScript']);
     }
 );
+
+Route::get('/supply/find', [SupplyController::class, 'find']);
+Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
+Route::post('/supply/find', [SupplyController::class, 'find']);
+
+Route::get('/main.js', [SupplyController::class, 'findScript']);
+Route::get('/supply/find.js', [SupplyController::class, 'findScript']);
+Route::get('/supply/register', [SupplyController::class, 'register']);
+
+Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView']);
+Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick']);
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
+
+# WHY PAGE
+Route::get('/supply/why', [SupplyController::class, 'why']);
