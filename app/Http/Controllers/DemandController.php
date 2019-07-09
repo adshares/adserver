@@ -96,7 +96,7 @@ class DemandController extends Controller
         $isIECompat = $request->query->has('xdr');
 
         if ('html' === $banner->creative_type) {
-            $mime = 'image/png';
+            $mime = 'text/html';
         } else {
             $mime = 'image/png';
         }
@@ -129,6 +129,7 @@ class DemandController extends Controller
                 'public' => true,
             ]
         );
+        $response->headers->addCacheControlDirective('no-transform');
 
         $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
 
