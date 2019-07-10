@@ -127,22 +127,20 @@ class CampaignRepository
                 }
             }
 
-            if ($conversions) {
-                $existedConversions = $this->findConversionsWhichMustStay($conversions);
-                ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
+            $existedConversions = $this->findConversionsWhichMustStay($conversions);
+            ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
 
-                foreach ($conversions as $conversionInput) {
-                    if (isset($conversionInput['uuid'])
-                        && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
-                        continue;
-                    }
-
-                    unset($conversionInput['uuid']);
-                    $conversion = new ConversionDefinition();
-                    $conversion->fill($conversionInput);
-
-                    $campaign->conversions()->save($conversion);
+            foreach ($conversions as $conversionInput) {
+                if (isset($conversionInput['uuid'])
+                    && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
+                    continue;
                 }
+
+                unset($conversionInput['uuid']);
+                $conversion = new ConversionDefinition();
+                $conversion->fill($conversionInput);
+
+                $campaign->conversions()->save($conversion);
             }
         } catch (\Exception $ex) {
             DB::rollBack();

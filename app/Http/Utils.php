@@ -20,12 +20,14 @@
 
 namespace Adshares\Adserver\Http;
 
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use DateTime;
+use Exception as GenericPhpException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -246,6 +248,10 @@ class Utils
             return $caseId.'03';
         }
 
+        if ($eventType === 'shadow-click') {
+            return $caseId.'04';
+        }
+
         throw new RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
     }
 
@@ -349,5 +355,16 @@ class Utils
     public static function hexUuidFromBase64UrlWithChecksum(string $trackingId): string
     {
         return bin2hex(substr(self::urlSafeBase64Decode($trackingId), 0, 16));
+    }
+
+    public static function base64Encoded16BytesSecret(): string
+    {
+        try {
+            $bytes = random_bytes(16);
+        } catch (GenericPhpException $exception) {
+            $bytes = hex2bin(UuidStringGenerator::v4());
+        }
+
+        return Utils::urlSafeBase64Encode($bytes);
     }
 }

@@ -36,8 +36,13 @@ class CreateConversionDefinitionsTable extends Migration
             $table->string('event_type', 50); // e.g. register, click, buy
             $table->string('type')->default('basic'); // basic, advanced
             $table->bigInteger('value')->nullable();
+            $table->boolean('is_value_mutable')->default(0);
             $table->bigInteger('limit')->nullable();
+            $table->bigInteger('cost')->default(0);
+            $table->unsignedInteger('occurrences')->default(0);
+            $table->boolean('is_repeatable')->default(0);
             $table->timestamps();
+            $table->softDeletes();
 
             $table->foreign('campaign_id')->references('id')->on('campaigns')->onUpdate('RESTRICT')->onDelete('CASCADE');
         });

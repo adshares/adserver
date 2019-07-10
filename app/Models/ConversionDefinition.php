@@ -29,27 +29,44 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Validation\Rule;
 use function hex2bin;
 use function route;
 
+/**
+ * @property int id
+ * @property string uuid
+ * @property int campaign_id
+ * @property string name
+ * @property string budget_type
+ * @property string event_type
+ * @property string type
+ * @property int|null value
+ * @property bool is_value_mutable
+ * @property int|null limit
+ * @property bool is_repeatable
+ * @property int cost
+ * @property int occurrences
+ */
 class ConversionDefinition extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
 
     private const IN_BUDGET = 'in_budget';
+
     private const OUT_OF_BUDGET = 'out_of_budget';
 
     public const BASIC_TYPE = 'basic';
+
     public const ADVANCED_TYPE = 'advanced';
 
     public const ALLOWED_TYPES = [
         self::BASIC_TYPE,
         self::ADVANCED_TYPE,
     ];
-
-    private const CLICK_CONVERSION = 'click';
 
     protected $fillable = [
         'campaign_id',
@@ -58,7 +75,9 @@ class ConversionDefinition extends Model
         'event_type',
         'type',
         'value',
+        'is_value_mutable',
         'limit',
+        'is_repeatable',
     ];
 
     protected $visible = [
@@ -69,7 +88,16 @@ class ConversionDefinition extends Model
         'event_type',
         'type',
         'value',
+        'is_value_mutable',
         'limit',
+        'is_repeatable',
+        'link',
+        'cost',
+        'occurrences',
+    ];
+
+    protected $appends = [
+        'link',
     ];
 
     protected $traitAutomate = [
@@ -95,17 +123,35 @@ class ConversionDefinition extends Model
         return $this->hasMany(ConversionGroup::class);
     }
 
-    public static function generateLink(int $definitionConvertionId): string
+    public function getLinkAttribute()
     {
         $params = [
-            'conversion_id' => $definitionConvertionId,
-            'cid' => '',
-            'value' => '',
-            'tnonce' => '',
-            'sig' => '',
+            'uuid' => $this->uuid,
         ];
 
-        return (new SecureUrl(route('conversion', $params)))->toString();
+        if (self::ADVANCED_TYPE === $this->type) {
+            $params = array_merge(
+                $params,
+                [
+                    'value' => 'value',
+                    'nonce' => 'nonce',
+                    'ts' => 'timestamp',
+                    'sig' => 'signature',
+                ]
+            );
+        }
+
+        return (new SecureUrl(route('conversion.gif', $params)))->toString();
+    }
+
+    public function isAdvanced(): bool
+    {
+        return self::ADVANCED_TYPE === $this->type;
+    }
+
+    public function isRepeatable(): bool
+    {
+        return (bool)$this->is_repeatable;
     }
 
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
@@ -121,17 +167,10 @@ class ConversionDefinition extends Model
             ->whereNotIn('uuid', $binaryUuids)->delete();
     }
 
-    public static function isClickConversionForCampaign(int $campaignId): bool
-    {
-        return (bool) self::where('campaign_id', $campaignId)
-            ->where('event_type', self::CLICK_CONVERSION)
-            ->first();
-    }
-
     public static function rules(array $conversion): array
     {
         $type = $conversion['type'] ?? null;
-        $eventType = $conversion['event_type'] ?? null;
+        $isValueMutable = $conversion['is_value_mutable'] ?? null;
         $rules = [
             'uuid' => 'string|nullable',
             'campaign_id' => 'required|integer',
@@ -141,8 +180,8 @@ class ConversionDefinition extends Model
             'value' => [
                 'integer',
                 'nullable',
-                Rule::requiredIf(static function () use ($type, $eventType) {
-                    return $type === self::BASIC_TYPE && $eventType !== self::CLICK_CONVERSION;
+                Rule::requiredIf(static function () use ($isValueMutable) {
+                    return 0 === $isValueMutable;
                 }),
             ],
             'limit' => 'integer|nullable',
@@ -150,8 +189,12 @@ class ConversionDefinition extends Model
 
         if ($type === self::BASIC_TYPE) {
             $rules['budget_type'] = 'in:'.self::IN_BUDGET;
+            $rules['is_repeatable'] = 'required|in:0';
+            $rules['is_value_mutable'] = 'required|in:0';
         } elseif ($type === self::ADVANCED_TYPE) {
             $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
+            $rules['is_repeatable'] = 'required|in:0,1';
+            $rules['is_value_mutable'] = 'required|in:0,1';
         }
 
         return $rules;
