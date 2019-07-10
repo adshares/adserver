@@ -244,9 +244,39 @@ function getBoundRect(el, overflow) {
     }
 }
 
+var isWindowVisible = (function() {
+    var hidden, visibilityChange;
+    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+        hidden = "hidden";
+        visibilityChange = "visibilitychange";
+    } else if (typeof document.msHidden !== "undefined") {
+        hidden = "msHidden";
+        visibilityChange = "msvisibilitychange";
+    } else if (typeof document.webkitHidden !== "undefined") {
+        hidden = "webkitHidden";
+        visibilityChange = "webkitvisibilitychange";
+    }
+
+    var isVisible;
+
+    if (typeof document.addEventListener === "undefined" || hidden === undefined) {
+        isVisible = true;
+    } else {
+        var handleVisibilityChange = function() {
+            isVisible = !document[hidden];
+        }
+        document.addEventListener(visibilityChange, handleVisibilityChange, false);
+        handleVisibilityChange();
+    }
+
+    return function() {
+        return isVisible;
+    }
+})();
+
 // checks if eleemnt is visible on screen
 var isVisible = function (el) {
-    if (!isRendered(el))
+    if (!isRendered(el) || !isWindowVisible())
         return false;
 
     var rect = getBoundRect(el),
