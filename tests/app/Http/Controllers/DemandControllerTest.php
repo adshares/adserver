@@ -26,6 +26,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
@@ -183,12 +184,12 @@ final class DemandControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        $conversionEvent = EventLog::where('event_type', EventLog::TYPE_CONVERSION)->first();
+        $conversionEvent = EventConversionLog::where('event_type', EventLog::TYPE_CONVERSION)->first();
         $eventData = [
-            'event_type' => EventLog::TYPE_CONVERSION,
+            'event_type' => EventConversionLog::TYPE_CONVERSION,
             'campaign_id' => hex2bin($campaign->uuid),
         ];
-        $this->assertDatabaseHas('event_logs', $eventData);
+        $this->assertDatabaseHas('event_conversion_logs', $eventData);
 
         $conversionGroupData = [
             'event_logs_id' => $conversionEvent->id,
