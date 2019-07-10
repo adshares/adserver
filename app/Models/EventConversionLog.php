@@ -324,10 +324,11 @@ class EventConversionLog extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    public static function eventClicked(string $caseId): void
+    public static function eventClicked(string $caseId): int
     {
         $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
-        self::where('event_id', hex2bin($eventId))
+
+        return self::where('event_id', hex2bin($eventId))
             ->update(['is_view_clicked' => 1]);
     }
 

@@ -275,24 +275,24 @@ class DemandController extends Controller
                 $eventType
             );
         } else {
-            EventLog::create(
-                $caseId,
-                $eventId,
-                $bannerId,
-                $context['page']['zone'] ?? null,
-                $trackingId,
-                $publisherId,
-                $campaign->uuid,
-                $user->uuid,
-                $payTo,
-                $ip,
-                $requestHeaders,
-                Utils::getImpressionContextArray($request),
-                $keywords,
-                $eventType
-            );
-
-            EventLog::eventClicked($caseId);
+            if (EventLog::eventClicked($caseId) > 0) {
+                EventLog::create(
+                    $caseId,
+                    $eventId,
+                    $bannerId,
+                    $context['page']['zone'] ?? null,
+                    $trackingId,
+                    $publisherId,
+                    $campaign->uuid,
+                    $user->uuid,
+                    $payTo,
+                    $ip,
+                    $requestHeaders,
+                    Utils::getImpressionContextArray($request),
+                    $keywords,
+                    $eventType
+                );
+            }
         }
 
         return $response;
@@ -708,26 +708,26 @@ class DemandController extends Controller
         foreach ($cases as $caseId => $weight) {
             $viewEventData = $viewEventsData[$caseId];
 
-            EventLog::createWithUserData(
-                $caseId,
-                Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK),
-                $viewEventData['bannerId'],
-                $viewEventData['zoneId'],
-                $viewEventData['trackingId'],
-                $viewEventData['publisherId'],
-                $campaignPublicId,
-                $advertiserId,
-                $viewEventData['payTo'],
-                $ip,
-                $headers,
-                $impressionContext,
-                '',
-                EventLog::TYPE_CLICK,
-                $viewEventData['humanScore'],
-                $viewEventData['ourUserdata']
-            );
-
-            EventLog::eventClicked($caseId);
+            if (EventLog::eventClicked($caseId) > 0) {
+                EventLog::createWithUserData(
+                    $caseId,
+                    Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK),
+                    $viewEventData['bannerId'],
+                    $viewEventData['zoneId'],
+                    $viewEventData['trackingId'],
+                    $viewEventData['publisherId'],
+                    $campaignPublicId,
+                    $advertiserId,
+                    $viewEventData['payTo'],
+                    $ip,
+                    $headers,
+                    $impressionContext,
+                    '',
+                    EventLog::TYPE_CLICK,
+                    $viewEventData['humanScore'],
+                    $viewEventData['ourUserdata']
+                );
+            }
         }
 
         DB::commit();
