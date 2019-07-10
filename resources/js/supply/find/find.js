@@ -196,23 +196,22 @@ function isNumber(x)
     return !isNaN(1*x);
 }
 
-var DocElem = function( property )
-{
-    var t;
-    return ((t = document.documentElement) || (t = document.body.parentNode)) && isNumber( t[property] ) ? t : document.body
-};
+function viewSize() {
+    var doc = document, w = window;
+    var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
+        doc.documentElement: doc.body;
 
-var viewSize = function ()
-{
-    var doc = DocElem( 'clientWidth' ),
-        body = document.body,
-        w, h;
-    return isNumber( document.clientWidth ) ? { w : document.clientWidth, h : document.clientHeight } :
-        doc === body
-        || (w = Math.max( doc.clientWidth, body.clientWidth )) > self.innerWidth
-        || (h = Math.max( doc.clientHeight, body.clientHeight )) > self.innerHeight ? { w : body.clientWidth, h : body.clientHeight } :
-            { w : w, h : h }
-};
+    var width = docEl.clientWidth;
+    var height = docEl.clientHeight;
+
+    // mobile zoomed in?
+    if ( w.innerWidth && width > w.innerWidth ) {
+        width = w.innerWidth;
+        height = w.innerHeight;
+    }
+
+    return {w: width, h: height};
+}
 
 function getBoundRect(el, overflow) {
     var left = 0, top = 0;
@@ -245,9 +244,39 @@ function getBoundRect(el, overflow) {
     }
 }
 
+var isWindowVisible = (function() {
+    var hidden, visibilityChange;
+    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
+        hidden = "hidden";
+        visibilityChange = "visibilitychange";
+    } else if (typeof document.msHidden !== "undefined") {
+        hidden = "msHidden";
+        visibilityChange = "msvisibilitychange";
+    } else if (typeof document.webkitHidden !== "undefined") {
+        hidden = "webkitHidden";
+        visibilityChange = "webkitvisibilitychange";
+    }
+
+    var isVisible;
+
+    if (typeof document.addEventListener === "undefined" || hidden === undefined) {
+        isVisible = true;
+    } else {
+        var handleVisibilityChange = function() {
+            isVisible = !document[hidden];
+        }
+        document.addEventListener(visibilityChange, handleVisibilityChange, false);
+        handleVisibilityChange();
+    }
+
+    return function() {
+        return isVisible;
+    }
+})();
+
 // checks if eleemnt is visible on screen
 var isVisible = function (el) {
-    if (!isRendered(el))
+    if (!isRendered(el) || !isWindowVisible())
         return false;
 
     var rect = getBoundRect(el),
@@ -441,16 +470,7 @@ domReady(function () {
                 return;
             }
 
-            if (isVisible(banner.destElement)) {
-                fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-            } else {
-                var timer = setInterval(function () {
-                    if (isVisible(banner.destElement)) {
-                        clearInterval(timer);
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-                    }
-                }, 200);
-            }
+            fetchBanner(banner, {page: params[0], zone: params[i + 1]});
         })
     });
 
@@ -558,7 +578,17 @@ var fetchBanner = function (banner, context) {
                 'iid': getImpressionId()
             });
 
-        var fn = function () {
+        var sendViewEvent = function(element) {
+            // record view if visible for 1 second
+            var timer = setInterval(function () {
+                if (isVisible(element)) {
+                    clearInterval(timer);
+                    dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                }
+            }, 1000);
+        };
+
+        var displayBanner = function () {
             var caller;
             if (data.type.indexOf('image/') != -1) {
                 caller = createImageFromData;
@@ -574,22 +604,37 @@ var fetchBanner = function (banner, context) {
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
-                dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                sendViewEvent(element);
             });
         };
+
+        var displayIfVisible = function()
+        {
+            if (isVisible(banner.destElement)) {
+                displayBanner();
+            } else {
+                var timer = setInterval(function () {
+                    if (isVisible(banner.destElement)) {
+                        clearInterval(timer);
+                        displayBanner();
+                    }
+                }, 200);
+            }
+        };
+
         if (banner.creative_sha1) {
             sha1_async(data, function (hash) {
                 if (hash === 'NO_SUPPORT' || hash == banner.creative_sha1) {
                     if(hash === 'NO_SUPPORT') {
                         console.log('warning: hash not checked');
                     }
-                    fn();
+                    displayIfVisible();
                 } else {
                     console.log('hash error', banner, hash);
                 }
             });
         } else {
-            fn();
+            displayIfVisible();
         }
     }, function () {
         console.log('could not fetch url', banner);

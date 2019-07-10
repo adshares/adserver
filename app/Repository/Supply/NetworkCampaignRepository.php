@@ -65,6 +65,7 @@ class NetworkCampaignRepository implements CampaignRepository
     {
         DB::table(NetworkCampaign::getTableName())
             ->where('source_host', $host)
+            ->whereNotIn(self::STATUS_FIELD, [Status::STATUS_DELETED])
             ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
         // mark all banners as DELETED for given $host
@@ -76,6 +77,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 'campaign.id'
             )
             ->where('campaign.source_host', $host)
+            ->where('campaign.'.self::STATUS_FIELD, Status::STATUS_TO_DELETE)
             ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 

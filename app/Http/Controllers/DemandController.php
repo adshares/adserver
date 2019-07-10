@@ -108,11 +108,7 @@ class DemandController extends Controller
             $response = new GzippedStreamedResponse();
         }
 
-        if ($request->headers->has('Origin')) {
-            $response->headers->set('Access-Control-Allow-Origin', '*');
-            $response->headers->set('Access-Control-Allow-Credentials', 'true');
-            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        }
+        $response->headers->set('Access-Control-Allow-Origin', '*');
 
         if ('OPTIONS' === $request->getRealMethod()) {
             $response->headers->set('Access-Control-Max-Age', 1728000);
@@ -156,6 +152,7 @@ class DemandController extends Controller
                 'public' => true,
             ]
         );
+        $response->headers->addCacheControlDirective('no-transform');
 
         $response->headers->set(self::CONTENT_TYPE, ($isIECompat ? 'text/base64,' : '').$mime);
 

@@ -95,7 +95,7 @@ class SupplyController extends Controller
     public function findScript(): StreamedResponse
     {
         $params = [
-            config('app.url'),
+            config('app.serve_base_url'),
             config('app.aduser_base_url'),
             '.'.config('app.adserver_id'),
         ];
@@ -118,6 +118,15 @@ class SupplyController extends Controller
         );
 
         $response->headers->set('Content-Type', 'text/javascript');
+        $response->setCache(
+            [
+                'last_modified' => new \DateTime(),
+                'max_age' => 3600 * 24 * 1,
+                's_maxage' => 3600 * 24 * 1,
+                'private' => false,
+                'public' => true,
+            ]
+        );
 
         return $response;
     }
@@ -332,7 +341,7 @@ class SupplyController extends Controller
 
         $data = [
             'url' => $banner->serve_url,
-            'supplyName' => config('app.adserver_info_name'),
+            'supplyName' => config('app.name'),
             'supplyTermsUrl' => config('app.terms_url'),
             'supplyPrivacyUrl' => config('app.privacy_url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
