@@ -107,10 +107,10 @@ class PublisherReportResponse extends ReportResponse
 
     protected function rows(): array
     {
-        $isAdmin = $this->isAdmin;
+        $isAdminReport = $this->isAdmin;
 
         return array_map(
-            static function ($item) use ($isAdmin) {
+            static function ($item) use ($isAdminReport) {
                 $row = [
                     $item['siteName'],
                     $item['zoneName'],
@@ -127,7 +127,7 @@ class PublisherReportResponse extends ReportResponse
                     $item['ctr'],
                 ];
 
-                if ($isAdmin) {
+                if ($isAdminReport) {
                     array_unshift($row, $item['publisher'] ?? '');
                 }
 
