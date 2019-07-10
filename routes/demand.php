@@ -29,19 +29,31 @@ use Illuminate\Support\Facades\Route;
 Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])
     ->name('demand-inventory');
 
-Route::get('/view.js', [DemandController::class, 'viewScript'])
-    ->name('demand-view.js');
+Route::group(
+    ['domain' => config('app.serve_base_url')],
+    function () {
+        Route::get('/serve/x{id}.doc', [DemandController::class, 'serve'])
+            ->name('banner-serve');
 
-Route::get('/serve/{id}.doc', [DemandController::class, 'serve'])
-    ->name('banner-serve');
+        Route::get('/view/{id}', [DemandController::class, 'view'])
+            ->name('banner-view');
+        Route::get('/click/{id}', [DemandController::class, 'click'])
+            ->name('banner-click');
+        Route::get('/context/{id}', [DemandController::class, 'context'])
+            ->name('banner-context');
+    }
+);
+Route::get('/view.js', [DemandController::class, 'viewScript']);
+
+Route::get('/serve/x{id}.doc', [DemandController::class, 'serve']);
+Route::get('/serve/{id}.png', [DemandController::class, 'serve']);
+Route::get('/serve/{id}.jpg', [DemandController::class, 'serve']);
+Route::get('/serve/{id}.doc', [DemandController::class, 'serve']);
 Route::get('/serve/{id}', [DemandController::class, 'serve']);
 
-Route::get('/view/{id}', [DemandController::class, 'view'])
-    ->name('banner-view');
-Route::get('/click/{id}', [DemandController::class, 'click'])
-    ->name('banner-click');
-Route::get('/context/{id}', [DemandController::class, 'context'])
-    ->name('banner-context');
+Route::get('/view/{id}', [DemandController::class, 'view']);
+Route::get('/click/{id}', [DemandController::class, 'click']);
+Route::get('/context/{id}', [DemandController::class, 'context']);
 Route::get('/payment-details/{transactionId}/{accountAddress}/{date}/{signature}',
     [DemandController::class, 'paymentDetails']);
 

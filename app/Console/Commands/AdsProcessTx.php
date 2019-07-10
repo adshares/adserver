@@ -274,7 +274,7 @@ class AdsProcessTx extends BaseCommand
             }
 
             try {
-                $processPaymentDetails = $this->paymentDetailsProcessor->processPaymentDetails(
+                $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
                     $incomingPayment,
                     $paymentDetails,
                     $resultsCollection->eventValueSum()
@@ -293,6 +293,8 @@ class AdsProcessTx extends BaseCommand
 
             $incomingPayment->last_offset = $offset;
         }
+
+        $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);
 
         $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
 

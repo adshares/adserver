@@ -50,7 +50,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $adsPayment = $this->createAdsPayment(10000);
 
-        $paymentDetailsProcessor->processPaymentDetails($adsPayment, [], 0);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, [], 0);
 
         $this->assertCount(0, NetworkPayment::all());
     }
@@ -84,7 +84,7 @@ final class PaymentDetailsProcessorTest extends TestCase
             ];
         }
 
-        $result = $paymentDetailsProcessor->processPaymentDetails($adsPayment, $paymentDetails, 0);
+        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
@@ -96,11 +96,9 @@ final class PaymentDetailsProcessorTest extends TestCase
         }
         $expectedAdIncome = $totalPayment - $expectedLicenseAmount - $expectedOperatorAmount;
 
+        $this->assertEquals($totalPayment, $result->eventValuePartialSum());
         $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
-
-        $this->assertCount(1, UserLedgerEntry::all());
-        $userLedgerEntry = UserLedgerEntry::first();
-        $this->assertEquals($expectedAdIncome, $userLedgerEntry->amount);
+        $this->assertEquals($expectedAdIncome, NetworkEventLog::sum('paid_amount'));
     }
 
     private function getExchangeRateReader(): ExchangeRateReader

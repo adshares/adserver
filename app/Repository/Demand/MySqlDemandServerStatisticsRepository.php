@@ -39,15 +39,23 @@ SQL;
 
     private const QUERY_DOMAINS = <<<SQL
 SELECT
-    SUBSTRING_INDEX(e.domain, "www.", -1) AS name,
-    SUM(e.views) AS impressions,
-    ROUND(SUM(e.cost)/100000000000, 2) AS cost,
-    ROUND(1000 * IFNULL((SUM(e.cost)/100000000000)/SUM(e.views), 0), 2) AS cpm,
-    GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height)) AS sizes
-FROM event_logs_hourly e
-JOIN banners b ON b.uuid = e.banner_id
-WHERE e.hour_timestamp < DATE(NOW()) AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
-    AND e.domain != '' AND e.views > 0
+	e.name,
+	SUM(e.impressions) AS impressions,
+	ROUND(SUM(e.cost)/100000000000, 2) AS cost,
+	ROUND(1000 * (SUM(e.cost)/100000000000)/SUM(e.impressions), 2) AS cpm,
+	GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height)) AS sizes
+FROM (
+	SELECT
+		e.banner_id,
+		SUBSTRING_INDEX(e.domain, "www.", -1) AS name,
+		SUM(e.views) AS impressions,
+		SUM(e.cost) AS cost
+	FROM event_logs_hourly e
+	WHERE e.hour_timestamp < DATE(NOW()) AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
+		AND e.domain != '' AND e.views > 0
+	GROUP BY 1, 2
+) e
+LEFT JOIN banners b ON b.uuid = e.banner_id
 GROUP BY 1;
 SQL;
 
