@@ -68,8 +68,6 @@ class ConversionDefinition extends Model
         self::ADVANCED_TYPE,
     ];
 
-    private const CLICK_CONVERSION = 'click';
-
     protected $fillable = [
         'campaign_id',
         'name',
