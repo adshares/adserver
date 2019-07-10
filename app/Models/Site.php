@@ -152,7 +152,7 @@ class Site extends Model
     {
         $scriptUrl = (new SecureUrl(route('supply-find.js')))->toString();
 
-        return "<script src=\"{$scriptUrl}\" async></script>";
+        return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
     }
 
     public function setStatusAttribute($value): void
