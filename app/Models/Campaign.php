@@ -153,7 +153,7 @@ class Campaign extends Model
 
     protected $appends = [
         'conversion_click_link',
-        'basic_information', 
+        'basic_information',
         'targeting',
         'ads',
     ];
@@ -259,18 +259,14 @@ class Campaign extends Model
 
     public function getConversionClickLinkAttribute(): ?string
     {
-        switch ($this->conversion_click)
-        {
+        switch ($this->conversion_click) {
             case self::CONVERSION_CLICK_BASIC:
-            {
                 $params = [
                     'campaign_uuid' => $this->uuid,
                 ];
 
                 return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
-            }
             case self::CONVERSION_CLICK_ADVANCED:
-            {
                 $params = [
                     'campaign_uuid' => $this->uuid,
                     'value' => 'value',
@@ -280,7 +276,6 @@ class Campaign extends Model
                 ];
 
                 return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
-            }
             case self::CONVERSION_CLICK_NONE:
             default:
                 return null;
