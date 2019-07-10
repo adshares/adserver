@@ -99,6 +99,6 @@ class ConversionGroup extends Model
 
     public function event(): BelongsTo
     {
-        return $this->belongsTo(EventLog::class);
+        return $this->belongsTo(EventConversionLog::class);
     }
 }

@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\ConversionGroup;
+use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -250,29 +251,47 @@ class DemandController extends Controller
 
         $response->send();
 
+        $ip = bin2hex(inet_pton($request->getClientIp()));
+
         $hasCampaignClickConversion = $campaign->hasClickConversion();
         $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
         $eventId = Utils::createCaseIdContainingEventType($caseId, $eventType);
-        $ip = bin2hex(inet_pton($request->getClientIp()));
 
-        EventLog::create(
-            $caseId,
-            $eventId,
-            $bannerId,
-            $context['page']['zone'] ?? null,
-            $trackingId,
-            $publisherId,
-            $campaign->uuid,
-            $user->uuid,
-            $payTo,
-            $ip,
-            $requestHeaders,
-            Utils::getImpressionContextArray($request),
-            $keywords,
-            $eventType
-        );
-        
-        if (!$hasCampaignClickConversion) {
+        if ($hasCampaignClickConversion) {
+            EventConversionLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $context['page']['zone'] ?? null,
+                $trackingId,
+                $publisherId,
+                $campaign->uuid,
+                $user->uuid,
+                $payTo,
+                $ip,
+                $requestHeaders,
+                Utils::getImpressionContextArray($request),
+                $keywords,
+                $eventType
+            );
+        } else {
+            EventLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $context['page']['zone'] ?? null,
+                $trackingId,
+                $publisherId,
+                $campaign->uuid,
+                $user->uuid,
+                $payTo,
+                $ip,
+                $requestHeaders,
+                Utils::getImpressionContextArray($request),
+                $keywords,
+                $eventType
+            );
+
             EventLog::eventClicked($caseId);
         }
 
@@ -630,7 +649,7 @@ class DemandController extends Controller
         foreach ($cases as $caseId => $weight) {
             $viewEventData = $viewEventsData[$caseId];
 
-            $event = EventLog::createWithUserData(
+            $event = EventConversionLog::createWithUserData(
                 $caseId,
                 Uuid::v4()->toString(),
                 $viewEventData['bannerId'],
