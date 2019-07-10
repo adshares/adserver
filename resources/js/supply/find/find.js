@@ -210,7 +210,19 @@ function viewSize() {
         height = w.innerHeight;
     }
 
-    return {w: width, h: height};
+    return {width: width, height: height, left: 0, top: 0, right: width, bottom: height};
+}
+
+function rectIntersect(a, b)
+{
+    var x = Math.max(a.left, b.left);
+    var num1 = Math.min(a.left + a.width, b.left + b.width);
+    var y = Math.max(a.top, b.top);
+    var num2 = Math.min(a.top + a.height, b.top + b.height);
+    if (num1 >= x && num2 >= y)
+        return {left: x, top: y, width: num1 - x, height: num2 - y, bottom: num2, right: num1};
+    else
+        return false;
 }
 
 function getBoundRect(el, overflow) {
@@ -274,37 +286,51 @@ var isWindowVisible = (function() {
     }
 })();
 
-// checks if eleemnt is visible on screen
+
+var isOccluded = function(rect, el)
+{
+    outer:
+    for(var i=0; i < 10; i++) {
+        var top = document.elementFromPoint(Math.round(rect.left + Math.random() * rect.width), Math.round(rect.top + Math.random() * rect.height));
+        while (top) {
+            if (top == el) {
+                continue outer;
+            }
+            top = top.parentElement;
+        }
+        return true;
+    }
+
+    return false;
+};
+
+// checks if element is visible on screen
 var isVisible = function (el) {
     if (!isRendered(el) || !isWindowVisible())
         return false;
 
-    var rect = getBoundRect(el),
-        top = rect.top,
-        height = rect.height,
-        left = rect.left,
-        width = rect.width,
-        el = el.parentNode;
-    while (el != document.body) {
-        rect = getBoundRect(el, true);
-        if (top <= rect.bottom === false)
+    var rootEl = el;
+    var rootRect = getBoundRect(el);
+    var intersect = rootRect;
+    var rootArea = rootRect.width * rootRect.height;
+    el = el.parentElement;
+
+    while (el.parentElement) {
+        var rect = getBoundRect(el, true);
+        intersect = rectIntersect(intersect, rect);
+        var area = intersect ? intersect.width * intersect.height : 0;
+        if(area < rootArea / 2)
             return false;
-        if (left <= rect.right === false)
-            return false;
-        // Check if the element is out of view due to a container scrolling
-        if ((top + height) < rect.top)
-            return false;
-        if ((left + width) < rect.left)
-            return false;
-        el = el.parentNode;
+        el = el.parentElement;
     }
 
     var viewsize = viewSize();
-    // Check its within the document viewport
-    return top <= viewsize.h
-        && top > -height
-        && left <= viewsize.w
-        && left > -width;
+    intersect = rectIntersect(intersect, viewsize);
+    if(isOccluded(intersect, rootEl)) {
+        return false;
+    }
+    var area = intersect ? intersect.width * intersect.height : 0;
+    return area >= rootArea / 2;
 };
 
 var impressionId;
