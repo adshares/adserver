@@ -25,21 +25,34 @@ use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/supply/find', [SupplyController::class, 'find'])
-    ->name('supply-find');
+Route::group(
+    ['domain' => config('app.serve_base_url')],
+    function () {
+        Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])
+            ->name('log-network-view');
+        Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])
+            ->name('log-network-click');
+    }
+);
+
+Route::group(
+    ['domain' => config('app.main_js_base_url')],
+    function () {
+        Route::get('/main.js', [SupplyController::class, 'findScript'])
+            ->name('supply-find.js');
+    }
+);
+
+Route::get('/supply/find', [SupplyController::class, 'find']);
 Route::get('/supply/find/{data}', [SupplyController::class, 'find']);
 Route::post('/supply/find', [SupplyController::class, 'find']);
 
-Route::get('/main.js', [SupplyController::class, 'findScript'])
-    ->name('supply-find.js');
+Route::get('/main.js', [SupplyController::class, 'findScript']);
 Route::get('/supply/find.js', [SupplyController::class, 'findScript']);
-Route::get('/supply/register', [SupplyController::class, 'register'])
-    ->name('supply-register');
+Route::get('/supply/register', [SupplyController::class, 'register']);
 
-Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView'])
-    ->name('log-network-view');
-Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick'])
-    ->name('log-network-click');
+Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView']);
+Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick']);
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
@@ -48,4 +61,3 @@ Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
 
 # WHY PAGE
 Route::get('/supply/why', [SupplyController::class, 'why']);
-
