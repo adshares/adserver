@@ -141,7 +141,7 @@ class NetworkCampaignRepository implements CampaignRepository
     private function fetchCampaignByDemand(Campaign $campaign): ?NetworkCampaign
     {
         return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))
-            ->where('source_host', $campaign->getSourceHost())
+            ->where('source_address', $campaign->getSourceAddress())
             ->first();
     }
 

@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Client;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Common\Application\Service\SignatureVerifier;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
@@ -64,7 +65,11 @@ final class GuzzleDemandClient implements DemandClient
         $this->timeout = $timeout;
     }
 
-    public function fetchAllInventory(string $sourceHost, string $inventoryUrl): CampaignCollection
+    public function fetchAllInventory(
+        AccountId $sourceAddress,
+        string $sourceHost,
+        string $inventoryUrl
+    ): CampaignCollection
     {
         $client = new Client($this->requestParameters());
 
@@ -83,9 +88,10 @@ final class GuzzleDemandClient implements DemandClient
 
         $this->validateResponse($statusCode, $body);
 
+        $address = $sourceAddress->toString();
         $campaigns = $this->createDecodedResponseFromBody($body);
-        $campaignDemandIdsToSupplyIds = $this->getCampaignDemandIdsToSupplyIds($campaigns);
-        $bannerDemandIdsToSupplyIds = $this->getBannerDemandIdsToSupplyIds($campaigns);
+        $campaignDemandIdsToSupplyIds = $this->getCampaignDemandIdsToSupplyIds($campaigns, $address);
+        $bannerDemandIdsToSupplyIds = $this->getBannerDemandIdsToSupplyIds($campaigns, $address);
 
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
@@ -95,6 +101,7 @@ final class GuzzleDemandClient implements DemandClient
                         $this->processData(
                             $data,
                             $sourceHost,
+                            $address,
                             $campaignDemandIdsToSupplyIds,
                             $bannerDemandIdsToSupplyIds
                         )
@@ -222,6 +229,7 @@ final class GuzzleDemandClient implements DemandClient
     private function processData(
         array $data,
         string $sourceHost,
+        string $sourceAddress,
         array $campaignDemandIdsToSupplyIds,
         array $bannerDemandIdsToSupplyIds
     ): array {
@@ -231,7 +239,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $data['source_campaign'] = [
             'host' => $sourceHost,
-            'address' => $data['address'],
+            'address' => $sourceAddress,
             'version' => self::VERSION,
             'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
             'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
@@ -298,17 +306,17 @@ final class GuzzleDemandClient implements DemandClient
         }
     }
 
-    private function getCampaignDemandIdsToSupplyIds(array $campaigns): array
+    private function getCampaignDemandIdsToSupplyIds(array $campaigns, string $sourceAddress): array
     {
         $campaignIds = [];
         foreach ($campaigns as $campaign) {
             $campaignIds[] = $campaign['id'];
         }
 
-        return NetworkCampaign::findSupplyIdsByDemandIds($campaignIds);
+        return NetworkCampaign::findSupplyIdsByDemandIdsAndAddress($campaignIds, $sourceAddress);
     }
 
-    private function getBannerDemandIdsToSupplyIds(array $campaigns): array
+    private function getBannerDemandIdsToSupplyIds(array $campaigns, string $sourceAddress): array
     {
         $bannerDemandIds = [];
         foreach ($campaigns as $campaign) {
@@ -317,6 +325,6 @@ final class GuzzleDemandClient implements DemandClient
             }
         }
 
-        return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds);
+        return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds, $sourceAddress);
     }
 }

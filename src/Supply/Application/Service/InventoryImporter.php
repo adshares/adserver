@@ -70,7 +70,7 @@ class InventoryImporter
 
     public function import(AccountId $sourceAddress, string $sourceHost, string $inventoryHost): void
     {
-        $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
+        $campaigns = $this->client->fetchAllInventory($sourceAddress, $sourceHost, $inventoryHost);
         $bannersPublicIds = $this->getBannerIds($campaigns);
         $classificationCollection = $this->classifyClient->fetchBannersClassification($bannersPublicIds);
 
