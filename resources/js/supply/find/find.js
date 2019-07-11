@@ -291,7 +291,7 @@ var isOccluded = function(rect, el)
 {
     outer:
     for(var i=0; i < 10; i++) {
-        var top = document.elementFromPoint(Math.round(rect.left + Math.random() * rect.width), Math.round(rect.top + Math.random() * rect.height));
+        var top = document.elementFromPoint(Math.floor(rect.left + Math.random() * rect.width), Math.floor(rect.top + Math.random() * rect.height));
         while (top) {
             if (top == el) {
                 continue outer;
