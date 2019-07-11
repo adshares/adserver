@@ -22,18 +22,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
-use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Adshares\Supply\Domain\Repository\Exception\CampaignRepositoryException;
-use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Domain\ValueObject\Classification;
-use function array_key_exists;
-use function array_search;
 
 class InventoryImporter
 {
@@ -71,7 +68,7 @@ class InventoryImporter
         $this->classifyVerifier = $classifyVerifier;
     }
 
-    public function import(string $sourceHost, string $inventoryHost): void
+    public function import(AccountId $sourceAddress, string $sourceHost, string $inventoryHost): void
     {
         $campaigns = $this->client->fetchAllInventory($sourceHost, $inventoryHost);
         $bannersPublicIds = $this->getBannerIds($campaigns);
@@ -80,7 +77,7 @@ class InventoryImporter
         $this->transactionManager->begin();
 
         try {
-            $this->clearInventoryForHost($sourceHost);
+            $this->clearInventoryForHost($sourceAddress);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -134,8 +131,8 @@ class InventoryImporter
         }
     }
 
-    public function clearInventoryForHost(string $host): void
+    public function clearInventoryForHost(AccountId $sourceAddress): void
     {
-        $this->markedCampaignsAsDeletedService->execute($host);
+        $this->markedCampaignsAsDeletedService->execute($sourceAddress);
     }
 }

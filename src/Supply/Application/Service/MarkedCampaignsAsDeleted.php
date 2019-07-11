@@ -20,6 +20,7 @@
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 
 class MarkedCampaignsAsDeleted
@@ -32,8 +33,8 @@ class MarkedCampaignsAsDeleted
         $this->campaignRepository = $campaignRepository;
     }
 
-    public function execute(string $host)
+    public function execute(AccountId $sourceAddress): void
     {
-        $this->campaignRepository->markedAsDeletedByHost($host);
+        $this->campaignRepository->markedAsDeletedBySourceAddress($sourceAddress);
     }
 }

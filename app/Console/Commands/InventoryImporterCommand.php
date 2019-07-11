@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -34,6 +35,7 @@ class InventoryImporterCommand extends BaseCommand
 
     protected $description = 'Import data from all defined inventories';
 
+    /** @var InventoryImporter  */
     private $inventoryImporterService;
 
     public function __construct(Locker $locker, InventoryImporter $inventoryImporterService)
@@ -71,37 +73,36 @@ class InventoryImporterCommand extends BaseCommand
         $networkHostSuccessfulConnectionCount = 0;
         /** @var NetworkHost $networkHost */
         foreach ($networkHosts as $networkHost) {
+            $address = new AccountId($networkHost->address);
+            $info = $networkHost->info;
             try {
-                $info = $networkHost->info;
-                $this->inventoryImporterService->import($info->getServerUrl(), $info->getInventoryUrl());
+                $this->inventoryImporterService->import($address, $info->getServerUrl(), $info->getInventoryUrl());
 
                 $networkHost->connectionSuccessful();
                 ++$networkHostSuccessfulConnectionCount;
             } catch (UnexpectedClientResponseException $exception) {
-                $host = $networkHost->info->getServerUrl();
                 $networkHost->connectionFailed();
 
                 $this->warn(sprintf(
                     '[Inventory Importer] Inventory host (%s) is unavailable (Exception: %s)',
-                    $host,
+                    $address->toString(),
                     $exception->getMessage()
                 ));
 
                 if ($networkHost->isInventoryToBeRemoved()) {
-                    $this->inventoryImporterService->clearInventoryForHost($host);
+                    $this->inventoryImporterService->clearInventoryForHost($address);
 
                     $this->info(sprintf(
                         '[Inventory Importer] Inventory (%s) has been removed.',
-                        $host
+                        $address->toString()
                     ));
                 }
             } catch (EmptyInventoryException $exception) {
-                $host = $networkHost->info->getServerUrl();
-                $this->inventoryImporterService->clearInventoryForHost($host);
+                $this->inventoryImporterService->clearInventoryForHost($address);
 
                 $this->info(sprintf(
                     '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database.',
-                    $host
+                    $address->toString()
                 ));
             }
         }
@@ -117,14 +118,15 @@ class InventoryImporterCommand extends BaseCommand
 
     private function removeNonExistentHosts(): void
     {
-        $hosts = NetworkHost::findNonExistentHosts();
-        foreach ($hosts as $host) {
-            $this->inventoryImporterService->clearInventoryForHost($host);
+        $addresses = NetworkHost::findNonExistentAddresses();
+
+        foreach ($addresses as $address) {
+            $this->inventoryImporterService->clearInventoryForHost(new AccountId($address));
 
             $this->info(
                 sprintf(
-                    '[Inventory Importer] Inventory (%s) has been removed.',
-                    $host
+                    '[Inventory Importer] Non existent inventory (%s) has been removed.',
+                    $address
                 )
             );
         }

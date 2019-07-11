@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
@@ -61,14 +62,15 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
-    public function markedAsDeletedByHost(string $host): void
+    public function markedAsDeletedBySourceAddress(AccountId $sourceAddress): void
     {
+        $address = $sourceAddress->toString();
+
         DB::table(NetworkCampaign::getTableName())
-            ->where('source_host', $host)
+            ->where('source_address', $address)
             ->whereNotIn(self::STATUS_FIELD, [Status::STATUS_DELETED])
             ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
-        // mark all banners as DELETED for given $host
         DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
             ->join(
                 sprintf('%s as campaign', NetworkCampaign::getTableName()),
@@ -76,7 +78,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 '=',
                 'campaign.id'
             )
-            ->where('campaign.source_host', $host)
+            ->where('campaign.source_address', $address)
             ->where('campaign.'.self::STATUS_FIELD, Status::STATUS_TO_DELETE)
             ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }

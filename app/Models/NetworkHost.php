@@ -160,18 +160,18 @@ class NetworkHost extends Model
         $this->attributes['info'] = json_encode($info->toArray());
     }
 
-    public static function findNonExistentHosts(): array
+    public static function findNonExistentAddresses(): array
     {
         $self = new self();
 
         $query = $self
-            ->select(['network_campaigns.source_host as host'])
+            ->select(['network_campaigns.source_address as address'])
             ->rightJoin('network_campaigns', function ($join) {
-                $join->on('network_hosts.host', '=', 'network_campaigns.source_host');
+                $join->on('network_hosts.address', '=', 'network_campaigns.source_address');
             })
-            ->where('network_hosts.host', null)
+            ->where('network_hosts.address', null)
             ->where('network_campaigns.status', '=', Status::STATUS_ACTIVE);
 
-        return $query->get()->pluck('host')->toArray();
+        return $query->get()->pluck('address')->toArray();
     }
 }
