@@ -118,7 +118,7 @@ class InventoryImporterCommand extends BaseCommand
 
     private function removeNonExistentHosts(): void
     {
-        $addresses = NetworkHost::findNonExistentAddresses();
+        $addresses = NetworkHost::findNonExistentHostsAddresses();
 
         foreach ($addresses as $address) {
             $this->inventoryImporterService->clearInventoryForHost(new AccountId($address));

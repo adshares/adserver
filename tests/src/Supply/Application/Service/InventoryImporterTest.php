@@ -124,7 +124,7 @@ final class InventoryImporterTest extends TestCase
         $repository = $this->repositoryMock();
         $repository
             ->expects($this->once())
-            ->method('markedAsDeletedByHost')
+            ->method('markedAsDeletedBySourceAddress')
             ->will($this->throwException(new CampaignRepositoryException()));
         $repository
             ->expects($this->never())
@@ -166,7 +166,7 @@ final class InventoryImporterTest extends TestCase
         $repository = $this->repositoryMock();
         $repository
             ->expects($this->once())
-            ->method('markedAsDeletedByHost');
+            ->method('markedAsDeletedBySourceAddress');
         $repository
             ->expects($this->exactly(2))
             ->method('save');

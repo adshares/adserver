@@ -160,7 +160,7 @@ class NetworkHost extends Model
         $this->attributes['info'] = json_encode($info->toArray());
     }
 
-    public static function findNonExistentAddresses(): array
+    public static function findNonExistentHostsAddresses(): array
     {
         $self = new self();
 
