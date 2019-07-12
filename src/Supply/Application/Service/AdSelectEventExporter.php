@@ -89,7 +89,7 @@ class AdSelectEventExporter
             return $eventId + 1;
         }
 
-        return $this->eventRepository->fetchLastUnPaidEventsByDate(new DateTime('-7 days'));
+        return $this->eventRepository->fetchLastUnPaidEventsByDate(new DateTime('-2 hours'));
     }
 
     public function getLastPaidPaymentId(): int
@@ -100,6 +100,6 @@ class AdSelectEventExporter
             return $eventId + 1;
         }
 
-        return $this->eventRepository->fetchLastPaidEventsByDate(new DateTime('-7 days'));
+        return $this->eventRepository->fetchLastPaidEventsByDate(new DateTime('-2 hours'));
     }
 }
