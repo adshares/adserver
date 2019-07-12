@@ -393,7 +393,7 @@ class DemandController extends Controller
     {
         Log::error(sprintf('[PP TEST] conversionGif=%s', $uuid));
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
-            $baseUrl = $request->getSchemeAndHttpHost();
+            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
             $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
             
             Log::error(sprintf('[PP TEST] baseUrl=%s', $baseUrl));
