@@ -878,10 +878,11 @@ class DemandController extends Controller
             return $urls[0];
         }
 
-        if ($key === count($urls)) {
+        $nextKey = $key + 1;
+        if ($nextKey >= count($urls)) {
             return null;
         }
 
-        return $urls[1 + $key];
+        return $urls[$nextKey];
     }
 }
