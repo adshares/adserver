@@ -30,8 +30,8 @@ class CreateConversionGroupsTable extends Migration
         Schema::create('conversion_groups', static function (Blueprint $table) {
             $table->increments('id');
             $table->bigInteger('event_logs_id')->unsigned();
-            $table->binary('case_id', 16);
-            $table->binary('group_id', 16);
+            $table->binary('case_id');
+            $table->binary('group_id');
             $table->bigInteger('conversion_definition_id')->unsigned();
             $table->bigInteger('value')->unsigned()->nullable();
             $table->decimal('weight', 3, 2);
@@ -40,7 +40,7 @@ class CreateConversionGroupsTable extends Migration
             $table
                 ->foreign('event_logs_id')
                 ->references('id')
-                ->on('event_logs')
+                ->on('event_conversion_logs')
                 ->onUpdate('RESTRICT')
                 ->onDelete('CASCADE');
         });

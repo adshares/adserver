@@ -391,8 +391,19 @@ class DemandController extends Controller
     {
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
+        $response->send();
 
-        $this->processConversion($uuid, $request, $response);
+        try {
+            $this->processConversion($uuid, $request);
+        } catch (BadRequestHttpException|NotFoundHttpException $exception) {
+            Log::error(
+                sprintf(
+                    '[DemandController] conversion error %d (%s)',
+                    $exception->getStatusCode(),
+                    $exception->getMessage()
+                )
+            );
+        }
 
         return $response;
     }
@@ -410,8 +421,19 @@ class DemandController extends Controller
     {
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
+        $response->send();
 
-        $this->processConversionClick($campaignUuid, $request, $response);
+        try {
+            $this->processConversionClick($campaignUuid, $request);
+        } catch (BadRequestHttpException|NotFoundHttpException $exception) {
+            Log::error(
+                sprintf(
+                    '[DemandController] click conversion error %d (%s)',
+                    $exception->getStatusCode(),
+                    $exception->getMessage()
+                )
+            );
+        }
 
         return $response;
     }
@@ -602,7 +624,7 @@ class DemandController extends Controller
         }
     }
 
-    private function processConversion(string $uuid, Request $request, Response $response): void
+    private function processConversion(string $uuid, Request $request, Response $response = null): void
     {
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
@@ -631,7 +653,9 @@ class DemandController extends Controller
             }
         }
 
-        $response->send();
+        if (null !== $response) {
+            $response->send();
+        }
 
         $advertiserId = $campaign->user->uuid;
         $groupId = Uuid::v4()->toString();
@@ -673,9 +697,13 @@ class DemandController extends Controller
         DB::commit();
     }
 
-    private function processConversionClick(string $campaignUuid, Request $request, Response $response): void
+    private function processConversionClick(string $campaignUuid, Request $request, Response $response = null): void
     {
         $campaign = Campaign::fetchByUuid($campaignUuid);
+
+        if (null === $campaign) {
+            throw new NotFoundHttpException('No matching campaign found');
+        }
 
         if (!$campaign->hasClickConversion()) {
             throw new BadRequestHttpException('Click conversion not supported');
@@ -691,7 +719,9 @@ class DemandController extends Controller
 
         $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
 
-        $response->send();
+        if (null !== $response) {
+            $response->send();
+        }
 
         $advertiserId = $campaign->user->uuid;
         $headers = $request->headers->all();
