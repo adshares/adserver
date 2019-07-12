@@ -382,6 +382,17 @@ class DemandController extends Controller
 
     public function conversion(string $uuid, Request $request): JsonResponse
     {
+        if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
+            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
+            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+
+            if (null === $baseUrlNext) {
+                throw new BadRequestHttpException('Missing case id');
+            }
+
+            return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
+        }
+
         $response = self::json(['status' => 'OK'], Response::HTTP_OK);
 
         $this->processConversion($uuid, $request, $response);
@@ -391,13 +402,9 @@ class DemandController extends Controller
 
     public function conversionGif(string $uuid, Request $request): Response
     {
-        Log::error(sprintf('[PP TEST] conversionGif=%s', $uuid));
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
             $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
-            
-            Log::error(sprintf('[PP TEST] baseUrl=%s', $baseUrl));
-            Log::error(sprintf('[PP TEST] $baseUrlNext=%s', $baseUrlNext));
 
             if (null === $baseUrlNext) {
                 throw new BadRequestHttpException('Missing case id');
@@ -405,7 +412,6 @@ class DemandController extends Controller
 
             return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
         }
-        Log::error('[PP TEST] cid or tid is present');
 
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
@@ -428,6 +434,17 @@ class DemandController extends Controller
 
     public function conversionClick(string $campaignUuid, Request $request): JsonResponse
     {
+        if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
+            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
+            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+
+            if (null === $baseUrlNext) {
+                throw new BadRequestHttpException('Missing case id');
+            }
+
+            return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
+        }
+
         $response = self::json(['status' => 'OK'], Response::HTTP_OK);
 
         $this->processConversionClick($campaignUuid, $request, $response);
@@ -437,6 +454,17 @@ class DemandController extends Controller
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
+        if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
+            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
+            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+
+            if (null === $baseUrlNext) {
+                throw new BadRequestHttpException('Missing case id');
+            }
+
+            return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
+        }
+
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
         $response->send();
