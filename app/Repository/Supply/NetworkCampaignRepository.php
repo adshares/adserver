@@ -42,6 +42,8 @@ class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
 
+    private const CAMPAIGN_UUID_FIELD = 'uuid';
+
     private const BANNER_CLICK_URL_FIELD = 'click_url';
 
     private const BANNER_SERVE_URL_FIELD = 'serve_url';
@@ -233,7 +235,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         try {
             DB::table(NetworkCampaign::getTableName())
-                ->where(self::BANNER_UUID_FIELD, hex2bin($campaign->getId()))
+                ->where(self::CAMPAIGN_UUID_FIELD, hex2bin($campaign->getId()))
                 ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
