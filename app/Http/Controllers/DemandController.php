@@ -868,9 +868,17 @@ class DemandController extends Controller
     {
         $urls = ServeDomain::fetch();
 
+        if (empty($urls)) {
+            return null;
+        }
+
         $key = array_search($baseUrl, $urls, true);
 
-        if (false === $key || $key === count($urls)) {
+        if (false === $key) {
+            return $urls[0];
+        }
+
+        if ($key === count($urls)) {
             return null;
         }
 
