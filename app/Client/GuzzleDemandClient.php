@@ -69,8 +69,7 @@ final class GuzzleDemandClient implements DemandClient
         AccountId $sourceAddress,
         string $sourceHost,
         string $inventoryUrl
-    ): CampaignCollection
-    {
+    ): CampaignCollection {
         $client = new Client($this->requestParameters());
 
         try {

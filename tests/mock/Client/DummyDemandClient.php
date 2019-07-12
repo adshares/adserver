@@ -154,8 +154,7 @@ final class DummyDemandClient implements DemandClient
         AccountId $sourceAddress,
         string $sourceHost,
         string $inventoryUrl
-    ): CampaignCollection
-    {
+    ): CampaignCollection {
         return new CampaignCollection(...$this->campaigns);
     }
 
