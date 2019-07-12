@@ -36,7 +36,8 @@ let mix = require('laravel-mix');
 mix.babel([
   'resources/js/header/*',
   'resources/js/base/*',
-  'resources/js/supply/*js',
+  'resources/js/supply/inv.js',
+  'resources/js/supply/sha1.js',
   'resources/js/supply/find/*',
   'resources/js/footer/*',
 ], 'public/-/find.js');
