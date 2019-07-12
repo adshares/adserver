@@ -450,7 +450,6 @@ class DemandController extends Controller
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
-                'address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
             ];
         }
 
