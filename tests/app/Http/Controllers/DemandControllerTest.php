@@ -32,7 +32,6 @@ use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 use function uniqid;
@@ -44,8 +43,6 @@ final class DemandControllerTest extends TestCase
     private const PAYMENT_DETAIL_URL = '/payment-details';
 
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
-
-    private const CONVERSION_URL_TEMPLATE = '/conversion/{uuid}.gif';
 
     public function testPaymentDetailsWhenMoreThanOnePaymentExistsForGivenTransactionIdAndAddress(): void
     {
@@ -202,6 +199,6 @@ final class DemandControllerTest extends TestCase
 
     private function buildConversionUrl(string $uuid): string
     {
-        return str_replace('{uuid}', $uuid, self::CONVERSION_URL_TEMPLATE);
+        return route('conversion.gif', ['{uuid}' => $uuid]);
     }
 }

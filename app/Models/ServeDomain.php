@@ -49,6 +49,11 @@ class ServeDomain extends Model
         $serveDomain->save();
     }
 
+    public static function fetch(): array
+    {
+        return ServeDomain::orderBy('updated_at', 'DESC')->get()->pluck('base_url')->toArray();
+    }
+
     public static function clear(): void
     {
         ServeDomain::where('updated_at', '<', new DateTime('-30 days'))->delete();
