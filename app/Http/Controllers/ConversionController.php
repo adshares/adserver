@@ -495,11 +495,11 @@ class ConversionController extends Controller
         }
 
         $nextKey = $key + 1;
-        if ($nextKey >= count($urls)) {
-            return null;
+        if (array_key_exists($nextKey, $urls)) {
+            return $urls[$nextKey];
         }
 
-        return $urls[$nextKey];
+        return null;
     }
 
     private function validateUuid(string $uuid): void
