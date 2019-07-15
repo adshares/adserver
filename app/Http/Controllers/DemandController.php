@@ -401,18 +401,21 @@ class DemandController extends Controller
 
     public function conversionGif(string $uuid, Request $request): Response
     {
+        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
+        $response->headers->set('Content-Type', 'image/gif');
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                throw new BadRequestHttpException('Missing case id');
+                Log::error('[DemandController] conversion error 400 (Missing case id)');
+
+                return $response;
             }
 
             return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
         }
 
-        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
-        $response->headers->set('Content-Type', 'image/gif');
         $response->send();
 
         try {
@@ -451,18 +454,21 @@ class DemandController extends Controller
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
+        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
+        $response->headers->set('Content-Type', 'image/gif');
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                throw new BadRequestHttpException('Missing case id');
+                Log::error('[DemandController] conversion error 400 (Missing case id)');
+
+                return $response;
             }
 
             return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
         }
 
-        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
-        $response->headers->set('Content-Type', 'image/gif');
         $response->send();
 
         try {
