@@ -175,9 +175,9 @@ final class Campaign
         return $this->targetingExcludes;
     }
 
-    public function getSourceHost(): string
+    public function getSourceAddress(): string
     {
-        return $this->sourceCampaign->getHost();
+        return $this->sourceCampaign->getAddress();
     }
 
     public function getBudget(): int
