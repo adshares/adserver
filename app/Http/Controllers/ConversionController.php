@@ -95,9 +95,6 @@ class ConversionController extends Controller
     {
         $this->validateUuid($uuid);
 
-        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
-        $response->headers->set('Content-Type', 'image/gif');
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -106,12 +103,13 @@ class ConversionController extends Controller
                     sprintf('[DemandController] conversion error 400 (Missing case id for: %s)', $uuid)
                 );
 
-                return $response;
+                return $this->createOnePixelResponse();
             }
 
             return redirect($baseUrlNext.route(Route::currentRouteName(), ['uuid' => $uuid], false));
         }
 
+        $response = $this->createOnePixelResponse();
         $response->send();
 
         try {
@@ -154,9 +152,6 @@ class ConversionController extends Controller
     {
         $this->validateUuid($campaignUuid);
 
-        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
-        $response->headers->set('Content-Type', 'image/gif');
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -165,12 +160,13 @@ class ConversionController extends Controller
                     sprintf('[DemandController] conversion error 400 (Missing case id for campaign: %s)', $campaignUuid)
                 );
 
-                return $response;
+                return $this->createOnePixelResponse();
             }
 
             return redirect($baseUrlNext.route(Route::currentRouteName(), ['campaign_uuid' => $campaignUuid], false));
         }
 
+        $response = $this->createOnePixelResponse();
         $response->send();
 
         try {
@@ -513,5 +509,13 @@ class ConversionController extends Controller
                 sprintf('Invalid id: %s', $uuid)
             );
         }
+    }
+
+    private function createOnePixelResponse(): Response
+    {
+        $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
+        $response->headers->set('Content-Type', 'image/gif');
+
+        return $response;
     }
 }
