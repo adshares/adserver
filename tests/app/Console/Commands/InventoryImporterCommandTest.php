@@ -37,7 +37,7 @@ final class InventoryImporterCommandTest extends TestCase
     public function testNoHosts(): void
     {
         $mockNetworkHost = Mockery::mock('alias:Adshares\Adserver\Models\NetworkHost');
-        $mockNetworkHost->shouldReceive('findNonExistentHosts')->andReturn([]);
+        $mockNetworkHost->shouldReceive('findNonExistentHostsAddresses')->andReturn([]);
         $mockNetworkHost->shouldReceive('fetchHosts')->andReturn(new Collection());
 
         $this->artisan('ops:demand:inventory:import')->assertExitCode(0);
@@ -49,14 +49,14 @@ final class InventoryImporterCommandTest extends TestCase
      */
     public function testNonExistentHosts(): void
     {
-        $sourceHost = 'https://example.com';
+        $sourceAddress = '0001-00000001-8B4E';
 
         $mockNetworkHost = Mockery::mock('alias:Adshares\Adserver\Models\NetworkHost');
-        $mockNetworkHost->shouldReceive('findNonExistentHosts')->andReturn([$sourceHost]);
+        $mockNetworkHost->shouldReceive('findNonExistentHostsAddresses')->andReturn([$sourceAddress]);
         $mockNetworkHost->shouldReceive('fetchHosts')->andReturn(new Collection());
 
         $campaignRepository = $this->createMock(CampaignRepository::class);
-        $campaignRepository->expects($this->once())->method('markedAsDeletedByHost');
+        $campaignRepository->expects($this->once())->method('markedAsDeletedBySourceAddress');
         $this->app->bind(
             CampaignRepository::class,
             function () use ($campaignRepository) {

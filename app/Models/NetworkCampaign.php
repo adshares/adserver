@@ -112,7 +112,7 @@ class NetworkCampaign extends Model
         return $this->banners()->where('status', Status::STATUS_ACTIVE)->get();
     }
 
-    public static function findSupplyIdsByDemandIds(array $demandIds): array
+    public static function findSupplyIdsByDemandIdsAndAddress(array $demandIds, string $sourceAddress): array
     {
         $binDemandIds = array_map(
             function (string $item) {
@@ -121,7 +121,10 @@ class NetworkCampaign extends Model
             $demandIds
         );
 
-        $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)->select('uuid', 'demand_campaign_id')->get();
+        $campaigns = self::whereIn('demand_campaign_id', $binDemandIds)
+            ->where('source_address', $sourceAddress)
+            ->select('uuid', 'demand_campaign_id')
+            ->get();
 
         $ids = [];
 
