@@ -21,6 +21,7 @@
 declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\ClassifyController;
+use Adshares\Adserver\Http\Controllers\ConversionController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
@@ -66,7 +67,11 @@ Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'previ
 
 Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
 
-Route::get('/kw/kl/{campaign_uuid}.gif', [DemandController::class, 'conversionClickGif'])->name('conversionClick.gif');
-Route::get('/kw/kl/{campaign_uuid}', [DemandController::class, 'conversionClick'])->name('conversionClick');
-Route::get('/kw/{uuid}.gif', [DemandController::class, 'conversionGif'])->name('conversion.gif');
-Route::get('/kw/{uuid}', [DemandController::class, 'conversion'])->name('conversion');
+Route::get('/kw/kl/{campaign_uuid}.gif', [ConversionController::class, 'conversionClickGif'])
+    ->name('conversionClick.gif');
+Route::get('/kw/kl/{campaign_uuid}', [ConversionController::class, 'conversionClick'])
+    ->name('conversionClick');
+Route::get('/kw/{uuid}.gif', [ConversionController::class, 'conversionGif'])
+    ->name('conversion.gif');
+Route::get('/kw/{uuid}', [ConversionController::class, 'conversion'])
+    ->name('conversion');

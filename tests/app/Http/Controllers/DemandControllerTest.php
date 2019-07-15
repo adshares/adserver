@@ -22,11 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Models\User;
@@ -136,69 +133,5 @@ final class DemandControllerTest extends TestCase
         $this->assertEquals($campaignActive->uuid, $content[0]['id']);
         $this->assertCount($activeBannersCount, $content[0]['banners']);
         $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
-    }
-
-    public function testConversion(): void
-    {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
-
-        /** @var Campaign $campaign */
-        $campaign = factory(Campaign::class)->create(
-            [
-                'user_id' => $user->id,
-                'budget' => 100000000000,
-            ]
-        );
-
-        /** @var EventLog $event */
-        $event = factory(EventLog::class)->create(
-            [
-                'event_type' => EventLog::TYPE_VIEW,
-                'campaign_id' => $campaign->uuid,
-            ]
-        );
-        $event->event_id = Utils::createCaseIdContainingEventType($event->case_id, EventLog::TYPE_VIEW);
-        $event->save();
-
-        $conversionValue = 100000000;
-        $conversion = new ConversionDefinition();
-        $conversion->campaign_id = $campaign->id;
-        $conversion->name = 'a';
-        $conversion->budget_type = 'in_budget';
-        $conversion->event_type = 'Purchase';
-        $conversion->type = ConversionDefinition::BASIC_TYPE;
-        $conversion->value = $conversionValue;
-
-        $conversion->save();
-
-        $url = $this->buildConversionUrl($conversion->uuid);
-
-        $cookies = [
-            'tid' => Utils::urlSafeBase64Encode(hex2bin($event->tracking_id)),
-        ];
-        $response = $this->call('get', $url, [], $cookies);
-
-        $response->assertStatus(Response::HTTP_OK);
-
-        $conversionEvent = EventConversionLog::where('event_type', EventLog::TYPE_CONVERSION)->first();
-        $eventData = [
-            'event_type' => EventConversionLog::TYPE_CONVERSION,
-            'campaign_id' => hex2bin($campaign->uuid),
-        ];
-        $this->assertDatabaseHas('event_conversion_logs', $eventData);
-
-        $conversionGroupData = [
-            'event_logs_id' => $conversionEvent->id,
-            'conversion_definition_id' => $conversion->id,
-            'value' => $conversionValue,
-            'weight' => 1,
-        ];
-        $this->assertDatabaseHas('conversion_groups', $conversionGroupData);
-    }
-
-    private function buildConversionUrl(string $uuid): string
-    {
-        return route('conversion.gif', ['{uuid}' => $uuid]);
     }
 }
