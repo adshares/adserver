@@ -383,8 +383,7 @@ class DemandController extends Controller
     public function conversion(string $uuid, Request $request): JsonResponse
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
-            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
-            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+            $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
                 throw new BadRequestHttpException('Missing case id');
@@ -403,8 +402,7 @@ class DemandController extends Controller
     public function conversionGif(string $uuid, Request $request): Response
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
-            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
-            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+            $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
                 throw new BadRequestHttpException('Missing case id');
@@ -435,8 +433,7 @@ class DemandController extends Controller
     public function conversionClick(string $campaignUuid, Request $request): JsonResponse
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
-            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
-            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+            $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
                 throw new BadRequestHttpException('Missing case id');
@@ -455,8 +452,7 @@ class DemandController extends Controller
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
-            $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
-            $baseUrlNext = $this->selectNextBaseUrl($baseUrl);
+            $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
                 throw new BadRequestHttpException('Missing case id');
@@ -892,13 +888,15 @@ class DemandController extends Controller
         return $viewEventsData;
     }
 
-    private function selectNextBaseUrl(string $baseUrl): ?string
+    private function selectNextBaseUrl(Request $request): ?string
     {
         $urls = ServeDomain::fetch();
 
         if (empty($urls)) {
             return null;
         }
+
+        $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
 
         $key = array_search($baseUrl, $urls, true);
 
