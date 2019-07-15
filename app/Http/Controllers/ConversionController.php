@@ -99,7 +99,7 @@ class ConversionController extends Controller
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error(
+                Log::info(
                     sprintf('[DemandController] conversion error 400 (Missing case id for: %s)', $uuid)
                 );
 
@@ -115,7 +115,7 @@ class ConversionController extends Controller
         try {
             $this->processConversion($uuid, $request);
         } catch (BadRequestHttpException|NotFoundHttpException $exception) {
-            Log::error(
+            Log::info(
                 sprintf(
                     '[DemandController] conversion error %d (%s)',
                     $exception->getStatusCode(),
@@ -156,7 +156,7 @@ class ConversionController extends Controller
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error(
+                Log::info(
                     sprintf('[DemandController] conversion error 400 (Missing case id for campaign: %s)', $campaignUuid)
                 );
 
@@ -172,7 +172,7 @@ class ConversionController extends Controller
         try {
             $this->processConversionClick($campaignUuid, $request);
         } catch (BadRequestHttpException|NotFoundHttpException $exception) {
-            Log::error(
+            Log::info(
                 sprintf(
                     '[DemandController] click conversion error %d (%s)',
                     $exception->getStatusCode(),
@@ -226,7 +226,7 @@ class ConversionController extends Controller
                 $secret
             );
         } catch (RuntimeException $exception) {
-            Log::warning(
+            Log::info(
                 sprintf(
                     '[DemandController] Conversion signature error: (%s) for: %s',
                     $exception->getMessage(),
