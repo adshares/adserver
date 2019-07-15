@@ -382,6 +382,8 @@ class DemandController extends Controller
 
     public function conversion(string $uuid, Request $request): JsonResponse
     {
+        $this->validateUuid($uuid);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -401,6 +403,8 @@ class DemandController extends Controller
 
     public function conversionGif(string $uuid, Request $request): Response
     {
+        $this->validateUuid($uuid);
+
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
 
@@ -408,7 +412,9 @@ class DemandController extends Controller
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error('[DemandController] conversion error 400 (Missing case id)');
+                Log::error(
+                    sprintf('[DemandController] conversion error 400 (Missing case id for: %s)', $uuid)
+                );
 
                 return $response;
             }
@@ -435,6 +441,8 @@ class DemandController extends Controller
 
     public function conversionClick(string $campaignUuid, Request $request): JsonResponse
     {
+        $this->validateUuid($campaignUuid);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -454,6 +462,8 @@ class DemandController extends Controller
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
+        $this->validateUuid($campaignUuid);
+
         $response = new Response(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set('Content-Type', 'image/gif');
 
@@ -461,7 +471,9 @@ class DemandController extends Controller
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error('[DemandController] conversion error 400 (Missing case id)');
+                Log::error(
+                    sprintf('[DemandController] conversion error 400 (Missing case id for campaign: %s)', $campaignUuid)
+                );
 
                 return $response;
             }
@@ -632,22 +644,26 @@ class DemandController extends Controller
     {
         $signature = $request->input('sig');
         if (null === $signature) {
-            throw new BadRequestHttpException('No signature provided');
+            throw new BadRequestHttpException(
+                sprintf('No signature provided for: %s', $conversionUuid));
         }
 
         $nonce = $request->input('nonce');
         if (null === $nonce) {
-            throw new BadRequestHttpException('No nonce provided');
+            throw new BadRequestHttpException(
+                sprintf('No nonce provided for: %s', $conversionUuid));
         }
 
         $timestampCreated = $request->input('ts');
         if (null === $timestampCreated) {
-            throw new BadRequestHttpException('No timestamp provided');
+            throw new BadRequestHttpException(
+                sprintf('No timestamp provided for: %s', $conversionUuid));
         }
 
         $timestampCreated = (int)$timestampCreated;
         if ($timestampCreated <= 0) {
-            throw new BadRequestHttpException('Invalid timestamp');
+            throw new BadRequestHttpException(
+                sprintf('Invalid timestamp for: %s', $conversionUuid));
         }
 
         $value = $request->input('value', '');
@@ -662,13 +678,21 @@ class DemandController extends Controller
                 $secret
             );
         } catch (RuntimeException $exception) {
-            Log::warning(sprintf('[DemandController] Conversion error: %s', $exception->getMessage()));
+            Log::warning(
+                sprintf(
+                    '[DemandController] Conversion signature error: (%s) for: %s',
+                    $exception->getMessage(),
+                    $conversionUuid
+                )
+            );
 
             $isSignatureValid = false;
         }
 
         if (!$isSignatureValid) {
-            throw new BadRequestHttpException('Invalid signature');
+            throw new BadRequestHttpException(
+                sprintf('Invalid signature for: %s', $conversionUuid)
+            );
         }
     }
 
@@ -697,7 +721,9 @@ class DemandController extends Controller
             $caseIds = array_keys($cases);
 
             if (ConversionGroup::containsConversionMatchingCaseIds($conversionDefinitionId, $caseIds)) {
-                throw new BadRequestHttpException('Repeated conversion');
+                throw new BadRequestHttpException(
+                    sprintf('Repeated conversion: %s', $uuid)
+                );
             }
         }
 
@@ -750,11 +776,15 @@ class DemandController extends Controller
         $campaign = Campaign::fetchByUuid($campaignUuid);
 
         if (null === $campaign) {
-            throw new NotFoundHttpException('No matching campaign found');
+            throw new NotFoundHttpException(
+                sprintf('No matching campaign found for id: %s', $campaignUuid)
+            );
         }
 
         if (!$campaign->hasClickConversion()) {
-            throw new BadRequestHttpException('Click conversion not supported');
+            throw new BadRequestHttpException(
+                sprintf('Click conversion not supported for campaign: %s', $campaignUuid)
+            );
         }
 
         if ($campaign->hasClickConversionAdvanced()) {
@@ -810,13 +840,12 @@ class DemandController extends Controller
 
     private function fetchConversionDefinitionOrFail(string $uuid): ConversionDefinition
     {
-        if (32 !== strlen($uuid)) {
-            throw new BadRequestHttpException('Invalid conversion id');
-        }
 
         $conversionDefinition = ConversionDefinition::fetchByUuid($uuid);
         if (!$conversionDefinition) {
-            throw new NotFoundHttpException('No conversion found');
+            throw new NotFoundHttpException(
+                sprintf('No conversion found for id: %s', $uuid)
+            );
         }
 
         return $conversionDefinition;
@@ -834,12 +863,16 @@ class DemandController extends Controller
             $value = $conversionDefinition->value;
         }
         if (null === $value) {
-            throw new BadRequestHttpException('No value provided');
+            throw new BadRequestHttpException(
+                sprintf('No value provided for: %s', $conversionDefinition->uuid)
+            );
         }
 
         $value = (int)$value;
         if ($value <= 0) {
-            throw new BadRequestHttpException('Invalid value');
+            throw new BadRequestHttpException(
+                sprintf('Invalid value of %d for: %s', $value, $conversionDefinition->uuid)
+            );
         }
 
         return $value;
@@ -856,14 +889,18 @@ class DemandController extends Controller
             ) : null;
 
             if (null === $tid) {
-                throw new BadRequestHttpException('Missing case id');
+                throw new BadRequestHttpException(
+                    sprintf('Missing case id for campaign: %s', $campaignPublicId)
+                );
             }
 
             $results = $this->eventCaseFinder->findByTrackingId($campaignPublicId, $tid);
         }
 
         if (0 === count($results)) {
-            throw new NotFoundHttpException('No matching case found');
+            throw new NotFoundHttpException(
+                sprintf('No matching case found for campaign: %s', $campaignPublicId)
+            );
         }
 
         return $results;
@@ -916,5 +953,14 @@ class DemandController extends Controller
         }
 
         return $urls[$nextKey];
+    }
+
+    private function validateUuid(string $uuid): void
+    {
+        if (32 !== strlen($uuid)) {
+            throw new BadRequestHttpException(
+                sprintf('Invalid id: %s', $uuid)
+            );
+        }
     }
 }
