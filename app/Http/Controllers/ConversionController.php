@@ -488,18 +488,11 @@ class ConversionController extends Controller
 
         $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
 
-        $key = array_search($baseUrl, $urls, true);
-
-        if (false === $key) {
+        if (false === ($key = array_search($baseUrl, $urls, true))) {
             return $urls[0];
         }
 
-        $nextKey = $key + 1;
-        if (array_key_exists($nextKey, $urls)) {
-            return $urls[$nextKey];
-        }
-
-        return null;
+        return $urls[$key + 1] ?? null;
     }
 
     private function validateUuid(string $uuid): void
