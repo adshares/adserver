@@ -77,7 +77,7 @@ class InventoryImporter
         $this->transactionManager->begin();
 
         try {
-            $this->clearInventoryForHost($sourceAddress);
+            $this->clearInventoryForHostAddress($sourceAddress);
 
             /** @var Campaign $campaign */
             foreach ($campaigns as $campaign) {
@@ -131,7 +131,7 @@ class InventoryImporter
         }
     }
 
-    public function clearInventoryForHost(AccountId $sourceAddress): void
+    public function clearInventoryForHostAddress(AccountId $sourceAddress): void
     {
         $this->markedCampaignsAsDeletedService->execute($sourceAddress);
     }

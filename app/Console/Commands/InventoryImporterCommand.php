@@ -84,13 +84,13 @@ class InventoryImporterCommand extends BaseCommand
                 $networkHost->connectionFailed();
 
                 $this->warn(sprintf(
-                    '[Inventory Importer] Inventory host (%s) is unavailable (Exception: %s)',
+                    '[Inventory Importer] Inventory (%s) is unavailable (Exception: %s)',
                     $address->toString(),
                     $exception->getMessage()
                 ));
 
                 if ($networkHost->isInventoryToBeRemoved()) {
-                    $this->inventoryImporterService->clearInventoryForHost($address);
+                    $this->inventoryImporterService->clearInventoryForHostAddress($address);
 
                     $this->info(sprintf(
                         '[Inventory Importer] Inventory (%s) has been removed.',
@@ -98,7 +98,7 @@ class InventoryImporterCommand extends BaseCommand
                     ));
                 }
             } catch (EmptyInventoryException $exception) {
-                $this->inventoryImporterService->clearInventoryForHost($address);
+                $this->inventoryImporterService->clearInventoryForHostAddress($address);
 
                 $this->info(sprintf(
                     '[Inventory Importer] Inventory (%s) is empty. It has been removed from the database.',
@@ -121,7 +121,7 @@ class InventoryImporterCommand extends BaseCommand
         $addresses = NetworkHost::findNonExistentHostsAddresses();
 
         foreach ($addresses as $address) {
-            $this->inventoryImporterService->clearInventoryForHost(new AccountId($address));
+            $this->inventoryImporterService->clearInventoryForHostAddress(new AccountId($address));
 
             $this->info(
                 sprintf(
