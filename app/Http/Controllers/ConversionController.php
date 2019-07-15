@@ -482,14 +482,10 @@ class ConversionController extends Controller
     {
         $urls = ServeDomain::fetch();
 
-        if (empty($urls)) {
-            return null;
-        }
-
         $baseUrl = (new SecureUrl($request->getSchemeAndHttpHost()))->toString();
 
         if (false === ($key = array_search($baseUrl, $urls, true))) {
-            return $urls[0];
+            return array_shift($urls);
         }
 
         return $urls[$key + 1] ?? null;
