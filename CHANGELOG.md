@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Use single lock for supply inventory commands
+- Import inventory: update using source address
 ### Fixed
 - Deleting campaigns during inventory import
 

@@ -22,13 +22,18 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Application\Service;
 
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\UrlInterface;
 use Adshares\Supply\Application\Dto\Info;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 
 interface DemandClient
 {
-    public function fetchAllInventory(string $sourceHost, string $inventoryHost): CampaignCollection;
+    public function fetchAllInventory(
+        AccountId $sourceAddress,
+        string $sourceHost,
+        string $inventoryUrl
+    ): CampaignCollection;
 
     public function fetchPaymentDetails(string $host, string $transactionId, int $limit, int $offset): array;
 
