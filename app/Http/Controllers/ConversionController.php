@@ -51,6 +51,8 @@ class ConversionController extends Controller
 {
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
+    private const UUID_LENGTH = 32;
+
     /** @var CampaignRepository */
     private $campaignRepository;
 
@@ -72,8 +74,6 @@ class ConversionController extends Controller
 
     public function conversion(string $uuid, Request $request): JsonResponse
     {
-        $this->validateUuid($uuid);
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -93,13 +93,11 @@ class ConversionController extends Controller
 
     public function conversionGif(string $uuid, Request $request): Response
     {
-        $this->validateUuid($uuid);
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error(
+                Log::info(
                     sprintf('[DemandController] conversion error 400 (Missing case id for: %s)', $uuid)
                 );
 
@@ -115,7 +113,7 @@ class ConversionController extends Controller
         try {
             $this->processConversion($uuid, $request);
         } catch (BadRequestHttpException|NotFoundHttpException $exception) {
-            Log::error(
+            Log::info(
                 sprintf(
                     '[DemandController] conversion error %d (%s)',
                     $exception->getStatusCode(),
@@ -129,8 +127,6 @@ class ConversionController extends Controller
 
     public function conversionClick(string $campaignUuid, Request $request): JsonResponse
     {
-        $this->validateUuid($campaignUuid);
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -150,13 +146,11 @@ class ConversionController extends Controller
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
-        $this->validateUuid($campaignUuid);
-
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
             if (null === $baseUrlNext) {
-                Log::error(
+                Log::info(
                     sprintf('[DemandController] conversion error 400 (Missing case id for campaign: %s)', $campaignUuid)
                 );
 
@@ -172,7 +166,7 @@ class ConversionController extends Controller
         try {
             $this->processConversionClick($campaignUuid, $request);
         } catch (BadRequestHttpException|NotFoundHttpException $exception) {
-            Log::error(
+            Log::info(
                 sprintf(
                     '[DemandController] click conversion error %d (%s)',
                     $exception->getStatusCode(),
@@ -226,9 +220,9 @@ class ConversionController extends Controller
                 $secret
             );
         } catch (RuntimeException $exception) {
-            Log::warning(
+            Log::info(
                 sprintf(
-                    '[DemandController] Conversion signature error: (%s) for: %s',
+                    '[DemandController] conversion signature error: (%s) for: %s',
                     $exception->getMessage(),
                     $conversionUuid
                 )
@@ -246,6 +240,8 @@ class ConversionController extends Controller
 
     private function processConversion(string $uuid, Request $request, Response $response = null): void
     {
+        $this->validateUuid($uuid);
+
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
         $isAdvanced = $conversionDefinition->isAdvanced();
@@ -321,6 +317,8 @@ class ConversionController extends Controller
 
     private function processConversionClick(string $campaignUuid, Request $request, Response $response = null): void
     {
+        $this->validateUuid($campaignUuid);
+
         $campaign = Campaign::fetchByUuid($campaignUuid);
 
         if (null === $campaign) {
@@ -493,7 +491,7 @@ class ConversionController extends Controller
 
     private function validateUuid(string $uuid): void
     {
-        if (32 !== strlen($uuid)) {
+        if (self::UUID_LENGTH !== strlen($uuid)) {
             throw new BadRequestHttpException(
                 sprintf('Invalid id: %s', $uuid)
             );
