@@ -222,7 +222,7 @@ class ConversionController extends Controller
         } catch (RuntimeException $exception) {
             Log::info(
                 sprintf(
-                    '[DemandController] Conversion signature error: (%s) for: %s',
+                    '[DemandController] conversion signature error: (%s) for: %s',
                     $exception->getMessage(),
                     $conversionUuid
                 )
