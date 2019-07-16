@@ -20,25 +20,9 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Repository\Common;
+namespace Adshares\Adserver\Client;
 
-class DummyClassifierExternalRepository implements ClassifierExternalRepository
+interface ClassifierExternalClient
 {
-    public function fetchClassifierPublicKey(string $classifier): ?string
-    {
-        if ('adclassify' === $classifier) {
-            return 'D69BCCF69C2D0F6CED025A05FA7F3BA687D1603AC1C8D9752209AC2BBF2C4D17';
-        }
-
-        return null;
-    }
-
-    public function fetchClassifierUrl(string $classifier): ?string
-    {
-        if ('adclassify' === $classifier) {
-            return 'http://172.18.0.1:8101/classify';
-        }
-
-        return null;
-    }
+    public function requestClassification(string $classifierUrl, array $data): void;
 }
