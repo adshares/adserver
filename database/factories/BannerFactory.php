@@ -27,7 +27,7 @@ $factory->define(Banner::class, function (Faker $faker) {
 
     return [
         'creative_contents' => $faker->sha1(),
-        'creative_type' => $faker->word(),
+        'creative_type' => $faker->randomElement(['image', 'html']),
         'creative_sha1' => $faker->sha1(),
 
         'creative_width' => $width,
