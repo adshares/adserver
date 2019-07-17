@@ -31,7 +31,7 @@ class CampaignSuspension extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private const SUBJECT = 'Campaign suspension';
+    private const SUBJECT = 'Your campaigns have been suspended';
 
     public function __construct()
     {

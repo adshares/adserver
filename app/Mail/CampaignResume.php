@@ -31,7 +31,7 @@ class CampaignResume extends Mailable
     use Queueable;
     use SerializesModels;
 
-    private const SUBJECT = 'Campaign resume';
+    private const SUBJECT = 'Your campaigns have been resumed';
 
     /** @var bool */
     private $revertSuspension;
