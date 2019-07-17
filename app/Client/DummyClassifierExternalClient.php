@@ -61,7 +61,12 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             ];
         }
 
-        $request = Request::create(route('demand-classifications-update', ['classifier' => $classifier], false), 'PATCH', $data);
+        $request =
+            Request::create(
+                route('demand-classifications-update', ['classifier' => $classifier], false),
+                'PATCH',
+                $data
+            );
         app()->handle($request);
     }
 }

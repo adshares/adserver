@@ -111,16 +111,20 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'requests' => $request,
             ];
 
-            $status =
-                $this->sendRequest($url, $data) ? BannerClassification::STATUS_IN_PROGRESS
-                    : BannerClassification::STATUS_ERROR;
-
             BannerClassification::whereIn('banner_id', $bannerIds[$classifier])->update(
                 [
-                    'status' => $status,
+                    'status' => BannerClassification::STATUS_IN_PROGRESS,
                     'requested_at' => new DateTime(),
                 ]
             );
+
+            if (!$this->sendRequest($url, $data)) {
+                BannerClassification::whereIn('banner_id', $bannerIds[$classifier])->update(
+                    [
+                        'status' => BannerClassification::STATUS_ERROR,
+                    ]
+                );
+            }
         }
 
         $this->info('Finish command '.$this->signature);
@@ -135,7 +139,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
         } catch (RuntimeException $exception) {
             $this->info(
                 sprintf(
-                    '[BannerClassificationRequest] exception while sending request to classifier: %s %s',
+                    '[BannerClassificationRequest] exception while sending request to classifier: %s [%s]',
                     $exception->getCode(),
                     $exception->getMessage()
                 )
