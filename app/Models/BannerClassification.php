@@ -74,14 +74,6 @@ class BannerClassification extends Model
         return $bannerClassification;
     }
 
-    public static function fetchByBannerId(int $bannerId): Collection
-    {
-        return BannerClassification::where('banner_id', $bannerId)->where(
-            'status',
-            BannerClassification::STATUS_SUCCESS
-        )->get()->keyBy('classifier');
-    }
-
     public static function fetchByBannerIds(array $bannerIds): Collection
     {
         return BannerClassification::whereIn('banner_id', $bannerIds)->where(
