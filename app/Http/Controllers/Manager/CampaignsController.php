@@ -212,11 +212,6 @@ class CampaignsController extends Controller
         return self::json($campaigns);
     }
 
-    public function count(): JsonResponse
-    {
-        throw new NotFoundHttpException('Endpoint removed');
-    }
-
     public function edit(Request $request, int $campaignId): JsonResponse
     {
         try {
