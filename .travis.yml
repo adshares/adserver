@@ -12,9 +12,11 @@ env:
     - APP_ENV=testing
     - APP_DEBUG=true
 before_install:
-  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "extension = sodium.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - sudo add-apt-repository ppa:ondrej/php -y
+  - sudo apt-get update -q
+  - sudo apt-get install libsodium-dev -y
 install:
+  - pecl install libsodium
   - composer install
   - mkdir -p storage/framework/{sessions,views,cache}
 jobs:
