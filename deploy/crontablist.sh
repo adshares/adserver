@@ -56,6 +56,10 @@ echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:stats:aggregate:publisher"
 echo ""
 
+echo -n "*/10 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:demand:classification:request"
+echo ""
+
 echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
