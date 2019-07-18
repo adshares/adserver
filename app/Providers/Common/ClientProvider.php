@@ -36,8 +36,6 @@ use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
-use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
-use Adshares\Adserver\Repository\Common\DummyClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
@@ -188,13 +186,6 @@ final class ClientProvider extends ServiceProvider
 //                        'timeout' => 3,
 //                    ]
 //                ));
-            }
-        );
-
-        $this->app->bind(
-            ClassifierExternalRepository::class,
-            function() {
-                return new DummyClassifierExternalRepository();
             }
         );
     }

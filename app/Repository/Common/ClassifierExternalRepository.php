@@ -24,11 +24,35 @@ namespace Adshares\Adserver\Repository\Common;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 
-interface ClassifierExternalRepository
+class ClassifierExternalRepository
 {
-    public function fetchDefaultClassifierName(): ?string;
+    public function fetchPublicKeyByClassifierName(string $name): ?string
+    {
+        if (null !== ($classifier = $this->fetchClassifierByName($name))) {
+            return $classifier->getPublicKey();
+        }
 
-    public function fetchPublicKeyByClassifierName(string $name): ?string;
+        return null;
+    }
 
-    public function fetchClassifierByName(string $name): ?ClassifierExternal;
+    public function fetchClassifierByName(string $name): ?ClassifierExternal
+    {
+        if ($this->fetchDefaultClassifierName() === $name) {
+            $publicKey = (string)config('app.classifier_external_public_key') ?: null;
+            $url = (string)config('app.classifier_external_url') ?: null;
+            $clientName = (string)config('app.classifier_external_client_name') ?: null;;
+            $clientApiKey = (string)config('app.classifier_external_client_api_key') ?: null;;
+
+            if (null !== $publicKey && null !== $url && null !== $clientName && null !== $clientApiKey) {
+                return new ClassifierExternal($name, $publicKey, $url, $clientName, $clientApiKey);
+            }
+        }
+
+        return null;
+    }
+
+    private function fetchDefaultClassifierName(): ?string
+    {
+        return (string)config('app.classifier_external_name') ?: null;
+    }
 }
