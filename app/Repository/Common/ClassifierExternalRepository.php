@@ -22,9 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Common;
 
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+
 interface ClassifierExternalRepository
 {
-    public function fetchClassifierPublicKey(string $classifier): ?string;
+    public function fetchDefaultClassifierName(): ?string;
 
-    public function fetchClassifierUrl(string $classifier): ?string;
+    public function fetchPublicKeyByClassifierName(string $name): ?string;
+
+    public function fetchClassifierByName(string $name): ?ClassifierExternal;
 }

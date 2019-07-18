@@ -22,21 +22,35 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Common;
 
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+
 class DummyClassifierExternalRepository implements ClassifierExternalRepository
 {
-    public function fetchClassifierPublicKey(string $classifier): ?string
+    public function fetchDefaultClassifierName(): ?string
     {
-        if ('adclassify' === $classifier) {
-            return 'D69BCCF69C2D0F6CED025A05FA7F3BA687D1603AC1C8D9752209AC2BBF2C4D17';
+        return (string)config('app.classifier_external_name') ?: null;
+    }
+
+    public function fetchPublicKeyByClassifierName(string $name): ?string
+    {
+        if ($this->fetchDefaultClassifierName() === $name) {
+            return (string)config('app.classifier_external_public_key') ?: null;
         }
 
         return null;
     }
 
-    public function fetchClassifierUrl(string $classifier): ?string
+    public function fetchClassifierByName(string $name): ?ClassifierExternal
     {
-        if ('adclassify' === $classifier) {
-            return 'http://172.18.0.1:8101/classify';
+        if ($this->fetchDefaultClassifierName() === $name) {
+            $publicKey = (string)config('app.classifier_external_public_key') ?: null;
+            $url = (string)config('app.classifier_external_url') ?: null;
+            $clientName = (string)config('app.classifier_external_client_name') ?: null;;
+            $clientApiKey = (string)config('app.classifier_external_client_api_key') ?: null;;
+
+            if (null !== $publicKey && null !== $url && null !== $clientName && null !== $clientApiKey) {
+                return new ClassifierExternal($name, $publicKey, $url, $clientName, $clientApiKey);
+            }
         }
 
         return null;

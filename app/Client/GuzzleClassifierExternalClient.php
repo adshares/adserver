@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Common\Exception\RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -37,13 +39,14 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         $this->client = $client;
     }
 
-    public function requestClassification(string $classifierUrl, array $data): void
+    public function requestClassification(ClassifierExternal $classifier, array $data): void
     {
         try {
             $this->client->post(
-                $classifierUrl,
+                $classifier->getUrl(),
                 [
                     RequestOptions::JSON => $data,
+                    RequestOptions::HEADERS => $this->buildHeaders($classifier),
                 ]
             );
         } catch (RequestException $requestException) {
@@ -51,5 +54,26 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
                 $requestException->getMessage(), $requestException->getCode(), $requestException
             );
         }
+    }
+
+    private function buildHeaders(ClassifierExternal $classifier): array
+    {
+        $userName = $classifier->getClientName();
+        $userApiKey = $classifier->getClientApiKey();
+
+        $nonce = Utils::urlSafeBase64Encode(substr(md5(uniqid()), 0, 16));
+        $created = date('c');
+        $digest = Utils::urlSafeBase64Encode(sha1(base64_decode($nonce).$created.$userApiKey, true));
+
+        return [
+            'Authorization' => 'WSSE profile="UsernameToken"',
+            'X-WSSE' => sprintf(
+                'UsernameToken Username="%s", PasswordDigest="%s", Nonce="%s", Created="%s"',
+                $userName,
+                $digest,
+                $nonce,
+                $created
+            ),
+        ];
     }
 }

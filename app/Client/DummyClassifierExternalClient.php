@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -30,10 +31,10 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
 {
     private const PRIVATE_KEY = 'FF767FC8FAF9CFA8D2C3BD193663E8B8CAC85005AD56E085FAB179B52BD88DD6';
 
-    public function requestClassification(string $classifierUrl, array $data): void
+    public function requestClassification(ClassifierExternal $classifier, array $data): void
     {
         $callbackUrl = $data['callback_url'];
-        $classifier = substr($callbackUrl, 1 + strrpos($callbackUrl, '/'));
+        $classifierName = substr($callbackUrl, 1 + strrpos($callbackUrl, '/'));
 
         $requests = $data['requests'];
 
@@ -61,12 +62,11 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             ];
         }
 
-        $request =
-            Request::create(
-                route('demand-classifications-update', ['classifier' => $classifier], false),
-                'PATCH',
-                $data
-            );
+        $request = Request::create(
+            route('demand-classifications-update', ['classifier' => $classifierName], false),
+            'PATCH',
+            $data
+        );
         app()->handle($request);
     }
 }

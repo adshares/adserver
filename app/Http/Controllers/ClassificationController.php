@@ -42,7 +42,7 @@ class ClassificationController extends Controller
 
     public function updateClassification(string $classifier, Request $request): JsonResponse
     {
-        if (null === ($publicKey = $this->classifierRepository->fetchClassifierPublicKey($classifier))) {
+        if (null === ($publicKey = $this->classifierRepository->fetchPublicKeyByClassifierName($classifier))) {
             return self::json([], Response::HTTP_NOT_FOUND);
         }
 

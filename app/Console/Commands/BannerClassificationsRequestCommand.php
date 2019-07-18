@@ -26,6 +26,7 @@ use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
@@ -85,13 +86,13 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
         /** @var BannerClassification $classification */
         foreach ($classifications as $classification) {
-            $classifier = $classification->classifier;
+            $classifierName = $classification->classifier;
             $banner = $classification->banner;
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
 
-            $dataSet[$classifier]['banners'][] = $banner->id;
-            $dataSet[$classifier]['requests'][] = [
+            $dataSet[$classifierName]['banners'][] = $banner->id;
+            $dataSet[$classifierName]['requests'][] = [
                 'id' => $bannerPublicId,
                 'checksum' => $banner->creative_sha1,
                 'type' => $banner->creative_type,
@@ -106,12 +107,12 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
     private function processData(array $dataSet): void
     {
-        foreach ($dataSet as $classifier => $data) {
-            if (null === ($url = $this->classifierRepository->fetchClassifierUrl($classifier))) {
+        foreach ($dataSet as $classifierName => $data) {
+            if (null === ($classifier = $this->classifierRepository->fetchClassifierByName($classifierName))) {
                 $this->warn(
                     sprintf(
                         '[BannerClassificationRequest] unknown classifier (%s)',
-                        $classifier
+                        $classifierName
                     )
                 );
 
@@ -120,7 +121,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
             $bannerIds = $data['banners'];
             $requestData = [
-                'callback_url' => route('demand-classifications-update', ['classifier' => $classifier]),
+                'callback_url' => route('demand-classifications-update', ['classifier' => $classifierName]),
                 'requests' => $data['requests'],
             ];
 
@@ -131,7 +132,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 ]
             );
 
-            if (!$this->sendRequest($url, $requestData)) {
+            if (!$this->sendRequest($classifier, $requestData)) {
                 BannerClassification::whereIn('banner_id', $bannerIds)->update(
                     [
                         'status' => BannerClassification::STATUS_ERROR,
@@ -141,10 +142,10 @@ class BannerClassificationsRequestCommand extends BaseCommand
         }
     }
 
-    private function sendRequest(string $url, array $data): bool
+    private function sendRequest(ClassifierExternal $classifier, array $data): bool
     {
         try {
-            $this->client->requestClassification($url, $data);
+            $this->client->requestClassification($classifier, $data);
 
             return true;
         } catch (RuntimeException $exception) {

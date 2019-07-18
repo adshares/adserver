@@ -22,7 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+
 interface ClassifierExternalClient
 {
-    public function requestClassification(string $classifierUrl, array $data): void;
+    public function requestClassification(ClassifierExternal $classifier, array $data): void;
 }
