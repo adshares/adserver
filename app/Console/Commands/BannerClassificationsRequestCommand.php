@@ -29,6 +29,7 @@ use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
+use Illuminate\Support\Collection;
 
 class BannerClassificationsRequestCommand extends BaseCommand
 {
@@ -72,8 +73,15 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
         $this->info('[BannerClassificationRequest] number of requests to process: '.$classifications->count());
 
-        $requests = [];
-        $bannerIds = [];
+        $dataSet = $this->prepareData($classifications);
+        $this->processData($dataSet);
+
+        $this->info('Finish command '.$this->signature);
+    }
+
+    private function prepareData(Collection $classifications): array
+    {
+        $dataSet = [];
 
         /** @var BannerClassification $classification */
         foreach ($classifications as $classification) {
@@ -82,8 +90,8 @@ class BannerClassificationsRequestCommand extends BaseCommand
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
 
-            $bannerIds[$classifier][] = $banner->id;
-            $requests[$classifier][] = [
+            $dataSet[$classifier]['banners'][] = $banner->id;
+            $dataSet[$classifier]['requests'][] = [
                 'id' => $bannerPublicId,
                 'checksum' => $banner->creative_sha1,
                 'type' => $banner->creative_type,
@@ -93,7 +101,12 @@ class BannerClassificationsRequestCommand extends BaseCommand
             ];
         }
 
-        foreach ($requests as $classifier => $request) {
+        return $dataSet;
+    }
+
+    private function processData(array $dataSet): void
+    {
+        foreach ($dataSet as $classifier => $data) {
             if (null === ($url = $this->classifierRepository->fetchClassifierUrl($classifier))) {
                 $this->warn(
                     sprintf(
@@ -105,28 +118,27 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 continue;
             }
 
-            $data = [
+            $bannerIds = $data['banners'];
+            $requestData = [
                 'callback_url' => route('demand-classifications-update', ['classifier' => $classifier]),
-                'requests' => $request,
+                'requests' => $data['requests'],
             ];
 
-            BannerClassification::whereIn('banner_id', $bannerIds[$classifier])->update(
+            BannerClassification::whereIn('banner_id', $bannerIds)->update(
                 [
                     'status' => BannerClassification::STATUS_IN_PROGRESS,
                     'requested_at' => new DateTime(),
                 ]
             );
 
-            if (!$this->sendRequest($url, $data)) {
-                BannerClassification::whereIn('banner_id', $bannerIds[$classifier])->update(
+            if (!$this->sendRequest($url, $requestData)) {
+                BannerClassification::whereIn('banner_id', $bannerIds)->update(
                     [
                         'status' => BannerClassification::STATUS_ERROR,
                     ]
                 );
             }
         }
-
-        $this->info('Finish command '.$this->signature);
     }
 
     private function sendRequest(string $url, array $data): bool
