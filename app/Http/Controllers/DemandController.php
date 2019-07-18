@@ -39,6 +39,7 @@ use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -447,7 +448,7 @@ class DemandController extends Controller
                     'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
                     'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
                     'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
-                    'classification' => $bannerClassifications[$banner->id] ?? [],
+                    'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
 

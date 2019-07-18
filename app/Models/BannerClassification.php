@@ -76,10 +76,15 @@ class BannerClassification extends Model
 
     public static function fetchByBannerIds(array $bannerIds): Collection
     {
-        return BannerClassification::whereIn('banner_id', $bannerIds)->where(
+        /** @var Collection $grouped */
+        $grouped = BannerClassification::whereIn('banner_id', $bannerIds)->where(
             'status',
             BannerClassification::STATUS_SUCCESS
-        )->get(['banner_id', 'classifier', 'keywords', 'signature'])->groupBy(['banner_id', 'classifier']);
+        )->get(['banner_id', 'classifier', 'keywords', 'signature'])->groupBy(['banner_id']);
+
+        return $grouped->map(function($item) {
+            return $item->keyBy('classifier');
+        });
     }
 
     public static function fetchByChecksumAndClassifier(string $checksum, string $classifier): ?self
