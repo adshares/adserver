@@ -82,14 +82,24 @@ class BannerClassification extends Model
             BannerClassification::STATUS_SUCCESS
         )->get(['banner_id', 'classifier', 'keywords', 'signature'])->groupBy(['banner_id']);
 
-        return $grouped->map(function($item) {
-            return $item->keyBy('classifier');
-        });
+        return $grouped->map(
+            function ($item) {
+                return $item->keyBy('classifier');
+            }
+        );
     }
 
     public static function fetchByChecksumAndClassifier(string $checksum, string $classifier): ?self
     {
         return BannerClassification::where('checksum', hex2bin($checksum))->where('classifier', $classifier)->first();
+    }
+
+    public static function fetchPendingForClassification(): Collection
+    {
+        return BannerClassification::whereIn(
+            'status',
+            [BannerClassification::STATUS_NEW, BannerClassification::STATUS_ERROR]
+        )->get();
     }
 
     public function banner(): BelongsTo

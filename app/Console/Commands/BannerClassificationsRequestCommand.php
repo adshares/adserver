@@ -68,10 +68,9 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $classifications = BannerClassification::whereIn(
-            'status',
-            [BannerClassification::STATUS_NEW, BannerClassification::STATUS_ERROR]
-        )->get();
+        $classifications = BannerClassification::fetchPendingForClassification();
+
+        $this->info('[BannerClassificationRequest] number of requests to process: '.$classifications->count());
 
         $requests = [];
         $bannerIds = [];
