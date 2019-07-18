@@ -199,6 +199,11 @@ class User extends Authenticatable
         $this->save();
     }
 
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
+    }
+
     public static function fetchByUuid(string $uuid): ?self
     {
         return self::where('uuid', hex2bin($uuid))->first();
