@@ -33,9 +33,6 @@ class CampaignResume extends Mailable
 
     private const SUBJECT = 'Your campaigns have been resumed';
 
-    /** @var bool */
-    private $revertSuspension;
-
     public function __construct()
     {
         $this->subject(self::SUBJECT);
