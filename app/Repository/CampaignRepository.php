@@ -116,6 +116,7 @@ class CampaignRepository
 
             if ($bannersToDelete) {
                 foreach ($bannersToDelete as $banner) {
+                    $banner->classifications()->delete();
                     $banner->delete();
                 }
             }
