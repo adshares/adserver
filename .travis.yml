@@ -13,6 +13,7 @@ env:
     - APP_DEBUG=true
 before_install:
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "extension = sodium.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 install:
   - composer install
   - mkdir -p storage/framework/{sessions,views,cache}
