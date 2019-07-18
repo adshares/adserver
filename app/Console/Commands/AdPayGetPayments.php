@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Mail\CampaignSuspension;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
@@ -33,6 +34,7 @@ use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function floor;
+use Illuminate\Support\Facades\Mail;
 use function now;
 use function sprintf;
 
@@ -209,6 +211,7 @@ class AdPayGetPayments extends BaseCommand
 
                             Log::debug("Suspended Campaigns for user [{$user->id}] "
                                 .'due to insufficient amount of clicks.');
+                            Mail::to($user)->queue(new CampaignSuspension());
                         }
 
                         return $events->sum(self::EVENT_VALUE);
