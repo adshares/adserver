@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Informing user by an email when campaigns are suspended due to insufficient funds
+- Inform user by an email when campaigns are suspended or resumed
 ### Changed
 - Use single lock for supply inventory commands
 - Import inventory: update using source address
