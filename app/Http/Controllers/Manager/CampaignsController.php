@@ -27,6 +27,9 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
+use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -58,14 +61,24 @@ class CampaignsController extends Controller
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
+    /** @var BannerClassificationCreator */
+    private $bannerClassificationCreator;
+
+    /** @var ClassifierExternalRepository */
+    private $classifierExternalRepository;
+
     public function __construct(
         CampaignRepository $campaignRepository,
         ConfigurationRepository $configurationRepository,
-        ExchangeRateReader $exchangeRateReader
+        ExchangeRateReader $exchangeRateReader,
+        BannerClassificationCreator $bannerClassificationCreator,
+        ClassifierExternalRepository $classifierExternalRepository
     ) {
         $this->campaignRepository = $campaignRepository;
         $this->configurationRepository = $configurationRepository;
         $this->exchangeRateReader = $exchangeRateReader;
+        $this->bannerClassificationCreator = $bannerClassificationCreator;
+        $this->classifierExternalRepository = $classifierExternalRepository;
     }
 
     public function upload(Request $request): UploadedFile
@@ -127,6 +140,10 @@ class CampaignsController extends Controller
 
         $campaign = new Campaign($input);
         $this->campaignRepository->save($campaign, $banners);
+
+        if (null !== ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
+            $this->createBannerClassificationsForNewBanners($classifier, $campaign);
+        }
 
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
@@ -239,6 +256,7 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
+        $oldBannerIds = $campaign->banners->pluck('id');
         $campaign->fill($input);
 
         $campaign->status = Campaign::STATUS_INACTIVE;
@@ -272,6 +290,10 @@ class CampaignsController extends Controller
         }
 
         $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
+
+        if (null !== ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
+            $this->createBannerClassificationsForNewBanners($classifier, $campaign, $oldBannerIds);
+        }
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
@@ -398,5 +420,25 @@ class CampaignsController extends Controller
         $input['targeting_excludes'] = $targetingProcessor->processTargeting($input['targeting']['excludes'] ?? []);
 
         return $input;
+    }
+
+    private function createBannerClassificationsForNewBanners(
+        ClassifierExternal $classifier,
+        Campaign $campaign,
+        Collection $oldBannerIds = null
+    ): void {
+        $bannerIds = $campaign->banners()->get()->pluck('id');
+
+        if (null !== $oldBannerIds) {
+            $bannerIds = $bannerIds->reject(function($item) use ($oldBannerIds) {
+                return $oldBannerIds->contains($item);
+            });
+        }
+
+        if ($bannerIds->isEmpty()) {
+            return;
+        }
+
+        $this->bannerClassificationCreator->create($classifier->getName(), $bannerIds->toArray());
     }
 }

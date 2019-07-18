@@ -51,7 +51,16 @@ class ClassifierExternalRepository
         return null;
     }
 
-    private function fetchDefaultClassifierName(): ?string
+    public function fetchDefaultClassifier(): ?ClassifierExternal
+    {
+        if (null !== ($name = $this->fetchDefaultClassifierName())) {
+            return $this->fetchClassifierByName($name);
+        }
+        
+        return null;
+    }
+
+    public function fetchDefaultClassifierName(): ?string
     {
         return (string)config('app.classifier_external_name') ?: null;
     }
