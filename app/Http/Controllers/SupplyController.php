@@ -39,6 +39,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function urlencode;
 
 class SupplyController extends Controller
@@ -69,6 +70,14 @@ class SupplyController extends Controller
             return $response;
         } else {
             throw new BadRequestHttpException('Invalid method');
+        }
+
+        if (!$data) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        if (false !== ($index = strpos($data, '&'))) {
+            $data = substr($data, 0, $index);
         }
 
         $decodedQueryData = Utils::decodeZones($data);
