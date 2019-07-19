@@ -82,6 +82,9 @@ class CampaignRepository
 
         try {
             $campaign->delete();
+            foreach ($campaign->banners as $banner) {
+                $banner->classifications()->delete();
+            }
             $campaign->banners()->delete();
         } catch (\Exception $ex) {
             DB::rollBack();
