@@ -22,40 +22,32 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\BannerClassification;
-use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
+use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use SodiumException;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 use function sprintf;
 
 class ClassificationController extends Controller
 {
-    /** @var ClassifierExternalRepository */
-    private $classifierRepository;
+    /** @var ClassifierExternalSignatureVerifier */
+    private $signatureVerifier;
 
-    public function __construct(ClassifierExternalRepository $classifierRepository)
+    public function __construct(ClassifierExternalSignatureVerifier $signatureVerifier)
     {
-        $this->classifierRepository = $classifierRepository;
+        $this->signatureVerifier = $signatureVerifier;
     }
 
     public function updateClassification(string $classifier, Request $request): JsonResponse
     {
-        if (null === ($publicKey = $this->classifierRepository->fetchPublicKeyByClassifierName($classifier))) {
-            return self::json([], Response::HTTP_NOT_FOUND);
-        }
-
         $inputs = $request->all();
         foreach ($inputs as $input) {
+            $signature = $input['signature'];
             $checksum = $input['checksum'];
             $keywords = $input['keywords'];
-            $signature = $input['signature'];
 
-            $message = $this->createMessage($checksum, $keywords);
-
-            if (!$this->isSignatureValid($publicKey, $message, $signature)) {
-                Log::warning(
+            if (!$this->signatureVerifier->isSignatureValid($classifier, $signature, $checksum, $keywords)) {
+                Log::info(
                     sprintf(
                         '[classification update] Invalid signature for banner checksum (%s) from classifier (%s)',
                         $checksum,
@@ -68,7 +60,7 @@ class ClassificationController extends Controller
 
             if (null === ($classification =
                     BannerClassification::fetchByChecksumAndClassifier($checksum, $classifier))) {
-                Log::warning(
+                Log::info(
                     sprintf(
                         '[classification update] Missing banner checksum (%s) from classifier (%s)',
                         $checksum,
@@ -86,21 +78,5 @@ class ClassificationController extends Controller
         }
 
         return self::json();
-    }
-
-    private function createMessage(string $checksum, array $keywords): string
-    {
-        ksort($keywords);
-
-        return sha1($checksum.json_encode($keywords));
-    }
-
-    private function isSignatureValid(string $publicKey, string $message, string $signature): bool
-    {
-        try {
-            return sodium_crypto_sign_verify_detached(hex2bin($signature), $message, hex2bin($publicKey));
-        } catch (SodiumException $exception) {
-            return false;
-        }
     }
 }

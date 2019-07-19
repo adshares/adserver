@@ -29,7 +29,6 @@ use Adshares\Adserver\Client\DummyClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
-use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
@@ -37,6 +36,7 @@ use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
+use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
@@ -119,7 +119,11 @@ final class ClientProvider extends ServiceProvider
             function (Application $app) {
                 $timeoutForDemandService = 15;
 
-                return new GuzzleDemandClient($app->make(SignatureVerifier::class), $timeoutForDemandService);
+                return new GuzzleDemandClient(
+                    $app->make(ClassifierExternalSignatureVerifier::class),
+                    $app->make(SignatureVerifier::class),
+                    $timeoutForDemandService
+                );
             }
         );
 

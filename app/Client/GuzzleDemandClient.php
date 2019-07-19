@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\Uuid;
@@ -53,14 +54,21 @@ final class GuzzleDemandClient implements DemandClient
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     .'?limit={limit}&offset={offset}';
 
+    /** @var ClassifierExternalSignatureVerifier */
+    private $classifierExternalSignatureVerifier;
+
     /** @var SignatureVerifier */
     private $signatureVerifier;
 
     /** @var int */
     private $timeout;
 
-    public function __construct(SignatureVerifier $signatureVerifier, int $timeout)
-    {
+    public function __construct(
+        ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
+        SignatureVerifier $signatureVerifier,
+        int $timeout
+    ) {
+        $this->classifierExternalSignatureVerifier = $classifierExternalSignatureVerifier;
         $this->signatureVerifier = $signatureVerifier;
         $this->timeout = $timeout;
     }
@@ -253,6 +261,24 @@ final class GuzzleDemandClient implements DemandClient
             } else {
                 unset($banner['id']);
             }
+
+            $classification = $banner['classification'] ?? [];
+            $checksum = $banner['checksum'] ?? '';
+            $invalidClassifiers = [];
+            foreach ($classification as $classifier => $value) {
+                if (!$this->classifierExternalSignatureVerifier->isSignatureValid(
+                    (string)$classifier,
+                    $value['signature'] ?? '',
+                    $checksum,
+                    $value['keywords'] ?? []
+                )) {
+                    $invalidClassifiers[] = $classifier;
+                }
+            }
+            foreach ($invalidClassifiers as $invalidClassifier) {
+                unset($classification[$invalidClassifier]);
+            }
+            $banner['classification'] = $classification;
 
             $banners[] = $banner;
         }
