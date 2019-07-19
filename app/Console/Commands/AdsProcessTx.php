@@ -29,6 +29,7 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
@@ -44,6 +45,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 use function sprintf;
 
@@ -340,8 +342,11 @@ class AdsProcessTx extends BaseCommand
                 $dbTx->save();
 
                 try {
-                    $this->reactivateSuspendedCampaigns($user);
-                    Log::debug("Notify user [{$user->id}] that we restarted all suspended campaigns.");
+                    $reactivatedCount = $this->reactivateSuspendedCampaigns($user);
+                    if ($reactivatedCount > 0) {
+                        Log::debug("We restarted all suspended campaigns owned by user [{$user->id}].");
+                        Mail::to($user)->queue(new CampaignResume());
+                    }
                 } catch (InvalidArgumentException $exception) {
                     Log::debug("Notify user [{$user->id}] that we cannot restart campaigns.");
                 }
@@ -359,7 +364,7 @@ class AdsProcessTx extends BaseCommand
         return substr($message, -32);
     }
 
-    private function reactivateSuspendedCampaigns(User $user): void
+    private function reactivateSuspendedCampaigns(User $user): int
     {
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
@@ -373,12 +378,18 @@ class AdsProcessTx extends BaseCommand
         $requiredBalance = $exchangeRate->toClick($requiredBudget);
 
         if ($balance >= $requiredBalance) {
-            $campaigns->filter(static function (Campaign $campaign) {
+            $suspendedCampaigns = $campaigns->filter(static function (Campaign $campaign) {
                 return $campaign->status === Campaign::STATUS_SUSPENDED;
-            })->each(static function (Campaign $campaign) use ($exchangeRate) {
+            });
+
+            $suspendedCampaigns->each(static function (Campaign $campaign) use ($exchangeRate) {
                 $campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate);
                 $campaign->save();
             });
+
+            return $suspendedCampaigns->count();
         }
+
+        return 0;
     }
 }

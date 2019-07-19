@@ -22,13 +22,16 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Mail\CampaignSuspension;
 use Adshares\Adserver\Models\AdvertiserBudget;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 
 class DemandBlockRequiredAmount extends BaseCommand
@@ -83,6 +86,7 @@ class DemandBlockRequiredAmount extends BaseCommand
                 Log::warning($e->getMessage());
 
                 Campaign::suspendAllForUserId($userId);
+                Mail::to(User::fetchById($userId))->queue(new CampaignSuspension());
             }
         });
     }
