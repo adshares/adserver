@@ -39,6 +39,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function urlencode;
 
 class SupplyController extends Controller
@@ -71,6 +72,14 @@ class SupplyController extends Controller
             throw new BadRequestHttpException('Invalid method');
         }
 
+        if (!$data) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        if (false !== ($index = strpos($data, '&'))) {
+            $data = substr($data, 0, $index);
+        }
+
         $decodedQueryData = Utils::decodeZones($data);
         $impressionId = $decodedQueryData['page']['iid'];
 
@@ -86,7 +95,12 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $zones = Utils::decodeZones($data)['zones'];
+        $zones = $decodedQueryData['zones'] ?? [];
+
+        if (!$zones) {
+            return self::json([]);
+        }
+        
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
         return self::json($bannerFinder->findBanners($zones, $context));
