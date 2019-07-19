@@ -36,9 +36,9 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         $callbackUrl = $data['callback_url'];
         $classifierName = substr($callbackUrl, 1 + strrpos($callbackUrl, '/'));
 
-        $requests = $data['requests'];
+        $requests = $data['banners'];
 
-        $data = [];
+        $dataOut = [];
         foreach ($requests as $classificationRequest) {
             $checksum = $classificationRequest['checksum'];
             $keywords = ['category' => ['crypto']];
@@ -55,7 +55,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
                 throw new HttpException(500, 'Cannot create signature');
             }
 
-            $data[] = [
+            $dataOut[] = [
                 'checksum' => $checksum,
                 'keywords' => $keywords,
                 'signature' => $signature,
@@ -65,7 +65,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         $request = Request::create(
             route('demand-classifications-update', ['classifier' => $classifierName], false),
             'PATCH',
-            $data
+            $dataOut
         );
         app()->handle($request);
     }

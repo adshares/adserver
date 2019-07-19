@@ -91,14 +91,14 @@ class BannerClassificationsRequestCommand extends BaseCommand
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
 
-            $dataSet[$classifierName]['banners'][] = $banner->id;
-            $dataSet[$classifierName]['requests'][] = [
+            $dataSet[$classifierName]['ids'][] = $banner->id;
+            $dataSet[$classifierName]['banners'][] = [
                 'id' => $bannerPublicId,
                 'checksum' => $banner->creative_sha1,
                 'type' => $banner->creative_type,
-                'url' => route('banner-serve', ['id' => $bannerPublicId]),
+                'serve_url' => route('banner-serve', ['id' => $bannerPublicId]),
                 'campaign_id' => $campaign->uuid,
-                'campaign_landing_url' => $campaign->landing_url,
+                'landing_url' => $campaign->landing_url,
             ];
         }
 
@@ -119,10 +119,10 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 continue;
             }
 
-            $bannerIds = $data['banners'];
+            $bannerIds = $data['ids'];
             $requestData = [
                 'callback_url' => route('demand-classifications-update', ['classifier' => $classifierName]),
-                'requests' => $data['requests'],
+                'banners' => $data['banners'],
             ];
 
             BannerClassification::whereIn('banner_id', $bannerIds)->update(
