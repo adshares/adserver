@@ -86,7 +86,12 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $zones = Utils::decodeZones($data)['zones'];
+        $zones = $decodedQueryData['zones'] ?? [];
+
+        if (!$zones) {
+            return self::json([]);
+        }
+        
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
         return self::json($bannerFinder->findBanners($zones, $context));
