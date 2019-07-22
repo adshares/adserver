@@ -41,7 +41,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         $dataOut = [];
         foreach ($requests as $classificationRequest) {
             $checksum = $classificationRequest['checksum'];
-            $keywords = ['category' => ['crypto']];
+            $keywords = ['category' => ['crypto', 'gambling']];
 
             ksort($keywords);
             $message = sha1($checksum.json_encode($keywords));
