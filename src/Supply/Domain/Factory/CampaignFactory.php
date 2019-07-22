@@ -81,7 +81,7 @@ class CampaignFactory
             $hash = $banner['checksum'] ?? '';
             
             $classification = [];
-            foreach ($banner['classification'] as $classificationItem) {
+            foreach ($banner['classification'] ?? [] as $classificationItem) {
                 $classification[] = new Classification($classificationItem);
             }
 
