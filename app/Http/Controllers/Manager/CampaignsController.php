@@ -430,7 +430,7 @@ class CampaignsController extends Controller
         $bannerIds = $campaign->banners()->get()->pluck('id');
 
         if (null !== $oldBannerIds) {
-            $bannerIds = $bannerIds->reject(function($item) use ($oldBannerIds) {
+            $bannerIds = $bannerIds->reject(function ($item) use ($oldBannerIds) {
                 return $oldBannerIds->contains($item);
             });
         }

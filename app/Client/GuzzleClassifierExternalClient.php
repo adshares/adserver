@@ -51,7 +51,9 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
             );
         } catch (RequestException $requestException) {
             throw new RuntimeException(
-                $requestException->getMessage(), $requestException->getCode(), $requestException
+                $requestException->getMessage(),
+                $requestException->getCode(),
+                $requestException
             );
         }
     }

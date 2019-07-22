@@ -184,12 +184,12 @@ final class ClientProvider extends ServiceProvider
             function () {
                 return new DummyClassifierExternalClient();
                 //TODO uncomment when external classifier will be ready
-//                return new GuzzleClassifierExternalClient(new Client(
-//                    [
-//                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-//                        'timeout' => 3,
-//                    ]
-//                ));
+                //return new GuzzleClassifierExternalClient(new Client(
+                //    [
+                //        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                //        'timeout' => 3,
+                //    ]
+                //));
             }
         );
     }
