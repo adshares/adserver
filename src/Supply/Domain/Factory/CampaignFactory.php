@@ -82,7 +82,7 @@ class CampaignFactory
             
             $classification = [];
             foreach ($banner['classification'] ?? [] as $classificationItem) {
-                $classification[] = new Classification($classificationItem);
+                $classification[] = new Classification($classificationItem['keyword']);
             }
 
             $banners[] = new Banner(

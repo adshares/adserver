@@ -363,7 +363,7 @@ final class GuzzleDemandClient implements DemandClient
                 $classificationItem['keywords']
             ) as $keyword => $values) {
                 foreach ($values as $value) {
-                    $flatClassification[] = implode(':', [$classifier, $keyword, $value]);
+                    $flatClassification[] = ['keyword' => implode(':', [$classifier, $keyword, $value])];
                 }
             }
         }

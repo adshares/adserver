@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use DateTime;
 
 class CampaignMapper
@@ -36,8 +37,8 @@ class CampaignMapper
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
             $classification = array_map(
-                function (array $item) {
-                    return $item['keyword'];
+                function (Classification $item) {
+                    return $item->getKeyword();
                 },
                 $banner->getClassification()
             );

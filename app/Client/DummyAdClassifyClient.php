@@ -57,7 +57,7 @@ final class DummyAdClassifyClient implements AdClassify
     {
       "type": "dict",
       "label": "Categories by Adshares",
-      "key": "adshares",
+      "key": "adclassify:category",
       "list": [
         {
           "label": "Adult",
