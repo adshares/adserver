@@ -26,13 +26,12 @@ $factory->define(Banner::class, function (Faker $faker) {
     [$width, $height] = explode('x', $faker->randomElement(Size::SUPPORTED_SIZES));
 
     return [
-        'creative_contents' => $faker->sha1(),
+        'creative_contents' => $faker->sha1,
         'creative_type' => $faker->randomElement(['image', 'html']),
-        'creative_sha1' => $faker->sha1(),
-
+        'creative_sha1' => $faker->sha1,
         'creative_width' => $width,
         'creative_height' => $height,
-        'name' => $faker->word(),
+        'name' => $faker->word,
         'status' => Banner::STATUS_ACTIVE,
     ];
 });
