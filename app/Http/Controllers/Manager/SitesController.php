@@ -113,7 +113,7 @@ class SitesController extends Controller
     {
         $classifyNamespace = (string)config('app.classify_namespace');
 
-        return Classification::createUnsigned($classifyNamespace, $publisherId, $status, $siteId)->keyword();
+        return (new Classification($classifyNamespace, $publisherId, $status, $siteId))->keyword();
     }
 
     private function getKeywordsForNotNegativeClassification(int $publisherId, $siteId): array

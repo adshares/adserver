@@ -45,15 +45,6 @@ class Classification
         $this->siteId = $siteId;
     }
 
-    public static function createUnsigned(
-        string $namespace,
-        int $publisherId,
-        ?bool $status,
-        ?int $siteId = null
-    ): self {
-        return new self($namespace, $publisherId, $status, $siteId);
-    }
-
     public function getSiteId(): ?int
     {
         return $this->siteId;
