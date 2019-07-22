@@ -47,12 +47,20 @@ class LocalPublisherBannerClassifier implements BannerClassifier
             try {
                 $classificationCollection = $this->classifier->fetch($internalId);
 
+                $namespaceToKeywordsMap = [];
                 /** @var Classification $classification */
                 foreach ($classificationCollection as $classification) {
-                    $collection->addClassification(
-                        $publicId,
-                        $classification->keyword()
-                    );
+                    $namespaceToKeywordsMap[$classification->getNamespace()][] = $classification->keyword();
+                }
+
+                if (empty($namespaceToKeywordsMap)) {
+                    $collection->addEmptyClassification($publicId);
+
+                    continue;
+                }
+
+                foreach ($namespaceToKeywordsMap as $namespace => $keywords) {
+                    $collection->addClassification($publicId, $namespace, $keywords);
                 }
             } catch (BannerNotVerifiedException $exception) {
                 $collection->addEmptyClassification($publicId);

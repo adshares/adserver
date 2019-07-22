@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\Classification;
@@ -36,21 +37,22 @@ class CampaignMapper
 
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
-            $classification = array_map(
-                function (Classification $item) {
-                    return $item->getKeyword();
-                },
-                $banner->getClassification()
-            );
-
-            $banners[] = [
+            $mappedBanner = [
                 'banner_id' => $banner->getId(),
                 'banner_size' => $banner->getSize(),
                 'keywords' => [
                     'type' => [$banner->getType()],
-                    'classification' => $classification,
                 ],
             ];
+
+            /** @var Classification $classification */
+            foreach ($banner->getClassification() as $classification) {
+                foreach (AbstractFilterMapper::generateNestedStructure($classification->toArray()) as $nestedStructureKey => $values) {
+                    $mappedBanner['keywords'][$nestedStructureKey] = $values;
+                }
+            }
+
+            $banners[] = $mappedBanner;
         }
 
         $targeting = TargetingMapper::map(

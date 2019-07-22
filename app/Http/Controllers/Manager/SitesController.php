@@ -72,21 +72,28 @@ class SitesController extends Controller
 
         if ($site->require_classified) {
             list($requireKeywords, $excludeKeywords) =
-                $this->getKeywordsForPositiveClassification($publisherId, $siteId);
+                $this->getClassificationForPositiveCase($publisherId, $siteId);
 
-            $siteRequires['classification'] = $requireKeywords;
-            $siteExcludes['classification'] = $excludeKeywords;
-        }
-        if ($site->exclude_unclassified) {
-            $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
-
-            if (empty($siteExcludes['classification'])) {
-                $siteExcludes['classification'] = [];
+            /** @var Classification $requireKeyword */
+            foreach ($requireKeywords as $requireKeyword) {
+                $siteRequires[$requireKeyword->getNamespace()][] = $requireKeyword->keyword();
             }
-
+            /** @var Classification $excludeKeyword */
             foreach ($excludeKeywords as $excludeKeyword) {
-                if (!in_array($excludeKeyword, $siteExcludes['classification'], true)) {
-                    $siteExcludes['classification'][] = $excludeKeyword;
+                $siteExcludes[$excludeKeyword->getNamespace()][] = $excludeKeyword->keyword();
+            }
+        }
+
+        if ($site->exclude_unclassified) {
+            $excludeKeywords = $this->getClassificationNotNegativeCase($publisherId, $siteId);
+
+            /** @var Classification $excludeKeyword */
+            foreach ($excludeKeywords as $excludeKeyword) {
+                $namespace = $excludeKeyword->getNamespace();
+                $keyword = $excludeKeyword->keyword();
+
+                if (!in_array($keyword, $siteExcludes[$namespace], true)) {
+                    $siteExcludes[$namespace][] = $keyword;
                 }
             }
         }
@@ -96,34 +103,29 @@ class SitesController extends Controller
         $site->save();
     }
 
-    private function getKeywordsForPositiveClassification(int $publisherId, $siteId): array
+    private function getClassificationForPositiveCase(int $publisherId, $siteId): array
     {
+        $namespace = (string)config('app.classify_namespace');
+
         $requireKeywords = [
-            $this->createClassificationKeyword($publisherId, true),
-            $this->createClassificationKeyword($publisherId, true, $siteId),
+            new Classification($namespace, $publisherId, true),
+            new Classification($namespace, $publisherId, true, $siteId),
         ];
         $excludeKeywords = [
-            $this->createClassificationKeyword($publisherId, false, $siteId),
+            new Classification($namespace, $publisherId, false, $siteId),
         ];
 
         return [$requireKeywords, $excludeKeywords];
     }
 
-    private function createClassificationKeyword(int $publisherId, bool $status, ?int $siteId = null): string
+    private function getClassificationNotNegativeCase(int $publisherId, $siteId): array
     {
-        $classifyNamespace = (string)config('app.classify_namespace');
+        $namespace = (string)config('app.classify_namespace');
 
-        return (new Classification($classifyNamespace, $publisherId, $status, $siteId))->keyword();
-    }
-
-    private function getKeywordsForNotNegativeClassification(int $publisherId, $siteId): array
-    {
-        $excludeKeywords = [
-            $this->createClassificationKeyword($publisherId, false),
-            $this->createClassificationKeyword($publisherId, false, $siteId),
+        return [
+            new Classification($namespace, $publisherId, false),
+            new Classification($namespace, $publisherId, false, $siteId),
         ];
-
-        return $excludeKeywords;
     }
 
     public function read(Site $site): JsonResponse

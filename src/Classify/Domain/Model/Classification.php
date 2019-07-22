@@ -57,12 +57,16 @@ class Classification
         ];
     }
 
+    public function getNamespace(): string
+    {
+        return $this->namespace;
+    }
+
     public function keyword(): string
     {
         if ($this->siteId) {
             return sprintf(
-                '%s:%s:%s:%s',
-                $this->namespace,
+                '%s:%s:%s',
                 $this->publisherId,
                 $this->siteId,
                 (int)$this->status
@@ -70,8 +74,7 @@ class Classification
         }
 
         return sprintf(
-            '%s:%s:%s',
-            $this->namespace,
+            '%s:%s',
             $this->publisherId,
             (int)$this->status
         );

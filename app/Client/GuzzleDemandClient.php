@@ -356,16 +356,12 @@ final class GuzzleDemandClient implements DemandClient
         foreach ($invalidClassifiers as $invalidClassifier) {
             unset($classification[$invalidClassifier]);
         }
-        
+
         $flatClassification = [];
         foreach ($classification as $classifier => $classificationItem) {
-            foreach (AbstractFilterMapper::generateNestedStructure(
+            $flatClassification[$classifier] = AbstractFilterMapper::generateNestedStructure(
                 $classificationItem['keywords']
-            ) as $keyword => $values) {
-                foreach ($values as $value) {
-                    $flatClassification[] = ['keyword' => implode(':', [$classifier, $keyword, $value])];
-                }
-            }
+            );
         }
 
         return $flatClassification;

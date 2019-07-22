@@ -27,10 +27,10 @@ use Adshares\Supply\Domain\ValueObject\Classification;
 
 class Collection extends ArrayCollection
 {
-    public function addClassification(string $bannerId, string $keyword): void
+    public function addClassification(string $bannerId, string $classifier, array $keywords): void
     {
         $elements = $this->get($bannerId) ?? [];
-        $elements[] = new Classification($keyword);
+        $elements[] = new Classification($classifier, $keywords);
 
         $this->set($bannerId, $elements);
     }

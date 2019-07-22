@@ -79,10 +79,10 @@ class CampaignFactory
             $demandBannerId = $banner['demand_banner_id'] ?? $banner['id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
-            
+
             $classification = [];
-            foreach ($banner['classification'] ?? [] as $classificationItem) {
-                $classification[] = new Classification($classificationItem['keyword']);
+            foreach ($banner['classification'] ?? [] as $classifier => $keywords) {
+                $classification[] = new Classification($classifier, $keywords);
             }
 
             $banners[] = new Banner(

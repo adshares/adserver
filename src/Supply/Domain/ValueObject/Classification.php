@@ -25,27 +25,37 @@ namespace Adshares\Supply\Domain\ValueObject;
 class Classification
 {
     /** @var string */
-    private $keyword;
+    private $classifier;
 
-    public function __construct(string $keyword)
+    /** @var array */
+    private $keywords;
+
+    public function __construct(string $classifier, array $keywords)
     {
-        $this->keyword = $keyword;
+        $this->classifier = $classifier;
+        $this->keywords = $keywords;
     }
 
-    public function getKeyword(): string
+    public function getClassifier(): string
     {
-        return $this->keyword;
+        return $this->classifier;
+    }
+
+    public function getKeywords(): array
+    {
+        return $this->keywords;
     }
 
     public function equals(self $classification): bool
     {
-        return $this->keyword === $classification->getKeyword();
+        return $this->classifier === $classification->getClassifier()
+            && $this->keywords === $classification->getKeywords();
     }
 
     public function toArray(): array
     {
         return [
-            'keyword' => $this->keyword,
+            $this->classifier => $this->keywords,
         ];
     }
 }
