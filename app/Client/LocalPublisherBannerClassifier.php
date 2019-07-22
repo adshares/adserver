@@ -51,8 +51,7 @@ class LocalPublisherBannerClassifier implements BannerClassifier
                 foreach ($classificationCollection as $classification) {
                     $collection->addClassification(
                         $publicId,
-                        $classification->keyword(),
-                        $classification->signature()
+                        $classification->keyword()
                     );
                 }
             } catch (BannerNotVerifiedException $exception) {

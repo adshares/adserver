@@ -76,7 +76,7 @@ class GuzzlePublisherBannerClassifier implements BannerClassifier
             }
 
             foreach ($classifications as $item) {
-                $collection->addClassification($bannerId, $item['keyword'], $item['signature']);
+                $collection->addClassification($bannerId, $item['keyword']);
             }
         }
 

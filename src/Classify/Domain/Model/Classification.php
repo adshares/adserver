@@ -28,8 +28,6 @@ class Classification
     private $publisherId;
     /** @var bool */
     private $status;
-    /** @var string */
-    private $signature;
     /** @var int|null */
     private $siteId;
     /** @var string */
@@ -39,13 +37,11 @@ class Classification
         string $namespace,
         int $publisherId,
         bool $status,
-        ?string $signature = null,
         ?int $siteId = null
     ) {
         $this->namespace = $namespace;
         $this->publisherId = $publisherId;
         $this->status = $status;
-        $this->signature = $signature;
         $this->siteId = $siteId;
     }
 
@@ -55,7 +51,7 @@ class Classification
         ?bool $status,
         ?int $siteId = null
     ): self {
-        return new self($namespace, $publisherId, $status, null, $siteId);
+        return new self($namespace, $publisherId, $status, $siteId);
     }
 
     public function getSiteId(): ?int
@@ -67,7 +63,6 @@ class Classification
     {
         return [
             'keyword' => $this->keyword(),
-            'signature' => $this->signature,
         ];
     }
 
@@ -89,15 +84,5 @@ class Classification
             $this->publisherId,
             (int)$this->status
         );
-    }
-
-    public function signature(): string
-    {
-        return $this->signature;
-    }
-
-    public function sign(string $signature): void
-    {
-        $this->signature = $signature;
     }
 }

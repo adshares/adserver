@@ -155,9 +155,9 @@ final class BannerTest extends TestCase
         $keyword2 = 'classify:1:2:0';
         $keyword3 = 'classify:2:3:1';
 
-        $classification1 = new Classification($keyword1, 'signature#1');
-        $classification2 = new Classification($keyword2, 'signature#2');
-        $classification3 = new Classification($keyword3, 'signature#3');
+        $classification1 = new Classification($keyword1);
+        $classification2 = new Classification($keyword2);
+        $classification3 = new Classification($keyword3);
 
         // CLASSIFY
         $banner->classify($classification1);
@@ -167,15 +167,12 @@ final class BannerTest extends TestCase
         $expected = [
             [
                 'keyword' => $keyword1,
-                'signature' => 'signature#1',
             ],
             [
                 'keyword' => $keyword2,
-                'signature' => 'signature#2',
             ],
             [
                 'keyword' => $keyword3,
-                'signature' => 'signature#3',
             ],
         ];
 

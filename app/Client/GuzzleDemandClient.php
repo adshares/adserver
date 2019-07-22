@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
@@ -262,23 +263,7 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $classification = $banner['classification'] ?? [];
-            $checksum = $banner['checksum'] ?? '';
-            $invalidClassifiers = [];
-            foreach ($classification as $classifier => $value) {
-                if (!$this->classifierExternalSignatureVerifier->isSignatureValid(
-                    (string)$classifier,
-                    $value['signature'] ?? '',
-                    $checksum,
-                    $value['keywords'] ?? []
-                )) {
-                    $invalidClassifiers[] = $classifier;
-                }
-            }
-            foreach ($invalidClassifiers as $invalidClassifier) {
-                unset($classification[$invalidClassifier]);
-            }
-            $banner['classification'] = $classification;
+            $banner['classification'] = $this->processClassification($banner);
 
             $banners[] = $banner;
         }
@@ -351,5 +336,38 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds, $sourceAddress);
+    }
+
+    private function processClassification(array $banner): array
+    {
+        $classification = $banner['classification'] ?? [];
+        $checksum = $banner['checksum'] ?? '';
+        $invalidClassifiers = [];
+        foreach ($classification as $classifier => $classificationItem) {
+            if (!$this->classifierExternalSignatureVerifier->isSignatureValid(
+                (string)$classifier,
+                $classificationItem['signature'] ?? '',
+                $checksum,
+                $classificationItem['keywords'] ?? []
+            )) {
+                $invalidClassifiers[] = $classifier;
+            }
+        }
+        foreach ($invalidClassifiers as $invalidClassifier) {
+            unset($classification[$invalidClassifier]);
+        }
+        
+        $flatClassification = [];
+        foreach ($classification as $classifier => $classificationItem) {
+            foreach (AbstractFilterMapper::generateNestedStructure(
+                $classificationItem['keywords']
+            ) as $keyword => $values) {
+                foreach ($values as $value) {
+                    $flatClassification[] = implode(':', [$classifier, $keyword, $value]);
+                }
+            }
+        }
+
+        return $flatClassification;
     }
 }

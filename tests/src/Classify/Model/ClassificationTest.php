@@ -36,7 +36,7 @@ final class ClassificationTest extends TestCase
         $siteId = 1;
         $status = true;
 
-        $classification = new Classification(self::NAMESPACE, $publisherId, $status, null, $siteId);
+        $classification = new Classification(self::NAMESPACE, $publisherId, $status, $siteId);
         $expected = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
 
 

@@ -95,9 +95,6 @@ class DummyClassifier implements ClassifierInterface
             $dummy['siteId']
         );
 
-        $signature = $this->signatureVerifier->create($classification->keyword(), $dummy['bannerId']);
-        $classification->sign($signature);
-
         return new ClassificationCollection($classification);
     }
 }
