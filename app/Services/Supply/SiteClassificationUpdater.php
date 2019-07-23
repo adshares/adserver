@@ -57,9 +57,12 @@ class SiteClassificationUpdater
         if ($site->exclude_unclassified) {
             $excludeKeywords = $this->getClassificationNotNegativeCase($namespace, $publisherId, $siteId);
 
+            if (empty($siteExcludes[$namespace])) {
+                $siteExcludes[$namespace] = [];
+            }
+
             /** @var Classification $excludeKeyword */
             foreach ($excludeKeywords as $excludeKeyword) {
-                $namespace = $excludeKeyword->getNamespace();
                 $keyword = $excludeKeyword->keyword();
 
                 if (!in_array($keyword, $siteExcludes[$namespace], true)) {
