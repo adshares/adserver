@@ -70,13 +70,12 @@ class ClassificationController extends Controller
                     )
                 );
 
+                $classification->failed();
+
                 continue;
             }
 
-            $classification->keywords = $keywords;
-            $classification->signature = $signature;
-            $classification->status = BannerClassification::STATUS_SUCCESS;
-            $classification->save();
+            $classification->classified($keywords, $signature);
         }
 
         return self::json();

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -70,6 +71,39 @@ class BannerClassification extends Model
         $bannerClassification->classifier = $classifier;
 
         return $bannerClassification;
+    }
+
+    public function classified(array $keywords, string $signature): void
+    {
+        $this->keywords = $keywords;
+        $this->signature = $signature;
+        $this->status = BannerClassification::STATUS_SUCCESS;
+        $this->save();
+    }
+
+    public function failed(): void
+    {
+        $this->status = BannerClassification::STATUS_FAILURE;
+        $this->save();
+    }
+
+    public static function setStatusInProgress(array $bannerIds): void
+    {
+        BannerClassification::whereIn('banner_id', $bannerIds)->update(
+            [
+                'status' => BannerClassification::STATUS_IN_PROGRESS,
+                'requested_at' => new DateTime(),
+            ]
+        );
+    }
+
+    public static function setStatusError(array $bannerIds): void
+    {
+        BannerClassification::whereIn('banner_id', $bannerIds)->update(
+            [
+                'status' => BannerClassification::STATUS_ERROR,
+            ]
+        );
     }
 
     public static function fetchByBannerIdAndClassifier(int $bannerId, string $classifier): ?self

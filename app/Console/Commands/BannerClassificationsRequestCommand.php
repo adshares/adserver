@@ -29,7 +29,6 @@ use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Common\Exception\RuntimeException;
-use DateTime;
 use Illuminate\Support\Collection;
 
 class BannerClassificationsRequestCommand extends BaseCommand
@@ -125,19 +124,9 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'banners' => $data['banners'],
             ];
 
-            BannerClassification::whereIn('banner_id', $bannerIds)->update(
-                [
-                    'status' => BannerClassification::STATUS_IN_PROGRESS,
-                    'requested_at' => new DateTime(),
-                ]
-            );
-
+            BannerClassification::setStatusInProgress($bannerIds);
             if (!$this->sendRequest($classifier, $requestData)) {
-                BannerClassification::whereIn('banner_id', $bannerIds)->update(
-                    [
-                        'status' => BannerClassification::STATUS_ERROR,
-                    ]
-                );
+                BannerClassification::setStatusError($bannerIds);
             }
         }
     }
