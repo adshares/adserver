@@ -156,7 +156,7 @@ final class ConversionValidatorTest extends TestCase
         string $secret
     ): string {
         return Utils::urlSafeBase64Encode(
-            hash('sha512', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
+            hash('sha256', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
         );
     }
 }

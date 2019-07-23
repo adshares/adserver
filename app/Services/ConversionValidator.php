@@ -57,7 +57,7 @@ class ConversionValidator
         Cache::put($cacheKey, 1, self::CACHE_ITEM_TTL_IN_MINUTES);
 
         $expected = Utils::urlSafeBase64Encode(
-            hash('sha512', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
+            hash('sha256', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
         );
 
         return hash_equals($expected, $signature);
