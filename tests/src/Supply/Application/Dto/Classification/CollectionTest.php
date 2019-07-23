@@ -44,13 +44,13 @@ final class CollectionTest extends TestCase
         $banner1Id = (string)Uuid::v4();
         $banner2Id = (string)Uuid::v4();
 
-        $collection->addClassification($banner1Id, 'classify:1:1');
-        $collection->addClassification($banner1Id, 'classify:1:1:2');
-        $collection->addClassification($banner1Id, 'classify:2:2:1');
-        $collection->addClassification($banner1Id, 'classify:2:1');
+        $collection->addClassification($banner1Id, 'classify', ['1:1']);
+        $collection->addClassification($banner1Id, 'classify', ['1:1:2']);
+        $collection->addClassification($banner1Id, 'classify', ['2:2:1']);
+        $collection->addClassification($banner1Id, 'classify', ['2:1']);
 
-        $collection->addClassification($banner2Id, 'classify:4:1:1');
-        $collection->addClassification($banner2Id, 'classify:4:1:1');
+        $collection->addClassification($banner2Id, 'classify', ['4:1:1']);
+        $collection->addClassification($banner2Id, 'classify', ['4:1:1']);
 
         $this->assertCount(4, $collection->findByBannerId($banner1Id));
         $this->assertCount(2, $collection->findByBannerId($banner2Id));

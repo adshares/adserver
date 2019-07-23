@@ -151,28 +151,26 @@ final class BannerTest extends TestCase
         $campaign = $this->createCampaign();
         $banner = $this->createBanner($campaign);
 
-        $keyword1 = 'classify:1:1:1';
-        $keyword2 = 'classify:1:2:0';
-        $keyword3 = 'classify:2:3:1';
+        $classifier1 = 'classify1';
+        $keyword1a = '1:1:1';
+        $keyword1b = '1:2:0';
+        $classifier2 = 'classify2';
+        $keyword2 = '2:3:1';
 
-        $classification1 = new Classification($keyword1);
-        $classification2 = new Classification($keyword2);
-        $classification3 = new Classification($keyword3);
+        $classification1 = new Classification($classifier1, [$keyword1a, $keyword1b]);
+        $classification2 = new Classification($classifier2, [$keyword2]);
 
         // CLASSIFY
         $banner->classify($classification1);
         $banner->classify($classification2);
-        $banner->classify($classification3);
 
         $expected = [
-            [
-                'keyword' => $keyword1,
+            $classifier1 => [
+                $keyword1a,
+                $keyword1b,
             ],
-            [
-                'keyword' => $keyword2,
-            ],
-            [
-                'keyword' => $keyword3,
+            $classifier2 => [
+                $keyword2,
             ],
         ];
 
@@ -180,9 +178,9 @@ final class BannerTest extends TestCase
 
         // REMOVE CLASSIFICATION
         $banner->removeClassification($classification2);
-        unset($expected[1]);
+        unset($expected[$classifier2]);
 
-        $this->assertEquals(array_values($expected), $banner->toArray()['classification']);
+        $this->assertEquals($expected, $banner->toArray()['classification']);
 
         // CLEAR CLASSIFICATION
         $banner->unclassified();

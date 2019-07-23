@@ -99,7 +99,6 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
-                        'classification' => [],
                     ],
                 ],
                 [
@@ -107,7 +106,6 @@ final class CampaignMapperTest extends TestCase
                     'banner_size' => '728x90',
                     'keywords' => [
                         'type' => ['image'],
-                        'classification' => [],
                     ],
                 ],
             ],
