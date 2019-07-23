@@ -61,18 +61,20 @@ class SitesController extends Controller
 
     private function addClassificationToSiteFiltering(Site $site): void
     {
+        $namespace = (string)config('app.classify_namespace');
+
         $siteRequires = $site->site_requires;
         $siteExcludes = $site->site_excludes;
 
-        unset($siteRequires['classification']);
-        unset($siteExcludes['classification']);
+        unset($siteRequires[$namespace]);
+        unset($siteExcludes[$namespace]);
 
         $publisherId = $site->user_id;
         $siteId = $site->id;
 
         if ($site->require_classified) {
             list($requireKeywords, $excludeKeywords) =
-                $this->getClassificationForPositiveCase($publisherId, $siteId);
+                $this->getClassificationForPositiveCase($namespace, $publisherId, $siteId);
 
             /** @var Classification $requireKeyword */
             foreach ($requireKeywords as $requireKeyword) {
@@ -85,7 +87,7 @@ class SitesController extends Controller
         }
 
         if ($site->exclude_unclassified) {
-            $excludeKeywords = $this->getClassificationNotNegativeCase($publisherId, $siteId);
+            $excludeKeywords = $this->getClassificationNotNegativeCase($namespace, $publisherId, $siteId);
 
             /** @var Classification $excludeKeyword */
             foreach ($excludeKeywords as $excludeKeyword) {
@@ -103,10 +105,8 @@ class SitesController extends Controller
         $site->save();
     }
 
-    private function getClassificationForPositiveCase(int $publisherId, $siteId): array
+    private function getClassificationForPositiveCase(string $namespace, int $publisherId, int $siteId): array
     {
-        $namespace = (string)config('app.classify_namespace');
-
         $requireKeywords = [
             new Classification($namespace, $publisherId, true),
             new Classification($namespace, $publisherId, true, $siteId),
@@ -118,10 +118,8 @@ class SitesController extends Controller
         return [$requireKeywords, $excludeKeywords];
     }
 
-    private function getClassificationNotNegativeCase(int $publisherId, $siteId): array
+    private function getClassificationNotNegativeCase(string $namespace, int $publisherId, int $siteId): array
     {
-        $namespace = (string)config('app.classify_namespace');
-
         return [
             new Classification($namespace, $publisherId, false),
             new Classification($namespace, $publisherId, false, $siteId),
@@ -130,24 +128,26 @@ class SitesController extends Controller
 
     public function read(Site $site): JsonResponse
     {
-        return self::json($this->processClassificationInFiltering($site));
+        return self::json($this->processInternalClassificationInFiltering($site));
     }
 
-    private function processClassificationInFiltering(Site $site): array
+    private function processInternalClassificationInFiltering(Site $site): array
     {
+        $namespace = (string)config('app.classify_namespace');
+
         $siteArray = $site->toArray();
 
         $filtering = $siteArray['filtering'];
 
-        if ($filtering['requires']['classification'] ?? false) {
-            unset($filtering['requires']['classification']);
+        if ($filtering['requires'][$namespace] ?? false) {
+            unset($filtering['requires'][$namespace]);
 
             if (!$filtering['requires']) {
                 $filtering['requires'] = null;
             }
         }
-        if ($filtering['excludes']['classification'] ?? false) {
-            unset($filtering['excludes']['classification']);
+        if ($filtering['excludes'][$namespace] ?? false) {
+            unset($filtering['excludes'][$namespace]);
 
             if (!$filtering['excludes']) {
                 $filtering['excludes'] = null;
@@ -225,7 +225,7 @@ class SitesController extends Controller
         $siteCollection = Site::get();
         $sites = [];
         foreach ($siteCollection as $site) {
-            $sites[] = $this->processClassificationInFiltering($site);
+            $sites[] = $this->processInternalClassificationInFiltering($site);
         }
 
         return self::json($sites);
