@@ -61,7 +61,7 @@ class ClassifierExternalSignatureVerifier
     {
         ksort($keywords);
 
-        return sha1($checksum.json_encode($keywords));
+        return hash('sha256', $checksum.json_encode($keywords));
     }
 
     private function getPublicKey(string $classifierName): ?string

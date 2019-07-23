@@ -65,7 +65,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
         $nonce = Utils::urlSafeBase64Encode(substr(md5(uniqid()), 0, 16));
         $created = date('c');
-        $digest = Utils::urlSafeBase64Encode(sha1(base64_decode($nonce).$created.$userApiKey, true));
+        $digest = Utils::urlSafeBase64Encode(hash('sha256', base64_decode($nonce).$created.$userApiKey, true));
 
         return [
             'Authorization' => 'WSSE profile="UsernameToken"',
