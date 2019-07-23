@@ -18,31 +18,17 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Site;
-use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class ChangeClassificationsDropSignature extends Migration
 {
-    /** @var SiteClassificationUpdater */
-    private $siteClassificationUpdater;
-
-    public function __construct()
-    {
-        $this->siteClassificationUpdater = new SiteClassificationUpdater();
-    }
-
     public function up(): void
     {
         Schema::table('classifications', function (Blueprint $table) {
             $table->dropColumn('signature');
         });
-
-        foreach (Site::all() as $site) {
-            $this->siteClassificationUpdater->addInternalClassificationToFiltering($site);
-        }
     }
 
     public function down(): void
