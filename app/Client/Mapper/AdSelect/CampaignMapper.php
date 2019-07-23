@@ -47,7 +47,9 @@ class CampaignMapper
 
             /** @var Classification $classification */
             foreach ($banner->getClassification() as $classification) {
-                foreach (AbstractFilterMapper::generateNestedStructure($classification->toArray()) as $nestedStructureKey => $values) {
+                foreach (AbstractFilterMapper::generateNestedStructure(
+                    $classification->toArray()
+                ) as $nestedStructureKey => $values) {
                     $mappedBanner['keywords'][$nestedStructureKey] = $values;
                 }
             }
@@ -85,9 +87,9 @@ class CampaignMapper
     private static function processDateEnd(?DateTime $dateEnd): int
     {
         if ($dateEnd === null) {
-            return (int)(new DateTime())->modify('+1 year')->getTimestamp();
+            return (new DateTime('+1 year'))->getTimestamp();
         }
 
-        return (int)$dateEnd->getTimestamp();
+        return $dateEnd->getTimestamp();
     }
 }
