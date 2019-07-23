@@ -32,8 +32,7 @@ class BannerClassificationCreator
         $banners = Banner::fetchBannersNotClassifiedByClassifier($classifier, $bannerIds);
 
         foreach ($banners as $banner) {
-            $classification = BannerClassification::prepare($banner->creative_sha1, $classifier);
-            $banner->classifications()->save($classification);
+            $banner->classifications()->save(BannerClassification::prepare($classifier));
         }
     }
 }

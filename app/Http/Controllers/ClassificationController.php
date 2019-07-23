@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Illuminate\Http\Request;
@@ -42,15 +43,13 @@ class ClassificationController extends Controller
     {
         $inputs = $request->all();
         foreach ($inputs as $input) {
-            $signature = $input['signature'];
-            $checksum = $input['checksum'];
-            $keywords = $input['keywords'];
-
-            if (!$this->signatureVerifier->isSignatureValid($classifier, $signature, $checksum, $keywords)) {
+            if (null === ($banner = Banner::fetchBanner($input['id']))
+                || null === ($classification =
+                    BannerClassification::fetchByBannerIdAndClassifier($banner->id, $classifier))) {
                 Log::info(
                     sprintf(
-                        '[classification update] Invalid signature for banner checksum (%s) from classifier (%s)',
-                        $checksum,
+                        '[classification update] Missing banner id (%s) from classifier (%s)',
+                        $input['id'],
                         $classifier
                     )
                 );
@@ -58,11 +57,14 @@ class ClassificationController extends Controller
                 continue;
             }
 
-            if (null === ($classification =
-                    BannerClassification::fetchByChecksumAndClassifier($checksum, $classifier))) {
+            $signature = $input['signature'];
+            $checksum = $banner->creative_sha1;
+            $keywords = $input['keywords'];
+
+            if (!$this->signatureVerifier->isSignatureValid($classifier, $signature, $checksum, $keywords)) {
                 Log::info(
                     sprintf(
-                        '[classification update] Missing banner checksum (%s) from classifier (%s)',
+                        '[classification update] Invalid signature for banner checksum (%s) from classifier (%s)',
                         $checksum,
                         $classifier
                     )

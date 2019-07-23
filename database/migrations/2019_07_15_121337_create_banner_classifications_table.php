@@ -33,7 +33,6 @@ class CreateBannerClassificationsTable extends Migration
             function (Blueprint $table) {
                 $table->increments('id');
                 $table->bigInteger('banner_id')->unsigned();
-                $table->binary('checksum');
                 $table->string('classifier', 32);
                 $table->json('keywords')->nullable();
                 $table->binary('signature')->nullable();
@@ -50,7 +49,6 @@ class CreateBannerClassificationsTable extends Migration
         );
 
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE `banner_classifications` MODIFY `checksum` varbinary(20) NOT NULL');
             DB::statement('ALTER TABLE `banner_classifications` MODIFY `signature` varbinary(64)');
         }
 
@@ -58,7 +56,6 @@ class CreateBannerClassificationsTable extends Migration
             'banner_classifications',
             function (Blueprint $table) {
                 $table->unique(['banner_id', 'classifier']);
-                $table->index(['classifier', 'checksum']);
                 $table->index('status');
             }
         );

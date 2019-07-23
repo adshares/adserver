@@ -31,7 +31,6 @@ use Illuminate\Support\Collection;
 /**
  * @property Banner banner
  * @property int banner_id
- * @property string checksum
  * @property string classifier
  * @property array|null keywords
  * @property string signature
@@ -65,16 +64,20 @@ class BannerClassification extends Model
         'signature',
     ];
 
-    public static function prepare(string $checksum, string $classifier): self
+    public static function prepare(string $classifier): self
     {
         $bannerClassification = new self();
-        $bannerClassification->checksum = hex2bin($checksum);
         $bannerClassification->classifier = $classifier;
 
         return $bannerClassification;
     }
 
-    public static function fetchByBannerIds(array $bannerIds): Collection
+    public static function fetchByBannerIdAndClassifier(int $bannerId, string $classifier): ?self
+    {
+        return BannerClassification::where('banner_id', $bannerId)->where('classifier', $classifier)->first();
+    }
+
+    public static function fetchClassifiedByBannerIds(array $bannerIds): Collection
     {
         /** @var Collection $grouped */
         $grouped = BannerClassification::whereIn('banner_id', $bannerIds)->where(
@@ -87,11 +90,6 @@ class BannerClassification extends Model
                 return $item->keyBy('classifier');
             }
         );
-    }
-
-    public static function fetchByChecksumAndClassifier(string $checksum, string $classifier): ?self
-    {
-        return BannerClassification::where('checksum', hex2bin($checksum))->where('classifier', $classifier)->first();
     }
 
     public static function fetchPendingForClassification(): Collection

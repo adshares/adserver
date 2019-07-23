@@ -56,7 +56,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             }
 
             $dataOut[] = [
-                'checksum' => $checksum,
+                'id' => $classificationRequest['id'],
                 'keywords' => $keywords,
                 'signature' => $signature,
             ];
