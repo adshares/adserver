@@ -395,7 +395,23 @@ var getBrowserContext = function () {
     }
 };
 
-domReady(function () {
+var parseZoneOptions = function(str) {
+    var opts = {};
+    if(typeof str != 'string') {
+        return opts;
+    }
+    var parts = str.split(',');
+    for(var i =0; i < parts.length; i++) {
+        var part = parts[i].trim();
+        var name_val = part.split('=', 2);
+        opts[name_val[0]] = name_val.length == 1 ? true : name_val[1];
+    }
+    return opts;
+};
+
+var abd;
+
+var getActiveZones = function(call_func) {
     var tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = tags.length;
 
@@ -406,11 +422,15 @@ domReady(function () {
     var param, params = [];
     params.push(getBrowserContext());
 
+    var zones = [];
+
     var valid = 0;
-    for (var i = 0; i < n; i++) {
+    var waiting = 0;
+    tags.forEach(function(tag, i) {
+        var zone;
         var tag = tags[i];
         if(tag.__dwmth) {
-            continue;
+            return;
         }
         tag.__dwmth = 1;
         param = {};
@@ -424,54 +444,115 @@ domReady(function () {
             }
         }
         if (param.zone) {
-            params.push(param);
             valid++;
+            params.push(param);
+            zone = zones[i] = {
+                id: param.zone,
+                width: param.width,
+                height: param.height,
+                options: parseZoneOptions(param.options),
+                destElement: tag
+            };
+
+            var backfill = tag.querySelectorAll('[type="app/backfill"]')[0];
+            if(backfill) {
+                zone.backfill = backfill.textContent;
+            }
+
+            if(zone.options.min_cpm > 0) {
+                zone.__invalid = true;
+                param.__invalid = true;
+                insertBackfill(tag, zone.backfill);
+            } else {
+                if (zone.options.adblock_only) {
+                    waiting++;
+                    abd = abd || new BlockDetector();
+                    abd.detect(function () {
+                        waiting--;
+                    }, function () {
+                        zone.__invalid = true;
+                        param.__invalid = true;
+                        waiting--;
+                        insertBackfill(tag, zone.backfill);
+                    })
+                }
+            }
+
         }
-    }
+    });
 
     if(valid == 0) {
         return;
     }
 
-    aduserPixel(getImpressionId());
-
-    var data = encodeZones(params);
-
-    var url = serverOrigin + '/supply/find';
-    var options = {
-        json: true
-    };
-    if (data.length <= 800) {
-        // safe limit for url
-        url += '?' + data;
-    } else {
-        options.method = 'post';
-        options.post = data;
+    var fn;
+    fn = function(){
+        if(waiting > 0) {
+            setTimeout(fn, 50);
+        } else {
+            var filter = function(x) { return !x.__invalid; };
+            call_func(zones.filter(filter), params.filter(filter));
+        }
     }
+    fn();
+}
 
-    fetchURL(url, options).then(function (banners) {
-        var foundTagIndexes = [];
-        banners.forEach(function (banner, i) {
-            if (!banner)
-                return;
 
-            var foundIndex = findDestination(banner.zone_id, tags, foundTagIndexes);
+domReady(function () {
+    aduserPixel(getImpressionId());
+    getActiveZones(function(zones, params) {
+        var data = encodeZones(params);
 
-            if (foundIndex === null) {
-                foundIndex = findDestination(banner.zone_id, tags, []);
-            }
+        var url = serverOrigin + '/supply/find';
+        var options = {
+            json: true
+        };
+        if (data.length <= 800) {
+            // safe limit for url
+            url += '?' + data;
+        } else {
+            options.method = 'post';
+            options.post = data;
+        }
 
-            banner.destElement = tags[foundIndex];
+        fetchURL(url, options).then(function (banners) {
 
-            foundTagIndexes.push(foundIndex);
+            zones.forEach(function(zone, i) {
+                if (!zone.destElement) {
+                    console.log('no element to replace');
+                    return;
+                }
 
-            if (!banner.destElement) {
-                console.log('no element to replace', banner);
-                return;
-            }
+                var banner = banners[i];
 
-            fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-        })
+                if (!banner || typeof banner != 'object') {
+                    insertBackfill(zone.destElement, zone.backfill);
+                    return;
+                }
+
+                banner.destElement = zone.destElement;
+                banner.backfill = zone.backfill;
+
+                if (zone.options.adblock_only) {
+                    abd.detect(function () {
+                        fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                    }, function () {
+                        insertBackfill(zone.destElement, zone.backfill);
+                    })
+                } else {
+                    console.log(banner);
+                    fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                }
+            });
+        }, function() {
+            zones.forEach(function(zone, i) {
+                if (!zone.destElement) {
+                    console.log('no element to replace');
+                    return;
+                }
+                insertBackfill(zone.destElement, zone.backfill);
+            });
+        });
     });
 
     addListener(window, 'message', function (event) {
@@ -631,6 +712,7 @@ var fetchBanner = function (banner, context) {
                     displayIfVisible();
                 } else {
                     console.log('hash error', banner, hash);
+                    insertBackfill(banner.destElement, banner.backfill);
                 }
             });
         } else {
@@ -638,5 +720,6 @@ var fetchBanner = function (banner, context) {
         }
     }, function () {
         console.log('could not fetch url', banner);
+        insertBackfill(banner.destElement, banner.backfill);
     });
 };
