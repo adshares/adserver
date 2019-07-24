@@ -186,7 +186,7 @@ final class ClientProvider extends ServiceProvider
                     new Client(
                         [
                             'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                            'timeout' => 3,
+                            'timeout' => 30,
                         ]
                     )
                 );
