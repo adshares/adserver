@@ -49,7 +49,7 @@ class CreateBannerClassificationsTable extends Migration
         );
 
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE `banner_classifications` MODIFY `signature` varbinary(64)');
+            DB::statement('ALTER TABLE `banner_classifications` MODIFY `signature` binary(64)');
         }
 
         Schema::table(
