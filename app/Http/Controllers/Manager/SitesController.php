@@ -81,12 +81,12 @@ class SitesController extends Controller
         $filtering = $siteArray['filtering'];
 
         $filtering['requires'] = array_filter(
-            $filtering['requires'],
+            $filtering['requires'] ?: [],
             $this->filterOutHelperKeywords($namespace),
             ARRAY_FILTER_USE_KEY
         );
         $filtering['excludes'] = array_filter(
-            $filtering['excludes'],
+            $filtering['excludes'] ?: [],
             $this->filterOutHelperKeywords($namespace),
             ARRAY_FILTER_USE_KEY
         );
