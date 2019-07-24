@@ -39,8 +39,8 @@ class SiteClassificationUpdater
     {
         $namespace = (string)config('app.classify_namespace');
 
-        $siteRequires = $site->site_requires;
-        $siteExcludes = $site->site_excludes;
+        $siteRequires = $site->site_requires ?: [];
+        $siteExcludes = $site->site_excludes ?: [];
 
         unset($siteRequires[$namespace]);
         unset($siteExcludes[$namespace]);

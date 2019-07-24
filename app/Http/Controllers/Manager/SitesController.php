@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Closure;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -69,35 +70,37 @@ class SitesController extends Controller
 
     public function read(Site $site): JsonResponse
     {
-        return self::json($this->processInternalClassificationInFiltering($site));
+        return self::json($this->processClassificationInFiltering($site));
     }
 
-    private function processInternalClassificationInFiltering(Site $site): array
+    private function processClassificationInFiltering(Site $site): array
     {
         $namespace = (string)config('app.classify_namespace');
 
         $siteArray = $site->toArray();
-
         $filtering = $siteArray['filtering'];
 
-        if ($filtering['requires'][$namespace] ?? false) {
-            unset($filtering['requires'][$namespace]);
-
-            if (!$filtering['requires']) {
-                $filtering['requires'] = null;
-            }
-        }
-        if ($filtering['excludes'][$namespace] ?? false) {
-            unset($filtering['excludes'][$namespace]);
-
-            if (!$filtering['excludes']) {
-                $filtering['excludes'] = null;
-            }
-        }
+        $filtering['requires'] = array_filter(
+            $filtering['requires'],
+            $this->filterOutHelperKeywords($namespace),
+            ARRAY_FILTER_USE_KEY
+        );
+        $filtering['excludes'] = array_filter(
+            $filtering['excludes'],
+            $this->filterOutHelperKeywords($namespace),
+            ARRAY_FILTER_USE_KEY
+        );
 
         $siteArray['filtering'] = $filtering;
 
         return $siteArray;
+    }
+
+    private function filterOutHelperKeywords(string $namespace): Closure
+    {
+        return function ($key) use ($namespace) {
+            return $namespace !== $key && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
+        };
     }
 
     public function update(Request $request, Site $site): JsonResponse
@@ -166,7 +169,7 @@ class SitesController extends Controller
         $siteCollection = Site::get();
         $sites = [];
         foreach ($siteCollection as $site) {
-            $sites[] = $this->processInternalClassificationInFiltering($site);
+            $sites[] = $this->processClassificationInFiltering($site);
         }
 
         return self::json($sites);
