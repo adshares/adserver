@@ -50,6 +50,8 @@ class AdPayGetPayments extends BaseCommand
 
     protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--c|chunkSize=250}';
 
+    protected $description = 'Updates events with payment data fetched from adpay';
+
     public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
     {
         if (!$this->lock()) {

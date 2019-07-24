@@ -27,6 +27,8 @@ class AdsMe extends BaseCommand
 {
     protected $signature = 'ads:me';
 
+    protected $description = 'Prints adserver blockchain account balance';
+
     public function handle(AdsClient $adsClient)
     {
         if (!$this->lock()) {
