@@ -10,26 +10,11 @@ var BlockDetector = function (options) {
         checking: false,
         loop: null,
         loopNumber: 0,
+        detected: null,
         event: {detected: [], notDetected: []}
     }
     if (options !== undefined) {
         this.setOption(options)
-    }
-    var self = this
-    var eventCallback = function () {
-        setTimeout(function () {
-            if (self._var.bait === null) {
-                self._creatBait()
-            }
-            setTimeout(function () {
-                self.check()
-            }, 1)
-        }, 1)
-    }
-    if (window.addEventListener !== undefined) {
-        window.addEventListener('load', eventCallback, false)
-    } else {
-        window.attachEvent('onload', eventCallback)
     }
 }
 BlockDetector.prototype._options = null
@@ -107,6 +92,7 @@ BlockDetector.prototype._checkBait = function (loop) {
         }
     }
     if (detected === true) {
+        this._var.detected = true;
         this._stopLoop()
         this._destroyBait()
         this.emitEvent(true)
@@ -114,6 +100,7 @@ BlockDetector.prototype._checkBait = function (loop) {
             this._var.checking = false
         }
     } else if (this._var.loop === null || loop === false) {
+        this._var.detected = false;
         this._destroyBait()
         this.emitEvent(false)
         if (loop === true) {
@@ -144,5 +131,9 @@ BlockDetector.prototype.detect = function (onDetected, onNotDetected) {
     if (typeof onNotDetected === 'function') {
         this._var.event.notDetected.push(onNotDetected)
     }
-    this.check()
+    if(this._var.detected === null) {
+        this.check()
+    } else {
+        this.emitEvent(this._var.detected);
+    }
 }

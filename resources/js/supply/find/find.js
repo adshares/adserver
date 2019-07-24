@@ -395,6 +395,17 @@ var getBrowserContext = function () {
     }
 };
 
+var findBackfillCode = function(container) {
+    var tag = container.querySelectorAll('[type="app/backfill"]')[0];
+    if(tag) return tag.textContent;
+    for(var i=0,n=container.childNodes.length; i<n; i++) {
+        if(container.childNodes[i].nodeType === 8) {
+            return container.childNodes[i].textContent;
+        }
+    }
+    return null;
+}
+
 var parseZoneOptions = function(str) {
     var opts = {};
     if(typeof str != 'string') {
@@ -454,10 +465,7 @@ var getActiveZones = function(call_func) {
                 destElement: tag
             };
 
-            var backfill = tag.querySelectorAll('[type="app/backfill"]')[0];
-            if(backfill) {
-                zone.backfill = backfill.textContent;
-            }
+            zone.backfill = findBackfillCode(tag);
 
             if(zone.options.min_cpm > 0) {
                 zone.__invalid = true;
@@ -540,7 +548,6 @@ domReady(function () {
                         insertBackfill(zone.destElement, zone.backfill);
                     })
                 } else {
-                    console.log(banner);
                     fetchBanner(banner, {page: params[0], zone: params[i + 1]});
                 }
             });
