@@ -37,9 +37,6 @@ class BannerClassificationsRequestCommand extends BaseCommand
 
     protected $description = 'Requests banner classification from classifiers';
 
-    /** @var BannerClassificationCreator */
-    private $creator;
-
     /** @var ClassifierExternalClient */
     private $client;
 
@@ -47,12 +44,10 @@ class BannerClassificationsRequestCommand extends BaseCommand
     private $classifierRepository;
 
     public function __construct(
-        BannerClassificationCreator $creator,
         ClassifierExternalClient $client,
         ClassifierExternalRepository $classifierRepository,
         Locker $locker
     ) {
-        $this->creator = $creator;
         $this->client = $client;
         $this->classifierRepository = $classifierRepository;
 

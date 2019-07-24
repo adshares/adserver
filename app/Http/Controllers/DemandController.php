@@ -428,7 +428,7 @@ class DemandController extends Controller
         }
         $bannerClassifications = BannerClassification::fetchClassifiedByBannerIds($bannerIds);
 
-        foreach ($activeCampaigns as $i => $campaign) {
+        foreach ($activeCampaigns as $campaign) {
             $banners = [];
 
             foreach ($campaign->ads as $banner) {
