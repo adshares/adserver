@@ -25,10 +25,10 @@ namespace Adshares\Adserver\Providers\Common;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Client\DummyClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
@@ -182,14 +182,14 @@ final class ClientProvider extends ServiceProvider
         $this->app->bind(
             ClassifierExternalClient::class,
             function () {
-                return new DummyClassifierExternalClient();
-                //TODO uncomment when external classifier will be ready
-                //return new GuzzleClassifierExternalClient(new Client(
-                //    [
-                //        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                //        'timeout' => 3,
-                //    ]
-                //));
+                return new GuzzleClassifierExternalClient(
+                    new Client(
+                        [
+                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                            'timeout' => 3,
+                        ]
+                    )
+                );
             }
         );
     }

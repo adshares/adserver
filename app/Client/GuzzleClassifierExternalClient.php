@@ -60,18 +60,18 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
     private function buildHeaders(ClassifierExternal $classifier): array
     {
-        $userName = $classifier->getClientName();
-        $userApiKey = $classifier->getClientApiKey();
+        $apiKeyName = $classifier->getApiKeyName();
+        $apiKeySecret = $classifier->getApiKeySecret();
 
-        $nonce = Utils::urlSafeBase64Encode(substr(md5(uniqid()), 0, 16));
+        $nonce = base64_encode(substr(md5(uniqid()), 0, 16));
         $created = date('c');
-        $digest = Utils::urlSafeBase64Encode(hash('sha256', base64_decode($nonce).$created.$userApiKey, true));
+        $digest = base64_encode(hash('sha256', base64_decode($nonce).$created.$apiKeySecret, true));
 
         return [
             'Authorization' => 'WSSE profile="UsernameToken"',
             'X-WSSE' => sprintf(
                 'UsernameToken Username="%s", PasswordDigest="%s", Nonce="%s", Created="%s"',
-                $userName,
+                $apiKeyName,
                 $digest,
                 $nonce,
                 $created

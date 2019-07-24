@@ -34,18 +34,18 @@ class ClassifierExternal
     private $url;
 
     /** @var string */
-    private $clientName;
+    private $apiKeyName;
 
     /** @var string */
-    private $clientApiKey;
+    private $apiKeySecret;
 
-    public function __construct(string $name, string $publicKey, string $url, string $clientName, string $clientApiKey)
+    public function __construct(string $name, string $publicKey, string $url, string $apiKeyName, string $apiKeySecret)
     {
         $this->name = $name;
         $this->publicKey = $publicKey;
         $this->url = $url;
-        $this->clientName = $clientName;
-        $this->clientApiKey = $clientApiKey;
+        $this->apiKeyName = $apiKeyName;
+        $this->apiKeySecret = $apiKeySecret;
     }
 
     public function getName(): string
@@ -63,14 +63,14 @@ class ClassifierExternal
         return $this->url;
     }
 
-    public function getClientName(): string
+    public function getApiKeyName(): string
     {
-        return $this->clientName;
+        return $this->apiKeyName;
     }
 
-    public function getClientApiKey(): string
+    public function getApiKeySecret(): string
     {
-        return $this->clientApiKey;
+        return $this->apiKeySecret;
     }
 
     public function __toString(): string
