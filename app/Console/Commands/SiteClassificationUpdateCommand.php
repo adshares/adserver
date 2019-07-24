@@ -43,7 +43,7 @@ class SiteClassificationUpdateCommand extends BaseCommand
 
         $siteClassificationUpdater = new SiteClassificationUpdater();
         foreach (Site::all() as $site) {
-            $siteClassificationUpdater->addInternalClassificationToFiltering($site);
+            $siteClassificationUpdater->addClassificationToFiltering($site);
         }
         
         $this->info('Finish command '.$this->signature);

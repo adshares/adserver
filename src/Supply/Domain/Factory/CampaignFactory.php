@@ -41,7 +41,6 @@ class CampaignFactory
 {
     public static function createFromArray(array $data): Campaign
     {
-
         self::validateArrayParameters($data);
 
         $source = $data['source_campaign'];

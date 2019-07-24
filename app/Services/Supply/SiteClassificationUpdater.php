@@ -27,7 +27,15 @@ use Adshares\Classify\Domain\Model\Classification;
 
 class SiteClassificationUpdater
 {
-    public function addInternalClassificationToFiltering(Site $site): void
+    public const KEYWORD_CLASSIFIED = 'classified';
+
+    public const KEYWORD_CLASSIFIED_VALUE = ['1'];
+
+    private const RESERVED_NAMESPACE_TYPE = 'type';
+
+    private const NAMESPACE_SEPARATOR = ':';
+
+    public function addClassificationToFiltering(Site $site): void
     {
         $namespace = (string)config('app.classify_namespace');
 
@@ -36,6 +44,11 @@ class SiteClassificationUpdater
 
         unset($siteRequires[$namespace]);
         unset($siteExcludes[$namespace]);
+
+        foreach ($this->extractClassifiers($siteExcludes, $siteRequires) as $classifier) {
+            $siteRequires[$classifier.self::NAMESPACE_SEPARATOR.self::KEYWORD_CLASSIFIED] =
+                self::KEYWORD_CLASSIFIED_VALUE;
+        }
 
         $publisherId = $site->user_id;
         $siteId = $site->id;
@@ -95,5 +108,26 @@ class SiteClassificationUpdater
             new Classification($namespace, $publisherId, false),
             new Classification($namespace, $publisherId, false, $siteId),
         ];
+    }
+
+    private function extractClassifiers(array $siteExcludes, array $siteRequires): array
+    {
+        $keys = array_merge(array_keys($siteExcludes), array_keys($siteRequires));
+        $classifiers = [];
+        foreach ($keys as $key) {
+            if (self::RESERVED_NAMESPACE_TYPE === $key) {
+                continue;
+            }
+
+            if (false !== ($index = strpos($key, self::NAMESPACE_SEPARATOR))) {
+                $key = substr($key, 0, $index);
+            }
+
+            if (!in_array($key, $classifiers, true)) {
+                $classifiers[] = $key;
+            }
+        }
+
+        return $classifiers;
     }
 }

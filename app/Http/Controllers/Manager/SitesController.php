@@ -54,7 +54,7 @@ class SitesController extends Controller
             $site = Site::create($input);
             $site->user_id = Auth::user()->id;
             $site->save();
-            $this->siteClassificationUpdater->addInternalClassificationToFiltering($site);
+            $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
             $site->zones()->createMany($request->input('site.ad_units'));
         } catch (Exception $exception) {
@@ -110,7 +110,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            $this->siteClassificationUpdater->addInternalClassificationToFiltering($site);
+            $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
             $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
 
