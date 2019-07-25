@@ -51,12 +51,21 @@ class ClassifierExternalRepository
         return null;
     }
 
+    public function fetchClassifiers(): array
+    {
+        if (null !== ($classifier = $this->fetchDefaultClassifier())) {
+            return [$classifier];
+        }
+
+        return [];
+    }
+
     public function fetchDefaultClassifier(): ?ClassifierExternal
     {
         if (null !== ($name = $this->fetchDefaultClassifierName())) {
             return $this->fetchClassifierByName($name);
         }
-        
+
         return null;
     }
 

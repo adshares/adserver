@@ -68,6 +68,11 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
     public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy
     {
+        return TaxonomyFactory::fromArray($this->fetchTaxonomyRaw($classifier));
+    }
+    
+    public function fetchTaxonomyRaw(ClassifierExternal $classifier): array
+    {
         $url = $classifier->getBaseUrl().self::PATH_API.self::PATH_TAXONOMY;
         try {
             $result = $this->client->get(
@@ -90,8 +95,8 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
                 $exception->getMessage(), $exception->getCode(), $exception
             );
         }
-        
-        return TaxonomyFactory::fromArray($items);
+
+        return $items;
     }
 
     private function buildHeaders(ClassifierExternal $classifier): array

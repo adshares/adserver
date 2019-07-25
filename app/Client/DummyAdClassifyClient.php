@@ -34,7 +34,7 @@ final class DummyAdClassifyClient implements AdClassify
         return TaxonomyFactory::fromArray(json_decode($this->getData(), true));
     }
 
-    private function getData(): string
+    public function getData(): string
     {
         return <<<JSON
 {
