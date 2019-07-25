@@ -45,6 +45,7 @@ class AdsSendOne implements ShouldQueue
 
     private const QUEUE_TRY_AGAIN_EXCEPTION_CODES = [
         CommandError::LOW_BALANCE,
+        CommandError::USER_BAD_TARGET,
         CommandError::LOCK_USER_FAILED,
     ];
 
