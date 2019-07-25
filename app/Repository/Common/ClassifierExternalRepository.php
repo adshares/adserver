@@ -39,12 +39,12 @@ class ClassifierExternalRepository
     {
         if ($this->fetchDefaultClassifierName() === $name) {
             $publicKey = (string)config('app.classifier_external_public_key') ?: null;
-            $url = (string)config('app.classifier_external_url') ?: null;
+            $baseUrl = (string)config('app.classifier_external_base_url') ?: null;
             $apiKeyName = (string)config('app.classifier_external_api_key_name') ?: null;
             $apiKeySecret = (string)config('app.classifier_external_api_key_secret') ?: null;
 
-            if (null !== $publicKey && null !== $url && null !== $apiKeyName && null !== $apiKeySecret) {
-                return new ClassifierExternal($name, $publicKey, $url, $apiKeyName, $apiKeySecret);
+            if (null !== $publicKey && null !== $baseUrl && null !== $apiKeyName && null !== $apiKeySecret) {
+                return new ClassifierExternal($name, $publicKey, $baseUrl, $apiKeyName, $apiKeySecret);
             }
         }
 

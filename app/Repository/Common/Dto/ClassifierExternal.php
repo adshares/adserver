@@ -31,7 +31,7 @@ class ClassifierExternal
     private $publicKey;
 
     /** @var string */
-    private $url;
+    private $baseUrl;
 
     /** @var string */
     private $apiKeyName;
@@ -39,11 +39,16 @@ class ClassifierExternal
     /** @var string */
     private $apiKeySecret;
 
-    public function __construct(string $name, string $publicKey, string $url, string $apiKeyName, string $apiKeySecret)
-    {
+    public function __construct(
+        string $name,
+        string $publicKey,
+        string $baseUrl,
+        string $apiKeyName,
+        string $apiKeySecret
+    ) {
         $this->name = $name;
         $this->publicKey = $publicKey;
-        $this->url = $url;
+        $this->baseUrl = $baseUrl;
         $this->apiKeyName = $apiKeyName;
         $this->apiKeySecret = $apiKeySecret;
     }
@@ -58,9 +63,9 @@ class ClassifierExternal
         return $this->publicKey;
     }
 
-    public function getUrl(): string
+    public function getBaseUrl(): string
     {
-        return $this->url;
+        return $this->baseUrl;
     }
 
     public function getApiKeyName(): string

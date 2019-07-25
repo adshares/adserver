@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Common\Application\Dto\Taxonomy;
 use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -68,5 +69,10 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             $dataOut
         );
         app()->handle($request);
+    }
+
+    public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy
+    {
+        return (new DummyAdClassifyClient())->fetchFilteringOptions();
     }
 }

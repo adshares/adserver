@@ -115,7 +115,7 @@ return [
     'classify_namespace' => (string)env('CLASSIFY_NAMESPACE', 'default_classify_namespace'),
     'classify_secret_key' => (string)env('CLASSIFY_SECRET_KEY', ''),
     'classifier_external_name' => env('CLASSIFIER_EXTERNAL_NAME'),
-    'classifier_external_url' => env('CLASSIFIER_EXTERNAL_URL'),
+    'classifier_external_base_url' => env('CLASSIFIER_EXTERNAL_BASE_URL'),
     'classifier_external_public_key' => env('CLASSIFIER_EXTERNAL_PUBLIC_KEY'),
     'classifier_external_api_key_name' => env('CLASSIFIER_EXTERNAL_API_KEY_NAME'),
     'classifier_external_api_key_secret' => env('CLASSIFIER_EXTERNAL_API_KEY_SECRET'),

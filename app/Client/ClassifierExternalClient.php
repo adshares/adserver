@@ -23,8 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Common\Application\Dto\Taxonomy;
 
 interface ClassifierExternalClient
 {
     public function requestClassification(ClassifierExternal $classifier, array $data): void;
+    
+    public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy;
 }

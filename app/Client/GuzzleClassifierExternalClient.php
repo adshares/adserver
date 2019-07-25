@@ -22,15 +22,24 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Common\Application\Dto\Taxonomy;
+use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Exception\RuntimeException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use InvalidArgumentException;
+use function GuzzleHttp\json_decode;
 
 final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 {
+    private const PATH_API = '/api/v0';
+
+    private const PATH_REQUEST_CLASSIFICATION = '/requests';
+
+    private const PATH_TAXONOMY = '/taxonomy';
+
     /** @var Client */
     private $client;
 
@@ -41,9 +50,10 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
 
     public function requestClassification(ClassifierExternal $classifier, array $data): void
     {
+        $url = $classifier->getBaseUrl().self::PATH_API.self::PATH_REQUEST_CLASSIFICATION;
         try {
             $this->client->post(
-                $classifier->getUrl(),
+                $url,
                 [
                     RequestOptions::JSON => $data,
                     RequestOptions::HEADERS => $this->buildHeaders($classifier),
@@ -51,11 +61,37 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
             );
         } catch (RequestException $requestException) {
             throw new RuntimeException(
-                $requestException->getMessage(),
-                $requestException->getCode(),
-                $requestException
+                $requestException->getMessage(), $requestException->getCode(), $requestException
             );
         }
+    }
+
+    public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy
+    {
+        $url = $classifier->getBaseUrl().self::PATH_API.self::PATH_TAXONOMY;
+        try {
+            $result = $this->client->get(
+                $url,
+                [
+                    RequestOptions::HEADERS => $this->buildHeaders($classifier),
+                ]
+            );
+        } catch (RequestException $requestException) {
+            throw new RuntimeException(
+                $requestException->getMessage(), $requestException->getCode(), $requestException
+            );
+        }
+
+        $body = (string)$result->getBody();
+        try {
+            $items = json_decode($body, true);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException(
+                $exception->getMessage(), $exception->getCode(), $exception
+            );
+        }
+        
+        return TaxonomyFactory::fromArray($items);
     }
 
     private function buildHeaders(ClassifierExternal $classifier): array
