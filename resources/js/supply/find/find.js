@@ -191,11 +191,6 @@ function isRendered(domObj) {
     return true;
 }
 
-function isNumber(x)
-{
-    return !isNaN(1*x);
-}
-
 function viewSize() {
     var doc = document, w = window;
     var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
@@ -560,58 +555,39 @@ domReady(function () {
                 insertBackfill(zone.destElement, zone.backfill);
             });
         });
-    });
 
-    addListener(window, 'message', function (event) {
-        var has_access = dwmthACL.some(function(win) {
-            return win && (win === event.source);
+        addListener(window, 'message', function (event) {
+            var has_access = dwmthACL.some(function(win) {
+                return win && (win === event.source);
+            });
+            if (has_access && event.data)
+            {
+                var data, isString = typeof event.data == "string";
+                if (isString) {
+                    data = JSON.parse(event.data);
+                } else {
+                    data = event.data;
+                }
+                if (data.insertElem) {
+                    data.insertElem.forEach(function (request) {
+                        if(dwmthACL.length >= 5 * zones.length) return;
+                        if(request.type == 'iframe') {
+                            if(dwmthURLS[request.url]) return;
+                            var iframe = addTrackingIframe(request.url);
+                            dwmthACL.push(iframe.contentWindow);
+                            dwmthURLS[request.url] = 1;
+                        } else if(request.type == 'img') {
+                            if(dwmthURLS[request.url]) return;
+                            addTrackingImage(request.url);
+                            dwmthACL.push(null);
+                            dwmthURLS[request.url] = 1;
+                        }
+                    });
+                }
+            }
         });
-        if (has_access && event.data)
-        {
-            var data, isString = typeof event.data == "string";
-            if (isString) {
-                data = JSON.parse(event.data);
-            } else {
-                data = event.data;
-            }
-            if (data.insertElem) {
-                data.insertElem.forEach(function (request) {
-                    if(dwmthACL.length >= 5 * valid) return;
-                    if(request.type == 'iframe') {
-                        if(dwmthURLS[request.url]) return;
-                        var iframe = addTrackingIframe(request.url);
-                        dwmthACL.push(iframe.contentWindow);
-                        dwmthURLS[request.url] = 1;
-                    } else if(request.type == 'img') {
-                        if(dwmthURLS[request.url]) return;
-                        addTrackingImage(request.url);
-                        dwmthACL.push(null);
-                        dwmthURLS[request.url] = 1;
-                    }
-                });
-            }
-        }
     });
 });
-
-var findDestination = function (zoneId, tags, excludedTags) {
-    if (!zoneId) {
-        return;
-    }
-
-    for (var i = 0; i < tags.length; i++) {
-        var dataZone = tags[i].getAttribute('data-zone');
-
-        if (!dataZone) {
-            return;
-        }
-        if (dataZone.toLowerCase() === zoneId.toLowerCase()
-            && (excludedTags.length === 0 || excludedTags.indexOf(i) === -1)
-        ) {
-            return i;
-        }
-    }
-};
 
 var addTrackingIframe = function (url, element) {
     if (!url) return;
