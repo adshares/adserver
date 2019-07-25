@@ -25,6 +25,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use function sprintf;
@@ -78,6 +79,6 @@ class ClassificationController extends Controller
             $classification->classified($keywords, $signature);
         }
 
-        return self::json();
+        return self::json([], Response::HTTP_NO_CONTENT);
     }
 }
