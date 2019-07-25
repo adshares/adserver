@@ -536,12 +536,8 @@ domReady(function () {
                 banner.destElement = zone.destElement;
                 banner.backfill = zone.backfill;
 
-                if (zone.options.adblock_only) {
-                    abd.detect(function () {
-                        fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-                    }, function () {
-                        insertBackfill(zone.destElement, zone.backfill);
-                    })
+                if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
+                    insertBackfill(zone.destElement, zone.backfill);
                 } else {
                     fetchBanner(banner, {page: params[0], zone: params[i + 1]});
                 }
