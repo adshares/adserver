@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services\Common;
 
+use Adshares\Adserver\Client\Mapper\ClassifierExternalKeywordsSerializer;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Illuminate\Support\Facades\Log;
 use SodiumException;
@@ -59,9 +60,7 @@ class ClassifierExternalSignatureVerifier
 
     private function createMessage(string $checksum, array $keywords): string
     {
-        ksort($keywords);
-
-        return hash('sha256', $checksum.json_encode($keywords));
+        return hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
     }
 
     private function getPublicKey(string $classifierName): ?string
