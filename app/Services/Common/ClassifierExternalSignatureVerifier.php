@@ -60,7 +60,7 @@ class ClassifierExternalSignatureVerifier
 
     private function createMessage(string $checksum, array $keywords): string
     {
-        return hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
+        return hash('sha256', hex2bin($checksum).json_encode($keywords));
     }
 
     private function getPublicKey(string $classifierName): ?string

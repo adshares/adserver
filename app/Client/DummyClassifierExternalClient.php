@@ -45,7 +45,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             $keywords = ['category' => ['crypto', 'gambling']];
 
             ksort($keywords);
-            $message = hash('sha256', $checksum.json_encode($keywords));
+            $message = hash('sha256', hex2bin($checksum).json_encode($keywords));
 
             try {
                 $keyPair = sodium_crypto_sign_seed_keypair(hex2bin(self::PRIVATE_KEY));
