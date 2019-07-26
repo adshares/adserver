@@ -216,7 +216,7 @@ class EventLog extends Model
         $log->their_userdata = $userData;
         $log->event_type = $type;
 
-        $log->domain = isset($headers['referer']) ? DomainReader::domain($headers['referer']) : null;
+        $log->domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
 
         if ($type === self::TYPE_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
