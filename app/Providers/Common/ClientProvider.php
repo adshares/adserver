@@ -112,7 +112,8 @@ final class ClientProvider extends ServiceProvider
             AdClassify::class,
             function (Application $app) {
                 return new MultipleExternalClassifierAdClassifyClient(
-                    $app->make(ClassifierExternalClient::class), new ClassifierExternalRepository()
+                    $app->make(ClassifierExternalClient::class),
+                    new ClassifierExternalRepository()
                 );
             }
         );

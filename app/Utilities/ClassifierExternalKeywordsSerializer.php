@@ -35,16 +35,16 @@ class ClassifierExternalKeywordsSerializer
     public static function serialize(array $data): string
     {
         $array = $data;
-        self::_sort($array);
+        self::sortRecursive($array);
 
         return json_encode($array);
     }
 
-    private static function _sort(array &$array): void
+    private static function sortRecursive(array &$array): void
     {
         foreach ($array as $key => &$value) {
             if (is_array($value)) {
-                self::_sort($value);
+                self::sortRecursive($value);
             }
         }
 

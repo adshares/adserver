@@ -61,7 +61,9 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
             );
         } catch (RequestException $requestException) {
             throw new RuntimeException(
-                $requestException->getMessage(), $requestException->getCode(), $requestException
+                $requestException->getMessage(),
+                $requestException->getCode(),
+                $requestException
             );
         }
     }
@@ -83,7 +85,9 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
             );
         } catch (RequestException $requestException) {
             throw new RuntimeException(
-                $requestException->getMessage(), $requestException->getCode(), $requestException
+                $requestException->getMessage(),
+                $requestException->getCode(),
+                $requestException
             );
         }
 
@@ -91,9 +95,7 @@ final class GuzzleClassifierExternalClient implements ClassifierExternalClient
         try {
             $items = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new RuntimeException(
-                $exception->getMessage(), $exception->getCode(), $exception
-            );
+            throw new RuntimeException($exception->getMessage(), $exception->getCode(), $exception);
         }
 
         return $items;
