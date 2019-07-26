@@ -33,6 +33,8 @@ class AdsSend extends BaseCommand
 {
     protected $signature = 'ads:send {--external}';
 
+    protected $description = 'For testing purposes: sends ads to seeded accounts';
+
     /** @var array */
     private $data = [];
 

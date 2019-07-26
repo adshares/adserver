@@ -38,7 +38,7 @@ class DemandEventMapper
                 $createdAt = $event->created_at;
                 $timestamp = $createdAt->getTimestamp();
 
-                $theirKeywords = self::processTheirKeywords($event->their_userdata);
+                $theirKeywords = new stdClass();//self::processTheirKeywords($event->their_userdata);
                 $ourUserData = json_decode(json_encode($event->our_userdata), true);
                 $ourKeywords = OurKeywordsMapper::map($ourUserData);
 
