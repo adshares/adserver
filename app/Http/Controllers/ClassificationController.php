@@ -42,7 +42,14 @@ class ClassificationController extends Controller
 
     public function updateClassification(string $classifier, Request $request): JsonResponse
     {
+        $isAnySignatureInvalid = false;
+
         $inputs = $request->all();
+
+        if (empty($inputs)) {
+            return self::json(['message' => 'No classification'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
         foreach ($inputs as $input) {
             if (null === ($banner = Banner::fetchBanner($input['id']))
                 || null === ($classification =
@@ -71,12 +78,17 @@ class ClassificationController extends Controller
                     )
                 );
 
+                $isAnySignatureInvalid = true;
                 $classification->failed();
 
                 continue;
             }
 
             $classification->classified($keywords, $signature);
+        }
+
+        if ($isAnySignatureInvalid) {
+            return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
