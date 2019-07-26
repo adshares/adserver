@@ -29,6 +29,8 @@ class DemandSendPayments extends BaseCommand
 {
     protected $signature = 'ops:demand:payments:send';
 
+    protected $description = 'Sends payments to supply adservers and license server';
+
     public function handle(Ads $ads): void
     {
         if (!$this->lock()) {

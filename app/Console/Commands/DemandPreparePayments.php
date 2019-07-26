@@ -33,6 +33,8 @@ class DemandPreparePayments extends BaseCommand
 {
     protected $signature = 'ops:demand:payments:prepare {--c|chunkSize=10000}';
 
+    protected $description = 'Prepares payments for events and license';
+
     /** @var LicenseReader */
     private $licenseReader;
 
