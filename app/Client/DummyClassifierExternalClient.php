@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
+use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Illuminate\Http\Request;
 use SodiumException;
@@ -43,9 +44,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         foreach ($requests as $classificationRequest) {
             $checksum = $classificationRequest['checksum'];
             $keywords = ['category' => ['crypto', 'gambling']];
-
-            ksort($keywords);
-            $message = hash('sha256', hex2bin($checksum).json_encode($keywords));
+            $message = hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
 
             try {
                 $keyPair = sodium_crypto_sign_seed_keypair(hex2bin(self::PRIVATE_KEY));
