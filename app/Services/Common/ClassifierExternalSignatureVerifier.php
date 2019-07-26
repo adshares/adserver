@@ -22,7 +22,6 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services\Common;
 
-use Adshares\Adserver\Client\Mapper\ClassifierExternalKeywordsSerializer;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Illuminate\Support\Facades\Log;
 use SodiumException;
