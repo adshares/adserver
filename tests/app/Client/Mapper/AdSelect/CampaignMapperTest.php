@@ -31,17 +31,101 @@ use stdClass;
 
 final class CampaignMapperTest extends TestCase
 {
-    private $campaignData;
+    public function testMappingCampaign(): void
+    {
+        $campaignData = $this->getCampaignData();;
 
-    public function __construct(
-        ?string $name = null,
-        array $data = [],
-        string $dataName = ''
-    ) {
-        $this->campaignData = [
+        $expected = [
+            'campaign_id' => (string)$campaignData['id'],
+            'time_start' => $campaignData['date_start']->getTimestamp(),
+            'time_end' => $campaignData['date_end']->getTimestamp(),
+            'banners' => [
+                [
+                    'banner_id' => (string)$campaignData['banners'][0]['id'],
+                    'banner_size' => '728x90',
+                    'keywords' => [
+                        'type' => ['image'],
+                    ],
+                ],
+                [
+                    'banner_id' => (string)$campaignData['banners'][1]['id'],
+                    'banner_size' => '728x90',
+                    'keywords' => [
+                        'type' => ['image'],
+                    ],
+                ],
+            ],
+            'keywords' => [
+                'source_host' => $campaignData['source_campaign']['host'],
+                'adshares_address' => $campaignData['source_campaign']['address'],
+            ],
+            'filters' => [
+                'require' => new stdClass(),
+                'exclude' => new stdClass(),
+            ],
+            'max_cpc' => 100000000001,
+            'max_cpm' => 100000000002,
+            'budget' => 1000000000000,
+        ];
+
+        $campaign = CampaignFactory::createFromArray($campaignData);
+
+        $this->assertEquals($expected, CampaignMapper::map($campaign)[0]);
+    }
+
+    public function testMappingCampaignWithClassification(): void
+    {
+        $campaignDataWithClassification = $this->getCampaignDataWithClassification();
+
+        $expected = [
+            'campaign_id' => (string)$campaignDataWithClassification['id'],
+            'time_start' => $campaignDataWithClassification['date_start']->getTimestamp(),
+            'banners' => [
+                [
+                    'banner_id' => (string)$campaignDataWithClassification['banners'][0]['id'],
+                    'banner_size' => '728x90',
+                    'keywords' => [
+                        'type' => ['image'],
+                        'test_classifier:category' => [
+                            'crypto',
+                            'gambling',
+                        ],
+                        'test_classifier:classified' => ['1'],
+                    ],
+                ],
+            ],
+            'keywords' => [
+                'source_host' => $campaignDataWithClassification['source_campaign']['host'],
+                'adshares_address' => $campaignDataWithClassification['source_campaign']['address'],
+            ],
+            'filters' => [
+                'require' => [
+                    'device:type' => ['desktop'],
+                ],
+                'exclude' => new stdClass(),
+            ],
+            'max_cpc' => 10000000001,
+            'max_cpm' => 10000000002,
+            'budget' => 93555000000,
+        ];
+
+        $campaign = CampaignFactory::createFromArray($campaignDataWithClassification);
+        $mapped = CampaignMapper::map($campaign)[0];
+        // time_end must be compared separately with timestamp range because it is overwritten
+        $mappedTimeEnd = $mapped['time_end'];
+        unset($mapped['time_end']);
+
+        $this->assertEquals($expected, $mapped);
+        $this->assertNotNull($mappedTimeEnd);
+        $this->assertGreaterThan((new DateTime('+11 months'))->getTimestamp(), $mappedTimeEnd);
+        $this->assertLessThanOrEqual((new DateTime('+1 year'))->getTimestamp(), $mappedTimeEnd);
+    }
+
+    private function getCampaignData(): array
+    {
+        return [
             'id' => Uuid::v4(),
             'demand_id' => Uuid::v4(),
-            'publisher_id' => Uuid::v4(),
             'landing_url' => 'http://adshares.pl',
             'date_start' => (new DateTime())->modify('-1 day'),
             'date_end' => (new DateTime())->modify('+2 days'),
@@ -83,47 +167,58 @@ final class CampaignMapperTest extends TestCase
             'targeting_excludes' => [],
             'targeting_requires' => [],
         ];
-
-        parent::__construct($name, $data, $dataName);
     }
 
-    public function testMappingCampaign(): void
+    private function getCampaignDataWithClassification(): array
     {
-        $expected = [
-            'campaign_id' => (string)$this->campaignData['id'],
-            'time_start' => $this->campaignData['date_start']->getTimestamp(),
-            'time_end' => $this->campaignData['date_end']->getTimestamp(),
+        return [
+            'id' => Uuid::v4(),
+            'demand_id' => Uuid::v4(),
+            'landing_url' => 'http://adshares.pl',
+            'date_start' => (new DateTime())->modify('-1 day'),
+            'date_end' => null,
+            'created_at' => (new DateTime())->modify('-2 days'),
+            'updated_at' => (new DateTime())->modify('-2 days'),
+            'source_campaign' => [
+                'host' => 'localhost:8101',
+                'address' => '0001-00000001-0001',
+                'version' => '0.1',
+                'created_at' => new DateTime(),
+                'updated_at' => new DateTime(),
+            ],
             'banners' => [
                 [
-                    'banner_id' => (string)$this->campaignData['banners'][0]['id'],
-                    'banner_size' => '728x90',
-                    'keywords' => [
-                        'type' => ['image'],
+                    'id' => Uuid::v4(),
+                    'demand_banner_id' => Uuid::v4(),
+                    'serve_url' => 'http://localhost:8101/serve/1',
+                    'click_url' => 'http://localhost:8101/click/1',
+                    'view_url' => 'http://localhost:8101/view/1',
+                    'type' => 'image',
+                    'checksum' => 'feca8167499895B0c30bbbc3c668550161f64235',
+                    'width' => 728,
+                    'height' => 90,
+                    'classification' => [
+                        'test_classifier' => [
+                            'category' => [
+                                'crypto',
+                                'gambling',
+                            ],
+                            'classified' => ['1'],
+                        ],
                     ],
                 ],
-                [
-                    'banner_id' => (string)$this->campaignData['banners'][1]['id'],
-                    'banner_size' => '728x90',
-                    'keywords' => [
-                        'type' => ['image'],
+            ],
+            'max_cpc' => 10000000001,
+            'max_cpm' => 10000000002,
+            'budget' => 93555000000,
+            'targeting_excludes' => [],
+            'targeting_requires' => [
+                "device" => [
+                    "type" => [
+                        "desktop",
                     ],
                 ],
             ],
-            'keywords' => [
-                'source_host' => $this->campaignData['source_campaign']['host'],
-                'adshares_address' => $this->campaignData['source_campaign']['address'],
-            ],
-            'filters' => [
-                'require' => new stdClass(),
-                'exclude' => new stdClass(),
-            ],
-            'max_cpc' => 100000000001,
-            'max_cpm' => 100000000002,
-            'budget' => 1000000000000,
         ];
-
-        $campaign = CampaignFactory::createFromArray($this->campaignData);
-
-        $this->assertEquals($expected, CampaignMapper::map($campaign)[0]);
     }
 }
