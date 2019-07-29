@@ -27,6 +27,7 @@ use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Illuminate\Http\Request;
 use SodiumException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 final class DummyClassifierExternalClient implements ClassifierExternalClient
@@ -47,12 +48,9 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             $message = hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
 
             try {
-                $keyPair = sodium_crypto_sign_seed_keypair(hex2bin(self::PRIVATE_KEY));
-                $keySecret = sodium_crypto_sign_secretkey($keyPair);
-
-                $signature = bin2hex(sodium_crypto_sign_detached($message, $keySecret));
+                $signature = $this->sign($message);
             } catch (SodiumException $exception) {
-                throw new HttpException(500, 'Cannot create signature');
+                throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot create signature');
             }
 
             $dataOut[] = [
@@ -78,5 +76,19 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
     public function fetchTaxonomyRaw(ClassifierExternal $classifier): array
     {
         return json_decode((new DummyAdClassifyClient())->getData(), true);
+    }
+
+    /**
+     * @param string $message
+     *
+     * @return string
+     * @throws SodiumException
+     */
+    private function sign(string $message): string
+    {
+        $keyPair = sodium_crypto_sign_seed_keypair(hex2bin(self::PRIVATE_KEY));
+        $keySecret = sodium_crypto_sign_secretkey($keyPair);
+
+        return bin2hex(sodium_crypto_sign_detached($message, $keySecret));
     }
 }
