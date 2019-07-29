@@ -42,7 +42,7 @@ class ClassifierExternalKeywordsSerializer
 
     private static function sortRecursive(array &$array): void
     {
-        foreach ($array as $key => &$value) {
+        foreach ($array as &$value) {
             if (is_array($value)) {
                 self::sortRecursive($value);
             }
