@@ -64,6 +64,22 @@ class ClassificationControllerTest extends TestCase
         $this->assertEquals($expectedKeywords, $keywords);
     }
 
+    public function testUpdateClassificationDeletedBanner(): void
+    {
+        $banner = $this->insertBanner();
+        $banner->delete();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywords($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
+    }
+
     public function testUpdateClassificationMissingId(): void
     {
         $banner = $this->insertBanner();
@@ -74,6 +90,9 @@ class ClassificationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
     }
 
     public function testUpdateClassificationMissingSignature(): void
@@ -86,16 +105,39 @@ class ClassificationControllerTest extends TestCase
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
+    }
+
+    public function testUpdateClassificationInvalidSignature(): void
+    {
+        $banner = $this->insertBanner();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywordsInvalidSignature($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
     }
 
     public function testUpdateClassificationEmpty(): void
     {
+        $banner = $this->insertBanner();
+
         $response = $this->patchJson(
             self::URI_UPDATE.self::CLASSIFIER_NAME,
             $this->getKeywordsEmpty()
         );
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
     }
 
     private function insertBanner(): Banner
@@ -141,6 +183,15 @@ class ClassificationControllerTest extends TestCase
     {
         $keywords = $this->getKeywords($banner);
         unset($keywords[0]['signature']);
+
+        return $keywords;
+    }
+
+    private function getKeywordsInvalidSignature(Banner $banner): array
+    {
+        $keywords = $this->getKeywords($banner);
+        $keywords[0]['signature'] = '000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+            .'00000000000000000000000000000000000000000000000';
 
         return $keywords;
     }
