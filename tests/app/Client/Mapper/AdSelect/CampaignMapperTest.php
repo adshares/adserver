@@ -33,7 +33,7 @@ final class CampaignMapperTest extends TestCase
 {
     public function testMappingCampaign(): void
     {
-        $campaignData = $this->getCampaignData();;
+        $campaignData = $this->getCampaignData();
 
         $expected = [
             'campaign_id' => (string)$campaignData['id'],
