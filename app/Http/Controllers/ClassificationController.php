@@ -28,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function sprintf;
 
 class ClassificationController extends Controller
@@ -45,10 +46,7 @@ class ClassificationController extends Controller
         $isAnySignatureInvalid = false;
 
         $inputs = $request->all();
-
-        if (empty($inputs)) {
-            return self::json(['message' => 'No classification'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $this->validateClassificationRequest($inputs, $classifier);
 
         foreach ($inputs as $input) {
             if (null === ($banner = Banner::fetchBanner($input['id']))
@@ -67,7 +65,7 @@ class ClassificationController extends Controller
 
             $signature = $input['signature'];
             $checksum = $banner->creative_sha1;
-            $keywords = $input['keywords'];
+            $keywords = $input['keywords'] ?? [];
 
             if (!$this->signatureVerifier->isSignatureValid($classifier, $signature, $checksum, $keywords)) {
                 Log::info(
@@ -92,5 +90,43 @@ class ClassificationController extends Controller
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    private function validateClassificationRequest(array $inputs, string $classifier): void
+    {
+        if (empty($inputs)) {
+            Log::info(
+                sprintf(
+                    '[classification update] No classification from classifier (%s)',
+                    $classifier
+                )
+            );
+
+            throw new UnprocessableEntityHttpException('No classification');
+        }
+
+        foreach ($inputs as $input) {
+            if (!isset($input['id'])) {
+                Log::info(
+                    sprintf(
+                        '[classification update] Missing field banner id from classifier (%s)',
+                        $classifier
+                    )
+                );
+
+                throw new UnprocessableEntityHttpException('Missing banner id');
+            }
+
+            if (!isset($input['signature'])) {
+                Log::info(
+                    sprintf(
+                        '[classification update] Missing field signature from classifier (%s)',
+                        $classifier
+                    )
+                );
+
+                throw new UnprocessableEntityHttpException('Missing signature');
+            }
+        }
     }
 }

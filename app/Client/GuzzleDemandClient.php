@@ -345,12 +345,13 @@ final class GuzzleDemandClient implements DemandClient
         $checksum = $banner['checksum'] ?? '';
         $invalidClassifiers = [];
         foreach ($classification as $classifier => $classificationItem) {
-            if (!$this->classifierExternalSignatureVerifier->isSignatureValid(
-                (string)$classifier,
-                $classificationItem['signature'] ?? '',
-                $checksum,
-                $classificationItem['keywords'] ?? []
-            )) {
+            if (!isset($classificationItem['signature'])
+                || !$this->classifierExternalSignatureVerifier->isSignatureValid(
+                    (string)$classifier,
+                    $classificationItem['signature'],
+                    $checksum,
+                    $classificationItem['keywords'] ?? []
+                )) {
                 $invalidClassifiers[] = $classifier;
             }
         }
@@ -360,7 +361,7 @@ final class GuzzleDemandClient implements DemandClient
 
         $flatClassification = [];
         foreach ($classification as $classifier => $classificationItem) {
-            $keywords = $classificationItem['keywords'];
+            $keywords = $classificationItem['keywords'] ?? [];
             $keywords[SiteClassificationUpdater::KEYWORD_CLASSIFIED] =
                 SiteClassificationUpdater::KEYWORD_CLASSIFIED_VALUE;
 
