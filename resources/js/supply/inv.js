@@ -366,7 +366,12 @@ function fetchURL(url, options) {
                         };
                     }
                     if (options.json) {
-                        data = JSON.parse(data.bytes);
+                        try {
+                            data = JSON.parse(data.bytes);
+                        } catch(e) {
+                            fail && fail();
+                            return;
+                        }
                     }
                     callback && callback(data, xhr);
                 }
