@@ -385,7 +385,9 @@ class DemandController extends Controller
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
-            $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            if (!$event->domain) {
+                $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            }
             $event->save();
         } catch (ModelNotFoundException $e) {
             Log::warning($e->getMessage());

@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
@@ -220,6 +221,8 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
+
+        $log->domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
 
         if ($type === self::TYPE_CLICK || $type === self::TYPE_SHADOW_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
