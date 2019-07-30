@@ -30,13 +30,23 @@ class SupplyBlacklistedDomainTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testBlacklisted(): void
+    public function testBlacklistedExampleCom(): void
     {
         SupplyBlacklistedDomain::register('example.com');
 
-        $this->assertFalse(SupplyBlacklistedDomain::isDomainBlacklisted('com'));
+        $this->assertFalse(SupplyBlacklistedDomain::isDomainBlacklisted('adshares.net'));
+        $this->assertFalse(SupplyBlacklistedDomain::isDomainBlacklisted('dot.com'));
+
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('example.com'));
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('one.example.com'));
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('www.one.example.com'));
+    }
+
+    public function testBlacklistedSpecial(): void
+    {
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted(''));
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('localhost'));
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('127.0.0.1'));
+        $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'));
     }
 }

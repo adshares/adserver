@@ -85,8 +85,12 @@ class SupplyController extends Controller
         $decodedQueryData = Utils::decodeZones($data);
         $zones = $decodedQueryData['zones'] ?? [];
 
-        if (!$zones || $this->isBlacklisted($decodedQueryData)) {
+        if (!$zones) {
             return self::json([]);
+        }
+
+        if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
+            throw new BadRequestHttpException('Site not accepted');
         }
 
         $impressionId = $decodedQueryData['page']['iid'];
@@ -384,9 +388,8 @@ class SupplyController extends Controller
         );
     }
 
-    private function isBlacklisted(array $decodedQueryData): bool
+    private function isPageBlacklisted(string $url): bool
     {
-        $url = $decodedQueryData['page']['url'];
         $domain = DomainReader::domain($url);
 
         return SupplyBlacklistedDomain::isDomainBlacklisted($domain);

@@ -21,6 +21,8 @@
 namespace Adshares\Adserver\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use function filter_var;
+use function strpos;
 
 /**
  * @property int id
@@ -50,8 +52,8 @@ class SupplyBlacklistedDomain extends Model
 
     public static function isDomainBlacklisted(string $domain): bool
     {
-        if ('' === $domain) {
-            return false;
+        if ('' === $domain || false === strpos($domain, '.') || false !== filter_var($domain, FILTER_VALIDATE_IP)) {
+            return true;
         }
 
         $domainParts = explode('.', $domain);
