@@ -357,7 +357,9 @@ class DemandController extends Controller
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
-            $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            if (!$event->domain) {
+                $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            }
             $event->save();
         } catch (ModelNotFoundException $e) {
             Log::warning($e->getMessage());
@@ -450,7 +452,6 @@ class DemandController extends Controller
                 'banners' => $banners,
                 'targeting_requires' => (array)$campaign->targeting_requires,
                 'targeting_excludes' => (array)$campaign->targeting_excludes,
-                'address' => AdsUtils::normalizeAddress(config('app.adshares_address')),
             ];
         }
 

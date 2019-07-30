@@ -166,7 +166,7 @@ HTML;
 
     public static function fetchPublisherPublicIdByPublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($publicId))->first();
+        $zone = self::where('uuid', hex2bin($publicId))->firstOrFail();
         $user = $zone->site->user;
 
         return $user->uuid;

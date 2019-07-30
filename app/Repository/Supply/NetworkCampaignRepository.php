@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Repository\Supply;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
@@ -40,6 +41,8 @@ use function hex2bin;
 class NetworkCampaignRepository implements CampaignRepository
 {
     private const STATUS_FIELD = 'status';
+
+    private const CAMPAIGN_UUID_FIELD = 'uuid';
 
     private const BANNER_CLICK_URL_FIELD = 'click_url';
 
@@ -61,13 +64,15 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
-    public function markedAsDeletedByHost(string $host): void
+    public function markedAsDeletedBySourceAddress(AccountId $sourceAddress): void
     {
+        $address = $sourceAddress->toString();
+
         DB::table(NetworkCampaign::getTableName())
-            ->where('source_host', $host)
+            ->where('source_address', $address)
+            ->whereNotIn(self::STATUS_FIELD, [Status::STATUS_DELETED])
             ->update([self::STATUS_FIELD => Status::STATUS_TO_DELETE]);
 
-        // mark all banners as DELETED for given $host
         DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))
             ->join(
                 sprintf('%s as campaign', NetworkCampaign::getTableName()),
@@ -75,7 +80,8 @@ class NetworkCampaignRepository implements CampaignRepository
                 '=',
                 'campaign.id'
             )
-            ->where('campaign.source_host', $host)
+            ->where('campaign.source_address', $address)
+            ->where('campaign.'.self::STATUS_FIELD, Status::STATUS_TO_DELETE)
             ->update(['banner.status' => Status::STATUS_TO_DELETE]);
     }
 
@@ -137,7 +143,7 @@ class NetworkCampaignRepository implements CampaignRepository
     private function fetchCampaignByDemand(Campaign $campaign): ?NetworkCampaign
     {
         return NetworkCampaign::where('demand_campaign_id', hex2bin($campaign->getDemandCampaignId()))
-            ->where('source_host', $campaign->getSourceHost())
+            ->where('source_address', $campaign->getSourceAddress())
             ->first();
     }
 
@@ -229,7 +235,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
         try {
             DB::table(NetworkCampaign::getTableName())
-                ->where(self::BANNER_UUID_FIELD, hex2bin($campaign->getId()))
+                ->where(self::CAMPAIGN_UUID_FIELD, hex2bin($campaign->getId()))
                 ->update([self::STATUS_FIELD => $campaign->getStatus()]);
 
             DB::table(sprintf('%s as banner', NetworkBanner::getTableName()))

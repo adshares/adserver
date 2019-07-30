@@ -52,8 +52,12 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
     public function handle()
     {
-        if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+        if (!$this->lock(InventoryImporterCommand::getLockName())) {
+            $this->info(
+                'Supply inventory processing already running. Command '
+                .$this->signature
+                .' cannot be started while import from demand or export to adselect is in progress'
+            );
 
             return;
         }

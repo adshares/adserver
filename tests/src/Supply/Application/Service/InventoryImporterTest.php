@@ -21,6 +21,7 @@
 namespace Adshares\Test\Supply\Application\Service;
 
 use Adshares\Common\Application\TransactionManager;
+use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Service\BannerClassifier;
@@ -38,12 +39,6 @@ use PHPUnit\Framework\TestCase;
 
 final class InventoryImporterTest extends TestCase
 {
-    private $classifiedBanners = [
-        'B6454DBC67A94B108E3895700D570EF0' => null,
-        'B6454DBC67A94B108E3895700D570EF1' => null,
-        'B6454DBC67A94B108E3895700D570EF2' => null,
-    ];
-
     public function testImportWhenDemandClientReturnsUnexpectedResponse(): void
     {
         $this->expectException(UnexpectedClientResponseException::class);
@@ -68,7 +63,11 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
+        $inventoryImporter->import(
+            new AccountId('0001-00000001-8B4E'),
+            'localhost:8101',
+            'http://localhost:8101/inventory/list'
+        );
 
         $this->doesNotPerformAssertions();
     }
@@ -125,7 +124,7 @@ final class InventoryImporterTest extends TestCase
         $repository = $this->repositoryMock();
         $repository
             ->expects($this->once())
-            ->method('markedAsDeletedByHost')
+            ->method('markedAsDeletedBySourceAddress')
             ->will($this->throwException(new CampaignRepositoryException()));
         $repository
             ->expects($this->never())
@@ -145,7 +144,11 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
+        $inventoryImporter->import(
+            new AccountId('0001-00000001-8B4E'),
+            'localhost:8101',
+            'http://localhost:8101/inventory/list'
+        );
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();
@@ -163,7 +166,7 @@ final class InventoryImporterTest extends TestCase
         $repository = $this->repositoryMock();
         $repository
             ->expects($this->once())
-            ->method('markedAsDeletedByHost');
+            ->method('markedAsDeletedBySourceAddress');
         $repository
             ->expects($this->exactly(2))
             ->method('save');
@@ -184,7 +187,11 @@ final class InventoryImporterTest extends TestCase
             $transactionManager
         );
 
-        $inventoryImporter->import('localhost:8101', 'http://localhost:8101/inventory/list');
+        $inventoryImporter->import(
+            new AccountId('0001-00000001-8B4E'),
+            'localhost:8101',
+            'http://localhost:8101/inventory/list'
+        );
 
         $statuses = array_map(function ($item) {
             return $item->getStatus();

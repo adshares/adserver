@@ -45,6 +45,7 @@ class AdsSendOne implements ShouldQueue
 
     private const QUEUE_TRY_AGAIN_EXCEPTION_CODES = [
         CommandError::LOW_BALANCE,
+        CommandError::USER_BAD_TARGET,
         CommandError::LOCK_USER_FAILED,
     ];
 
@@ -116,10 +117,10 @@ class AdsSendOne implements ShouldQueue
             $response = $adsClient->runTransaction($command);
         } catch (CommandException $exception) {
             if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
-                $message = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
-                $message .= ' Will be tried again later. Exception code (%s)';
+                $logMessage = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
+                $logMessage .= ' Will be tried again later. Exception code (%s)';
                 Log::info(
-                    sprintf($message, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
+                    sprintf($logMessage, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
                 );
 
                 self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
@@ -130,9 +131,9 @@ class AdsSendOne implements ShouldQueue
 
             Log::error(sprintf('[AdsSendOne] Send command exception: %s', $exception->getMessage()));
 
-            $message = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
+            $logMessage = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
 
-            Log::error(sprintf($message, $this->addressTo, $this->amount, $this->message ?? ''));
+            Log::error(sprintf($logMessage, $this->addressTo, $this->amount, $this->message ?? ''));
 
             $this->userLedger->status = UserLedgerEntry::STATUS_NET_ERROR;
 

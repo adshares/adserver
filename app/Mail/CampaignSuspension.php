@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,23 +18,28 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Repository;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Common\Domain\ValueObject\AccountId;
-use Adshares\Supply\Domain\Model\Campaign;
-use Adshares\Supply\Domain\Model\CampaignCollection;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-interface CampaignRepository
+class CampaignSuspension extends Mailable
 {
-    public function markedAsDeletedBySourceAddress(AccountId $sourceAddress): void;
+    use Queueable;
+    use SerializesModels;
 
-    public function save(Campaign $campaign): void;
+    private const SUBJECT = 'Your campaigns have been suspended';
 
-    public function fetchActiveCampaigns(): CampaignCollection;
+    public function __construct()
+    {
+        $this->subject(self::SUBJECT);
+    }
 
-    public function fetchCampaignsToDelete(): CampaignCollection;
-
-    public function deleteCampaign(Campaign $campaign): void;
+    public function build()
+    {
+        return $this->markdown('emails.campaign-suspension');
+    }
 }

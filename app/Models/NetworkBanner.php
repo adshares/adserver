@@ -241,11 +241,11 @@ class NetworkBanner extends Model
         }
 
         if ($networkBannerFilter->isRejected()) {
-            return  self::fetchRejected($networkBannerFilter);
+            return self::fetchRejected($networkBannerFilter);
         }
 
         if ($networkBannerFilter->isUnclassified()) {
-            return  self::fetchUnclassified($networkBannerFilter);
+            return self::fetchUnclassified($networkBannerFilter);
         }
 
         return self::fetchAll($networkBannerFilter);
@@ -359,7 +359,7 @@ class NetworkBanner extends Model
         return $ids;
     }
 
-    public static function findSupplyIdsByDemandIds(array $demandIds): array
+    public static function findSupplyIdsByDemandIds(array $demandIds, string $sourceAddress): array
     {
         $binDemandIds = array_map(
             function (string $item) {
@@ -368,7 +368,19 @@ class NetworkBanner extends Model
             $demandIds
         );
 
-        $banners = self::whereIn('demand_banner_id', $binDemandIds)->select('uuid', 'demand_banner_id')->get();
+        $banners =
+            NetworkBanner::select(
+                ['network_banners.uuid as uuid', 'network_banners.demand_banner_id as demand_banner_id']
+            )
+                ->join(
+                    'network_campaigns',
+                    function ($join) {
+                        $join->on('network_banners.network_campaign_id', '=', 'network_campaigns.id');
+                    }
+                )
+                ->where('network_campaigns.source_address', $sourceAddress)
+                ->whereIn('network_banners.demand_banner_id', $binDemandIds)
+                ->get();
 
         $ids = [];
 
