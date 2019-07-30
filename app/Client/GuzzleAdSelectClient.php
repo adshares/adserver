@@ -161,8 +161,16 @@ class GuzzleAdSelectClient implements AdSelect
             $body
         ));
 
-        $bannerIds = $this->fixBannerOrdering($existingZones, $items, $zoneIds);
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds));
+        $bannerIds = [];
+        foreach ($zoneCollection as $request_id => $zone) {
+            if(isset($existingZones[$request_id])) {
+                $bannerIds[] = $items[$request_id] ?? [null];
+            } else {
+                $bannerIds[] = [null];
+            }
+        }
+
+        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneIds));
 
         return new FoundBanners($banners);
     }
@@ -254,9 +262,9 @@ class GuzzleAdSelectClient implements AdSelect
         return $orderedBannerIds;
     }
 
-    private function fetchInOrderOfAppearance(array $params): Generator
+    private function fetchInOrderOfAppearance(array $params, array $zoneIds): Generator
     {
-        foreach ($params as $zoneId => $bannerIds) {
+        foreach ($params as $requestId => $bannerIds) {
             foreach ($bannerIds as $item) {
                 $bannerId = $item['banner_id'] ?? null;
                 $banner = $bannerId ? NetworkBanner::findByUuid((string)$bannerId) : null;
@@ -271,7 +279,7 @@ class GuzzleAdSelectClient implements AdSelect
                     $campaign = $banner->campaign;
                     yield [
                         'id' => $bannerId,
-                        'zone_id' => $zoneId,
+                        'zone_id' => $zoneIds[$requestId],
                         'pay_from' => $campaign->source_address,
                         'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
                         'serve_url' => $banner->serve_url,
