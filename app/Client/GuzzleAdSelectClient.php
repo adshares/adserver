@@ -121,10 +121,14 @@ class GuzzleAdSelectClient implements AdSelect
             $zones
         );
 
-        $zoneCollection = Zone::findByPublicIds($zoneIds);
+        $zoneMap = [];
+        foreach(Zone::findByPublicIds($zoneIds) as $zone) {
+            $zoneMap[$zone->uuid] = $zone;
+        }
 
-        if ($zoneCollection->count() < count($zoneIds)) {
-            $zoneCollection = self::attachDuplicatedZones($zoneCollection, $zoneIds);
+        $zoneCollection = new Collection();
+        foreach($zoneIds as $id) {
+            $zoneCollection[] = $zoneMap[$id] ?? null;
         }
 
         $existingZones = $zoneCollection->reject(static function ($zone) {
