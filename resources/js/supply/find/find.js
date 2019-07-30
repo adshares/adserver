@@ -284,6 +284,7 @@ var isWindowVisible = (function() {
 
 var isOccluded = function(rect, el)
 {
+    if(!rect) return true;
     outer:
     for(var i=0; i < 10; i++) {
         var top = document.elementFromPoint(Math.floor(rect.left + Math.random() * rect.width), Math.floor(rect.top + Math.random() * rect.height));
