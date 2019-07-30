@@ -122,12 +122,12 @@ class GuzzleAdSelectClient implements AdSelect
         );
 
         $zoneMap = [];
-        foreach(Zone::findByPublicIds($zoneIds) as $zone) {
+        foreach (Zone::findByPublicIds($zoneIds) as $zone) {
             $zoneMap[$zone->uuid] = $zone;
         }
 
         $zoneCollection = new Collection();
-        foreach($zoneIds as $id) {
+        foreach ($zoneIds as $id) {
             $zoneCollection[] = $zoneMap[$id] ?? null;
         }
 
@@ -167,7 +167,7 @@ class GuzzleAdSelectClient implements AdSelect
 
         $bannerIds = [];
         foreach ($zoneCollection as $request_id => $zone) {
-            if(isset($existingZones[$request_id])) {
+            if (isset($existingZones[$request_id])) {
                 $bannerIds[] = $items[$request_id] ?? [null];
             } else {
                 $bannerIds[] = [null];
