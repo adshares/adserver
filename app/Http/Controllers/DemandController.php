@@ -194,7 +194,6 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
@@ -237,7 +236,6 @@ class DemandController extends Controller
             $user->uuid,
             $payTo,
             $ip,
-            $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
@@ -251,7 +249,6 @@ class DemandController extends Controller
     public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
@@ -322,7 +319,6 @@ class DemandController extends Controller
             $user->uuid,
             $payTo,
             $ip,
-            $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW

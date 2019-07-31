@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use function hex2bin;
+use stdClass;
 
 /**
  * @property int created_at
@@ -53,9 +54,8 @@ use function hex2bin;
  * @property string event_type
  * @property string pay_to
  * @property string ip
- * @property string headers
  * @property string our_context
- * @property string their_context
+ * @property array|stdClass their_context
  * @property int human_score
  * @property string our_userdata
  * @property string their_userdata
@@ -105,7 +105,6 @@ class EventLog extends Model
         'event_type',
         'pay_to',
         'ip',
-        'headers',
         'our_context',
         'their_context',
         'human_score',
@@ -144,7 +143,6 @@ class EventLog extends Model
         'campaign_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
         'ip' => 'BinHex',
-        'headers' => 'JsonValue',
         'our_context' => 'JsonValue',
         'their_context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
@@ -189,7 +187,6 @@ class EventLog extends Model
         string $advertiserId,
         string $payTo,
         $ip,
-        $headers,
         array $context,
         string $userData,
         $type
@@ -211,14 +208,15 @@ class EventLog extends Model
         $log->advertiser_id = $advertiserId;
         $log->pay_to = $payTo;
         $log->ip = $ip;
-        $log->headers = $headers;
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
 
-        $log->domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
+        $headers = $context['device']['headers'];
+        $domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
+        $log->domain = $domain;
 
-        if ($type === self::TYPE_CLICK) {
+        if (null === $domain && $type === self::TYPE_CLICK) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
             $viewEvent = self::where('event_id', hex2bin($eventId))->first();
 
