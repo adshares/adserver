@@ -232,7 +232,13 @@ class EventLog extends Model
     {
         $headers = $context['device']['headers'];
 
-        return isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
+        $domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
+
+        if (!$domain || DomainReader::domain((string)config('app.serve_base_url')) === $domain) {
+            return null;
+        }
+
+        return $domain;
     }
 
     public static function fetchOneByEventId(string $eventId): self
