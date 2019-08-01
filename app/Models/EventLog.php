@@ -211,19 +211,28 @@ class EventLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
+        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
 
-        $headers = $context['device']['headers'];
-        $domain = isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
-        $log->domain = $domain;
+        $log->save();
+    }
 
-        if (null === $domain && $type === self::TYPE_CLICK) {
+    private static function fetchDomainFromMatchingEvent(string $type, string $caseId): ?string
+    {
+        if (self::TYPE_CLICK === $type) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
             $viewEvent = self::where('event_id', hex2bin($eventId))->first();
 
-            $log->domain = $viewEvent->domain ?? null;
+            return $viewEvent->domain ?? null;
         }
 
-        $log->save();
+        return null;
+    }
+
+    private static function getDomainFromContext(array $context): ?string
+    {
+        $headers = $context['device']['headers'];
+
+        return isset($headers['referer'][0]) ? DomainReader::domain($headers['referer'][0]) : null;
     }
 
     public static function fetchOneByEventId(string $eventId): self
