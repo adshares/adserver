@@ -29,7 +29,9 @@ use Illuminate\Support\Facades\Mail;
 
 class SendEmailsCommand extends BaseCommand
 {
-    protected $signature = 'ops:email:send {email_id}';
+    protected $signature = 'ops:email:send
+                            {email_id : Id of an email which will be sent}
+                            {--p|preview-address= : Email address for a preview }';
 
     protected $description = 'Sends emails to all users';
 
@@ -51,7 +53,14 @@ class SendEmailsCommand extends BaseCommand
         $email = Email::fetchById($emailId);
 
         if (null === $email) {
-            $this->info(sprintf('Cannot find email with id (%d)', $emailId));
+            $this->info(sprintf('[SendEmailsCommand] Cannot find email with id (%d)', $emailId));
+
+            return;
+        }
+
+        if (null !== ($address = $this->option('preview-address'))) {
+            Mail::to($address)->queue(new GeneralMessage($email->subject, $email->body));
+            $this->info(sprintf('[SendEmailsCommand] Preview message sent to (%s)', $address));
 
             return;
         }
