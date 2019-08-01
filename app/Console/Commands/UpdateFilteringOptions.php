@@ -26,6 +26,8 @@ class UpdateFilteringOptions extends BaseCommand
 {
     protected $signature = 'ops:filtering-options:update';
 
+    protected $description = 'Updates site filtering options';
+
     public function handle(FilteringOptionsImporter $service): void
     {
         if (!$this->lock()) {

@@ -38,6 +38,8 @@ class DemandBlockRequiredAmount extends BaseCommand
 {
     protected $signature = 'ops:demand:payments:block';
 
+    protected $description = 'Reserves user funds for payment for campaign events';
+
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 

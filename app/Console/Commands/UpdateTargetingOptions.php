@@ -26,6 +26,8 @@ class UpdateTargetingOptions extends BaseCommand
 {
     protected $signature = 'ops:targeting-options:update';
 
+    protected $description = 'Updates campaign targeting options';
+
     public function handle(TargetingOptionsImporter $service): void
     {
         if (!$this->lock()) {
