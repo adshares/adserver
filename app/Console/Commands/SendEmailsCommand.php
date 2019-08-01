@@ -25,15 +25,20 @@ use Adshares\Adserver\Mail\GeneralMessage;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
 use DateTime;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
+use function file;
+use function trim;
 
 class SendEmailsCommand extends BaseCommand
 {
     protected $signature = 'ops:email:send
                             {email_id : Id of an email which will be sent}
+                            {--d|dry-run : Lists recipients and message }
+                            {--f|file-address-list= : File containing list of email addresses }
                             {--p|preview-address= : Email address for a preview }';
 
-    protected $description = 'Sends emails to all users';
+    protected $description = 'Sends emails';
 
     private const PACKAGE_SIZE_MAX = 40;
 
@@ -65,9 +70,71 @@ class SendEmailsCommand extends BaseCommand
             return;
         }
 
+        if (null !== ($file = $this->option('file-address-list'))) {
+            $recipients = $this->getAddressesFromFile($file);
+        } else {
+            $recipients = User::fetchEmails();
+        }
+
+        if (0 === ($recipientsCount = $recipients->count())) {
+            $this->info('[SendEmailsCommand] Recipients list is empty');
+
+            return;
+        }
+
+        if ($this->option('dry-run')) {
+            $this->info('[SendEmailsCommand] Recipients ->');
+            foreach ($recipients as $recipient) {
+                $this->info($recipient);
+            }
+
+            $this->info('[SendEmailsCommand] Message subject ->');
+            $this->info($email->subject);
+            $this->info('[SendEmailsCommand] Message body ->');
+            $this->info($email->body);
+
+            return;
+        }
+
+        $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
+
+        $this->sendEmail($email, $recipients);
+        $email->delete();
+
+        $this->info('Finish command '.$this->signature);
+    }
+
+    private function getAddressesFromFile(string $file): Collection
+    {
+        if (false === ($contents = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))) {
+            $this->info(sprintf('[SendEmailsCommand] File (%s) cannot be read', $file));
+
+            return new Collection();
+        }
+
+        $results = array_map(
+            function ($item) {
+                return strtolower(trim(preg_replace('/\s+/', '', $item), '.'));
+            },
+            $contents
+        );
+
+        $results = array_values(
+            array_filter(
+                array_unique($results),
+                function ($item) {
+                    return false !== filter_var($item, FILTER_VALIDATE_EMAIL) && 1 !== preg_match('/@.*\.gov/', $item);
+                }
+            )
+        );
+
+        return collect($results);
+    }
+
+    private function sendEmail(Email $email, Collection $recipients): void
+    {
         $emailSendTime = new DateTime();
-        User::chunk(
-            self::PACKAGE_SIZE_MAX,
+        $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
             function ($users) use ($emailSendTime, $email) {
                 foreach ($users as $user) {
                     Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
@@ -75,9 +142,5 @@ class SendEmailsCommand extends BaseCommand
                 $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
             }
         );
-
-        $email->delete();
-
-        $this->info('Finish command '.$this->signature);
     }
 }
