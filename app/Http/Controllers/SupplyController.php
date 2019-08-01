@@ -166,8 +166,6 @@ class SupplyController extends Controller
 
         $url = $this->addQueryStringToUrl($request, $url);
 
-        $requestHeaders = $request->headers->all();
-
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $trackingId = $request->cookies->get('tid')
@@ -202,7 +200,6 @@ class SupplyController extends Controller
             $siteId,
             $payFrom,
             bin2hex(inet_pton($request->getClientIp())),
-            $requestHeaders,
             $context,
             NetworkEventLog::TYPE_CLICK
         );
@@ -251,8 +248,6 @@ class SupplyController extends Controller
             $url = $this->addQueryStringToUrl($request, $url);
         }
 
-        $requestHeaders = $request->headers->all();
-
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = $request->cookies->get('tid')
@@ -286,7 +281,6 @@ class SupplyController extends Controller
             $siteId,
             $payFrom,
             bin2hex(inet_pton($request->getClientIp())),
-            $requestHeaders,
             $context,
             NetworkEventLog::TYPE_VIEW
         );
