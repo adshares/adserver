@@ -160,8 +160,7 @@ class AdSelectEventExportCommand extends BaseCommand
         static $userInfoCache = [];
 
         $impressionContext = ImpressionContext::fromEventData(
-            $event->context->device->headers,
-            $event->ip,
+            $event->context,
             $event->tracking_id
         );
         $trackingId = $impressionContext->trackingId();
