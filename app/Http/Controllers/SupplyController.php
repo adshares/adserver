@@ -196,20 +196,20 @@ class SupplyController extends Controller
 
         $context = Utils::getFullContext($request, $contextProvider);
 
-        NetworkEventLog::create(
-            $caseId,
-            $eventId,
-            $bannerId,
-            $zoneId,
-            $trackingId,
-            $publisherId,
-            $siteId,
-            $payFrom,
-            $context,
-            NetworkEventLog::TYPE_CLICK
-        );
-
-        NetworkEventLog::eventClicked($caseId);
+        if (NetworkEventLog::eventClicked($caseId) > 0) {
+            NetworkEventLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $zoneId,
+                $trackingId,
+                $publisherId,
+                $siteId,
+                $payFrom,
+                $context,
+                NetworkEventLog::TYPE_CLICK
+            );
+        }
 
         return $response;
     }

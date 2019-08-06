@@ -32,7 +32,6 @@ use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -224,22 +223,22 @@ class DemandController extends Controller
 
         $response->send();
 
-        EventLog::create(
-            $caseId,
-            $eventId,
-            $bannerId,
-            $context['page']['zone'] ?? null,
-            $trackingId,
-            $publisherId,
-            $campaign->uuid,
-            $user->uuid,
-            $payTo,
-            Utils::getImpressionContextArray($request),
-            $keywords,
-            EventLog::TYPE_CLICK
-        );
-
-        EventLog::eventClicked($caseId);
+        if (EventLog::eventClicked($caseId) > 0) {
+            EventLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $context['page']['zone'] ?? null,
+                $trackingId,
+                $publisherId,
+                $campaign->uuid,
+                $user->uuid,
+                $payTo,
+                Utils::getImpressionContextArray($request),
+                $keywords,
+                EventLog::TYPE_CLICK
+            );
+        }
 
         return $response;
     }
