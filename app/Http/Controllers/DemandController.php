@@ -32,7 +32,6 @@ use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -194,7 +193,6 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
@@ -225,25 +223,22 @@ class DemandController extends Controller
 
         $response->send();
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
-        EventLog::create(
-            $caseId,
-            $eventId,
-            $bannerId,
-            $context['page']['zone'] ?? null,
-            $trackingId,
-            $publisherId,
-            $campaign->uuid,
-            $user->uuid,
-            $payTo,
-            $ip,
-            $requestHeaders,
-            Utils::getImpressionContextArray($request),
-            $keywords,
-            EventLog::TYPE_CLICK
-        );
-
-        EventLog::eventClicked($caseId);
+        if (EventLog::eventClicked($caseId) > 0) {
+            EventLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $context['page']['zone'] ?? null,
+                $trackingId,
+                $publisherId,
+                $campaign->uuid,
+                $user->uuid,
+                $payTo,
+                Utils::getImpressionContextArray($request),
+                $keywords,
+                EventLog::TYPE_CLICK
+            );
+        }
 
         return $response;
     }
@@ -251,7 +246,6 @@ class DemandController extends Controller
     public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
@@ -310,7 +304,6 @@ class DemandController extends Controller
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
@@ -321,8 +314,6 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $ip,
-            $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
@@ -357,8 +348,8 @@ class DemandController extends Controller
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
-            if (!$event->domain) {
-                $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            if (!$event->domain && isset($decodedContext->url)) {
+                $event->domain = DomainReader::domain($decodedContext->url);
             }
             $event->save();
         } catch (ModelNotFoundException $e) {

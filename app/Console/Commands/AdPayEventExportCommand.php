@@ -151,7 +151,10 @@ class AdPayEventExportCommand extends BaseCommand
     {
         static $userInfoCache = [];
 
-        $impressionContext = ImpressionContext::fromEventData($event->headers, $event->ip, $event->tracking_id);
+        $impressionContext = ImpressionContext::fromEventData(
+            $event->their_context,
+            $event->tracking_id
+        );
         $trackingId = $impressionContext->trackingId();
 
         if (isset($userInfoCache[$trackingId])) {

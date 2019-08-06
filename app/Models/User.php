@@ -270,4 +270,9 @@ class User extends Authenticatable
     {
         $this->email_confirmed_at = new DateTime();
     }
+
+    public static function fetchEmails(): Collection
+    {
+        return User::all()->pluck('email');
+    }
 }
