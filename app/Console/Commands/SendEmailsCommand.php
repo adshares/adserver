@@ -28,6 +28,7 @@ use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use function file;
+use function is_readable;
 use function trim;
 
 class SendEmailsCommand extends BaseCommand
@@ -64,16 +65,13 @@ class SendEmailsCommand extends BaseCommand
         }
 
         if (null !== ($address = $this->option('preview-address'))) {
-            Mail::to($address)->queue(new GeneralMessage($email->subject, $email->body));
-            $this->info(sprintf('[SendEmailsCommand] Preview message sent to (%s)', $address));
-
-            return;
-        }
-
-        if (null !== ($file = $this->option('file-address-list'))) {
-            $recipients = $this->getAddressesFromFile($file);
+            $recipients = collect($address);
         } else {
-            $recipients = User::fetchEmails();
+            if (null !== ($file = $this->option('file-address-list'))) {
+                $recipients = $this->getAddressesFromFile($file);
+            } else {
+                $recipients = User::fetchEmails();
+            }
         }
 
         if (0 === ($recipientsCount = $recipients->count())) {
