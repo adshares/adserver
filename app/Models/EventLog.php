@@ -186,7 +186,6 @@ class EventLog extends Model
         string $campaignId,
         string $advertiserId,
         string $payTo,
-        $ip,
         array $context,
         string $userData,
         $type
@@ -207,7 +206,6 @@ class EventLog extends Model
         $log->campaign_id = $campaignId;
         $log->advertiser_id = $advertiserId;
         $log->pay_to = $payTo;
-        $log->ip = $ip;
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;

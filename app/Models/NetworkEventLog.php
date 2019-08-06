@@ -51,7 +51,6 @@ use stdClass;
  * @property string campaign_id
  * @property string event_type
  * @property string pay_from
- * @property string ip
  * @property array|stdClass context
  * @property int human_score
  * @property string our_userdata
@@ -98,7 +97,6 @@ class NetworkEventLog extends Model
         'site_id',
         'pay_from',
         'event_type',
-        'ip',
         'context',
         'human_score',
         'our_userdata',
@@ -136,7 +134,6 @@ class NetworkEventLog extends Model
         'site_id' => 'BinHex',
         'campaign_id' => 'BinHex',
         'pay_from' => 'AccountAddress',
-        'ip' => 'BinHex',
         'context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
         'their_userdata' => 'JsonValue',
@@ -175,7 +172,6 @@ class NetworkEventLog extends Model
         string $publisherId,
         string $siteId,
         string $payFrom,
-        $ip,
         ImpressionContext $context,
         $type
     ): void {
@@ -207,7 +203,6 @@ class NetworkEventLog extends Model
         $log->publisher_id = $publisherId;
         $log->site_id = $siteId;
         $log->pay_from = $payFrom;
-        $log->ip = $ip;
         $log->event_type = $type;
         $log->context = $context->toArray();
         $log->domain = DomainReader::domain(NetworkBanner::findByUuid($bannerId)->campaign->landing_url ?? '');

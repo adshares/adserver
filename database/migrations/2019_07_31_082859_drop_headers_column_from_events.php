@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -37,14 +38,14 @@ class DropHeadersColumnFromEvents extends Migration
         Schema::table(
             self::TABLE_EVENT_LOGS,
             function (Blueprint $table) {
-                $table->dropColumn(self::COLUMN_HEADERS);
+                $table->dropColumn([self::COLUMN_IP, self::COLUMN_HEADERS]);
             }
         );
 
         Schema::table(
             self::TABLE_NETWORK_EVENT_LOGS,
             function (Blueprint $table) {
-                $table->dropColumn(self::COLUMN_HEADERS);
+                $table->dropColumn([self::COLUMN_IP, self::COLUMN_HEADERS]);
             }
         );
     }
@@ -54,6 +55,7 @@ class DropHeadersColumnFromEvents extends Migration
         Schema::table(
             self::TABLE_EVENT_LOGS,
             function (Blueprint $table) {
+                $table->binary(self::COLUMN_IP)->nullable()->after('pay_to');
                 $table->json(self::COLUMN_HEADERS)->nullable()->after(self::COLUMN_IP);
             }
         );
@@ -61,8 +63,21 @@ class DropHeadersColumnFromEvents extends Migration
         Schema::table(
             self::TABLE_NETWORK_EVENT_LOGS,
             function (Blueprint $table) {
+                $table->binary(self::COLUMN_IP)->nullable()->after('pay_from');
                 $table->json(self::COLUMN_HEADERS)->nullable()->after(self::COLUMN_IP);
             }
         );
+
+        if (DB::isMysql()) {
+            foreach ([self::TABLE_EVENT_LOGS, self::TABLE_NETWORK_EVENT_LOGS] as $table) {
+                DB::statement(
+                    sprintf(
+                        'ALTER TABLE %s MODIFY %s VARBINARY(16)',
+                        $table,
+                        self::COLUMN_IP
+                    )
+                );
+            }
+        }
     }
 }

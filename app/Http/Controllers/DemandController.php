@@ -224,7 +224,6 @@ class DemandController extends Controller
 
         $response->send();
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
@@ -235,7 +234,6 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $ip,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_CLICK
@@ -307,7 +305,6 @@ class DemandController extends Controller
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
@@ -318,7 +315,6 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $ip,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
