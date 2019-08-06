@@ -28,20 +28,20 @@ use Adshares\Ads\Util\AdsValidator;
 use Adshares\Adserver\Exceptions\JobException;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Models\UserLedgerException;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
 class AdsSendOne implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use Queueable;
+    use SerializesModels;
 
-    const QUEUE_NAME = 'ads';
-
-    private const QUEUE_TRY_AGAIN_INTERVAL = 600;
+    private const QUEUE_NAME = 'ads';
 
     private const QUEUE_TRY_AGAIN_EXCEPTION_CODES = [
         CommandError::LOW_BALANCE,
@@ -117,16 +117,17 @@ class AdsSendOne implements ShouldQueue
             $response = $adsClient->runTransaction($command);
         } catch (CommandException $exception) {
             if (in_array($exception->getCode(), self::QUEUE_TRY_AGAIN_EXCEPTION_CODES, true)) {
-                $logMessage = '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).';
-                $logMessage .= ' Will be tried again later. Exception code (%s)';
-                Log::info(
-                    sprintf($logMessage, $this->addressTo, $this->amount, $this->message ?? '', $exception->getCode())
+                $logMessage = sprintf(
+                    '[AdsSendOne] Send command to (%s) with amount (%s) failed (message: %s).'
+                    .' Will be tried again later. Exception code (%s)',
+                    $this->addressTo,
+                    $this->amount,
+                    $this->message ?? '',
+                    $exception->getCode()
                 );
+                Log::info($logMessage);
 
-                self::dispatch($this->userLedger, $this->addressTo, $this->amount, $this->message)
-                    ->delay(self::QUEUE_TRY_AGAIN_INTERVAL);
-
-                return;
+                throw new JobException($logMessage);
             }
 
             Log::error(sprintf('[AdsSendOne] Send command exception: %s', $exception->getMessage()));
@@ -136,7 +137,6 @@ class AdsSendOne implements ShouldQueue
             Log::error(sprintf($logMessage, $this->addressTo, $this->amount, $this->message ?? ''));
 
             $this->userLedger->status = UserLedgerEntry::STATUS_NET_ERROR;
-
             $this->userLedger->save();
 
             return;
@@ -148,7 +148,9 @@ class AdsSendOne implements ShouldQueue
             $this->userLedger->status = UserLedgerEntry::STATUS_SYS_ERROR;
             $this->userLedger->save();
 
-            throw new JobException("[AdsSendOne] Invalid txid: ${txid}");
+            Log::error(sprintf('[AdsSendOne] Invalid txid: (%s)', $txid));
+
+            return;
         }
 
         $this->userLedger->status = UserLedgerEntry::STATUS_ACCEPTED;
@@ -163,5 +165,13 @@ class AdsSendOne implements ShouldQueue
         $this->userLedger->save();
 
         Log::error(sprintf('[AdsSendOne] User %d has negative balance', $this->userLedger->user_id));
+    }
+
+    public function failed(Exception $exception): void
+    {
+        Log::error(sprintf('[AdsSendOne] Job failed with exception (%s)', $exception->getMessage()));
+
+        $this->userLedger->status = UserLedgerEntry::STATUS_NET_ERROR;
+        $this->userLedger->save();
     }
 }
