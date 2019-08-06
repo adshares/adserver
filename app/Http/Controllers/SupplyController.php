@@ -206,7 +206,6 @@ class SupplyController extends Controller
                 $publisherId,
                 $siteId,
                 $payFrom,
-                bin2hex(inet_pton($request->getClientIp())),
                 $context,
                 NetworkEventLog::TYPE_CLICK
             );
@@ -286,7 +285,6 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            bin2hex(inet_pton($request->getClientIp())),
             $context,
             NetworkEventLog::TYPE_VIEW
         );

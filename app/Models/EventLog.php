@@ -53,7 +53,6 @@ use stdClass;
  * @property string zone_id
  * @property string event_type
  * @property string pay_to
- * @property string ip
  * @property string our_context
  * @property array|stdClass their_context
  * @property int human_score
@@ -104,7 +103,6 @@ class EventLog extends Model
         'campaign_id',
         'event_type',
         'pay_to',
-        'ip',
         'our_context',
         'their_context',
         'human_score',
@@ -142,7 +140,6 @@ class EventLog extends Model
         'advertiser_id' => 'BinHex',
         'campaign_id' => 'BinHex',
         'pay_to' => 'AccountAddress',
-        'ip' => 'BinHex',
         'our_context' => 'JsonValue',
         'their_context' => 'JsonValue',
         'our_userdata' => 'JsonValue',
@@ -186,7 +183,6 @@ class EventLog extends Model
         string $campaignId,
         string $advertiserId,
         string $payTo,
-        $ip,
         array $context,
         string $userData,
         $type
@@ -207,7 +203,6 @@ class EventLog extends Model
         $log->campaign_id = $campaignId;
         $log->advertiser_id = $advertiserId;
         $log->pay_to = $payTo;
-        $log->ip = $ip;
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
