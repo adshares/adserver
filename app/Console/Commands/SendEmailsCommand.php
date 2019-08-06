@@ -104,7 +104,7 @@ class SendEmailsCommand extends BaseCommand
 
     private function getAddressesFromFile(string $file): Collection
     {
-        if (false === ($contents = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))) {
+        if (!is_readable($file) || false === ($contents = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))) {
             $this->info(sprintf('[SendEmailsCommand] File (%s) cannot be read', $file));
 
             return new Collection();
