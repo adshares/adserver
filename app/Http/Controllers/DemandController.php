@@ -225,23 +225,24 @@ class DemandController extends Controller
         $response->send();
 
         $ip = bin2hex(inet_pton($request->getClientIp()));
-        EventLog::create(
-            $caseId,
-            $eventId,
-            $bannerId,
-            $context['page']['zone'] ?? null,
-            $trackingId,
-            $publisherId,
-            $campaign->uuid,
-            $user->uuid,
-            $payTo,
-            $ip,
-            Utils::getImpressionContextArray($request),
-            $keywords,
-            EventLog::TYPE_CLICK
-        );
 
-        EventLog::eventClicked($caseId);
+        if (EventLog::eventClicked($caseId) > 0) {
+            EventLog::create(
+                $caseId,
+                $eventId,
+                $bannerId,
+                $context['page']['zone'] ?? null,
+                $trackingId,
+                $publisherId,
+                $campaign->uuid,
+                $user->uuid,
+                $payTo,
+                $ip,
+                Utils::getImpressionContextArray($request),
+                $keywords,
+                EventLog::TYPE_CLICK
+            );
+        }
 
         return $response;
     }
