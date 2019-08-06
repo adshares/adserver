@@ -199,7 +199,6 @@ class DemandController extends Controller
         $user = $campaign->user;
 
         $url = $campaign->landing_url;
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
 
@@ -230,8 +229,6 @@ class DemandController extends Controller
 
         $response->send();
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
-
         $hasCampaignClickConversion = $campaign->hasClickConversion();
         $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
         $eventId = Utils::createCaseIdContainingEventType($caseId, $eventType);
@@ -247,8 +244,6 @@ class DemandController extends Controller
                 $campaign->uuid,
                 $user->uuid,
                 $payTo,
-                $ip,
-                $requestHeaders,
                 Utils::getImpressionContextArray($request),
                 $keywords,
                 $eventType
@@ -265,8 +260,6 @@ class DemandController extends Controller
                     $campaign->uuid,
                     $user->uuid,
                     $payTo,
-                    $ip,
-                    $requestHeaders,
                     Utils::getImpressionContextArray($request),
                     $keywords,
                     $eventType
@@ -280,7 +273,6 @@ class DemandController extends Controller
     public function view(Request $request, string $bannerId): Response
     {
         $this->validateEventRequest($request);
-        $requestHeaders = $request->headers->all();
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_VIEW);
@@ -339,7 +331,6 @@ class DemandController extends Controller
         $campaign = $banner->campaign;
         $user = $campaign->user;
 
-        $ip = bin2hex(inet_pton($request->getClientIp()));
         EventLog::create(
             $caseId,
             $eventId,
@@ -350,8 +341,6 @@ class DemandController extends Controller
             $campaign->uuid,
             $user->uuid,
             $payTo,
-            $ip,
-            $requestHeaders,
             Utils::getImpressionContextArray($request),
             $keywords,
             EventLog::TYPE_VIEW
@@ -385,8 +374,8 @@ class DemandController extends Controller
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
-            if (!$event->domain) {
-                $event->domain = isset($decodedContext->url) ? DomainReader::domain($decodedContext->url) : null;
+            if (!$event->domain && isset($decodedContext->url)) {
+                $event->domain = DomainReader::domain($decodedContext->url);
             }
             $event->save();
         } catch (ModelNotFoundException $e) {

@@ -114,7 +114,6 @@ class AdsProcessTxTest extends TestCase
             $log->zone_id = $paymentDetail['zone_id'];
             $log->publisher_id = $paymentDetail['publisher_id'];
             $log->pay_from = config('app.adshares_address');
-            $log->ip = bin2hex(inet_pton('127.0.0.1'));
             $log->context = $context;
             $log->event_type = $paymentDetail['event_type'];
             $log->save();

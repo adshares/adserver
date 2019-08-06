@@ -348,8 +348,6 @@ class ConversionController extends Controller
         }
 
         $advertiserId = $campaign->user->uuid;
-        $headers = $request->headers->all();
-        $ip = bin2hex(inet_pton($request->getClientIp()));
         $impressionContext = Utils::getImpressionContextArray($request);
 
         $viewEventsData = $this->getViewEventsData($cases);
@@ -370,8 +368,6 @@ class ConversionController extends Controller
                     $campaignPublicId,
                     $advertiserId,
                     $viewEventData['payTo'],
-                    $ip,
-                    $headers,
                     $impressionContext,
                     '',
                     EventLog::TYPE_CLICK,

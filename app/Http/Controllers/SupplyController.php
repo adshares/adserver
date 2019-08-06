@@ -25,8 +25,10 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -81,6 +83,16 @@ class SupplyController extends Controller
         }
 
         $decodedQueryData = Utils::decodeZones($data);
+        $zones = $decodedQueryData['zones'] ?? [];
+
+        if (!$zones) {
+            return self::json([]);
+        }
+
+        if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
+            throw new BadRequestHttpException('Site not accepted');
+        }
+
         $impressionId = $decodedQueryData['page']['iid'];
 
         $tid = Utils::attachOrProlongTrackingCookie(
@@ -95,12 +107,6 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $zones = $decodedQueryData['zones'] ?? [];
-
-        if (!$zones) {
-            return self::json([]);
-        }
-        
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
         return self::json($bannerFinder->findBanners($zones, $context));
@@ -166,8 +172,6 @@ class SupplyController extends Controller
 
         $url = $this->addQueryStringToUrl($request, $url);
 
-        $requestHeaders = $request->headers->all();
-
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
         $trackingId = $request->cookies->get('tid')
@@ -202,8 +206,6 @@ class SupplyController extends Controller
                 $publisherId,
                 $siteId,
                 $payFrom,
-                bin2hex(inet_pton($request->getClientIp())),
-                $requestHeaders,
                 $context,
                 NetworkEventLog::TYPE_CLICK
             );
@@ -251,8 +253,6 @@ class SupplyController extends Controller
             $url = $this->addQueryStringToUrl($request, $url);
         }
 
-        $requestHeaders = $request->headers->all();
-
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
         $trackingId = $request->cookies->get('tid')
@@ -285,8 +285,6 @@ class SupplyController extends Controller
             $publisherId,
             $siteId,
             $payFrom,
-            bin2hex(inet_pton($request->getClientIp())),
-            $requestHeaders,
             $context,
             NetworkEventLog::TYPE_VIEW
         );
@@ -380,5 +378,12 @@ class SupplyController extends Controller
             'supply/why',
             $data
         );
+    }
+
+    private function isPageBlacklisted(string $url): bool
+    {
+        $domain = DomainReader::domain($url);
+
+        return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
     }
 }

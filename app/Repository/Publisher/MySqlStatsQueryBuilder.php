@@ -74,7 +74,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('COUNT(1) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_UNIQUE:
-                $this->column('COUNT(DISTINCT e.user_id, e.site_id) AS c');
+                $this->column('COUNT(DISTINCT IFNULL(e.user_id,e.tracking_id), e.site_id) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_INVALID_RATE:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
@@ -167,7 +167,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         $this->column(
             sprintf(
                 "COUNT(DISTINCT(CASE WHEN e.event_type = '%s' AND e.paid_amount_currency IS NOT NULL"
-                .' THEN e.user_id END)) AS viewsUnique',
+                .' THEN IFNULL(e.user_id, e.tracking_id) END)) AS viewsUnique',
                 NetworkEventLog::TYPE_VIEW
             )
         );

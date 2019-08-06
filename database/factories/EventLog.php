@@ -38,7 +38,7 @@ $factory->define(
         ];
 
         $caseId = $faker->uuid;
-        $eventType = $faker->randomElement([EventLog::TYPE_REQUEST, EventLog::TYPE_VIEW, EventLog::TYPE_CLICK]);
+        $eventType = $faker->randomElement([EventLog::TYPE_VIEW, EventLog::TYPE_CLICK]);
 
         return [
             'case_id' => $caseId,
@@ -51,50 +51,11 @@ $factory->define(
             'campaign_id' => $faker->uuid,
             'zone_id' => $faker->uuid,
             'event_type' => $eventType,
-            'ip' => bin2hex(inet_pton($faker->ipv4)),
             'event_value_currency' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'exchange_rate' => null,
             'event_value' => null,
             'pay_to' => $faker->randomElement($addresses),
             'reason' => 0,
-            'headers' => json_decode(
-                <<<JSON
-{
-    "host": [
-        "{$faker->ipv4}"
-    ],
-    "accept": [
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    ],
-    "cookie": [
-        "tid=UaBp3Jjxnc-A4vORitTMXBYZuF268Q; io=QzTM0GfPPsUvjM0SAAAH"
-    ],
-    "referer": [
-        "http://localhost:8000/Page2/"
-    ],
-    "connection": [
-        "keep-alive"
-    ],
-    "user-agent": [
-        "{$faker->chrome}"
-    ],
-    "content-type": [
-        ""
-    ],
-    "content-length": [
-        ""
-    ],
-    "accept-encoding": [
-        "gzip, deflate"
-    ],
-    "accept-language": [
-        "pl,en-US;q=0.7,en;q=0.3"
-    ]
-}
-JSON
-                ,
-                true
-            ),
         ];
     }
 );
