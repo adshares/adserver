@@ -21,12 +21,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\GeneralMessage;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
 use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 use function file;
 use function is_readable;
 use function trim;
@@ -96,7 +98,7 @@ class SendEmailsCommand extends BaseCommand
 
         $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
 
-        $this->sendEmail($email, $recipients);
+        $this->addSendEmailJobsToQueue($email, $recipients);
         $email->delete();
 
         $this->info('Finish command '.$this->signature);
@@ -129,16 +131,27 @@ class SendEmailsCommand extends BaseCommand
         return collect($results);
     }
 
-    private function sendEmail(Email $email, Collection $recipients): void
+    private function addSendEmailJobsToQueue(Email $email, Collection $recipients): void
     {
         $emailSendTime = new DateTime();
-        $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
-            function ($users) use ($emailSendTime, $email) {
-                foreach ($users as $user) {
-                    Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+
+        DB::beginTransaction();
+
+        try {
+            $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
+                function ($users) use ($emailSendTime, $email) {
+                    foreach ($users as $user) {
+                        Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+                    }
+                    $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
                 }
-                $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
-            }
-        );
+            );
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+
+            throw $throwable;
+        }
+
+        DB::commit();
     }
 }
