@@ -21,13 +21,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\GeneralMessage;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
 use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 use function file;
+use function is_readable;
 use function trim;
 
 class SendEmailsCommand extends BaseCommand
@@ -63,17 +66,14 @@ class SendEmailsCommand extends BaseCommand
             return;
         }
 
-        if (null !== ($address = $this->option('preview-address'))) {
-            Mail::to($address)->queue(new GeneralMessage($email->subject, $email->body));
-            $this->info(sprintf('[SendEmailsCommand] Preview message sent to (%s)', $address));
-
-            return;
-        }
-
-        if (null !== ($file = $this->option('file-address-list'))) {
-            $recipients = $this->getAddressesFromFile($file);
+        if (null !== ($previewAddress = $this->option('preview-address'))) {
+            $recipients = collect($previewAddress);
         } else {
-            $recipients = User::fetchEmails();
+            if (null !== ($file = $this->option('file-address-list'))) {
+                $recipients = $this->getAddressesFromFile($file);
+            } else {
+                $recipients = User::fetchEmails();
+            }
         }
 
         if (0 === ($recipientsCount = $recipients->count())) {
@@ -98,15 +98,18 @@ class SendEmailsCommand extends BaseCommand
 
         $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
 
-        $this->sendEmail($email, $recipients);
-        $email->delete();
+        $this->addSendEmailJobsToQueue($email, $recipients);
+
+        if (null === $previewAddress) {
+            $email->delete();
+        }
 
         $this->info('Finish command '.$this->signature);
     }
 
     private function getAddressesFromFile(string $file): Collection
     {
-        if (false === ($contents = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))) {
+        if (!is_readable($file) || false === ($contents = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES))) {
             $this->info(sprintf('[SendEmailsCommand] File (%s) cannot be read', $file));
 
             return new Collection();
@@ -131,16 +134,27 @@ class SendEmailsCommand extends BaseCommand
         return collect($results);
     }
 
-    private function sendEmail(Email $email, Collection $recipients): void
+    private function addSendEmailJobsToQueue(Email $email, Collection $recipients): void
     {
         $emailSendTime = new DateTime();
-        $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
-            function ($users) use ($emailSendTime, $email) {
-                foreach ($users as $user) {
-                    Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+
+        DB::beginTransaction();
+
+        try {
+            $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
+                function ($users) use ($emailSendTime, $email) {
+                    foreach ($users as $user) {
+                        Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+                    }
+                    $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
                 }
-                $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
-            }
-        );
+            );
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+
+            throw $throwable;
+        }
+
+        DB::commit();
     }
 }
