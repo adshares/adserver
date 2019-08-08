@@ -66,8 +66,8 @@ class SendEmailsCommand extends BaseCommand
             return;
         }
 
-        if (null !== ($address = $this->option('preview-address'))) {
-            $recipients = collect($address);
+        if (null !== ($previewAddress = $this->option('preview-address'))) {
+            $recipients = collect($previewAddress);
         } else {
             if (null !== ($file = $this->option('file-address-list'))) {
                 $recipients = $this->getAddressesFromFile($file);
@@ -99,7 +99,10 @@ class SendEmailsCommand extends BaseCommand
         $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
 
         $this->addSendEmailJobsToQueue($email, $recipients);
-        $email->delete();
+
+        if (null === $previewAddress) {
+            $email->delete();
+        }
 
         $this->info('Finish command '.$this->signature);
     }
