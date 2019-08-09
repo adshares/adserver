@@ -37,10 +37,14 @@ class Newsletter extends Mailable
     /** @var string */
     private $body;
 
-    public function __construct(string $subject, string $body)
+    /** @var bool */
+    private $attachUnsubscribe;
+
+    public function __construct(string $subject, string $body, bool $attachUnsubscribe = false)
     {
         $this->subject($subject);
         $this->body = $body;
+        $this->attachUnsubscribe = $attachUnsubscribe;
     }
 
     public function build()
@@ -49,7 +53,7 @@ class Newsletter extends Mailable
             'body' => $this->body,
         ];
 
-        if (null !== ($email = $this->extractEmail())) {
+        if ($this->attachUnsubscribe && null !== ($email = $this->extractEmail())) {
             $params['unsubscribe_url'] = $this->createUnsubscribeUrl($email);
         }
 
