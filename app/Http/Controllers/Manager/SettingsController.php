@@ -26,8 +26,9 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function hash_equals;
 use function is_bool;
@@ -70,24 +71,36 @@ class SettingsController extends Controller
         return self::json(['is_subscribed' => $isSubscribed]);
     }
 
-    public function newsletterUnsubscribe(Request $request): View
+    public function newsletterUnsubscribe(Request $request): Response
     {
         $address = (string)$request->get('address');
 
         if (null === ($user = User::fetchByEmail($address))) {
-            throw new UnprocessableEntityHttpException('Invalid address');
+            Log::info('Newsletter unsubscribe failed: Invalid address');
+
+            return response()->view(
+                'common.newsletter-unsubscribe',
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
         }
 
         $digestExpected = Newsletter::createDigest($address);
         $digest = (string)$request->get('digest');
 
         if (!hash_equals($digestExpected, $digest)) {
-            throw new UnprocessableEntityHttpException('Invalid digest');
+            Log::info('Newsletter unsubscribe failed: Invalid digest');
+
+            return response()->view(
+                'common.newsletter-unsubscribe',
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
         }
 
         $user->subscription(false);
         $user->save();
 
-        return view('common.newsletter-unsubscribe');
+        return response()->view('common.newsletter-unsubscribe', ['success' => true]);
     }
 }
