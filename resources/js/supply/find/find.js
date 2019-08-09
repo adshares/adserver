@@ -191,11 +191,6 @@ function isRendered(domObj) {
     return true;
 }
 
-function isNumber(x)
-{
-    return !isNaN(1*x);
-}
-
 function viewSize() {
     var doc = document, w = window;
     var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
@@ -210,7 +205,19 @@ function viewSize() {
         height = w.innerHeight;
     }
 
-    return {w: width, h: height};
+    return {width: width, height: height, left: 0, top: 0, right: width, bottom: height};
+}
+
+function rectIntersect(a, b)
+{
+    var x = Math.max(a.left, b.left);
+    var num1 = Math.min(a.left + a.width, b.left + b.width);
+    var y = Math.max(a.top, b.top);
+    var num2 = Math.min(a.top + a.height, b.top + b.height);
+    if (num1 >= x && num2 >= y)
+        return {left: x, top: y, width: num1 - x, height: num2 - y, bottom: num2, right: num1};
+    else
+        return false;
 }
 
 function getBoundRect(el, overflow) {
@@ -274,37 +281,52 @@ var isWindowVisible = (function() {
     }
 })();
 
-// checks if eleemnt is visible on screen
+
+var isOccluded = function(rect, el)
+{
+    if(!rect) return true;
+    outer:
+    for(var i=0; i < 10; i++) {
+        var top = document.elementFromPoint(Math.floor(rect.left + Math.random() * rect.width), Math.floor(rect.top + Math.random() * rect.height));
+        while (top) {
+            if (top == el) {
+                continue outer;
+            }
+            top = top.parentElement;
+        }
+        return true;
+    }
+
+    return false;
+};
+
+// checks if element is visible on screen
 var isVisible = function (el) {
     if (!isRendered(el) || !isWindowVisible())
         return false;
 
-    var rect = getBoundRect(el),
-        top = rect.top,
-        height = rect.height,
-        left = rect.left,
-        width = rect.width,
-        el = el.parentNode;
-    while (el != document.body) {
-        rect = getBoundRect(el, true);
-        if (top <= rect.bottom === false)
+    var rootEl = el;
+    var rootRect = getBoundRect(el);
+    var intersect = rootRect;
+    var rootArea = rootRect.width * rootRect.height;
+    el = el.parentElement;
+
+    while (el.parentElement) {
+        var rect = getBoundRect(el, true);
+        intersect = rectIntersect(intersect, rect);
+        var area = intersect ? intersect.width * intersect.height : 0;
+        if(area < rootArea / 2)
             return false;
-        if (left <= rect.right === false)
-            return false;
-        // Check if the element is out of view due to a container scrolling
-        if ((top + height) < rect.top)
-            return false;
-        if ((left + width) < rect.left)
-            return false;
-        el = el.parentNode;
+        el = el.parentElement;
     }
 
     var viewsize = viewSize();
-    // Check its within the document viewport
-    return top <= viewsize.h
-        && top > -height
-        && left <= viewsize.w
-        && left > -width;
+    intersect = rectIntersect(intersect, viewsize);
+    if(isOccluded(intersect, rootEl)) {
+        return false;
+    }
+    var area = intersect ? intersect.width * intersect.height : 0;
+    return area >= rootArea / 2;
 };
 
 var impressionId;
@@ -395,7 +417,34 @@ var getBrowserContext = function () {
     }
 };
 
-domReady(function () {
+var findBackfillCode = function(container) {
+    var tag = container.querySelectorAll('[type="app/backfill"]')[0];
+    if(tag) return tag.textContent;
+    for(var i=0,n=container.childNodes.length; i<n; i++) {
+        if(container.childNodes[i].nodeType === 8) {
+            return container.childNodes[i].textContent;
+        }
+    }
+    return null;
+}
+
+var parseZoneOptions = function(str) {
+    var opts = {};
+    if(typeof str != 'string') {
+        return opts;
+    }
+    var parts = str.split(',');
+    for(var i =0; i < parts.length; i++) {
+        var part = parts[i].trim();
+        var name_val = part.split('=', 2);
+        opts[name_val[0]] = name_val.length == 1 ? true : name_val[1];
+    }
+    return opts;
+};
+
+var abd;
+
+var getActiveZones = function(call_func) {
     var tags = document.querySelectorAll(selectorClass + '[data-zone]');
     var n = tags.length;
 
@@ -406,11 +455,15 @@ domReady(function () {
     var param, params = [];
     params.push(getBrowserContext());
 
+    var zones = [];
+
     var valid = 0;
-    for (var i = 0; i < n; i++) {
+    var waiting = 0;
+    tags.forEach(function(tag, i) {
+        var zone;
         var tag = tags[i];
         if(tag.__dwmth) {
-            continue;
+            return;
         }
         tag.__dwmth = 1;
         param = {};
@@ -424,106 +477,140 @@ domReady(function () {
             }
         }
         if (param.zone) {
-            params.push(param);
             valid++;
+            params.push(param);
+            zone = zones[i] = {
+                id: param.zone,
+                width: param.width,
+                height: param.height,
+                options: parseZoneOptions(param.options),
+                destElement: tag
+            };
+
+            zone.backfill = findBackfillCode(tag);
+
+            if(zone.options.min_cpm > 0) {
+                zone.__invalid = true;
+                param.__invalid = true;
+                insertBackfill(tag, zone.backfill);
+            } else {
+                if (zone.options.adblock_only) {
+                    waiting++;
+                    abd = abd || new BlockDetector();
+                    abd.detect(function () {
+                        waiting--;
+                    }, function () {
+                        zone.__invalid = true;
+                        param.__invalid = true;
+                        waiting--;
+                        insertBackfill(tag, zone.backfill);
+                    })
+                }
+            }
+
         }
-    }
+    });
 
     if(valid == 0) {
         return;
     }
 
-    aduserPixel(getImpressionId());
-
-    var data = encodeZones(params);
-
-    var url = serverOrigin + '/supply/find';
-    var options = {
-        json: true
-    };
-    if (data.length <= 800) {
-        // safe limit for url
-        url += '?' + data;
-    } else {
-        options.method = 'post';
-        options.post = data;
-    }
-
-    fetchURL(url, options).then(function (banners) {
-        var foundTagIndexes = [];
-        banners.forEach(function (banner, i) {
-            if (!banner)
-                return;
-
-            var foundIndex = findDestination(banner.zone_id, tags, foundTagIndexes);
-
-            if (foundIndex === null) {
-                foundIndex = findDestination(banner.zone_id, tags, []);
-            }
-
-            banner.destElement = tags[foundIndex];
-
-            foundTagIndexes.push(foundIndex);
-
-            if (!banner.destElement) {
-                console.log('no element to replace', banner);
-                return;
-            }
-
-            fetchBanner(banner, {page: params[0], zone: params[i + 1]});
-        })
-    });
-
-    addListener(window, 'message', function (event) {
-        var has_access = dwmthACL.some(function(win) {
-            return win && (win === event.source);
-        });
-        if (has_access && event.data)
-        {
-            var data, isString = typeof event.data == "string";
-            if (isString) {
-                data = JSON.parse(event.data);
-            } else {
-                data = event.data;
-            }
-            if (data.insertElem) {
-                data.insertElem.forEach(function (request) {
-                    if(dwmthACL.length >= 5 * valid) return;
-                    if(request.type == 'iframe') {
-                        if(dwmthURLS[request.url]) return;
-                        var iframe = addTrackingIframe(request.url);
-                        dwmthACL.push(iframe.contentWindow);
-                        dwmthURLS[request.url] = 1;
-                    } else if(request.type == 'img') {
-                        if(dwmthURLS[request.url]) return;
-                        addTrackingImage(request.url);
-                        dwmthACL.push(null);
-                        dwmthURLS[request.url] = 1;
-                    }
-                });
-            }
+    var fn;
+    fn = function(){
+        if(waiting > 0) {
+            setTimeout(fn, 50);
+        } else {
+            var filter = function(x) { return !x.__invalid; };
+            call_func(zones.filter(filter), params.filter(filter));
         }
+    }
+    fn();
+}
+
+
+domReady(function () {
+    aduserPixel(getImpressionId());
+    getActiveZones(function(zones, params) {
+        var data = encodeZones(params);
+
+        var url = serverOrigin + '/supply/find';
+        var options = {
+            json: true
+        };
+        if (data.length <= 800) {
+            // safe limit for url
+            url += '?' + data;
+        } else {
+            options.method = 'post';
+            options.post = data;
+        }
+
+        fetchURL(url, options).then(function (banners) {
+
+            zones.forEach(function(zone, i) {
+                if (!zone.destElement) {
+                    console.log('no element to replace');
+                    return;
+                }
+
+                var banner = banners[i];
+
+                if (!banner || typeof banner != 'object') {
+                    insertBackfill(zone.destElement, zone.backfill);
+                    return;
+                }
+
+                banner.destElement = zone.destElement;
+                banner.backfill = zone.backfill;
+
+                if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
+                    insertBackfill(zone.destElement, zone.backfill);
+                } else {
+                    fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                }
+            });
+        }, function() {
+            zones.forEach(function(zone, i) {
+                if (!zone.destElement) {
+                    console.log('no element to replace');
+                    return;
+                }
+                insertBackfill(zone.destElement, zone.backfill);
+            });
+        });
+
+        addListener(window, 'message', function (event) {
+            var has_access = dwmthACL.some(function(win) {
+                return win && (win === event.source);
+            });
+            if (has_access && event.data)
+            {
+                var data, isString = typeof event.data == "string";
+                if (isString) {
+                    data = JSON.parse(event.data);
+                } else {
+                    data = event.data;
+                }
+                if (data.insertElem) {
+                    data.insertElem.forEach(function (request) {
+                        if(dwmthACL.length >= 5 * zones.length) return;
+                        if(request.type == 'iframe') {
+                            if(dwmthURLS[request.url]) return;
+                            var iframe = addTrackingIframe(request.url);
+                            dwmthACL.push(iframe.contentWindow);
+                            dwmthURLS[request.url] = 1;
+                        } else if(request.type == 'img') {
+                            if(dwmthURLS[request.url]) return;
+                            addTrackingImage(request.url);
+                            dwmthACL.push(null);
+                            dwmthURLS[request.url] = 1;
+                        }
+                    });
+                }
+            }
+        });
     });
 });
-
-var findDestination = function (zoneId, tags, excludedTags) {
-    if (!zoneId) {
-        return;
-    }
-
-    for (var i = 0; i < tags.length; i++) {
-        var dataZone = tags[i].getAttribute('data-zone');
-
-        if (!dataZone) {
-            return;
-        }
-        if (dataZone.toLowerCase() === zoneId.toLowerCase()
-            && (excludedTags.length === 0 || excludedTags.indexOf(i) === -1)
-        ) {
-            return i;
-        }
-    }
-};
 
 var addTrackingIframe = function (url, element) {
     if (!url) return;
@@ -631,6 +718,7 @@ var fetchBanner = function (banner, context) {
                     displayIfVisible();
                 } else {
                     console.log('hash error', banner, hash);
+                    insertBackfill(banner.destElement, banner.backfill);
                 }
             });
         } else {
@@ -638,5 +726,6 @@ var fetchBanner = function (banner, context) {
         }
     }, function () {
         console.log('could not fetch url', banner);
+        insertBackfill(banner.destElement, banner.backfill);
     });
 };

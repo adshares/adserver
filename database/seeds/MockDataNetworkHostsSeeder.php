@@ -50,6 +50,6 @@ class MockDataNetworkHostsSeeder extends Seeder
         $info->setSupplyFee(0.01);
         $info->setStatistics(new InfoStatistics(1, 1, 1));
 
-        NetworkHost::registerHost('0001-00000004-DBEB', $info, new DateTime());
+        NetworkHost::registerHost($info->getAdsAddress(), $info, new DateTime());
     }
 }

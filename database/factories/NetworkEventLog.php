@@ -46,47 +46,8 @@ $factory->define(
             'publisher_id' => $faker->uuid,
             'site_id' => $faker->uuid,
             'event_type' => $faker->randomElement(['view', 'click']),
-            'ip' => bin2hex(inet_pton($faker->ipv4)),
             'event_value' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'pay_from' => $faker->randomElement($addresses),
-            'headers' => json_decode(
-                <<<JSON
-{
-    "host": [
-        "{$faker->ipv4}"
-    ],
-    "accept": [
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
-    ],
-    "cookie": [
-        "tid=UaBp3Jjxnc-A4vORitTMXBYZuF268Q; io=QzTM0GfPPsUvjM0SAAAH"
-    ],
-    "referer": [
-        "http://localhost:8000/Page2/"
-    ],
-    "connection": [
-        "keep-alive"
-    ],
-    "user-agent": [
-        "{$faker->chrome}"
-    ],
-    "content-type": [
-        ""
-    ],
-    "content-length": [
-        ""
-    ],
-    "accept-encoding": [
-        "gzip, deflate"
-    ],
-    "accept-language": [
-        "pl,en-US;q=0.7,en;q=0.3"
-    ]
-}
-JSON
-                ,
-                true
-            ),
         ];
     }
 );
