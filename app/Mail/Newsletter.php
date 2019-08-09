@@ -26,7 +26,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class GeneralMessage extends Mailable
+class Newsletter extends Mailable
 {
     use Queueable;
     use SerializesModels;
@@ -45,10 +45,41 @@ class GeneralMessage extends Mailable
 
     public function build()
     {
-        return $this->markdown('emails.general-message')->with(
+        $params = [
+            'body' => $this->body,
+        ];
+
+        if (null !== ($email = $this->extractEmail())) {
+            $params['unsubscribe_url'] = $this->createUnsubscribeUrl($email);
+        }
+
+        return $this->markdown('emails.newsletter')->with(
+            $params
+        );
+    }
+
+    private function extractEmail(): ?string
+    {
+        if (1 !== count($this->to)) {
+            return null;
+        }
+
+        return $this->to[0]['address'] ?? null;
+    }
+
+    private function createUnsubscribeUrl(string $emailAddress): string
+    {
+        return route(
+            'newsletter-unsubscribe',
             [
-                'body' => $this->body,
+                'address' => $emailAddress,
+                'digest' => self::createDigest($emailAddress),
             ]
         );
+    }
+
+    public static function createDigest(string $emailAddress): string
+    {
+        return sha1($emailAddress.config('app.adserver_secret'));
     }
 }

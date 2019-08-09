@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
+use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\StatisticsGlobalController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,3 +44,5 @@ Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fet
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
+
+Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name('newsletter-unsubscribe');

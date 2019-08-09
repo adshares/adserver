@@ -21,6 +21,7 @@
 declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
+use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::patch('self', [AuthController::class, 'updateSelf']);
     Route::post('email/activate/resend', [AuthController::class, 'emailActivateResend']);
+    Route::post('newsletter/subscription', [SettingsController::class, 'newsletterSubscription']);
 });
 
 Route::middleware([Kernel::ONLY_AUTHENTICATED_USERS_EXCEPT_IMPERSONATION, Kernel::JSON_API])->group(function () {

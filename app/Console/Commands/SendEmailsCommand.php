@@ -22,7 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\GeneralMessage;
+use Adshares\Adserver\Mail\Newsletter;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
 use DateTime;
@@ -144,7 +144,7 @@ class SendEmailsCommand extends BaseCommand
             $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
                 function ($users) use ($emailSendTime, $email) {
                     foreach ($users as $user) {
-                        Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+                        Mail::to($user)->later($emailSendTime, new Newsletter($email->subject, $email->body));
                     }
                     $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
                 }
