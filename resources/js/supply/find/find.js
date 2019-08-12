@@ -116,8 +116,8 @@ var prepareElement = function (context, banner, element, contextParam) {
                         return;
                     }
                     var url = context.click_url;
-                    if (!window.open(url, '_blank')) {
-                        window.location.href = url;
+                    if (!topwin.open(url, '_blank')) {
+                        topwin.location.href = url;
                     }
                     // prevent double click
                     document.activeElement.blur();
@@ -236,7 +236,16 @@ function getBoundRect(el, overflow) {
         }
     }
 
-    return el.getBoundingClientRect();
+    var rect = el.getBoundingClientRect();
+
+    return {
+        top: rect.top + top,
+        bottom: rect.top + top + height,
+        left: rect.left + left,
+        right: rect.left + left + width,
+        width: width,
+        height: height
+    }
 }
 
 var isWindowVisible = (function() {
@@ -367,8 +376,8 @@ var aduserPixel = function (impressionId) {
     dwmthURLS[url] = 1;
 };
 
-var createIframeFromUrl = function createIframeFromUrl(url) {
-    var iframe = document.createElement('iframe');
+var createIframeFromUrl = function createIframeFromUrl(url, doc) {
+    var iframe = (doc || document).createElement('iframe');
     iframe.setAttribute('style', 'display:none');
     iframe.setAttribute('width', 1);
     iframe.setAttribute('height', 1);
@@ -378,10 +387,10 @@ var createIframeFromUrl = function createIframeFromUrl(url) {
     return iframe;
 };
 
-var getPageKeywords = function () {
+var getPageKeywords = function (doc) {
 
     var MAX_KEYWORDS = 10;
-    var metaKeywords = document.querySelector("meta[name=keywords]");
+    var metaKeywords = doc.querySelector("meta[name=keywords]");
 
     if (metaKeywords === null) {
         return '';
@@ -399,14 +408,26 @@ var getPageKeywords = function () {
     return metaKeywords;
 };
 
+var topwin = window;
+try {
+    while(topwin.parent != topwin && topwin.parent.document) {
+        topwin = topwin.parent;
+    }
+} catch(e) {
+
+}
+var topdoc = topwin.document;
+
 var getBrowserContext = function () {
     return {
         iid: getImpressionId(),
-        frame: (window == top ? 0 : 1),
-        width: window.screen.width,
-        height: window.screen.height,
-        url: window.location.href,
-        keywords: getPageKeywords()
+        frame: (topwin == top ? 0 : 1),
+        width: topwin.screen.width,
+        height: topwin.screen.height,
+        url: topwin.location.href,
+        keywords: getPageKeywords(topdoc),
+        ref: topdoc.referrer,
+        pop: topwin.opener !== null ? 1 : 0
         // agent: window.navigator.userAgent
     }
 };
@@ -573,7 +594,7 @@ domReady(function () {
             });
         });
 
-        addListener(window, 'message', function (event) {
+        addListener(topwin, 'message', function (event) {
             var has_access = dwmthACL.some(function(win) {
                 return win && (win === event.source);
             });
@@ -606,30 +627,24 @@ domReady(function () {
     });
 });
 
-var addTrackingIframe = function (url, element) {
+var addTrackingIframe = function (url) {
     if (!url) return;
-    if(!element) {
-        element = document.body.lastChild;
-    }
-    var iframe = createIframeFromUrl(url);
-    element.parentNode.insertBefore(iframe, element);
+    var iframe = createIframeFromUrl(url, topdoc);
+    topdoc.body.appendChild(iframe);
     setTimeout(function() {
         iframe.parentElement.removeChild(iframe);
     }, 10000);
     return iframe;
 };
 
-var addTrackingImage = function (url, element) {
+var addTrackingImage = function (url) {
     if (!url) return;
-    if(!element) {
-        element = document.body.lastChild;
-    }
     var img = new Image();
     img.setAttribute('style', 'display:none');
     img.setAttribute('width', 1);
     img.setAttribute('height', 1);
     img.src = url;
-    element.parentNode.insertBefore(img, element);
+    topdoc.body.appendChild(img);
     return img;
 };
 
@@ -664,7 +679,7 @@ var fetchBanner = function (banner, context) {
             var timer = setInterval(function () {
                 if (isVisible(element)) {
                     clearInterval(timer);
-                    dwmthACL.push(addTrackingIframe(context.view_url, element).contentWindow);
+                    dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
                 }
             }, 1000);
         };
