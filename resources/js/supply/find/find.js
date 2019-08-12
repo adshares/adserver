@@ -21,6 +21,17 @@ var serverOrigin = '{{ ORIGIN }}';
 var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
+
+var topwin = window;
+try {
+    while(topwin.parent != topwin && topwin.parent.document) {
+        topwin = topwin.parent;
+    }
+} catch(e) {
+
+}
+var topdoc = topwin.document;
+
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -191,8 +202,10 @@ function isRendered(domObj) {
     return true;
 }
 
-function viewSize() {
-    var doc = document, w = window;
+function viewSizeWin(w)
+{
+    var left = 0, top = 0;
+    var doc = w.document;
     var docEl = (doc.compatMode && doc.compatMode === 'CSS1Compat')?
         doc.documentElement: doc.body;
 
@@ -205,7 +218,41 @@ function viewSize() {
         height = w.innerHeight;
     }
 
-    return {width: width, height: height, left: 0, top: 0, right: width, bottom: height};
+
+    return {width: width, height: height, left: left, top: top, right: width, bottom: height};
+}
+
+function locateFrameElement(w_parent, w)
+{
+    var frames = w_parent.document.getElementsByTagName('iframe');
+    for(var i=0,n=frames.length;i<n;i++) {
+        if(frames[i].contentWindow == w) {
+            return frames[i];
+        }
+    }
+    return null;
+}
+
+function viewSize() {
+    var w = window;
+    var size = viewSizeWin(w);
+    // console.log(w.location.href, size);
+    while(w != topwin) {
+
+        var parent_size = viewSizeWin(w.parent);
+        var frame_el = locateFrameElement(w.parent, w);
+        var rect = getBoundRect(frame_el);
+        var isect = rectIntersect(parent_size, rect);
+        isect.left -= rect.left;
+        isect.right -= rect.left;
+        isect.top -= rect.top;
+        isect.bottom -= rect.top;
+        // console.log(w.location.pathname, isect);
+        size = rectIntersect(size, isect);
+        w = w.parent;
+    }
+
+    return size;
 }
 
 function rectIntersect(a, b)
@@ -225,7 +272,7 @@ function getBoundRect(el, overflow) {
     var width = el.offsetWidth, height = el.offsetHeight;
 
     if(overflow) {
-        var css = window.getComputedStyle(el);
+        var css = el.ownerDocument.defaultView.getComputedStyle(el);
         if (css.overflowX == 'visible') {
             width = 200000;
             left = -100000;
@@ -407,16 +454,6 @@ var getPageKeywords = function (doc) {
     }
     return metaKeywords;
 };
-
-var topwin = window;
-try {
-    while(topwin.parent != topwin && topwin.parent.document) {
-        topwin = topwin.parent;
-    }
-} catch(e) {
-
-}
-var topdoc = topwin.document;
 
 var getBrowserContext = function () {
     return {
@@ -709,12 +746,14 @@ var fetchBanner = function (banner, context) {
             if (isVisible(banner.destElement)) {
                 displayBanner();
             } else {
-                var timer = setInterval(function () {
+                var n=0,fn;
+                setTimeout(fn = function () {
                     if (isVisible(banner.destElement)) {
-                        clearInterval(timer);
                         displayBanner();
+                    } else {
+                        setTimeout(fn, n++ < 10 ? 200 : 1000);
                     }
-                }, 200);
+                }, 100);
             }
         };
 
