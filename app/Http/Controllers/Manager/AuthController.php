@@ -217,7 +217,7 @@ class AuthController extends Controller
             );
         }
         $user->email = $token['payload']['email'];
-        $user->confirmEmail();
+        $user->email_confirmed_at = date('Y-m-d H:i:s');
         $user->save();
         DB::commit();
 
