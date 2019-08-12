@@ -236,19 +236,7 @@ function getBoundRect(el, overflow) {
         }
     }
 
-    do {
-        left += el.offsetLeft - el.scrollLeft;
-        top += el.offsetTop - el.scrollTop;
-    } while (el = (el == document.body ? document.documentElement : el.offsetParent));
-
-    return {
-        top: top,
-        bottom: top + height,
-        left: left,
-        right: left + width,
-        width: width,
-        height: height
-    }
+    return el.getBoundingClientRect();
 }
 
 var isWindowVisible = (function() {
