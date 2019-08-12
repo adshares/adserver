@@ -156,6 +156,8 @@ class Utils
                 $word = strtolower(trim($word));
             }
         }
+        $site['referrer'] = $page['ref'];
+        $site['popup'] = $page['pop'];
 
         return $site;
     }
