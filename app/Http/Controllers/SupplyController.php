@@ -92,6 +92,9 @@ class SupplyController extends Controller
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
+        if ($decodedQueryData['page']['frame'] ?? false) {
+            throw new BadRequestHttpException('Site not accepted.');
+        }
 
         $impressionId = $decodedQueryData['page']['iid'];
 
