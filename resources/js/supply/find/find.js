@@ -352,9 +352,15 @@ var getRandId = function(bytes) {
 
 var aduserPixel = function (impressionId) {
     if (!aduserOrigin) return;
-    var url = serverOrigin + '/supply/register?iid=' + impressionId;
+    var prefix = serverOrigin + '/supply/register?iid=';
+    var url = prefix + impressionId;
 
     if(dwmthURLS[url]) return;
+    // adusers from other find.js
+    var tags = document.querySelectorAll('iframe[src^="' + prefix + '"]');
+    if(tags.length) {
+        return;
+    }
     var iframe = createIframeFromUrl(url);
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
