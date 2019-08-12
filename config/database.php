@@ -70,6 +70,9 @@ return [
             'prefix' => '',
             'strict' => true,
             'engine' => null,
+            'options' => array(
+                PDO::ATTR_PERSISTENT => (bool)env('DB_PERSISTENT', false),
+            ),
         ],
 
         'sqlite_testing' => [
