@@ -97,6 +97,6 @@ final class TaxonomyItemFactory
             unset($value['key']);
         }
 
-        return new Value($value['value'], $value['label']);
+        return new Value($value['value'], $value['label'], $value['description'] ?? null);
     }
 }
