@@ -41,6 +41,8 @@ use function in_array;
  * @property string creative_contents
  * @property string creative_type
  * @property string creative_sha1
+ * @property int creative_width
+ * @property int creative_height
  * @property Campaign campaign
  * @property BannerClassification[] classifications
  * @mixin Builder
