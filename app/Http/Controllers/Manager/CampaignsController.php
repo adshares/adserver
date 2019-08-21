@@ -28,7 +28,6 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
-use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
@@ -141,10 +140,6 @@ class CampaignsController extends Controller
         $campaign = new Campaign($input);
         $this->campaignRepository->save($campaign, $banners);
 
-        if (null !== ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
-            $this->createBannerClassificationsForNewBanners($classifier, $campaign);
-        }
-
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
         try {
@@ -154,6 +149,8 @@ class CampaignsController extends Controller
         } catch (InvalidArgumentException $e) {
             Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->id}] cannot be started.");
         }
+
+        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
@@ -256,7 +253,6 @@ class CampaignsController extends Controller
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
-        $oldBannerIds = $campaign->banners->pluck('id');
         $campaign->fill($input);
 
         $campaign->status = Campaign::STATUS_INACTIVE;
@@ -291,10 +287,6 @@ class CampaignsController extends Controller
 
         $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
 
-        if (null !== ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
-            $this->createBannerClassificationsForNewBanners($classifier, $campaign, $oldBannerIds);
-        }
-
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
         }
@@ -310,6 +302,8 @@ class CampaignsController extends Controller
                     ." {$e->getMessage()}");
             }
         }
+
+        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -338,6 +332,8 @@ class CampaignsController extends Controller
         }
 
         $this->campaignRepository->update($campaign);
+
+        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
     }
@@ -411,7 +407,7 @@ class CampaignsController extends Controller
 
         $campaign->update();
     }
-    
+
     private function processTargeting(array $input): array
     {
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
@@ -422,23 +418,25 @@ class CampaignsController extends Controller
         return $input;
     }
 
-    private function createBannerClassificationsForNewBanners(
-        ClassifierExternal $classifier,
-        Campaign $campaign,
-        Collection $oldBannerIds = null
-    ): void {
-        $bannerIds = $campaign->banners()->get()->pluck('id');
-
-        if (null !== $oldBannerIds) {
-            $bannerIds = $bannerIds->reject(function ($item) use ($oldBannerIds) {
-                return $oldBannerIds->contains($item);
-            });
+    private function createBannerClassificationsForCampaign(Campaign $campaign): void {
+        if (Campaign::STATUS_ACTIVE !== $campaign->status
+            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
+            return;
         }
+
+        $classifierName = $classifier->getName();
+
+        $bannerIds = $campaign->banners()->where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
+            'classifications',
+            function ($query) use ($classifierName) {
+                $query->where('classifier', $classifierName);
+            }
+        )->get()->pluck('id');
 
         if ($bannerIds->isEmpty()) {
             return;
         }
 
-        $this->bannerClassificationCreator->create($classifier->getName(), $bannerIds->toArray());
+        $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
     }
 }

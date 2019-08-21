@@ -23,6 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 
 class BannerClassificationsCreateCommand extends BaseCommand
@@ -55,12 +57,34 @@ class BannerClassificationsCreateCommand extends BaseCommand
 
         $classifier = $this->argument('classifier');
 
-        if (null !== ($bannerIds = $this->option('bannerIds'))) {
-            $bannerIds = explode(',', $bannerIds);
-        }
+        $bannerIds = $this->getBannerIds();
 
         $this->creator->create($classifier, $bannerIds);
 
         $this->info('Finish command '.$this->signature);
+    }
+
+    private function getBannerIds(): ?array
+    {
+        if (null !== ($bannerIds = $this->option('bannerIds'))) {
+            return explode(',', $bannerIds);
+        }
+
+        $campaignRepository = new CampaignRepository();
+
+        $bannerIds = [];
+        foreach ($campaignRepository->fetchActiveCampaigns() as $campaign) {
+            foreach ($campaign->ads as $banner) {
+                if (Banner::STATUS_ACTIVE === $banner->status) {
+                    $bannerIds[] = $banner->id;
+                }
+            }
+        }
+
+        if (empty($bannerIds)) {
+            return null;
+        }
+
+        return $bannerIds;
     }
 }
