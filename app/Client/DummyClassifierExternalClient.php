@@ -44,8 +44,13 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         $dataOut = [];
         foreach ($requests as $classificationRequest) {
             $checksum = $classificationRequest['checksum'];
+            $timestamp = time();
             $keywords = ['category' => ['crypto', 'gambling']];
-            $message = hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
+            $message =
+                hash(
+                    'sha256',
+                    hex2bin($checksum).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+                );
 
             try {
                 $signature = $this->sign($message);
@@ -57,6 +62,7 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
                 'id' => $classificationRequest['id'],
                 'keywords' => $keywords,
                 'signature' => $signature,
+                'timestamp' => $timestamp,
             ];
         }
 

@@ -41,15 +41,20 @@ class ClassifierExternalSignatureVerifier
         $this->classifierRepository = $classifierRepository;
     }
 
-    public function isSignatureValid(string $classifierName, string $signature, string $checksum, array $keywords): bool
-    {
+    public function isSignatureValid(
+        string $classifierName,
+        string $signature,
+        string $checksum,
+        int $timestamp,
+        array $keywords
+    ): bool {
         if (null === ($publicKey = $this->getPublicKey($classifierName))) {
             Log::info(sprintf('Unknown classifier (%s)', $classifierName));
 
             return false;
         }
 
-        $message = $this->createMessage($checksum, $keywords);
+        $message = $this->createMessage($checksum, $timestamp, $keywords);
 
         try {
             return sodium_crypto_sign_verify_detached(hex2bin($signature), $message, hex2bin($publicKey));
@@ -58,9 +63,9 @@ class ClassifierExternalSignatureVerifier
         }
     }
 
-    private function createMessage(string $checksum, array $keywords): string
+    private function createMessage(string $checksum, int $timestamp, array $keywords): string
     {
-        return hash('sha256', hex2bin($checksum).ClassifierExternalKeywordsSerializer::serialize($keywords));
+        return hash('sha256', hex2bin($checksum).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords));
     }
 
     private function getPublicKey(string $classifierName): ?string

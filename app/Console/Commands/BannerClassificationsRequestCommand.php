@@ -90,7 +90,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'id' => $bannerPublicId,
                 'checksum' => $banner->creative_sha1,
                 'type' => $banner->creative_type,
-                'size' => $banner->creative_width.'x'.$banner->creative_height,
+                'size' => $banner->getFormattedSize(),
                 'serve_url' => route('banner-serve', ['id' => $bannerPublicId]),
                 'campaign_id' => $campaign->uuid,
                 'landing_url' => $campaign->landing_url,

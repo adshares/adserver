@@ -36,6 +36,7 @@ class CreateBannerClassificationsTable extends Migration
                 $table->string('classifier', 32);
                 $table->json('keywords')->nullable();
                 $table->binary('signature')->nullable();
+                $table->timestamp('signed_at')->nullable();
                 $table->timestamps();
                 $table->timestamp('requested_at')->nullable();
                 $table->unsignedTinyInteger('status')->default(BannerClassification::STATUS_NEW);

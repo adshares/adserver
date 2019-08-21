@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -48,8 +49,14 @@ class ClassificationController extends Controller
         $inputs = $request->all();
         $this->validateClassificationRequest($inputs, $classifier);
 
+        $bannerPublicIds = [];
         foreach ($inputs as $input) {
-            if (null === ($banner = Banner::fetchBanner($input['id']))
+            $bannerPublicIds[] = $input['id'];
+        }
+        $banners = Banner::fetchBannerByPublicIds($bannerPublicIds)->keyBy('uuid');
+
+        foreach ($inputs as $input) {
+            if (null === ($banner = $banners->get($input['id']))
                 || null === ($classification =
                     BannerClassification::fetchByBannerIdAndClassifier($banner->id, $classifier))) {
                 Log::info(
@@ -63,11 +70,32 @@ class ClassificationController extends Controller
                 continue;
             }
 
+            $timestamp = $input['timestamp'];
+            $signedAt = (new DateTime())->setTimestamp($timestamp);
+
+            if (null !== $classification->signed_at && $signedAt <= $classification->signed_at) {
+                Log::info(
+                    sprintf(
+                        '[classification update] Banner id (%s) has more recent classification from classifier (%s)',
+                        $input['id'],
+                        $classifier
+                    )
+                );
+
+                continue;
+            }
+
             $signature = $input['signature'];
             $checksum = $banner->creative_sha1;
             $keywords = $input['keywords'] ?? [];
 
-            if (!$this->signatureVerifier->isSignatureValid($classifier, $signature, $checksum, $keywords)) {
+            if (!$this->signatureVerifier->isSignatureValid(
+                $classifier,
+                $signature,
+                $checksum,
+                $timestamp,
+                $keywords
+            )) {
                 Log::info(
                     sprintf(
                         '[classification update] Invalid signature for banner checksum (%s) from classifier (%s)',
@@ -82,7 +110,7 @@ class ClassificationController extends Controller
                 continue;
             }
 
-            $classification->classified($keywords, $signature);
+            $classification->classified($keywords, $signature, $signedAt);
         }
 
         if ($isAnySignatureInvalid) {

@@ -122,6 +122,11 @@ class Banner extends Model
         return Size::SUPPORTED_SIZES[$size];
     }
 
+    public function getFormattedSize(): string
+    {
+        return $this->creative_width.'x'.$this->creative_height;
+    }
+
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
@@ -137,6 +142,18 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    public static function fetchBannerByPublicIds(array $publicIds): Collection
+    {
+        $binPublicIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $publicIds
+        );
+
+        return self::whereIn('uuid', $binPublicIds)->get();
     }
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection

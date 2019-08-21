@@ -345,11 +345,13 @@ final class GuzzleDemandClient implements DemandClient
         $checksum = $banner['checksum'] ?? '';
         $invalidClassifiers = [];
         foreach ($classification as $classifier => $classificationItem) {
+            $timestamp = DateTime::createFromFormat(DateTime::ATOM, $classificationItem['signed_at'])->getTimestamp();
             if (!isset($classificationItem['signature'])
                 || !$this->classifierExternalSignatureVerifier->isSignatureValid(
                     (string)$classifier,
                     $classificationItem['signature'],
                     $checksum,
+                    $timestamp,
                     $classificationItem['keywords'] ?? []
                 )) {
                 $invalidClassifiers[] = $classifier;

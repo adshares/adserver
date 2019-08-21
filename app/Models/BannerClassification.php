@@ -34,7 +34,8 @@ use Illuminate\Support\Collection;
  * @property int banner_id
  * @property string classifier
  * @property array|null keywords
- * @property string signature
+ * @property string|null signature
+ * @property DateTime|null signed_at
  * @property int status
  */
 class BannerClassification extends Model
@@ -54,6 +55,11 @@ class BannerClassification extends Model
 
     protected $casts = [
         'keywords' => 'array',
+        'signed_at' => 'datetime:Y-m-d\TH:i:sP',
+    ];
+
+    protected $dates = [
+        'signed_at',
     ];
 
     protected $traitAutomate = [
@@ -63,6 +69,7 @@ class BannerClassification extends Model
     protected $visible = [
         'keywords',
         'signature',
+        'signed_at',
     ];
 
     public static function prepare(string $classifier): self
@@ -73,10 +80,11 @@ class BannerClassification extends Model
         return $bannerClassification;
     }
 
-    public function classified(array $keywords, string $signature): void
+    public function classified(array $keywords, string $signature, DateTime $signedAt): void
     {
         $this->keywords = $keywords;
         $this->signature = $signature;
+        $this->signed_at = $signedAt;
         $this->status = BannerClassification::STATUS_SUCCESS;
         $this->save();
     }
@@ -117,7 +125,7 @@ class BannerClassification extends Model
         $grouped = BannerClassification::whereIn('banner_id', $bannerIds)->where(
             'status',
             BannerClassification::STATUS_SUCCESS
-        )->get(['banner_id', 'classifier', 'keywords', 'signature'])->groupBy(['banner_id']);
+        )->get(['banner_id', 'classifier', 'keywords', 'signature', 'signed_at'])->groupBy(['banner_id']);
 
         return $grouped->map(
             function ($item) {
