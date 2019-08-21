@@ -155,6 +155,17 @@ class ClassificationController extends Controller
 
                 throw new UnprocessableEntityHttpException('Missing signature');
             }
+
+            if (!isset($input['timestamp'])) {
+                Log::info(
+                    sprintf(
+                        '[classification update] Missing field timestamp from classifier (%s)',
+                        $classifier
+                    )
+                );
+
+                throw new UnprocessableEntityHttpException('Missing timestamp');
+            }
         }
     }
 }

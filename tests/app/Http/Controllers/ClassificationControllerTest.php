@@ -31,6 +31,7 @@ use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use SodiumException;
+use function time;
 
 class ClassificationControllerTest extends TestCase
 {
@@ -110,6 +111,21 @@ class ClassificationControllerTest extends TestCase
         $this->assertNull($keywords);
     }
 
+    public function testUpdateClassificationMissingTimestamp(): void
+    {
+        $banner = $this->insertBanner();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywordsWithoutTimestamp($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
+    }
+
     public function testUpdateClassificationInvalidSignature(): void
     {
         $banner = $this->insertBanner();
@@ -158,8 +174,9 @@ class ClassificationControllerTest extends TestCase
                 'gambling',
             ],
         ];
+        $timestamp = time();
         $message =
-            hash('sha256', hex2bin($banner->creative_sha1).ClassifierExternalKeywordsSerializer::serialize($keywords));
+            hash('sha256', hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords));
         $signature = $this->sign($message);
 
         return [
@@ -167,6 +184,7 @@ class ClassificationControllerTest extends TestCase
                 'id' => $banner->uuid,
                 'keywords' => $keywords,
                 'signature' => $signature,
+                'timestamp' => $timestamp,
             ],
         ];
     }
@@ -187,10 +205,19 @@ class ClassificationControllerTest extends TestCase
         return $keywords;
     }
 
+    private function getKeywordsWithoutTimestamp(Banner $banner): array
+    {
+        $keywords = $this->getKeywords($banner);
+        unset($keywords[0]['timestamp']);
+
+        return $keywords;
+    }
+
     private function getKeywordsInvalidSignature(Banner $banner): array
     {
         $keywords = $this->getKeywords($banner);
-        $keywords[0]['signature'] = '000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        $keywords[0]['signature'] =
+            '000000000000000000000000000000000000000000000000000000000000000000000000000000000'
             .'00000000000000000000000000000000000000000000000';
 
         return $keywords;

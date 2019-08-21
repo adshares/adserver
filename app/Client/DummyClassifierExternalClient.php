@@ -29,6 +29,7 @@ use Illuminate\Http\Request;
 use SodiumException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use function time;
 
 final class DummyClassifierExternalClient implements ClassifierExternalClient
 {
@@ -46,11 +47,10 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
             $checksum = $classificationRequest['checksum'];
             $timestamp = time();
             $keywords = ['category' => ['crypto', 'gambling']];
-            $message =
-                hash(
-                    'sha256',
-                    hex2bin($checksum).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
-                );
+            $message = hash(
+                'sha256',
+                hex2bin($checksum).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+            );
 
             try {
                 $signature = $this->sign($message);
