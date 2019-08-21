@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Http\Controllers;
 
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
@@ -66,6 +67,26 @@ class ClassificationController extends Controller
                         $classifier
                     )
                 );
+
+                continue;
+            }
+
+            if (null !== ($errorCode = $input['error']['code'] ?? null)) {
+                Log::warning(
+                    sprintf(
+                        '[classification update] Error for banner id (%s) from classifier (%s): (%s)(%s)',
+                        $input['id'],
+                        $classifier,
+                        $errorCode,
+                        $input['error']['message'] ?? ''
+                    )
+                );
+
+                $classification->failed();
+
+                if (ClassifierExternalClient::CLASSIFIER_ERROR_CODE_BANNER_REJECTED === $errorCode) {
+                    // TODO reject banner
+                }
 
                 continue;
             }
@@ -148,6 +169,14 @@ class ClassificationController extends Controller
                 );
 
                 throw new UnprocessableEntityHttpException('Missing banner id');
+            }
+
+            if (isset($input['error'])) {
+                if (!isset($input['error']['code'])) {
+                    throw new UnprocessableEntityHttpException('Missing error code');
+                }
+
+                continue;
             }
 
             if (!isset($input['signature'])) {

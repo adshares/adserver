@@ -27,8 +27,12 @@ use Adshares\Common\Application\Dto\Taxonomy;
 
 interface ClassifierExternalClient
 {
+    public const CLASSIFIER_ERROR_CODE_BANNER_FAILED = 3;
+
+    public const CLASSIFIER_ERROR_CODE_BANNER_REJECTED = 4;
+
     public function requestClassification(ClassifierExternal $classifier, array $data): void;
-    
+
     public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy;
 
     public function fetchTaxonomyRaw(ClassifierExternal $classifier): array;
