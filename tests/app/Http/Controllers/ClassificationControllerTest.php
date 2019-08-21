@@ -176,7 +176,10 @@ class ClassificationControllerTest extends TestCase
         ];
         $timestamp = time();
         $message =
-            hash('sha256', hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords));
+            hash(
+                'sha256',
+                hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+            );
         $signature = $this->sign($message);
 
         return [

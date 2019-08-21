@@ -76,9 +76,12 @@ class ClassificationController extends Controller
             if (null !== $classification->signed_at && $signedAt <= $classification->signed_at) {
                 Log::info(
                     sprintf(
-                        '[classification update] Banner id (%s) has more recent classification from classifier (%s)',
+                        '[classification update] Banner id (%s) has more recent classification from classifier (%s). '
+                        .'%s <= %s',
                         $input['id'],
-                        $classifier
+                        $classifier,
+                        $signedAt->format(DateTime::ATOM),
+                        $classification->signed_at->format(DateTime::ATOM)
                     )
                 );
 
@@ -98,7 +101,9 @@ class ClassificationController extends Controller
             )) {
                 Log::info(
                     sprintf(
-                        '[classification update] Invalid signature for banner checksum (%s) from classifier (%s)',
+                        '[classification update] Invalid signature for banner id (%s),'
+                        .' checksum (%s) from classifier (%s)',
+                        $input['id'],
                         $checksum,
                         $classifier
                     )
