@@ -32,7 +32,7 @@ final class OptionValue
     /** @var string */
     private $value;
 
-    /** @var string */
+    /** @var string|null */
     private $description;
 
     public function __construct(string $label, string $value, ?string $description = null)

@@ -56,10 +56,7 @@ class BannerClassificationsCreateCommand extends BaseCommand
         $this->info('Start command '.$this->signature);
 
         $classifier = $this->argument('classifier');
-
-        $bannerIds = $this->getBannerIds();
-
-        $this->creator->create($classifier, $bannerIds);
+        $this->creator->create($classifier, $this->getBannerIds());
 
         $this->info('Finish command '.$this->signature);
     }

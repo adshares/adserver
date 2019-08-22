@@ -30,7 +30,7 @@ final class Value
     private $value;
     /** @var string */
     private $label;
-    /** @var string */
+    /** @var string|null */
     private $description;
 
     public function __construct(string $value, string $label, ?string $description = null)
