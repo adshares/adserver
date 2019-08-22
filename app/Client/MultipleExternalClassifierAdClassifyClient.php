@@ -54,7 +54,7 @@ final class MultipleExternalClassifierAdClassifyClient implements AdClassify
         /** @var ClassifierExternal $classifier */
         foreach ($classifiers as $classifier) {
             $namespace = $classifier->getName();
-            $taxonomyRaw = $this->client->fetchTaxonomyRaw($classifier);
+            $taxonomyRaw = $this->client->fetchTaxonomy($classifier)->getRawData();
 
             if (!isset($taxonomyRaw['data'])) {
                 continue;

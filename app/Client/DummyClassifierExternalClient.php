@@ -79,11 +79,6 @@ final class DummyClassifierExternalClient implements ClassifierExternalClient
         return (new DummyAdClassifyClient())->fetchFilteringOptions();
     }
 
-    public function fetchTaxonomyRaw(ClassifierExternal $classifier): array
-    {
-        return json_decode((new DummyAdClassifyClient())->getData(), true);
-    }
-
     /**
      * @param string $message
      *

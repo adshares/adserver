@@ -57,7 +57,7 @@ class ClassifierExternalKeywordsSerializer
 
     private static function isAssocAndNotEmpty(array $arr): bool
     {
-        if ([] === $arr) {
+        if (empty($arr)) {
             return false;
         }
 

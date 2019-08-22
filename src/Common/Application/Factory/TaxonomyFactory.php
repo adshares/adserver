@@ -44,19 +44,19 @@ final class TaxonomyFactory
         $fallbackVersion = ($taxonomy['meta'] ?? false) ? $taxonomy['meta']['version'] : '0.0.0';
         $version = SemVer::fromString($taxonomy['$version'] ?? $fallbackVersion);
 
-        if (!isset($taxonomy['data'])) {
-            throw new RuntimeException('Invalid Taxonomy: Missing "data" field.');
-        }
-
-        try {
-            $items = array_map(
-                function (array $item) {
-                    return TaxonomyItemFactory::fromArray($item);
-                },
-                $taxonomy['data']
-            );
-        } catch (ErrorException $e) {
-            Log::info('This seems to be a newer version of Taxonomy.');
+        if (isset($taxonomy['data'])) {
+            try {
+                $items = array_map(
+                    function (array $item) {
+                        return TaxonomyItemFactory::fromArray($item);
+                    },
+                    $taxonomy['data']
+                );
+            } catch (ErrorException $e) {
+                Log::info('This seems to be a newer version of Taxonomy.');
+                $items = [];
+            }
+        } else {
             $items = [];
         }
 
@@ -82,6 +82,7 @@ final class TaxonomyFactory
         );
 
         return new Taxonomy(
+            $taxonomy,
             $schema,
             $version,
             TaxonomyItemFactory::groupingItem('user', 'User', ...$itemsUser),

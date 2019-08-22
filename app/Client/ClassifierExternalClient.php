@@ -34,6 +34,4 @@ interface ClassifierExternalClient
     public function requestClassification(ClassifierExternal $classifier, array $data): void;
 
     public function fetchTaxonomy(ClassifierExternal $classifier): Taxonomy;
-
-    public function fetchTaxonomyRaw(ClassifierExternal $classifier): array;
 }
