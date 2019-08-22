@@ -32,6 +32,12 @@ use Adshares\Adserver\Utilities\ClassifierExternalKeywordsSerializer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use SodiumException;
+use function bin2hex;
+use function hash;
+use function hex2bin;
+use function sodium_crypto_sign_detached;
+use function sodium_crypto_sign_secretkey;
+use function sodium_crypto_sign_seed_keypair;
 use function time;
 
 class ClassificationControllerTest extends TestCase
@@ -142,6 +148,33 @@ class ClassificationControllerTest extends TestCase
         $this->assertNull($keywords);
     }
 
+    public function testUpdateClassificationWithOlderTimestamp(): void
+    {
+        $banner = $this->insertBanner();
+
+        $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywords($banner)
+        );
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywordsWithOlderTimestamp($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $expectedKeywords = [
+            'category' => [
+                'crypto',
+                'gambling',
+            ],
+        ];
+
+        $this->assertEquals($expectedKeywords, $keywords);
+    }
+
     public function testUpdateClassificationError(): void
     {
         $banner = $this->insertBanner();
@@ -156,6 +189,18 @@ class ClassificationControllerTest extends TestCase
         $bannerClassification = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME);
         $this->assertNull($bannerClassification->keywords);
         $this->assertEquals(BannerClassification::STATUS_FAILURE, $bannerClassification->status);
+    }
+
+    public function testUpdateClassificationErrorWithoutCode(): void
+    {
+        $banner = $this->insertBanner();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywordsErrorWithoutCode($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testUpdateClassificationEmpty(): void
@@ -242,6 +287,30 @@ class ClassificationControllerTest extends TestCase
         return $keywords;
     }
 
+    private function getKeywordsWithOlderTimestamp(Banner $banner): array
+    {
+        $keywords = [
+            'category' => [
+                'annoying',
+            ],
+        ];
+        $timestamp = 1566463900;
+        $message = hash(
+            'sha256',
+            hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+        );
+        $signature = $this->sign($message);
+
+        return [
+            [
+                'id' => $banner->uuid,
+                'keywords' => $keywords,
+                'signature' => $signature,
+                'timestamp' => $timestamp,
+            ],
+        ];
+    }
+
     private function getKeywordsError(Banner $banner): array
     {
         return [
@@ -250,6 +319,18 @@ class ClassificationControllerTest extends TestCase
                 'error' => [
                     'code' => ClassifierExternalClient::CLASSIFIER_ERROR_CODE_BANNER_REJECTED,
                     'message' => 'Rejected by classifier',
+                ],
+            ],
+        ];
+    }
+
+    private function getKeywordsErrorWithoutCode(Banner $banner): array
+    {
+        return [
+            [
+                'id' => $banner->uuid,
+                'error' => [
+                    'description' => 'Rejected by classifier',
                 ],
             ],
         ];
