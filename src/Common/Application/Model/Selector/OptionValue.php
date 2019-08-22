@@ -32,17 +32,27 @@ final class OptionValue
     /** @var string */
     private $value;
 
-    public function __construct(string $label, string $value)
+    /** @var string|null */
+    private $description;
+
+    public function __construct(string $label, string $value, ?string $description = null)
     {
         $this->label = $label;
         $this->value = $value;
+        $this->description = $description;
     }
 
     public function toArray(): array
     {
-        return [
+        $array = [
             'label' => $this->label,
             'value' => str_replace('-', '_', $this->value),
         ];
+
+        if ($this->description) {
+            $array['description'] = $this->description;
+        }
+
+        return $array;
     }
 }

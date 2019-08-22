@@ -20,7 +20,6 @@
 
 declare(strict_types = 1);
 
-use Adshares\Adserver\Http\Controllers\ClassifyController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Http\Controllers\SupplyController;
 use Illuminate\Support\Facades\Route;
@@ -56,8 +55,6 @@ Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick']);
 
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
-
-Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);
 
 # WHY PAGE
 Route::get('/supply/why', [SupplyController::class, 'why']);

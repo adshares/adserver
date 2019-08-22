@@ -18,11 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Supply\Application\Service;
+declare(strict_types = 1);
 
-use Adshares\Supply\Domain\ValueObject\Classification;
+namespace Adshares\Adserver\Services\Demand;
 
-interface ClassifyVerifier
+use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
+
+class BannerClassificationCreator
 {
-    public function isVerified(Classification $classification, string $publicBannerId): bool;
+    public function create(string $classifier, ?array $bannerIds): void
+    {
+        $banners = Banner::fetchBannersNotClassifiedByClassifier($classifier, $bannerIds);
+
+        foreach ($banners as $banner) {
+            $banner->classifications()->save(BannerClassification::prepare($classifier));
+        }
+    }
 }

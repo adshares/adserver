@@ -27,14 +27,26 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use function hex2bin;
 use function in_array;
 
 /**
+ * @property int id
+ * @property string uuid
+ * @property string creative_contents
+ * @property string creative_type
+ * @property string creative_sha1
+ * @property int creative_width
+ * @property int creative_height
+ * @property string name
+ * @property int status
  * @property Campaign campaign
+ * @property BannerClassification[] classifications
  * @mixin Builder
  */
 class Banner extends Model
@@ -49,7 +61,9 @@ class Banner extends Model
 
     public const STATUS_ACTIVE = 2;
 
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    public const STATUS_REJECTED = 3;
+
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
 
     use AutomateMutators;
     use BinHex;
@@ -94,7 +108,7 @@ class Banner extends Model
         return in_array($status, self::STATUSES);
     }
 
-    public static function type($type)
+    public static function type($type): string
     {
         if ($type === self::IMAGE_TYPE) {
             return 'image';
@@ -112,6 +126,11 @@ class Banner extends Model
         return Size::SUPPORTED_SIZES[$size];
     }
 
+    public function getFormattedSize(): string
+    {
+        return $this->creative_width.'x'.$this->creative_height;
+    }
+
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
@@ -127,5 +146,38 @@ class Banner extends Model
     public static function fetchBanner(string $bannerUuid): ?self
     {
         return self::where('uuid', hex2bin($bannerUuid))->first();
+    }
+
+    public static function fetchBannerByPublicIds(array $publicIds): Collection
+    {
+        $binPublicIds = array_map(
+            function (string $item) {
+                return hex2bin($item);
+            },
+            $publicIds
+        );
+
+        return self::whereIn('uuid', $binPublicIds)->get();
+    }
+
+    public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
+    {
+        $builder = Banner::whereDoesntHave(
+            'classifications',
+            function ($query) use ($classifier) {
+                $query->where('classifier', $classifier);
+            }
+        );
+
+        if ($bannerIds) {
+            $builder->whereIn('id', $bannerIds);
+        }
+
+        return $builder->get();
+    }
+
+    public function classifications(): HasMany
+    {
+        return $this->hasMany(BannerClassification::class);
     }
 }

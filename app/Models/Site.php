@@ -33,6 +33,7 @@ use Illuminate\Support\Collection;
 use function in_array;
 
 /**
+ * @property int id
  * @property string uuid
  * @property int user_id
  * @property string name

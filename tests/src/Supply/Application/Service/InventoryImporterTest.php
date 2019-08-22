@@ -25,7 +25,6 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Dto\Classification\Collection;
 use Adshares\Supply\Application\Service\BannerClassifier;
-use Adshares\Supply\Application\Service\ClassifyVerifier;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\InventoryImporter;
@@ -48,7 +47,6 @@ final class InventoryImporterTest extends TestCase
         $transactionManager = $this->transactionManagerMock();
         $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
         $classifierClient = $this->classifierClientMock();
-        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $transactionManager
             ->expects($this->never())
@@ -59,7 +57,6 @@ final class InventoryImporterTest extends TestCase
             $repository,
             $demandClient,
             $classifierClient,
-            $signatureVerifier,
             $transactionManager
         );
 
@@ -119,7 +116,6 @@ final class InventoryImporterTest extends TestCase
         $inMemoryDemandClient = new DummyDemandClient();
         $campaigns = new CampaignCollection(...$inMemoryDemandClient->campaigns);
         $classifierClient = $this->classifierClientMock();
-        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $repository = $this->repositoryMock();
         $repository
@@ -140,7 +136,6 @@ final class InventoryImporterTest extends TestCase
             $repository,
             $demandClient,
             $classifierClient,
-            $signatureVerifier,
             $transactionManager
         );
 
@@ -176,14 +171,12 @@ final class InventoryImporterTest extends TestCase
         $transactionManager = $this->transactionManagerMock();
         $markCampaignAsDeletedService = new MarkedCampaignsAsDeleted($repository);
         $classifierClient = $this->classifierClientMock();
-        $signatureVerifier = $this->createMock(ClassifyVerifier::class);
 
         $inventoryImporter = new InventoryImporter(
             $markCampaignAsDeletedService,
             $repository,
             $demandClient,
             $classifierClient,
-            $signatureVerifier,
             $transactionManager
         );
 

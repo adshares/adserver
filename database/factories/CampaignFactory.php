@@ -23,10 +23,10 @@ use Faker\Generator as Faker;
 
 $factory->define(Campaign::class, function (Faker $faker) {
     return [
-        'landing_url' => $faker->url(),
+        'landing_url' => $faker->url,
         'time_start' => $faker->dateTimeThisMonth()->format(DATE_ATOM),
         'status' => '0',
-        'name' => $faker->word(),
+        'name' => $faker->word,
         'max_cpc' => '200000000000',
         'max_cpm' => '100000000000',
         'budget' => 10000000000000,

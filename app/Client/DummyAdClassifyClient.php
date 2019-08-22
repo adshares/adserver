@@ -34,7 +34,7 @@ final class DummyAdClassifyClient implements AdClassify
         return TaxonomyFactory::fromArray(json_decode($this->getData(), true));
     }
 
-    private function getData(): string
+    public function getData(): string
     {
         return <<<JSON
 {
@@ -51,6 +51,29 @@ final class DummyAdClassifyClient implements AdClassify
         {
           "label": "Image",
           "value": "image"
+        }
+      ]
+    },
+    {
+      "type": "dict",
+      "label": "Categories by Adshares",
+      "key": "adclassify:category",
+      "list": [
+        {
+          "label": "Adult",
+          "value": "adult"
+        },
+        {
+          "label": "Crypto",
+          "value": "crypto"
+        },
+        {
+          "label": "Gambling",
+          "value": "gambling"
+        },
+        {
+          "label": "Drugs",
+          "value": "drugs"
         }
       ]
     }

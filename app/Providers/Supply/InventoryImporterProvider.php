@@ -45,14 +45,11 @@ class InventoryImporterProvider extends ServiceProvider
         $this->app->bind(
             InventoryImporter::class,
             function (Application $app) {
-                $publicKey = config('app.classify_public_key');
-
                 return new InventoryImporter(
                     new MarkedCampaignsAsDeleted($app->make(CampaignRepository::class)),
                     $app->make(CampaignRepository::class),
                     $app->make(DemandClient::class),
                     $app->make(BannerClassifier::class),
-                    new SodiumCompatClassifyVerifier($publicKey),
                     new EloquentTransactionManager()
                 );
             }

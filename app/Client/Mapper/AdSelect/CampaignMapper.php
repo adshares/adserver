@@ -22,8 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use DateTime;
 
 class CampaignMapper
@@ -35,21 +37,24 @@ class CampaignMapper
 
         /** @var Banner $banner */
         foreach ($campaign->getBanners() as $banner) {
-            $classification = array_map(
-                function (array $item) {
-                    return $item['keyword'];
-                },
-                $banner->getClassification()
-            );
-
-            $banners[] = [
+            $mappedBanner = [
                 'banner_id' => $banner->getId(),
                 'banner_size' => $banner->getSize(),
                 'keywords' => [
                     'type' => [$banner->getType()],
-                    'classification' => $classification,
                 ],
             ];
+
+            /** @var Classification $classification */
+            foreach ($banner->getClassification() as $classification) {
+                foreach (AbstractFilterMapper::generateNestedStructure(
+                    $classification->toArray()
+                ) as $nestedStructureKey => $values) {
+                    $mappedBanner['keywords'][$nestedStructureKey] = $values;
+                }
+            }
+
+            $banners[] = $mappedBanner;
         }
 
         $targeting = TargetingMapper::map(
@@ -82,9 +87,9 @@ class CampaignMapper
     private static function processDateEnd(?DateTime $dateEnd): int
     {
         if ($dateEnd === null) {
-            return (int)(new DateTime())->modify('+1 year')->getTimestamp();
+            return (new DateTime('+1 year'))->getTimestamp();
         }
 
-        return (int)$dateEnd->getTimestamp();
+        return $dateEnd->getTimestamp();
     }
 }

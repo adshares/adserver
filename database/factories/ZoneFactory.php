@@ -24,7 +24,7 @@ use Faker\Generator as Faker;
 $factory->define(Zone::class, function (Faker $faker) {
     return [
         'uuid' => $faker->uuid,
-        'name' => $faker->word(),
+        'name' => $faker->word,
         'status' => Zone::STATUS_ACTIVE,
         'type' => $faker->randomElement(Zone::ZONE_TYPES),
         'size' => [

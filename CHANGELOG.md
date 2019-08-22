@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Use of an external classifier
 - Inform user by an email when campaigns are suspended or resumed
 ### Changed
 - Use single lock for supply inventory commands

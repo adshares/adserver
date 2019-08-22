@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-use Adshares\Adserver\Http\Controllers\ClassifyController;
+use Adshares\Adserver\Http\Controllers\ClassificationController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/adshares/inventory/list', [DemandController::class, 'inventoryList'])
     ->name('demand-inventory');
+Route::patch('/callback/classifications/{classifier}', [ClassificationController::class, 'updateClassification'])
+    ->name('demand-classifications-update');
 
 Route::group(
     ['domain' => config('app.serve_base_url')],
@@ -63,5 +65,3 @@ Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 # should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])
     ->name('banner-preview');
-
-Route::post('/classify/fetch', [ClassifyController::class, 'fetch']);

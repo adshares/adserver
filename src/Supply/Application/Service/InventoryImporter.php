@@ -49,15 +49,11 @@ class InventoryImporter
     /** @var BannerClassifier */
     private $classifyClient;
 
-    /** @var ClassifyVerifier */
-    private $classifyVerifier;
-
     public function __construct(
         MarkedCampaignsAsDeleted $markedCampaignsAsDeletedService,
         CampaignRepository $campaignRepository,
         DemandClient $client,
         BannerClassifier $classifyClient,
-        ClassifyVerifier $classifyVerifier,
         TransactionManager $transactionManager
     ) {
         $this->client = $client;
@@ -65,7 +61,6 @@ class InventoryImporter
         $this->transactionManager = $transactionManager;
         $this->markedCampaignsAsDeletedService = $markedCampaignsAsDeletedService;
         $this->classifyClient = $classifyClient;
-        $this->classifyVerifier = $classifyVerifier;
     }
 
     public function import(AccountId $sourceAddress, string $sourceHost, string $inventoryHost): void
@@ -116,17 +111,9 @@ class InventoryImporter
         foreach ($campaign->getBanners() as $banner) {
             $classifications = $classificationCollection->findByBannerId($banner->getId()) ?? [];
 
-            if (empty($classifications)) {
-                $banner->unclassified();
-            }
-
             /** @var Classification $classification */
             foreach ($classifications as $classification) {
-                if ($classification && $this->classifyVerifier->isVerified($classification, $banner->getId())) {
-                    $banner->classify($classification);
-                } else {
-                    $banner->removeClassification($classification);
-                }
+                $banner->classify($classification);
             }
         }
     }
