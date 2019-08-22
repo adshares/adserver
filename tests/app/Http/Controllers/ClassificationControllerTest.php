@@ -218,6 +218,21 @@ class ClassificationControllerTest extends TestCase
         $this->assertNull($keywords);
     }
 
+    public function testUpdateClassificationByUnknownClassifier(): void
+    {
+        $banner = $this->insertBanner();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.'unknown_classifier',
+            $this->getKeywords($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+
+        $keywords = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME)->keywords;
+        $this->assertNull($keywords);
+    }
+
     private function insertBanner(): Banner
     {
         $user = factory(User::class)->create();

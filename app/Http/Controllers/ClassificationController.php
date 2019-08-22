@@ -24,27 +24,36 @@ use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function sprintf;
 
 class ClassificationController extends Controller
 {
+    /** @var ClassifierExternalRepository */
+    private $classifierRepository;
     /** @var ClassifierExternalSignatureVerifier */
     private $signatureVerifier;
 
-    public function __construct(ClassifierExternalSignatureVerifier $signatureVerifier)
-    {
+    public function __construct(
+        ClassifierExternalRepository $classifierRepository,
+        ClassifierExternalSignatureVerifier $signatureVerifier
+    ) {
+        $this->classifierRepository = $classifierRepository;
         $this->signatureVerifier = $signatureVerifier;
     }
 
     public function updateClassification(string $classifier, Request $request): JsonResponse
     {
+        $this->validateClassifier($classifier);
+
         $isAnySignatureInvalid = false;
 
         $inputs = $request->all();
@@ -153,6 +162,13 @@ class ClassificationController extends Controller
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    private function validateClassifier(string $classifier): void
+    {
+        if (null === $this->classifierRepository->fetchClassifierByName($classifier)) {
+            throw new NotFoundHttpException('Unknown classifier');
+        }
     }
 
     private function validateClassificationRequest(array $inputs, string $classifier): void
