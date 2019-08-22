@@ -72,9 +72,9 @@ class ClassificationController extends Controller
             }
 
             if (null !== ($errorCode = $input['error']['code'] ?? null)) {
-                Log::warning(
+                Log::info(
                     sprintf(
-                        '[classification update] Error for banner id (%s) from classifier (%s): (%s)(%s)',
+                        '[classification update] Error for banner id (%s) from classifier (%s): (code:%s)(message:%s)',
                         $input['id'],
                         $classifier,
                         $errorCode,
@@ -85,7 +85,16 @@ class ClassificationController extends Controller
                 $classification->failed();
 
                 if (ClassifierExternalClient::CLASSIFIER_ERROR_CODE_BANNER_REJECTED === $errorCode) {
-                    // TODO reject banner
+                    $banner->status = Banner::STATUS_REJECTED;
+                    $banner->save();
+
+                    Log::info(
+                        sprintf(
+                            '[classification update] Banner id (%s) was rejected by classifier (%s)',
+                            $input['id'],
+                            $classifier
+                        )
+                    );
                 }
 
                 continue;

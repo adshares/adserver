@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
@@ -141,6 +142,22 @@ class ClassificationControllerTest extends TestCase
         $this->assertNull($keywords);
     }
 
+    public function testUpdateClassificationError(): void
+    {
+        $banner = $this->insertBanner();
+
+        $response = $this->patchJson(
+            self::URI_UPDATE.self::CLASSIFIER_NAME,
+            $this->getKeywordsError($banner)
+        );
+
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $bannerClassification = BannerClassification::fetchByBannerIdAndClassifier($banner->id, self::CLASSIFIER_NAME);
+        $this->assertNull($bannerClassification->keywords);
+        $this->assertEquals(BannerClassification::STATUS_FAILURE, $bannerClassification->status);
+    }
+
     public function testUpdateClassificationEmpty(): void
     {
         $banner = $this->insertBanner();
@@ -175,11 +192,10 @@ class ClassificationControllerTest extends TestCase
             ],
         ];
         $timestamp = time();
-        $message =
-            hash(
-                'sha256',
-                hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
-            );
+        $message = hash(
+            'sha256',
+            hex2bin($banner->creative_sha1).$timestamp.ClassifierExternalKeywordsSerializer::serialize($keywords)
+        );
         $signature = $this->sign($message);
 
         return [
@@ -224,6 +240,19 @@ class ClassificationControllerTest extends TestCase
             .'00000000000000000000000000000000000000000000000';
 
         return $keywords;
+    }
+
+    private function getKeywordsError(Banner $banner): array
+    {
+        return [
+            [
+                'id' => $banner->uuid,
+                'error' => [
+                    'code' => ClassifierExternalClient::CLASSIFIER_ERROR_CODE_BANNER_REJECTED,
+                    'message' => 'Rejected by classifier',
+                ],
+            ],
+        ];
     }
 
     private function getKeywordsEmpty(): array

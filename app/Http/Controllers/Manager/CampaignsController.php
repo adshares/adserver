@@ -347,8 +347,13 @@ class CampaignsController extends Controller
         }
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-
+        /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
+
+        if (Banner::STATUS_REJECTED === $banner->status) {
+            throw new BadRequestHttpException('Status cannot be changed. Banner was rejected.');
+        }
+
         $banner->status = $status;
 
         $this->campaignRepository->update($campaign, [], [$banner], []);

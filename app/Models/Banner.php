@@ -43,6 +43,8 @@ use function in_array;
  * @property string creative_sha1
  * @property int creative_width
  * @property int creative_height
+ * @property string name
+ * @property int status
  * @property Campaign campaign
  * @property BannerClassification[] classifications
  * @mixin Builder
@@ -59,7 +61,9 @@ class Banner extends Model
 
     public const STATUS_ACTIVE = 2;
 
-    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE];
+    public const STATUS_REJECTED = 3;
+
+    public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_REJECTED];
 
     use AutomateMutators;
     use BinHex;
@@ -104,7 +108,7 @@ class Banner extends Model
         return in_array($status, self::STATUSES);
     }
 
-    public static function type($type)
+    public static function type($type): string
     {
         if ($type === self::IMAGE_TYPE) {
             return 'image';
