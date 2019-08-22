@@ -221,8 +221,8 @@ class ClassificationControllerTest extends TestCase
     private function insertBanner(): Banner
     {
         $user = factory(User::class)->create();
-        $campaign = factory(Campaign::class)->create(['user_id' => $user->id]);
-        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id]);
+        $campaign = factory(Campaign::class)->create(['status' => Campaign::STATUS_ACTIVE, 'user_id' => $user->id]);
+        $banner = factory(Banner::class)->create(['campaign_id' => $campaign->id, 'status' => Banner::STATUS_ACTIVE]);
         $banner->classifications()->save(BannerClassification::prepare(self::CLASSIFIER_NAME));
 
         return $banner;

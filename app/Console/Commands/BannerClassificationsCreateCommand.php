@@ -26,6 +26,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
+use function explode;
 
 class BannerClassificationsCreateCommand extends BaseCommand
 {
