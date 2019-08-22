@@ -28,7 +28,6 @@ $factory->define(Classification::class, function (Faker $faker) {
         'user_id' => $faker->randomDigit,
         'site_id' => $faker->randomDigit,
         'banner_id' => $faker->randomDigit,
-        'signature' => $faker->text(16),
         'status' => null,
     ];
 });

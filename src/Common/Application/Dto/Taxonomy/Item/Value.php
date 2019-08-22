@@ -30,15 +30,18 @@ final class Value
     private $value;
     /** @var string */
     private $label;
+    /** @var string|null */
+    private $description;
 
-    public function __construct(string $value, string $label)
+    public function __construct(string $value, string $label, ?string $description = null)
     {
         $this->value = $value;
         $this->label = $label;
+        $this->description = $description;
     }
 
     public function toOptionValue(): OptionValue
     {
-        return new OptionValue($this->label, $this->value);
+        return new OptionValue($this->label, $this->value, $this->description);
     }
 }

@@ -102,19 +102,8 @@ class ClassifierController extends Controller
             throw new NotFoundHttpException(sprintf('Banner %s does not exist.', $bannerId));
         }
 
-        $classificationDomain = new DomainClassification(
-            (string)config('app.classify_namespace'),
-            $userId,
-            $status,
-            '',
-            $siteId
-        );
-
-        $signature = $this->signatureVerifier->create($classificationDomain->keyword(), $banner->uuid);
-        $classificationDomain->sign($signature);
-
         try {
-            Classification::classify($userId, $bannerId, $status, $signature, $siteId);
+            Classification::classify($userId, $bannerId, $status, $siteId);
         } catch (QueryException $exception) {
             throw new AccessDeniedHttpException('Operation cannot be proceed. Wrong permissions.');
         }

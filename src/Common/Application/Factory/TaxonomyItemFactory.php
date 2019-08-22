@@ -53,6 +53,10 @@ final class TaxonomyItemFactory
             $item['values'] = $item['list'];
             unset($item['list']);
         }
+        
+        if (!isset($item['type'])) {
+            $item['type'] = 'dict';
+        }
 
         return new Item(
             self::map($item['type']),
@@ -93,6 +97,6 @@ final class TaxonomyItemFactory
             unset($value['key']);
         }
 
-        return new Value($value['value'], $value['label']);
+        return new Value($value['value'], $value['label'], $value['description'] ?? null);
     }
 }

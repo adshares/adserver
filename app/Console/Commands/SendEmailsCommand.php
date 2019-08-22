@@ -22,7 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\GeneralMessage;
+use Adshares\Adserver\Mail\Newsletter;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
 use DateTime;
@@ -67,11 +67,14 @@ class SendEmailsCommand extends BaseCommand
         }
 
         if (null !== ($previewAddress = $this->option('preview-address'))) {
+            $attachUnsubscribe = false;
             $recipients = collect($previewAddress);
         } else {
             if (null !== ($file = $this->option('file-address-list'))) {
+                $attachUnsubscribe = false;
                 $recipients = $this->getAddressesFromFile($file);
             } else {
+                $attachUnsubscribe = true;
                 $recipients = User::fetchEmails();
             }
         }
@@ -98,7 +101,7 @@ class SendEmailsCommand extends BaseCommand
 
         $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
 
-        $this->addSendEmailJobsToQueue($email, $recipients);
+        $this->addSendEmailJobsToQueue($email, $recipients, $attachUnsubscribe);
 
         if (null === $previewAddress) {
             $email->delete();
@@ -134,7 +137,7 @@ class SendEmailsCommand extends BaseCommand
         return collect($results);
     }
 
-    private function addSendEmailJobsToQueue(Email $email, Collection $recipients): void
+    private function addSendEmailJobsToQueue(Email $email, Collection $recipients, bool $attachUnsubscribe): void
     {
         $emailSendTime = new DateTime();
 
@@ -142,9 +145,12 @@ class SendEmailsCommand extends BaseCommand
 
         try {
             $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
-                function ($users) use ($emailSendTime, $email) {
+                function ($users) use ($emailSendTime, $email, $attachUnsubscribe) {
                     foreach ($users as $user) {
-                        Mail::to($user)->later($emailSendTime, new GeneralMessage($email->subject, $email->body));
+                        Mail::to($user)->later(
+                            $emailSendTime,
+                            new Newsletter($email->subject, $email->body, $attachUnsubscribe)
+                        );
                     }
                     $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
                 }

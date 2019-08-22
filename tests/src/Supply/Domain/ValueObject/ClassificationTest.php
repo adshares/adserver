@@ -29,9 +29,9 @@ final class ClassificationTest extends TestCase
 {
     public function testClassificationEquality(): void
     {
-        $classification1 = new Classification('classify:1:1:1', 'signature#1');
-        $classification2 = new Classification('classify:1:1:1', 'signature#2');
-        $classification3 = new Classification('classify:1:1:2', 'signature#3');
+        $classification1 = new Classification('classify', ['1:1:1']);
+        $classification2 = new Classification('classify', ['1:1:1']);
+        $classification3 = new Classification('classify', ['1:1:2']);
 
         $this->assertTrue($classification1->equals($classification2));
         $this->assertTrue($classification2->equals($classification1));
@@ -42,11 +42,10 @@ final class ClassificationTest extends TestCase
 
     public function testClassificationToArray(): void
     {
-        $classification1 = new Classification('classify:1:1:1', 'signature#1');
+        $classification1 = new Classification('classify', ['1:1:1']);
 
         $expected = [
-            'keyword' => 'classify:1:1:1',
-            'signature' => 'signature#1',
+            'classify' => ['1:1:1'],
         ];
 
         $this->assertEquals($expected, $classification1->toArray());

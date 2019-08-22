@@ -36,11 +36,11 @@ final class ClassificationTest extends TestCase
         $siteId = 1;
         $status = true;
 
-        $classification = new Classification(self::NAMESPACE, $publisherId, $status, null, $siteId);
-        $expected = sprintf('classify:%s:%s:%s', $publisherId, $siteId, $status);
+        $classification = new Classification(self::NAMESPACE, $publisherId, $status, $siteId);
+        $expectedKeyword = sprintf('%s:%s:%s', $publisherId, $siteId, $status);
 
-
-        $this->assertEquals($expected, $classification->keyword());
+        $this->assertEquals(self::NAMESPACE, $classification->getNamespace());
+        $this->assertEquals($expectedKeyword, $classification->keyword());
     }
 
     public function testKeywordWhenSiteIdIsNull(): void
@@ -49,9 +49,9 @@ final class ClassificationTest extends TestCase
         $status = false;
 
         $classification = new Classification(self::NAMESPACE, $publisherId, $status);
-        $expected = sprintf('classify:%s:%s', $publisherId, (int)$status);
+        $expectedKeyword = sprintf('%s:%s', $publisherId, (int)$status);
 
-
-        $this->assertEquals($expected, $classification->keyword());
+        $this->assertEquals(self::NAMESPACE, $classification->getNamespace());
+        $this->assertEquals($expectedKeyword, $classification->keyword());
     }
 }

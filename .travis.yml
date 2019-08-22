@@ -19,6 +19,7 @@ before_install:
   - pecl install libsodium
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 install:
+  - yarn install && yarn run prod
   - composer install
   - mkdir -p storage/framework/{sessions,views,cache}
 jobs:

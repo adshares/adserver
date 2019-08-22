@@ -21,19 +21,26 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Mail\Newsletter;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserSettings;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
+use function hash_equals;
+use function is_bool;
 
 class SettingsController extends Controller
 {
     /**
      * Return adserver users notifications.
      *
-     * @param \Illuminate\Http\Request $request
-     *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function readNotifications()
+    public function readNotifications(): JsonResponse
     {
         $settings =
             UserSettings::where('user_id', Auth::user()->id)->where('type', 'notifications')->first()->toArray();
@@ -45,6 +52,55 @@ class SettingsController extends Controller
         }
         $settings['payload'] = $payload;
 
-        return self::json($settings, 200);
+        return self::json($settings);
+    }
+
+    public function newsletterSubscription(Request $request): JsonResponse
+    {
+        $isSubscribed = $request->get('is_subscribed');
+
+        if (!is_bool($isSubscribed)) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        /** @var User $user */
+        $user = Auth::user();
+        $user->subscription($isSubscribed);
+        $user->save();
+
+        return self::json(['is_subscribed' => $isSubscribed]);
+    }
+
+    public function newsletterUnsubscribe(Request $request): Response
+    {
+        $address = (string)$request->get('address');
+
+        if (null === ($user = User::fetchByEmail($address))) {
+            Log::info('Newsletter unsubscribe failed: Invalid address');
+
+            return response()->view(
+                'common.newsletter-unsubscribe',
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $digestExpected = Newsletter::createDigest($address);
+        $digest = (string)$request->get('digest');
+
+        if (!hash_equals($digestExpected, $digest)) {
+            Log::info('Newsletter unsubscribe failed: Invalid digest');
+
+            return response()->view(
+                'common.newsletter-unsubscribe',
+                [],
+                Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $user->subscription(false);
+        $user->save();
+
+        return response()->view('common.newsletter-unsubscribe', ['success' => true]);
     }
 }

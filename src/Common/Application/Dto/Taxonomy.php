@@ -29,16 +29,24 @@ use Adshares\Common\Domain\ValueObject\Taxonomy\Schema;
 
 final class Taxonomy extends ArrayCollection
 {
+    /** @var array */
+    private $rawData;
     /** @var Schema */
     private $schema;
     /** @var SemVer */
     private $version;
 
-    public function __construct(Schema $schema, SemVer $version, Item...$items)
+    public function __construct(array $rawData, Schema $schema, SemVer $version, Item...$items)
     {
+        $this->rawData = $rawData;
         $this->schema = $schema;
         $this->version = $version;
 
         parent::__construct($items);
+    }
+
+    public function getRawData(): array
+    {
+        return $this->rawData;
     }
 }

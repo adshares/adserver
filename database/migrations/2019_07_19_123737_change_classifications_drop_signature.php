@@ -18,37 +18,23 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-namespace Adshares\Adserver\Mail;
-
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
-
-class GeneralMessage extends Mailable
+class ChangeClassificationsDropSignature extends Migration
 {
-    use Queueable;
-    use SerializesModels;
-
-    /** @var int */
-    public $tries = 100;
-
-    /** @var string */
-    private $body;
-
-    public function __construct(string $subject, string $body)
+    public function up(): void
     {
-        $this->subject($subject);
-        $this->body = $body;
+        Schema::table('classifications', function (Blueprint $table) {
+            $table->dropColumn('signature');
+        });
     }
 
-    public function build()
+    public function down(): void
     {
-        return $this->markdown('emails.general-message')->with(
-            [
-                'body' => $this->body,
-            ]
-        );
+        Schema::table('classifications', function (Blueprint $table) {
+            $table->string('signature', 128)->after('banner_id')->default('00');
+        });
     }
 }

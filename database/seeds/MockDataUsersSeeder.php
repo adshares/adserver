@@ -50,7 +50,7 @@ class MockDataUsersSeeder extends Seeder
             $user->is_advertiser = $row->isAdvertiser ?? true;
             $user->is_publisher = $row->isPublisher ?? true;
             if ($row->isConfirmed ?? false) {
-                $user->email_confirmed_at = date('Y-m-d H:i:s');
+                $user->confirmEmail();
             }
             $user->save();
 

@@ -34,7 +34,6 @@ use Illuminate\Database\QueryException;
  * @property int user_id
  * @property int site_id
  * @property int banner_id
- * @property string signature
  * @property int|null status
  */
 class Classification extends Model
@@ -50,7 +49,6 @@ class Classification extends Model
         'user_id',
         'site_id',
         'banner_id',
-        'signature',
         'status',
     ];
 
@@ -63,7 +61,7 @@ class Classification extends Model
         return self::whereIn('banner_id', $ids)->get();
     }
 
-    public static function classify(int $userId, int $bannerId, bool $status, string $signature, ?int $siteId): void
+    public static function classify(int $userId, int $bannerId, bool $status, ?int $siteId): void
     {
         $classification = self::where('banner_id', $bannerId)
             ->where('user_id', $userId)
@@ -77,7 +75,6 @@ class Classification extends Model
             $classification->site_id = $siteId;
         }
 
-        $classification->signature = $signature;
         $classification->status = $status;
 
         DB::beginTransaction();

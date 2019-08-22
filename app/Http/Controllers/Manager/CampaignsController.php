@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
+use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Adserver\Uploader\Factory;
 use Adshares\Adserver\Uploader\Image\ImageUploader;
 use Adshares\Adserver\Uploader\UploadedFile;
@@ -58,14 +60,24 @@ class CampaignsController extends Controller
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
+    /** @var BannerClassificationCreator */
+    private $bannerClassificationCreator;
+
+    /** @var ClassifierExternalRepository */
+    private $classifierExternalRepository;
+
     public function __construct(
         CampaignRepository $campaignRepository,
         ConfigurationRepository $configurationRepository,
-        ExchangeRateReader $exchangeRateReader
+        ExchangeRateReader $exchangeRateReader,
+        BannerClassificationCreator $bannerClassificationCreator,
+        ClassifierExternalRepository $classifierExternalRepository
     ) {
         $this->campaignRepository = $campaignRepository;
         $this->configurationRepository = $configurationRepository;
         $this->exchangeRateReader = $exchangeRateReader;
+        $this->bannerClassificationCreator = $bannerClassificationCreator;
+        $this->classifierExternalRepository = $classifierExternalRepository;
     }
 
     public function upload(Request $request): UploadedFile
@@ -137,6 +149,8 @@ class CampaignsController extends Controller
         } catch (InvalidArgumentException $e) {
             Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->id}] cannot be started.");
         }
+
+        $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
@@ -210,21 +224,6 @@ class CampaignsController extends Controller
         $campaigns = $this->campaignRepository->find();
 
         return self::json($campaigns);
-    }
-
-    public function count(): JsonResponse
-    {
-        //@TODO: create function data
-        $siteCount = [
-            'totalBudget' => 0,
-            'totalClicks' => 0,
-            'totalImpressions' => 0,
-            'averageCTR' => 0,
-            'averageCPC' => 0,
-            'totalCost' => 0,
-        ];
-
-        return self::json($siteCount);
     }
 
     public function edit(Request $request, int $campaignId): JsonResponse
@@ -304,6 +303,8 @@ class CampaignsController extends Controller
             }
         }
 
+        $this->createBannerClassificationsForCampaign($campaign);
+
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
@@ -332,6 +333,8 @@ class CampaignsController extends Controller
 
         $this->campaignRepository->update($campaign);
 
+        $this->createBannerClassificationsForCampaign($campaign);
+
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
@@ -344,8 +347,13 @@ class CampaignsController extends Controller
         }
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
-
+        /** @var Banner $banner */
         $banner = $campaign->banners()->where('id', $bannerId)->first();
+
+        if (Banner::STATUS_REJECTED === $banner->status) {
+            throw new BadRequestHttpException('Status cannot be changed. Banner was rejected.');
+        }
+
         $banner->status = $status;
 
         $this->campaignRepository->update($campaign, [], [$banner], []);
@@ -404,7 +412,7 @@ class CampaignsController extends Controller
 
         $campaign->update();
     }
-    
+
     private function processTargeting(array $input): array
     {
         $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
@@ -413,5 +421,28 @@ class CampaignsController extends Controller
         $input['targeting_excludes'] = $targetingProcessor->processTargeting($input['targeting']['excludes'] ?? []);
 
         return $input;
+    }
+
+    private function createBannerClassificationsForCampaign(Campaign $campaign): void
+    {
+        if (Campaign::STATUS_ACTIVE !== $campaign->status
+            || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
+            return;
+        }
+
+        $classifierName = $classifier->getName();
+
+        $bannerIds = $campaign->banners()->where('status', Banner::STATUS_ACTIVE)->whereDoesntHave(
+            'classifications',
+            function ($query) use ($classifierName) {
+                $query->where('classifier', $classifierName);
+            }
+        )->get()->pluck('id');
+
+        if ($bannerIds->isEmpty()) {
+            return;
+        }
+
+        $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
     }
 }
