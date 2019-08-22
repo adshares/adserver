@@ -38,10 +38,12 @@ use Illuminate\Support\Facades\Hash;
 /**
  * @property Collection|Campaign[] campaigns
  * @property int id
+ * @property string email
  * @property DateTime|null email_confirmed_at
  * @property string uuid
  * @property string referral_id
  * @property int|null referrer_user_id
+ * @property int subscribe
  * @mixin Builder
  */
 class User extends Authenticatable
@@ -113,6 +115,7 @@ class User extends Authenticatable
         'is_admin',
         'api_token',
         'is_email_confirmed',
+        'is_subscribed',
         'adserver_wallet',
         'referral_id',
     ];
@@ -124,6 +127,7 @@ class User extends Authenticatable
     protected $appends = [
         'adserver_wallet',
         'is_email_confirmed',
+        'is_subscribed',
         'referral_id',
     ];
 
@@ -151,6 +155,11 @@ class User extends Authenticatable
     public function getIsEmailConfirmedAttribute(): bool
     {
         return null !== $this->email_confirmed_at;
+    }
+
+    public function getIsSubscribedAttribute(): bool
+    {
+        return 0 !== $this->subscribe;
     }
 
     public function getAdserverWalletAttribute(): array
@@ -269,10 +278,16 @@ class User extends Authenticatable
     public function confirmEmail(): void
     {
         $this->email_confirmed_at = new DateTime();
+        $this->subscription(true);
+    }
+
+    public function subscription(bool $subscribe): void
+    {
+        $this->subscribe = $subscribe ? 1 : 0;
     }
 
     public static function fetchEmails(): Collection
     {
-        return User::all()->pluck('email');
+        return self::where('subscribe', 1)->get()->pluck('email');
     }
 }
