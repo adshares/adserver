@@ -423,7 +423,8 @@ class CampaignsController extends Controller
         return $input;
     }
 
-    private function createBannerClassificationsForCampaign(Campaign $campaign): void {
+    private function createBannerClassificationsForCampaign(Campaign $campaign): void
+    {
         if (Campaign::STATUS_ACTIVE !== $campaign->status
             || null === ($classifier = $this->classifierExternalRepository->fetchDefaultClassifier())) {
             return;
