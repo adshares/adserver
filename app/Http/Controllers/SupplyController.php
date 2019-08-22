@@ -92,6 +92,15 @@ class SupplyController extends Controller
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
+        if ($decodedQueryData['page']['frame'] ?? false) {
+            throw new BadRequestHttpException('Site not accepted.');
+        }
+        if($decodedQueryData['page']['pop'] ?? false) {
+            if (DomainReader::domain($decodedQueryData['page']['ref'] ?? '') != DomainReader::domain($decodedQueryData['page']['url'] ?? ''))
+            {
+                throw new BadRequestHttpException('Bad request.');
+            }
+        }
 
         $impressionId = $decodedQueryData['page']['iid'];
 

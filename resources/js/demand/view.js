@@ -22,7 +22,8 @@ var getBrowserContext = function() {
         frame : (parent == top ? 0 : 1),
         width : window.screen.width,
         height : window.screen.height,
-        url : (parent !== window) ? document.referrer : document.location.href
+        url : (parent !== window) ? document.referrer : document.location.href,
+        pop: top.opener !== null ? 1 : 0
     }
 }
 
