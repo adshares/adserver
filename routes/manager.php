@@ -35,8 +35,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('campaigns', [CampaignsController::class, 'browse'])
         ->name('app.campaigns.browse');
-    Route::get('campaigns/count', [CampaignsController::class, 'count'])
-        ->name('app.campaigns.count');
     Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])
         ->name('app.campaigns.read');
     Route::post('campaigns', [CampaignsController::class, 'add'])

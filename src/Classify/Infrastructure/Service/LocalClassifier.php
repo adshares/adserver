@@ -55,7 +55,6 @@ class LocalClassifier implements ClassifierInterface
                 $this->namespace,
                 $classification->user_id,
                 $classification->status,
-                $classification->signature,
                 $classification->site_id
             );
 

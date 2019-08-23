@@ -23,17 +23,21 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
-use Adshares\Adserver\Client\DummyAdClassifyClient;
+use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
+use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
 use Adshares\Adserver\Client\JsonRpcAdSelectClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
+use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
+use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Classify\Application\Service\ClassifierInterface;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\Ads;
@@ -106,8 +110,11 @@ final class ClientProvider extends ServiceProvider
 
         $this->app->bind(
             AdClassify::class,
-            function () {
-                return new DummyAdClassifyClient();
+            function (Application $app) {
+                return new MultipleExternalClassifierAdClassifyClient(
+                    $app->make(ClassifierExternalClient::class),
+                    new ClassifierExternalRepository()
+                );
             }
         );
 
@@ -116,7 +123,11 @@ final class ClientProvider extends ServiceProvider
             function (Application $app) {
                 $timeoutForDemandService = 15;
 
-                return new GuzzleDemandClient($app->make(SignatureVerifier::class), $timeoutForDemandService);
+                return new GuzzleDemandClient(
+                    $app->make(ClassifierExternalSignatureVerifier::class),
+                    $app->make(SignatureVerifier::class),
+                    $timeoutForDemandService
+                );
             }
         );
 
@@ -169,6 +180,20 @@ final class ClientProvider extends ServiceProvider
             EloquentExchangeRateRepository::class,
             function () {
                 return new EloquentExchangeRateRepository();
+            }
+        );
+
+        $this->app->bind(
+            ClassifierExternalClient::class,
+            function () {
+                return new GuzzleClassifierExternalClient(
+                    new Client(
+                        [
+                            'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                            'timeout' => 30,
+                        ]
+                    )
+                );
             }
         );
     }

@@ -130,7 +130,7 @@ final class Banner
         $classification = [];
         /** @var Classification $classification */
         foreach ($this->classification as $classificationItem) {
-            $classification[] = $classificationItem->toArray();
+            $classification[$classificationItem->getClassifier()] = $classificationItem->getKeywords();
         }
 
         return [

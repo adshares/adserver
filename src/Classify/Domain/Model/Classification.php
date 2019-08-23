@@ -28,8 +28,6 @@ class Classification
     private $publisherId;
     /** @var bool */
     private $status;
-    /** @var string */
-    private $signature;
     /** @var int|null */
     private $siteId;
     /** @var string */
@@ -39,23 +37,12 @@ class Classification
         string $namespace,
         int $publisherId,
         bool $status,
-        ?string $signature = null,
         ?int $siteId = null
     ) {
         $this->namespace = $namespace;
         $this->publisherId = $publisherId;
         $this->status = $status;
-        $this->signature = $signature;
         $this->siteId = $siteId;
-    }
-
-    public static function createUnsigned(
-        string $namespace,
-        int $publisherId,
-        ?bool $status,
-        ?int $siteId = null
-    ): self {
-        return new self($namespace, $publisherId, $status, null, $siteId);
     }
 
     public function getSiteId(): ?int
@@ -67,16 +54,19 @@ class Classification
     {
         return [
             'keyword' => $this->keyword(),
-            'signature' => $this->signature,
         ];
+    }
+
+    public function getNamespace(): string
+    {
+        return $this->namespace;
     }
 
     public function keyword(): string
     {
         if ($this->siteId) {
             return sprintf(
-                '%s:%s:%s:%s',
-                $this->namespace,
+                '%s:%s:%s',
                 $this->publisherId,
                 $this->siteId,
                 (int)$this->status
@@ -84,20 +74,9 @@ class Classification
         }
 
         return sprintf(
-            '%s:%s:%s',
-            $this->namespace,
+            '%s:%s',
             $this->publisherId,
             (int)$this->status
         );
-    }
-
-    public function signature(): string
-    {
-        return $this->signature;
-    }
-
-    public function sign(string $signature): void
-    {
-        $this->signature = $signature;
     }
 }

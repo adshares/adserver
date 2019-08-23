@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
@@ -39,6 +40,7 @@ use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -433,7 +435,20 @@ class DemandController extends Controller
         $operatorTxFee = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
         $campaigns = [];
-        foreach ($this->campaignRepository->fetchActiveCampaigns() as $i => $campaign) {
+
+        $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
+        
+        $bannerIds = [];
+        foreach ($activeCampaigns as $campaign) {
+            foreach ($campaign->ads as $banner) {
+                if (Banner::STATUS_ACTIVE === $banner->status) {
+                    $bannerIds[] = $banner->id;
+                }
+            }
+        }
+        $bannerClassifications = BannerClassification::fetchClassifiedByBannerIds($bannerIds);
+
+        foreach ($activeCampaigns as $campaign) {
             $banners = [];
 
             foreach ($campaign->ads as $banner) {
@@ -453,6 +468,7 @@ class DemandController extends Controller
                     'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
                     'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
                     'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
 

@@ -30,6 +30,7 @@ use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
+use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
@@ -40,7 +41,6 @@ class CampaignFactory
 {
     public static function createFromArray(array $data): Campaign
     {
-
         self::validateArrayParameters($data);
 
         $source = $data['source_campaign'];
@@ -78,7 +78,11 @@ class CampaignFactory
             $demandBannerId = $banner['demand_banner_id'] ?? $banner['id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
-            $classification = $banner['classification'] ?? [];
+
+            $classification = [];
+            foreach ($banner['classification'] ?? [] as $classifier => $keywords) {
+                $classification[] = new Classification($classifier, $keywords);
+            }
 
             $banners[] = new Banner(
                 $campaign,

@@ -19,17 +19,19 @@
  */
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Faker\Generator as Faker;
 
 $factory->define(Banner::class, function (Faker $faker) {
-    return [
-        'creative_contents' => $faker->sha1(),
-        'creative_type' => $faker->word(),
-        'creative_sha1' => $faker->sha1(),
+    [$width, $height] = explode('x', $faker->randomElement(Size::SUPPORTED_SIZES));
 
-        'creative_width' => $faker->numberBetween(100,1024),
-        'creative_height' => $faker->numberBetween(100,1024),
-        'name' => $faker->word(),
+    return [
+        'creative_contents' => $faker->sha1,
+        'creative_type' => $faker->randomElement(['image', 'html']),
+        'creative_sha1' => $faker->sha1,
+        'creative_width' => $width,
+        'creative_height' => $height,
+        'name' => $faker->word,
         'status' => Banner::STATUS_ACTIVE,
     ];
 });

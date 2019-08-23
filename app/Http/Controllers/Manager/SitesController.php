@@ -23,8 +23,9 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
-use Adshares\Classify\Domain\Model\Classification;
+use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Closure;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,6 +36,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class SitesController extends Controller
 {
+    /** @var SiteClassificationUpdater */
+    private $siteClassificationUpdater;
+    
+    public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
+    {
+        $this->siteClassificationUpdater = $siteClassificationUpdater;
+    }
+
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
@@ -46,7 +55,7 @@ class SitesController extends Controller
             $site = Site::create($input);
             $site->user_id = Auth::user()->id;
             $site->save();
-            $this->addClassificationToSiteFiltering($site);
+            $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
             $site->zones()->createMany($request->input('site.ad_units'));
         } catch (Exception $exception) {
@@ -59,73 +68,6 @@ class SitesController extends Controller
         return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
     }
 
-    private function addClassificationToSiteFiltering(Site $site): void
-    {
-        $siteRequires = $site->site_requires;
-        $siteExcludes = $site->site_excludes;
-
-        unset($siteRequires['classification']);
-        unset($siteExcludes['classification']);
-
-        $publisherId = $site->user_id;
-        $siteId = $site->id;
-
-        if ($site->require_classified) {
-            list($requireKeywords, $excludeKeywords) =
-                $this->getKeywordsForPositiveClassification($publisherId, $siteId);
-
-            $siteRequires['classification'] = $requireKeywords;
-            $siteExcludes['classification'] = $excludeKeywords;
-        }
-        if ($site->exclude_unclassified) {
-            $excludeKeywords = $this->getKeywordsForNotNegativeClassification($publisherId, $siteId);
-
-            if (empty($siteExcludes['classification'])) {
-                $siteExcludes['classification'] = [];
-            }
-
-            foreach ($excludeKeywords as $excludeKeyword) {
-                if (!in_array($excludeKeyword, $siteExcludes['classification'], true)) {
-                    $siteExcludes['classification'][] = $excludeKeyword;
-                }
-            }
-        }
-
-        $site->site_excludes = $siteExcludes;
-        $site->site_requires = $siteRequires;
-        $site->save();
-    }
-
-    private function getKeywordsForPositiveClassification(int $publisherId, $siteId): array
-    {
-        $requireKeywords = [
-            $this->createClassificationKeyword($publisherId, true),
-            $this->createClassificationKeyword($publisherId, true, $siteId),
-        ];
-        $excludeKeywords = [
-            $this->createClassificationKeyword($publisherId, false, $siteId),
-        ];
-
-        return [$requireKeywords, $excludeKeywords];
-    }
-
-    private function createClassificationKeyword(int $publisherId, bool $status, ?int $siteId = null): string
-    {
-        $classifyNamespace = (string)config('app.classify_namespace');
-
-        return Classification::createUnsigned($classifyNamespace, $publisherId, $status, $siteId)->keyword();
-    }
-
-    private function getKeywordsForNotNegativeClassification(int $publisherId, $siteId): array
-    {
-        $excludeKeywords = [
-            $this->createClassificationKeyword($publisherId, false),
-            $this->createClassificationKeyword($publisherId, false, $siteId),
-        ];
-
-        return $excludeKeywords;
-    }
-
     public function read(Site $site): JsonResponse
     {
         return self::json($this->processClassificationInFiltering($site));
@@ -133,28 +75,32 @@ class SitesController extends Controller
 
     private function processClassificationInFiltering(Site $site): array
     {
-        $siteArray = $site->toArray();
+        $namespace = (string)config('app.classify_namespace');
 
+        $siteArray = $site->toArray();
         $filtering = $siteArray['filtering'];
 
-        if ($filtering['requires']['classification'] ?? false) {
-            unset($filtering['requires']['classification']);
-
-            if (!$filtering['requires']) {
-                $filtering['requires'] = null;
-            }
-        }
-        if ($filtering['excludes']['classification'] ?? false) {
-            unset($filtering['excludes']['classification']);
-
-            if (!$filtering['excludes']) {
-                $filtering['excludes'] = null;
-            }
-        }
+        $filtering['requires'] = array_filter(
+            $filtering['requires'] ?: [],
+            $this->filterOutHelperKeywords($namespace),
+            ARRAY_FILTER_USE_KEY
+        );
+        $filtering['excludes'] = array_filter(
+            $filtering['excludes'] ?: [],
+            $this->filterOutHelperKeywords($namespace),
+            ARRAY_FILTER_USE_KEY
+        );
 
         $siteArray['filtering'] = $filtering;
 
         return $siteArray;
+    }
+
+    private function filterOutHelperKeywords(string $namespace): Closure
+    {
+        return function ($key) use ($namespace) {
+            return $namespace !== $key && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
+        };
     }
 
     public function update(Request $request, Site $site): JsonResponse
@@ -167,7 +113,7 @@ class SitesController extends Controller
         try {
             $site->fill($input);
             $site->push();
-            $this->addClassificationToSiteFiltering($site);
+            $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
             $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
 
