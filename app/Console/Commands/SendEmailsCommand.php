@@ -184,10 +184,9 @@ class SendEmailsCommand extends BaseCommand
 
     private function deleteEmailFromDatabase(): void
     {
-        if (null === $this->option('preview-address') && null !== ($emailId = $this->option('email_id'))) {
-            if (null !== ($email = Email::fetchById((int)$emailId))) {
-                $email->delete();
-            }
+        if (null === $this->option('preview-address') && null !== ($emailId = $this->option('email_id'))
+            && null !== ($email = Email::fetchById((int)$emailId))) {
+            $email->delete();
         }
     }
 }
