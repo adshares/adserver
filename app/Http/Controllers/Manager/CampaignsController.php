@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
@@ -36,6 +37,7 @@ use Adshares\Adserver\Uploader\Zip\ZipUploader;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -44,10 +46,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use InvalidArgumentException;
+use function response;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
+use Validator;
 
 class CampaignsController extends Controller
 {
@@ -251,6 +255,9 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
+        $conversions = $input['conversions'] ?? [];
+        $this->validateConversions($campaignId, $conversions);
+
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
         $campaign->fill($input);
@@ -285,7 +292,13 @@ class CampaignsController extends Controller
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
         }
 
-        $this->campaignRepository->update($campaign, $bannersToInsert, $bannersToUpdate, $bannersToDelete);
+        $this->campaignRepository->update(
+            $campaign,
+            $bannersToInsert,
+            $bannersToUpdate,
+            $bannersToDelete,
+            $conversions
+        );
 
         if ($ads) {
             $this->removeTemporaryUploadedFiles($ads, $request);
@@ -297,15 +310,35 @@ class CampaignsController extends Controller
 
                 $this->campaignRepository->save($campaign);
             } catch (InvalidArgumentException $e) {
-                Log::debug("Notify user [{$campaign->user_id}]"
+                Log::debug(
+                    "Notify user [{$campaign->user_id}]"
                     ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
-                    ." {$e->getMessage()}");
+                    ." {$e->getMessage()}"
+                );
             }
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    private function validateConversions(int $campaignId, array $conversions): void
+    {
+        foreach ($conversions as $conversion) {
+            $conversion['campaign_id'] = $campaignId;
+            $validator = Validator::make($conversion, ConversionDefinition::rules($conversion));
+
+            if ($validator->fails()) {
+                $errors = $validator->errors()->toArray();
+                throw new HttpResponseException(response()->json(
+                    [
+                        'errors' => $errors,
+                    ],
+                    JsonResponse::HTTP_BAD_REQUEST
+                ));
+            }
+        }
     }
 
     public function changeStatus(Campaign $campaign, Request $request): JsonResponse
@@ -377,9 +410,17 @@ class CampaignsController extends Controller
 
     public function read(int $campaignId): JsonResponse
     {
-        $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
+        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
+    }
+
+    public function getConversions(int $campaignId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
+        $conversions = $campaign->toArray()['conversions'];
+
+        return self::json($conversions);
     }
 
     public function classify(int $campaignId): JsonResponse

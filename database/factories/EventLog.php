@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Faker\Generator as Faker;
@@ -36,9 +37,12 @@ $factory->define(
             AccountId::fromIncompleteString('0001-00000008'),
         ];
 
+        $caseId = $faker->uuid;
+        $eventType = $faker->randomElement([EventLog::TYPE_VIEW, EventLog::TYPE_CLICK]);
+
         return [
-            'case_id' => $faker->uuid,
-            'event_id' => $faker->uuid,
+            'case_id' => $caseId,
+            'event_id' => Utils::createCaseIdContainingEventType($caseId, $eventType),
             'user_id' => $faker->uuid,
             'tracking_id' => $faker->uuid,
             'banner_id' => $faker->uuid,
@@ -46,7 +50,7 @@ $factory->define(
             'advertiser_id' => $faker->uuid,
             'campaign_id' => $faker->uuid,
             'zone_id' => $faker->uuid,
-            'event_type' => $faker->randomElement(['view', 'click']),
+            'event_type' => $eventType,
             'event_value_currency' => $faker->numberBetween(10 ** 4, 10 ** 7),
             'exchange_rate' => null,
             'event_value' => null,

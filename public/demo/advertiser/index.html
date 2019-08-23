@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- saved from url=(0022)http://www.lipsum.com/ -->
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Website</title>
+    <meta name="keywords"
+          content="Lorem Ipsum, Lipsum, Lorem, Ipsum, Text, Generate, Generator, Facts, Information, What, Why, Where, Dummy Text, Typesetting, Printing, de Finibus, Bonorum et Malorum, de Finibus Bonorum et Malorum, Extremes of Good and Evil, Cicero, Latin, Garbled, Scrambled, Lorem ipsum dolor sit amet, dolor, sit amet, consectetur, adipiscing, elit, sed, eiusmod, tempor, incididunt">
+    <meta name="description"
+          content="Reference site about Lorem Ipsum, giving information on its origins, as well as a random Lipsum generator.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="content-language" content="en">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body style="background-color: #AAF">
+<div id="Outer">
+
+    <div id="Inner">
+
+
+        <h1>Advertiser website</h1>
+        <h4>"Done is better than perfect..." Adshares Team</h4>
+        <h5>but you still need one more interface</h5>
+
+        <input type="text" id="conversionValue" />
+        <button id="conversionButton">Send conversion</button>
+    </div>
+</div>
+</body>
+<script>
+    const createIframeFromUrl = function createIframeFromUrl(url) {
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('style', 'display:none');
+        iframe.setAttribute('width', 1);
+        iframe.setAttribute('height', 1);
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        iframe.src = url;
+
+        return iframe;
+    };
+
+    const button = document.getElementById("conversionButton");
+    button.addEventListener("click",function(e){
+        const url = document.getElementById("conversionValue").value;
+
+        if (url) {
+            button.appendChild(createIframeFromUrl(url));
+        }
+    },false);
+</script>
+</html>
+

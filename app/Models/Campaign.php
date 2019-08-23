@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Events\CampaignCreating;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
@@ -28,10 +28,12 @@ use Adshares\Adserver\Models\Traits\DateAtom;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
@@ -57,6 +59,8 @@ use function hex2bin;
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
  * @property User user
+ * @property string secret
+ * @property int conversion_click
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder
@@ -79,6 +83,12 @@ class Campaign extends Model
 
     public const STATUSES = [self::STATUS_DRAFT, self::STATUS_INACTIVE, self::STATUS_ACTIVE, self::STATUS_SUSPENDED];
 
+    public const CONVERSION_CLICK_NONE = 0;
+
+    public const CONVERSION_CLICK_BASIC = 1;
+
+    public const CONVERSION_CLICK_ADVANCED = 2;
+
     public static $rules = [
 //        'name' => 'required|max:255',
 //        'landing_url' => 'required|max:1024',
@@ -99,7 +109,7 @@ class Campaign extends Model
     ];
 
     protected $dispatchesEvents = [
-        'creating' => GenerateUUID::class,
+        'creating' => CampaignCreating::class
     ];
 
     protected $fillable = [
@@ -116,6 +126,7 @@ class Campaign extends Model
         'targeting_excludes',
         'classification_status',
         'classification_tags',
+        'conversion_click',
     ];
 
     protected $visible = [
@@ -128,16 +139,24 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
+        'conversions',
+        'secret',
+        'conversion_click',
+        'conversion_click_link',
     ];
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
-
     ];
 
-    protected $appends = ['basic_information', 'targeting', 'ads'];
+    protected $appends = [
+        'conversion_click_link',
+        'basic_information',
+        'targeting',
+        'ads',
+    ];
 
     public static function suspendAllForUserId(int $userId): void
     {
@@ -217,7 +236,12 @@ class Campaign extends Model
         return $this->hasMany(Banner::class);
     }
 
-    public function user()
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(ConversionDefinition::class);
+    }
+
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -231,6 +255,31 @@ class Campaign extends Model
         }
 
         return $this->banners;
+    }
+
+    public function getConversionClickLinkAttribute(): ?string
+    {
+        switch ($this->conversion_click) {
+            case self::CONVERSION_CLICK_BASIC:
+                $params = [
+                    'campaign_uuid' => $this->uuid,
+                ];
+
+                return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
+            case self::CONVERSION_CLICK_ADVANCED:
+                $params = [
+                    'campaign_uuid' => $this->uuid,
+                    'value' => 'value',
+                    'nonce' => 'nonce',
+                    'ts' => 'timestamp',
+                    'sig' => 'signature',
+                ];
+
+                return (new SecureUrl(route('conversionClick.gif', $params)))->toString();
+            case self::CONVERSION_CLICK_NONE:
+            default:
+                return null;
+        }
     }
 
     public function getTargetingAttribute(): array
@@ -337,5 +386,19 @@ class Campaign extends Model
     public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
+    }
+
+    public function hasClickConversion(): bool
+    {
+        return in_array(
+            $this->conversion_click,
+            [Campaign::CONVERSION_CLICK_BASIC, Campaign::CONVERSION_CLICK_ADVANCED],
+            true
+        );
+    }
+
+    public function hasClickConversionAdvanced(): bool
+    {
+        return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
     }
 }

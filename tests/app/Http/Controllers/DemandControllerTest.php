@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
