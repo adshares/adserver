@@ -21,31 +21,37 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\Newsletter;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Email;
 use Adshares\Adserver\Models\User;
-use DateTime;
+use Adshares\Adserver\Services\Common\Dto\EmailData;
+use Adshares\Adserver\Services\Common\EmailJobsQueuing;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Mail;
-use Throwable;
 use function file;
 use function is_readable;
+use function strpos;
 use function trim;
 
 class SendEmailsCommand extends BaseCommand
 {
     protected $signature = 'ops:email:send
-                            {email_id : Id of an email which will be sent}
                             {--d|dry-run : Lists recipients and message }
+                            {--i|email_id : Id of an email which will be sent}
                             {--f|file-address-list= : File containing list of email addresses }
+                            {--m|file-message= : File containing email subject and body }
                             {--p|preview-address= : Email address for a preview }';
 
     protected $description = 'Sends emails';
 
-    private const PACKAGE_SIZE_MAX = 40;
+    /** @var EmailJobsQueuing */
+    private $emailJobsQueuing;
 
-    private const PACKAGE_INTERVAL = 180;
+    public function __construct(EmailJobsQueuing $emailJobsQueuing, Locker $locker)
+    {
+        $this->emailJobsQueuing = $emailJobsQueuing;
+
+        parent::__construct($locker);
+    }
 
     public function handle(): void
     {
@@ -57,24 +63,19 @@ class SendEmailsCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $emailId = (int)$this->argument('email_id');
-        $email = Email::fetchById($emailId);
-
-        if (null === $email) {
-            $this->info(sprintf('[SendEmailsCommand] Cannot find email with id (%d)', $emailId));
+        if (null === ($emailData = $this->getMessage())) {
+            $this->info('[SendEmailsCommand] Cannot read email data.');
 
             return;
         }
 
         if (null !== ($previewAddress = $this->option('preview-address'))) {
-            $attachUnsubscribe = false;
             $recipients = collect($previewAddress);
         } else {
             if (null !== ($file = $this->option('file-address-list'))) {
-                $attachUnsubscribe = false;
                 $recipients = $this->getAddressesFromFile($file);
             } else {
-                $attachUnsubscribe = true;
+                $emailData->setAttachUnsubscribe(true);
                 $recipients = User::fetchEmails();
             }
         }
@@ -92,20 +93,17 @@ class SendEmailsCommand extends BaseCommand
             }
 
             $this->info('[SendEmailsCommand] Message subject ->');
-            $this->info($email->subject);
+            $this->info($emailData->getSubject());
             $this->info('[SendEmailsCommand] Message body ->');
-            $this->info($email->body);
+            $this->info($emailData->getBody());
 
             return;
         }
 
         $this->info(sprintf('[SendEmailsCommand] Sending emails to (%d) recipients', $recipientsCount));
 
-        $this->addSendEmailJobsToQueue($email, $recipients, $attachUnsubscribe);
-
-        if (null === $previewAddress) {
-            $email->delete();
-        }
+        $this->emailJobsQueuing->addEmail($emailData, $recipients);
+        $this->deleteEmailFromDatabase();
 
         $this->info('Finish command '.$this->signature);
     }
@@ -137,30 +135,58 @@ class SendEmailsCommand extends BaseCommand
         return collect($results);
     }
 
-    private function addSendEmailJobsToQueue(Email $email, Collection $recipients, bool $attachUnsubscribe): void
+    private function getMessage(): ?EmailData
     {
-        $emailSendTime = new DateTime();
-
-        DB::beginTransaction();
-
-        try {
-            $recipients->chunk(self::PACKAGE_SIZE_MAX)->each(
-                function ($users) use ($emailSendTime, $email, $attachUnsubscribe) {
-                    foreach ($users as $user) {
-                        Mail::to($user)->later(
-                            $emailSendTime,
-                            new Newsletter($email->subject, $email->body, $attachUnsubscribe)
-                        );
-                    }
-                    $emailSendTime->modify(sprintf('+%d seconds', self::PACKAGE_INTERVAL));
-                }
-            );
-        } catch (Throwable $throwable) {
-            DB::rollBack();
-
-            throw $throwable;
+        if (null !== ($fileMessage = $this->option('file-message'))) {
+            $emailData = $this->getMessageFromFile($fileMessage);
+        } else {
+            if (null !== ($emailId = $this->option('email_id'))) {
+                $emailData = $this->getMessageFromDatabase((int)$emailId);
+            } else {
+                $this->info(sprintf('[SendEmailsCommand] Cannot read email - no id nor file provided'));
+                $emailData = null;
+            }
         }
 
-        DB::commit();
+        return $emailData;
+    }
+
+    private function getMessageFromFile(string $file): ?EmailData
+    {
+        if (!is_readable($file) || false === ($content = file_get_contents($file))) {
+            $this->info(sprintf('[SendEmailsCommand] File (%s) cannot be read', $file));
+
+            return null;
+        }
+
+        if (false === ($indexOfFirstNewLine = strpos($content, "\n"))) {
+            $this->info(sprintf('[SendEmailsCommand] File (%s) does not have email body', $file));
+
+            return null;
+        }
+
+        $subject = substr($content, 0, $indexOfFirstNewLine);
+        $body = substr($content, $indexOfFirstNewLine + 1);
+
+        return new EmailData($subject, $body);
+    }
+
+    private function getMessageFromDatabase(int $emailId): ?EmailData
+    {
+        if (null === ($email = Email::fetchById($emailId))) {
+            $this->info(sprintf('[SendEmailsCommand] Cannot find email with id (%s)', $emailId));
+
+            return null;
+        }
+
+        return new EmailData($email->subject, $email->body);
+    }
+
+    private function deleteEmailFromDatabase(): void
+    {
+        if (null === $this->option('preview-address') && null !== ($emailId = $this->option('email_id'))
+            && null !== ($email = Email::fetchById((int)$emailId))) {
+            $email->delete();
+        }
     }
 }
