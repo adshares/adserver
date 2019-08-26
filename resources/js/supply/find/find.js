@@ -582,7 +582,7 @@ var getActiveZones = function(call_func) {
 var extraBannerCheck = function(banner, code)
 {
     try {
-        return (new topwin.Function(code))(banner);
+        return (new topwin.Function('banner', code))(banner);
     } catch(e) {
         return false;
     }
