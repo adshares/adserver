@@ -446,13 +446,13 @@ var getPageKeywords = function (doc) {
     if (metaKeywords.content) {
         var tmp = metaKeywords.content.split(',');
         var n = Math.min(MAX_KEYWORDS, tmp.length);
-        metaKeywords = [];
+        var tmp2 = [];
         for (var i = 0; i < n; i++) {
-            metaKeywords.push(tmp[i].trim());
+            tmp2.push(tmp[i].trim());
         }
-        metaKeywords = metaKeywords.join(',');
+        return tmp2.join(',');
     }
-    return metaKeywords;
+    return '';
 };
 
 var getBrowserContext = function () {
