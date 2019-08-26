@@ -579,6 +579,14 @@ var getActiveZones = function(call_func) {
     fn();
 }
 
+var extraBannerCheck = function(banner, code)
+{
+    try {
+        return (new topwin.Function(code))(banner);
+    } catch(e) {
+        return false;
+    }
+}
 
 domReady(function () {
     aduserPixel(getImpressionId());
@@ -610,6 +618,13 @@ domReady(function () {
                 if (!banner || typeof banner != 'object') {
                     insertBackfill(zone.destElement, zone.backfill);
                     return;
+                }
+
+                if(banner.extra_check) {
+                    if(!extraBannerCheck(banner, banner.extra_check)) {
+                        insertBackfill(zone.destElement, zone.backfill);
+                        return;
+                    }
                 }
 
                 banner.destElement = zone.destElement;
