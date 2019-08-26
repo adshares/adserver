@@ -27,8 +27,6 @@ use Adshares\Adserver\Http\Request\Classifier\NetworkBannerFilter;
 use Adshares\Adserver\Http\Response\Classifier\ClassifierResponse;
 use Adshares\Adserver\Models\Classification;
 use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Classify\Application\Service\SignatureVerifierInterface;
-use Adshares\Classify\Domain\Model\Classification as DomainClassification;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Http\JsonResponse;
@@ -41,14 +39,6 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClassifierController extends Controller
 {
-    /** @var SignatureVerifierInterface */
-    private $signatureVerifier;
-
-    public function __construct(SignatureVerifierInterface $signatureVerifier)
-    {
-        $this->signatureVerifier = $signatureVerifier;
-    }
-
     public function fetch(Request $request, ?int $siteId = null): JsonResponse
     {
         $limit = (int)$request->get('limit', 20);

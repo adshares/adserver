@@ -28,10 +28,8 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use function factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function urldecode;
 use function urlencode;
 
 final class ClassifierControllerTest extends TestCase
@@ -139,7 +137,6 @@ final class ClassifierControllerTest extends TestCase
 
     public function testChangeGlobalStatusWhenDoesNotExistInDb(): void
     {
-        $this->mockVerifier();
         $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
@@ -164,25 +161,8 @@ final class ClassifierControllerTest extends TestCase
         $this->assertEquals(204, $response->getStatusCode());
     }
 
-    private function mockVerifier()
-    {
-        $this->app->bind(
-            SignatureVerifierInterface::class,
-            function () {
-                $signatureVerify = $this->createMock(SignatureVerifierInterface::class);
-
-                $signatureVerify
-                    ->method('create')
-                    ->willReturn('signature');
-
-                return $signatureVerify;
-            }
-        );
-    }
-
     public function testChangeGlobalStatusWhenExistsInDb(): void
     {
-        $this->mockVerifier();
         $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
@@ -210,7 +190,6 @@ final class ClassifierControllerTest extends TestCase
 
     public function testRejectGloballyWhenForSiteExistsInDb(): void
     {
-        $this->mockVerifier();
         $user = factory(User::class)->create(['id' => 1]);
         factory(User::class)->create(['id' => 2]);
         $this->actingAs($user, 'api');
@@ -240,7 +219,6 @@ final class ClassifierControllerTest extends TestCase
 
     public function testChangeSiteStatusWhenDoesNotExistInDb(): void
     {
-        $this->mockVerifier();
         $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
@@ -267,7 +245,6 @@ final class ClassifierControllerTest extends TestCase
 
     public function testChangeSiteStatusWhenExistsInDb(): void
     {
-        $this->mockVerifier();
         $user = factory(User::class)->create(['id' => 1]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');

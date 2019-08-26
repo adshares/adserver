@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Classify\Infrastructure\Service;
 
 use Adshares\Classify\Application\Service\ClassifierInterface;
-use Adshares\Classify\Application\Service\SignatureVerifierInterface;
 use Adshares\Classify\Application\Exception\BannerNotVerifiedException;
 use Adshares\Classify\Domain\Model\Classification;
 use Adshares\Classify\Domain\Model\ClassificationCollection;
@@ -34,8 +33,6 @@ class DummyClassifier implements ClassifierInterface
     /** @var string */
     private $keyword;
 
-    /** @var SignatureVerifierInterface */
-    private $signatureVerifier;
     private $banners = [
         '1' => [
             'bannerId' => 1,
@@ -75,10 +72,9 @@ class DummyClassifier implements ClassifierInterface
         ],
     ];
 
-    public function __construct(string $keyword, SignatureVerifierInterface $signatureVerifier)
+    public function __construct(string $keyword)
     {
         $this->keyword = $keyword;
-        $this->signatureVerifier = $signatureVerifier;
     }
 
     public function fetch(int $bannerId): ClassificationCollection
