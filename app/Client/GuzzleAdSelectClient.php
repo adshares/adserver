@@ -167,8 +167,8 @@ class GuzzleAdSelectClient implements AdSelect
 
         $bannerIds = [];
         foreach ($zoneCollection as $request_id => $zone) {
-            if (isset($existingZones[$request_id])) {
-                $bannerIds[] = $items[$request_id] ?? [null];
+            if (isset($existingZones[$request_id]) && isset($items[$request_id])) {
+                $bannerIds[] = $items[$request_id] ?: [null];
             } else {
                 $bannerIds[] = [null];
             }
