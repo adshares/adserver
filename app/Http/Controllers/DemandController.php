@@ -27,6 +27,7 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -46,6 +47,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function base64_decode;
+use function bin2hex;
+use function inet_pton;
 use function json_decode;
 use function sprintf;
 
@@ -56,6 +60,8 @@ class DemandController extends Controller
     private const PAYMENT_DETAILS_LIMIT_DEFAULT = 1000;
 
     private const PAYMENT_DETAILS_LIMIT_MAX = 10000;
+
+    private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
@@ -197,8 +203,8 @@ class DemandController extends Controller
         $url = $campaign->landing_url;
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainingEventType($caseId, EventLog::TYPE_CLICK);
 
+        $url = Utils::addUrlParameter($url, 'cid', $caseId);
         $response = new RedirectResponse($url);
         $impressionId = $request->query->get('iid');
 
@@ -225,8 +231,12 @@ class DemandController extends Controller
 
         $response->send();
 
-        if (EventLog::eventClicked($caseId) > 0) {
-            EventLog::create(
+        $hasCampaignClickConversion = $campaign->hasClickConversion();
+        $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
+        $eventId = Utils::createCaseIdContainingEventType($caseId, $eventType);
+
+        if ($hasCampaignClickConversion) {
+            EventConversionLog::create(
                 $caseId,
                 $eventId,
                 $bannerId,
@@ -238,8 +248,25 @@ class DemandController extends Controller
                 $payTo,
                 Utils::getImpressionContextArray($request),
                 $keywords,
-                EventLog::TYPE_CLICK
+                $eventType
             );
+        } else {
+            if (EventLog::eventClicked($caseId) > 0) {
+                EventLog::create(
+                    $caseId,
+                    $eventId,
+                    $bannerId,
+                    $context['page']['zone'] ?? null,
+                    $trackingId,
+                    $publisherId,
+                    $campaign->uuid,
+                    $user->uuid,
+                    $payTo,
+                    Utils::getImpressionContextArray($request),
+                    $keywords,
+                    $eventType
+                );
+            }
         }
 
         return $response;
@@ -339,8 +366,7 @@ class DemandController extends Controller
     {
         $response = new Response();
 
-        //transparent 1px gif
-        $response->setContent(base64_decode('R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='));
+        $response->setContent(base64_decode(self::ONE_PIXEL_GIF_DATA));
         $response->headers->set(self::CONTENT_TYPE, 'image/gif');
         $response->send();
 

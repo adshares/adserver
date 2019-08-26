@@ -21,6 +21,7 @@
 declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\ClassificationController;
+use Adshares\Adserver\Http\Controllers\ConversionController;
 use Adshares\Adserver\Http\Controllers\DemandController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
@@ -65,3 +66,12 @@ Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 # should be moved to a better place - place for routing which don't have to be authenticated but belongs to manager
 Route::get('/campaigns/banner/{id}/preview', [CampaignsController::class, 'preview'])
     ->name('banner-preview');
+
+Route::get('/kw/kl/{campaign_uuid}.gif', [ConversionController::class, 'conversionClickGif'])
+    ->name('conversionClick.gif');
+Route::get('/kw/kl/{campaign_uuid}', [ConversionController::class, 'conversionClick'])
+    ->name('conversionClick');
+Route::get('/kw/{uuid}.gif', [ConversionController::class, 'conversionGif'])
+    ->name('conversion.gif');
+Route::get('/kw/{uuid}', [ConversionController::class, 'conversion'])
+    ->name('conversion');

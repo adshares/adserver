@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -72,7 +72,7 @@ use stdClass;
  * @property int id
  * @mixin Builder
  */
-class EventLog extends Model
+class EventConversionLog extends Model
 {
     use AccountAddress;
     use AutomateMutators;
@@ -89,7 +89,7 @@ class EventLog extends Model
 
     public const TYPE_CONVERSION = 'conversion';
 
-    public const INDEX_CREATED_AT = 'event_logs_created_at_index';
+    public const INDEX_CREATED_AT = 'event_conversion_logs_created_at_index';
 
     /**
      * The attributes that are mass assignable.
@@ -263,7 +263,7 @@ class EventLog extends Model
 
     private static function fetchDomainFromMatchingEvent(string $type, string $caseId): ?string
     {
-        if (self::TYPE_CLICK === $type) {
+        if (self::TYPE_CLICK === $type || self::TYPE_SHADOW_CLICK === $type) {
             $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
             $viewEvent = self::where('event_id', hex2bin($eventId))->first();
 

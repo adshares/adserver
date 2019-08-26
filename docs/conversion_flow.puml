@@ -1,0 +1,39 @@
+@startuml
+
+header Adshares Conversion Flow
+title Conversion
+
+actor User << browser >>
+participant Publisher << Site >>
+participant Supply
+participant Demand
+participant Advertiser << Adidas >>
+
+...
+Advertiser -> Advertiser: Generate advanced pixel urls \n<font color=red><b>generate_urls()
+...
+
+User -> Publisher: GET index.html
+User <-- Publisher: index.html
+
+Publisher -> Supply: GET find.js
+Publisher <-- Supply: find.js
+
+
+autonumber
+User -> Publisher: CLICK on a banner
+
+Publisher -> Supply: Register click event
+Supply -> Demand: Register click event
+
+
+alt Conversion flow
+User -> Advertiser: Open advertiser page (Adidas)
+
+Advertiser -> Advertiser: Parse request query params (cid)
+Advertiser -> Advertiser: use query params to build a pixel url \n based on previously generated urls\n<font color=red><b>generate_urls()
+Advertiser -> Demand: send a pixel request
+
+Demand -> Demand: Save Conversion event
+end
+@enduml

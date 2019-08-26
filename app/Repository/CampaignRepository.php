@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;
 
 class CampaignRepository
@@ -48,6 +49,11 @@ class CampaignRepository
     public function fetchCampaignById(int $campaignId): Campaign
     {
         return (new Campaign())->findOrFail($campaignId);
+    }
+
+    public function fetchCampaignByIdWithConversions(int $campaignId): Campaign
+    {
+        return (new Campaign())->with('conversions')->findOrFail($campaignId);
     }
 
     /**
@@ -98,7 +104,8 @@ class CampaignRepository
         Campaign $campaign,
         array $bannersToInsert = [],
         array $bannersToUpdate = [],
-        array $bannersToDelete = []
+        array $bannersToDelete = [],
+        array $conversions = []
     ): void {
         DB::beginTransaction();
 
@@ -123,11 +130,39 @@ class CampaignRepository
                     $banner->delete();
                 }
             }
+
+            $existedConversions = $this->findConversionsWhichMustStay($conversions);
+            ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
+
+            foreach ($conversions as $conversionInput) {
+                if (isset($conversionInput['uuid'])
+                    && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
+                    continue;
+                }
+
+                unset($conversionInput['uuid']);
+                $conversion = new ConversionDefinition();
+                $conversion->fill($conversionInput);
+
+                $campaign->conversions()->save($conversion);
+            }
         } catch (\Exception $ex) {
             DB::rollBack();
             throw $ex;
         }
 
         DB::commit();
+    }
+
+    private function findConversionsWhichMustStay(array $conversions): array
+    {
+        $uuids = [];
+        foreach ($conversions as $conversion) {
+            if (isset($conversion['uuid'])) {
+                $uuids[] = $conversion['uuid'];
+            }
+        }
+
+        return $uuids;
     }
 }
