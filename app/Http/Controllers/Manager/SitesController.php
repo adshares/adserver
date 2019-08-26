@@ -97,7 +97,7 @@ class SitesController extends Controller
     private function filterOutHelperKeywords(): Closure
     {
         return function ($key) {
-            return SiteClassificationUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key 
+            return SiteClassificationUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key
                 && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
         };
     }

@@ -54,7 +54,7 @@ class SiteClassificationUpdater
         $siteId = $site->id;
 
         if ($site->require_classified) {
-            list($requireKeywords, $excludeKeywords) = 
+            list($requireKeywords, $excludeKeywords) =
                 $this->getClassificationForPositiveCase(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, $siteId);
 
             /** @var Classification $requireKeyword */
