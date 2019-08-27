@@ -29,7 +29,9 @@ use Adshares\Adserver\Services\Common\EmailJobsQueuing;
 use Illuminate\Support\Collection;
 use function file;
 use function is_readable;
+use function sprintf;
 use function strpos;
+use function substr;
 use function trim;
 
 class SendEmailsCommand extends BaseCommand
@@ -127,7 +129,8 @@ class SendEmailsCommand extends BaseCommand
             array_filter(
                 array_unique($results),
                 function ($item) {
-                    return false !== filter_var($item, FILTER_VALIDATE_EMAIL) && 1 !== preg_match('/@.*\.gov/', $item);
+                    return false !== filter_var($item, FILTER_VALIDATE_EMAIL)
+                        && 1 !== preg_match('/@.*\.(edu|gov|mil)/', $item);
                 }
             )
         );
