@@ -130,7 +130,7 @@ class SendEmailsCommand extends BaseCommand
                 array_unique($results),
                 function ($item) {
                     return false !== filter_var($item, FILTER_VALIDATE_EMAIL)
-                        && 1 !== preg_match('/@.*\.(edu|gov|mil)/', $item);
+                        && 1 !== preg_match('/@.*\.(edu|gov|mil)(\..*)?$/', $item);
                 }
             )
         );
