@@ -284,7 +284,7 @@ class Utils
             Log::error(sprintf(
                 '{message: "%s","context": "%s"}',
                 Exception::cleanMessage($e->getMessage()),
-                json_encode($partialImpressionContext->toArray())
+                (string)$partialImpressionContext
             ));
         }
 
