@@ -219,7 +219,8 @@ class EventConversionLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
-        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
+        $log->domain =
+            self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($impressionContext);
 
         $log->save();
     }
@@ -265,7 +266,8 @@ class EventConversionLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $theirUserData;
         $log->event_type = $type;
-        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
+        $log->domain =
+            self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($impressionContext);
 
         $log->human_score = $humanScore;
         $log->our_userdata = $ourUserData;

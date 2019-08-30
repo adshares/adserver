@@ -195,7 +195,6 @@ class NetworkEventLog extends Model
 
         $context = (string)$impressionContext;
         if (!$context) {
-
             return;
         }
 

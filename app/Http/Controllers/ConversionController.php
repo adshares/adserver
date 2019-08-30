@@ -304,6 +304,8 @@ class ConversionController extends Controller
             );
 
             if (null === $event) {
+                DB::rollBack();
+
                 throw new BadRequestHttpException('Invalid context');
             }
 
