@@ -156,8 +156,8 @@ class Utils
                 $word = strtolower(trim($word));
             }
         }
-        $site['referrer'] = $page['ref'];
-        $site['popup'] = $page['pop'];
+        $site['referrer'] = $page['ref'] ?? '';
+        $site['popup'] = $page['pop'] ?? '';
 
         return $site;
     }
@@ -284,7 +284,7 @@ class Utils
             Log::error(sprintf(
                 '{message: "%s","context": "%s"}',
                 Exception::cleanMessage($e->getMessage()),
-                json_encode($partialImpressionContext->toArray())
+                (string)$partialImpressionContext
             ));
         }
 

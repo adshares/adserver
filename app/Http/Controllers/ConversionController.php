@@ -303,6 +303,12 @@ class ConversionController extends Controller
                 $viewEventData['ourUserdata']
             );
 
+            if (null === $event) {
+                DB::rollBack();
+
+                throw new BadRequestHttpException('Invalid context');
+            }
+
             $eventId = $event->id;
             $partialValue = (int)floor($value * $weight);
             ConversionGroup::register($caseId, $groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
