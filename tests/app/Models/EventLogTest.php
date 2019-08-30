@@ -58,7 +58,7 @@ class EventLogTest extends TestCase
 
         $this->assertArraySubset($data, $event);
         $this->assertArrayHasKey('their_context', $event);
-        $this->assertEquals($theirContext, $event['their_context']);
+        $this->assertEquals($theirContext, json_encode($event['their_context']));
     }
 
     public function testCreateEventLogTryTwoSame(): void
