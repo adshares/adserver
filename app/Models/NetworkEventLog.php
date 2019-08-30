@@ -172,7 +172,7 @@ class NetworkEventLog extends Model
         string $publisherId,
         string $siteId,
         string $payFrom,
-        ImpressionContext $impressionContext,
+        ImpressionContext $context,
         $type
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
@@ -193,11 +193,6 @@ class NetworkEventLog extends Model
             return;
         }
 
-        $context = (string)$impressionContext;
-        if (!$context) {
-            return;
-        }
-
         $log = new self();
         $log->case_id = $caseId;
         $log->event_id = $eventId;
@@ -209,7 +204,7 @@ class NetworkEventLog extends Model
         $log->site_id = $siteId;
         $log->pay_from = $payFrom;
         $log->event_type = $type;
-        $log->context = $context;
+        $log->context = $context->toArray();
         $log->domain = DomainReader::domain(NetworkBanner::findByUuid($bannerId)->campaign->landing_url ?? '');
 
         $log->save();
