@@ -106,17 +106,6 @@ final class ImpressionContext
             'user' => $this->user,
         ];
     }
-    
-    public function __toString(): string
-    {
-        if (false === ($encoded = json_encode($this->toArray()))) {
-            Log::warning('ImpressionContext could not be encoded');
-
-            return '';
-        }
-
-        return $encoded;
-    }
 
     public function adUserRequestBody(): array
     {
