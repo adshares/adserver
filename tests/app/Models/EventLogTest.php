@@ -140,7 +140,9 @@ class EventLogTest extends TestCase
                         'accept-encoding' => [0 => 'gzip, deflate',],
                         'accept-language' => [0 => 'en-US,en;q=0.5',],
                         'accept' => [0 => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',],
-                        'user-agent' => [0 => 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',],
+                        'user-agent' => [
+                            0 => 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+                        ],
                         'host' => [0 => 'example.com',],
                         'content-length' => [0 => '',],
                         'content-type' => [0 => '',],
