@@ -20,6 +20,8 @@
 
 namespace Adshares\Adserver\Models\Traits;
 
+use Adshares\Common\Exception\RuntimeException;
+
 /**
  * binhex columns
  */
@@ -27,11 +29,24 @@ trait JsonValue
 {
     public function jsonValueMutator($key, $value)
     {
-        $this->attributes[$key] = $value !== null ? json_encode($value) : null;
+        $this->attributes[$key] = $this->processValue($value);
     }
 
     public function jsonValueAccessor($value)
     {
         return $value === null ? null : json_decode($value);
+    }
+
+    private function processValue($value): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        if (false === ($jsonEncode = json_encode($value))) {
+            throw new RuntimeException('Json value cannot be saved');
+        }
+
+        return $jsonEncode;
     }
 }
