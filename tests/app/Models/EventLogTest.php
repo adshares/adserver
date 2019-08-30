@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class EventLogTest extends TestCase
@@ -57,7 +58,7 @@ class EventLogTest extends TestCase
 
         $this->assertArraySubset($data, $event);
         $this->assertArrayHasKey('their_context', $event);
-        $this->assertEquals($theirContext, $event['their_context']);
+        $this->assertEquals($theirContext, json_encode($event['their_context']));
     }
 
     public function testCreateEventLogTryTwoSame(): void
@@ -88,6 +89,8 @@ class EventLogTest extends TestCase
     {
         $data = $this->getEventData();
         $data['impression_context']['device']['headers']['binary'] = ["\xB1\x31"];
+
+        $this->expectException(RuntimeException::class);
 
         EventLog::create(
             $data['case_id'],

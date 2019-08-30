@@ -38,8 +38,6 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use function hex2bin;
-use function json_encode;
-use Illuminate\Support\Facades\Log;
 use stdClass;
 
 /**
@@ -190,19 +188,13 @@ class EventConversionLog extends Model
         string $campaignId,
         string $advertiserId,
         string $payTo,
-        array $impressionContext,
+        array $context,
         string $userData,
         string $type
     ): void {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
 
         if ($existedEventLog) {
-            return;
-        }
-
-        if (false === ($context = json_encode($impressionContext))) {
-            Log::warning('ImpressionContext could not be encoded for EventConversionLog');
-
             return;
         }
 
@@ -219,8 +211,7 @@ class EventConversionLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $userData;
         $log->event_type = $type;
-        $log->domain =
-            self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($impressionContext);
+        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
 
         $log->save();
     }
@@ -235,22 +226,16 @@ class EventConversionLog extends Model
         string $campaignId,
         string $advertiserId,
         string $payTo,
-        array $impressionContext,
+        array $context,
         string $theirUserData,
         string $type,
         ?float $humanScore,
         ?stdClass $ourUserData
-    ): ?self {
+    ): self {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
 
         if ($existedEventLog) {
             return $existedEventLog;
-        }
-
-        if (false === ($context = json_encode($impressionContext))) {
-            Log::warning('ImpressionContext could not be encoded for EventConversionLog');
-
-            return null;
         }
 
         $log = new self();
@@ -266,8 +251,7 @@ class EventConversionLog extends Model
         $log->their_context = $context;
         $log->their_userdata = $theirUserData;
         $log->event_type = $type;
-        $log->domain =
-            self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($impressionContext);
+        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
 
         $log->human_score = $humanScore;
         $log->our_userdata = $ourUserData;
