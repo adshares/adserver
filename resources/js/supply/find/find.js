@@ -446,13 +446,13 @@ var getPageKeywords = function (doc) {
     if (metaKeywords.content) {
         var tmp = metaKeywords.content.split(',');
         var n = Math.min(MAX_KEYWORDS, tmp.length);
-        metaKeywords = [];
+        var tmp2 = [];
         for (var i = 0; i < n; i++) {
-            metaKeywords.push(tmp[i].trim());
+            tmp2.push(tmp[i].trim());
         }
-        metaKeywords = metaKeywords.join(',');
+        return tmp2.join(',');
     }
-    return metaKeywords;
+    return '';
 };
 
 var getBrowserContext = function () {
@@ -579,6 +579,14 @@ var getActiveZones = function(call_func) {
     fn();
 }
 
+var extraBannerCheck = function(banner, code)
+{
+    try {
+        return (new topwin.Function('banner', code))(banner);
+    } catch(e) {
+        return false;
+    }
+}
 
 domReady(function () {
     aduserPixel(getImpressionId());
@@ -610,6 +618,13 @@ domReady(function () {
                 if (!banner || typeof banner != 'object') {
                     insertBackfill(zone.destElement, zone.backfill);
                     return;
+                }
+
+                if(banner.extra_check) {
+                    if(!extraBannerCheck(banner, banner.extra_check)) {
+                        insertBackfill(zone.destElement, zone.backfill);
+                        return;
+                    }
                 }
 
                 banner.destElement = zone.destElement;
