@@ -32,7 +32,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
-use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\AdSelectLegacyEventExporter;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Facades\Log;
@@ -54,7 +54,7 @@ class AdSelectEventExportCommand extends BaseCommand
 
     public function __construct(
         Locker $locker,
-        AdSelectEventExporter $exporterService,
+        AdSelectLegacyEventExporter $exporterService,
         AdUser $adUser,
         NetworkEventRepository $eventRepository
     ) {

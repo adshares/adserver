@@ -23,19 +23,25 @@ namespace Adshares\Adserver\Http\Controllers;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use DateTime;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -49,7 +55,7 @@ class SupplyController extends Controller
     public function find(
         Request $request,
         AdUser $contextProvider,
-        AdSelect $bannerFinder,
+        AdSelectLegacy $bannerFinder,
         string $data = null
     ) {
         $response = new Response();
@@ -118,7 +124,16 @@ class SupplyController extends Controller
 
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        return self::json($bannerFinder->findBanners($zones, $context));
+        $response = self::json($bannerFinder->findBanners($zones, $context));
+        $response->send();
+
+        NetworkImpression::register(
+            Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
+            Utils::hexUuidFromBase64UrlWithChecksum($tid),
+            $context
+        );
+
+        return $response;
     }
 
     public function findScript(): StreamedResponse
@@ -149,7 +164,7 @@ class SupplyController extends Controller
         $response->headers->set('Content-Type', 'text/javascript');
         $response->setCache(
             [
-                'last_modified' => new \DateTime(),
+                'last_modified' => new DateTime(),
                 'max_age' => 3600 * 24 * 1,
                 's_maxage' => 3600 * 24 * 1,
                 'private' => false,
@@ -160,11 +175,8 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(
-        Request $request,
-        AdUser $contextProvider,
-        string $bannerId
-    ): RedirectResponse {
+    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
+    {
         $this->validateEventRequest($request);
 
         $url = $this->getRedirectionUrlFromQuery($request);
@@ -182,17 +194,14 @@ class SupplyController extends Controller
         $url = $this->addQueryStringToUrl($request, $url);
 
         $caseId = $request->query->get('cid');
+        if (null === ($networkCase = NetworkCase::fetchByCaseId($caseId))) {
+            throw new NotFoundHttpException();
+        }
+
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $caseId;
-        $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
-
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
-        $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
-
         $impressionId = $request->query->get('iid');
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
@@ -203,21 +212,20 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = Utils::getFullContext($request, $contextProvider);
-
-        if (NetworkEventLog::eventClicked($caseId) > 0) {
-            NetworkEventLog::create(
-                $caseId,
-                $eventId,
-                $bannerId,
-                $zoneId,
-                $trackingId,
-                $publisherId,
-                $siteId,
-                $payFrom,
-                $context,
-                NetworkEventLog::TYPE_CLICK
-            );
+        try {
+            $networkCase->networkCaseClick()->save(new NetworkCaseClick());
+        } catch (QueryException $queryException) {
+            if (SqlUtils::isDuplicatedEntry($queryException)) {
+                Log::info(sprintf('Duplicated click for case (%s)', $caseId));
+            } else {
+                Log::warning(
+                    sprintf(
+                        'During saving click for case (%s) occurred an error (%s)',
+                        $caseId,
+                        $queryException->getMessage()
+                    )
+                );
+            }
         }
 
         return $response;
@@ -253,9 +261,17 @@ class SupplyController extends Controller
         return $url;
     }
 
-    public function logNetworkView(Request $request, AdUser $contextProvider, string $bannerId): RedirectResponse
+    public function logNetworkView(Request $request, string $bannerId): RedirectResponse
     {
         $this->validateEventRequest($request);
+
+        $impressionId = $request->query->get('iid');
+        $networkImpression = NetworkImpression::fetchByImpressionId(
+            Utils::hexUuidFromBase64UrlWithChecksum($impressionId)
+        );
+        if (null === $networkImpression) {
+            throw new NotFoundHttpException();
+        }
 
         $url = $this->getRedirectionUrlFromQuery($request);
         if ($url) {
@@ -264,16 +280,10 @@ class SupplyController extends Controller
 
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        $trackingId = $request->cookies->get('tid')
-            ? Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'))
-            : $caseId;
-        $payFrom = $request->query->get('pfr');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
-
-        $impressionId = $request->query->get('iid');
 
         $url = Utils::addUrlParameter($url, 'pto', $payTo);
         $url = Utils::addUrlParameter($url, 'pid', $publisherId);
@@ -283,20 +293,17 @@ class SupplyController extends Controller
         $response = new RedirectResponse($url);
         $response->send();
 
-        $context = Utils::getFullContext($request, $contextProvider);
-
-        NetworkEventLog::create(
+        $networkCase = NetworkCase::create(
             $caseId,
-            $eventId,
-            $bannerId,
-            $zoneId,
-            $trackingId,
             $publisherId,
             $siteId,
-            $payFrom,
-            $context,
-            NetworkEventLog::TYPE_VIEW
+            $zoneId,
+            $bannerId
         );
+
+        if (null !== $networkCase) {
+            $networkImpression->networkCases()->save($networkCase);
+        }
 
         return $response;
     }

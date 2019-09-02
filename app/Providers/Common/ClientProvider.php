@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Providers\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\ClassifierExternalClient;
+use Adshares\Adserver\Client\GuzzleAdSelectLegacyClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
@@ -31,7 +32,7 @@ use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayClient;
-use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\Client\JsonRpcAdSelectLegacyClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
@@ -47,6 +48,7 @@ use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -77,7 +79,7 @@ final class ClientProvider extends ServiceProvider
         );
 
         $this->app->bind(
-            AdSelect::class,
+            AdSelectLegacy::class,
             function () {
                 $client = new Client(
                     [
@@ -88,8 +90,23 @@ final class ClientProvider extends ServiceProvider
                 );
 
                 if ('python' === (string)config('app.x_adselect_version')) {
-                    return new JsonRpcAdSelectClient(new JsonRpc($client));
+                    return new JsonRpcAdSelectLegacyClient(new JsonRpc($client));
                 }
+
+                return new GuzzleAdSelectLegacyClient($client);
+            }
+        );
+
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                $client = new Client(
+                    [
+                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
+                        'base_uri' => config('app.adselect_endpoint'),
+                        'timeout' => 5,
+                    ]
+                );
 
                 return new GuzzleAdSelectClient($client);
             }

@@ -166,6 +166,7 @@ final class DummyDemandClient implements DemandClient
             $arr = [];
             for ($i = 0; $i < $limit; $i++) {
                 $arr[] = [
+                    'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'view',
                     'banner_id' => 'b22e19a3874847f4a6287d26deacd208',
@@ -174,6 +175,7 @@ final class DummyDemandClient implements DemandClient
                     'event_value' => 10,
                 ];
                 $arr[] = [
+                    'case_id' => Uuid::v4()->hex(),
                     'event_id' => Uuid::v4()->hex(),
                     'event_type' => 'click',
                     'banner_id' => '9c6edfaef7454af4a96cb434c85323ee',
