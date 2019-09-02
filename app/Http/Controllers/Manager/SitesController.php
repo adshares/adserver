@@ -75,19 +75,17 @@ class SitesController extends Controller
 
     private function processClassificationInFiltering(Site $site): array
     {
-        $namespace = (string)config('app.classify_namespace');
-
         $siteArray = $site->toArray();
         $filtering = $siteArray['filtering'];
 
         $filtering['requires'] = array_filter(
             $filtering['requires'] ?: [],
-            $this->filterOutHelperKeywords($namespace),
+            $this->filterOutHelperKeywords(),
             ARRAY_FILTER_USE_KEY
         );
         $filtering['excludes'] = array_filter(
             $filtering['excludes'] ?: [],
-            $this->filterOutHelperKeywords($namespace),
+            $this->filterOutHelperKeywords(),
             ARRAY_FILTER_USE_KEY
         );
 
@@ -96,10 +94,11 @@ class SitesController extends Controller
         return $siteArray;
     }
 
-    private function filterOutHelperKeywords(string $namespace): Closure
+    private function filterOutHelperKeywords(): Closure
     {
-        return function ($key) use ($namespace) {
-            return $namespace !== $key && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
+        return function ($key) {
+            return SiteClassificationUpdater::INTERNAL_CLASSIFIER_NAMESPACE !== $key
+                && false === strpos($key, SiteClassificationUpdater::KEYWORD_CLASSIFIED);
         };
     }
 

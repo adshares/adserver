@@ -27,6 +27,8 @@ use Adshares\Classify\Domain\Model\Classification;
 
 class SiteClassificationUpdater
 {
+    public const INTERNAL_CLASSIFIER_NAMESPACE = 'classify';
+
     public const KEYWORD_CLASSIFIED = 'classified';
 
     public const KEYWORD_CLASSIFIED_VALUE = ['1'];
@@ -37,13 +39,11 @@ class SiteClassificationUpdater
 
     public function addClassificationToFiltering(Site $site): void
     {
-        $namespace = (string)config('app.classify_namespace');
-
         $siteRequires = $site->site_requires ?: [];
         $siteExcludes = $site->site_excludes ?: [];
 
-        unset($siteRequires[$namespace]);
-        unset($siteExcludes[$namespace]);
+        unset($siteRequires[self::INTERNAL_CLASSIFIER_NAMESPACE]);
+        unset($siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE]);
 
         foreach ($this->extractClassifiers($siteExcludes, $siteRequires) as $classifier) {
             $siteRequires[$classifier.self::NAMESPACE_SEPARATOR.self::KEYWORD_CLASSIFIED] =
@@ -55,7 +55,7 @@ class SiteClassificationUpdater
 
         if ($site->require_classified) {
             list($requireKeywords, $excludeKeywords) =
-                $this->getClassificationForPositiveCase($namespace, $publisherId, $siteId);
+                $this->getClassificationForPositiveCase(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, $siteId);
 
             /** @var Classification $requireKeyword */
             foreach ($requireKeywords as $requireKeyword) {
@@ -68,18 +68,19 @@ class SiteClassificationUpdater
         }
 
         if ($site->exclude_unclassified) {
-            $excludeKeywords = $this->getClassificationNotNegativeCase($namespace, $publisherId, $siteId);
+            $excludeKeywords =
+                $this->getClassificationNotNegativeCase(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, $siteId);
 
-            if (empty($siteExcludes[$namespace])) {
-                $siteExcludes[$namespace] = [];
+            if (empty($siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE])) {
+                $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [];
             }
 
             /** @var Classification $excludeKeyword */
             foreach ($excludeKeywords as $excludeKeyword) {
                 $keyword = $excludeKeyword->keyword();
 
-                if (!in_array($keyword, $siteExcludes[$namespace], true)) {
-                    $siteExcludes[$namespace][] = $keyword;
+                if (!in_array($keyword, $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE], true)) {
+                    $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $keyword;
                 }
             }
         }
