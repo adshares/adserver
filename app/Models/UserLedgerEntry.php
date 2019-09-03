@@ -21,9 +21,12 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder as DatabaseBuilder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use function array_filter;
 use function array_merge;
@@ -434,5 +437,52 @@ class UserLedgerEntry extends Model
         }
 
         return $type;
+    }
+
+    public static function getBillingHistoryBuilder(int $userId, array $types, ?DateTime $from, ?DateTime $to): DatabaseBuilder
+    {
+        return DB::table('user_ledger_entries')->select(
+            [
+                DB::raw('MAX(id) AS id'),
+                DB::raw('SUM(amount) AS amount'),
+                'type',
+                'status',
+                'address_from',
+                'address_to',
+                'txid',
+                DB::raw('MAX(created_at) AS created_at')
+            ]
+        )->fromSub(
+            function (DatabaseBuilder $subQuery) use ($userId, $types, $from, $to) {
+                $subQuery->from('user_ledger_entries')->select(
+                    [
+                        'id',
+                        'amount',
+                        'type',
+                        'status',
+                        'address_from',
+                        'address_to',
+                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'),
+                        'created_at',
+                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper')
+                    ]
+                )->where('user_id', $userId);
+    
+                if (!empty($types)) {
+                    $subQuery->whereIn('type', $types);
+                }
+    
+                if (null !== $from) {
+                    $subQuery->where('created_at', '>=', $from);
+                }
+    
+                if (null !== $to) {
+                    $subQuery->where('created_at', '<=', $to);
+                }
+    
+                return $subQuery;
+            },
+            'u'
+        )->groupBy(['date_helper', 'type', 'status', 'txid', 'address_from', 'address_to']);
     }
 }

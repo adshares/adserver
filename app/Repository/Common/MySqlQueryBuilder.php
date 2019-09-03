@@ -130,6 +130,11 @@ abstract class MySqlQueryBuilder
         return $dateTime->format('Y-m-d H:i:s');
     }
 
+    public static function convertMySqlDateToDateTime(string $mysqlDate): DateTime
+    {
+        return DateTime::createFromFormat('Y-m-d H:i:s', $mysqlDate);
+    }
+
     abstract protected function isTypeAllowed(string $type): bool;
 
     abstract protected function getTableName(): string;
