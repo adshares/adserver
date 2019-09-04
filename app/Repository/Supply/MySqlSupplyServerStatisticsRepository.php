@@ -31,8 +31,8 @@ class MySqlSupplyServerStatisticsRepository
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")                       AS date,
   SUM(views)                                                      AS impressions,
-  ROUND((SUM(e.revenue) / 100000000000) / #volume_coefficient, 2) AS volume
-FROM network_event_logs_hourly e
+  ROUND((SUM(e.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
+FROM network_case_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
 GROUP BY 1;
@@ -47,7 +47,7 @@ FROM zones z
        JOIN sites s ON s.id = z.site_id AND s.status = 2 AND s.deleted_at IS NULL
        LEFT JOIN (
     SELECT e.zone_id, SUM(e.views) AS views
-    FROM network_event_logs_hourly e
+    FROM network_case_logs_hourly e
     WHERE e.hour_timestamp < DATE(NOW())
       AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
