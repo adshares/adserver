@@ -31,6 +31,7 @@ class MySqlSupplyServerStatisticsRepository
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d")                       AS date,
   SUM(views)                                                      AS impressions,
+  SUM(clicks)                                                     AS clicks,
   ROUND((SUM(e.revenue) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_event_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())

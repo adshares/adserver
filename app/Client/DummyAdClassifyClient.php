@@ -40,40 +40,48 @@ final class DummyAdClassifyClient implements AdClassify
 {
   "data": [
     {
-      "type": "dict",
-      "label": "Content Type",
-      "key": "type",
-      "list": [
+      "key": "category",
+      "label": "Category",
+      "values": [
         {
-          "label": "HTML",
-          "value": "html"
-        },
-        {
-          "label": "Image",
-          "value": "image"
-        }
-      ]
-    },
-    {
-      "type": "dict",
-      "label": "Categories by Adshares",
-      "key": "adclassify:category",
-      "list": [
-        {
+          "key": "adult",
           "label": "Adult",
-          "value": "adult"
+          "description": "NSFW, nudity, pornography"
         },
         {
+          "key": "annoying",
+          "label": "Annoying",
+          "description": "Sounds, flashing, disturbing"
+        },
+        {
+          "key": "crypto",
           "label": "Crypto",
-          "value": "crypto"
+          "description": "Cryptocurrencies, exchanges, wallets"
         },
         {
-          "label": "Gambling",
-          "value": "gambling"
-        },
-        {
+          "key": "drugs",
           "label": "Drugs",
-          "value": "drugs"
+          "description": "Medicines, dietary supplement"
+        },
+        {
+          "key": "gambling",
+          "label": "Gambling",
+          "description": "Sports betting, casinos, lottery"
+        },
+        {
+          "key": "investment",
+          "label": "Investment",
+          "description": "HYIPs, ICO\/IEO, crowdfunding"
+        },
+        {
+          "key": "malware",
+          "label": "Malware",
+          "description": "Software download, extensions"
+        },
+        {
+          "key": "safe",
+          "label": "Mainstream",
+          "description": "Safe content"
         }
       ]
     }
