@@ -20,13 +20,13 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use function array_filter;
 use function array_merge;
@@ -466,26 +466,33 @@ class UserLedgerEntry extends Model
                         'status',
                         'address_from',
                         'address_to',
-                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'),
+                        DB::raw(
+                            DB::isSQLite()
+                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0 THEN null ELSE txid END AS txid'
+                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'
+                        ),
                         'created_at',
                         DB::raw(
-                            'IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'
+                            DB::isSQLite()
+                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0 '
+                                .'THEN date(created_at) ELSE created_at END AS date_helper'
+                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'
                         ),
                     ]
                 )->where('user_id', $userId);
-    
+
                 if (!empty($types)) {
                     $subQuery->whereIn('type', $types);
                 }
-    
+
                 if (null !== $from) {
                     $subQuery->where('created_at', '>=', $from);
                 }
-    
+
                 if (null !== $to) {
                     $subQuery->where('created_at', '<=', $to);
                 }
-    
+
                 return $subQuery;
             },
             'u'
