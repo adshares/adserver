@@ -439,8 +439,12 @@ class UserLedgerEntry extends Model
         return $type;
     }
 
-    public static function getBillingHistoryBuilder(int $userId, array $types, ?DateTime $from, ?DateTime $to): DatabaseBuilder
-    {
+    public static function getBillingHistoryBuilder(
+        int $userId,
+        array $types,
+        ?DateTime $from,
+        ?DateTime $to
+    ): DatabaseBuilder {
         return DB::table('user_ledger_entries')->select(
             [
                 DB::raw('MAX(id) AS id'),
@@ -450,7 +454,7 @@ class UserLedgerEntry extends Model
                 'address_from',
                 'address_to',
                 'txid',
-                DB::raw('MAX(created_at) AS created_at')
+                DB::raw('MAX(created_at) AS created_at'),
             ]
         )->fromSub(
             function (DatabaseBuilder $subQuery) use ($userId, $types, $from, $to) {
@@ -464,7 +468,9 @@ class UserLedgerEntry extends Model
                         'address_to',
                         DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'),
                         'created_at',
-                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper')
+                        DB::raw(
+                            'IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'
+                        ),
                     ]
                 )->where('user_id', $userId);
     
