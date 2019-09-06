@@ -337,7 +337,6 @@ class WalletControllerTest extends TestCase
                             'address' => '0001-00000000-XXXX',
                             'txid' => null,
                             'id' => 2,
-
                         ],
                     ],
                 ]

@@ -303,7 +303,7 @@ class WalletController extends Controller
                     'date' => $date,
                     'address' => $this->getUserLedgerEntryAddress($ledgerItem),
                     'txid' => $ledgerItem->txid,
-                    'id' => $ledgerItem->id,
+                    'id' => (int)$ledgerItem->id,
                 ];
             }
         }
