@@ -322,15 +322,6 @@ class WalletControllerTest extends TestCase
                     'itemsCountAll' => 2,
                     'items' => [
                         [
-                            'amount' => $amountInClicks,
-                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                            'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                            'date' => '2018-10-24T15:00:49+00:00',
-                            'address' => '0001-00000000-XXXX',
-                            'txid' => '0001:0000000A:0001',
-                            'id' => 1,
-                        ],
-                        [
                             'amount' => -$amountInClicks,
                             'status' => UserLedgerEntry::STATUS_ACCEPTED,
                             'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
@@ -338,6 +329,15 @@ class WalletControllerTest extends TestCase
                             'address' => '0001-00000000-XXXX',
                             'txid' => null,
                             'id' => 2,
+                        ],
+                        [
+                            'amount' => $amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => '0001:0000000A:0001',
+                            'id' => 1,
                         ],
                     ],
                 ]
@@ -381,13 +381,13 @@ class WalletControllerTest extends TestCase
                 'itemsCountAll' => 2,
                 'items' => [
                     [
-                        'amount' => $amountInClicks,
+                        'amount' => -$amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => '2018-10-24T15:00:49+00:00',
+                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                        'date' => '2018-10-24T15:20:49+00:00',
                         'address' => '0001-00000000-XXXX',
-                        'txid' => '0001:0000000A:0001',
-                        'id' => 1,
+                        'txid' => null,
+                        'id' => 2,
                     ],
                 ],
             ]
@@ -421,13 +421,13 @@ class WalletControllerTest extends TestCase
                 'itemsCountAll' => 2,
                 'items' => [
                     [
-                        'amount' => -$amountInClicks,
+                        'amount' => $amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                        'date' => '2018-10-24T15:20:49+00:00',
+                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                        'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
-                        'txid' => null,
-                        'id' => 2,
+                        'txid' => '0001:0000000A:0001',
+                        'id' => 1,
                     ],
                 ],
             ]
@@ -459,7 +459,7 @@ class WalletControllerTest extends TestCase
                     'limit' => 10,
                     'offset' => 0,
                     'itemsCount' => 1,
-                    'itemsCountAll' => 2,
+                    'itemsCountAll' => 1,
                     'items' => [
                         [
                             'amount' => $amountInClicks,
@@ -469,7 +469,7 @@ class WalletControllerTest extends TestCase
                             'address' => '0001-00000000-XXXX',
                             'txid' => '0001:0000000A:0001',
                             'id' => 1,
-                        ]
+                        ],
                     ],
                 ]
             );
@@ -499,7 +499,7 @@ class WalletControllerTest extends TestCase
 
         $this->actingAs($user, 'api');
         $response = $this->getJson(
-            urlencode('/api/wallet/history?date_from=2018-10-24T15:20:49+00:00&date_to=2019-10-24T15:20:49+00:00')
+            '/api/wallet/history?date_from=2018-10-24T15:20:49%2B00:00&date_to=2019-10-24T15:20:49%2B00:00'
         );
 
         $response->assertStatus(Response::HTTP_OK)
@@ -508,7 +508,7 @@ class WalletControllerTest extends TestCase
                     'limit' => 10,
                     'offset' => 0,
                     'itemsCount' => 1,
-                    'itemsCountAll' => 2,
+                    'itemsCountAll' => 1,
                     'items' => [
                         [
                             'amount' => -$amountInClicks,
@@ -533,9 +533,7 @@ class WalletControllerTest extends TestCase
         $this->initUserLedger($userId, $amountInClicks);
 
         $this->actingAs($user, 'api');
-        $response = $this->getJson(
-            urlencode('/api/wallet/history?date_from=2018-10-24&date_to=2019-10-24')
-        );
+        $response = $this->getJson('/api/wallet/history?date_from=2018-10-24&date_to=2019-10-24');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
