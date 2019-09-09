@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Illuminate\Support\Facades\DB;
 
 class ExpiredWithdrawalCancellationCommand extends BaseCommand
 {
@@ -43,6 +44,8 @@ class ExpiredWithdrawalCancellationCommand extends BaseCommand
 
         $tokens = Token::fetchExpiredWithdrawals();
 
+        DB::beginTransaction();
+
         $ids = [];
         foreach ($tokens as $token) {
             $ids[] = $token->toArray()['payload']['ledgerEntry'];
@@ -57,8 +60,9 @@ class ExpiredWithdrawalCancellationCommand extends BaseCommand
             UserLedgerEntry::STATUS_AWAITING_APPROVAL
         )->whereIn('id', $ids)->update(['status' => UserLedgerEntry::STATUS_CANCELED]);
 
-        $this->info(sprintf('[ExpiredWithdrawalCancellation] Cancelled %d expired withdrawal(s)', $updatedCount));
+        DB::commit();
 
+        $this->info(sprintf('[ExpiredWithdrawalCancellation] Cancelled %d expired withdrawal(s)', $updatedCount));
         $this->info('[ExpiredWithdrawalCancellation] Finish command '.$this->signature);
     }
 }
