@@ -40,6 +40,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use stdClass;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function config;
@@ -261,7 +262,7 @@ class WalletController extends Controller
             $request->all(),
             [
                 self::FIELD_TYPES => 'array',
-                self::FIELD_TYPES.'.*' => 'integer',
+                self::FIELD_TYPES.'.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
                 self::FIELD_DATE_FROM => 'date_format:'.DateTime::ATOM,
                 self::FIELD_DATE_TO => 'date_format:'.DateTime::ATOM,
                 self::FIELD_LIMIT => ['integer', 'min:1'],
