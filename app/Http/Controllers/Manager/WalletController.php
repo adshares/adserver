@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function config;
 
@@ -70,8 +71,6 @@ class WalletController extends Controller
         $addressFrom = $this->getAdServerAdsAddress();
 
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            Log::error("Invalid ADS address is set: ${addressFrom}");
-
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -109,15 +108,14 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    /**
-     * @return string AdServer address in ADS network
-     */
     private function getAdServerAdsAddress(): AccountId
     {
         try {
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
+
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
