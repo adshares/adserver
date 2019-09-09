@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Serialize;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 /**
  * @mixin Builder
@@ -181,5 +182,12 @@ class Token extends Model
             self::VALIDITY_PERIODS[self::EMAIL_ACTIVATE],
             $user->id
         );
+    }
+
+    public static function fetchExpiredWithdrawals(): Collection
+    {
+        return self::where('tag', self::EMAIL_APPROVE_WITHDRAWAL)
+            ->where('valid_until', '<', date('Y-m-d H:i:s'))
+            ->get();
     }
 }
