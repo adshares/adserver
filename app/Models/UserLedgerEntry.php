@@ -35,6 +35,7 @@ use const PHP_INT_MAX;
 /**
  * @mixin Builder
  * @property int status
+ * @property int type
  */
 class UserLedgerEntry extends Model
 {
@@ -129,6 +130,7 @@ class UserLedgerEntry extends Model
         'id' => 'int',
         'amount' => 'int',
         'status' => 'int',
+        'type' => 'int',
         'user_id' => 'int',
     ];
 
