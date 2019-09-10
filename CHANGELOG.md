@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Billing history filtering
+### Changed
+- Import inventory: reject unclassified banners
 
 ## [1.1.2] - 2019-08-30
 ### Fixed
