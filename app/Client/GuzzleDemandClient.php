@@ -105,7 +105,7 @@ final class GuzzleDemandClient implements DemandClient
         $campaignsCollection = new CampaignCollection();
         foreach ($campaigns as $data) {
             try {
-                $data =
+                $campaign =
                     CampaignFactory::createFromArray(
                         $this->processData(
                             $data,
@@ -115,7 +115,7 @@ final class GuzzleDemandClient implements DemandClient
                             $bannerDemandIdsToSupplyIds
                         )
                     );
-                $campaignsCollection->add($data);
+                $campaignsCollection->add($campaign);
             } catch (RuntimeException $exception) {
                 Log::info(sprintf('[Inventory Importer] %s', $exception->getMessage()));
             }
@@ -265,6 +265,9 @@ final class GuzzleDemandClient implements DemandClient
             }
 
             $banner['classification'] = $this->processClassification($banner);
+            if (empty($banner['classification'])) {
+                continue;
+            }
 
             $banners[] = $banner;
         }
