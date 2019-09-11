@@ -180,11 +180,24 @@ class WalletControllerTest extends TestCase
         self::assertSame(UserLedgerEntry::STATUS_CANCELED, UserLedgerEntry::find($userLedgerEntry->id)->status);
     }
 
+    public function testWithdrawCancelInvalidLedgerEntry(): void
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+
+        $this->actingAs($user, 'api');
+
+        $this->delete(
+            sprintf('/api/wallet/cancel-withdrawal/%d', 1)
+        )->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     private function generateUserIncome(int $userId, int $amount): void
     {
         $dateString = '2018-10-24 15:00:49';
 
         $ul = new UserLedgerEntry();
+        $ul->id = 1;
         $ul->user_id = $userId;
         $ul->amount = $amount;
         $ul->address_from = '0001-00000000-XXXX';
@@ -321,6 +334,15 @@ class WalletControllerTest extends TestCase
                     'itemsCountAll' => 2,
                     'items' => [
                         [
+                            'amount' => -$amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                            'date' => '2018-10-24T15:20:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => null,
+                            'id' => 2,
+                        ],
+                        [
                             'amount' => $amountInClicks,
                             'status' => UserLedgerEntry::STATUS_ACCEPTED,
                             'type' => UserLedgerEntry::TYPE_DEPOSIT,
@@ -328,16 +350,6 @@ class WalletControllerTest extends TestCase
                             'address' => '0001-00000000-XXXX',
                             'txid' => '0001:0000000A:0001',
                             'id' => 1,
-                        ],
-                        [
-                            'amount' => -$amountInClicks,
-                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
-                            'date' => '2018-10-24T15:00:49+00:00',
-                            'address' => '0001-00000000-XXXX',
-                            'txid' => null,
-                            'id' => 2,
-
                         ],
                     ],
                 ]
@@ -349,8 +361,9 @@ class WalletControllerTest extends TestCase
         // add entry with a txid
         $this->generateUserIncome($userId, $amountInClicks);
         // add entry without txid
-        $dateString = '2018-10-24 15:00:49';
+        $dateString = '2018-10-24 15:20:49';
         $ul = new UserLedgerEntry();
+        $ul->id = 2;
         $ul->user_id = $userId;
         $ul->amount = -$amountInClicks;
         $ul->address_from = '0001-00000000-XXXX';
@@ -380,13 +393,13 @@ class WalletControllerTest extends TestCase
                 'itemsCountAll' => 2,
                 'items' => [
                     [
-                        'amount' => $amountInClicks,
+                        'amount' => -$amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
-                        'date' => '2018-10-24T15:00:49+00:00',
+                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                        'date' => '2018-10-24T15:20:49+00:00',
                         'address' => '0001-00000000-XXXX',
-                        'txid' => '0001:0000000A:0001',
-                        'id' => 1,
+                        'txid' => null,
+                        'id' => 2,
                     ],
                 ],
             ]
@@ -420,13 +433,13 @@ class WalletControllerTest extends TestCase
                 'itemsCountAll' => 2,
                 'items' => [
                     [
-                        'amount' => -$amountInClicks,
+                        'amount' => $amountInClicks,
                         'status' => UserLedgerEntry::STATUS_ACCEPTED,
-                        'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                        'type' => UserLedgerEntry::TYPE_DEPOSIT,
                         'date' => '2018-10-24T15:00:49+00:00',
                         'address' => '0001-00000000-XXXX',
-                        'txid' => null,
-                        'id' => 2,
+                        'txid' => '0001:0000000A:0001',
+                        'id' => 1,
                     ],
                 ],
             ]
@@ -437,6 +450,102 @@ class WalletControllerTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create(), 'api');
         $response = $this->getJson('/api/wallet/history?limit=1&offset=-1');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testHistoryTypes(): void
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history?types[]='.UserLedgerEntry::TYPE_DEPOSIT);
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson(
+                [
+                    'limit' => 10,
+                    'offset' => 0,
+                    'itemsCount' => 1,
+                    'itemsCountAll' => 1,
+                    'items' => [
+                        [
+                            'amount' => $amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_DEPOSIT,
+                            'date' => '2018-10-24T15:00:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => '0001:0000000A:0001',
+                            'id' => 1,
+                        ],
+                    ],
+                ]
+            );
+    }
+
+    public function testHistoryTypesInvalid(): void
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history?types[]=100');
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testHistoryDates(): void
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson(
+            '/api/wallet/history?date_from=2018-10-24T15:20:49%2B00:00&date_to=2019-10-24T15:20:49%2B00:00'
+        );
+
+        $response->assertStatus(Response::HTTP_OK)
+            ->assertExactJson(
+                [
+                    'limit' => 10,
+                    'offset' => 0,
+                    'itemsCount' => 1,
+                    'itemsCountAll' => 1,
+                    'items' => [
+                        [
+                            'amount' => -$amountInClicks,
+                            'status' => UserLedgerEntry::STATUS_ACCEPTED,
+                            'type' => UserLedgerEntry::TYPE_WITHDRAWAL,
+                            'date' => '2018-10-24T15:20:49+00:00',
+                            'address' => '0001-00000000-XXXX',
+                            'txid' => null,
+                            'id' => 2,
+                        ],
+                    ],
+                ]
+            );
+    }
+
+    public function testHistoryDatesInvalid(): void
+    {
+        $user = factory(User::class)->create();
+        $userId = $user->id;
+
+        $amountInClicks = 200000000000;
+        $this->initUserLedger($userId, $amountInClicks);
+
+        $this->actingAs($user, 'api');
+        $response = $this->getJson('/api/wallet/history?date_from=2018-10-24&date_to=2019-10-24');
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
