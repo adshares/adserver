@@ -32,6 +32,10 @@ echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:adpay:event:export ${_REDIRECTION}"
 echo ""
 
+echo -n "* * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:expired-withdrawal:cancel ${_REDIRECTION}"
+echo ""
+
 echo -n "30 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:adpay:payments:get"
 echo -n " && "

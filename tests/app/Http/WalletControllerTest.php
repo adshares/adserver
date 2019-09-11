@@ -180,6 +180,18 @@ class WalletControllerTest extends TestCase
         self::assertSame(UserLedgerEntry::STATUS_CANCELED, UserLedgerEntry::find($userLedgerEntry->id)->status);
     }
 
+    public function testWithdrawCancelInvalidLedgerEntry(): void
+    {
+        $user = factory(User::class)->create();
+        $this->generateUserIncome($user->id, 200000000000);
+
+        $this->actingAs($user, 'api');
+
+        $this->delete(
+            sprintf('/api/wallet/cancel-withdrawal/%d', 1)
+        )->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
     private function generateUserIncome(int $userId, int $amount): void
     {
         $dateString = '2018-10-24 15:00:49';
