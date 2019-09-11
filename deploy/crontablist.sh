@@ -64,6 +64,10 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
 
+echo -n "0 0 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:serve-domains:update"
+echo ""
+
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
 {
     echo -n "*/30 * * * * "
