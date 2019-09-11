@@ -42,6 +42,8 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use stdClass;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function config;
 
@@ -80,8 +82,6 @@ class WalletController extends Controller
         $addressFrom = $this->getAdServerAdsAddress();
 
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            Log::error("Invalid ADS address is set: ${addressFrom}");
-
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -119,15 +119,14 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    /**
-     * @return string AdServer address in ADS network
-     */
     private function getAdServerAdsAddress(): AccountId
     {
         try {
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
+
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -146,7 +145,8 @@ class WalletController extends Controller
 
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
-        if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
+        if (UserLedgerEntry::TYPE_WITHDRAWAL !== $userLedgerEntry->type
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $userLedgerEntry->status) {
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 
@@ -167,8 +167,10 @@ class WalletController extends Controller
 
     public function cancelWithdrawal(UserLedgerEntry $entry): JsonResponse
     {
-        if (Auth::user()->id !== $entry->user_id) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+        if (Auth::user()->id !== $entry->user_id
+            || UserLedgerEntry::TYPE_WITHDRAWAL !== $entry->type
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $entry->status) {
+            throw new NotFoundHttpException();
         }
 
         $entry->status = UserLedgerEntry::STATUS_CANCELED;

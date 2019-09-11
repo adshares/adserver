@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Cancel expired withdrawal automatically
 - Billing history filtering
 ### Changed
 - Import inventory: reject unclassified banners
