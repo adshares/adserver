@@ -19,6 +19,11 @@
                 <ul>
                     <li>Terms: <a href="{{ $supplyTermsUrl }}">{{ $supplyTermsUrl }}</a></li>
                     <li>Policy: <a href="{{ $supplyPrivacyUrl }}">{{ $supplyPrivacyUrl }}</a></li>
+                    <li>
+                        If you find this banner inappropriate send this link:
+                        <a href="{{ $supplyBannerRejectUrl }}">{{ $supplyBannerRejectUrl }}</a>
+                        to <a href="mailto:{{ $supplySupportEmail }}">{{ $supplySupportEmail }}</a>
+                    </li>
                 </ul>
             </section>
 

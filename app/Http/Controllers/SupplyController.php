@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
@@ -30,6 +31,7 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
@@ -366,6 +368,8 @@ class SupplyController extends Controller
             'supplyTermsUrl' => config('app.terms_url'),
             'supplyPrivacyUrl' => config('app.privacy_url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
+            'supplyBannerRejectUrl' => config('app.adpanel_url').'/publisher/classifier/'.$bannerId,
+            'supplySupportEmail' => (new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]))->toString(),
             'demand' => false,
             'bannerType' => $banner->type,
         ];
