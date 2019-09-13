@@ -79,6 +79,9 @@ class Site extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'status' => 'integer',
         'site_requires' => 'json',
         'site_excludes' => 'json',
         'require_classified' => 'boolean',
