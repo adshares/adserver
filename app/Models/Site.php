@@ -37,6 +37,7 @@ use function in_array;
  * @property string uuid
  * @property int user_id
  * @property string name
+ * @property int status
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
  * @property bool $require_classified deprecated
