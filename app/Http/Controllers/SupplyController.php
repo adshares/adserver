@@ -22,22 +22,23 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -307,15 +308,15 @@ class SupplyController extends Controller
     {
         if (!$request->query->has('r')
             || !$request->query->has('ctx')
-            || !$this->isCidValid($request->query->get('cid'))
+            || !$this->isUuidValid($request->query->get('cid'))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
     }
 
-    private function isCidValid($cid): bool
+    private function isUuidValid($uuid): bool
     {
-        return is_string($cid) && 32 === strlen($cid);
+        return is_string($uuid) && 1 === preg_match('/^[0-9a-f]{32}$/i', $uuid);
     }
 
     /**
@@ -354,7 +355,16 @@ class SupplyController extends Controller
 
     public function why(Request $request): View
     {
+        Validator::make(
+            $request->all(),
+            [
+                'bid' => 'required|regex:/^[0-9a-f]{32}$/i',
+                'cid' => 'required|regex:/^[0-9a-f]{32}$/i',
+            ]
+        )->validate();
+
         $bannerId = $request->query->get('bid');
+        $caseId = $request->query->get('cid');
 
         $banner = NetworkBanner::fetchByPublicId($bannerId);
         $campaign = $banner->campaign()->first();
@@ -368,8 +378,16 @@ class SupplyController extends Controller
             'supplyTermsUrl' => config('app.terms_url'),
             'supplyPrivacyUrl' => config('app.privacy_url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
+            'supplyBannerReportUrl' => SecureUrl::change(
+                route(
+                    'report-ad',
+                    [
+                        'banner_id' => $bannerId,
+                        'case_id' => $caseId,
+                    ]
+                )
+            ),
             'supplyBannerRejectUrl' => config('app.adpanel_url').'/publisher/classifier/'.$bannerId,
-            'supplySupportEmail' => (new Email(Config::fetchAdminSettings()[Config::SUPPORT_EMAIL]))->toString(),
             'demand' => false,
             'bannerType' => $banner->type,
         ];
@@ -391,6 +409,24 @@ class SupplyController extends Controller
             'supply/why',
             $data
         );
+    }
+
+    public function reportAd(string $caseId, string $bannerId): string
+    {
+        if (!$this->isUuidValid($caseId) || !$this->isUuidValid($bannerId)) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
+        if (null === ($event = NetworkEventLog::fetchByEventId($eventId))) {
+            throw new NotFoundHttpException('Missing case');
+        }
+
+        $userId = User::fetchByUuid($event->publisher_id)->id;
+        //TODO store reject request and notify user
+        Log::error(sprintf('Notify publisher %s that banner %s was reported', $userId, $bannerId));
+
+        return 'Ad reported.';
     }
 
     private function isPageBlacklisted(string $url): bool
