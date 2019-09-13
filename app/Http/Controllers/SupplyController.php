@@ -366,7 +366,9 @@ class SupplyController extends Controller
         $bannerId = $request->query->get('bid');
         $caseId = $request->query->get('cid');
 
-        $banner = NetworkBanner::fetchByPublicId($bannerId);
+        if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+            throw new NotFoundHttpException('No matching banner');
+        }
         $campaign = $banner->campaign()->first();
         $networkHost = NetworkHost::fetchByHost($campaign->source_host);
 
