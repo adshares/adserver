@@ -50,24 +50,18 @@ class SiteClassificationUpdater
                 self::KEYWORD_CLASSIFIED_VALUE;
         }
 
-        $excludeKeywords = $this->getClassificationForRejectedBanners($site->user_id, $site->id);
-
-        /** @var Classification $excludeKeyword */
-        foreach ($excludeKeywords as $excludeKeyword) {
-            $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $excludeKeyword->keyword();
-        }
+        $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [
+            $this->getClassificationForRejectedBanners($site->user_id)->keyword(),
+        ];
 
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;
         $site->save();
     }
 
-    private function getClassificationForRejectedBanners(int $publisherId, int $siteId): array
+    private function getClassificationForRejectedBanners(int $publisherId): Classification
     {
-        return [
-            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false),
-            new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false, $siteId),
-        ];
+        return new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false);
     }
 
     private function extractClassifiers(array $siteExcludes, array $siteRequires): array
