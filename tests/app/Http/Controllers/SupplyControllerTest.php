@@ -23,6 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http\Controllers;
 
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
@@ -60,7 +62,11 @@ final class SupplyControllerTest extends TestCase
 
     public function testPageWhy(): void
     {
-        $banner = factory(NetworkBanner::class)->create();
+        $host = 'https://example.com';
+        $campaignId = 1;
+        factory(NetworkHost::class)->create(['host' => $host]);
+        factory(NetworkCampaign::class)->create(['id' => $campaignId, 'source_host' => $host]);
+        $banner = factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => $campaignId]);
 
         $response = $this->get(self::PAGE_WHY_URI.'?bid='.$banner->uuid.'&cid=0123456789abcdef0123456789abcdef');
 
