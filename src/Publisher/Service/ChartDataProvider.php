@@ -38,7 +38,8 @@ final class ChartDataProvider
         StatsRepository::TYPE_VIEW_INVALID_RATE => 'fetchViewInvalidRate',
         StatsRepository::TYPE_RPC => 'fetchRpc',
         StatsRepository::TYPE_RPM => 'fetchRpm',
-        StatsRepository::TYPE_SUM => 'fetchSum',
+        StatsRepository::TYPE_REVENUE_BY_CASE => 'fetchSum',
+        StatsRepository::TYPE_REVENUE_BY_HOUR => 'fetchSumHour',
         StatsRepository::TYPE_CTR => 'fetchCtr',
     ];
 

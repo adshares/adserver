@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Tests\Http;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\CreatesApplication;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Advertiser\Dto\ChartInput;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;

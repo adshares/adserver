@@ -220,7 +220,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $resultSum = $this->fetch(
-            StatsRepository::TYPE_SUM,
+            StatsRepository::TYPE_REVENUE_BY_CASE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -259,7 +259,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $resultSum = $this->fetch(
-            StatsRepository::TYPE_SUM,
+            StatsRepository::TYPE_REVENUE_BY_CASE,
             $publisherId,
             $resolution,
             $dateStart,
@@ -298,7 +298,26 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId = null
     ): ChartResult {
         $result = $this->fetch(
-            StatsRepository::TYPE_SUM,
+            StatsRepository::TYPE_REVENUE_BY_CASE,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        return new ChartResult($result);
+    }
+
+    public function fetchSumHour(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_REVENUE_BY_HOUR,
             $publisherId,
             $resolution,
             $dateStart,

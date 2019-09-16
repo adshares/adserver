@@ -183,6 +183,23 @@ class DummyStatsRepository implements StatsRepository
         return new ChartResult($data);
     }
 
+    public function fetchSumHour(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult {
+        $data = [
+            ['2019-01-01T15:00:00+00:00', 15],
+            ['2019-01-01T16:00:00+00:00', 25],
+            ['2019-01-01T17:00:00+00:00', 35],
+            ['2019-01-01T18:00:00+00:00', 45],
+        ];
+
+        return new ChartResult($data);
+    }
+
     public function fetchCtr(
         string $publisherId,
         string $resolution,
