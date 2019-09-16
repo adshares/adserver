@@ -27,9 +27,11 @@ use Adshares\Adserver\Mail\WithdrawalApproval;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -38,40 +40,48 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use stdClass;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function config;
 
 class WalletController extends Controller
 {
-    const FIELD_ADDRESS = 'address';
+    private const FIELD_ADDRESS = 'address';
 
-    const FIELD_AMOUNT = 'amount';
+    private const FIELD_AMOUNT = 'amount';
 
-    const FIELD_ERROR = 'error';
+    private const FIELD_DATE_FROM = 'date_from';
 
-    const FIELD_FEE = 'fee';
+    private const FIELD_DATE_TO = 'date_to';
 
-    const FIELD_LIMIT = 'limit';
+    private const FIELD_ERROR = 'error';
 
-    const FIELD_MEMO = 'memo';
+    private const FIELD_FEE = 'fee';
 
-    const FIELD_MESSAGE = 'message';
+    private const FIELD_LIMIT = 'limit';
 
-    const FIELD_OFFSET = 'offset';
+    private const FIELD_MEMO = 'memo';
 
-    const FIELD_TO = 'to';
+    private const FIELD_MESSAGE = 'message';
 
-    const FIELD_TOTAL = 'total';
+    private const FIELD_OFFSET = 'offset';
 
-    const VALIDATOR_RULE_REQUIRED = 'required';
+    private const FIELD_TO = 'to';
+
+    private const FIELD_TOTAL = 'total';
+
+    private const FIELD_TYPES = 'types';
+
+    private const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
 
         if (!AdsValidator::isAccountAddressValid($addressFrom)) {
-            Log::error("Invalid ADS address is set: ${addressFrom}");
-
             return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
@@ -109,15 +119,14 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    /**
-     * @return string AdServer address in ADS network
-     */
     private function getAdServerAdsAddress(): AccountId
     {
         try {
             return new AccountId(config('app.adshares_address'));
         } catch (InvalidArgumentException $e) {
-            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage());
+            Log::error(sprintf('Invalid ADS address is set: %s', $e->getMessage()));
+
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -136,7 +145,8 @@ class WalletController extends Controller
 
         $userLedgerEntry = UserLedgerEntry::find($token['payload']['ledgerEntry']);
 
-        if ($userLedgerEntry->status !== UserLedgerEntry::STATUS_AWAITING_APPROVAL) {
+        if (UserLedgerEntry::TYPE_WITHDRAWAL !== $userLedgerEntry->type
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $userLedgerEntry->status) {
             throw new UnprocessableEntityHttpException('Payment already approved');
         }
 
@@ -157,8 +167,10 @@ class WalletController extends Controller
 
     public function cancelWithdrawal(UserLedgerEntry $entry): JsonResponse
     {
-        if (Auth::user()->id !== $entry->user_id) {
-            return self::json([], Response::HTTP_NOT_FOUND);
+        if (Auth::user()->id !== $entry->user_id
+            || UserLedgerEntry::TYPE_WITHDRAWAL !== $entry->type
+            || UserLedgerEntry::STATUS_AWAITING_APPROVAL !== $entry->status) {
+            throw new NotFoundHttpException();
         }
 
         $entry->status = UserLedgerEntry::STATUS_CANCELED;
@@ -251,36 +263,50 @@ class WalletController extends Controller
         Validator::make(
             $request->all(),
             [
+                self::FIELD_TYPES => 'array',
+                self::FIELD_TYPES.'.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
+                self::FIELD_DATE_FROM => 'date_format:'.DateTime::ATOM,
+                self::FIELD_DATE_TO => 'date_format:'.DateTime::ATOM,
                 self::FIELD_LIMIT => ['integer', 'min:1'],
                 self::FIELD_OFFSET => ['integer', 'min:0'],
             ]
         )->validate();
 
+        $types = $request->input(self::FIELD_TYPES, []);
+        $from =
+            null !== $request->input(self::FIELD_DATE_FROM) ? DateTime::createFromFormat(
+                DateTime::ATOM,
+                $request->input(self::FIELD_DATE_FROM)
+            ) : null;
+        $to =
+            null !== $request->input(self::FIELD_DATE_TO) ? DateTime::createFromFormat(
+                DateTime::ATOM,
+                $request->input(self::FIELD_DATE_TO)
+            ) : null;
         $limit = $request->input(self::FIELD_LIMIT, 10);
         $offset = $request->input(self::FIELD_OFFSET, 0);
 
         $userId = Auth::user()->id;
-        $count = UserLedgerEntry::where('user_id', $userId)->count();
+        $builder = UserLedgerEntry::getBillingHistoryBuilder($userId, $types, $from, $to);
+        $count = $builder->getCountForPagination();
         $resp = [];
         $items = [];
         if ($count > 0) {
-            foreach (UserLedgerEntry::where('user_id', $userId)
-                ->orderBy('created_at', 'desc')
-                ->skip($offset)->take($limit)->cursor() as $ledgerItem) {
-                $amount = (int)$ledgerItem->amount;
-                $date = $ledgerItem->created_at->format(DATE_ATOM);
-                $status = (int)$ledgerItem->status;
-                $type = (int)$ledgerItem->type;
-                $address = $this->getUserLedgerEntryAddress($ledgerItem);
+            $userLedgerItems = $builder->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get();
+
+            /** @var stdClass $ledgerItem */
+            foreach ($userLedgerItems as $ledgerItem) {
+                $date = MySqlQueryBuilder::convertMySqlDateToDateTime($ledgerItem->created_at)
+                    ->format(DATE_ATOM);
 
                 $items[] = [
-                    'amount' => $amount,
-                    'status' => $status,
-                    'type' => $type,
+                    'amount' => (int)$ledgerItem->amount,
+                    'status' => (int)$ledgerItem->status,
+                    'type' => (int)$ledgerItem->type,
                     'date' => $date,
-                    'address' => $address,
+                    'address' => $this->getUserLedgerEntryAddress($ledgerItem),
                     'txid' => $ledgerItem->txid,
-                    'id' => $ledgerItem->id,
+                    'id' => (int)$ledgerItem->id,
                 ];
             }
         }
@@ -293,14 +319,12 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    private function getUserLedgerEntryAddress(UserLedgerEntry $ledgerItem): ?string
+    private function getUserLedgerEntryAddress(stdClass $ledgerItem): ?string
     {
         if ((int)$ledgerItem->amount > 0) {
-            $address = $ledgerItem->address_from;
-        } else {
-            $address = $ledgerItem->address_to;
+            return $ledgerItem->address_from;
         }
 
-        return $address;
+        return $ledgerItem->address_to;
     }
 }

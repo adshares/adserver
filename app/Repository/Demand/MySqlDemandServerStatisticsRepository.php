@@ -30,6 +30,7 @@ class MySqlDemandServerStatisticsRepository
 SELECT
   DATE_FORMAT(e.hour_timestamp, "%Y-%m-%d") AS date,
   SUM(views)                                AS impressions,
+  SUM(clicks)                               AS clicks,
   ROUND(SUM(e.cost) / 100000000000, 2)      AS volume
 FROM event_logs_hourly e
 WHERE e.hour_timestamp < DATE(NOW())
