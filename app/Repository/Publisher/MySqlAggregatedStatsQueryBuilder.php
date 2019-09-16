@@ -30,7 +30,7 @@ use function sprintf;
 
 class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 {
-    protected const TABLE_NAME = 'network_event_logs_hourly e';
+    protected const TABLE_NAME = 'network_case_logs_hourly e';
 
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
@@ -80,7 +80,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 $this->column('SUM(e.views_unique) AS c');
                 break;
             case StatsRepository::TYPE_SUM:
-                $this->column('SUM(e.revenue) AS c');
+                $this->column('SUM(e.revenue_case) AS c');
                 break;
             case StatsRepository::TYPE_STATS:
                 $this->selectBaseStatsColumns();
@@ -95,7 +95,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->column('SUM(e.clicks) AS clicks');
         $this->column('SUM(e.views) AS views');
-        $this->column('SUM(e.revenue) AS revenue');
+        $this->column('SUM(e.revenue_case) AS revenue');
     }
 
     private function selectBaseStatsReportColumns(): void
