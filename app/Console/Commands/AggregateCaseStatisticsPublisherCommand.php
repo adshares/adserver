@@ -137,11 +137,11 @@ SELECT
   SUM(IF(amount IS NOT NULL, amount, 0))                    AS revenue_case
 FROM
   (SELECT
-     c.publisher_id                                                                                  AS publisher_id,
-     c.site_id                                                                                       AS site_id,
-     c.zone_id                                                                                       AS zone_id,
-     c.domain                                                                                        AS domain,
-     IFNULL(i.user_id, i.tracking_id)                                                                AS uid,
+     c.publisher_id                                                                             AS publisher_id,
+     c.site_id                                                                                  AS site_id,
+     c.zone_id                                                                                  AS zone_id,
+     c.domain                                                                                   AS domain,
+     IFNULL(i.user_id, i.tracking_id)                                                           AS uid,
      IF(clicks.network_case_id IS NULL, 0, 1)                                                   AS is_view_clicked,
      (SELECT SUM(paid_amount_currency) FROM network_case_payments WHERE network_case_id = c.id) AS amount
    FROM network_cases c

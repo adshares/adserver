@@ -503,6 +503,13 @@ class MySqlStatsRepository implements StatsRepository
         return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
+    /**
+     * @deprecated Left for legacy code until NetworkEventLog will be removed.
+     * Statistics are aggregated in AggregateCaseStatisticsPublisherCommand command.
+     *
+     * @param DateTime $dateStart
+     * @param DateTime $dateEnd
+     */
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
     {
         $cacheTable = 'network_event_logs_hourly';
