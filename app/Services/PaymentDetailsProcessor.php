@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Services;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\User;
@@ -62,8 +63,9 @@ class PaymentDetailsProcessor
 
     private static function fetchOperatorFee(): float
     {
-        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        if ($operatorFee === null) {
+        try {
+            $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        } catch (ConfigException $exception) {
             throw new MissingInitialConfigurationException('No config entry for operator fee.');
         }
 
@@ -93,16 +95,12 @@ class PaymentDetailsProcessor
                 continue;
             }
 
-            $payTime = isset($paymentDetail['pay_time'])
-                ? DateTime::createFromFormat(DateTime::ATOM, $paymentDetail['pay_time'])
-                : $transactionTime;
-
             $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
             $eventValue = min($spendableAmount, $paymentDetail['event_value']);
             $calculatedFees = $feeCalculator->calculateFee($eventValue);
 
             $networkCasePayment = NetworkCasePayment::create(
-                $payTime,
+                $transactionTime,
                 $adsPaymentId,
                 $eventValue,
                 $calculatedFees['license_fee'],
