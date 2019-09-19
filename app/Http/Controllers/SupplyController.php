@@ -89,6 +89,9 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
+        if (parse_url($decodedQueryData['page']['url'] ?? '', PHP_URL_SCHEME) != 'https') {
+            throw new BadRequestHttpException('Bad request.');
+        }
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
