@@ -40,11 +40,11 @@ class Token extends Model
 
     private const VALIDITY_PERIODS = [
         self::EMAIL_ACTIVATE => 24 * 3600,
-        self::EMAIL_CHANGE_STEP_1 => 3600,
-        self::EMAIL_CHANGE_STEP_2 => 3600,
-        self::PASSWORD_RECOVERY => 3600,
+        self::EMAIL_CHANGE_STEP_1 => 24 * 3600,
+        self::EMAIL_CHANGE_STEP_2 => 24 * 3600,
+        self::PASSWORD_RECOVERY => 24 * 3600,
         self::IMPERSONATION => 24 * 3600,
-        self::EMAIL_APPROVE_WITHDRAWAL => 15 * 60,
+        self::EMAIL_APPROVE_WITHDRAWAL => 3600,
     ];
 
     private const MINIMAL_AGE_LIMITS = [
