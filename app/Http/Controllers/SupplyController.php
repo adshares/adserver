@@ -37,7 +37,7 @@ use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -424,11 +424,18 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('Missing case');
         }
 
-        $userId = User::fetchByUuid($event->publisher_id)->id;
-        //TODO store reject request and notify user
-        Log::error(sprintf('Notify publisher %s that banner %s was reported', $userId, $bannerId));
+        if ($event->banner_id !== $bannerId) {
+            throw new BadRequestHttpException('Wrong banner id');
+        }
 
-        return 'Ad reported.';
+        $userId = User::fetchByUuid($event->publisher_id)->id;
+
+        Storage::disk('local')->put(
+            'reported-ads.txt',
+            sprintf('%s;%s', $userId, $bannerId)
+        );
+
+        return 'Thank you for reporting ad.';
     }
 
     private function isPageBlacklisted(string $url): bool
