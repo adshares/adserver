@@ -429,16 +429,15 @@ class SupplyController extends Controller
             throw new UnprocessableEntityHttpException();
         }
 
-        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
-        if (null === ($event = NetworkEventLog::fetchByEventId($eventId))) {
+        if (null === ($case = NetworkCase::fetchByCaseId($caseId))) {
             throw new NotFoundHttpException('Missing case');
         }
 
-        if ($event->banner_id !== $bannerId) {
+        if ($case->banner_id !== $bannerId) {
             throw new BadRequestHttpException('Wrong banner id');
         }
 
-        $userId = User::fetchByUuid($event->publisher_id)->id;
+        $userId = User::fetchByUuid($case->publisher_id)->id;
 
         Storage::disk('local')->put(
             'reported-ads.txt',
