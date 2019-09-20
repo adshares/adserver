@@ -19,6 +19,8 @@
 
 body {
     background-image: radial-gradient(circle at 24% 13%,#121e3e,#0b1329);
+    font-family: Arial, sans-serif;
+    font-size: medium;
 }
 
 #container {
@@ -37,4 +39,9 @@ body {
 
 #container #adshares {
     margin-top: 50px;
+}
+
+#ad-report {
+    font-size: small;
+    margin: 10px;
 }

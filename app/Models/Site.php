@@ -37,10 +37,11 @@ use function in_array;
  * @property string uuid
  * @property int user_id
  * @property string name
+ * @property int status
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
- * @property bool require_classified
- * @property bool exclude_unclassified
+ * @property bool $require_classified deprecated
+ * @property bool $exclude_unclassified deprecated
  * @property Zone[]|Collection zones
  * @method static Site create($input = null)
  * @method static get()
@@ -78,6 +79,9 @@ class Site extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
+        'user_id' => 'integer',
+        'status' => 'integer',
         'site_requires' => 'json',
         'site_excludes' => 'json',
         'require_classified' => 'boolean',
@@ -89,8 +93,6 @@ class Site extends Model
         'status',
         'primary_language',
         'filtering',
-        'require_classified',
-        'exclude_unclassified',
     ];
 
     protected $hidden = [
@@ -98,6 +100,8 @@ class Site extends Model
         'site_requires',
         'site_excludes',
         'zones',
+        'require_classified',
+        'exclude_unclassified',
     ];
 
     protected $appends = [
