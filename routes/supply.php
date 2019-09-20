@@ -58,3 +58,5 @@ Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 
 # WHY PAGE
 Route::get('/supply/why', [SupplyController::class, 'why']);
+Route::get('/supply/ad/report/{case_id}/{banner_id}', [SupplyController::class, 'reportAd'])
+    ->name('report-ad');

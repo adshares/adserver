@@ -13,6 +13,9 @@ mkdir -pm 777 storage
 mkdir -pm 777 storage/app/public/banners
 mkdir -pm 777 storage/framework/views
 
+echo 'user_id;network_banner_uuid' > storage/app/reported-ads.txt
+chmod 664 storage/app/reported-ads.txt
+
 ln -sf ${SERVICE_DIR}/storage/app/public public/storage
 
 composer install --no-dev

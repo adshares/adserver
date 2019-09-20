@@ -20,6 +20,11 @@
                     <li>Terms: <a href="{{ $supplyTermsUrl }}">{{ $supplyTermsUrl }}</a></li>
                     <li>Policy: <a href="{{ $supplyPrivacyUrl }}">{{ $supplyPrivacyUrl }}</a></li>
                 </ul>
+                <div id="ad-report">
+                    Report inappropriate ad by clicking the link <a href="{{ $supplyBannerReportUrl }}">{{ $supplyBannerReportUrl }}</a>
+                    <br />
+                    If you own this site, use direct link <a href="{{ $supplyBannerRejectUrl }}">{{ $supplyBannerRejectUrl }}</a>
+                </div>
             </section>
 
             @if ($demand)
