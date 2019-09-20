@@ -65,6 +65,7 @@ class Kernel extends ConsoleKernel
         try {
             DB::connection()->getPdo();
             DatabaseConfigReader::overwriteAdministrationConfig();
+            DB::statement('SET SESSION wait_timeout = 30000');
         } catch (Exception $exception) {
             // do not overwrite environments' variables
         }
