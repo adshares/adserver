@@ -50,65 +50,18 @@ class SiteClassificationUpdater
                 self::KEYWORD_CLASSIFIED_VALUE;
         }
 
-        $publisherId = $site->user_id;
-        $siteId = $site->id;
-
-        if ($site->require_classified) {
-            list($requireKeywords, $excludeKeywords) =
-                $this->getClassificationForPositiveCase(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, $siteId);
-
-            /** @var Classification $requireKeyword */
-            foreach ($requireKeywords as $requireKeyword) {
-                $siteRequires[$requireKeyword->getNamespace()][] = $requireKeyword->keyword();
-            }
-            /** @var Classification $excludeKeyword */
-            foreach ($excludeKeywords as $excludeKeyword) {
-                $siteExcludes[$excludeKeyword->getNamespace()][] = $excludeKeyword->keyword();
-            }
-        }
-
-        if ($site->exclude_unclassified) {
-            $excludeKeywords =
-                $this->getClassificationNotNegativeCase(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, $siteId);
-
-            if (empty($siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE])) {
-                $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [];
-            }
-
-            /** @var Classification $excludeKeyword */
-            foreach ($excludeKeywords as $excludeKeyword) {
-                $keyword = $excludeKeyword->keyword();
-
-                if (!in_array($keyword, $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE], true)) {
-                    $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE][] = $keyword;
-                }
-            }
-        }
+        $siteExcludes[self::INTERNAL_CLASSIFIER_NAMESPACE] = [
+            $this->getClassificationForRejectedBanners($site->user_id)->keyword(),
+        ];
 
         $site->site_excludes = $siteExcludes;
         $site->site_requires = $siteRequires;
         $site->save();
     }
 
-    private function getClassificationForPositiveCase(string $namespace, int $publisherId, int $siteId): array
+    private function getClassificationForRejectedBanners(int $publisherId): Classification
     {
-        $requireKeywords = [
-            new Classification($namespace, $publisherId, true),
-            new Classification($namespace, $publisherId, true, $siteId),
-        ];
-        $excludeKeywords = [
-            new Classification($namespace, $publisherId, false, $siteId),
-        ];
-
-        return [$requireKeywords, $excludeKeywords];
-    }
-
-    private function getClassificationNotNegativeCase(string $namespace, int $publisherId, int $siteId): array
-    {
-        return [
-            new Classification($namespace, $publisherId, false),
-            new Classification($namespace, $publisherId, false, $siteId),
-        ];
+        return new Classification(self::INTERNAL_CLASSIFIER_NAMESPACE, $publisherId, false);
     }
 
     private function extractClassifiers(array $siteExcludes, array $siteRequires): array

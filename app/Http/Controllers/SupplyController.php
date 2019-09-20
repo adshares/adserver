@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -36,6 +37,8 @@ use DateTime;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -305,15 +308,15 @@ class SupplyController extends Controller
     {
         if (!$request->query->has('r')
             || !$request->query->has('ctx')
-            || !$this->isCidValid($request->query->get('cid'))
+            || !$this->isUuidValid($request->query->get('cid'))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
     }
 
-    private function isCidValid($cid): bool
+    private function isUuidValid($uuid): bool
     {
-        return is_string($cid) && 32 === strlen($cid);
+        return is_string($uuid) && 1 === preg_match('/^[0-9a-f]{32}$/i', $uuid);
     }
 
     /**
@@ -352,9 +355,20 @@ class SupplyController extends Controller
 
     public function why(Request $request): View
     {
-        $bannerId = $request->query->get('bid');
+        Validator::make(
+            $request->all(),
+            [
+                'bid' => 'required|regex:/^[0-9a-f]{32}$/i',
+                'cid' => 'required|regex:/^[0-9a-f]{32}$/i',
+            ]
+        )->validate();
 
-        $banner = NetworkBanner::fetchByPublicId($bannerId);
+        $bannerId = $request->query->get('bid');
+        $caseId = $request->query->get('cid');
+
+        if (null === ($banner = NetworkBanner::fetchByPublicId($bannerId))) {
+            throw new NotFoundHttpException('No matching banner');
+        }
         $campaign = $banner->campaign()->first();
         $networkHost = NetworkHost::fetchByHost($campaign->source_host);
 
@@ -366,6 +380,16 @@ class SupplyController extends Controller
             'supplyTermsUrl' => config('app.terms_url'),
             'supplyPrivacyUrl' => config('app.privacy_url'),
             'supplyPanelUrl' => config('app.adpanel_url'),
+            'supplyBannerReportUrl' => SecureUrl::change(
+                route(
+                    'report-ad',
+                    [
+                        'banner_id' => $bannerId,
+                        'case_id' => $caseId,
+                    ]
+                )
+            ),
+            'supplyBannerRejectUrl' => config('app.adpanel_url').'/publisher/classifier/'.$bannerId,
             'demand' => false,
             'bannerType' => $banner->type,
         ];
@@ -387,6 +411,31 @@ class SupplyController extends Controller
             'supply/why',
             $data
         );
+    }
+
+    public function reportAd(string $caseId, string $bannerId): string
+    {
+        if (!$this->isUuidValid($caseId) || !$this->isUuidValid($bannerId)) {
+            throw new UnprocessableEntityHttpException();
+        }
+
+        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
+        if (null === ($event = NetworkEventLog::fetchByEventId($eventId))) {
+            throw new NotFoundHttpException('Missing case');
+        }
+
+        if ($event->banner_id !== $bannerId) {
+            throw new BadRequestHttpException('Wrong banner id');
+        }
+
+        $userId = User::fetchByUuid($event->publisher_id)->id;
+
+        Storage::disk('local')->put(
+            'reported-ads.txt',
+            sprintf('%s;%s', $userId, $bannerId)
+        );
+
+        return 'Thank you for reporting ad.';
     }
 
     private function isPageBlacklisted(string $url): bool

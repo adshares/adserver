@@ -280,6 +280,10 @@ class NetworkBanner extends Model
                 $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
                 $query->whereIn($concatSizeExpression, $sizes);
             }
+
+            if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
+                $query->where('network_banners.uuid', $networkBannerPublicId->bin());
+            }
         }
 
         $query->join(

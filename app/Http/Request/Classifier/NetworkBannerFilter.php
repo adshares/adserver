@@ -23,8 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Request\Classifier;
 
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
+use Adshares\Common\Domain\ValueObject\Uuid;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
+use function json_decode;
+use function sprintf;
 use function urldecode;
 
 class NetworkBannerFilter
@@ -50,6 +54,9 @@ class NetworkBannerFilter
     /** @var int|null */
     private $siteId;
 
+    /** @var Uuid|null */
+    private $networkBannerPublicId;
+
     /** @var string */
     private $landingUrl;
 
@@ -64,6 +71,13 @@ class NetworkBannerFilter
 
         $this->userId = $userId;
         $this->siteId = $siteId;
+
+        try {
+            $this->networkBannerPublicId =
+                null !== ($bannerId = $request->get('banner_id')) ? Uuid::fromString($bannerId) : null;
+        } catch (InvalidUuidException $exception) {
+            throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] %s', $exception->getMessage()));
+        }
 
         $landingUrl = $request->get('landing_url');
 
@@ -105,6 +119,11 @@ class NetworkBannerFilter
     public function getSiteId(): ?int
     {
         return $this->siteId;
+    }
+
+    public function getNetworkBannerPublicId(): ?Uuid
+    {
+        return $this->networkBannerPublicId;
     }
 
     public function getLandingUrl(): ?string

@@ -37,8 +37,6 @@ class SitesTest extends TestCase
         'id',
         'name',
         'filtering',
-        'requireClassified',
-        'excludeUnclassified',
         'adUnits' => [
             '*' => [
                 'name',
@@ -141,12 +139,12 @@ class SitesTest extends TestCase
     {
         $presets = [
             [
-                "status" => "0",
+                "status" => 0,
                 "name" => "nameA",
                 "primaryLanguage" => "pl",
             ],
             [
-                'status' => "1",
+                'status' => 1,
                 "name" => "nameB",
                 "primaryLanguage" => "en",
             ],
@@ -209,7 +207,7 @@ JSON
             [
                 'name' => $data['name'] ?? $site->name,
                 'primaryLanguage' => $data['primaryLanguage'] ?? $site->primary_language,
-                'status' => $data['status'] ?? "{$site->status}",
+                'status' => $data['status'] ?? $site->status,
             ]
         );
     }
@@ -293,14 +291,14 @@ JSON
         return [
             [
                 [
-                    "status" => "1",
+                    "status" => 1,
                     "name" => "name1",
                     "primaryLanguage" => "xx",
                 ],
             ],
             [
                 [
-                    'status' => "1",
+                    'status' => 1,
                 ],
             ],
             [
@@ -347,7 +345,7 @@ JSON
             'completelyNewZones' => [
                 [
                     [
-                        "status" => "0",
+                        "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "title1",
                         'size' => [
@@ -356,7 +354,7 @@ JSON
                         ],
                     ],
                     [
-                        "status" => "1",
+                        "status" => 1,
                         "name" => "title2",
                         'size' => [
                             "width" => 300,
@@ -369,7 +367,7 @@ JSON
                 [
                     [
                         "id" => "1",
-                        "status" => "0",
+                        "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "new-title1",
                         'size' => [
@@ -379,7 +377,7 @@ JSON
                     ],
 
                     [
-                        "status" => "1",
+                        "status" => 1,
                         "name" => "new-title2",
                         'size' => [
                             "width" => 300,
@@ -392,7 +390,7 @@ JSON
                 [
                     [
                         "id" => "1",
-                        "status" => "0",
+                        "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "new-title1",
                         'size' => [
@@ -402,7 +400,7 @@ JSON
                     ],
                     [
                         "id" => "2",
-                        "status" => "1",
+                        "status" => 1,
                         "name" => "new-title2",
                         'size' => [
                             "width" => 300,
@@ -457,11 +455,6 @@ JSON
             2,
             'filtering'
         );
-
-        $content = json_decode($response->content(), true);
-
-        $this->assertEquals($preset['requireClassified'] ?? false, $content['requireClassified']);
-        $this->assertEquals($preset['excludeUnclassified'] ?? false, $content['excludeUnclassified']);
     }
 
     public function filteringDataProvider(): array
@@ -493,7 +486,7 @@ JSON
       "requires": {},
       "excludes": {}
     },
-    "status": "0",
+    "status": 0,
     "name": "nameA",
     "primaryLanguage": "pl",
     "adUnits": [
