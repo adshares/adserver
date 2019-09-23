@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+use Adshares\Adserver\Models\NetworkCase;
+use Faker\Generator as Faker;
 
-use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class AdSelectInventoryExporterCommandTest extends TestCase
-{
-    use RefreshDatabase;
-
-    public function testExport(): void
-    {
-        $this->app->bind(AdSelectLegacy::class, function () {
-            $adSelect = $this->createMock(AdSelectLegacy::class);
-
-            return $adSelect;
-        });
-
-        $this->artisan('ops:adselect:inventory:export')
-            ->assertExitCode(0);
+$factory->define(
+    NetworkCase::class,
+    function (Faker $faker) {
+        return [
+            'case_id' => $faker->uuid,
+            'network_impression_id' => 1,
+            'publisher_id' => $faker->uuid,
+            'site_id' => $faker->uuid,
+            'zone_id' => $faker->uuid,
+            'domain' => $faker->domainName,
+            'campaign_id' => $faker->uuid,
+            'banner_id' => $faker->uuid,
+        ];
     }
-}
+);

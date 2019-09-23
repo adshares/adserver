@@ -22,10 +22,16 @@ declare(strict_types = 1);
 
 namespace Adshares\Tests\Supply\Application\Service;
 
+use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdSelectTest extends TestCase
@@ -34,15 +40,37 @@ class AdSelectTest extends TestCase
 
     public function testFindBanners(): void
     {
-        $this->markTestIncomplete('Create banners for selection');
+        $this->app->bind(
+            AdSelect::class,
+            function () {
+                return new DummyAdSelectClient();
+            }
+        );
 
-        $this->app->bind(AdSelect::class, function () {
-            return new DummyAdSelectClient();
-        });
+        $user = factory(User::class)->create();
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+        $zone = factory(Zone::class)->create(['site_id' => $site->id]);
+
+        $campaign =
+            factory(NetworkCampaign::class)->create(
+                ['status' => Status::STATUS_ACTIVE, 'publisher_id' => $user->uuid]
+            );
+        $banner = factory(NetworkBanner::class)->create(
+            [
+                'network_campaign_id' => $campaign->id,
+                'status' => Status::STATUS_ACTIVE,
+                'width' => $zone->width,
+                'height' => $zone->height,
+            ]
+        );
+
+        $zones = [['width' => $zone->width, 'height' => $zone->height, 'zone' => $zone->uuid]];
+        $bannerChecksum = $banner->checksum;
 
         $finder = $this->app->make(AdSelect::class);
-        $banners = $finder->findBanners([], new ImpressionContext([], [], []));
+        $banners = $finder->findBanners($zones, new ImpressionContext([], [], []));
 
         self::assertGreaterThan(0, count($banners));
+        $this->assertEquals($bannerChecksum, $banners[0]['creative_sha1']);
     }
 }

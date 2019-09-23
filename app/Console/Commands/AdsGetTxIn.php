@@ -26,6 +26,7 @@ use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Utilities\SqlUtils;
 use DateTime;
 use Illuminate\Database\QueryException;
 
@@ -97,7 +98,7 @@ class AdsGetTxIn extends BaseCommand
                     $adsTx->save();
                     ++$count;
                 } catch (QueryException $exc) {
-                    if (is_array($exc->errorInfo) && count($exc->errorInfo) > 1 && $exc->errorInfo[1] === 1062) {
+                    if (SqlUtils::isDuplicatedEntry($exc)) {
                         $this->info("Tx [$txid] rejected. It is already in the database.");
                     } else {
                         $excMessage = $exc->getMessage();

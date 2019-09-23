@@ -5,7 +5,7 @@ if [ ! -e /tmp/ads_scanner_in_progress ]; then
 
     ./artisan ads:get-tx-in
     ./artisan ads:process-tx
-    ./artisan ops:adselect:payment:export
+    ./artisan ops:adselect:case-payments:export
     ./artisan ops:stats:aggregate:publisher
 
     rm -f /tmp/ads_scanner_in_progress

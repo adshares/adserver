@@ -21,7 +21,7 @@
 namespace Adshares\Tests\Supply\Application\Service;
 
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Application\Service\AdSelectInventoryExporter;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -52,7 +52,7 @@ class AdSelectInventoryExporterTest extends TestCase
             []
         );
 
-        $client = $this->createMock(AdSelect::class);
+        $client = $this->createMock(AdSelectLegacy::class);
         $client
             ->expects($this->once())
             ->method('exportInventory');

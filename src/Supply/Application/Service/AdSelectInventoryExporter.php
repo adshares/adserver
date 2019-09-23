@@ -34,7 +34,7 @@ class AdSelectInventoryExporter
     /** @var LoggerInterface */
     private $logger;
 
-    public function __construct(AdSelect $client, CampaignRepository $repository, LoggerInterface $logger)
+    public function __construct(AdSelectLegacy $client, CampaignRepository $repository, LoggerInterface $logger)
     {
         $this->client = $client;
         $this->repository = $repository;

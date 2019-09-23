@@ -25,13 +25,13 @@ namespace Adshares\Supply\Application\Service;
 use Adshares\Supply\Domain\Repository\EventRepository;
 use DateTime;
 
-class AdSelectEventExporter
+class AdSelectLegacyEventExporter
 {
     private $client;
 
     private $eventRepository;
 
-    public function __construct(AdSelect $client, EventRepository $eventRepository)
+    public function __construct(AdSelectLegacy $client, EventRepository $eventRepository)
     {
         $this->client = $client;
         $this->eventRepository = $eventRepository;

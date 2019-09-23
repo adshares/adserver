@@ -22,7 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Client;
 
-use Adshares\Adserver\Client\JsonRpcAdSelectClient;
+use Adshares\Adserver\Client\JsonRpcAdSelectLegacyClient;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Result;
 use Adshares\Adserver\Models\NetworkBanner;
@@ -125,7 +125,7 @@ class JsonRpcAdSelectClientTest extends TestCase
         );
 
         /** @var $mockJsonRpc JsonRpc */
-        $jsonRpcAdSelectClient = new JsonRpcAdSelectClient($mockJsonRpc);
+        $jsonRpcAdSelectClient = new JsonRpcAdSelectLegacyClient($mockJsonRpc);
 
         $requestedZones = [
             ['zone' => $ZONE_UUID_SINGLE_BILLBOARD],
@@ -179,7 +179,7 @@ class JsonRpcAdSelectClientTest extends TestCase
         );
 
         /** @var $mockJsonRpc JsonRpc */
-        $jsonRpcAdSelectClient = new JsonRpcAdSelectClient($mockJsonRpc);
+        $jsonRpcAdSelectClient = new JsonRpcAdSelectLegacyClient($mockJsonRpc);
 
         $requestedZones = [
             ['zone' => $ZONE_UUID_SINGLE_BILLBOARD],
