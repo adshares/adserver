@@ -481,7 +481,7 @@ class UserLedgerEntry extends Model
                                 : 'IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'
                         ),
                     ]
-                )->where('user_id', $userId);
+                )->where('user_id', $userId)->whereNull('deleted_at');
 
                 if (!empty($types)) {
                     $subQuery->whereIn('type', $types);
