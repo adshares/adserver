@@ -141,7 +141,7 @@ class SplitNetworkEventLogs extends Migration
                 $table->bigIncrements('id');
 
                 $table->unsignedBigInteger('network_case_id')->index();
-                $table->timestamp('pay_time')->index();
+                $table->timestamp('pay_time')->useCurrent()->index();
                 $table->bigInteger('ads_payment_id')->index();
 
                 $table->unsignedBigInteger('total_amount');
