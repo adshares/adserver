@@ -42,7 +42,7 @@ class AdSelectEventExportCommand extends BaseCommand
 {
     private const TIME_NEEDED_FOR_ADUSER_USER_MERGE = '-10 minutes';
 
-    protected $signature = 'ops:adselect:event:export';
+    protected $signature = 'legacy:ops:adselect:event:export';
 
     protected $description = 'Export events to AdSelect';
 

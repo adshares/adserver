@@ -23,7 +23,7 @@ echo -n "php ${SERVICE_DIR}/artisan ops:adselect:inventory:export ${_REDIRECTION
 echo ""
 
 echo -n "* * * * * "
-echo -n "php ${SERVICE_DIR}/artisan ops:adselect:event:export ${_REDIRECTION}"
+echo -n "php ${SERVICE_DIR}/artisan ops:adselect:case:export ${_REDIRECTION}"
 echo ""
 
 echo -n "* * * * * "
@@ -55,7 +55,7 @@ echo -n "php ${SERVICE_DIR}/artisan ads:get-tx-in"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ads:process-tx"
 echo -n " && "
-echo -n "php ${SERVICE_DIR}/artisan ops:adselect:payment:export"
+echo -n "php ${SERVICE_DIR}/artisan ops:adselect:case-payments:export"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:stats:aggregate:publisher"
 echo ""

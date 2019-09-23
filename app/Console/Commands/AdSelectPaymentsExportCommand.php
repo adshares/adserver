@@ -32,7 +32,7 @@ use function sprintf;
 
 class AdSelectPaymentsExportCommand extends BaseCommand
 {
-    protected $signature = 'ops:adselect:payment:export';
+    protected $signature = 'legacy:ops:adselect:payment:export';
 
     protected $description = 'Export event payments to AdSelect';
 
