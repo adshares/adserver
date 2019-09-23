@@ -26,7 +26,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Supply\Application\Service\AdSelectEventExporter;
+use Adshares\Supply\Application\Service\AdSelectLegacyEventExporter;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use function sprintf;
 
@@ -38,7 +38,7 @@ class AdSelectPaymentsExportCommand extends BaseCommand
 
     protected $exporterService;
 
-    public function __construct(Locker $locker, AdSelectEventExporter $exporterService)
+    public function __construct(Locker $locker, AdSelectLegacyEventExporter $exporterService)
     {
         parent::__construct($locker);
 

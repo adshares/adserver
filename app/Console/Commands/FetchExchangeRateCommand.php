@@ -24,14 +24,12 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Illuminate\Database\QueryException;
 
 class FetchExchangeRateCommand extends BaseCommand
 {
-    private const SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION = 23000;
-
-    private const SQL_ERROR_CODE_DUPLICATE_ENTRY = 1062;
 
     protected $signature = 'ops:exchange-rate:fetch';
 
@@ -70,8 +68,7 @@ class FetchExchangeRateCommand extends BaseCommand
         try {
             $this->repositoryStorable->storeExchangeRate($exchangeRate);
         } catch (QueryException $queryException) {
-            if (self::SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION === (int)$queryException->errorInfo[0]
-                && self::SQL_ERROR_CODE_DUPLICATE_ENTRY === (int)$queryException->errorInfo[1]) {
+            if (SqlUtils::isDuplicatedEntry($queryException)) {
                 $this->warn('Exchange rate is already in database');
 
                 return;

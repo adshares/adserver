@@ -18,35 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models;
+namespace Adshares\Supply\Application\Service;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Adshares\Supply\Application\Dto\FoundBanners;
+use Adshares\Supply\Application\Dto\ImpressionContext;
+use Adshares\Supply\Domain\Model\Campaign;
+use Adshares\Supply\Domain\Model\CampaignCollection;
 
-/**
- * @property int id
- * @property string txid
- * @property string address
- * @property int amount
- * @property int status
- * @property int last_offset
- * @mixin Builder
- */
-class AdsPayment extends Model
+interface AdSelectLegacy
 {
-    public const STATUS_INVALID = -1;
+    public function exportInventory(Campaign $campaign): void;
 
-    public const STATUS_NEW = 0;
+    public function deleteFromInventory(CampaignCollection $campaigns): void;
 
-    public const STATUS_USER_DEPOSIT = 1;
+    public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 
-    public const STATUS_EVENT_PAYMENT = 2;
+    public function exportEvents(array $events): void;
 
-    public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
+    public function exportEventsPayments(array $events): void;
 
-    public const STATUS_RESERVED = 64;
+    public function getLastPaidPaymentId(): int;
 
-    protected $casts = [
-        'amount' => 'int',
-    ];
+    public function getLastUnpaidEventId(): int;
 }

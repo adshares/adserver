@@ -38,7 +38,8 @@ interface StatsRepository
     public const TYPE_CLICK_INVALID_RATE = 'clickInvalidRate';
     public const TYPE_RPC = 'rpc';
     public const TYPE_RPM = 'rpm';
-    public const TYPE_SUM = 'sum';
+    public const TYPE_REVENUE_BY_CASE = 'sum';
+    public const TYPE_REVENUE_BY_HOUR = 'sumHour';
     public const TYPE_CTR = 'ctr';
     public const TYPE_STATS = 'stats';
     public const TYPE_STATS_REPORT = 'statsReport';
@@ -123,6 +124,14 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchSum(
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId = null
+    ): ChartResult;
+
+    public function fetchSumHour(
         string $publisherId,
         string $resolution,
         DateTime $dateStart,

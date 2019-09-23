@@ -25,16 +25,21 @@ namespace Adshares\Adserver\Services;
 use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\ConfigException;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Dto\PaymentProcessingResult;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use function max;
 use function min;
+use function sprintf;
 
 class PaymentDetailsProcessor
 {
@@ -58,8 +63,9 @@ class PaymentDetailsProcessor
 
     private static function fetchOperatorFee(): float
     {
-        $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
-        if ($operatorFee === null) {
+        try {
+            $operatorFee = Config::fetchFloatOrFail(Config::OPERATOR_RX_FEE);
+        } catch (ConfigException $exception) {
             throw new MissingInitialConfigurationException('No config entry for operator fee.');
         }
 
@@ -68,10 +74,10 @@ class PaymentDetailsProcessor
 
     public function processPaidEvents(
         AdsPayment $adsPayment,
+        DateTime $transactionTime,
         array $paymentDetails,
         int $carriedEventValueSum
     ): PaymentProcessingResult {
-        $senderAddress = $adsPayment->address;
         $adsPaymentId = $adsPayment->id;
 
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
@@ -81,30 +87,33 @@ class PaymentDetailsProcessor
 
         $exchangeRateValue = $exchangeRate->getValue();
 
+        $cases = $this->fetchNetworkCasesForPaymentDetails($paymentDetails);
+
         foreach ($paymentDetails as $paymentDetail) {
-            $event = NetworkEventLog::fetchByEventId($paymentDetail['event_id']);
-            if ($event === null) {
+            /** @var NetworkCase $case */
+            if (null === ($case = $cases->get($paymentDetail['case_id']))) {
                 continue;
             }
 
-            $event->pay_from = $senderAddress;
-            $event->ads_payment_id = $adsPaymentId;
-
             $spendableAmount = max(0, $adsPayment->amount - $carriedEventValueSum - $totalEventValue);
-            $event_value = min($spendableAmount, $paymentDetail['event_value']);
-            $event->event_value = $event_value;
-            $calculatedFees = $feeCalculator->calculateFee($event_value);
-            $event->license_fee = $calculatedFees['license_fee'];
-            $event->operator_fee = $calculatedFees['operator_fee'];
-            $event->paid_amount = $calculatedFees['paid_amount'];
+            $eventValue = min($spendableAmount, $paymentDetail['event_value']);
+            $calculatedFees = $feeCalculator->calculateFee($eventValue);
 
-            $event->exchange_rate = $exchangeRateValue;
-            $event->paid_amount_currency = $exchangeRate->fromClick($calculatedFees['paid_amount']);
+            $networkCasePayment = NetworkCasePayment::create(
+                $transactionTime,
+                $adsPaymentId,
+                $eventValue,
+                $calculatedFees['license_fee'],
+                $calculatedFees['operator_fee'],
+                $calculatedFees['paid_amount'],
+                $exchangeRateValue,
+                $exchangeRate->fromClick($calculatedFees['paid_amount'])
+            );
 
-            $event->save();
+            $case->networkCasePayments()->save($networkCasePayment);
 
             $totalLicenseFee += $calculatedFees['license_fee'];
-            $totalEventValue += $event->event_value;
+            $totalEventValue += $eventValue;
         }
 
         return new PaymentProcessingResult($totalEventValue, $totalLicenseFee);
@@ -112,38 +121,31 @@ class PaymentDetailsProcessor
 
     public function addAdIncomeToUserLedger(AdsPayment $adsPayment): void
     {
-        $splitPayments = NetworkEventLog::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
+        $splitPayments = NetworkCasePayment::fetchPaymentsForPublishersByAdsPaymentId($adsPayment->id);
 
         foreach ($splitPayments as $splitPayment) {
-            $userUuid = $splitPayment->publisher_id;
-            $amount = (int)$splitPayment->paid_amount;
-
-            $user = User::fetchByUuid($userUuid);
-
-            if (null === $user) {
-                Log::error(
+            if (null === ($user = User::fetchByUuid($splitPayment->publisher_id))) {
+                Log::warning(
                     sprintf(
-                        '[Supply] (SupplySendPayments) User %s does not exist. AdsPayment id %s. Amount %s.',
-                        $userUuid,
+                        '[PaymentDetailsProcessor] User id (%s) does not exist. AdsPayment id (%s). Amount (%s).',
+                        $splitPayment->publisher_id,
                         $adsPayment->id,
-                        $amount
+                        $splitPayment->paid_amount
                     )
                 );
 
                 continue;
             }
 
-            $userLedgerEntry = UserLedgerEntry::constructWithAddressAndTransaction(
+            UserLedgerEntry::constructWithAddressAndTransaction(
                 $user->id,
-                $amount,
+                (int)$splitPayment->paid_amount,
                 UserLedgerEntry::STATUS_ACCEPTED,
                 UserLedgerEntry::TYPE_AD_INCOME,
                 $adsPayment->address,
                 $this->adServerAddress,
                 $adsPayment->txid
-            );
-
-            $userLedgerEntry->save();
+            )->save();
         }
     }
 
@@ -156,5 +158,15 @@ class PaymentDetailsProcessor
         }
 
         return $licenseFee;
+    }
+
+    private function fetchNetworkCasesForPaymentDetails(array $paymentDetails): Collection
+    {
+        $caseIds = [];
+        foreach ($paymentDetails as $paymentDetail) {
+            $caseIds[] = $paymentDetail['case_id'];
+        }
+
+        return NetworkCase::fetchByCaseIds($caseIds);
     }
 }

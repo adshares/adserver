@@ -23,10 +23,11 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Utilities;
 
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCasePayment;
+use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
@@ -50,7 +51,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $adsPayment = $this->createAdsPayment(10000);
 
-        $paymentDetailsProcessor->processPaidEvents($adsPayment, [], 0);
+        $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), [], 0);
 
         $this->assertCount(0, NetworkPayment::all());
     }
@@ -65,26 +66,27 @@ final class PaymentDetailsProcessorTest extends TestCase
         $user = factory(User::class)->create();
         $userUuid = $user->uuid;
 
-        $networkEvents = factory(NetworkEventLog::class)->times($paidEventsCount)->create(
-            ['event_value' => null, 'publisher_id' => $userUuid]
+        $networkImpression = factory(NetworkImpression::class)->create();
+        $networkCases = factory(NetworkCase::class)->times($paidEventsCount)->create(
+            ['network_impression_id' => $networkImpression->id, 'publisher_id' => $userUuid]
         );
 
         $adsPayment = $this->createAdsPayment($totalPayment);
 
         $paymentDetails = [];
-        foreach ($networkEvents as $networkEvent) {
+        foreach ($networkCases as $networkCase) {
             $paymentDetails[] = [
-                'case_id' => $networkEvent->case_id,
-                'event_id' => $networkEvent->event_id,
-                'event_type' => $networkEvent->event_type,
-                'banner_id' => $networkEvent->banner_id,
-                'zone_id' => $networkEvent->zone_id,
+                'case_id' => $networkCase->case_id,
+                'event_id' => $networkCase->event_id,
+                'event_type' => $networkCase->event_type,
+                'banner_id' => $networkCase->banner_id,
+                'zone_id' => $networkCase->zone_id,
                 'publisher_id' => $userUuid,
                 'event_value' => $totalPayment / $paidEventsCount,
             ];
         }
 
-        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, $paymentDetails, 0);
+        $result = $paymentDetailsProcessor->processPaidEvents($adsPayment, new DateTime(), $paymentDetails, 0);
 
         $expectedLicenseAmount = 0;
         $expectedOperatorAmount = 0;
@@ -98,7 +100,7 @@ final class PaymentDetailsProcessorTest extends TestCase
 
         $this->assertEquals($totalPayment, $result->eventValuePartialSum());
         $this->assertEquals($expectedLicenseAmount, $result->licenseFeePartialSum());
-        $this->assertEquals($expectedAdIncome, NetworkEventLog::sum('paid_amount'));
+        $this->assertEquals($expectedAdIncome, NetworkCasePayment::sum('paid_amount'));
     }
 
     private function getExchangeRateReader(): ExchangeRateReader

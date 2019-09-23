@@ -29,7 +29,7 @@ use DateTime;
 
 class AggregateStatisticsPublisherCommand extends BaseCommand
 {
-    protected $signature = 'ops:stats:aggregate:publisher {--hour=} {--B|bulk}';
+    protected $signature = 'legacy:ops:stats:aggregate:publisher {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates network events data for statistics';
 

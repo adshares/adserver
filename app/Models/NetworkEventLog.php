@@ -158,11 +158,6 @@ class NetworkEventLog extends Model
         return $collection;
     }
 
-    public static function getTableName()
-    {
-        return with(new static())->getTable();
-    }
-
     public static function create(
         string $caseId,
         string $eventId,
