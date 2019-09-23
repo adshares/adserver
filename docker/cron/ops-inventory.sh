@@ -5,7 +5,6 @@ if [ ! -e /tmp/ops_inventory_in_progress ]; then
 
     ./artisan ops:demand:inventory:import
     ./artisan ops:adselect:inventory:export
-    ./artisan ops:adselect:event:export
 
     rm -f /tmp/ops_inventory_in_progress
 fi

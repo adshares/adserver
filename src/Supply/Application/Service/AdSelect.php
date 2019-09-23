@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,6 +24,7 @@ use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
+use Illuminate\Support\Collection;
 
 interface AdSelect
 {
@@ -33,11 +34,15 @@ interface AdSelect
 
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners;
 
-    public function exportEvents(array $events): void;
+    public function exportCases(Collection $cases): void;
 
-    public function exportEventsPayments(array $events): void;
+    public function exportCaseClicks(Collection $caseClicks): void;
 
-    public function getLastPaidPaymentId(): int;
+    public function exportCasePayments(Collection $casePayments): void;
 
-    public function getLastUnpaidEventId(): int;
+    public function getLastExportedCaseId(): int;
+
+    public function getLastExportedCaseClickId(): int;
+
+    public function getLastExportedCasePaymentId(): int;
 }

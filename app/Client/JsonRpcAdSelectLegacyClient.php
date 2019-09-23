@@ -34,7 +34,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use Generator;
@@ -45,7 +45,7 @@ use function iterator_to_array;
 use function sprintf;
 use function strtolower;
 
-final class JsonRpcAdSelectClient implements AdSelect
+final class JsonRpcAdSelectLegacyClient implements AdSelectLegacy
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 

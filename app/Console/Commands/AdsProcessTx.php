@@ -42,6 +42,7 @@ use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use DateTime;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -164,7 +165,7 @@ class AdsProcessTx extends BaseCommand
         }
     }
 
-    private function handleDbTx($dbTx): void
+    private function handleDbTx(AdsPayment $dbTx): void
     {
         try {
             $txid = $dbTx->txid;
@@ -201,35 +202,33 @@ class AdsProcessTx extends BaseCommand
 
     private function handleSendManyTx(AdsPayment $dbTx, SendManyTransaction $transaction): void
     {
-        $isTxTargetValid = false;
-        $wiresCount = $transaction->getWireCount();
-
-        if ($wiresCount > 0) {
-            $wires = $transaction->getWires();
-
-            foreach ($wires as $wire) {
-                /** @var $wire SendManyTransactionWire */
-                $targetAddr = $wire->getTargetAddress();
-                if ($targetAddr === $this->adServerAddress) {
-                    $isTxTargetValid = true;
-                    break;
-                }
-            }
-        }
-
-        if ($isTxTargetValid) {
-            $this->handleReservedTx($dbTx);
+        if ($this->isSendManyTransactionTargetValid($transaction)) {
+            $this->handleReservedTx($dbTx, $transaction->getTime());
         } else {
             $dbTx->status = AdsPayment::STATUS_INVALID;
             $dbTx->save();
         }
     }
 
-    private function handleReservedTx(AdsPayment $dbTx): void
+    private function isSendManyTransactionTargetValid(SendManyTransaction $transaction): bool
+    {
+        if ($transaction->getWireCount() > 0) {
+            foreach ($transaction->getWires() as $wire) {
+                /** @var $wire SendManyTransactionWire */
+                if ($wire->getTargetAddress() === $this->adServerAddress) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function handleReservedTx(AdsPayment $dbTx, DateTime $transactionTime): void
     {
         if ($this->checkIfColdWalletTransaction($dbTx)) {
             $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
-        } elseif (!$this->handleIfEventPayment($dbTx)) {
+        } elseif (!$this->handleIfEventPayment($dbTx, $transactionTime)) {
             $dbTx->status = AdsPayment::STATUS_RESERVED;
         }
 
@@ -241,15 +240,13 @@ class AdsProcessTx extends BaseCommand
         return $dbTx->address === config('app.adshares_wallet_cold_address');
     }
 
-    private function handleIfEventPayment(AdsPayment $incomingPayment): bool
+    private function handleIfEventPayment(AdsPayment $incomingPayment, DateTime $transactionTime): bool
     {
-        $networkHost = NetworkHost::fetchByAddress($incomingPayment->address);
-
-        $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
-
-        if ($networkHost === null) {
+        if (null === ($networkHost = NetworkHost::fetchByAddress($incomingPayment->address))) {
             return false;
         }
+
+        $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
 
         $limit = (int)$this->option('chunkSize');
         for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = $limit;
@@ -278,6 +275,7 @@ class AdsProcessTx extends BaseCommand
             try {
                 $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
                     $incomingPayment,
+                    $transactionTime,
                     $paymentDetails,
                     $resultsCollection->eventValueSum()
                 );
@@ -321,7 +319,7 @@ class AdsProcessTx extends BaseCommand
             $user = User::fetchByUuid($uuid);
 
             if (null === $user) {
-                $this->handleReservedTx($dbTx);
+                $this->handleReservedTx($dbTx, $transaction->getTime());
             } else {
                 DB::beginTransaction();
 

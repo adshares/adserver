@@ -23,9 +23,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\CampaignMapper;
-use Adshares\Adserver\Client\Mapper\AdSelect\CaseClickMapper;
-use Adshares\Adserver\Client\Mapper\AdSelect\CaseMapper;
-use Adshares\Adserver\Client\Mapper\AdSelect\CasePaymentMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\EventMapper;
+use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
@@ -34,7 +33,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
@@ -43,8 +42,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use Log;
 use Symfony\Component\HttpFoundation\Response;
 use function array_map;
 use function config;
@@ -55,24 +54,8 @@ use function route;
 use function sprintf;
 use function strtolower;
 
-class GuzzleAdSelectClient implements AdSelect
+class GuzzleAdSelectLegacyClient implements AdSelectLegacy
 {
-    private const URI_CASE_EXPORT = '/api/v1/cases';
-
-    private const URI_CASE_LAST_EXPORTED_ID = '/api/v1/cases/last';
-
-    private const URI_CASE_CLICK_EXPORT = '/api/v1/clicks';
-
-    private const URI_CASE_CLICK_LAST_EXPORTED_ID = '/api/v1/clicks/last';
-
-    private const URI_CASE_PAYMENT_EXPORT = '/api/v1/payments';
-
-    private const URI_CASE_PAYMENT_LAST_EXPORTED_ID = '/api/v1/payments/last';
-
-    private const URI_FIND_BANNERS = '/api/v1/find';
-
-    private const URI_INVENTORY = '/api/v1/campaigns';
-
     /** @var Client */
     private $client;
 
@@ -86,12 +69,9 @@ class GuzzleAdSelectClient implements AdSelect
         $mapped = CampaignMapper::map($campaign);
 
         try {
-            $this->client->post(
-                self::URI_INVENTORY,
-                [
-                    RequestOptions::JSON => ['campaigns' => $mapped],
-                ]
-            );
+            $this->client->post('/api/v1/campaigns', [
+                RequestOptions::JSON => ['campaigns' => $mapped],
+            ]);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
@@ -115,12 +95,9 @@ class GuzzleAdSelectClient implements AdSelect
         }
 
         try {
-            $this->client->delete(
-                self::URI_INVENTORY,
-                [
-                    RequestOptions::JSON => ['campaigns' => $mapped],
-                ]
-            );
+            $this->client->delete('/api/v1/campaigns', [
+                RequestOptions::JSON => ['campaigns' => $mapped],
+            ]);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
@@ -159,12 +136,9 @@ class GuzzleAdSelectClient implements AdSelect
         });
 
         try {
-            $result = $this->client->post(
-                self::URI_FIND_BANNERS,
-                [
-                    RequestOptions::JSON => $context->adSelectRequestParams($existingZones),
-                ]
-            );
+            $result = $this->client->post('/api/v1/find', [
+                RequestOptions::JSON =>  $context->adSelectRequestParams($existingZones),
+            ]);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
@@ -193,8 +167,8 @@ class GuzzleAdSelectClient implements AdSelect
 
         $bannerIds = [];
         foreach ($zoneCollection as $request_id => $zone) {
-            if (isset($existingZones[$request_id]) && isset($items[$request_id])) {
-                $bannerIds[] = $items[$request_id] ?: [null];
+            if (isset($existingZones[$request_id])) {
+                $bannerIds[] = $items[$request_id] ?? [null];
             } else {
                 $bannerIds[] = [null];
             }
@@ -203,6 +177,93 @@ class GuzzleAdSelectClient implements AdSelect
         $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneIds));
 
         return new FoundBanners($banners);
+    }
+
+    public function exportEvents(array $events): void
+    {
+        $mapped = [];
+
+        foreach ($events as $event) {
+            $mapped[] = EventMapper::map($event);
+        }
+
+        try {
+            $this->client->post('/api/v1/events/unpaid', [
+                RequestOptions::JSON => ['events' => $mapped],
+            ]);
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADSELECT] Export unpaid events from %s failed (%s).',
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+    }
+
+    public function exportEventsPayments(array $events): void
+    {
+        $mapped = [];
+
+        foreach ($events as $event) {
+            $mapped[] = EventPaymentMapper::map($event);
+        }
+
+        try {
+            $this->client->post('/api/v1/events/paid', [
+                RequestOptions::JSON => ['events' => $mapped],
+            ]);
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADSELECT] Export paid events to %s failed (%s).',
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+    }
+
+    private static function attachDuplicatedZones(Collection $uniqueZones, array $zoneIds): Collection
+    {
+        $zones = [];
+        foreach ($zoneIds as $zonePublicIdPassedFromPublisher) {
+            $zones[] = $uniqueZones->filter(
+                static function (Zone $zone) use ($zonePublicIdPassedFromPublisher) {
+                    return $zone->uuid === $zonePublicIdPassedFromPublisher;
+                }
+            )->first();
+        }
+
+        return new Collection($zones);
+    }
+
+    private function fixBannerOrdering(Collection $zones, array $bannerMap, array $zoneIds): array
+    {
+        $bannerIds = [];
+
+        foreach ($zones as $requestId => $zone) {
+            $banner = $bannerMap[$requestId] ?? null;
+
+            if ($banner === null) {
+                Log::warning(sprintf('Banner for zone 0x%s (%s) not found', $zone->uuid, $zone->id));
+            }
+
+            $bannerIds[$zone->uuid][] = $banner[0] ?? null;
+        }
+
+        $orderedBannerIds = [];
+
+        foreach ($zoneIds as $zoneId) {
+            $orderedBannerIds[$zoneId] = $bannerIds[$zoneId] ?? [null];
+        }
+
+        return $orderedBannerIds;
     }
 
     private function fetchInOrderOfAppearance(array $params, array $zoneIds): Generator
@@ -251,84 +312,20 @@ class GuzzleAdSelectClient implements AdSelect
         }
     }
 
-    public function exportCases(Collection $cases): void
+    public function getLastPaidPaymentId(): int
     {
-        $mapped = [];
-        foreach ($cases as $case) {
-            $mapped[] = CaseMapper::map($case);
-        }
-
-        $options = [
-            RequestOptions::JSON => ['cases' => $mapped],
-        ];
-
-        $this->export(self::URI_CASE_EXPORT, $options);
+        return $this->getLastId('paid');
     }
 
-    public function exportCaseClicks(Collection $caseClicks): void
+    public function getLastUnpaidEventId(): int
     {
-        $mapped = [];
-        foreach ($caseClicks as $caseClick) {
-            $mapped[] = CaseClickMapper::map($caseClick);
-        }
-
-        $options = [
-            RequestOptions::JSON => ['clicks' => $mapped],
-        ];
-
-        $this->export(self::URI_CASE_CLICK_EXPORT, $options);
+        return $this->getLastId('unpaid');
     }
 
-    public function exportCasePayments(Collection $casePayments): void
-    {
-        $mapped = [];
-        foreach ($casePayments as $casePayment) {
-            $mapped[] = CasePaymentMapper::map($casePayment);
-        }
-
-        $options = [
-            RequestOptions::JSON => ['payments' => $mapped],
-        ];
-
-        $this->export(self::URI_CASE_PAYMENT_EXPORT, $options);
-    }
-
-    public function export(string $uri, array $options): void
+    private function getLastId(string $type): int
     {
         try {
-            $this->client->post($uri, $options);
-        } catch (RequestException $exception) {
-            throw new UnexpectedClientResponseException(
-                sprintf(
-                    '[ADSELECT] Export to (%s) (%s) failed (%s).',
-                    $this->client->getConfig()['base_uri'],
-                    $uri,
-                    $exception->getMessage()
-                ),
-                $exception->getCode(),
-                $exception
-            );
-        }
-    }
-
-    public function getLastExportedCaseId(): int
-    {
-        return $this->getLastExportedId(self::URI_CASE_LAST_EXPORTED_ID);
-    }
-
-    public function getLastExportedCaseClickId(): int
-    {
-        return $this->getLastExportedId(self::URI_CASE_CLICK_LAST_EXPORTED_ID);
-    }
-
-    public function getLastExportedCasePaymentId(): int
-    {
-        return $this->getLastExportedId(self::URI_CASE_PAYMENT_LAST_EXPORTED_ID);
-    }
-
-    private function getLastExportedId(string $uri): int
-    {
-        try {
+            $uri = sprintf('/api/v1/events/%s/last', $type);
             $response = $this->client->get($uri);
         } catch (RequestException $exception) {
             if ($exception->getCode() === Response::HTTP_NOT_FOUND) {
@@ -337,8 +334,8 @@ class GuzzleAdSelectClient implements AdSelect
 
             throw new UnexpectedClientResponseException(
                 sprintf(
-                    '[ADSELECT] Fetch last id (%s) from (%s) failed (%s).',
-                    $uri,
+                    '[ADSELECT] Fetch last %s event id from %s failed (%s).',
+                    $type,
                     $this->client->getConfig()['base_uri'],
                     $exception->getMessage()
                 ),
@@ -351,24 +348,24 @@ class GuzzleAdSelectClient implements AdSelect
         try {
             $item = json_decode($body, true);
         } catch (InvalidArgumentException $exception) {
-            throw new DomainRuntimeException(
-                sprintf(
-                    '[ADSELECT] Fetch last id (%s). Invalid json data (%s).',
-                    $uri,
-                    $body
-                )
-            );
+            throw new DomainRuntimeException(sprintf(
+                '[ADSELECT] Fetch last %s events. Invalid json data (%s).',
+                $type,
+                $body
+            ));
         }
 
-        if (!isset($item['id'])) {
-            throw new UnexpectedClientResponseException(
-                sprintf(
-                    '[ADSELECT] Could not fetch last id (%s) from (%s). Id is required, given (%s).',
-                    $uri,
-                    $this->client->getConfig()['base_uri'],
-                    $body
-                )
-            );
+        if (!isset($item['id']) || !array_key_exists('payment_id', $item)) {
+            throw new UnexpectedClientResponseException(sprintf(
+                '[ADSELECT] Could not fetch last %s event from adselect (%s). Event id is required, given: %s.',
+                $type,
+                $this->client->getConfig()['base_uri'],
+                $body
+            ));
+        }
+
+        if ($type === 'paid') {
+            return (int)$item['payment_id'];
         }
 
         return (int)$item['id'];

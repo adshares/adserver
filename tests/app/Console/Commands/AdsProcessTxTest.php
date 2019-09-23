@@ -27,13 +27,14 @@ use Adshares\Ads\Response\GetBlockIdsResponse;
 use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsPayment;
-use Adshares\Adserver\Models\NetworkEventLog;
+use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
-use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\AdSelect;
@@ -97,34 +98,40 @@ class AdsProcessTxTest extends TestCase
         $demandClient = new DummyDemandClient();
 
         $info = $demandClient->fetchInfo(new NullUrl());
+        $networkHost = NetworkHost::registerHost('0001-00000000-9B6F', $info);
 
-        NetworkHost::registerHost('0001-00000000-9B6F', $info);
-
+        $networkImpression = factory(NetworkImpression::class)->create();
         $paymentDetails = $demandClient->fetchPaymentDetails('', '', 333, 0);
-        $context = $this->getContext();
-        $totalEventValue = 0;
+
+        $publisherIds = [];
+        $totalAmount = 0;
 
         foreach ($paymentDetails as $paymentDetail) {
-            $log = new NetworkEventLog();
-            $log->case_id = Uuid::caseId();
-            $log->event_id = $paymentDetail['event_id'];
-            $log->tracking_id = (string)UUID::v4();
-            $log->site_id = (string)Uuid::v4();
-            $log->banner_id = $paymentDetail['banner_id'];
-            $log->zone_id = $paymentDetail['zone_id'];
-            $log->publisher_id = $paymentDetail['publisher_id'];
-            $log->pay_from = config('app.adshares_address');
-            $log->context = $context;
-            $log->event_type = $paymentDetail['event_type'];
-            $log->save();
+            $publisherId = $paymentDetail['publisher_id'];
 
-            $totalEventValue += (int)$paymentDetail['event_value'];
+            factory(NetworkCase::class)->create(
+                [
+                    'case_id' => $paymentDetail['case_id'],
+                    'network_impression_id' => $networkImpression->id,
+                    'publisher_id' => $publisherId,
+                ]
+            );
+
+            if (!in_array($publisherId, $publisherIds)) {
+                $publisherIds[] = $publisherId;
+            }
+
+            $totalAmount += (int)$paymentDetail['event_value'];
+        }
+
+        foreach ($publisherIds as $publisherId) {
+            factory(User::class)->create(['uuid' => $publisherId]);
         }
 
         $adsTx = new AdsPayment();
         $adsTx->txid = self::TX_ID_SEND_MANY;
-        $adsTx->amount = $totalEventValue;
-        $adsTx->address = '0001-00000000-9B6F';
+        $adsTx->amount = $totalAmount;
+        $adsTx->address = $networkHost->address;
         $adsTx->save();
 
         $this->app->bind(
@@ -146,7 +153,7 @@ class AdsProcessTxTest extends TestCase
         $this->artisan('ads:process-tx', ['--chunkSize' => 500])->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
-        $this->assertEquals($totalEventValue, NetworkEventLog::sum('event_value'));
+        $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
     }
 
     public function testAdsProcessValidSendMany(): void
@@ -242,84 +249,6 @@ class AdsProcessTxTest extends TestCase
 
                 return $adsClient;
             }
-        );
-    }
-
-    private function getContext()
-    {
-        return json_decode(<<<JSON
-{
-    "site": {
-        "domain": "localhost",
-        "inframe": "no",
-        "page": "http:\/\/localhost:8000\/",
-        "keywords": []
-    },
-    "device": {
-        "ua": "Mozilla\/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko\/20100101 Firefox\/64.0",
-        "ip": "172.21.0.1",
-        "ips": [
-            "172.21.0.1"
-        ],
-        "headers": {
-            "cookie": [
-                "tid=KeU0jaHoz5UsW3VnpQjSbPKQ53zNpw; XDEBUG_SESSION=PHPSTORM; io=kQmRqzCsX5RGvTPHAAAA"
-            ],
-            "connection": [
-                "keep-alive"
-            ],
-            "referer": [
-                "http:\/\/localhost:8000\/"
-            ],
-            "accept-encoding": [
-                "gzip, deflate"
-            ],
-            "accept-language": [
-                "en-US,en;q=0.5"
-            ],
-            "accept": [
-                "*\/*"
-            ],
-            "user-agent": [
-                "Mozilla\/5.0 (X11; Ubuntu; Linux x86_64; rv:64.0) Gecko\/20100101 Firefox\/64.0"
-            ],
-            "host": [
-                "localhost:8101"
-            ],
-            "content-length": [
-                ""
-            ],
-            "content-type": [
-                ""
-            ]
-        }
-    },
-    "user": {
-        "uid": "KeU0jaHoz5UsW3VnpQjSbPKQ53zNpw",
-        "keywords": {
-            "interest": [
-                "200063",
-                "200142"
-            ],
-            "javascript": [
-                true
-            ],
-            "platform": [
-                "Ubuntu"
-            ],
-            "device_type": [
-                "Desktop"
-            ],
-            "browser": [
-                "Firefox"
-            ],
-            "human_score": [
-                0.5
-            ]
-        }
-    }
-}
-JSON
         );
     }
 

@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+namespace Adshares\Adserver\Utilities;
 
-class AdSelectInventoryExporterCommandTest extends TestCase
+use Illuminate\Database\QueryException;
+
+class SqlUtils
 {
-    use RefreshDatabase;
+    private const SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION = 23000;
 
-    public function testExport(): void
+    private const SQL_ERROR_CODE_DUPLICATE_ENTRY = 1062;
+
+    public static function isDuplicatedEntry(QueryException $queryException): bool
     {
-        $this->app->bind(AdSelectLegacy::class, function () {
-            $adSelect = $this->createMock(AdSelectLegacy::class);
-
-            return $adSelect;
-        });
-
-        $this->artisan('ops:adselect:inventory:export')
-            ->assertExitCode(0);
+        return self::SQL_ERROR_INTEGRITY_CONSTRAINT_VIOLATION === (int)$queryException->errorInfo[0]
+            && self::SQL_ERROR_CODE_DUPLICATE_ENTRY === (int)$queryException->errorInfo[1];
     }
 }

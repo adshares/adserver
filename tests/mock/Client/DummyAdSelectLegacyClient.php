@@ -30,37 +30,49 @@ use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Supply\Application\Dto\FoundBanners;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Service\AdSelect;
+use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Domain\Model\Campaign;
 use Adshares\Supply\Domain\Model\CampaignCollection;
-use Adshares\Supply\Domain\ValueObject\Status;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use function hex2bin;
+use function array_map;
+use function str_replace;
 
-final class DummyAdSelectClient implements AdSelect
+final class DummyAdSelectLegacyClient implements AdSelectLegacy
 {
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
-        $banners = $this->getBestBanners($zones);
+        $banners = $this->getBestBanners($zones, $context->keywords());
 
         return new FoundBanners($banners);
     }
 
-    private function getBestBanners(array $zones): array
+    private function getBestBanners(array $zones, array $keywords): array
     {
+        $typeDefault = [
+            'image',
+        ];
+
+        $keywords = array_map(
+            function (string $keyword) {
+                return str_replace('accio:', '', $keyword);
+            },
+            $keywords
+        );
+
+        $key = $keywords[random_int(0, count($keywords) - 1)];
+
         $bannerIds = [];
         foreach ($zones as $zoneInfo) {
-            $zone = Zone::where('uuid', hex2bin($zoneInfo['zone']))->first();
+            $zone = Zone::find($zoneInfo['zone']);
             if (!$zone) {
                 $bannerIds[] = '';
                 continue;
             }
 
             try {
-                $queryBuilder = $this->queryBuilder($zone);
-                $bannerIds[] = bin2hex($queryBuilder->get(['network_banners.uuid'])->random()->uuid);
+                $queryBuilder = $this->queryBuilder($key, $zone, $typeDefault);
+                $bannerIds[] = bin2hex($queryBuilder->get('network_banners.uuid')->random()->uuid);
             } catch (InvalidArgumentException $e) {
                 $bannerIds[] = '';
             }
@@ -100,52 +112,53 @@ final class DummyAdSelectClient implements AdSelect
         return $banners;
     }
 
-    private function queryBuilder(Zone $zone): Builder
+    private function queryBuilder($key, $zone, array $typeDefault): Builder
     {
-        // TODO add targeting
-
-        return DB::table('network_banners')->join(
+        $queryBuilder = DB::table('network_banners')->join(
             'network_campaigns',
             'network_banners.network_campaign_id',
             '=',
             'network_campaigns.id'
-        )->where('network_campaigns.status', Status::STATUS_ACTIVE)->where(
+        )->select('network_banners.uuid')->whereRaw(
+            "(network_campaigns.targeting_requires LIKE ? OR network_campaigns.targeting_requires = '[]')",
+            "%$key%"
+        )->whereRaw(
+            "(network_campaigns.targeting_excludes NOT LIKE ? OR network_campaigns.targeting_excludes = '[]')",
+            "%$key%"
+        )->where('network_campaigns.status', Campaign::STATUS_ACTIVE)->where(
             'network_banners.width',
             $zone->width
-        )->where('network_banners.height', $zone->height);
+        )->where('network_banners.height', $zone->height)->whereIn('type', $typeDefault);
+
+        return $queryBuilder;
     }
 
     public function exportInventory(Campaign $campaign): void
     {
+        // TODO: Implement exportInventory() method.
+    }
+
+    public function exportEvents(array $events): void
+    {
+        // TODO: Implement exportEvents() method.
+    }
+
+    public function exportEventsPayments(array $events): void
+    {
+        // TODO: Implement exportEventPayments() method.
     }
 
     public function deleteFromInventory(CampaignCollection $campaigns): void
     {
+        // TODO: Implement deleteFromInventory() method.
     }
 
-    public function exportCases(Collection $cases): void
-    {
-    }
-
-    public function exportCaseClicks(Collection $caseClicks): void
-    {
-    }
-
-    public function exportCasePayments(Collection $casePayments): void
-    {
-    }
-
-    public function getLastExportedCaseId(): int
+    public function getLastPaidPaymentId(): int
     {
         return 0;
     }
 
-    public function getLastExportedCaseClickId(): int
-    {
-        return 0;
-    }
-
-    public function getLastExportedCasePaymentId(): int
+    public function getLastUnpaidEventId(): int
     {
         return 0;
     }

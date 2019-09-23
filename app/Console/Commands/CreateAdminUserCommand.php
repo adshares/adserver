@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Domain\ValueObject\Email;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Database\QueryException;
@@ -75,7 +76,7 @@ class CreateAdminUserCommand extends BaseCommand
         try {
             User::createAdmin($email, $name, $password);
         } catch (QueryException $exception) {
-            if ($exception->getCode() === '23000') { // 23000 = duplicated
+            if (SqlUtils::isDuplicatedEntry($exception)) {
                 $this->error(sprintf('User %s already exists', $email->toString()));
 
                 exit(0);

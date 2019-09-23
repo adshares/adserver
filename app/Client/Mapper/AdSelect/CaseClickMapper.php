@@ -18,25 +18,21 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-class AdSelectInventoryExporterCommandTest extends TestCase
+use Adshares\Adserver\Models\NetworkCaseClick;
+use DateTime;
+
+class CaseClickMapper
 {
-    use RefreshDatabase;
-
-    public function testExport(): void
+    public static function map(NetworkCaseClick $click): array
     {
-        $this->app->bind(AdSelectLegacy::class, function () {
-            $adSelect = $this->createMock(AdSelectLegacy::class);
-
-            return $adSelect;
-        });
-
-        $this->artisan('ops:adselect:inventory:export')
-            ->assertExitCode(0);
+        return [
+            'id' => $click->id,
+            'case_id' => $click->network_case_id,
+            'created_at' => $click->created_at->format(DateTime::ATOM),
+        ];
     }
 }

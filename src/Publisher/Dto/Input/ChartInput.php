@@ -38,7 +38,8 @@ final class ChartInput
         StatsRepository::TYPE_CLICK_INVALID_RATE,
         StatsRepository::TYPE_RPC,
         StatsRepository::TYPE_RPM,
-        StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_REVENUE_BY_CASE,
+        StatsRepository::TYPE_REVENUE_BY_HOUR,
         StatsRepository::TYPE_CTR,
     ];
 

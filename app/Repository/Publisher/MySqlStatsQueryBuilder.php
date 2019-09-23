@@ -40,7 +40,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_CLICK_INVALID_RATE,
-        StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_REVENUE_BY_CASE,
         StatsRepository::TYPE_CTR,
         StatsRepository::TYPE_STATS,
         StatsRepository::TYPE_STATS_REPORT,
@@ -80,7 +80,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
                 $this->column('COALESCE(AVG(IF(e.paid_amount_currency IS NULL, 1, 0)), 0) AS c');
                 break;
-            case StatsRepository::TYPE_SUM:
+            case StatsRepository::TYPE_REVENUE_BY_CASE:
                 $this->column('COALESCE(SUM(e.paid_amount_currency), 0) AS c');
                 break;
             case StatsRepository::TYPE_CTR:
