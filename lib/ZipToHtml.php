@@ -246,7 +246,7 @@ MYSCRIPT;
                 $this->assets[$file]['used'] = true;
                 $css_text = $this->replaceCssUrls($this->assets[$file]['contents'], dirname($file));
                 $new_tag = $doc->createElement('style');
-                $new_tag->nodeValue = $css_text;
+                $new_tag->textContent = $css_text;
                 $new_tag->setAttribute('data-inject', "1");
                 $new_tag->setAttribute('data-href', $file);
                 $sheet->parentNode->replaceChild($new_tag, $sheet);
@@ -274,7 +274,7 @@ MYSCRIPT;
                 $this->assets[$file]['used'] = true;
                 $script_text = $this->assets[$file]['contents'];
                 $new_tag = $doc->createElement('script');
-                $new_tag->nodeValue = $script_text;
+                $new_tag->textContent = $script_text;
                 $new_tag->setAttribute('data-inject', "1");
                 $new_tag->setAttribute('data-href', $file);
                 $script->parentNode->replaceChild($new_tag, $script);
@@ -371,7 +371,7 @@ MYSCRIPT;
         }
 
         $fix_script = $doc->createElement('script');
-        $fix_script->nodeValue = self::FIX_SCRIPT;
+        $fix_script->textContent = self::FIX_SCRIPT;
 
         $body->appendChild($fix_script);
 

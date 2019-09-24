@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.3] - 2019-09-24
+### Changed
+- Add created column to network case payments
+### Fixed
+- Missing 'Access-Control-Allow-Origin' header during banner find
+- Script and css escaping
+
 ## [1.2.2] - 2019-09-23
 ### Changed
 - Split network event logs table
@@ -210,7 +217,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.2.2...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.2.3...develop
+[1.2.3]: https://github.com/adshares/adserver/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/adshares/adserver/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/adshares/adserver/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/adshares/adserver/compare/v1.1.2...v1.2.0

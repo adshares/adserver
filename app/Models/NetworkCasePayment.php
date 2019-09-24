@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 /**
  * @property int id
  * @property int network_case_id
+ * @property Carbon created_at
  * @property Carbon pay_time
  * @property int ads_payment_id
  * @property int total_amount
@@ -53,6 +54,7 @@ class NetworkCasePayment extends Model
 
     /** @var array */
     protected $dates = [
+        'created_at',
         'pay_time',
     ];
 
