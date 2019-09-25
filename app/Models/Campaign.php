@@ -48,8 +48,8 @@ use function hex2bin;
  * @property int deleted_at
  * @property int user_id
  * @property string landing_url
- * @property DateTime time_start
- * @property DateTime time_end
+ * @property string time_start
+ * @property string time_end
  * @property int status
  * @property string name
  * @property array|null|string strategy_name

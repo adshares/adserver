@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
 use Adshares\Adserver\Client\Mapper\AdSelect\TargetingMapper;
+use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
@@ -32,48 +33,28 @@ class DemandCampaignMapper
 {
     public static function mapCampaignCollectionToCampaignArray(Collection $campaigns): array
     {
-        $campaignArray = $campaigns->map(
+        return $campaigns->map(
             function (Campaign $campaign) {
-                $banners = [];
                 $campaignArray = $campaign->toArray();
 
-                $campaignBannersArray = $campaignArray['ads'];
-
-                foreach ($campaignBannersArray as $banner) {
-                    $banners[] = [
-                        'banner_id' => $banner['uuid'],
-                        'banner_size' => self::processSize($banner),
-                        'keywords' => [
-                            'type' => [$banner['type']],
-                        ],
-                    ];
-                }
-
-                $advertiserId = Campaign::fetchAdvertiserId($campaignArray['id']);
-
+                $conversions = self::processConversions($campaignArray['conversions']);
                 $targeting = self::processTargeting($campaignArray['targeting']);
 
-                $timeStart = self::processDate($campaignArray['time_start']);
-                $timeEnd = self::processDate($campaignArray['time_end']);
-
-                $mapped = [
-                    'campaign_id' => $campaignArray['uuid'],
-                    'advertiser_id' => $advertiserId,
+                return [
+                    'campaign_id' => $campaign->uuid,
+                    'advertiser_id' => Campaign::fetchAdvertiserId($campaign->id),
                     'budget' => $campaignArray['basic_information']['budget'],
                     'max_cpc' => $campaignArray['basic_information']['max_cpc'],
                     'max_cpm' => $campaignArray['basic_information']['max_cpm'],
-                    'time_start' => $timeStart,
-                    'time_end' => $timeEnd,
-                    'banners' => $banners,
+                    'time_start' => self::processDate($campaign->time_start),
+                    'time_end' => self::processDate($campaign->time_end),
+                    'banners' => self::extractAds($campaign),
+                    'conversions' => $conversions,
                     'filters' => $targeting,
                     'keywords' => self::processKeywords($campaignArray),
                 ];
-
-                return $mapped;
             }
         )->toArray();
-
-        return $campaignArray;
     }
 
     private static function processDate(?string $date): int
@@ -82,7 +63,7 @@ class DemandCampaignMapper
             return (new DateTime())->modify('+1 year')->getTimestamp();
         }
 
-        return DateTime::createFromFormat(DATE_ATOM, $date)->getTimestamp();
+        return DateTime::createFromFormat(DateTime::ATOM, $date)->getTimestamp();
     }
 
     private static function processKeywords(array $campaign)
@@ -94,9 +75,31 @@ class DemandCampaignMapper
         return array_fill_keys(explode(',', $campaign['classification_tags']), 1);
     }
 
-    private static function processSize(array $banner): string
+    private static function extractAds(Campaign $campaign): array
     {
-        return $banner['creative_width'].'x'.$banner['creative_height'];
+        $banners = [];
+
+        /** @var Banner $ad */
+        foreach ($campaign->ads as $ad) {
+            $banners[] = [
+                'banner_id' => $ad->uuid,
+                'banner_size' => $ad->getFormattedSize(),
+                'keywords' => [
+                    'type' => [$ad->type],
+                ],
+            ];
+        }
+
+        return $banners;
+    }
+
+    private static function processConversions(array $conversions): array
+    {
+        foreach ($conversions as &$conversion) {
+            unset($conversion['campaign_id']);
+        }
+
+        return $conversions;
     }
 
     private static function processTargeting(array $targeting): array
