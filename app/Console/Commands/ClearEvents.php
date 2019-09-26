@@ -22,22 +22,16 @@ declare(strict_types=1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use Adshares\Demand\Application\Service\AdPay;
 use function sprintf;
 
 class ClearEvents extends BaseCommand
 {
-    public const DIRECT = 'direct';
-
-    public const NORMAL = 'normal';
 
     protected $signature = 'ops:events:clear {--b|before=} {--p|period=P32D} {--c|chunkSize=1000}';
 
     protected $description = 'Clear event and network event logs';
 
-
-    public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
+    public function handle(): void
     {
         if (!$this->lock()) {
             $this->info(sprintf('Command %s already running', $this->signature));
@@ -58,20 +52,23 @@ class ClearEvents extends BaseCommand
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
+
             return;
         }
 
         $this->info(sprintf(
-                'Clearing events older than %s with chunk size %d',
-                $dateTo->format('c'),
-                $chunkSize)
-        );
+            'Clearing events older than %s with chunk size %d',
+            $dateTo->format('c'),
+            $chunkSize
+        ));
 
         $this->clearTable('event_logs', $dateTo, $chunkSize);
         $this->clearTable('network_impressions', $dateTo, $chunkSize);
         $this->clearTable('network_cases', $dateTo, $chunkSize);
         $this->clearTable('network_case_clicks', $dateTo, $chunkSize);
         $this->clearTable('network_case_payments', $dateTo, $chunkSize);
+
+        $this->info('Finish clearing events');
     }
 
     private function clearTable(string $table, \DateTime $dateTo, int $chunkSize): int
@@ -95,7 +92,8 @@ class ClearEvents extends BaseCommand
                     $offset,
                     $offset + $chunkSize - 1,
                     $last
-                ]);
+                ]
+            );
             $deleted += $count;
         } while ($count > 0);
 
