@@ -66,7 +66,7 @@ class AdminController extends Controller
         return self::json([
             'wallet' => [
                 'balance' => UserLedgerEntry::getBalanceForAllUsers(),
-                'unspent_bonuses' => UserLedgerEntry::getUnspentBonusesForAllUsers(),
+                'unused_bonuses' => UserLedgerEntry::getUnusedBonusesForAllUsers(),
             ]
         ]);
     }

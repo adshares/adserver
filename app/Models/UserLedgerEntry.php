@@ -177,7 +177,7 @@ class UserLedgerEntry extends Model
             ->sum('amount');
     }
 
-    public static function getUnspentBonusesForAllUsers(): int
+    public static function getUnusedBonusesForAllUsers(): int
     {
         return (int)self::queryForEntriesRelevantForBalance()->where('type', self::TYPE_BONUS_INCOME)->sum('amount')
             - (int)self::queryForEntriesRelevantForBalance()->where('type', self::TYPE_BONUS_EXPENSE)->sum('amount');
