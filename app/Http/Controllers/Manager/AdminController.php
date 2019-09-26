@@ -29,6 +29,7 @@ use Adshares\Adserver\Http\Response\LicenseResponse;
 use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -58,6 +59,16 @@ class AdminController extends Controller
         Config::updateAdminSettings($input);
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function wallet(): JsonResponse
+    {
+        return self::json([
+            'wallet' => [
+                'balance' => UserLedgerEntry::getBalanceForAllUsers(),
+                'unspent_bonuses' => UserLedgerEntry::getUnspentBonusesForAllUsers(),
+            ]
+        ]);
     }
 
     public function getLicense(): LicenseResponse

@@ -177,6 +177,12 @@ class UserLedgerEntry extends Model
             ->sum('amount');
     }
 
+    public static function getUnspentBonusesForAllUsers(): int
+    {
+        return (int)self::queryForEntriesRelevantForBalance()->where('type', self::TYPE_BONUS_INCOME)->sum('amount')
+            - (int)self::queryForEntriesRelevantForBalance()->where('type', self::TYPE_BONUS_EXPENSE)->sum('amount');
+    }
+
     public static function getWalletBalanceForAllUsers(): int
     {
         return (int)self::queryForEntriesRelevantForWalletBalance()
