@@ -95,6 +95,6 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
     echo ""
 }
 
-echo -n "15 1 * * * "
-echo -n "${SERVICE_DIR}/bin/archive_events.sh"
+echo -n "5 */1 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:events:clear"
 echo ""
