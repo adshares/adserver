@@ -25,8 +25,9 @@ namespace Adshares\Adserver\Client\Mapper\AdPay;
 use Adshares\Adserver\Client\Mapper\AdSelect\TargetingMapper;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection;
 use stdClass;
 
 class DemandCampaignMapper
@@ -37,9 +38,6 @@ class DemandCampaignMapper
             function (Campaign $campaign) {
                 $campaignArray = $campaign->toArray();
 
-                $conversions = self::processConversions($campaignArray['conversions']);
-                $targeting = self::processTargeting($campaignArray['targeting']);
-
                 return [
                     'campaign_id' => $campaign->uuid,
                     'advertiser_id' => Campaign::fetchAdvertiserId($campaign->id),
@@ -49,8 +47,8 @@ class DemandCampaignMapper
                     'time_start' => self::processDate($campaign->time_start),
                     'time_end' => self::processDate($campaign->time_end),
                     'banners' => self::extractAds($campaign),
-                    'conversions' => $conversions,
-                    'filters' => $targeting,
+                    'conversions' => self::processConversions($campaign->conversions),
+                    'filters' => self::processTargeting($campaignArray['targeting']),
                     'keywords' => self::processKeywords($campaignArray),
                 ];
             }
@@ -93,13 +91,29 @@ class DemandCampaignMapper
         return $banners;
     }
 
-    private static function processConversions(array $conversions): array
+    private static function processConversions(Collection $conversions): array
     {
-        foreach ($conversions as &$conversion) {
-            unset($conversion['campaign_id']);
+        $mapped = $conversions->map(
+            function(ConversionDefinition $conversion) {
+                return $conversion->only(
+                    [
+                        'uuid',
+                        'budget_type',
+                        'value',
+                        'is_value_mutable',
+                        'limit',
+                        'is_repeatable',
+                    ]
+                );
+            }
+        )->toArray();
+
+        foreach ($mapped as &$item) {
+            $item['conversion_id'] = $item['uuid'];
+            unset($item['uuid']);
         }
 
-        return $conversions;
+        return $mapped;
     }
 
     private static function processTargeting(array $targeting): array

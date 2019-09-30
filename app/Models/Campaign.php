@@ -58,6 +58,7 @@ use function hex2bin;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
+ * @property Collection conversions
  * @property User user
  * @property string secret
  * @property int conversion_click
