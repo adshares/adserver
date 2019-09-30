@@ -94,7 +94,7 @@ class DemandCampaignMapper
     private static function processConversions(Collection $conversions): array
     {
         $mapped = $conversions->map(
-            function(ConversionDefinition $conversion) {
+            function (ConversionDefinition $conversion) {
                 return $conversion->only(
                     [
                         'uuid',
