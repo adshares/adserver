@@ -150,7 +150,7 @@ class ZipToHtml
     private function flattenHtml(): string
     {
         libxml_use_internal_errors(true);
-        $doc = new DOMDocument();
+        $doc = new DOMDocumentSafe();
         $doc->loadHTML(mb_convert_encoding($this->html_file_contents, 'HTML-ENTITIES', 'UTF-8'));
 
         $xpath = new DOMXPath($doc);
@@ -226,8 +226,7 @@ class ZipToHtml
                 $script_text = $this->assets[$file]['contents'];
                 $new_tag = $doc->createElement('script');
 
-                $this->assets[$file]['placeholder'] = $this->assets[$file]['placeholder'] ?? bin2hex(random_bytes(16));
-                $new_tag->textContent = $this->assets[$file]['placeholder'];
+                $new_tag->textContent = $script_text;
 
                 $new_tag->setAttribute('data-inject', "1");
                 $new_tag->setAttribute('data-href', $file);
@@ -332,19 +331,10 @@ class ZipToHtml
 
         $body->appendChild($fix_script);
 
-        $html = $doc->saveHTML();
-
-        return $this->fillScripts($html);
+        return $doc->saveHTML();
     }
 
-    private function fillScripts($html) {
-        foreach($this->assets as $file => $data) {
-            if(isset($data['placeholder'])) {
-                $html = str_replace($data['placeholder'], $data['contents'], $html);
-            }
-        }
-        return $html;
-    }
+
 
     private function normalizePath($path): string
     {
