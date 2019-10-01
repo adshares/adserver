@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Lib\DOMDocumentSafe;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -28,18 +29,16 @@ class CreativeSha1
 {
     use Dispatchable, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(\Adshares\Adserver\Models\Banner $model)
+    public function __construct(Banner $model)
     {
         if ($model->creative_type === Banner::type(Banner::HTML_TYPE)) {
             $model->creative_contents = $this->injectScriptAndCSP($model->creative_contents);
         }
 
-        $model->creative_sha1 = sha1($model->creative_contents);
+        if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
+            $model->creative_sha1 = $sha1;
+            $model->classifications()->delete();
+        }
     }
 
     private function injectScriptAndCSP($html)
@@ -75,7 +74,7 @@ class CreativeSha1
             $body->removeChild($tag);
         }
         $banner_script = $doc->createElement('script');
-        $banner_script->nodeValue = $jsCode;
+        $banner_script->textContent = $jsCode;
         $banner_script->setAttribute('data-inject', "1");
         $body->insertBefore($banner_script, $body->firstChild);
 
@@ -84,7 +83,7 @@ class CreativeSha1
 
     private function loadHtml(string $html)
     {
-        $doc = new \DOMDocument();
+        $doc = new DOMDocumentSafe();
         $old = libxml_use_internal_errors(true);
         libxml_clear_errors();
         $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
