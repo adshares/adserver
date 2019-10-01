@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Lib\DOMDocumentSafe;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -73,7 +74,7 @@ class CreativeSha1
             $body->removeChild($tag);
         }
         $banner_script = $doc->createElement('script');
-        $banner_script->nodeValue = $jsCode;
+        $banner_script->textContent = $jsCode;
         $banner_script->setAttribute('data-inject', "1");
         $body->insertBefore($banner_script, $body->firstChild);
 
@@ -82,7 +83,7 @@ class CreativeSha1
 
     private function loadHtml(string $html)
     {
-        $doc = new \DOMDocument();
+        $doc = new DOMDocumentSafe();
         $old = libxml_use_internal_errors(true);
         libxml_clear_errors();
         $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
