@@ -238,10 +238,6 @@ class Utils
     {
         $caseId = substr($baseCaseId, 0, -2);
 
-        if ($eventType === 'request') {
-            return $caseId.'01';
-        }
-
         if ($eventType === 'view') {
             return $caseId.'02';
         }

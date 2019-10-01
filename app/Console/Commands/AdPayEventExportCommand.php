@@ -34,8 +34,6 @@ use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
-use function array_filter;
-use function array_values;
 use function sprintf;
 
 class AdPayEventExportCommand extends BaseCommand
@@ -125,8 +123,7 @@ class AdPayEventExportCommand extends BaseCommand
         foreach ($eventsToExport as $event) {
             /** @var $event EventLog */
 
-            if ($event->event_type === EventLog::TYPE_REQUEST
-                || ($event->human_score !== null && $event->our_userdata !== null)) {
+            if ($event->human_score !== null && $event->our_userdata !== null) {
                 continue;
             }
 
@@ -179,19 +176,12 @@ class AdPayEventExportCommand extends BaseCommand
 
     private function exportWithoutRequestEvents(AdPay $adPay, array $events): int
     {
-        $filteredEvents = array_values(array_filter(
-            $events,
-            static function (array $event) {
-                return $event['event_type'] !== EventLog::TYPE_REQUEST;
-            }
-        ));
-
-        if (empty($filteredEvents)) {
+        if (empty($events)) {
             return 0;
         }
 
-        $adPay->addEvents($filteredEvents);
+        $adPay->addEvents($events);
 
-        return count($filteredEvents);
+        return count($events);
     }
 }

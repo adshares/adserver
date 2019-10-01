@@ -79,8 +79,6 @@ class EventConversionLog extends Model
     use BinHex;
     use JsonValue;
 
-    public const TYPE_REQUEST = 'request';
-
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
