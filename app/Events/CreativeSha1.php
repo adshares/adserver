@@ -29,18 +29,16 @@ class CreativeSha1
 {
     use Dispatchable, SerializesModels;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct(\Adshares\Adserver\Models\Banner $model)
+    public function __construct(Banner $model)
     {
         if ($model->creative_type === Banner::type(Banner::HTML_TYPE)) {
             $model->creative_contents = $this->injectScriptAndCSP($model->creative_contents);
         }
 
-        $model->creative_sha1 = sha1($model->creative_contents);
+        if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
+            $model->creative_sha1 = $sha1;
+            $model->classifications()->delete();
+        }
     }
 
     private function injectScriptAndCSP($html)

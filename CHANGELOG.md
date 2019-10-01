@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Exporting conversions' definition to adpay
+### Fixed
+- Invalid classification after banner hash change
 
 ## [1.2.4] - 2019-09-30
 ### Added
