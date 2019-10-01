@@ -39,62 +39,12 @@ class ZipToHtml
     const DOMAIN_WHITELIST = [
         'googleapis.com',
         'gstatic.com',
+        'code.createjs.com',
     ];
 
     const MAX_ZIPPED_SIZE = 512 * 1024;
 
     const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
-
-    const FIX_SCRIPT = <<<MYSCRIPT
-(function(){
-    var styles = document.getElementsByTagName('style');
-    for(var i=0;i<styles.length;i++) {
-        var code = styles[i].innerHTML;
-        
-        code = code.replace(/\/\*\{asset-src:(.*?)\}\*\//g, function(match, src) {
-            var uri = ''; var org = document.querySelector('[data-asset-org="' + src + '"]');
-            if(org) {
-                uri = org.getAttribute('src') || org.getAttribute('data-src');
-            } 
-            return 'url(' + uri + ')';
-        }); 
-    
-        var s = document.createElement('style');
-        s.type = 'text/css';
-        try {
-          s.appendChild(document.createTextNode(code));
-        } catch (e) {
-          s.text = code;
-        }
-        styles[i].parentElement.replaceChild(s, styles[i]);
-    
-    }
-    
-    var refs = document.querySelectorAll('[data-asset-src]');
-    for(var i=0;i<refs.length;i++) {
-        var org = document.querySelector('[data-asset-org="' + refs[i].getAttribute('data-asset-src') + '"]');
-        if(org) {
-            refs[i].setAttribute('src', org.getAttribute('src'));
-        }
-    }
-    
-    var refs = document.querySelectorAll('img[srcset], source[srcset]');
-    for(var i=0;i<refs.length;i++) {
-        var any_found = false;
-        var newsrcset = refs[i].getAttribute('srcset').replace(/asset-src:([^,\s]+)/g, function(match, href) {
-            any_found = true;
-            var uri = 'null'; var org = document.querySelector('[data-asset-org="' + href + '"]');
-            if(org) {
-                uri = org.getAttribute('src') || org.getAttribute('data-src');
-            } 
-            return uri;
-        })
-        if(any_found) {
-            refs[i].setAttribute('srcset', newsrcset);
-        }
-    }
-})();
-MYSCRIPT;
 
     private $filename;
 
@@ -268,17 +218,24 @@ MYSCRIPT;
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
                 }
+                $href = $this->getAssetDataUriExternal($href);
             }
             $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
                 $script_text = $this->assets[$file]['contents'];
                 $new_tag = $doc->createElement('script');
-                $new_tag->textContent = $script_text;
+
+                $this->assets[$file]['placeholder'] = $this->assets[$file]['placeholder'] ?? bin2hex(random_bytes(16));
+                $new_tag->textContent = $this->assets[$file]['placeholder'];
+
                 $new_tag->setAttribute('data-inject', "1");
                 $new_tag->setAttribute('data-href', $file);
                 $script->parentNode->replaceChild($new_tag, $script);
+
+                $this->includeCreateJsFix($new_tag, $script_text);
             } else {
+                die($href);
                 $script->parentNode->removeChild($script);
             }
         }
@@ -371,11 +328,22 @@ MYSCRIPT;
         }
 
         $fix_script = $doc->createElement('script');
-        $fix_script->textContent = self::FIX_SCRIPT;
+        $fix_script->textContent = file_get_contents(resource_path ('js/demand/ziptohtml/fixscript.js'));
 
         $body->appendChild($fix_script);
 
-        return $doc->saveHTML();
+        $html = $doc->saveHTML();
+
+        return $this->fillScripts($html);
+    }
+
+    private function fillScripts($html) {
+        foreach($this->assets as $file => $data) {
+            if(isset($data['placeholder'])) {
+                $html = str_replace($data['placeholder'], $data['contents'], $html);
+            }
+        }
+        return $html;
     }
 
     private function normalizePath($path): string
@@ -407,7 +375,12 @@ MYSCRIPT;
             }
         }
 
-        return implode('/', $parts);
+        $url = implode('/', $parts);
+        if(($n = strpos($url, '?')) !== false) {
+            $url = substr($url, 0, $n);
+        }
+
+        return $url;
     }
 
     private function replaceCssUrls($css_text, $basedir)
@@ -473,5 +446,16 @@ MYSCRIPT;
             ];
         }
         return $name;
+    }
+
+    private function includeCreateJsFix($element, $text)
+    {
+        if(strstr($text, 'createjs.com')) {
+
+            $fix_script = $element->ownerDocument->createElement('script');
+            $fix_script->textContent = file_get_contents(resource_path ('js/demand/ziptohtml/createjs_fix.js'));
+
+            $element->parentNode->insertBefore($fix_script, $element->nextSibling);
+        }
     }
 }
