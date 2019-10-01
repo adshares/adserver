@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Exporting conversions to adpay
+- Exporting conversions' definition to adpay
 
 ## [1.2.4] - 2019-09-30
 ### Added
