@@ -441,7 +441,6 @@ class ZipToHtml
     private function includeCreateJsFix($element, $text)
     {
         if (strstr($text, 'createjs.com')) {
-
             $fix_script = $element->ownerDocument->createElement('script');
             $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/createjs_fix.js'));
 
