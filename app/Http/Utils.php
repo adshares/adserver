@@ -162,7 +162,7 @@ class Utils
         return $site;
     }
 
-    public static function addUrlParameter($url, $name, $value): ?string
+    public static function addUrlParameter($url, $name, $value): string
     {
         $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');
@@ -173,6 +173,11 @@ class Utils
         } else {
             return $url.'&'.$param;
         }
+    }
+
+    public static function addUrlParameterBannerChecksum(string $url, string $bannerChecksum): string
+    {
+        return self::addUrlParameter($url, 'v', substr($bannerChecksum, 0, 4));
     }
 
     public static function attachOrProlongTrackingCookie(

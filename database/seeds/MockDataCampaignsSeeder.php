@@ -178,31 +178,6 @@ class MockDataCampaignsSeeder extends Seeder
         return $b;
     }
 
-//    private function makeNetworkBanner(Banner $banner, $nc): NetworkBanner
-//    {
-//        $serveUrl = route('banner-serve', [
-//            'id' => $banner,
-//        ]);
-//
-//        $b = new NetworkBanner();
-//        $b->fill([
-//            'network_campaign_id' => $nc->id,
-//            'uuid' => Uuid::v4(),
-//            'type' => 'image',
-//            'width' => $banner->creative_width,
-//            'height' => $banner->creative_height,
-//            'serve_url' => $serveUrl,
-//            'click_url' => route('banner-click', [
-//                'id' => $banner->id,
-//            ]),
-//            'view_url' => route('banner-view', [
-//                'id' => $banner->id,
-//            ]),
-//        ]);
-//
-//        return $b;
-//    }
-
     private function generateBannernPng($id, $width, $height, $text = '')
     {
         $image = \imagecreatetruecolor($width, $height);
@@ -266,30 +241,4 @@ class MockDataCampaignsSeeder extends Seeder
         </html>
         ';
     }
-
-//    private function createNetworkCampaign($mockCampaign, $sourceCampaign, $user): NetworkCampaign
-//    {
-//        $campaign = new NetworkCampaign();
-//        $campaign->uuid = Uuid::v4();
-//        $campaign->demand_campaign_id = $sourceCampaign->uuid;
-//        $campaign->publisher_id = $user->uuid;
-//        $campaign->landing_url = $mockCampaign->url;
-//        $campaign->max_cpm = $mockCampaign->max_cpm;
-//        $campaign->max_cpc = $mockCampaign->max_cpc;
-//        $campaign->source_host = config('app.url');
-//        $campaign->source_version = '0.1';
-//        $campaign->source_address = '0001-00000001-0001';
-//        $campaign->source_created_at = new DateTime();
-//        $campaign->source_updated_at = new DateTime();
-//        $campaign->budget = $mockCampaign->budget_per_hour;
-//
-//
-//        $campaign->fill([
-//            'date_start' => date('Y-m-d H:i:s'),
-//            'date_end' => date('Y-m-d H:i:s', time() + 30 * 24 * 60 * 60),
-//        ]);
-//        $campaign->save();
-//
-//        return $campaign;
-//    }
 }
