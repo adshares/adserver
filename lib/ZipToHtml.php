@@ -20,7 +20,6 @@
 
 namespace Adshares\Lib;
 
-use DOMDocument;
 use DOMXPath;
 use Mimey\MimeTypes;
 use RuntimeException;
@@ -179,7 +178,7 @@ class ZipToHtml
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
                 if ($this->isWhitelisted($href)) {
-                    $href = $this->getAssetDataUriExternal($href);
+                    $file = $this->getAssetDataUriExternal($href);
                 } else {
                     if ($scheme !== 'data') {
                         throw new RuntimeException(
@@ -189,9 +188,9 @@ class ZipToHtml
 
                     continue;
                 }
+            } else {
+                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             }
-
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
                 $css_text = $this->replaceCssUrls($this->assets[$file]['contents'], dirname($file));
@@ -218,9 +217,11 @@ class ZipToHtml
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
                 }
-                $href = $this->getAssetDataUriExternal($href);
+                $file = $this->getAssetDataUriExternal($href);
+            } else {
+                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             }
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
                 $script_text = $this->assets[$file]['contents'];
@@ -234,13 +235,12 @@ class ZipToHtml
 
                 $this->includeCreateJsFix($new_tag, $script_text);
             } else {
-                die($href);
                 $script->parentNode->removeChild($script);
             }
         }
 
-        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]".
-                                "|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
+        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]" .
+            "|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
         foreach ($media as $tag) {
             if ($tag->hasAttribute('src')) {
                 $attr = 'src';
@@ -259,7 +259,7 @@ class ZipToHtml
                 }
             }
 
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+            $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             if (isset($this->assets[$file])) {
                 if (isset($this->assets[$file]['used'])) {
                     $tag->removeAttribute($attr);
@@ -283,21 +283,21 @@ class ZipToHtml
                     $scheme = parse_url($href, PHP_URL_SCHEME);
                     if ($scheme) {
                         if ($scheme === 'data') {
-                            return $href.$match[2].($match[3] ?? '');
+                            return $href . $match[2] . ($match[3] ?? '');
                         } elseif (!$this->isWhitelisted($href)) {
                             throw new RuntimeException(
                                 sprintf("Only local assets and data uri allowed (found %s)", $href)
                             );
                         }
                     }
-                    $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+                    $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
                     if (isset($this->assets[$file])) {
                         if (isset($this->assets[$file]['used'])) {
-                            return 'asset-src:'.$file.$match[2].($match[3] ?? '');
+                            return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
                         } else {
                             $this->assets[$file]['used'] = true;
 
-                            return $this->getAssetDataUri($this->assets[$file]).$match[2].($match[3] ?? '');
+                            return $this->getAssetDataUri($this->assets[$file]) . $match[2] . ($match[3] ?? '');
                         }
                     } else {
                         return '';
@@ -327,13 +327,12 @@ class ZipToHtml
         }
 
         $fix_script = $doc->createElement('script');
-        $fix_script->textContent = file_get_contents(resource_path ('js/demand/ziptohtml/fixscript.js'));
+        $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/fixscript.js'));
 
         $body->appendChild($fix_script);
 
         return $doc->saveHTML();
     }
-
 
 
     private function normalizePath($path): string
@@ -366,7 +365,7 @@ class ZipToHtml
         }
 
         $url = implode('/', $parts);
-        if(($n = strpos($url, '?')) !== false) {
+        if (($n = strpos($url, '?')) !== false) {
             $url = substr($url, 0, $n);
         }
 
@@ -378,14 +377,13 @@ class ZipToHtml
         $uri_chars = preg_quote('-._~:/?#[]@!$&\'()*+,;=', '#');
 
         return preg_replace_callback(
-            '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im',
+            '#url\(\s*[\'"]?([0-9a-z' . $uri_chars . ']+?)[\'"]?\s*\)#im',
             function ($match) use ($basedir) {
                 $href = $match[1];
                 $scheme = parse_url($href, PHP_URL_SCHEME);
                 if ($scheme) {
                     if ($this->isWhitelisted($href)) {
-                        $href = $this->getAssetDataUriExternal($href);
-                        //$scheme = parse_url($href, PHP_URL_SCHEME);
+                        $file = $this->getAssetDataUriExternal($href);
                     } else {
                         if ($scheme === 'data') {
                             return $match[0];
@@ -395,9 +393,11 @@ class ZipToHtml
                             );
                         }
                     }
+                } else {
+                    $file = $this->normalizePath($basedir . '/' . $href);
                 }
 
-                return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$href).'}*/';
+                return '/*{asset-src:' . $file . '}*/';
             },
             $css_text
         );
@@ -406,7 +406,7 @@ class ZipToHtml
     private function getAssetDataUri(array &$asset)
     {
         if (!$asset['data_uri']) {
-            $asset['data_uri'] = "data:{$asset['mime_type']};base64,".base64_encode($asset['contents']);
+            $asset['data_uri'] = "data:{$asset['mime_type']};base64," . base64_encode($asset['contents']);
         }
 
         return $asset['data_uri'];
@@ -440,10 +440,10 @@ class ZipToHtml
 
     private function includeCreateJsFix($element, $text)
     {
-        if(strstr($text, 'createjs.com')) {
+        if (strstr($text, 'createjs.com')) {
 
             $fix_script = $element->ownerDocument->createElement('script');
-            $fix_script->textContent = file_get_contents(resource_path ('js/demand/ziptohtml/createjs_fix.js'));
+            $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/createjs_fix.js'));
 
             $element->parentNode->insertBefore($fix_script, $element->nextSibling);
         }
