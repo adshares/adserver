@@ -92,10 +92,7 @@ class BannerClassificationsRequestCommand extends BaseCommand
                 'checksum' => $checksum,
                 'type' => $banner->creative_type,
                 'size' => $banner->getFormattedSize(),
-                'serve_url' => Utils::addUrlParameterBannerChecksum(
-                    route('banner-serve', ['id' => $bannerPublicId]),
-                    $checksum
-                ),
+                'serve_url' => route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                 'campaign_id' => $campaign->uuid,
                 'landing_url' => $campaign->landing_url,
             ];

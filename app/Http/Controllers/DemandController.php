@@ -466,10 +466,7 @@ class DemandController extends Controller
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
                     'serve_url' => $this->changeHost(
-                        Utils::addUrlParameterBannerChecksum(
-                            route('banner-serve', ['id' => $bannerPublicId]),
-                            $checksum
-                        ),
+                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                         $request
                     ),
                     'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),

@@ -175,11 +175,6 @@ class Utils
         }
     }
 
-    public static function addUrlParameterBannerChecksum(string $url, string $bannerChecksum): string
-    {
-        return self::addUrlParameter($url, 'v', substr($bannerChecksum, 0, 4));
-    }
-
     public static function attachOrProlongTrackingCookie(
         Request $request,
         Response $response,
