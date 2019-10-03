@@ -47,7 +47,9 @@ class Config extends Model
 
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
-    public const ADPAY_LAST_EXPORTED_EVENT_ID = 'adpay-last-exported-event-id';
+    public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
+
+    public const ADPAY_LAST_EXPORTED_EVENT_TIME = 'adpay-last-event-time';
 
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
 

@@ -33,96 +33,86 @@ use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use function ceil;
 use function sprintf;
 
 class AdPayEventExportCommand extends BaseCommand
 {
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 500;
 
-    protected $signature = 'ops:adpay:event:export {--first=} {--last=}';
+    protected $signature = 'ops:adpay:event:export {--from=} {--to=}';
 
     protected $description = 'Exports event data to AdPay';
 
     public function handle(AdPay $adPay, AdUser $adUser): void
     {
-        $eventIdFirst = $this->option('first');
-        $eventIdLast = $this->option('last');
+        $commandStartTime = microtime(true);
 
-        if ($eventIdLast === null && !$this->lock()) {
+        $optionFrom = $this->option('from');
+        $optionTo = $this->option('to');
+
+        if (null === $optionTo && !$this->lock()) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
 
             return;
         }
 
-        $timeStart = microtime(true);
-        $this->info('Start command '.$this->signature);
+        if (null === $optionFrom && null !== $optionTo) {
+            $this->error('[AdPayEventExport] Option --from must be defined when option --to is defined');
 
-        $configEventIdFirst = Config::fetchInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID) + 1;
-
-        if ($eventIdFirst === null) {
-            $eventIdFirst = $configEventIdFirst;
-        }
-        if ($eventIdLast !== null) {
-            $eventIdLast = (int)$eventIdLast;
+            return;
         }
 
-        $counter = 0;
-        do {
-            $eventsToExport = $this->fetchEventsToExport((int)$eventIdFirst, $eventIdLast);
+        $this->info('[AdPayEventExport] Start command '.$this->signature);
 
-            $this->info(sprintf(
-                '[AdPayEventExport] Found %d events to export [%d].',
-                count($eventsToExport),
-                ++$counter
-            ));
+        if (null !== $optionFrom) {
+            if (false === ($timestampFrom = strtotime($optionFrom))) {
+                $this->error(sprintf('[AdPayEventExport] Invalid option --from format "%s"', $optionFrom));
 
-            if (count($eventsToExport) > 0) {
-                $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
-
-                $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
-
-                $exportedCount = $this->exportWithoutRequestEvents($adPay, $events);
-
-                $this->info(sprintf(
-                    '[AdPayEventExport] Really exported %d events.',
-                    $exportedCount
-                ));
-
-                $eventIdLastExported = $eventsToExport->last()->id;
-                if ($eventIdLastExported > $configEventIdFirst) {
-                    Config::upsertInt(Config::ADPAY_LAST_EXPORTED_EVENT_ID, $eventIdLastExported);
-                }
-
-                $eventIdFirst = $eventIdLastExported + 1;
+                return;
             }
-        } while (self::EVENTS_BUNDLE_MAXIMAL_SIZE === count($eventsToExport));
 
-        $this->info(sprintf('[AdPayEventExport] LastExportedId %s', $eventIdLastExported ?? '<none>'));
-        $this->info('[AdPayEventExport] Finish command '.$this->signature);
-        $executionTime = microtime(true) - $timeStart;
-        $this->info(sprintf('[AdPayEventExport] Export took %d seconds', (int)$executionTime));
-    }
-
-    private function fetchEventsToExport(int $eventIdFirst, ?int $eventIdLast = null): Collection
-    {
-        $builder = EventLog::where('id', '>=', $eventIdFirst);
-        if ($eventIdLast !== null) {
-            $builder = $builder->where('id', '<=', $eventIdLast);
+            $dateFrom = (new DateTime())->setTimestamp($timestampFrom);
         } else {
-            $builder = $builder->where('created_at', '<=', new DateTime('-10 minutes'));
+            $dateFrom = Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, new DateTime('-4 hours'));
         }
 
-        return $builder->orderBy('id')
-            ->limit(self::EVENTS_BUNDLE_MAXIMAL_SIZE)
-            ->get();
+        if (null !== $optionTo) {
+            if (false === ($timestampTo = strtotime($optionTo))) {
+                $this->error(sprintf('[AdPayEventExport] Invalid option --to format "%s"', $optionTo));
+
+                return;
+            }
+
+            $dateTo = (new DateTime())->setTimestamp($timestampTo);
+        } else {
+            $dateTo = new DateTime('-10 minutes');
+        }
+
+        if ($dateFrom >= $dateTo) {
+            $this->error(
+                sprintf(
+                    '[AdPayEventExport] Invalid range from %s (exclusive) to %s (inclusive)',
+                    $dateFrom->format(DateTime::ATOM),
+                    $dateTo->format(DateTime::ATOM)
+                )
+            );
+
+            return;
+        }
+
+        $this->exportEvents($adPay, $adUser, $dateFrom, $dateTo, $optionTo);
+
+        $commandExecutionTime = microtime(true) - $commandStartTime;
+        $this->info(sprintf('[AdPayEventExport] Finished after %d seconds', (int)$commandExecutionTime));
     }
 
-    private function updateEventLogWithAdUserData(AdUser $adUser, Collection $eventsToExport): void
+    private function updateEventLogWithAdUserData(AdUser $adUser, Collection $events): void
     {
-        foreach ($eventsToExport as $event) {
+        foreach ($events as $event) {
             /** @var $event EventLog */
-
             if ($event->human_score !== null && $event->our_userdata !== null) {
                 continue;
             }
@@ -160,28 +150,133 @@ class AdPayEventExportCommand extends BaseCommand
 
         $userContext = $adUser->getUserContext($impressionContext);
 
-        Log::debug(sprintf(
-            '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"trackingId":%s,"context": %s}',
-            __FUNCTION__,
-            $userContext->humanScore(),
-            $event->id,
-            $event->tracking_id,
-            $userContext->toString()
-        ));
+        Log::debug(
+            sprintf(
+                '%s {"userInfoCache":"MISS","humanScore":%s,"event":%s,"trackingId":%s,"context": %s}',
+                __FUNCTION__,
+                $userContext->humanScore(),
+                $event->id,
+                $event->tracking_id,
+                $userContext->toString()
+            )
+        );
 
         $userInfoCache[$trackingId] = $userContext;
 
         return $userContext;
     }
 
-    private function exportWithoutRequestEvents(AdPay $adPay, array $events): int
+    private function fetchEvents(DateTime $dateFrom, DateTime $dateTo): array
     {
-        if (empty($events)) {
-            return 0;
+        return DB::select(
+            self::SQL_SELECT_EVENTS_TEMPLATE,
+            [
+                'date_from1' => $dateFrom,
+                'date_to1' => $dateTo,
+                'date_from2' => $dateFrom,
+                'date_to2' => $dateTo,
+                'limit' => self::EVENTS_BUNDLE_MAXIMAL_SIZE,
+                'offset' => 0,
+            ]
+        );
+    }
+
+    private const SQL_SELECT_EVENTS_TEMPLATE = <<<SQL
+SELECT UNIX_TIMESTAMP(created_at)   AS `timestamp`,
+       banner_id,
+       case_id,
+       event_type,
+       event_id,
+       their_userdata,
+       our_userdata,
+       human_score,
+       IFNULL(user_id, tracking_id) AS user_id,
+       publisher_id,
+       event_value,
+       reason,
+       null                         AS conversion_definition_id
+FROM event_logs
+WHERE created_at > :date_from1
+  AND created_at <= :date_to1
+UNION
+SELECT UNIX_TIMESTAMP(cg.created_at)                                            AS `timestamp`,
+       e.banner_id                                                              AS banner_id,
+       cg.case_id                                                               AS case_id,
+       'conversion'                                                             AS event_type,
+       (SELECT event_id FROM event_conversion_logs WHERE id = cg.event_logs_id) AS event_id,
+       e.their_userdata                                                         AS their_userdata,
+       e.our_userdata                                                           AS our_userdata,
+       e.human_score                                                            AS human_score,
+       IFNULL(e.user_id, e.tracking_id)                                         AS user_id,
+       e.publisher_id                                                           AS publisher_id,
+       cg.value                                                                 AS event_value,
+       e.reason                                                                 AS reason,
+       cg.conversion_definition_id                                              AS conversion_definition_id
+FROM conversion_groups AS cg
+       JOIN event_logs e ON (cg.case_id = e.case_id AND e.event_type = 'view')
+WHERE cg.created_at > :date_from2
+  AND cg.created_at <= :date_to2
+LIMIT :limit
+  OFFSET :offset
+SQL;
+
+    private function exportEvents(AdPay $adPay, AdUser $adUser, DateTime $dateFrom, DateTime $dateTo, $optionTo): void
+    {
+        $this->info(
+            sprintf(
+                '[AdPayEventExport] Exporting events from %s (exclusive) to %s (inclusive)',
+                $dateFrom->format(DateTime::ATOM),
+                $dateTo->format(DateTime::ATOM)
+            )
+        );
+
+        $seconds = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
+        $eventsCount = EventLog::where('created_at', '>', $dateFrom)->where('created_at', '<=', $dateTo)->count();
+        $packCount = max((int)ceil($eventsCount / self::EVENTS_BUNDLE_MAXIMAL_SIZE), 1);
+        $packInterval = (int)floor($seconds / $packCount);
+        if (0 === $packInterval) {
+            $this->error(
+                sprintf('[AdPayEventExport] Too many events to export (%s) in time (%s)', $eventsCount, $seconds)
+            );
         }
 
-        $adPay->addEvents($events);
+        $dateToTemporary = clone $dateFrom;
 
-        return count($events);
+        for ($pack = 0; $pack < $packCount; $pack++) {
+            $dateFromTemporary = clone $dateToTemporary;
+            $dateToTemporary->modify(sprintf('+ %d seconds', $packInterval));
+
+            if ($dateToTemporary > $dateTo) {
+                $dateToTemporary = clone $dateTo;
+            }
+
+            $eventsToExport =
+                EventLog::where('created_at', '>', $dateFromTemporary)
+                    ->where('created_at', '<=', $dateToTemporary)
+                    ->get();
+
+            $this->info(
+                sprintf('[AdPayEventExport] Pack [%d]. Events to export: %d', $pack + 1, count($eventsToExport))
+            );
+
+            $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+            $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
+
+            $request = [
+                'meta' => [
+                    'from' => $dateFromTemporary->format(DateTime::ATOM),
+                    'to' => $dateToTemporary->format(DateTime::ATOM),
+                ],
+                'events' => $events,
+            ];
+
+            $adPay->addEvents($request);
+
+            if (null === $optionTo && count($eventsToExport) > 0) {
+                Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);
+            }
+        }
+
+        $this->info(sprintf('[AdPayEventExport] Finished exporting %d events', $eventsCount));
     }
 }

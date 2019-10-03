@@ -28,6 +28,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property Carbon created_at
+ */
 class ConversionGroup extends Model
 {
     use AutomateMutators;
@@ -56,6 +59,10 @@ class ConversionGroup extends Model
     protected $traitAutomate = [
         'case_id' => 'BinHex',
         'group_id' => 'BinHex',
+    ];
+
+    protected $dates = [
+        'created_at',
     ];
 
     public static function register(
