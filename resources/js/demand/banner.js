@@ -44,20 +44,22 @@ domReady(function() {
     var fn = function(event) {
         var msg;
 
-        if (typeof event.data == 'string') {
-            msg = JSON.parse(event.data);
-        } else {
-            msg = event.data;
-        }
-        if (msg.dwmthLoad) {
-            var data = msg.data;
+        try {
+            if (typeof event.data == 'string') {
+                msg = JSON.parse(event.data);
+            } else {
+                msg = event.data;
+            }
+            if (msg.dwmthLoad) {
+                var data = msg.data;
 
-            if (data.click_url) {
-                for(var i=0;i<links.length;i++) {
-                    links[i].href = data.click_url;
+                if (data.click_url) {
+                    for (var i = 0; i < links.length; i++) {
+                        links[i].href = data.click_url;
+                    }
                 }
             }
-        }
+        } catch (e) {}
     };
     window.addEventListener ? addEventListener('message', fn) : attachEvent(
         'onmessage', fn);

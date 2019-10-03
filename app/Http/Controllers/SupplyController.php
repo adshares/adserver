@@ -131,16 +131,13 @@ class SupplyController extends Controller
 
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
 
-        $response = self::json($bannerFinder->findBanners($zones, $context));
-        $response->send();
-
         NetworkImpression::register(
             Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
             Utils::hexUuidFromBase64UrlWithChecksum($tid),
             $context
         );
 
-        return $response;
+        return self::json($bannerFinder->findBanners($zones, $context));
     }
 
     public function findScript(): StreamedResponse
