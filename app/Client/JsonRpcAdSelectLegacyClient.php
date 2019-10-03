@@ -27,7 +27,6 @@ use Adshares\Adserver\Client\Mapper\AdSelect\EventPaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
@@ -262,11 +261,15 @@ final class JsonRpcAdSelectLegacyClient implements AdSelectLegacy
 
     public function getLastPaidPaymentId(): int
     {
-        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID);
+        Log::error('deprecated function getLastPaidPaymentId');
+
+        return 0;
     }
 
     public function getLastUnpaidEventId(): int
     {
-        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID);
+        Log::error('deprecated function getLastUnpaidEventId');
+
+        return 0;
     }
 }

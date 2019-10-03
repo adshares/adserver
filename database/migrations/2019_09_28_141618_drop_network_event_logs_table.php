@@ -28,6 +28,7 @@ class DropNetworkEventLogsTable extends Migration
     public function up(): void
     {
         Schema::dropIfExists('network_event_logs');
+        Schema::dropIfExists('network_event_logs_hourly');
     }
 
     public function down(): void
@@ -89,6 +90,40 @@ class DropNetworkEventLogsTable extends Migration
                 $table->unique('event_id');
                 $table->index('created_at', 'network_event_logs_created_at_index');
                 $table->index('updated_at', 'network_event_logs_updated_at_index');
+            }
+        );
+
+        Schema::create(
+            'network_event_logs_hourly',
+            function (Blueprint $table) {
+                $table->increments('id');
+                $table->timestamp('hour_timestamp')->nullable(false);
+
+                $table->binary('publisher_id')->nullable(false);
+                $table->binary('site_id')->nullable(false);
+                $table->binary('zone_id')->nullable(false);
+                $table->string('domain', 255)->nullable(false);
+
+                $table->bigInteger('revenue')->nullable(false);
+                $table->unsignedInteger('clicks')->nullable(false);
+                $table->unsignedInteger('views')->nullable(false);
+                $table->unsignedInteger('clicks_all')->nullable(false);
+                $table->unsignedInteger('views_all')->nullable(false);
+                $table->unsignedInteger('views_unique')->nullable(false);
+            }
+        );
+
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE network_event_logs_hourly MODIFY publisher_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs_hourly MODIFY site_id varbinary(16)');
+            DB::statement('ALTER TABLE network_event_logs_hourly MODIFY zone_id varbinary(16)');
+        }
+
+        Schema::table(
+            'network_event_logs_hourly',
+            function (Blueprint $table) {
+                $table->index('hour_timestamp');
+                $table->index(['publisher_id', 'site_id']);
             }
         );
     }
