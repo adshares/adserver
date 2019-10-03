@@ -465,12 +465,12 @@ class DemandController extends Controller
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => $this->changeHost(
+                    'serve_url' => SecureUrl::change(
                         route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                         $request
                     ),
-                    'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
-                    'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    'click_url' => SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request),
+                    'view_url' => SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
@@ -501,13 +501,5 @@ class DemandController extends Controller
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
-    }
-
-    private function changeHost(string $url, Request $request): string
-    {
-        $currentHost = $request->getSchemeAndHttpHost();
-        $bannerHost = config('app.adserver_banner_host');
-
-        return str_replace($currentHost, $bannerHost, $url);
     }
 }
