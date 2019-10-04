@@ -144,7 +144,7 @@ class CampaignRepository
                 $conversion = new ConversionDefinition();
                 $conversion->fill($conversionInput);
 
-                $campaign->conversions()->save($conversion);
+                $campaign->conversionDefinitions()->save($conversion);
             }
         } catch (\Exception $ex) {
             DB::rollBack();
