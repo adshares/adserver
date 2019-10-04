@@ -47,7 +47,7 @@ class DemandCampaignMapper
                     'time_start' => self::processDate($campaign->time_start),
                     'time_end' => self::processDate($campaign->time_end),
                     'banners' => self::extractAds($campaign),
-                    'conversion_definitions' => self::processConversions($campaign->conversions),
+                    'conversion_definitions' => self::processConversions($campaign->conversion_definitions),
                     'filters' => self::processTargeting($campaignArray['targeting']),
                     'keywords' => self::processKeywords($campaignArray),
                 ];

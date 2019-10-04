@@ -58,7 +58,7 @@ use function hex2bin;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
- * @property Collection conversions
+ * @property Collection conversion_definitions
  * @property User user
  * @property string secret
  * @property int conversion_click
@@ -140,7 +140,7 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
-        'conversions',
+        'conversion_definitions',
         'secret',
         'conversion_click',
         'conversion_click_link',
@@ -237,7 +237,7 @@ class Campaign extends Model
         return $this->hasMany(Banner::class);
     }
 
-    public function conversions(): HasMany
+    public function conversion_definitions(): HasMany
     {
         return $this->hasMany(ConversionDefinition::class);
     }
