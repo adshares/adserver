@@ -32,6 +32,7 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
+use DateTimeZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -287,6 +288,10 @@ class WalletController extends Controller
         $offset = $request->input(self::FIELD_OFFSET, 0);
 
         $userId = Auth::user()->id;
+
+        $dateTimeZone = new DateTimeZone($from->format('O'));
+        $this->setDbSessionTimezone($dateTimeZone);
+
         $builder = UserLedgerEntry::getBillingHistoryBuilder($userId, $types, $from, $to);
         $count = $builder->getCountForPagination();
         $resp = [];
@@ -296,7 +301,7 @@ class WalletController extends Controller
 
             /** @var stdClass $ledgerItem */
             foreach ($userLedgerItems as $ledgerItem) {
-                $date = MySqlQueryBuilder::convertMySqlDateToDateTime($ledgerItem->created_at)
+                $date = MySqlQueryBuilder::convertMySqlDateToDateTime($ledgerItem->created_at, $dateTimeZone)
                     ->format(DATE_ATOM);
 
                 $items[] = [
@@ -310,6 +315,9 @@ class WalletController extends Controller
                 ];
             }
         }
+
+        $this->unsetDbSessionTimeZone();
+
         $resp['limit'] = (int)$limit;
         $resp['offset'] = (int)$offset;
         $resp['items_count'] = count($items);
@@ -317,6 +325,17 @@ class WalletController extends Controller
         $resp['items'] = $items;
 
         return self::json($resp);
+    }
+
+    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
+    {
+        DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+    }
+
+    private function unsetDbSessionTimeZone(): void
+    {
+        DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
     }
 
     private function getUserLedgerEntryAddress(stdClass $ledgerItem): ?string
