@@ -103,6 +103,7 @@ class DemandCampaignMapper
                         'is_value_mutable',
                         'limit',
                         'is_repeatable',
+                        'cost',
                     ]
                 );
             }
