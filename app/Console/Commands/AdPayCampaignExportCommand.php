@@ -47,7 +47,7 @@ class AdPayCampaignExportCommand extends BaseCommand
         $now = new DateTime();
         $dateFrom = Config::fetchDateTime(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
 
-        $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->with('conversion_definitions')->get();
+        $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->with('conversionDefinitions')->get();
         $this->info('Found '.count($updatedCampaigns).' updated campaigns to export.');
         if (count($updatedCampaigns) > 0) {
             $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
