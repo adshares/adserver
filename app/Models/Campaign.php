@@ -140,7 +140,7 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
-        'conversion_definitions',
+        'conversionDefinitions',
         'secret',
         'conversion_click',
         'conversion_click_link',
