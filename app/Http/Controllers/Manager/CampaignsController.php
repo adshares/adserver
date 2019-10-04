@@ -255,7 +255,7 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
-        $conversions = $input['conversions'] ?? [];
+        $conversions = $input['conversion_definitions'] ?? [];
         $this->validateConversions($campaignId, $conversions);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
