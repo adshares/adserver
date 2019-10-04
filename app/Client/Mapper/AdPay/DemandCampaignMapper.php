@@ -98,7 +98,7 @@ class DemandCampaignMapper
                 return $conversion->only(
                     [
                         'uuid',
-                        'budget_type',
+                        'limit_type',
                         'value',
                         'is_value_mutable',
                         'limit',

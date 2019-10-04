@@ -39,7 +39,7 @@ use function route;
  * @property string uuid
  * @property int campaign_id
  * @property string name
- * @property string budget_type
+ * @property string $limit_type
  * @property string event_type
  * @property string type
  * @property int|null value
@@ -71,7 +71,7 @@ class ConversionDefinition extends Model
     protected $fillable = [
         'campaign_id',
         'name',
-        'budget_type',
+        'limit_type',
         'event_type',
         'type',
         'value',
@@ -84,7 +84,7 @@ class ConversionDefinition extends Model
         'uuid',
         'campaign_id',
         'name',
-        'budget_type',
+        'limit_type',
         'event_type',
         'type',
         'value',
@@ -179,20 +179,21 @@ class ConversionDefinition extends Model
             'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),
             'value' => [
                 'integer',
+                'min:0',
                 'nullable',
                 Rule::requiredIf(static function () use ($isValueMutable) {
                     return 0 === $isValueMutable;
                 }),
             ],
-            'limit' => 'integer|nullable',
+            'limit' => 'integer|min:0|nullable',
         ];
 
         if ($type === self::BASIC_TYPE) {
-            $rules['budget_type'] = 'in:'.self::IN_BUDGET;
+            $rules['limit_type'] = 'required|in:'.self::IN_BUDGET;
             $rules['is_repeatable'] = 'required|in:0';
             $rules['is_value_mutable'] = 'required|in:0';
         } elseif ($type === self::ADVANCED_TYPE) {
-            $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
+            $rules['limit_type'] = sprintf('required|in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
             $rules['is_repeatable'] = 'required|in:0,1';
             $rules['is_value_mutable'] = 'required|in:0,1';
         }
