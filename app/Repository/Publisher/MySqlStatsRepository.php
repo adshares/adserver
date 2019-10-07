@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
@@ -520,13 +519,6 @@ class MySqlStatsRepository implements StatsRepository
             );
 
         return new DataCollection(array_merge($result, $resultWithoutEvents));
-    }
-
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
-    {
-        throw new RuntimeException(
-            'Publisher statistics are aggregated in AggregateCaseStatisticsPublisherCommand command'
-        );
     }
 
     private function fetch(
