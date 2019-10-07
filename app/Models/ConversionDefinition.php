@@ -100,6 +100,11 @@ class ConversionDefinition extends Model
         'link',
     ];
 
+    protected $casts = [
+        'is_value_mutable' => 'boolean',
+        'is_repeatable' => 'boolean',
+    ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
