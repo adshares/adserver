@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
@@ -37,7 +38,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -336,13 +336,17 @@ class WalletController extends Controller
 
     private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
     {
-        DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
-        DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+        if (DB::isMySql()) {
+            DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+            DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+        }
     }
 
     private function unsetDbSessionTimeZone(): void
     {
-        DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+        if (DB::isMySql()) {
+            DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+        }
     }
 
     private function getUserLedgerEntryAddress(stdClass $ledgerItem): ?string
