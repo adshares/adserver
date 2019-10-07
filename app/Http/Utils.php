@@ -162,7 +162,7 @@ class Utils
         return $site;
     }
 
-    public static function addUrlParameter($url, $name, $value): ?string
+    public static function addUrlParameter($url, $name, $value): string
     {
         $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');

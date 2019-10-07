@@ -3,7 +3,9 @@
 [[ -z ${1:-""} ]] && set -eu || source ${1}/_functions.sh --vendor
 cd ${2:-"."}
 
-export APP_VERSION=$(versionFromGit)
+GIT_TAG=$(git tag -l --points-at HEAD | head -n 1)
+GIT_HASH="#"$(git rev-parse --short HEAD)
+export APP_VERSION=${GIT_TAG:-${GIT_HASH}}
 
 function artisanCommand {
     ./artisan --no-interaction "$@"
