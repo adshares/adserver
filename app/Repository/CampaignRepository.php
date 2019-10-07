@@ -53,7 +53,7 @@ class CampaignRepository
 
     public function fetchCampaignByIdWithConversions(int $campaignId): Campaign
     {
-        return (new Campaign())->with('conversionDefinitions')->findOrFail($campaignId);
+        return (new Campaign())->with('conversions')->findOrFail($campaignId);
     }
 
     /**
@@ -144,7 +144,7 @@ class CampaignRepository
                 $conversion = new ConversionDefinition();
                 $conversion->fill($conversionInput);
 
-                $campaign->conversionDefinitions()->save($conversion);
+                $campaign->conversions()->save($conversion);
             }
         } catch (\Exception $ex) {
             DB::rollBack();

@@ -255,7 +255,7 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
-        $conversions = $input['conversion_definitions'] ?? [];
+        $conversions = $input['conversions'] ?? [];
         $this->validateConversions($campaignId, $conversions);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
@@ -413,6 +413,14 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
+    }
+
+    public function getConversions(int $campaignId): JsonResponse
+    {
+        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
+        $conversions = $campaign->toArray()['conversions'];
+
+        return self::json($conversions);
     }
 
     public function classify(int $campaignId): JsonResponse
