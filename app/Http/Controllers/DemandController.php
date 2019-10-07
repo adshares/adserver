@@ -48,8 +48,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function base64_decode;
-use function bin2hex;
-use function inet_pton;
 use function json_decode;
 use function sprintf;
 
@@ -437,7 +435,7 @@ class DemandController extends Controller
         $campaigns = [];
 
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
-        
+
         $bannerIds = [];
         foreach ($activeCampaigns as $campaign) {
             foreach ($campaign->ads as $banner) {
@@ -459,15 +457,20 @@ class DemandController extends Controller
                 }
 
                 $bannerPublicId = $bannerArray['uuid'];
+                $checksum = $bannerArray['creative_sha1'];
+
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
-                    'checksum' => $bannerArray['creative_sha1'],
-                    'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
-                    'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
-                    'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    'checksum' => $checksum,
+                    'serve_url' => SecureUrl::change(
+                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
+                        $request
+                    ),
+                    'click_url' => SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request),
+                    'view_url' => SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
@@ -498,13 +501,5 @@ class DemandController extends Controller
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
-    }
-
-    private function changeHost(string $url, Request $request): string
-    {
-        $currentHost = $request->getSchemeAndHttpHost();
-        $bannerHost = config('app.adserver_banner_host');
-
-        return str_replace($currentHost, $bannerHost, $url);
     }
 }
