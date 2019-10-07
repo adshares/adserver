@@ -289,8 +289,13 @@ class WalletController extends Controller
 
         $userId = Auth::user()->id;
 
-        $dateTimeZone = new DateTimeZone($from->format('O'));
-        $this->setDbSessionTimezone($dateTimeZone);
+        $changeDbSessionTimezone = null !== $from;
+        if ($changeDbSessionTimezone) {
+            $dateTimeZone = new DateTimeZone($from->format('O'));
+            $this->setDbSessionTimezone($dateTimeZone);
+        } else {
+            $dateTimeZone = null;
+        }
 
         $builder = UserLedgerEntry::getBillingHistoryBuilder($userId, $types, $from, $to);
         $count = $builder->getCountForPagination();
@@ -316,7 +321,9 @@ class WalletController extends Controller
             }
         }
 
-        $this->unsetDbSessionTimeZone();
+        if ($changeDbSessionTimezone) {
+            $this->unsetDbSessionTimeZone();
+        }
 
         $resp['limit'] = (int)$limit;
         $resp['offset'] = (int)$offset;
