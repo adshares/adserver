@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Banner checksum fragment to serve url
+### Changed
+- Sum incomes/expenditures from different adservers in billing history
+### Fixed
+- Grouping events by day in billing history
 
 ## [1.2.5] - 2019-10-01
 ### Added

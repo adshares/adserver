@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Ads\Util\AdsValidator;
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Mail\WithdrawalApproval;
@@ -32,11 +33,11 @@ use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
+use DateTimeZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
@@ -287,6 +288,15 @@ class WalletController extends Controller
         $offset = $request->input(self::FIELD_OFFSET, 0);
 
         $userId = Auth::user()->id;
+
+        $changeDbSessionTimezone = null !== $from;
+        if ($changeDbSessionTimezone) {
+            $dateTimeZone = new DateTimeZone($from->format('O'));
+            $this->setDbSessionTimezone($dateTimeZone);
+        } else {
+            $dateTimeZone = null;
+        }
+
         $builder = UserLedgerEntry::getBillingHistoryBuilder($userId, $types, $from, $to);
         $count = $builder->getCountForPagination();
         $resp = [];
@@ -296,7 +306,7 @@ class WalletController extends Controller
 
             /** @var stdClass $ledgerItem */
             foreach ($userLedgerItems as $ledgerItem) {
-                $date = MySqlQueryBuilder::convertMySqlDateToDateTime($ledgerItem->created_at)
+                $date = MySqlQueryBuilder::convertMySqlDateToDateTime($ledgerItem->created_at, $dateTimeZone)
                     ->format(DATE_ATOM);
 
                 $items[] = [
@@ -310,6 +320,11 @@ class WalletController extends Controller
                 ];
             }
         }
+
+        if ($changeDbSessionTimezone) {
+            $this->unsetDbSessionTimeZone();
+        }
+
         $resp['limit'] = (int)$limit;
         $resp['offset'] = (int)$offset;
         $resp['items_count'] = count($items);
@@ -317,6 +332,21 @@ class WalletController extends Controller
         $resp['items'] = $items;
 
         return self::json($resp);
+    }
+
+    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
+    {
+        if (DB::isMySql()) {
+            DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+            DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+        }
+    }
+
+    private function unsetDbSessionTimeZone(): void
+    {
+        if (DB::isMySql()) {
+            DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+        }
     }
 
     private function getUserLedgerEntryAddress(stdClass $ledgerItem): ?string

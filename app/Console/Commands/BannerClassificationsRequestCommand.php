@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
