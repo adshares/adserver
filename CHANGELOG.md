@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- NetworkEventLog and related classes
 - Banner checksum fragment to serve url
 ### Changed
 - Sum incomes/expenditures from different adservers in billing history

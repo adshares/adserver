@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,26 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Providers\Supply;
 
-use Adshares\Adserver\Repository\Supply\NetworkEventRepository;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
-use Adshares\Supply\Application\Service\AdSelectLegacyEventExporter;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 
 class AdSelectEventExporterProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(
-            AdSelectLegacyEventExporter::class,
-            function (Application $app) {
-                $eventRepository = new NetworkEventRepository();
-
-                return new AdSelectLegacyEventExporter(
-                    $app->make(AdSelectLegacy::class),
-                    $eventRepository
-                );
-            }
-        );
     }
 }

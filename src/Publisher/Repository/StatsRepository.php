@@ -167,6 +167,4 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection;
-
-    public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
 }
