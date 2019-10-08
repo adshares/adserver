@@ -415,14 +415,6 @@ class CampaignsController extends Controller
         return self::json(['campaign' => $campaign->toArray()]);
     }
 
-    public function getConversions(int $campaignId): JsonResponse
-    {
-        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
-        $conversions = $campaign->toArray()['conversions'];
-
-        return self::json($conversions);
-    }
-
     public function classify(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);

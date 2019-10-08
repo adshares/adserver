@@ -21,17 +21,17 @@
         "budget_per_hour": 100000000000,
         "classification_status": 2,
         "classification_tags": "tea",
-        "conversions": [
+        "conversion_definitions": [
           {
               "name" : "Conversion #1",
-              "budget_type": "in_budget",
+              "limit_type": "in_budget",
               "event_type": "Complete registration",
               "type": "basic",
               "value": "22222222222"
           },
           {
             "name" : "Conversion #2",
-            "budget_type": "out_of_budget",
+            "limit_type": "out_of_budget",
             "event_type": "Purchase",
             "type": "advanced",
             "value": "100000000000",
@@ -62,7 +62,7 @@
         "max_cpc": 100000000000,
         "budget_per_hour": 100000000000,
         "classification_status": 2,
-        "classification_tags": "advertising, blockchain, technology"
+        "classification_tags": "advertising,blockchain,technology"
       }
     ]
   },
@@ -77,7 +77,7 @@
         "max_cpc": 100000000000,
         "budget_per_hour": 100000000000,
         "classification_status": 2,
-        "classification_tags": "advertising, blockchain, technology"
+        "classification_tags": "advertising,blockchain,technology"
       }
     ]
   }

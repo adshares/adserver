@@ -23,6 +23,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class MockDataCampaignsSeeder extends Seeder
 {
@@ -65,14 +66,14 @@ class MockDataCampaignsSeeder extends Seeder
             foreach ($mockCampaign->campaigns as $cr) {
                 $campaign = $this->createCampaign($user, $cr);
 
-                if (isset($cr->conversions)) {
-                    foreach ($cr->conversions as $conversionData) {
+                if (isset($cr->conversion_definitions)) {
+                    foreach ($cr->conversion_definitions as $conversionData) {
                         $name = $campaign->name . 'Conversion';
 
                         $conversion = new ConversionDefinition();
                         $conversion->name = $name;
                         $conversion->campaign_id = $campaign->id;
-                        $conversion->budget_type = $conversionData->budget_type;
+                        $conversion->limit_type = $conversionData->limit_type;
                         $conversion->event_type = $conversionData->event_type;
                         $conversion->type = $conversionData->type;
                         $conversion->value = $conversionData->value ?? null;

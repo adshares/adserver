@@ -63,7 +63,7 @@ final class ConversionControllerTest extends TestCase
         $conversion = new ConversionDefinition();
         $conversion->campaign_id = $campaign->id;
         $conversion->name = 'a';
-        $conversion->budget_type = 'in_budget';
+        $conversion->limit_type = 'in_budget';
         $conversion->event_type = 'Purchase';
         $conversion->type = ConversionDefinition::BASIC_TYPE;
         $conversion->value = $conversionValue;
