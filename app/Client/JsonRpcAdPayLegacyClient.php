@@ -24,9 +24,9 @@ namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\HttpClient\JsonRpc\Procedure;
-use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Demand\Application\Service\AdPayLegacy;
 
-final class JsonRpcAdPayClient implements AdPay
+final class JsonRpcAdPayLegacyClient implements AdPayLegacy
 {
     private const METHOD_CAMPAIGN_UPDATE = 'campaign_update';
 

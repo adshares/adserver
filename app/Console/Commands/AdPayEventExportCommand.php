@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
@@ -35,6 +36,8 @@ use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use function array_filter;
+use function array_values;
 use function ceil;
 use function sprintf;
 
@@ -171,10 +174,8 @@ class AdPayEventExportCommand extends BaseCommand
         return DB::select(
             self::SQL_SELECT_EVENTS_TEMPLATE,
             [
-                'date_from1' => $dateFrom,
-                'date_to1' => $dateTo,
-                'date_from2' => $dateFrom,
-                'date_to2' => $dateTo,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
                 'limit' => self::EVENTS_BUNDLE_MAXIMAL_SIZE,
                 'offset' => 0,
             ]
@@ -182,23 +183,6 @@ class AdPayEventExportCommand extends BaseCommand
     }
 
     private const SQL_SELECT_EVENTS_TEMPLATE = <<<SQL
-SELECT UNIX_TIMESTAMP(created_at)   AS `timestamp`,
-       banner_id,
-       case_id,
-       event_type,
-       event_id,
-       their_userdata,
-       our_userdata,
-       human_score,
-       IFNULL(user_id, tracking_id) AS user_id,
-       publisher_id,
-       event_value,
-       reason,
-       null                         AS conversion_definition_id
-FROM event_logs
-WHERE created_at > :date_from1
-  AND created_at <= :date_to1
-UNION
 SELECT UNIX_TIMESTAMP(cg.created_at)                                            AS `timestamp`,
        e.banner_id                                                              AS banner_id,
        cg.case_id                                                               AS case_id,
@@ -214,8 +198,8 @@ SELECT UNIX_TIMESTAMP(cg.created_at)                                            
        cg.conversion_definition_id                                              AS conversion_definition_id
 FROM conversion_groups AS cg
        JOIN event_logs e ON (cg.case_id = e.case_id AND e.event_type = 'view')
-WHERE cg.created_at > :date_from2
-  AND cg.created_at <= :date_to2
+WHERE cg.created_at > :date_from
+  AND cg.created_at <= :date_to
 LIMIT :limit
   OFFSET :offset
 SQL;
@@ -262,15 +246,17 @@ SQL;
             $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
             $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
 
-            $request = [
-                'meta' => [
-                    'from' => $dateFromTemporary->format(DateTime::ATOM),
-                    'to' => $dateToTemporary->format(DateTime::ATOM),
-                ],
-                'events' => $events,
-            ];
+            $views = array_values(array_filter($events, function ($item) {
+                return EventLog::TYPE_VIEW === $item['event_type'];
+            }));
+            $clicks = array_values(array_filter($events, function ($item) {
+                return EventLog::TYPE_CLICK === $item['event_type'];
+            }));
 
-            $adPay->addEvents($request);
+            $timeStart = (clone $dateFromTemporary)->modify('+1 second');
+            $timeEnd = clone $dateToTemporary;
+            $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
+            $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
 
             if (null === $optionTo && count($eventsToExport) > 0) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);

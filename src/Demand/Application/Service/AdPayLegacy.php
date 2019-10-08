@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,19 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Demand\Application\Service;
 
-use Adshares\Demand\Application\Dto\AdPayEvents;
-
-interface AdPay
+interface AdPayLegacy
 {
     public function updateCampaign(array $campaigns): void;
 
     public function deleteCampaign(array $campaignIds): void;
 
-    public function addViews(AdPayEvents $events): void;
+    public function addEvents(array $events): void;
 
-    public function addClicks(AdPayEvents $events): void;
-
-    public function addConversions(AdPayEvents $events): void;
-
-    public function getPayments(int $timestamp, bool $recalculate = false, bool $force = false): array;
+    public function getPayments(int $timestamp, bool $force): array;
 }

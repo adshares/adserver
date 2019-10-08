@@ -33,8 +33,8 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use function floor;
 use Illuminate\Support\Facades\Mail;
+use function floor;
 use function now;
 use function sprintf;
 
@@ -48,7 +48,12 @@ class AdPayGetPayments extends BaseCommand
 
     public const NORMAL = 'normal';
 
-    protected $signature = 'ops:adpay:payments:get {--t|timestamp=} {--s|sub=1} {--f|force} {--c|chunkSize=250}';
+    protected $signature = 'ops:adpay:payments:get
+                            {--t|timestamp=}
+                            {--s|sub=1}
+                            {--f|force}
+                            {--r|recalculate}
+                            {--c|chunkSize=250}';
 
     protected $description = 'Updates events with payment data fetched from adpay';
 
@@ -118,7 +123,7 @@ class AdPayGetPayments extends BaseCommand
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
 
-        return new Collection($adPay->getPayments($timestamp, (bool)$this->option('force')));
+        return new Collection($adPay->getPayments($timestamp, (bool)$this->option('recalculate'), (bool)$this->option('force')));
     }
 
     private function updateEventsWithAdPayData(

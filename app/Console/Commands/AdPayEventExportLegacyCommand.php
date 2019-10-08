@@ -27,7 +27,7 @@ use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
-use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Demand\Application\Service\AdPayLegacy;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -44,7 +44,7 @@ class AdPayEventExportLegacyCommand extends BaseCommand
 
     protected $description = '(Legacy) Exports event data to AdPay';
 
-    public function handle(AdPay $adPay, AdUser $adUser): void
+    public function handle(AdPayLegacy $adPay, AdUser $adUser): void
     {
         $eventIdFirst = $this->option('first');
         $eventIdLast = $this->option('last');
@@ -174,7 +174,7 @@ class AdPayEventExportLegacyCommand extends BaseCommand
         return $userContext;
     }
 
-    private function exportWithoutRequestEvents(AdPay $adPay, array $events): int
+    private function exportWithoutRequestEvents(AdPayLegacy $adPay, array $events): int
     {
         if (empty($events)) {
             return 0;

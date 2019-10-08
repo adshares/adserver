@@ -20,21 +20,35 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Demand\Application\Dto;
 
-use Adshares\Demand\Application\Dto\AdPayEvents;
+use DateTime;
+use Illuminate\Contracts\Support\Arrayable;
 
-interface AdPay
+class AdPayEvents implements Arrayable
 {
-    public function updateCampaign(array $campaigns): void;
+    /** @var DateTime */
+    private $timeStart;
 
-    public function deleteCampaign(array $campaignIds): void;
+    /** @var DateTime */
+    private $timeEnd;
 
-    public function addViews(AdPayEvents $events): void;
+    /** @var array */
+    private $events;
 
-    public function addClicks(AdPayEvents $events): void;
+    public function __construct(DateTime $timeStart, DateTime $timeEnd, array $events)
+    {
+        $this->timeStart = $timeStart;
+        $this->timeEnd = $timeEnd;
+        $this->events = $events;
+    }
 
-    public function addConversions(AdPayEvents $events): void;
-
-    public function getPayments(int $timestamp, bool $recalculate = false, bool $force = false): array;
+    public function toArray()
+    {
+        return [
+            'time_start' => $this->timeStart->getTimestamp(),
+            'time_end' => $this->timeEnd->getTimestamp(),
+            'events' => $this->events,
+        ];
+    }
 }
