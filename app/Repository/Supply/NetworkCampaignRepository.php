@@ -154,11 +154,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            try {
-                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
-            } catch (RuntimeException $exception) {
-                // backward compatibility
-            }
+            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
         }
 
         return new CampaignCollection(...$campaigns);
@@ -171,11 +167,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            try {
-                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
-            } catch (RuntimeException $exception) {
-                // backward compatibility
-            }
+            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
         }
 
         return new CampaignCollection(...$campaigns);

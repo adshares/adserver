@@ -52,17 +52,4 @@ final class CampaignDateTest extends TestCase
         $this->assertEquals($createdAt, $campaignDate->getCreatedAt());
         $this->assertEquals($updatedAt, $campaignDate->getUpdatedAt());
     }
-
-    public function testWhenDateEndIsSmallerThanCurrentDate(): void
-    {
-        $this->expectException(InvalidCampaignDateException::class);
-        $this->expectExceptionMessage('End date must be greater than current date.');
-
-        $dateStart = new DateTime('-2 hour');
-        $dateEnd = (new DateTime())->modify('-1 hour');
-        $createdAt = new DateTime();
-        $updatedAt = new DateTime();
-
-        new CampaignDate($dateStart, $dateEnd, $createdAt, $updatedAt);
-    }
 }
