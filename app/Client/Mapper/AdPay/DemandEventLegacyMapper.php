@@ -40,7 +40,7 @@ class DemandEventLegacyMapper
 
                 $theirKeywords = new stdClass();//self::processTheirKeywords($event->their_userdata);
                 $ourUserData = json_decode(json_encode($event->our_userdata), true);
-                $ourKeywords = OurKeywordsMapper::map($ourUserData);
+                $ourKeywords = OurKeywordsLegacyMapper::map($ourUserData);
 
                 $mapped = [
                     'banner_id' => $event->banner_id,

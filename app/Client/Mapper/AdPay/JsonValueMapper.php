@@ -23,16 +23,17 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
-use stdClass;
 
-class OurKeywordsMapper extends AbstractFilterMapper
+class JsonValueMapper extends AbstractFilterMapper
 {
-    public static function map($keywords)
+    public static function map($keywords): array
     {
-        if (!$keywords) {
-            return new stdClass();
+        $decoded = json_decode(json_encode($keywords), true);
+
+        if (!$decoded) {
+            return [];
         }
 
-        return self::generateNestedStructure($keywords);
+        return self::generateNestedStructure($decoded);
     }
 }
