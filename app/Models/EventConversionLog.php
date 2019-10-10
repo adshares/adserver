@@ -36,12 +36,12 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use function hex2bin;
+use Illuminate\Support\Carbon;
 use stdClass;
 
 /**
- * @property int created_at
+ * @property Carbon created_at
  * @property int updated_at
  * @property string case_id
  * @property string event_id
@@ -344,10 +344,5 @@ class EventConversionLog extends Model
     {
         $this->human_score = $humanScore;
         $this->our_userdata = $userData;
-    }
-
-    public function group(): HasOne
-    {
-        return $this->hasOne(ConversionGroup::class);
     }
 }

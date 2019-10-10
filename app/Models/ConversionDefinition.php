@@ -120,7 +120,7 @@ class ConversionDefinition extends Model
 
     public function conversionGroups(): HasMany
     {
-        return $this->hasMany(ConversionGroup::class);
+        return $this->hasMany(Conversion::class);
     }
 
     public function getLinkAttribute()

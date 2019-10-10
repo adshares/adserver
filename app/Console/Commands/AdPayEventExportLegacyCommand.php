@@ -21,7 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Client\Mapper\AdPay\DemandEventMapper;
+use Adshares\Adserver\Client\Mapper\AdPay\DemandEventLegacyMapper;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
@@ -80,7 +80,7 @@ class AdPayEventExportLegacyCommand extends BaseCommand
             if (count($eventsToExport) > 0) {
                 $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
-                $events = DemandEventMapper::mapEventCollectionToEventArray($eventsToExport);
+                $events = DemandEventLegacyMapper::mapEventCollectionToEventArray($eventsToExport);
 
                 $exportedCount = $this->exportWithoutRequestEvents($adPay, $events);
 

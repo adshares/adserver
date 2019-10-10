@@ -92,7 +92,7 @@ final class ConversionControllerTest extends TestCase
             'value' => $conversionValue,
             'weight' => 1,
         ];
-        $this->assertDatabaseHas('conversion_groups', $conversionGroupData);
+        $this->assertDatabaseHas('conversions', $conversionGroupData);
     }
 
     private function buildConversionUrl(string $uuid): string

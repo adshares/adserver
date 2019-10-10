@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Carbon\Carbon;
@@ -29,17 +30,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @property int id
+ * @property string uuid
  * @property Carbon created_at
+ * @property EventLog event
+ * @property int event_logs_id
+ * @property string group_id
+ * @property int conversion_definition_id
+ * @property int value
+ * @property float weight
+ * @property int payment_status
  */
-class ConversionGroup extends Model
+class Conversion extends Model
 {
     use AutomateMutators;
     use BinHex;
 
-    public $timestamps = false;
-
     protected $fillable = [
-        'case_id',
+        'uuid',
         'group_id',
         'event_logs_id',
         'conversion_definition_id',
@@ -48,7 +56,7 @@ class ConversionGroup extends Model
     ];
 
     protected $visible = [
-        'case_id',
+        'uuid',
         'group_id',
         'event_logs_id',
         'conversion_definition_id',
@@ -57,16 +65,15 @@ class ConversionGroup extends Model
     ];
 
     protected $traitAutomate = [
-        'case_id' => 'BinHex',
+        'uuid' => 'BinHex',
         'group_id' => 'BinHex',
     ];
 
-    protected $dates = [
-        'created_at',
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
     ];
 
     public static function register(
-        string $caseId,
         string $groupId,
         int $eventId,
         int $conversionDefinitionId,
@@ -74,18 +81,16 @@ class ConversionGroup extends Model
         float $weight
     ): void {
         $group = new self();
-        $group->case_id = $caseId;
         $group->group_id = $groupId;
         $group->event_logs_id = $eventId;
         $group->conversion_definition_id = $conversionDefinitionId;
         $group->value = $value;
         $group->weight = $weight;
-        $group->created_at = Carbon::now();
 
         $group->save();
     }
 
-    public static function containsConversionMatchingCaseIds(int $conversionDefinitionId, array $caseIds): bool
+    public static function wasRegisteredForDefinitionAndCaseId(int $conversionDefinitionId, array $caseIds): bool
     {
         $binaryCaseIds = array_map(
             function (string $item) {
@@ -94,9 +99,10 @@ class ConversionGroup extends Model
             $caseIds
         );
 
-        return null !== ConversionGroup::where('conversion_definition_id', $conversionDefinitionId)
-            ->whereIn('case_id', $binaryCaseIds)
-            ->first();
+        return null !== self::where('conversion_definition_id', $conversionDefinitionId)->whereIn(
+                    'case_id',
+                    $binaryCaseIds
+                )->first();
     }
 
     public function conversionDefinition(): BelongsTo
@@ -106,6 +112,6 @@ class ConversionGroup extends Model
 
     public function event(): BelongsTo
     {
-        return $this->belongsTo(EventConversionLog::class);
+        return $this->belongsTo(EventLog::class, 'event_logs_id', 'id');
     }
 }

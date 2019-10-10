@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,57 +22,62 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Carbon;
-use stdClass;
 
 class DemandEventMapper
 {
-    public static function mapEventCollectionToEventArray(Collection $events): array
+    public static function mapEventCollectionToArray(Collection $events): array
     {
         return $events->map(
-            function (EventLog $event) {
-                /** @var Carbon $createdAt */
-                $createdAt = $event->created_at;
-                $timestamp = $createdAt->getTimestamp();
-
-                $theirKeywords = new stdClass();//self::processTheirKeywords($event->their_userdata);
-                $ourUserData = json_decode(json_encode($event->our_userdata), true);
-                $ourKeywords = OurKeywordsMapper::map($ourUserData);
-
-                $mapped = [
-                    'banner_id' => $event->banner_id,
-                    'case_id' => $event->case_id,
-                    'event_type' => $event->event_type,
-                    'event_id' => $event->event_id,
-                    'timestamp' => $timestamp,
-                    'their_keywords' => $theirKeywords,
-                    'our_keywords' => $ourKeywords,
-                    'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
-                    'user_id' => $event->user_id ?? $event->tracking_id,
-                ];
-
-                if ($event->publisher_id !== null) {
-                    $mapped['publisher_id'] = $event->publisher_id;
-                }
-
-                if ($event->event_value !== null) {
-                    $mapped['event_value'] = $event->event_value;
-                }
-
-                return $mapped;
+            function (EventLog $eventLog) {
+                return self::mapEventLog($eventLog);
             }
         )->toArray();
     }
 
-    private static function processTheirKeywords($keywords)
+    public static function mapConversionCollectionToArray(Collection $conversions): array
     {
-        if (!$keywords) {
-            return new stdClass();
-        }
+        $a = $conversions->map(
+            function (Conversion $conversion) {
+                $mapped = self::mapEventLog($conversion->event);
 
-        return array_fill_keys(explode(',', $keywords), 1);
+                $mapped['conversion_id'] = $conversion->uuid;
+                $mapped['conversion_value'] = $conversion->value;
+                $mapped['payment_status'] = $conversion->payment_status;
+
+                return $mapped;
+            }
+        )->toArray();
+        
+        return $a;
+    }
+
+    private static function mapEventLog(EventLog $event): array
+    {
+        $ourContext = json_decode(json_encode($event->our_context), true);
+        $context = OurKeywordsMapper::map($ourContext);
+        $ourUserData = json_decode(json_encode($event->our_userdata), true);
+        $keywords = OurKeywordsMapper::map($ourUserData);
+
+        return [
+            'id' => $event->id,
+            'time' => $event->created_at->getTimestamp(),
+            'case_id' => $event->case_id,
+            'publisher_id' => $event->publisher_id,
+            'zone_id' => $event->zone_id,
+            'advertiser_id' => $event->banner_id,
+            'campaign_id' => $event->campaign_id,
+            'banner_id' => $event->advertiser_id,
+            'impression_id' => $event->case_id,
+            'tracking_id' => $event->tracking_id,
+            'user_id' => $event->user_id ?? $event->tracking_id,
+            'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
+            'context' => $context,
+            'keywords' => $keywords,
+            'payment_status' => $event->reason,
+        ];
     }
 }

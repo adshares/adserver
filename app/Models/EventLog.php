@@ -36,12 +36,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
+use Illuminate\Support\Carbon;
 use stdClass;
 
 /**
- * @property int created_at
+ * @property Carbon created_at
  * @property int updated_at
  * @property string case_id
  * @property string event_id
@@ -346,8 +347,8 @@ class EventLog extends Model
         $this->our_userdata = $userData;
     }
 
-    public function group(): HasOne
+    public function conversions(): HasMany
     {
-        return $this->hasOne(ConversionGroup::class);
+        return $this->hasMany(Conversion::class);
     }
 }
