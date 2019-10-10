@@ -6,13 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- NetworkEventLog and related classes
+- Banner checksum fragment to serve url
+### Changed
+- Sum incomes/expenditures from different adservers in billing history
+### Fixed
+- Grouping events by day in billing history
+
+## [1.2.5] - 2019-10-01
+### Added
+- Exporting conversions' definition to adpay
+- Supports createjs and non-ascii names in HTML banners
+### Fixed
+- Invalid classification after banner hash change
 
 ## [1.2.4] - 2019-09-30
 ### Added
 - Admin wallet info
 - Clearing old events
 ### Fixed
-- Nginx deply (additional hosts)
+- Nginx deploy (additional hosts)
 
 ## [1.2.3] - 2019-09-24
 ### Changed
@@ -224,7 +238,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.2.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.2.5...develop
+[1.2.5]: https://github.com/adshares/adserver/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/adshares/adserver/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/adshares/adserver/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/adshares/adserver/compare/v1.2.1...v1.2.2

@@ -45,10 +45,6 @@ final class CampaignDate
             throw new InvalidCampaignDateException('End date must be greater than start date.');
         }
 
-        if ($dateEnd && $dateEnd < new DateTime()) {
-            throw new InvalidCampaignDateException('End date must be greater than current date.');
-        }
-
         $this->dateStart = $dateStart;
         $this->dateEnd = $dateEnd;
         $this->createdAt = $createdAt;

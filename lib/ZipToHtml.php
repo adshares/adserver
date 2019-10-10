@@ -20,7 +20,6 @@
 
 namespace Adshares\Lib;
 
-use DOMDocument;
 use DOMXPath;
 use Mimey\MimeTypes;
 use RuntimeException;
@@ -39,62 +38,12 @@ class ZipToHtml
     const DOMAIN_WHITELIST = [
         'googleapis.com',
         'gstatic.com',
+        'code.createjs.com',
     ];
 
     const MAX_ZIPPED_SIZE = 512 * 1024;
 
     const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
-
-    const FIX_SCRIPT = <<<MYSCRIPT
-(function(){
-    var styles = document.getElementsByTagName('style');
-    for(var i=0;i<styles.length;i++) {
-        var code = styles[i].innerHTML;
-        
-        code = code.replace(/\/\*\{asset-src:(.*?)\}\*\//g, function(match, src) {
-            var uri = ''; var org = document.querySelector('[data-asset-org="' + src + '"]');
-            if(org) {
-                uri = org.getAttribute('src') || org.getAttribute('data-src');
-            } 
-            return 'url(' + uri + ')';
-        }); 
-    
-        var s = document.createElement('style');
-        s.type = 'text/css';
-        try {
-          s.appendChild(document.createTextNode(code));
-        } catch (e) {
-          s.text = code;
-        }
-        styles[i].parentElement.replaceChild(s, styles[i]);
-    
-    }
-    
-    var refs = document.querySelectorAll('[data-asset-src]');
-    for(var i=0;i<refs.length;i++) {
-        var org = document.querySelector('[data-asset-org="' + refs[i].getAttribute('data-asset-src') + '"]');
-        if(org) {
-            refs[i].setAttribute('src', org.getAttribute('src'));
-        }
-    }
-    
-    var refs = document.querySelectorAll('img[srcset], source[srcset]');
-    for(var i=0;i<refs.length;i++) {
-        var any_found = false;
-        var newsrcset = refs[i].getAttribute('srcset').replace(/asset-src:([^,\s]+)/g, function(match, href) {
-            any_found = true;
-            var uri = 'null'; var org = document.querySelector('[data-asset-org="' + href + '"]');
-            if(org) {
-                uri = org.getAttribute('src') || org.getAttribute('data-src');
-            } 
-            return uri;
-        })
-        if(any_found) {
-            refs[i].setAttribute('srcset', newsrcset);
-        }
-    }
-})();
-MYSCRIPT;
 
     private $filename;
 
@@ -200,7 +149,7 @@ MYSCRIPT;
     private function flattenHtml(): string
     {
         libxml_use_internal_errors(true);
-        $doc = new DOMDocument();
+        $doc = new DOMDocumentSafe();
         $doc->loadHTML(mb_convert_encoding($this->html_file_contents, 'HTML-ENTITIES', 'UTF-8'));
 
         $xpath = new DOMXPath($doc);
@@ -229,7 +178,7 @@ MYSCRIPT;
             $scheme = parse_url($href, PHP_URL_SCHEME);
             if ($scheme) {
                 if ($this->isWhitelisted($href)) {
-                    $href = $this->getAssetDataUriExternal($href);
+                    $file = $this->getAssetDataUriExternal($href);
                 } else {
                     if ($scheme !== 'data') {
                         throw new RuntimeException(
@@ -239,9 +188,9 @@ MYSCRIPT;
 
                     continue;
                 }
+            } else {
+                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             }
-
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
                 $css_text = $this->replaceCssUrls($this->assets[$file]['contents'], dirname($file));
@@ -268,23 +217,30 @@ MYSCRIPT;
                         sprintf("Only local assets and data uri allowed (found %s)", $href)
                     );
                 }
+                $file = $this->getAssetDataUriExternal($href);
+            } else {
+                $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             }
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+
             if (isset($this->assets[$file]) && !isset($this->assets[$file]['used'])) {
                 $this->assets[$file]['used'] = true;
                 $script_text = $this->assets[$file]['contents'];
                 $new_tag = $doc->createElement('script');
+
                 $new_tag->textContent = $script_text;
+
                 $new_tag->setAttribute('data-inject', "1");
                 $new_tag->setAttribute('data-href', $file);
                 $script->parentNode->replaceChild($new_tag, $script);
+
+                $this->includeCreateJsFix($new_tag, $script_text);
             } else {
                 $script->parentNode->removeChild($script);
             }
         }
 
-        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]".
-                                "|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
+        $media = $xpath->query("//img[@src]|//input[@src]|//audio[@src]|//video[@src]" .
+            "|//source[@src]|//gwd-image[@source]|//amp-img[@src]");
         foreach ($media as $tag) {
             if ($tag->hasAttribute('src')) {
                 $attr = 'src';
@@ -303,7 +259,7 @@ MYSCRIPT;
                 }
             }
 
-            $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+            $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
             if (isset($this->assets[$file])) {
                 if (isset($this->assets[$file]['used'])) {
                     $tag->removeAttribute($attr);
@@ -327,21 +283,21 @@ MYSCRIPT;
                     $scheme = parse_url($href, PHP_URL_SCHEME);
                     if ($scheme) {
                         if ($scheme === 'data') {
-                            return $href.$match[2].($match[3] ?? '');
+                            return $href . $match[2] . ($match[3] ?? '');
                         } elseif (!$this->isWhitelisted($href)) {
                             throw new RuntimeException(
                                 sprintf("Only local assets and data uri allowed (found %s)", $href)
                             );
                         }
                     }
-                    $file = $this->normalizePath(dirname($this->html_file).'/'.$href);
+                    $file = $this->normalizePath(dirname($this->html_file) . '/' . $href);
                     if (isset($this->assets[$file])) {
                         if (isset($this->assets[$file]['used'])) {
-                            return 'asset-src:'.$file.$match[2].($match[3] ?? '');
+                            return 'asset-src:' . $file . $match[2] . ($match[3] ?? '');
                         } else {
                             $this->assets[$file]['used'] = true;
 
-                            return $this->getAssetDataUri($this->assets[$file]).$match[2].($match[3] ?? '');
+                            return $this->getAssetDataUri($this->assets[$file]) . $match[2] . ($match[3] ?? '');
                         }
                     } else {
                         return '';
@@ -371,12 +327,13 @@ MYSCRIPT;
         }
 
         $fix_script = $doc->createElement('script');
-        $fix_script->textContent = self::FIX_SCRIPT;
+        $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/fixscript.js'));
 
         $body->appendChild($fix_script);
 
         return $doc->saveHTML();
     }
+
 
     private function normalizePath($path): string
     {
@@ -407,7 +364,12 @@ MYSCRIPT;
             }
         }
 
-        return implode('/', $parts);
+        $url = implode('/', $parts);
+        if (($n = strpos($url, '?')) !== false) {
+            $url = substr($url, 0, $n);
+        }
+
+        return $url;
     }
 
     private function replaceCssUrls($css_text, $basedir)
@@ -415,14 +377,13 @@ MYSCRIPT;
         $uri_chars = preg_quote('-._~:/?#[]@!$&\'()*+,;=', '#');
 
         return preg_replace_callback(
-            '#url\(\s*[\'"]?([0-9a-z'.$uri_chars.']+?)[\'"]?\s*\)#im',
+            '#url\(\s*[\'"]?([0-9a-z' . $uri_chars . ']+?)[\'"]?\s*\)#im',
             function ($match) use ($basedir) {
                 $href = $match[1];
                 $scheme = parse_url($href, PHP_URL_SCHEME);
                 if ($scheme) {
                     if ($this->isWhitelisted($href)) {
-                        $href = $this->getAssetDataUriExternal($href);
-                        //$scheme = parse_url($href, PHP_URL_SCHEME);
+                        $file = $this->getAssetDataUriExternal($href);
                     } else {
                         if ($scheme === 'data') {
                             return $match[0];
@@ -432,9 +393,11 @@ MYSCRIPT;
                             );
                         }
                     }
+                } else {
+                    $file = $this->normalizePath($basedir . '/' . $href);
                 }
 
-                return '/*{asset-src:'.$this->normalizePath($basedir.'/'.$href).'}*/';
+                return '/*{asset-src:' . $file . '}*/';
             },
             $css_text
         );
@@ -443,7 +406,7 @@ MYSCRIPT;
     private function getAssetDataUri(array &$asset)
     {
         if (!$asset['data_uri']) {
-            $asset['data_uri'] = "data:{$asset['mime_type']};base64,".base64_encode($asset['contents']);
+            $asset['data_uri'] = "data:{$asset['mime_type']};base64," . base64_encode($asset['contents']);
         }
 
         return $asset['data_uri'];
@@ -473,5 +436,15 @@ MYSCRIPT;
             ];
         }
         return $name;
+    }
+
+    private function includeCreateJsFix($element, $text)
+    {
+        if (strstr($text, 'createjs.com')) {
+            $fix_script = $element->ownerDocument->createElement('script');
+            $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/createjs_fix.js'));
+
+            $element->parentNode->insertBefore($fix_script, $element->nextSibling);
+        }
     }
 }

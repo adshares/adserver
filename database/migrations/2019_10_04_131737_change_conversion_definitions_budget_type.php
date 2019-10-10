@@ -18,15 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-namespace Adshares\Adserver\Providers\Supply;
-
-use Illuminate\Support\ServiceProvider;
-
-class AdSelectEventExporterProvider extends ServiceProvider
+class ChangeConversionDefinitionsBudgetType extends Migration
 {
-    public function register(): void
+    public function up(): void
     {
+        Schema::table(
+            'conversion_definitions',
+            function (Blueprint $table) {
+                $table->renameColumn('budget_type', 'limit_type');
+            }
+        );
+    }
+
+    public function down(): void
+    {
+        Schema::table(
+            'conversion_definitions',
+            function (Blueprint $table) {
+                $table->renameColumn('limit_type', 'budget_type');
+            }
+        );
     }
 }

@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Common;
 
 use DateTime;
+use DateTimeZone;
 use RuntimeException;
 use function implode;
 use function sprintf;
@@ -130,9 +131,9 @@ abstract class MySqlQueryBuilder
         return $dateTime->format('Y-m-d H:i:s');
     }
 
-    public static function convertMySqlDateToDateTime(string $mysqlDate): DateTime
+    public static function convertMySqlDateToDateTime(string $mysqlDate, DateTimeZone $dateTimeZone = null): DateTime
     {
-        return DateTime::createFromFormat('Y-m-d H:i:s', $mysqlDate);
+        return DateTime::createFromFormat('Y-m-d H:i:s', $mysqlDate, $dateTimeZone);
     }
 
     abstract protected function isTypeAllowed(string $type): bool;
