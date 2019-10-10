@@ -99,10 +99,9 @@ class Conversion extends Model
             $caseIds
         );
 
-        return null !== self::where('conversion_definition_id', $conversionDefinitionId)->whereIn(
-                    'case_id',
-                    $binaryCaseIds
-                )->first();
+        return null !== self::where('conversion_definition_id', $conversionDefinitionId)
+            ->whereIn('case_id', $binaryCaseIds)
+            ->first();
     }
 
     public function conversionDefinition(): BelongsTo

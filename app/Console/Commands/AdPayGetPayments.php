@@ -123,7 +123,9 @@ class AdPayGetPayments extends BaseCommand
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
 
-        return new Collection($adPay->getPayments($timestamp, (bool)$this->option('recalculate'), (bool)$this->option('force')));
+        return new Collection(
+            $adPay->getPayments($timestamp, (bool)$this->option('recalculate'), (bool)$this->option('force'))
+        );
     }
 
     private function updateEventsWithAdPayData(
