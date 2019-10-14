@@ -7,12 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- NetworkEventLog and related classes
 - Banner checksum fragment to serve url
+- Exporting conversions to adpay
 ### Changed
 - Sum incomes/expenditures from different adservers in billing history
 ### Fixed
 - Grouping events by day in billing history
+### Removed
+- NetworkEventLog and related classes
 
 ## [1.2.5] - 2019-10-01
 ### Added
