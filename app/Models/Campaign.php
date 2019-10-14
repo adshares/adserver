@@ -159,14 +159,14 @@ class Campaign extends Model
         'ads',
     ];
 
-    public static function suspendAllForUserId(int $userId): void
+    public static function suspendAllForUserId(int $userId): int
     {
-        self::fetchByUserId($userId)->filter(function (self $campaign) {
+        return self::fetchByUserId($userId)->filter(function (self $campaign) {
             return $campaign->status === Campaign::STATUS_ACTIVE;
         })->each(function (Campaign $campaign) {
             $campaign->status = Campaign::STATUS_SUSPENDED;
             $campaign->save();
-        });
+        })->count();
     }
 
     public static function isStatusAllowed(int $status): bool

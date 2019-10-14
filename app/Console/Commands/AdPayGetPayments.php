@@ -197,13 +197,13 @@ class AdPayGetPayments extends BaseCommand
                 }
 
                 $clicks = $this->evaluateEventsByCampaign($events, $exchangeRate)
-                    ->map(function (Collection $events, string $key) use ($user, $exchangeRate, $userPublicId) {
+                    ->map(function (Collection $events, string $key) use ($user, $exchangeRate) {
                         $userBalance = $key === self::DIRECT ? $user->getWalletBalance() : $user->getBalance();
 
                         if ($userBalance < 0) {
                             $this->error(sprintf(
                                 'User %s has negative "%s" balance %d',
-                                $userPublicId,
+                                $user->id,
                                 $key,
                                 $userBalance
                             ));
@@ -219,11 +219,15 @@ class AdPayGetPayments extends BaseCommand
                         });
 
                         if ($insufficientFunds) {
-                            Campaign::suspendAllForUserId($user->id);
-
-                            Log::debug("Suspended Campaigns for user [{$user->id}] "
-                                .'due to insufficient amount of clicks.');
-                            Mail::to($user)->queue(new CampaignSuspension());
+                            if (Campaign::suspendAllForUserId($user->id) > 0) {
+                                Log::debug(
+                                    sprintf(
+                                        'Suspended Campaigns for user [%s] due to insufficient amount of clicks.',
+                                        $user->id
+                                    )
+                                );
+                                Mail::to($user)->queue(new CampaignSuspension());
+                            }
                         }
 
                         return $events->sum(self::EVENT_VALUE);
