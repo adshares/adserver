@@ -83,7 +83,7 @@ class AdPayGetPaymentsTest extends TestCase
             ];
         });
 
-        $totalInCurrency = $calculatedEvents->sum('amount');
+        $totalInCurrency = $calculatedEvents->sum('value');
         $userBalance = (int)ceil(
             $totalInCurrency / $dummyExchangeRateRepository->fetchExchangeRate(new DateTime())->getValue()
         );
@@ -105,8 +105,10 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
 
-            $eventValue['event_value_currency'] = $eventValue['amount'];
-            unset($eventValue['amount']);
+            $eventValue['event_value_currency'] = $eventValue['value'];
+            unset($eventValue['value']);
+            $eventValue['payment_status'] = $eventValue['status'];
+            unset($eventValue['status']);
 
             $this->assertDatabaseHas('event_logs', $eventValue);
         });
