@@ -67,6 +67,8 @@ class AdPayGetPayments extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
+        $exchangeRate = $this->getExchangeRate($exchangeRateReader);
+
         DB::beginTransaction();
 
         UserLedgerEntry::removeProcessingExpenses();
@@ -75,7 +77,6 @@ class AdPayGetPayments extends BaseCommand
 
         $this->info("Found {$calculations->count()} calculations.");
 
-        $exchangeRate = $this->getExchangeRate($exchangeRateReader);
         $eventIds = $this->getEventIds($calculations);
         $unpaidEvents = $this->getUnpaidEvents($eventIds);
 
@@ -92,7 +93,9 @@ class AdPayGetPayments extends BaseCommand
 
     private function getEventIds(Collection $calculations): Collection
     {
-        return $calculations->map(static function (array $amount) {
+        return $calculations->filter(static function (array $calculation) {
+            return in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true); 
+        })->map(static function (array $amount) {
             return hex2bin($amount['event_id']);
         });
     }
@@ -139,12 +142,12 @@ class AdPayGetPayments extends BaseCommand
 
         $unpaidEvents->each(static function (EventLog $entry) use ($mappedCalculations, $exchangeRate) {
             $calculation = $mappedCalculations[$entry->event_id];
-            $amount = $calculation['amount'];
+            $value = $calculation['value'];
 
-            $entry->event_value_currency = $amount;
+            $entry->event_value_currency = $value;
             $entry->exchange_rate = $exchangeRate->getValue();
-            $entry->event_value = $exchangeRate->toClick($amount);
-            $entry->payment_status = $calculation['reason'];
+            $entry->event_value = $exchangeRate->toClick($value);
+            $entry->payment_status = $calculation['status'];
         });
     }
 

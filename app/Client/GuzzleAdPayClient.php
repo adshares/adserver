@@ -29,6 +29,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Validator;
 
 class GuzzleAdPayClient implements AdPay
 {
@@ -41,6 +42,14 @@ class GuzzleAdPayClient implements AdPay
     private const URI_CLICKS = '/api/v1/events/clicks';
 
     private const URI_CONVERSIONS = '/api/v1/events/conversions';
+
+    private const RULES_PAYMENTS = [
+        'payments' => 'required|array',
+        'payments.*.event_type' => 'required|in:view,click,conversion',
+        'payments.*.event_id' => 'required',
+        'payments.*.status' => 'required|integer',
+        'payments.*.value' => 'nullable|integer',
+    ];
 
     /** @var Client */
     private $client;
@@ -131,6 +140,7 @@ class GuzzleAdPayClient implements AdPay
             );
         }
     }
+
     public function getPayments(int $timestamp, bool $recalculate = false, bool $force = false): array
     {
         $uri = sprintf(self::URI_PAYMENTS_TEMPLATE, $timestamp);
@@ -159,10 +169,10 @@ class GuzzleAdPayClient implements AdPay
 
         $body = json_decode((string)$response->getBody(), true);
 
-        if (!array_key_exists('payments', $body) || !is_array($payments = $body['payments'])) {
+        if (Validator::make($body, self::RULES_PAYMENTS)->fails()) {
             throw new RuntimeException('Unexpected response format from the adpay');
         }
 
-        return $payments;
+        return $body['payments'];
     }
 }

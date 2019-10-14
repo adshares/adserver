@@ -77,8 +77,9 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => random_int(0, 100 * 10 ** 11),
-                'payment_status' => 0,
+                'event_type' => $entry->event_type,
+                'value' => random_int(0, 100 * 10 ** 11),
+                'status' => 0,
             ];
         });
 
@@ -170,8 +171,9 @@ class AdPayGetPaymentsTest extends TestCase
                 $calculatedEvents = EventLog::all()->map(static function (EventLog $entry) {
                     return [
                         'event_id' => $entry->event_id,
-                        'amount' => 100,
-                        'payment_status' => 0,
+                        'event_type' => $entry->event_type,
+                        'value' => 100,
+                        'status' => 0,
                     ];
                 });
 
