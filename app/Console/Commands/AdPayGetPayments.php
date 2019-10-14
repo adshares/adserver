@@ -144,7 +144,7 @@ class AdPayGetPayments extends BaseCommand
             $entry->event_value_currency = $amount;
             $entry->exchange_rate = $exchangeRate->getValue();
             $entry->event_value = $exchangeRate->toClick($amount);
-            $entry->reason = $calculation['reason'];
+            $entry->payment_status = $calculation['reason'];
         });
     }
 

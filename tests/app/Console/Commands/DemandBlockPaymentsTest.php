@@ -179,7 +179,7 @@ class DemandBlockPaymentsTest extends TestCase
             return [
                 'event_id' => $entry->event_id,
                 'amount' => 10 ** 11,
-                'reason' => 0,
+                'payment_status' => 0,
             ];
         });
 

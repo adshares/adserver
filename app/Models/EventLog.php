@@ -67,7 +67,7 @@ use stdClass;
  * @property int $operator_fee
  * @property int $paid_amount
  * @property int payment_id
- * @property int reason
+ * @property int $payment_status
  * @property int is_view_clicked
  * @property string domain
  * @property int id
@@ -116,7 +116,7 @@ class EventLog extends Model
         'event_value_currency',
         'paid_amount',
         'payment_id',
-        'reason',
+        'payment_status',
         'is_view_clicked',
         'domain',
     ];

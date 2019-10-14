@@ -79,7 +79,9 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_VIEW_INVALID_RATE:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
-                $this->column('COALESCE(AVG(IF(e.event_value_currency IS NULL OR e.reason <> 0, 1, 0)), 0) AS c');
+                $this->column(
+                    'COALESCE(AVG(IF(e.event_value_currency IS NULL OR e.payment_status <> 0, 1, 0)), 0) AS c'
+                );
                 break;
             case StatsRepository::TYPE_SUM:
                 $this->column('COALESCE(SUM(e.event_value_currency), 0) AS c');
@@ -104,7 +106,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_CTR:
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 $this->where('e.event_value_currency IS NOT NULL');
-                $this->where('e.reason = 0');
+                $this->where('e.payment_status = 0');
                 break;
             case StatsRepository::TYPE_VIEW_ALL:
             case StatsRepository::TYPE_VIEW_INVALID_RATE:
@@ -114,7 +116,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
                 $this->where(sprintf("e.event_type = '%s'", EventLog::TYPE_VIEW));
                 $this->where('e.is_view_clicked = 1');
                 $this->where('e.event_value_currency IS NOT NULL');
-                $this->where('e.reason = 0');
+                $this->where('e.payment_status = 0');
                 break;
             case StatsRepository::TYPE_CLICK_ALL:
             case StatsRepository::TYPE_CLICK_INVALID_RATE:
@@ -132,7 +134,7 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.reason = 0';
+        $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.payment_status = 0';
 
         $this->column(
             sprintf(
@@ -169,8 +171,8 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
         );
         $this->column(
             sprintf(
-                "COUNT(DISTINCT(CASE WHEN e.event_type = '%s' AND e.event_value_currency IS NOT NULL AND e.reason = 0"
-                .' THEN IFNULL(e.user_id, e.tracking_id) END)) AS viewsUnique',
+                "COUNT(DISTINCT(CASE WHEN e.event_type = '%s' AND e.event_value_currency IS NOT NULL"
+                .' AND e.payment_status = 0 THEN IFNULL(e.user_id, e.tracking_id) END)) AS viewsUnique',
                 EventLog::TYPE_VIEW
             )
         );

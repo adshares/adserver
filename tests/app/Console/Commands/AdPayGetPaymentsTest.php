@@ -78,7 +78,7 @@ class AdPayGetPaymentsTest extends TestCase
             return [
                 'event_id' => $entry->event_id,
                 'amount' => random_int(0, 100 * 10 ** 11),
-                'reason' => 0,
+                'payment_status' => 0,
             ];
         });
 
@@ -171,7 +171,7 @@ class AdPayGetPaymentsTest extends TestCase
                     return [
                         'event_id' => $entry->event_id,
                         'amount' => 100,
-                        'reason' => 0,
+                        'payment_status' => 0,
                     ];
                 });
 

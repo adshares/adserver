@@ -72,7 +72,7 @@ class DemandEventMapper
             'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
             'context' => JsonValueMapper::map($event->our_context),
             'keywords' => JsonValueMapper::map($event->our_userdata),
-            'payment_status' => $event->reason,
+            'payment_status' => $event->payment_status,
         ];
     }
 }
