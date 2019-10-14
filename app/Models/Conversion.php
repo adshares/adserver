@@ -40,6 +40,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int value
  * @property float weight
  * @property int payment_status
+ * @property int event_value_currency
+ * @property int exchange_rate
+ * @property int event_value
+ * @property int license_fee
+ * @property int operator_fee
+ * @property int paid_amount
+ * @property int payment_id
  */
 class Conversion extends Model
 {
