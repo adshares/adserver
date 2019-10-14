@@ -25,10 +25,12 @@ namespace Adshares\Adserver\Client\Mapper\AdPay;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use stdClass;
 
-class OurKeywordsMapper extends AbstractFilterMapper
+class JsonValueMapper extends AbstractFilterMapper
 {
-    public static function map($keywords)
+    public static function map($jsonValue)
     {
+        $keywords = json_decode(json_encode($jsonValue), true);
+
         if (!$keywords) {
             return new stdClass();
         }

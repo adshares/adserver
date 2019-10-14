@@ -39,8 +39,7 @@ class DemandEventLegacyMapper
                 $timestamp = $createdAt->getTimestamp();
 
                 $theirKeywords = new stdClass();//self::processTheirKeywords($event->their_userdata);
-                $ourUserData = json_decode(json_encode($event->our_userdata), true);
-                $ourKeywords = OurKeywordsMapper::map($ourUserData);
+                $ourKeywords = JsonValueMapper::map($event->our_userdata);
 
                 $mapped = [
                     'banner_id' => $event->banner_id,
