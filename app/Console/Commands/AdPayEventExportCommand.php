@@ -43,6 +43,10 @@ class AdPayEventExportCommand extends BaseCommand
 {
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 500;
 
+    private const DEFAULT_EXPORT_TIME_FROM = '-4 hours';
+
+    private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
+
     protected $signature = 'ops:adpay:event:export {--from=} {--to=}';
 
     protected $description = 'Exports event data to AdPay';
@@ -53,6 +57,7 @@ class AdPayEventExportCommand extends BaseCommand
 
         $optionFrom = $this->option('from');
         $optionTo = $this->option('to');
+        $isCommandExecutedAutomatically = null === $optionTo;
 
         if (null === $optionTo && !$this->lock()) {
             $this->info('[AdPayEventExport] Command '.$this->signature.' already running.');
@@ -78,9 +83,16 @@ class AdPayEventExportCommand extends BaseCommand
             $dateFromEvents = (new DateTime())->setTimestamp($timestampFrom);
             $dateFromConversions = clone $dateFromEvents;
         } else {
-            $dateFromEvents = Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, new DateTime('-4 hours'));
+            $dateFromEvents =
+                Config::fetchDateTime(
+                    Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
+                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+                );
             $dateFromConversions =
-                Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, new DateTime('-4 hours'));
+                Config::fetchDateTime(
+                    Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+                );
         }
 
         if (null !== $optionTo) {
@@ -92,11 +104,11 @@ class AdPayEventExportCommand extends BaseCommand
 
             $dateTo = (new DateTime())->setTimestamp($timestampTo);
         } else {
-            $dateTo = new DateTime('-10 minutes');
+            $dateTo = new DateTime(self::DEFAULT_EXPORT_TIME_TO);
         }
 
-        $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $optionTo);
-        $this->exportConversions($adPay, $dateFromConversions, $dateTo, $optionTo);
+        $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
+        $this->exportConversions($adPay, $dateFromConversions, $dateTo, $isCommandExecutedAutomatically);
 
         $commandExecutionTime = microtime(true) - $commandStartTime;
         $this->info(sprintf('[AdPayEventExport] Finished after %d seconds', (int)$commandExecutionTime));
@@ -159,8 +171,13 @@ class AdPayEventExportCommand extends BaseCommand
         return $userContext;
     }
 
-    private function exportEvents(AdPay $adPay, AdUser $adUser, DateTime $dateFrom, DateTime $dateTo, $optionTo): void
-    {
+    private function exportEvents(
+        AdPay $adPay,
+        AdUser $adUser,
+        DateTime $dateFrom,
+        DateTime $dateTo,
+        bool $isCommandExecutedAutomatically
+    ): void {
         if ($dateFrom >= $dateTo) {
             $this->error(
                 sprintf(
@@ -234,7 +251,7 @@ class AdPayEventExportCommand extends BaseCommand
             $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
             $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
 
-            if (null === $optionTo && count($eventsToExport) > 0) {
+            if ($isCommandExecutedAutomatically && count($eventsToExport) > 0) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);
             }
         }
@@ -242,8 +259,12 @@ class AdPayEventExportCommand extends BaseCommand
         $this->info(sprintf('[AdPayEventExport] Finished exporting %d events', $eventsCount));
     }
 
-    private function exportConversions(AdPay $adPay, DateTime $dateFrom, DateTime $dateTo, $optionTo): void
-    {
+    private function exportConversions(
+        AdPay $adPay,
+        DateTime $dateFrom,
+        DateTime $dateTo,
+        bool $isCommandExecutedAutomatically
+    ): void {
         if ($dateFrom >= $dateTo) {
             $this->error(
                 sprintf(
@@ -306,7 +327,7 @@ class AdPayEventExportCommand extends BaseCommand
             $timeEnd = clone $dateToTemporary;
             $adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));
 
-            if (null === $optionTo && count($conversionsToExport) > 0) {
+            if ($isCommandExecutedAutomatically && count($conversionsToExport) > 0) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, $dateToTemporary);
             }
         }
