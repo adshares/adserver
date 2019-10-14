@@ -57,6 +57,11 @@ class DemandEventMapper
 
     private static function mapEventLog(EventLog $event): array
     {
+        $ourContext = json_decode(json_encode($event->our_context), true);
+        $context = OurKeywordsMapper::map($ourContext);
+        $ourUserData = json_decode(json_encode($event->our_userdata), true);
+        $keywords = OurKeywordsMapper::map($ourUserData);
+
         return [
             'id' => $event->id,
             'time' => $event->created_at->getTimestamp(),
@@ -70,8 +75,8 @@ class DemandEventMapper
             'tracking_id' => $event->tracking_id,
             'user_id' => $event->user_id ?? $event->tracking_id,
             'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
-            'context' => JsonValueMapper::map($event->our_context),
-            'keywords' => JsonValueMapper::map($event->our_userdata),
+            'context' => $context,
+            'keywords' => $keywords,
             'payment_status' => $event->reason,
         ];
     }
