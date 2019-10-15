@@ -36,5 +36,11 @@ interface AdPay
 
     public function addConversions(AdPayEvents $events): void;
 
-    public function getPayments(int $timestamp, bool $recalculate = false, bool $force = false): array;
+    public function getPayments(
+        int $timestamp,
+        bool $recalculate = false,
+        bool $force = false,
+        int $limit = PHP_INT_MAX,
+        int $offset = 0
+    ): array;
 }

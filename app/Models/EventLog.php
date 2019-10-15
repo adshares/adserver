@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as SupportCollection;
 use stdClass;
 
 /**
@@ -89,6 +90,8 @@ class EventLog extends Model
     public const TYPE_CONVERSION = 'conversion';
 
     public const INDEX_CREATED_AT = 'event_logs_created_at_index';
+
+    private const CHUNK_SIZE = 1000;
 
     /**
      * The attributes that are mass assignable.
@@ -167,6 +170,19 @@ class EventLog extends Model
         }
 
         return $query->get();
+    }
+
+    public static function fetchUnpaidEventsForUpdateWithPaymentReport(SupportCollection $eventIds): SupportCollection
+    {
+        return $eventIds
+            ->chunk(self::CHUNK_SIZE)
+            ->flatMap(
+                static function (Collection $eventIds) {
+                    return self::whereIn('event_id', $eventIds)
+                        ->whereNull('event_value_currency')
+                        ->get();
+                }
+            );
     }
 
     public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection

@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\CampaignSuspension;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -53,7 +54,7 @@ class AdPayGetPayments extends BaseCommand
                             {--s|sub=1}
                             {--f|force}
                             {--r|recalculate}
-                            {--c|chunkSize=250}';
+                            {--c|chunkSize=10000}';
 
     protected $description = 'Updates events with payment data fetched from adpay';
 
@@ -68,23 +69,40 @@ class AdPayGetPayments extends BaseCommand
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->getExchangeRate($exchangeRateReader);
+        $allEvents = new Collection();
+        $limit = (int)$this->option('chunkSize');
+        $offset = 0;
 
         DB::beginTransaction();
 
         UserLedgerEntry::removeProcessingExpenses();
 
-        $calculations = $this->getCalculations($adPay);
+        do {
+            $calculations = $this->getCalculations($adPay, $limit, $offset);
 
-        $this->info("Found {$calculations->count()} calculations.");
+            $this->info("Found {$calculations->count()} calculations.");
 
-        $eventIds = $this->getEventIds($calculations);
-        $unpaidEvents = $this->getUnpaidEvents($eventIds);
+            $eventIds = $this->getEventIds($calculations);
+            $unpaidEvents = EventLog::fetchUnpaidEventsForUpdateWithPaymentReport($eventIds);
+            $conversionIds = $this->getConversionIds($calculations);
+            $unpaidConversions = Conversion::fetchUnpaidConversionsForUpdateWithPaymentReport($conversionIds);
 
-        $this->info("Found {$unpaidEvents->count()} entries to update.");
+            $this->info(sprintf('Found %s entries to update.', $unpaidEvents->count() + $unpaidConversions->count()));
 
-        $this->updateEventsWithAdPayData($unpaidEvents, $calculations, $exchangeRate);
+            $mappedCalculations = $calculations->mapWithKeys(static function ($value) {
+                return [$value['event_id'] => $value];
+            })->all();
 
-        $ledgerEntries = $this->processExpenses($unpaidEvents, $exchangeRate);
+            $this->updateEventsWithAdPayData($unpaidEvents, $mappedCalculations, $exchangeRate);
+            $this->updateConversionsWithAdPayData($unpaidConversions, $mappedCalculations, $exchangeRate);
+
+            $allEvents = $allEvents->concat($unpaidEvents);
+            $this->info("Found {} entries to update.");
+            
+            $offset += $limit;
+        } while ($limit === count($calculations));
+
+        $ledgerEntries = $this->processExpenses($allEvents, $exchangeRate);
 
         DB::commit();
 
@@ -95,8 +113,17 @@ class AdPayGetPayments extends BaseCommand
     {
         return $calculations->filter(static function (array $calculation) {
             return in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true); 
-        })->map(static function (array $amount) {
-            return hex2bin($amount['event_id']);
+        })->map(static function (array $calculation) {
+            return hex2bin($calculation['event_id']);
+        });
+    }
+
+    private function getConversionIds(Collection $calculations): Collection
+    {
+        return $calculations->filter(static function (array $calculation) {
+            return Conversion::TYPE === $calculation['event_type']; 
+        })->map(static function (array $calculation) {
+            return hex2bin($calculation['event_id']);
         });
     }
 
@@ -108,47 +135,60 @@ class AdPayGetPayments extends BaseCommand
         return $exchangeRate;
     }
 
-    private function getUnpaidEvents(Collection $eventIds): Collection
-    {
-        return $eventIds
-            ->chunk((int)$this->option('chunkSize'))
-            ->flatMap(
-                static function (Collection $eventIds) {
-                    return EventLog::whereIn('event_id', $eventIds)
-                        ->whereNull('event_value_currency')
-                        ->get();
-                }
-            );
-    }
-
-    private function getCalculations(AdPay $adPay): Collection
+    private function getCalculations(AdPay $adPay, int $limit, int $offset): Collection
     {
         $ts = $this->option('timestamp');
         $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
 
         return new Collection(
-            $adPay->getPayments($timestamp, (bool)$this->option('recalculate'), (bool)$this->option('force'))
+            $adPay->getPayments(
+                $timestamp,
+                (bool)$this->option('recalculate'),
+                (bool)$this->option('force'),
+                $limit,
+                $offset
+            )
         );
     }
 
     private function updateEventsWithAdPayData(
         Collection $unpaidEvents,
-        Collection $calculations,
+        array $mappedCalculations,
         ExchangeRate $exchangeRate
     ): void {
-        $mappedCalculations = $calculations->mapWithKeys(static function ($value) {
-            return [$value['event_id'] => $value];
-        })->all();
+        $exchangeRateValue = $exchangeRate->getValue();
 
-        $unpaidEvents->each(static function (EventLog $entry) use ($mappedCalculations, $exchangeRate) {
-            $calculation = $mappedCalculations[$entry->event_id];
-            $value = $calculation['value'];
+        $unpaidEvents->each(
+            static function (EventLog $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
+                $calculation = $mappedCalculations[$entry->event_id];
+                $value = $calculation['value'];
+    
+                $entry->event_value_currency = $value;
+                $entry->exchange_rate = $exchangeRateValue;
+                $entry->event_value = $exchangeRate->toClick($value);
+                $entry->payment_status = $calculation['status'];
+            }
+        );
+    }
 
-            $entry->event_value_currency = $value;
-            $entry->exchange_rate = $exchangeRate->getValue();
-            $entry->event_value = $exchangeRate->toClick($value);
-            $entry->payment_status = $calculation['status'];
-        });
+    private function updateConversionsWithAdPayData(
+        Collection $unpaidConversions,
+        array $mappedCalculations,
+        ExchangeRate $exchangeRate
+    ): void {
+        $exchangeRateValue = $exchangeRate->getValue();
+
+        $unpaidConversions->each(
+            static function (Conversion $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
+                $calculation = $mappedCalculations[$entry->uuid];
+                $value = $calculation['value'];
+    
+                $entry->event_value_currency = $value;
+                $entry->exchange_rate = $exchangeRateValue;
+                $entry->event_value = $exchangeRate->toClick($value);
+                $entry->payment_status = $calculation['status'];
+            }
+        );
     }
 
     private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): Collection

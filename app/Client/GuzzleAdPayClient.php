@@ -141,8 +141,13 @@ class GuzzleAdPayClient implements AdPay
         }
     }
 
-    public function getPayments(int $timestamp, bool $recalculate = false, bool $force = false): array
-    {
+    public function getPayments(
+        int $timestamp,
+        bool $recalculate = false,
+        bool $force = false,
+        int $limit = PHP_INT_MAX,
+        int $offset = 0
+    ): array {
         $uri = sprintf(self::URI_PAYMENTS_TEMPLATE, $timestamp);
 
         try {
@@ -152,6 +157,8 @@ class GuzzleAdPayClient implements AdPay
                     'query' => [
                         'recalculate' => $recalculate,
                         'force' => $force,
+                        'limit' => $limit,
+                        'offset' => $offset,
                     ],
                 ]
             );

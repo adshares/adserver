@@ -93,7 +93,11 @@ class AdPayGetPaymentsTest extends TestCase
             AdPay::class,
             function () use ($calculatedEvents) {
                 $adPay = $this->createMock(AdPay::class);
-                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+                $adPay->method('getPayments')->will($this->returnCallback(
+                    function ($timestamp, $recalculate, $force, $limit, $offset) use ($calculatedEvents) {
+                        return $calculatedEvents->slice($offset, $limit)->toArray();
+                    }
+                ));
 
                 return $adPay;
             }

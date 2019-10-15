@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\Traits\BinHex;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
 /**
  * @property int id
@@ -52,6 +53,10 @@ class Conversion extends Model
 {
     use AutomateMutators;
     use BinHex;
+
+    public const TYPE = 'conversion';
+
+    private const CHUNK_SIZE = 1000;
 
     protected $fillable = [
         'uuid',
@@ -95,6 +100,19 @@ class Conversion extends Model
         $group->weight = $weight;
 
         $group->save();
+    }
+
+    public static function fetchUnpaidConversionsForUpdateWithPaymentReport(Collection $conversionIds): Collection
+    {
+        return $conversionIds
+            ->chunk(self::CHUNK_SIZE)
+            ->flatMap(
+                static function (Collection $eventIds) {
+                    return self::whereIn('uuid', $eventIds)
+                        ->whereNull('event_value_currency')
+                        ->get();
+                }
+            );
     }
 
     public static function wasRegisteredForDefinitionAndCaseId(int $conversionDefinitionId, array $caseIds): bool
