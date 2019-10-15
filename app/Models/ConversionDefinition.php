@@ -175,7 +175,7 @@ class ConversionDefinition extends Model
     public static function rules(array $conversion): array
     {
         $type = $conversion['type'] ?? null;
-        $isValueMutable = $conversion['is_value_mutable'] ?? null;
+        $isValueMutable = (bool)($conversion['is_value_mutable'] ?? false);
         $rules = [
             'uuid' => 'string|nullable',
             'campaign_id' => 'required|integer',
@@ -187,7 +187,7 @@ class ConversionDefinition extends Model
                 'min:0',
                 'nullable',
                 Rule::requiredIf(static function () use ($isValueMutable) {
-                    return 0 === $isValueMutable;
+                    return !$isValueMutable;
                 }),
             ],
             'limit' => 'integer|min:0|nullable',
@@ -195,12 +195,18 @@ class ConversionDefinition extends Model
 
         if ($type === self::BASIC_TYPE) {
             $rules['limit_type'] = 'required|in:'.self::IN_BUDGET;
-            $rules['is_repeatable'] = 'required|in:0';
-            $rules['is_value_mutable'] = 'required|in:0';
+            $rules['is_repeatable'] = [
+                'required',
+                Rule::in(false, 0),
+            ];
+            $rules['is_value_mutable'] = [
+                'required',
+                Rule::in(false, 0),
+            ];
         } elseif ($type === self::ADVANCED_TYPE) {
             $rules['limit_type'] = sprintf('required|in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
-            $rules['is_repeatable'] = 'required|in:0,1';
-            $rules['is_value_mutable'] = 'required|in:0,1';
+            $rules['is_repeatable'] = 'required|boolean';
+            $rules['is_value_mutable'] = 'required|boolean';
         }
 
         return $rules;
