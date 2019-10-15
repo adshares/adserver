@@ -154,11 +154,6 @@ class ConversionDefinition extends Model
         return self::ADVANCED_TYPE === $this->type;
     }
 
-    public function isRepeatable(): bool
-    {
-        return (bool)$this->is_repeatable;
-    }
-
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
     {
         $binaryUuids = array_map(

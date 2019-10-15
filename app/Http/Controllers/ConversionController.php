@@ -261,7 +261,7 @@ class ConversionController extends Controller
 
         $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
 
-        if (!$conversionDefinition->isRepeatable()) {
+        if (!$conversionDefinition->is_repeatable) {
             $caseIds = array_keys($cases);
 
             if (Conversion::wasRegisteredForDefinitionAndCaseId($conversionDefinitionId, $caseIds)) {
