@@ -65,7 +65,7 @@ class GuzzleAdPayClient implements AdPay
             $this->client->post(
                 self::URI_CAMPAIGNS,
                 [
-                    RequestOptions::JSON => $campaigns,
+                    RequestOptions::JSON => ['campaigns' => $campaigns],
                 ]
             );
         } catch (RequestException $exception) {
@@ -87,7 +87,7 @@ class GuzzleAdPayClient implements AdPay
             $this->client->delete(
                 self::URI_CAMPAIGNS,
                 [
-                    RequestOptions::JSON => $campaignIds,
+                    RequestOptions::JSON => ['campaigns' => $campaignIds],
                 ]
             );
         } catch (RequestException $exception) {

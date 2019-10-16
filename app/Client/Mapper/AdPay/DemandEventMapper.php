@@ -51,14 +51,14 @@ class DemandEventMapper
                 return $mapped;
             }
         )->toArray();
-        
+
         return $a;
     }
 
     private static function mapEventLog(EventLog $event): array
     {
         return [
-            'id' => $event->id,
+            'id' => $event->event_id,
             'time' => $event->created_at->getTimestamp(),
             'case_id' => $event->case_id,
             'publisher_id' => $event->publisher_id,
