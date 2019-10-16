@@ -26,7 +26,9 @@ class ChangeConfigAdpayLastExportedEvent extends Migration
 {
     public function up(): void
     {
-        DB::table('configs')->where('key', 'adpay-last-exported-event-id')->delete();
+        DB::table('configs')
+            ->whereIn('key', ['adpay-last-exported-event-id', Config::ADPAY_CAMPAIGN_EXPORT_TIME])
+            ->delete();
     }
 
     public function down(): void
