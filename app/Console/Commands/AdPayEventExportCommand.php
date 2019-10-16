@@ -43,6 +43,8 @@ class AdPayEventExportCommand extends BaseCommand
 {
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 500;
 
+    private const EVENTS_PERIOD = 300;//5 * 60 s
+
     private const DEFAULT_EXPORT_TIME_FROM = '-4 hours';
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
@@ -83,16 +85,14 @@ class AdPayEventExportCommand extends BaseCommand
             $dateFromEvents = (new DateTime())->setTimestamp($timestampFrom);
             $dateFromConversions = clone $dateFromEvents;
         } else {
-            $dateFromEvents =
-                Config::fetchDateTime(
-                    Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
-                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
-                );
-            $dateFromConversions =
-                Config::fetchDateTime(
-                    Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
-                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
-                );
+            $dateFromEvents = Config::fetchDateTime(
+                Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
+                new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+            );
+            $dateFromConversions = Config::fetchDateTime(
+                Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+                new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+            );
         }
 
         if (null !== $optionTo) {
@@ -190,6 +190,61 @@ class AdPayEventExportCommand extends BaseCommand
             return;
         }
 
+        $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
+        $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
+
+        $dateToChunk = clone $dateFrom;
+        for ($i = 0; $i < $periodCount; $i++) {
+            $dateFromChunk = clone $dateToChunk;
+            $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
+            if ($dateToChunk > $dateTo) {
+                $dateToChunk = clone $dateTo;
+            }
+
+            $this->exportEventsInPacks($adPay, $adUser, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
+        }
+    }
+
+    private function exportConversions(
+        AdPay $adPay,
+        DateTime $dateFrom,
+        DateTime $dateTo,
+        bool $isCommandExecutedAutomatically
+    ): void {
+        if ($dateFrom >= $dateTo) {
+            $this->error(
+                sprintf(
+                    '[AdPayEventExport] Invalid conversions range from %s (exclusive) to %s (inclusive)',
+                    $dateFrom->format(DateTime::ATOM),
+                    $dateTo->format(DateTime::ATOM)
+                )
+            );
+
+            return;
+        }
+
+        $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
+        $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
+
+        $dateToChunk = clone $dateFrom;
+        for ($i = 0; $i < $periodCount; $i++) {
+            $dateFromChunk = clone $dateToChunk;
+            $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
+            if ($dateToChunk > $dateTo) {
+                $dateToChunk = clone $dateTo;
+            }
+
+            $this->exportConversionsInPacks($adPay, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
+        }
+    }
+
+    private function exportEventsInPacks(
+        AdPay $adPay,
+        AdUser $adUser,
+        DateTime $dateFrom,
+        DateTime $dateTo,
+        bool $isCommandExecutedAutomatically
+    ): void {
         $this->info(
             sprintf(
                 '[AdPayEventExport] Exporting events from %s (exclusive) to %s (inclusive)',
@@ -201,20 +256,20 @@ class AdPayEventExportCommand extends BaseCommand
         $seconds = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $eventsCount = EventLog::where('created_at', '>', $dateFrom)->where('created_at', '<=', $dateTo)->count();
         $packCount = max((int)ceil($eventsCount / self::EVENTS_BUNDLE_MAXIMAL_SIZE), 1);
-        $packInterval = (int)floor($seconds / $packCount);
-        if (0 === $packInterval) {
+        if ($seconds < $packCount) {
             $this->error(
                 sprintf('[AdPayEventExport] Too many events to export (%s) in time (%s)', $eventsCount, $seconds)
             );
 
             return;
         }
+        $packInterval = (int)ceil($seconds / $packCount);
 
         $dateToTemporary = clone $dateFrom;
 
         for ($pack = 0; $pack < $packCount; $pack++) {
             $dateFromTemporary = clone $dateToTemporary;
-            $dateToTemporary->modify(sprintf('+ %d seconds', $packInterval));
+            $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
 
             if ($dateToTemporary > $dateTo) {
                 $dateToTemporary = clone $dateTo;
@@ -269,24 +324,12 @@ class AdPayEventExportCommand extends BaseCommand
         $this->info(sprintf('[AdPayEventExport] Finished exporting %d events', $eventsCount));
     }
 
-    private function exportConversions(
+    private function exportConversionsInPacks(
         AdPay $adPay,
         DateTime $dateFrom,
         DateTime $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
-        if ($dateFrom >= $dateTo) {
-            $this->error(
-                sprintf(
-                    '[AdPayEventExport] Invalid conversions range from %s (exclusive) to %s (inclusive)',
-                    $dateFrom->format(DateTime::ATOM),
-                    $dateTo->format(DateTime::ATOM)
-                )
-            );
-
-            return;
-        }
-
         $this->info(
             sprintf(
                 '[AdPayEventExport] Exporting conversions from %s (exclusive) to %s (inclusive)',
@@ -298,20 +341,20 @@ class AdPayEventExportCommand extends BaseCommand
         $seconds = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $eventsCount = Conversion::where('created_at', '>', $dateFrom)->where('created_at', '<=', $dateTo)->count();
         $packCount = max((int)ceil($eventsCount / self::EVENTS_BUNDLE_MAXIMAL_SIZE), 1);
-        $packInterval = (int)floor($seconds / $packCount);
-        if (0 === $packInterval) {
+        if ($seconds < $packCount) {
             $this->error(
                 sprintf('[AdPayEventExport] Too many conversions to export (%s) in time (%s)', $eventsCount, $seconds)
             );
 
             return;
         }
+        $packInterval = (int)ceil($seconds / $packCount);
 
         $dateToTemporary = clone $dateFrom;
 
         for ($pack = 0; $pack < $packCount; $pack++) {
             $dateFromTemporary = clone $dateToTemporary;
-            $dateToTemporary->modify(sprintf('+ %d seconds', $packInterval));
+            $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
 
             if ($dateToTemporary > $dateTo) {
                 $dateToTemporary = clone $dateTo;
