@@ -57,9 +57,13 @@ class CreateConversionsTable extends Migration
         );
 
         if (DB::isMysql()) {
-            DB::statement('ALTER TABLE conversions MODIFY uuid varbinary(16)');
-            DB::statement('ALTER TABLE conversions MODIFY group_id varbinary(16)');
+            DB::statement('ALTER TABLE conversions MODIFY uuid varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE conversions MODIFY group_id varbinary(16) NOT NULL');
         }
+
+        Schema::table('conversions', function (Blueprint $table) {
+            $table->unique('uuid');
+        });
     }
 
     public function down(): void
