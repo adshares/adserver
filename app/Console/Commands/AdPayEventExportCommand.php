@@ -225,11 +225,23 @@ class AdPayEventExportCommand extends BaseCommand
                     ->where('created_at', '<=', $dateToTemporary)
                     ->get();
 
+            $eventsToExportCount = count($eventsToExport);
+
             $this->info(
-                sprintf('[AdPayEventExport] Pack [%d]. Events to export: %d', $pack + 1, count($eventsToExport))
+                sprintf(
+                    '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
+                    $pack + 1,
+                    $eventsToExportCount,
+                    $dateFromTemporary->format(DateTime::ATOM),
+                    $dateToTemporary->format(DateTime::ATOM),
+                    $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
+                )
             );
 
             $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
+
+            $timeStart = (clone $dateFromTemporary)->modify('+1 second');
+            $timeEnd = clone $dateToTemporary;
 
             $views = DemandEventMapper::mapEventCollectionToArray(
                 $eventsToExport->filter(
@@ -238,6 +250,8 @@ class AdPayEventExportCommand extends BaseCommand
                     }
                 )
             );
+            $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
+
             $clicks = DemandEventMapper::mapEventCollectionToArray(
                 $eventsToExport->filter(
                     function ($item) {
@@ -245,13 +259,9 @@ class AdPayEventExportCommand extends BaseCommand
                     }
                 )
             );
-
-            $timeStart = (clone $dateFromTemporary)->modify('+1 second');
-            $timeEnd = clone $dateToTemporary;
-            $adPay->addViews(new AdPayEvents($timeStart, $timeEnd, $views));
             $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
 
-            if ($isCommandExecutedAutomatically && count($eventsToExport) > 0) {
+            if ($isCommandExecutedAutomatically && $eventsToExportCount > 0) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);
             }
         }
@@ -313,21 +323,25 @@ class AdPayEventExportCommand extends BaseCommand
                 $dateToTemporary
             )->with('event')->get();
 
+            $conversionToExportCount = count($conversionsToExport);
             $this->info(
                 sprintf(
-                    '[AdPayEventExport] Pack [%d]. Conversions to export: %d',
+                    '[AdPayEventExport] Pack [%d]. Conversions to export: %d (%s -> %s, %s s)',
                     $pack + 1,
-                    count($conversionsToExport)
+                    $conversionToExportCount,
+                    $dateFromTemporary->format(DateTime::ATOM),
+                    $dateToTemporary->format(DateTime::ATOM),
+                    $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
                 )
             );
 
-            $conversions = DemandEventMapper::mapConversionCollectionToArray($conversionsToExport);
-
             $timeStart = (clone $dateFromTemporary)->modify('+1 second');
             $timeEnd = clone $dateToTemporary;
+            $conversions = DemandEventMapper::mapConversionCollectionToArray($conversionsToExport);
+
             $adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));
 
-            if ($isCommandExecutedAutomatically && count($conversionsToExport) > 0) {
+            if ($isCommandExecutedAutomatically && $conversionToExportCount > 0) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, $dateToTemporary);
             }
         }
