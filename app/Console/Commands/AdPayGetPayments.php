@@ -89,18 +89,19 @@ class AdPayGetPayments extends BaseCommand
 
             $this->info(sprintf('Found %s entries to update.', $unpaidEvents->count() + $unpaidConversions->count()));
 
-            $mappedCalculations = $calculations->mapWithKeys(static function ($value) {
-                return [$value['event_id'] => $value];
-            })->all();
+            $mappedCalculations = $calculations->mapWithKeys(
+                static function ($value) {
+                    return [$value['event_id'] => $value];
+                }
+            )->all();
 
             $this->updateEventsWithAdPayData($unpaidEvents, $mappedCalculations, $exchangeRate);
             $this->updateConversionsWithAdPayData($unpaidConversions, $mappedCalculations, $exchangeRate);
 
             $allEvents = $allEvents->concat($unpaidEvents);
-            $this->info("Found {} entries to update.");
-            
+
             $offset += $limit;
-        } while ($limit === count($calculations));
+        } while ($limit === $calculations->count());
 
         $ledgerEntries = $this->processExpenses($allEvents, $exchangeRate);
 
@@ -111,20 +112,28 @@ class AdPayGetPayments extends BaseCommand
 
     private function getEventIds(Collection $calculations): Collection
     {
-        return $calculations->filter(static function (array $calculation) {
-            return in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true); 
-        })->map(static function (array $calculation) {
-            return hex2bin($calculation['event_id']);
-        });
+        return $calculations->filter(
+            static function (array $calculation) {
+                return in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true);
+            }
+        )->map(
+            static function (array $calculation) {
+                return hex2bin($calculation['event_id']);
+            }
+        );
     }
 
     private function getConversionIds(Collection $calculations): Collection
     {
-        return $calculations->filter(static function (array $calculation) {
-            return Conversion::TYPE === $calculation['event_type']; 
-        })->map(static function (array $calculation) {
-            return hex2bin($calculation['event_id']);
-        });
+        return $calculations->filter(
+            static function (array $calculation) {
+                return Conversion::TYPE === $calculation['event_type'];
+            }
+        )->map(
+            static function (array $calculation) {
+                return hex2bin($calculation['event_id']);
+            }
+        );
     }
 
     private function getExchangeRate(ExchangeRateReader $exchangeRateReader): ExchangeRate
@@ -162,7 +171,7 @@ class AdPayGetPayments extends BaseCommand
             static function (EventLog $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
                 $calculation = $mappedCalculations[$entry->event_id];
                 $value = $calculation['value'];
-    
+
                 $entry->event_value_currency = $value;
                 $entry->exchange_rate = $exchangeRateValue;
                 $entry->event_value = $exchangeRate->toClick($value);
@@ -182,7 +191,7 @@ class AdPayGetPayments extends BaseCommand
             static function (Conversion $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
                 $calculation = $mappedCalculations[$entry->uuid];
                 $value = $calculation['value'];
-    
+
                 $entry->event_value_currency = $value;
                 $entry->exchange_rate = $exchangeRateValue;
                 $entry->event_value = $exchangeRate->toClick($value);
