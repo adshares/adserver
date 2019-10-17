@@ -177,7 +177,7 @@ class EventLog extends Model
         return $eventIds
             ->chunk(self::CHUNK_SIZE)
             ->flatMap(
-                static function (Collection $eventIds) {
+                static function (SupportCollection $eventIds) {
                     return self::whereIn('event_id', $eventIds)
                         ->whereNull('event_value_currency')
                         ->get();

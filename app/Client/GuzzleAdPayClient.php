@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client;
 
+use Adshares\Adserver\Exceptions\Demand\AdPayReportMissingEventsException;
+use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
@@ -30,6 +32,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 
 class GuzzleAdPayClient implements AdPay
 {
@@ -163,15 +166,26 @@ class GuzzleAdPayClient implements AdPay
                 ]
             );
         } catch (RequestException $exception) {
-            throw new UnexpectedClientResponseException(
-                sprintf(
-                    '[ADPAY] Get payments from %s failed (%s).',
-                    $this->client->getConfig()['base_uri'],
-                    $exception->getMessage()
-                ),
-                $exception->getCode(),
-                $exception
-            );
+            switch($code = $exception->getCode()) {
+                case Response::HTTP_NOT_FOUND:
+                    throw new AdPayReportNotReadyException(sprintf('Report for %d is not ready', $timestamp));
+                    break;
+                case Response::HTTP_UNPROCESSABLE_ENTITY:
+                    throw new AdPayReportMissingEventsException(
+                        sprintf('Missing events for %d', $timestamp)
+                    );
+                    break;
+                default:
+                    throw new UnexpectedClientResponseException(
+                        sprintf(
+                            '[ADPAY] Get payments from %s failed (%s).',
+                            $this->client->getConfig()['base_uri'],
+                            $exception->getMessage()
+                        ), $code,
+                        $exception
+                    );
+                    break;
+            }
         }
 
         $body = json_decode((string)$response->getBody(), true);
