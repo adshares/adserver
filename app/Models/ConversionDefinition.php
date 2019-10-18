@@ -113,6 +113,11 @@ class ConversionDefinition extends Model
         'creating' => GenerateUUID::class,
     ];
 
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
+    }
+
     public static function fetchByUuid(string $uuid): ?self
     {
         return self::where('uuid', hex2bin($uuid))->first();
@@ -152,6 +157,25 @@ class ConversionDefinition extends Model
     public function isAdvanced(): bool
     {
         return self::ADVANCED_TYPE === $this->type;
+    }
+
+    public function isInCampaignBudget(): bool
+    {
+        return self::IN_BUDGET === $this->limit_type;
+    }
+
+    public static function updateCostAndOccurrences(array $costAndOccurrencesArray): void
+    {
+        $ids = array_keys($costAndOccurrencesArray);
+        $definitions = ConversionDefinition::whereIn('id', $ids)->get();
+
+        foreach ($definitions as $definition) {
+            $data = $costAndOccurrencesArray[$definition->id];
+
+            $definition->cost = $data['cost'];
+            $definition->occurrences = $data['occurrences'];
+            $definition->save();
+        }
     }
 
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void

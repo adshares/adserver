@@ -110,6 +110,7 @@ class Conversion extends Model
                 static function (Collection $eventIds) {
                     return self::whereIn('uuid', $eventIds)
                         ->whereNull('event_value_currency')
+                        ->with('event')
                         ->get();
                 }
             );
