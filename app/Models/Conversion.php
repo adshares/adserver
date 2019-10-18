@@ -92,14 +92,14 @@ class Conversion extends Model
         int $value,
         float $weight
     ): void {
-        $group = new self();
-        $group->group_id = $groupId;
-        $group->event_logs_id = $eventId;
-        $group->conversion_definition_id = $conversionDefinitionId;
-        $group->value = $value;
-        $group->weight = $weight;
+        $conversion = new self();
+        $conversion->group_id = $groupId;
+        $conversion->event_logs_id = $eventId;
+        $conversion->conversion_definition_id = $conversionDefinitionId;
+        $conversion->value = $value;
+        $conversion->weight = $weight;
 
-        $group->save();
+        $conversion->save();
     }
 
     public static function fetchUnpaidConversionsForUpdateWithPaymentReport(Collection $conversionIds): Collection

@@ -40,19 +40,19 @@ class DemandEventMapper
 
     public static function mapConversionCollectionToArray(Collection $conversions): array
     {
-        $a = $conversions->map(
+        return $conversions->map(
             function (Conversion $conversion) {
-                $mapped = self::mapEventLog($conversion->event);
+                $event = $conversion->event;
 
+                $mapped = self::mapEventLog($event);
                 $mapped['conversion_id'] = $conversion->uuid;
                 $mapped['conversion_value'] = $conversion->value;
-                $mapped['payment_status'] = $conversion->payment_status;
+                $mapped['group_id'] = $conversion->group_id;
+                $mapped['payment_status'] = $event->payment_status;
 
                 return $mapped;
             }
         )->toArray();
-
-        return $a;
     }
 
     private static function mapEventLog(EventLog $event): array
@@ -72,7 +72,6 @@ class DemandEventMapper
             'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
             'context' => JsonValueMapper::map($event->our_context),
             'keywords' => JsonValueMapper::map($event->our_userdata),
-            'payment_status' => $event->payment_status,
         ];
     }
 }

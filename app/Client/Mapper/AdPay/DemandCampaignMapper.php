@@ -86,7 +86,6 @@ class DemandCampaignMapper
                     [
                         'uuid',
                         'limit_type',
-                        'value',
                         'is_value_mutable',
                         'limit',
                         'is_repeatable',
