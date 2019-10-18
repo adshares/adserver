@@ -45,7 +45,7 @@ class AdPayEventExportCommand extends BaseCommand
 
     private const EVENTS_PERIOD = 300;//5 * 60 s
 
-    private const DEFAULT_EXPORT_TIME_FROM = '-4 hours';
+    private const DEFAULT_EXPORT_TIME_FROM = '-2 hours';
 
     private const DEFAULT_EXPORT_TIME_TO = '-10 minutes';
 
