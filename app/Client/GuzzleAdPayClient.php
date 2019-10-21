@@ -166,7 +166,7 @@ class GuzzleAdPayClient implements AdPay
                 ]
             );
         } catch (RequestException $exception) {
-            switch($code = $exception->getCode()) {
+            switch ($code = $exception->getCode()) {
                 case Response::HTTP_NOT_FOUND:
                     throw new AdPayReportNotReadyException(sprintf('Report for %d is not ready', $timestamp));
                     break;
@@ -181,7 +181,8 @@ class GuzzleAdPayClient implements AdPay
                             '[ADPAY] Get payments from %s failed (%s).',
                             $this->client->getConfig()['base_uri'],
                             $exception->getMessage()
-                        ), $code,
+                        ),
+                        $code,
                         $exception
                     );
                     break;
