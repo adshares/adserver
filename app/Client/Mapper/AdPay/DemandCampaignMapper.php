@@ -43,23 +43,17 @@ class DemandCampaignMapper
                     'budget' => $campaignArray['basic_information']['budget'],
                     'max_cpc' => $campaignArray['basic_information']['max_cpc'],
                     'max_cpm' => $campaignArray['basic_information']['max_cpm'],
-                    'time_start' => self::processDate($campaign->time_start),
-                    'time_end' => self::processDate($campaign->time_end),
+                    'time_start' => DateTime::createFromFormat(DateTime::ATOM, $campaign->time_start)->getTimestamp(),
+                    'time_end' => null !== $campaign->time_end ? DateTime::createFromFormat(
+                        DateTime::ATOM,
+                        $campaign->time_end
+                    )->getTimestamp() : null,
                     'banners' => self::extractBanners($campaign),
                     'conversions' => self::processConversions($campaign->conversions),
                     'filters' => self::processTargeting($campaignArray['targeting']),
                 ];
             }
         )->toArray();
-    }
-
-    private static function processDate(?string $date): int
-    {
-        if ($date === null) {
-            return (new DateTime())->modify('+1 year')->getTimestamp();
-        }
-
-        return DateTime::createFromFormat(DateTime::ATOM, $date)->getTimestamp();
     }
 
     private static function extractBanners(Campaign $campaign): array
