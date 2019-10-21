@@ -30,6 +30,7 @@ use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
+use DateTime;
 use Illuminate\Support\Collection;
 use function count;
 use function hex2bin;
@@ -41,7 +42,6 @@ class AdPayGetPayments extends BaseCommand
 {
     protected $signature = 'ops:adpay:payments:get
                             {--t|timestamp=}
-                            {--s|sub=1}
                             {--f|force}
                             {--r|recalculate}
                             {--c|chunkSize=10000}';
@@ -58,7 +58,8 @@ class AdPayGetPayments extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $exchangeRate = $this->getExchangeRate($exchangeRateReader);
+        $timestamp = $this->getReportTimestamp();
+        $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@'.$timestamp));
         $limit = (int)$this->option('chunkSize');
         $offset = 0;
 
@@ -68,7 +69,7 @@ class AdPayGetPayments extends BaseCommand
         UserLedgerEntry::removeProcessingExpenses();
 
         do {
-            $calculations = $this->getCalculations($adPay, $limit, $offset);
+            $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
 
             $this->info("Found {$calculations->count()} calculations.");
 
@@ -129,19 +130,16 @@ class AdPayGetPayments extends BaseCommand
         );
     }
 
-    private function getExchangeRate(ExchangeRateReader $exchangeRateReader): ExchangeRate
+    private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
     {
-        $exchangeRate = $exchangeRateReader->fetchExchangeRate();
-        $this->info(sprintf('Current exchange rate is %f', $exchangeRate->getValue()));
+        $exchangeRate = $exchangeRateReader->fetchExchangeRate($dateTime);
+        $this->info(sprintf('Exchange rate is %f', $exchangeRate->getValue()));
 
         return $exchangeRate;
     }
 
-    private function getCalculations(AdPay $adPay, int $limit, int $offset): Collection
+    private function getCalculations(AdPay $adPay, int $timestamp, int $limit, int $offset): Collection
     {
-        $ts = $this->option('timestamp');
-        $timestamp = $ts === null ? now()->subHour((int)$this->option('sub'))->getTimestamp() : (int)$ts;
-
         return new Collection(
             $adPay->getPayments(
                 $timestamp,
@@ -163,5 +161,12 @@ class AdPayGetPayments extends BaseCommand
         }
 
         return $count;
+    }
+
+    private function getReportTimestamp(): int
+    {
+        $ts = $this->option('timestamp');
+
+        return $ts === null ? now()->subHour(1)->getTimestamp() : (int)$ts;
     }
 }
