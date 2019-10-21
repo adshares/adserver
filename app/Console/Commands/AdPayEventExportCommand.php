@@ -82,7 +82,7 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateFromEvents = (new DateTime())->setTimestamp($timestampFrom);
+            $dateFromEvents = (new DateTime())->setTimestamp($this->correctUserTimestamp($timestampFrom));
             $dateFromConversions = clone $dateFromEvents;
         } else {
             $dateFromEvents = Config::fetchDateTime(
@@ -102,7 +102,7 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateTo = (new DateTime())->setTimestamp($timestampTo);
+            $dateTo = (new DateTime())->setTimestamp($this->correctUserTimestamp($timestampTo));
         } else {
             $dateTo = new DateTime(self::DEFAULT_EXPORT_TIME_TO);
         }
@@ -390,5 +390,10 @@ class AdPayEventExportCommand extends BaseCommand
         }
 
         $this->info(sprintf('[AdPayEventExport] Finished exporting %d conversions', $eventsCount));
+    }
+
+    private function correctUserTimestamp($timestampFrom): int
+    {
+        return $timestampFrom - 1;
     }
 }
