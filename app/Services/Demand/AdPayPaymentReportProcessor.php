@@ -233,6 +233,8 @@ class AdPayPaymentReportProcessor
         $event->exchange_rate = $this->exchangeRateValue;
         $event->event_value = $value;
         $event->payment_status = $status;
+
+        $event->save();
     }
 
     private function setConversionValueAndStatus(
@@ -245,6 +247,8 @@ class AdPayPaymentReportProcessor
         $conversion->exchange_rate = $this->exchangeRateValue;
         $conversion->event_value = $value;
         $conversion->payment_status = $status;
+
+        $conversion->save();
     }
 
     public function getAdvertiserExpenses(): array
@@ -252,9 +256,16 @@ class AdPayPaymentReportProcessor
         $expenses = [];
 
         foreach ($this->advertisers as $advertiserId => $balances) {
+            $wallet = $this->exchangeRate->toClick($balances['wallet'] - $balances['walletLeft']);
+            $bonus = $this->exchangeRate->toClick($balances['bonus'] - $balances['bonusLeft']);
+
+            if (0 === ($total = $wallet + $bonus)) {
+                continue;
+            }
+
             $expenses[$advertiserId] = [
-                'wallet' => $this->exchangeRate->toClick($balances['wallet'] - $balances['walletLeft']),
-                'bonus' => $this->exchangeRate->toClick($balances['bonus'] - $balances['bonusLeft']),
+                'total' => $total,
+                'maxBonus' => $bonus,
             ];
         }
 

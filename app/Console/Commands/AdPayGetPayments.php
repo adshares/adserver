@@ -22,33 +22,23 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Mail\CampaignSuspension;
-use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Common\Application\Dto\ExchangeRate;
-use Adshares\Common\Exception\Exception;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use function floor;
+use function count;
+use function hex2bin;
+use function in_array;
 use function now;
 use function sprintf;
 
 class AdPayGetPayments extends BaseCommand
 {
-    private const EVENT_VALUE_CURRENCY = 'event_value_currency';
-
-    private const EVENT_VALUE = 'event_value';
-
-    public const DIRECT = 'direct';
-
-    public const NORMAL = 'normal';
-
     protected $signature = 'ops:adpay:payments:get
                             {--t|timestamp=}
                             {--s|sub=1}
@@ -69,10 +59,10 @@ class AdPayGetPayments extends BaseCommand
         $this->info('Start command '.$this->signature);
 
         $exchangeRate = $this->getExchangeRate($exchangeRateReader);
-        $allEvents = new Collection();
         $limit = (int)$this->option('chunkSize');
         $offset = 0;
 
+        $reportProcessor = new AdPayPaymentReportProcessor($exchangeRate);
         DB::beginTransaction();
 
         UserLedgerEntry::removeProcessingExpenses();
@@ -95,19 +85,22 @@ class AdPayGetPayments extends BaseCommand
                 }
             )->all();
 
-            $this->updateEventsWithAdPayData($unpaidEvents, $mappedCalculations, $exchangeRate);
-            $this->updateConversionsWithAdPayData($unpaidConversions, $mappedCalculations, $exchangeRate);
-
-            $allEvents = $allEvents->concat($unpaidEvents);
+            foreach ($unpaidEvents as $event) {
+                $reportProcessor->processEventLog($event, $mappedCalculations[$event->event_id]);
+            }
+            foreach ($unpaidConversions as $conversion) {
+                $reportProcessor->processConversion($conversion, $mappedCalculations[$conversion->uuid]);
+            }
 
             $offset += $limit;
         } while ($limit === $calculations->count());
 
-        $ledgerEntries = $this->processExpenses($allEvents, $exchangeRate);
+        $ledgerEntriesCount = $this->processExpenses($reportProcessor->getAdvertiserExpenses());
+        ConversionDefinition::updateCostAndOccurrences($reportProcessor->getProcessedConversionDefinitions());
 
         DB::commit();
 
-        $this->info("Created {$ledgerEntries->count()} Ledger Entries.");
+        $this->info("Created {$ledgerEntriesCount} Ledger Entries.");
     }
 
     private function getEventIds(Collection $calculations): Collection
@@ -160,157 +153,15 @@ class AdPayGetPayments extends BaseCommand
         );
     }
 
-    private function updateEventsWithAdPayData(
-        Collection $unpaidEvents,
-        array $mappedCalculations,
-        ExchangeRate $exchangeRate
-    ): void {
-        $exchangeRateValue = $exchangeRate->getValue();
-
-        $unpaidEvents->each(
-            static function (EventLog $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
-                $calculation = $mappedCalculations[$entry->event_id];
-                $value = $calculation['value'];
-
-                $entry->event_value_currency = $value;
-                $entry->exchange_rate = $exchangeRateValue;
-                $entry->event_value = $exchangeRate->toClick($value);
-                $entry->payment_status = $calculation['status'];
-            }
-        );
-    }
-
-    private function updateConversionsWithAdPayData(
-        Collection $unpaidConversions,
-        array $mappedCalculations,
-        ExchangeRate $exchangeRate
-    ): void {
-        $exchangeRateValue = $exchangeRate->getValue();
-
-        $unpaidConversions->each(
-            static function (Conversion $entry) use ($mappedCalculations, $exchangeRate, $exchangeRateValue) {
-                $calculation = $mappedCalculations[$entry->uuid];
-                $value = $calculation['value'];
-
-                $entry->event_value_currency = $value;
-                $entry->exchange_rate = $exchangeRateValue;
-                $entry->event_value = $exchangeRate->toClick($value);
-                $entry->payment_status = $calculation['status'];
-            }
-        );
-    }
-
-    private function evaluateEventsByCampaign(Collection $unpaidEvents, ExchangeRate $exchangeRate): Collection
+    private function processExpenses(array $expenses): int
     {
-        return $unpaidEvents->groupBy('campaign_id')
-            ->mapToGroups(static function (Collection $events, string $campaignPublicId) use ($exchangeRate) {
-                Log::debug(sprintf('%s CampaignId %s', __FUNCTION__, $campaignPublicId));
+        $count = 0;
 
-                $campaign = Campaign::fetchByUuid($campaignPublicId);
-
-                if (!$campaign) {
-                    Log::warning(
-                        sprintf(
-                            '{"error":"no-campaign","command":"ops:adpay:payments:get","uuid":"%s"}',
-                            $campaignPublicId
-                        )
-                    );
-
-                    return new Collection();
-                }
-
-                $total = $campaign->budget;
-                self::normalize($events, $total, $exchangeRate);
-
-                return [$campaign->isDirectDeal() ? self::DIRECT : self::NORMAL => $events->all()];
-            })->map(static function (Collection $groups) {
-                return new Collection($groups->reduce('array_merge', []));
-            });
-    }
-
-    private function processExpenses(Collection $unpaidEvents, ExchangeRate $exchangeRate): Collection
-    {
-        return $unpaidEvents->groupBy('advertiser_id')
-            ->map(function (Collection $events, string $userPublicId) use ($exchangeRate) {
-                Log::debug(sprintf('%s UserId %s', __FUNCTION__, $userPublicId));
-
-                $user = User::fetchByUuid($userPublicId);
-
-                if (!$user) {
-                    throw new Exception(
-                        sprintf(
-                            '{"error":"no-user","command":"ops:adpay:payments:get","advertiser_id":"%s"}',
-                            $userPublicId
-                        )
-                    );
-                }
-
-                $clicks = $this->evaluateEventsByCampaign($events, $exchangeRate)
-                    ->map(function (Collection $events, string $key) use ($user, $exchangeRate) {
-                        $userBalance = $key === self::DIRECT ? $user->getWalletBalance() : $user->getBalance();
-
-                        if ($userBalance < 0) {
-                            $this->error(sprintf(
-                                'User %s has negative "%s" balance %d',
-                                $user->id,
-                                $key,
-                                $userBalance
-                            ));
-                            $maxSpendableAmount = 0;
-                        } else {
-                            $maxSpendableAmount = $exchangeRate->fromClick($userBalance);
-                        }
-
-                        $insufficientFunds = self::normalize($events, $maxSpendableAmount, $exchangeRate);
-
-                        $events->each(static function (EventLog $entry) {
-                            $entry->save();
-                        });
-
-                        if ($insufficientFunds) {
-                            if (Campaign::suspendAllForUserId($user->id) > 0) {
-                                Log::debug(
-                                    sprintf(
-                                        'Suspended Campaigns for user [%s] due to insufficient amount of clicks.',
-                                        $user->id
-                                    )
-                                );
-                                Mail::to($user)->queue(new CampaignSuspension());
-                            }
-                        }
-
-                        return $events->sum(self::EVENT_VALUE);
-                    });
-
-                $maxBonus = $clicks->get(self::NORMAL, 0);
-
-                $totalEventValueInClicks = $maxBonus + $clicks->get(self::DIRECT, 0);
-                if ($totalEventValueInClicks > 0) {
-                    return UserLedgerEntry::processAdExpense($user->id, $totalEventValueInClicks, $maxBonus);
-                }
-
-                return false;
-            })->filter();
-    }
-
-    private static function normalize(Collection $events, int $maxSpendableAmount, ExchangeRate $exchangeRate): bool
-    {
-        $totalEventValue = $events->sum(self::EVENT_VALUE_CURRENCY);
-
-        if ($maxSpendableAmount < $totalEventValue) {
-            $normalizationFactor = (float)$maxSpendableAmount / $totalEventValue;
-            $events->each(static function (EventLog $entry) use (
-                $normalizationFactor,
-                $exchangeRate
-            ) {
-                $amount = (int)floor($entry->event_value_currency * $normalizationFactor);
-                $entry->event_value_currency = $amount;
-                $entry->event_value = $exchangeRate->toClick($amount);
-            });
-
-            return true;
+        foreach ($expenses as $userId => $expense) {
+            $entries = UserLedgerEntry::processAdExpense($userId, $expense['total'], $expense['maxBonus']);
+            $count += count($entries);
         }
 
-        return false;
+        return $count;
     }
 }
