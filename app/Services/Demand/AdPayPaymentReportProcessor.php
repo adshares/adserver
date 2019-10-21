@@ -52,28 +52,28 @@ class AdPayPaymentReportProcessor
 
     public function processEventLog(EventLog $event, array $calculation): void
     {
-        $advertiserId = $event->advertiser_id;
+        $advertiserPublicId = $event->advertiser_id;
 
-        if (!$this->isUser($advertiserId)) {
-            Log::warning(sprintf('No user with uuid (%s)', $advertiserId));
+        if (!$this->isUser($advertiserPublicId)) {
+            Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
             $this->setEventValueAndStatus($event, 0, 0, $calculation['status']);
 
             return;
         }
 
-        $campaignId = $event->campaign_id;
+        $campaignPublicId = $event->campaign_id;
 
-        if (!$this->isCampaign($advertiserId, $campaignId)) {
-            Log::warning(sprintf('No campaign with uuid (%s)', $campaignId));
+        if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
+            Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
             $this->setEventValueAndStatus($event, 0, 0, $calculation['status']);
 
             return;
         }
 
-        $isDirectDeal = $this->advertisers[$advertiserId]['campaigns'][$campaignId]['isDirectDeal'];
-        $budget = $this->advertisers[$advertiserId]['campaigns'][$campaignId]['budgetLeft'];
-        $wallet = $this->advertisers[$advertiserId]['walletLeft'];
-        $bonus = $this->advertisers[$advertiserId]['bonusLeft'];
+        $isDirectDeal = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['isDirectDeal'];
+        $budget = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
+        $wallet = $this->advertisers[$advertiserPublicId]['walletLeft'];
+        $bonus = $this->advertisers[$advertiserPublicId]['bonusLeft'];
 
         $maxAvailableValue = (int)min($budget, $isDirectDeal ? $wallet : $wallet + $bonus);
         $value = $calculation['value'];
@@ -82,16 +82,16 @@ class AdPayPaymentReportProcessor
             $value = $maxAvailableValue;
         }
 
-        $this->advertisers[$advertiserId]['campaigns'][$campaignId]['budgetLeft'] = $budget - $value;
+        $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'] = $budget - $value;
 
         if ($isDirectDeal) {
-            $this->advertisers[$advertiserId]['walletLeft'] = $wallet - $value;
+            $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
         } else {
             if ($value > $bonus) {
-                $this->advertisers[$advertiserId]['bonusLeft'] = 0;
-                $this->advertisers[$advertiserId]['walletLeft'] = $wallet - ($value - $bonus);
+                $this->advertisers[$advertiserPublicId]['bonusLeft'] = 0;
+                $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - ($value - $bonus);
             } else {
-                $this->advertisers[$advertiserId]['bonusLeft'] = $bonus - $value;
+                $this->advertisers[$advertiserPublicId]['bonusLeft'] = $bonus - $value;
             }
         }
 
@@ -100,19 +100,19 @@ class AdPayPaymentReportProcessor
 
     public function processConversion(Conversion $conversion, array $calculation): void
     {
-        $advertiserId = $conversion->event->advertiser_id;
+        $advertiserPublicId = $conversion->event->advertiser_id;
 
-        if (!$this->isUser($advertiserId)) {
-            Log::warning(sprintf('No user with uuid (%s)', $advertiserId));
+        if (!$this->isUser($advertiserPublicId)) {
+            Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
             $this->setConversionValueAndStatus($conversion, 0, 0, $calculation['status']);
 
             return;
         }
 
-        $campaignId = $conversion->event->campaign_id;
+        $campaignPublicId = $conversion->event->campaign_id;
 
-        if (!$this->isCampaign($advertiserId, $campaignId)) {
-            Log::warning(sprintf('No campaign with uuid (%s)', $campaignId));
+        if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
+            Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
             $this->setConversionValueAndStatus($conversion, 0, 0, $calculation['status']);
 
             return;
@@ -127,8 +127,8 @@ class AdPayPaymentReportProcessor
             return;
         }
 
-        $campaignBudget = $this->advertisers[$advertiserId]['campaigns'][$campaignId]['budgetLeft'];
-        $wallet = $this->advertisers[$advertiserId]['walletLeft'];
+        $campaignBudget = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
+        $wallet = $this->advertisers[$advertiserPublicId]['walletLeft'];
         $conversionLimit = $this->conversionDefinitions[$definitionId]['limitLeft'];
         $conversionIsInCampaignBudget = $this->conversionDefinitions[$definitionId]['isInCampaignBudget'];
 
@@ -145,10 +145,11 @@ class AdPayPaymentReportProcessor
         }
 
         if ($conversionIsInCampaignBudget) {
-            $this->advertisers[$advertiserId]['campaigns'][$campaignId]['budgetLeft'] = $campaignBudget - $value;
+            $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'] =
+                $campaignBudget - $value;
         }
 
-        $this->advertisers[$advertiserId]['walletLeft'] = $wallet - $value;
+        $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
         $this->conversionDefinitions[$definitionId]['limitLeft'] = $conversionLimit - $value;
 
         $this->conversionDefinitions[$definitionId]['cost'] += $value;
@@ -162,10 +163,10 @@ class AdPayPaymentReportProcessor
         );
     }
 
-    private function isUser(string $advertiserId): bool
+    private function isUser(string $advertiserPublicId): bool
     {
-        if (!isset($this->advertisers[$advertiserId])) {
-            $user = User::fetchByUuid($advertiserId);
+        if (!isset($this->advertisers[$advertiserPublicId])) {
+            $user = User::fetchByUuid($advertiserPublicId);
 
             if (!$user) {
                 return false;
@@ -174,7 +175,8 @@ class AdPayPaymentReportProcessor
             $walletBalance = $this->exchangeRate->fromClick($user->getWalletBalance());
             $bonusBalance = $this->exchangeRate->fromClick($user->getBonusBalance());
 
-            $this->advertisers[$advertiserId] = [
+            $this->advertisers[$advertiserPublicId] = [
+                'id' => $user->id,
                 'wallet' => $walletBalance,
                 'walletLeft' => $walletBalance,
                 'bonus' => $bonusBalance,
@@ -186,16 +188,16 @@ class AdPayPaymentReportProcessor
         return true;
     }
 
-    private function isCampaign(string $advertiserId, string $campaignId): bool
+    private function isCampaign(string $advertiserPublicId, string $campaignPublicId): bool
     {
-        if (!isset($this->advertisers[$advertiserId]['campaigns'][$campaignId])) {
-            $campaign = Campaign::fetchByUuid($campaignId);
+        if (!isset($this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId])) {
+            $campaign = Campaign::fetchByUuid($campaignPublicId);
 
             if (!$campaign) {
                 return false;
             }
 
-            $this->advertisers[$advertiserId]['campaigns'][$campaignId] = [
+            $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId] = [
                 'isDirectDeal' => $campaign->isDirectDeal(),
                 'budget' => $campaign->budget,
                 'budgetLeft' => $campaign->budget,
@@ -255,15 +257,15 @@ class AdPayPaymentReportProcessor
     {
         $expenses = [];
 
-        foreach ($this->advertisers as $advertiserId => $balances) {
-            $wallet = $this->exchangeRate->toClick($balances['wallet'] - $balances['walletLeft']);
-            $bonus = $this->exchangeRate->toClick($balances['bonus'] - $balances['bonusLeft']);
+        foreach ($this->advertisers as $advertiserId => $advertiserData) {
+            $wallet = $this->exchangeRate->toClick($advertiserData['wallet'] - $advertiserData['walletLeft']);
+            $bonus = $this->exchangeRate->toClick($advertiserData['bonus'] - $advertiserData['bonusLeft']);
 
             if (0 === ($total = $wallet + $bonus)) {
                 continue;
             }
 
-            $expenses[$advertiserId] = [
+            $expenses[$advertiserData['id']] = [
                 'total' => $total,
                 'maxBonus' => $bonus,
             ];
