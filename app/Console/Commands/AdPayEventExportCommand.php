@@ -102,7 +102,7 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateTo = (new DateTime())->setTimestamp($this->correctUserTimestamp($timestampTo));
+            $dateTo = (new DateTime())->setTimestamp($timestampTo);
         } else {
             $dateTo = new DateTime(self::DEFAULT_EXPORT_TIME_TO);
         }
