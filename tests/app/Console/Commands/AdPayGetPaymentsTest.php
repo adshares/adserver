@@ -118,7 +118,7 @@ class AdPayGetPaymentsTest extends TestCase
         });
     }
 
-    public function test(): void
+    public function testNormalization(): void
     {
         /** @var User $user */
         $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
@@ -205,16 +205,10 @@ class AdPayGetPaymentsTest extends TestCase
         $this->artisan('ops:adpay:payments:get')
             ->assertExitCode(0);
 
-        $count = EventLog::all()->map(static function (EventLog $entry) {
-            if (Campaign::fetchByUuid($entry->campaign_id)->isDirectDeal()) {
-                self::assertEquals(100, $entry->event_value_currency);
-            } else {
-                self::assertEquals(50, $entry->event_value_currency);
-            }
-        })->count();
+        $events = EventLog::all();
 
-        self::assertEquals(3, $count);
-
+        self::assertEquals(200, $events->sum('event_value_currency'));
+        self::assertEquals(3, $events->count());
         self::assertEquals(0, $user->getBalance());
     }
 }
