@@ -130,6 +130,21 @@ class Conversion extends Model
             ->first();
     }
 
+    public function setStatus(int $status): void
+    {
+        $this->payment_status = $status;
+        $this->save();
+    }
+
+    public function setValueAndStatus(int $valueCurrency, float $exchangeRateValue, int $value, int $status): void
+    {
+        $this->event_value_currency = $valueCurrency;
+        $this->exchange_rate = $exchangeRateValue;
+        $this->event_value = $value;
+        $this->payment_status = $status;
+        $this->save();
+    }
+
     public function conversionDefinition(): BelongsTo
     {
         return $this->belongsTo(ConversionDefinition::class);
