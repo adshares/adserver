@@ -52,11 +52,17 @@ class AdPayPaymentReportProcessor
 
     public function processEventLog(EventLog $event, array $calculation): void
     {
+        if (0 !== ($status = $calculation['status'])) {
+            $this->setEventStatus($event, $status);
+
+            return;
+        }
+
         $advertiserPublicId = $event->advertiser_id;
 
         if (!$this->isUser($advertiserPublicId)) {
             Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
-            $this->setEventValueAndStatus($event, 0, 0, $calculation['status']);
+            $this->setEventValueAndStatus($event, 0, 0, $status);
 
             return;
         }
@@ -65,7 +71,7 @@ class AdPayPaymentReportProcessor
 
         if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
             Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
-            $this->setEventValueAndStatus($event, 0, 0, $calculation['status']);
+            $this->setEventValueAndStatus($event, 0, 0, $status);
 
             return;
         }
@@ -95,16 +101,22 @@ class AdPayPaymentReportProcessor
             }
         }
 
-        $this->setEventValueAndStatus($event, $value, $this->exchangeRate->toClick($value), $calculation['status']);
+        $this->setEventValueAndStatus($event, $value, $this->exchangeRate->toClick($value), $status);
     }
 
     public function processConversion(Conversion $conversion, array $calculation): void
     {
+        if (0 !== ($status = $calculation['status'])) {
+            $this->setConversionStatus($conversion, $status);
+
+            return;
+        }
+
         $advertiserPublicId = $conversion->event->advertiser_id;
 
         if (!$this->isUser($advertiserPublicId)) {
             Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
-            $this->setConversionValueAndStatus($conversion, 0, 0, $calculation['status']);
+            $this->setConversionValueAndStatus($conversion, 0, 0, $status);
 
             return;
         }
@@ -113,7 +125,7 @@ class AdPayPaymentReportProcessor
 
         if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
             Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
-            $this->setConversionValueAndStatus($conversion, 0, 0, $calculation['status']);
+            $this->setConversionValueAndStatus($conversion, 0, 0, $status);
 
             return;
         }
@@ -122,7 +134,7 @@ class AdPayPaymentReportProcessor
 
         if (!$this->isConversionDefinition($definitionId)) {
             Log::warning(sprintf('No conversions definitions with id (%s)', $definitionId));
-            $this->setConversionValueAndStatus($conversion, 0, 0, $calculation['status']);
+            $this->setConversionValueAndStatus($conversion, 0, 0, $status);
 
             return;
         }
@@ -159,7 +171,7 @@ class AdPayPaymentReportProcessor
             $conversion,
             $value,
             $this->exchangeRate->toClick($value),
-            $calculation['status']
+            $status
         );
     }
 
@@ -229,6 +241,13 @@ class AdPayPaymentReportProcessor
         return true;
     }
 
+    private function setEventStatus(EventLog $event, int $status): void
+    {
+        $event->payment_status = $status;
+
+        $event->save();
+    }
+
     private function setEventValueAndStatus(EventLog $event, int $valueCurrency, int $value, int $status): void
     {
         $event->event_value_currency = $valueCurrency;
@@ -237,6 +256,13 @@ class AdPayPaymentReportProcessor
         $event->payment_status = $status;
 
         $event->save();
+    }
+
+    private function setConversionStatus(Conversion $conversion, int $status): void
+    {
+        $conversion->payment_status = $status;
+
+        $conversion->save();
     }
 
     private function setConversionValueAndStatus(
