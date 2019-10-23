@@ -33,7 +33,7 @@ class ChangeConfigAdpayLastExportedEvent extends Migration
 
     public function down(): void
     {
-        $date = new DateTime('-4 hours');
+        $date = new DateTime('-2 hours');
         $eventId = DB::table('event_logs')->where('created_at', '<=', $date)->max('id') ?? 0;
         $current = new DateTime();
 

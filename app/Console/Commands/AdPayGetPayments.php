@@ -123,7 +123,7 @@ class AdPayGetPayments extends BaseCommand
     private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
     {
         $exchangeRate = $exchangeRateReader->fetchExchangeRate($dateTime);
-        $this->info(sprintf('Exchange rate is %f', $exchangeRate->getValue()));
+        $this->info(sprintf('Exchange rate for %s is %f', $dateTime->format('Y-m-d H:i:s'), $exchangeRate->getValue()));
 
         return $exchangeRate;
     }
@@ -153,8 +153,8 @@ class AdPayGetPayments extends BaseCommand
 
     private function getReportTimestamp(): int
     {
-        $ts = $this->option('timestamp');
+        $timestamp = $this->option('timestamp');
 
-        return $ts === null ? now()->subHour(1)->getTimestamp() : (int)$ts;
+        return $timestamp === null ? now()->subHour(1)->getTimestamp() : (int)$timestamp;
     }
 }
