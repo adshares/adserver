@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exporting conversions to adpay
 ### Changed
 - Sum incomes/expenditures from different adservers in billing history
+- Getting payment report from adpay (optimization)
 ### Fixed
 - Grouping events by day in billing history
 ### Removed
