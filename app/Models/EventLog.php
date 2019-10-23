@@ -39,7 +39,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection as SupportCollection;
 use stdClass;
 
 /**
@@ -92,6 +91,15 @@ class EventLog extends Model
     public const INDEX_CREATED_AT = 'event_logs_created_at_index';
 
     private const CHUNK_SIZE = 1000;
+
+    private const SQL_QUERY_SELECT_EVENTS_TO_UPDATE_WITH_ADPAY_REPORT_TEMPLATE = <<<SQL
+SELECT LOWER(HEX(event_id))      AS event_id,
+       LOWER(HEX(advertiser_id)) AS advertiser_id,
+       LOWER(HEX(campaign_id))   AS campaign_id
+FROM event_logs
+WHERE event_value_currency IS NULL
+  AND event_id IN (%s)
+SQL;
 
     /**
      * The attributes that are mass assignable.
@@ -172,17 +180,18 @@ class EventLog extends Model
         return $query->get();
     }
 
-    public static function fetchUnpaidEventsForUpdateWithPaymentReport(SupportCollection $eventIds): SupportCollection
+    public static function fetchUnpaidEventsForUpdateWithPaymentReport(array $eventIds): array
     {
-        return $eventIds
-            ->chunk(self::CHUNK_SIZE)
-            ->flatMap(
-                static function (SupportCollection $eventIds) {
-                    return self::whereIn('event_id', $eventIds)
-                        ->whereNull('event_value_currency')
-                        ->get();
-                }
+        $result = [];
+        foreach (array_chunk($eventIds, self::CHUNK_SIZE) as $ids) {
+            $query = sprintf(
+                self::SQL_QUERY_SELECT_EVENTS_TO_UPDATE_WITH_ADPAY_REPORT_TEMPLATE,
+                str_repeat('?,', count($ids) - 1).'?'
             );
+            $result = array_merge($result, DB::select($query, $ids));
+        }
+
+        return $result;
     }
 
     public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection

@@ -64,37 +64,36 @@ class AdPayGetPayments extends BaseCommand
         $offset = 0;
 
         $reportProcessor = new AdPayPaymentReportProcessor($exchangeRate);
+
         DB::beginTransaction();
 
         UserLedgerEntry::removeProcessingExpenses();
 
         do {
             $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
+            $calculationsCount = count($calculations);
+            $this->info("Found {$calculationsCount} calculations.");
 
-            $this->info("Found {$calculations->count()} calculations.");
-
-            $eventIds = $this->getEventIds($calculations);
+            $eventIds = [];
+            $conversionIds = [];
+            $mappedCalculations = [];
+            $this->mapCalculationsAndSplitIds($calculations, $mappedCalculations, $eventIds, $conversionIds);
             $unpaidEvents = EventLog::fetchUnpaidEventsForUpdateWithPaymentReport($eventIds);
-            $conversionIds = $this->getConversionIds($calculations);
-            $unpaidConversions = Conversion::fetchUnpaidConversionsForUpdateWithPaymentReport($conversionIds);
+            $unpaidConversions =
+                Conversion::fetchUnpaidConversionsForUpdateWithPaymentReport(new Collection($conversionIds));
 
-            $this->info(sprintf('Found %s entries to update.', $unpaidEvents->count() + $unpaidConversions->count()));
-
-            $mappedCalculations = $calculations->mapWithKeys(
-                static function ($value) {
-                    return [$value['event_id'] => $value];
-                }
-            )->all();
+            $this->info(sprintf('Found %s entries to update.', count($unpaidEvents) + $unpaidConversions->count()));
 
             foreach ($unpaidEvents as $event) {
-                $reportProcessor->processEventLog($event, $mappedCalculations[$event->event_id]);
+                $data = $reportProcessor->processEventLog($event, $mappedCalculations[$event->event_id]);
+                DB::table('event_logs')->where('event_id', hex2bin($event->event_id))->update($data);
             }
             foreach ($unpaidConversions as $conversion) {
                 $reportProcessor->processConversion($conversion, $mappedCalculations[$conversion->uuid]);
             }
 
             $offset += $limit;
-        } while ($limit === $calculations->count());
+        } while ($limit === $calculationsCount);
 
         $ledgerEntriesCount = $this->processExpenses($reportProcessor->getAdvertiserExpenses());
         ConversionDefinition::updateCostAndOccurrences($reportProcessor->getProcessedConversionDefinitions());
@@ -104,30 +103,21 @@ class AdPayGetPayments extends BaseCommand
         $this->info("Created {$ledgerEntriesCount} Ledger Entries.");
     }
 
-    private function getEventIds(Collection $calculations): Collection
-    {
-        return $calculations->filter(
-            static function (array $calculation) {
-                return in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true);
-            }
-        )->map(
-            static function (array $calculation) {
-                return hex2bin($calculation['event_id']);
-            }
-        );
-    }
+    private function mapCalculationsAndSplitIds(
+        array $calculations,
+        array &$mappedCalculations,
+        array &$eventIds,
+        array &$conversionIds
+    ): void {
+        foreach ($calculations as $calculation) {
+            $mappedCalculations[$calculation['event_id']] = $calculation;
 
-    private function getConversionIds(Collection $calculations): Collection
-    {
-        return $calculations->filter(
-            static function (array $calculation) {
-                return Conversion::TYPE === $calculation['event_type'];
+            if (in_array($calculation['event_type'], [EventLog::TYPE_VIEW, EventLog::TYPE_CLICK], true)) {
+                $eventIds[] = hex2bin($calculation['event_id']);
+            } elseif (Conversion::TYPE === $calculation['event_type']) {
+                $conversionIds[] = hex2bin($calculation['event_id']);
             }
-        )->map(
-            static function (array $calculation) {
-                return hex2bin($calculation['event_id']);
-            }
-        );
+        }
     }
 
     private function getExchangeRate(ExchangeRateReader $exchangeRateReader, DateTime $dateTime): ExchangeRate
@@ -138,16 +128,14 @@ class AdPayGetPayments extends BaseCommand
         return $exchangeRate;
     }
 
-    private function getCalculations(AdPay $adPay, int $timestamp, int $limit, int $offset): Collection
+    private function getCalculations(AdPay $adPay, int $timestamp, int $limit, int $offset): array
     {
-        return new Collection(
-            $adPay->getPayments(
-                $timestamp,
-                (bool)$this->option('recalculate'),
-                (bool)$this->option('force'),
-                $limit,
-                $offset
-            )
+        return $adPay->getPayments(
+            $timestamp,
+            (bool)$this->option('recalculate'),
+            (bool)$this->option('force'),
+            $limit,
+            $offset
         );
     }
 

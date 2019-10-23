@@ -25,10 +25,11 @@ namespace Adshares\Adserver\Services\Demand;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Dto\ExchangeRate;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 
 class AdPayPaymentReportProcessor
 {
@@ -50,30 +51,37 @@ class AdPayPaymentReportProcessor
         $this->exchangeRateValue = $exchangeRate->getValue();
     }
 
-    public function processEventLog(EventLog $event, array $calculation): void
+    public function processEventLog(stdClass $event, array $calculation): array
     {
-        if (0 !== ($status = $calculation['status'])) {
-            $event->setStatus($status);
+        if (!isset($calculation['status'])) {
+            throw new RuntimeException('Missing event status');
+        }
 
-            return;
+        if (0 !== ($status = $calculation['status'])) {
+            return $this->getEventStatus($status);
+        }
+
+        if (!isset($calculation['value'])) {
+            throw new RuntimeException('Missing event value');
+        }
+        if (0 > ($value = $calculation['value'])) {
+            throw new RuntimeException('Invalid event value');
         }
 
         $advertiserPublicId = $event->advertiser_id;
 
         if (!$this->isUser($advertiserPublicId)) {
             Log::warning(sprintf('No user with uuid (%s)', $advertiserPublicId));
-            $event->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
 
-            return;
+            return $this->getEventValueAndStatus(0, 0, $status);
         }
 
         $campaignPublicId = $event->campaign_id;
 
         if (!$this->isCampaign($advertiserPublicId, $campaignPublicId)) {
             Log::warning(sprintf('No campaign with uuid (%s)', $campaignPublicId));
-            $event->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
 
-            return;
+            return $this->getEventValueAndStatus(0, 0, $status);
         }
 
         $isDirectDeal = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['isDirectDeal'];
@@ -82,7 +90,6 @@ class AdPayPaymentReportProcessor
         $bonus = $this->advertisers[$advertiserPublicId]['bonusLeft'];
 
         $maxAvailableValue = (int)min($budget, $isDirectDeal ? $wallet : $wallet + $bonus);
-        $value = $calculation['value'];
 
         if ($value > $maxAvailableValue) {
             $value = $maxAvailableValue;
@@ -101,15 +108,26 @@ class AdPayPaymentReportProcessor
             }
         }
 
-        $event->setValueAndStatus($value, $this->exchangeRateValue, $this->exchangeRate->toClick($value), $status);
+        return $this->getEventValueAndStatus($value, $this->exchangeRate->toClick($value), $status);
     }
 
     public function processConversion(Conversion $conversion, array $calculation): void
     {
+        if (!isset($calculation['status'])) {
+            throw new RuntimeException('Missing conversion status');
+        }
+
         if (0 !== ($status = $calculation['status'])) {
             $conversion->setStatus($status);
 
             return;
+        }
+
+        if (!isset($calculation['value'])) {
+            throw new RuntimeException('Missing conversion value');
+        }
+        if (0 > ($value = $calculation['value'])) {
+            throw new RuntimeException('Invalid conversion value');
         }
 
         $advertiserPublicId = $conversion->event->advertiser_id;
@@ -234,6 +252,21 @@ class AdPayPaymentReportProcessor
         }
 
         return true;
+    }
+
+    private function getEventStatus(int $status): array
+    {
+        return ['payment_status' => $status];
+    }
+
+    private function getEventValueAndStatus(int $valueCurrency, int $value, int $status): array
+    {
+        return [
+            'event_value_currency' => $valueCurrency,
+            'exchange_rate' => $this->exchangeRateValue,
+            'event_value' => $value,
+            'payment_status' => $status,
+        ];
     }
 
     public function getAdvertiserExpenses(): array
