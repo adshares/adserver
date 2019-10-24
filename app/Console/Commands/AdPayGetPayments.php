@@ -21,6 +21,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Exceptions\Demand\AdPayReportMissingEventsException;
+use Adshares\Adserver\Exceptions\Demand\AdPayReportNotReadyException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
@@ -30,6 +32,7 @@ use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
 use Illuminate\Support\Collection;
 use function count;
@@ -40,6 +43,16 @@ use function sprintf;
 
 class AdPayGetPayments extends BaseCommand
 {
+    public const COMMAND_SIGNATURE = 'ops:adpay:payments:get';
+
+    public const STATUS_OK = 0;
+
+    public const STATUS_LOCKED = 1;
+
+    public const STATUS_CLIENT_EXCEPTION = 2;
+
+    public const STATUS_REQUEST_FAILED = 3;
+
     protected $signature = 'ops:adpay:payments:get
                             {--t|timestamp=}
                             {--f|force}
@@ -48,15 +61,15 @@ class AdPayGetPayments extends BaseCommand
 
     protected $description = 'Updates events with payment data fetched from adpay';
 
-    public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): void
+    public function handle(AdPay $adPay, ExchangeRateReader $exchangeRateReader): int
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
-            return;
+            return self::STATUS_LOCKED;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
 
         $timestamp = $this->getReportTimestamp();
         $exchangeRate = $this->getExchangeRate($exchangeRateReader, new DateTime('@'.$timestamp));
@@ -70,7 +83,33 @@ class AdPayGetPayments extends BaseCommand
         UserLedgerEntry::removeProcessingExpenses();
 
         do {
-            $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
+            try {
+                $calculations = $this->getCalculations($adPay, $timestamp, $limit, $offset);
+            } catch (AdPayReportNotReadyException|UnexpectedClientResponseException $recoverableException) {
+                $this->info(
+                    sprintf(
+                        'Exception during fetching payment report from adpay (%s) (%s)',
+                        $recoverableException->getCode(),
+                        $recoverableException->getMessage()
+                    )
+                );
+                DB::rollBack();
+                $this->release();
+
+                return self::STATUS_CLIENT_EXCEPTION;
+            } catch (AdPayReportMissingEventsException $unrecoverableException) {
+                $this->error(
+                    sprintf(
+                        'Error during fetching payment report from adpay (%s) (%s)',
+                        $unrecoverableException->getCode(),
+                        $unrecoverableException->getMessage()
+                    )
+                );
+                DB::rollBack();
+                $this->release();
+
+                return self::STATUS_REQUEST_FAILED;
+            }
             $calculationsCount = count($calculations);
             $this->info("Found {$calculationsCount} calculations.");
 
@@ -101,6 +140,9 @@ class AdPayGetPayments extends BaseCommand
         DB::commit();
 
         $this->info("Created {$ledgerEntriesCount} Ledger Entries.");
+        $this->release();
+
+        return self::STATUS_OK;
     }
 
     private function mapCalculationsAndSplitIds(

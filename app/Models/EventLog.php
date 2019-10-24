@@ -161,13 +161,17 @@ SQL;
         'their_userdata' => 'JsonValue',
     ];
 
-    public static function fetchUnpaidEvents(int $limit = null): Collection
+    public static function fetchUnpaidEvents(int $limit = null, ?DateTime $from = null): Collection
     {
+        if (null === $from) {
+            $from = (new DateTime())->modify('-24 hour');
+        }
+
         $query = self::whereNotNull('event_value_currency')
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-24 hour'));
+            ->where('created_at', '>', $from);
 
         if ($limit !== null) {
             $query->limit($limit);

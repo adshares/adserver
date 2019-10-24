@@ -27,6 +27,8 @@ use Adshares\Common\Application\Service\Exception\AdsException;
 
 class DemandSendPayments extends BaseCommand
 {
+    public const COMMAND_SIGNATURE = 'ops:demand:payments:send';
+
     protected $signature = 'ops:demand:payments:send';
 
     protected $description = 'Sends payments to supply adservers and license server';
@@ -34,12 +36,12 @@ class DemandSendPayments extends BaseCommand
     public function handle(Ads $ads): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
 
         $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);
 
@@ -47,6 +49,8 @@ class DemandSendPayments extends BaseCommand
         $this->info("Found $paymentCount sendable payments.");
 
         if (!$paymentCount) {
+            $this->release();
+
             return;
         }
 
@@ -56,8 +60,8 @@ class DemandSendPayments extends BaseCommand
             $tx = $ads->sendPayments($payments);
         } catch (AdsException $exception) {
             if ($exception->getCode() === AdsException::LOW_LEVEL_BALANCE) {
-                $message = '[Demand] (DemandSendPayments) Insufficient funds on Operator Account.';
-                $this->error($message);
+                $this->error('[DemandSendPayments] Insufficient funds on Operator Account.');
+                $this->release();
 
                 return;
             }
@@ -81,5 +85,6 @@ class DemandSendPayments extends BaseCommand
 
         $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks network fee.");
         $this->info("TransactionId: {$tx->getId()}");
+        $this->release();
     }
 }

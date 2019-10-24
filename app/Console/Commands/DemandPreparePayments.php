@@ -26,12 +26,17 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends BaseCommand
 {
-    protected $signature = 'ops:demand:payments:prepare {--c|chunkSize=10000}';
+    public const COMMAND_SIGNATURE = 'ops:demand:payments:prepare';
+
+    protected $signature = 'ops:demand:payments:prepare
+                            {--c|chunkSize=10000}
+                            {--p|period= : Maximal period (seconds) that will be searched for unpaid events}';
 
     protected $description = 'Prepares payments for events and license';
 
@@ -48,20 +53,24 @@ class DemandPreparePayments extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $optionPeriod = $this->option('period');
+        $from = $optionPeriod ? new DateTime('@'.(time()-(int)$optionPeriod)) : null;
 
         while (true) {
-            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'));
+            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'), $from);
 
             $eventCount = count($events);
             $this->info("Found $eventCount payable events.");
 
             if (!$eventCount) {
+                $this->release();
+
                 return;
             }
 
@@ -110,6 +119,7 @@ class DemandPreparePayments extends BaseCommand
 
             $this->info("and a license fee of {$licensePayment->fee} clicks"
                 ." payable to {$licensePayment->account_address}.");
+            $this->release();
         }
     }
 
