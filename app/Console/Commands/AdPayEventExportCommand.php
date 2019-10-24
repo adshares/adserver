@@ -316,7 +316,7 @@ class AdPayEventExportCommand extends BaseCommand
             );
             $adPay->addClicks(new AdPayEvents($timeStart, $timeEnd, $clicks));
 
-            if ($isCommandExecutedAutomatically && $eventsToExportCount > 0) {
+            if ($isCommandExecutedAutomatically) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME, $dateToTemporary);
             }
         }
@@ -384,7 +384,7 @@ class AdPayEventExportCommand extends BaseCommand
 
             $adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));
 
-            if ($isCommandExecutedAutomatically && $conversionToExportCount > 0) {
+            if ($isCommandExecutedAutomatically) {
                 Config::upsertDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME, $dateToTemporary);
             }
         }
