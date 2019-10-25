@@ -73,4 +73,11 @@ class ClassifierExternalRepository
     {
         return (string)config('app.classifier_external_name') ?: null;
     }
+
+    public function fetchRequiredClassifiersNames(): array
+    {
+        $name = $this->fetchDefaultClassifierName();
+
+        return $name ? [$name] : [];
+    }
 }
