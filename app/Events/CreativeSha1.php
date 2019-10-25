@@ -36,5 +36,4 @@ class CreativeSha1
             $model->classifications()->delete();
         }
     }
-
 }
