@@ -73,6 +73,10 @@ class DemandPreparePayments extends BaseCommand
             );
         }
 
+        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
+
         while (true) {
             $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
 
@@ -85,9 +89,6 @@ class DemandPreparePayments extends BaseCommand
                 return;
             }
 
-            $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
-            $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-            $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
             $groupedEvents = $this->processAndGroupByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
@@ -130,7 +131,6 @@ class DemandPreparePayments extends BaseCommand
 
             $this->info("and a license fee of {$licensePayment->fee} clicks"
                 ." payable to {$licensePayment->account_address}.");
-            $this->release();
         }
     }
 
