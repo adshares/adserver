@@ -31,65 +31,10 @@ class CreativeSha1
 
     public function __construct(Banner $model)
     {
-        if ($model->creative_type === Banner::type(Banner::HTML_TYPE)) {
-            $model->creative_contents = $this->injectScriptAndCSP($model->creative_contents);
-        }
-
         if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
             $model->creative_sha1 = $sha1;
             $model->classifications()->delete();
         }
     }
 
-    private function injectScriptAndCSP($html)
-    {
-        $jsPath = public_path('-/banner.js');
-        $jsCode = file_get_contents($jsPath);
-
-        $doc = $this->loadHtml($html);
-
-        $xpath = new \DOMXPath($doc);
-        [$html] = $xpath->query('//html');
-        [$body] = $xpath->query('//body');
-        [$head] = $xpath->query('//head');
-
-        if (!$head) {
-            $head = $doc->createElement('head');
-            $html->insertBefore($head, $body);
-        }
-
-        $metas = $xpath->query("//head/meta[@data-inject='1']");
-        foreach ($metas as $tag) {
-            $head->removeChild($tag);
-        }
-
-        $csp_tag = $doc->createElement('meta');
-        $csp_tag->setAttribute('http-equiv', "Content-Security-Policy");
-        $csp_tag->setAttribute('content', "default-src 'unsafe-inline' data: blob:");
-        $csp_tag->setAttribute('data-inject', "1");
-        $head->insertBefore($csp_tag, $head->firstChild);
-
-        $scripts = $xpath->query("//body/script[@data-inject='1']");
-        foreach ($scripts as $tag) {
-            $body->removeChild($tag);
-        }
-        $banner_script = $doc->createElement('script');
-        $banner_script->textContent = $jsCode;
-        $banner_script->setAttribute('data-inject', "1");
-        $body->insertBefore($banner_script, $body->firstChild);
-
-        return $doc->saveHTML();
-    }
-
-    private function loadHtml(string $html)
-    {
-        $doc = new DOMDocumentSafe();
-        $old = libxml_use_internal_errors(true);
-        libxml_clear_errors();
-        $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-
-        libxml_use_internal_errors($old);
-
-        return $doc;
-    }
 }
