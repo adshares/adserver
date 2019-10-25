@@ -40,7 +40,7 @@ interface AdPay
         int $timestamp,
         bool $recalculate = false,
         bool $force = false,
-        int $limit = PHP_INT_MAX,
-        int $offset = 0
+        ?int $limit = null,
+        ?int $offset = null
     ): array;
 }

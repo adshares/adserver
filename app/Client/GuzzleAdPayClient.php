@@ -37,7 +37,7 @@ class GuzzleAdPayClient implements AdPay
 {
     private const URI_CAMPAIGNS = '/api/v1/campaigns';
 
-    private const URI_PAYMENTS_TEMPLATE = '/api/v1/payments/%s';
+    private const URI_PAYMENTS_TEMPLATE = '/api/v1/payments/%d';
 
     private const URI_VIEWS = '/api/v1/events/views';
 
@@ -139,8 +139,8 @@ class GuzzleAdPayClient implements AdPay
         int $timestamp,
         bool $recalculate = false,
         bool $force = false,
-        int $limit = PHP_INT_MAX,
-        int $offset = 0
+        ?int $limit = null,
+        ?int $offset = null
     ): array {
         $uri = sprintf(self::URI_PAYMENTS_TEMPLATE, $timestamp);
 
