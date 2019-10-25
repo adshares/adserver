@@ -35,6 +35,7 @@ class CreateConversionsTable extends Migration
                 $table->timestamps();
 
                 $table->bigInteger('event_logs_id')->unsigned();
+                $table->binary('case_id');
                 $table->binary('group_id');
                 $table->bigInteger('conversion_definition_id')->unsigned();
                 $table->bigInteger('value')->unsigned()->nullable();
@@ -58,6 +59,7 @@ class CreateConversionsTable extends Migration
 
         if (DB::isMysql()) {
             DB::statement('ALTER TABLE conversions MODIFY uuid varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE conversions MODIFY case_id varbinary(16) NOT NULL');
             DB::statement('ALTER TABLE conversions MODIFY group_id varbinary(16) NOT NULL');
         }
 

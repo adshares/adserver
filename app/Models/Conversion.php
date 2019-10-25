@@ -37,6 +37,7 @@ use Illuminate\Support\Collection;
  * @property ConversionDefinition conversionDefinition
  * @property EventLog event
  * @property int event_logs_id
+ * @property string case_id
  * @property string group_id
  * @property int conversion_definition_id
  * @property int value
@@ -61,6 +62,7 @@ class Conversion extends Model
 
     protected $fillable = [
         'uuid',
+        'case_id',
         'group_id',
         'event_logs_id',
         'conversion_definition_id',
@@ -70,6 +72,7 @@ class Conversion extends Model
 
     protected $visible = [
         'uuid',
+        'case_id',
         'group_id',
         'event_logs_id',
         'conversion_definition_id',
@@ -79,6 +82,7 @@ class Conversion extends Model
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+        'case_id' => 'BinHex',
         'group_id' => 'BinHex',
     ];
 
@@ -87,6 +91,7 @@ class Conversion extends Model
     ];
 
     public static function register(
+        string $caseId,
         string $groupId,
         int $eventId,
         int $conversionDefinitionId,
@@ -94,6 +99,7 @@ class Conversion extends Model
         float $weight
     ): void {
         $conversion = new self();
+        $conversion->case_id = $caseId;
         $conversion->group_id = $groupId;
         $conversion->event_logs_id = $eventId;
         $conversion->conversion_definition_id = $conversionDefinitionId;

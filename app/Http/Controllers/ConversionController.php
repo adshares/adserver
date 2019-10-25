@@ -282,7 +282,7 @@ class ConversionController extends Controller
 
             $eventId = $viewEventData['eventId'];
             $partialValue = (int)floor($value * $weight);
-            Conversion::register($groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
+            Conversion::register($caseId, $groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
         }
 
         DB::commit();
