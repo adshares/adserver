@@ -54,7 +54,7 @@ class CreatePaymentReportsTable extends Migration
         DB::table('payment_reports')->insert(
             [
                 'id' => $timestamp,
-                'status' => 0,
+                'status' => PaymentReport::STATUS_NEW,
                 'created_at' => $dateTime,
                 'updated_at' => $dateTime,
             ]
