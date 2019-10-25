@@ -43,7 +43,7 @@ class AdPayEventExportCommand extends BaseCommand
 {
     private const EVENTS_BUNDLE_MAXIMAL_SIZE = 500;
 
-    private const EVENTS_PERIOD = 300;//5 * 60 s
+    private const EVENTS_PERIOD = 5 * 60;
 
     private const DEFAULT_EXPORT_TIME_FROM = '-2 hours';
 

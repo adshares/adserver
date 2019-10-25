@@ -31,7 +31,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:stats:aggregate:advertiser';
 
-    protected $signature = 'ops:stats:aggregate:advertiser {--hour=} {--B|bulk}';
+    protected $signature = self::COMMAND_SIGNATURE.' {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates events data for statistics';
 

@@ -29,7 +29,7 @@ class DemandSendPayments extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:demand:payments:send';
 
-    protected $signature = 'ops:demand:payments:send';
+    protected $signature = self::COMMAND_SIGNATURE;
 
     protected $description = 'Sends payments to supply adservers and license server';
 

@@ -34,7 +34,7 @@ class DemandPreparePayments extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:demand:payments:prepare';
 
-    protected $signature = 'ops:demand:payments:prepare
+    protected $signature = self::COMMAND_SIGNATURE.'
                             {--c|chunkSize=10000}
                             {--p|period= : Maximal period (seconds) that will be searched for unpaid events}';
 

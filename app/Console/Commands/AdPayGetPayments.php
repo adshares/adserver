@@ -53,7 +53,7 @@ class AdPayGetPayments extends BaseCommand
 
     public const STATUS_REQUEST_FAILED = 3;
 
-    protected $signature = 'ops:adpay:payments:get
+    protected $signature = self::COMMAND_SIGNATURE.'
                             {--t|timestamp=}
                             {--f|force}
                             {--r|recalculate}
