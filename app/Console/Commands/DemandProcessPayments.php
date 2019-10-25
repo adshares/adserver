@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Models\PaymentReport;
+use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Console\Exception\LogicException;
@@ -29,7 +30,7 @@ use Symfony\Component\Console\Exception\LogicException;
 class DemandProcessPayments extends BaseCommand
 {
     protected $signature = 'ops:demand:payments:process
-                            {--p|period= : Maximal period (seconds) that will be searched for reports}';
+                            {--f|from= : Date from which reports will be processed}';
 
     protected $description = 'Fetches reports, sends payments and updates statistics';
 
@@ -44,8 +45,7 @@ class DemandProcessPayments extends BaseCommand
         $this->info('Start command '.$this->getName());
 
         PaymentReport::fillMissingReports();
-        $optionPeriod = $this->option('period');
-        $reports = $optionPeriod ? PaymentReport::fetchUndone((int)$optionPeriod) : PaymentReport::fetchUndone();
+        $reports = PaymentReport::fetchUndone($this->getReportDateFrom());
 
         /** @var PaymentReport $report */
         foreach ($reports as $report) {
@@ -71,7 +71,10 @@ class DemandProcessPayments extends BaseCommand
             }
 
             if ($report->isUpdated()) {
-                $parameters = $optionPeriod ? ['--period' => $optionPeriod] : [];
+                $parameters = [
+                    '--from' => (new DateTime('@'.$timestamp))->format(DateTime::ATOM),
+                    '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTime::ATOM),
+                ];
                 try {
                     Artisan::call(DemandPreparePayments::COMMAND_SIGNATURE, $parameters);
                 } catch (LogicException $logicException) {
@@ -109,5 +112,22 @@ class DemandProcessPayments extends BaseCommand
         }
 
         $this->info('End command '.$this->getName());
+    }
+
+    private function getReportDateFrom(): DateTime
+    {
+        $optionFrom = $this->option('from');
+
+        if (null === $optionFrom) {
+            return new DateTime('-2 days');
+        }
+
+        if (false === ($timestampFrom = strtotime($optionFrom))) {
+            throw new InvalidArgumentException(
+                sprintf('[DemandProcessPayments] Invalid option --from format "%s"', $optionFrom)
+            );
+        }
+
+        return new DateTime('@'.$timestampFrom);
     }
 }

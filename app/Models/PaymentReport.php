@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -32,8 +33,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PaymentReport extends Model
 {
-    public const DEFAULT_PERIOD = 86400;// 1 day
-
     public const MIN_INTERVAL = 3600;// 1 hour
 
     public const STATUS_DONE = 0;
@@ -116,9 +115,9 @@ class PaymentReport extends Model
         return self::STATUS_SENT === $this->status;
     }
 
-    public static function fetchUndone(int $period = self::DEFAULT_PERIOD): Collection
+    public static function fetchUndone(DateTime $from): Collection
     {
-        return self::where('id', '>=', time() - $period)->where('status', '>=', self::STATUS_NEW)->get();
+        return self::where('id', '>=', $from)->where('status', '>=', self::STATUS_NEW)->get();
     }
 
     private static function getLast(): self

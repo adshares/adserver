@@ -25,6 +25,7 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
 use Illuminate\Support\Collection;
@@ -36,7 +37,8 @@ class DemandPreparePayments extends BaseCommand
 
     protected $signature = self::COMMAND_SIGNATURE.'
                             {--c|chunkSize=10000}
-                            {--p|period= : Maximal period (seconds) that will be searched for unpaid events}';
+                            {--f|from= : Date from which unpaid events will be searched}
+                            {--t|to= : Date to which unpaid events will be searched}';
 
     protected $description = 'Prepares payments for events and license';
 
@@ -59,11 +61,20 @@ class DemandPreparePayments extends BaseCommand
         }
 
         $this->info('Start command '.self::COMMAND_SIGNATURE);
-        $optionPeriod = $this->option('period');
-        $from = $optionPeriod ? new DateTime('@'.(time()-(int)$optionPeriod)) : null;
+        $from = $this->getDateTimeFromOption('from') ?: new DateTime('-24 hour');
+        $to = $this->getDateTimeFromOption('to');
+        if ($from !== null && $to !== null && $to < $from) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    '[DemandPreparePayments] Invalid period from (%s) to (%s)',
+                    $from->format(DateTime::ATOM),
+                    $to->format(DateTime::ATOM)
+                )
+            );
+        }
 
         while (true) {
-            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'), $from);
+            $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
 
             $eventCount = count($events);
             $this->info("Found $eventCount payable events.");
@@ -140,5 +151,22 @@ class DemandPreparePayments extends BaseCommand
                 $entry->paid_amount = $amountAfterFee - $operatorFee;
             }
         )->groupBy('pay_to');
+    }
+
+    private function getDateTimeFromOption(string $option): ?DateTime
+    {
+        $value = $this->option($option);
+
+        if (null === $value) {
+            return null;
+        }
+
+        if (false === ($timestamp = strtotime((string)$value))) {
+            throw new InvalidArgumentException(
+                sprintf('[DemandPreparePayments] Invalid option %s format "%s"', $option, $value)
+            );
+        }
+
+        return new DateTime('@'.$timestamp);
     }
 }
