@@ -124,7 +124,7 @@ function createIframeFromData(data, domInsertCallback) {
 
             var csp = doc.createElement('meta');
             csp.setAttribute('http-equiv', "Content-Security-Policy");
-            csp.setAttribute('content', "frame-src blob:; child-src blob:");
+            csp.setAttribute('content', "frame-src data: blob:; child-src data: blob:; default-src 'unsafe-inline' data: blob:");
 
             iframe.contentWindow.eval(proxyScript);
             
@@ -162,7 +162,7 @@ function createIframeFromData(data, domInsertCallback) {
         var fn = function(frame_src) {
             var blob = new Blob(['<html>' +
             '<head>' +
-            '<meta http-equiv="Content-Security-Policy" content="frame-src blob: data: \'self\' \'unsafe-inline\'; child-src blob: data: \'self\' \'unsafe-inline\'"></head>' +
+            '<meta http-equiv="Content-Security-Policy" content="frame-src blob: data: \'self\' \'unsafe-inline\'; child-src blob: data: \'self\' \'unsafe-inline\'; default-src \'unsafe-inline\' data: blob:"></head>' +
             '<body>' +
             '<script>' + proxyScript + '</script>' +
             '<iframe id="frame" src="' + frame_src + '" sandbox="allow-scripts" width="100%" height="100%" marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" frameborder="0"></iframe>' +
