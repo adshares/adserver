@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use function array_merge;
@@ -194,9 +195,9 @@ class Config extends Model
         $config->save();
     }
 
-    public static function upsertDateTime(string $key, DateTime $date): void
+    public static function upsertDateTime(string $key, DateTimeInterface $date): void
     {
-        self::upsertByKey($key, $date->format(DateTime::ATOM));
+        self::upsertByKey($key, $date->format(DateTimeInterface::ATOM));
     }
 
     public static function upsertInt(string $key, int $id): void

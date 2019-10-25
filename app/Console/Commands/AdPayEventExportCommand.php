@@ -34,6 +34,7 @@ use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use function ceil;
@@ -82,16 +83,20 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateFromEvents = (new DateTime())->setTimestamp($this->correctUserTimestamp($timestampFrom));
-            $dateFromConversions = clone $dateFromEvents;
+            $dateFromEvents = new DateTimeImmutable('@'.$this->correctUserTimestamp($timestampFrom));
+            $dateFromConversions = $dateFromEvents;
         } else {
-            $dateFromEvents = Config::fetchDateTime(
-                Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
-                new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+            $dateFromEvents = DateTimeImmutable::createFromMutable(
+                Config::fetchDateTime(
+                    Config::ADPAY_LAST_EXPORTED_EVENT_TIME,
+                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+                )
             );
-            $dateFromConversions = Config::fetchDateTime(
-                Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
-                new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+            $dateFromConversions = DateTimeImmutable::createFromMutable(
+                Config::fetchDateTime(
+                    Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME,
+                    new DateTime(self::DEFAULT_EXPORT_TIME_FROM)
+                )
             );
         }
 
@@ -102,9 +107,9 @@ class AdPayEventExportCommand extends BaseCommand
                 return;
             }
 
-            $dateTo = (new DateTime())->setTimestamp($timestampTo);
+            $dateTo = new DateTimeImmutable('@'.$timestampTo);
         } else {
-            $dateTo = new DateTime(self::DEFAULT_EXPORT_TIME_TO);
+            $dateTo = new DateTimeImmutable(self::DEFAULT_EXPORT_TIME_TO);
         }
 
         $this->exportEvents($adPay, $adUser, $dateFromEvents, $dateTo, $isCommandExecutedAutomatically);
@@ -174,8 +179,8 @@ class AdPayEventExportCommand extends BaseCommand
     private function exportEvents(
         AdPay $adPay,
         AdUser $adUser,
-        DateTime $dateFrom,
-        DateTime $dateTo,
+        DateTimeImmutable $dateFrom,
+        DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
         if ($dateFrom >= $dateTo) {
@@ -193,12 +198,12 @@ class AdPayEventExportCommand extends BaseCommand
         $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
 
-        $dateToChunk = clone $dateFrom;
+        $dateToChunk = $dateFrom;
         for ($i = 0; $i < $periodCount; $i++) {
-            $dateFromChunk = clone $dateToChunk;
-            $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
+            $dateFromChunk = $dateToChunk;
+            $dateToChunk = $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
             if ($dateToChunk > $dateTo) {
-                $dateToChunk = clone $dateTo;
+                $dateToChunk = $dateTo;
             }
 
             $this->exportEventsInPacks($adPay, $adUser, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
@@ -207,8 +212,8 @@ class AdPayEventExportCommand extends BaseCommand
 
     private function exportConversions(
         AdPay $adPay,
-        DateTime $dateFrom,
-        DateTime $dateTo,
+        DateTimeImmutable $dateFrom,
+        DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
         if ($dateFrom >= $dateTo) {
@@ -226,12 +231,12 @@ class AdPayEventExportCommand extends BaseCommand
         $periodTotal = $dateTo->getTimestamp() - $dateFrom->getTimestamp();
         $periodCount = (int)ceil($periodTotal / self::EVENTS_PERIOD);
 
-        $dateToChunk = clone $dateFrom;
+        $dateToChunk = $dateFrom;
         for ($i = 0; $i < $periodCount; $i++) {
-            $dateFromChunk = clone $dateToChunk;
-            $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
+            $dateFromChunk = $dateToChunk;
+            $dateToChunk = $dateToChunk->modify(sprintf('+%d seconds', self::EVENTS_PERIOD));
             if ($dateToChunk > $dateTo) {
-                $dateToChunk = clone $dateTo;
+                $dateToChunk = $dateTo;
             }
 
             $this->exportConversionsInPacks($adPay, $dateFromChunk, $dateToChunk, $isCommandExecutedAutomatically);
@@ -241,8 +246,8 @@ class AdPayEventExportCommand extends BaseCommand
     private function exportEventsInPacks(
         AdPay $adPay,
         AdUser $adUser,
-        DateTime $dateFrom,
-        DateTime $dateTo,
+        DateTimeImmutable $dateFrom,
+        DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
         $this->info(
@@ -265,14 +270,14 @@ class AdPayEventExportCommand extends BaseCommand
         }
         $packInterval = (int)ceil($seconds / $packCount);
 
-        $dateToTemporary = clone $dateFrom;
+        $dateToTemporary = $dateFrom;
 
         for ($pack = 0; $pack < $packCount; $pack++) {
-            $dateFromTemporary = clone $dateToTemporary;
-            $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
+            $dateFromTemporary = $dateToTemporary;
+            $dateToTemporary = $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
 
             if ($dateToTemporary > $dateTo) {
-                $dateToTemporary = clone $dateTo;
+                $dateToTemporary = $dateTo;
             }
 
             $eventsToExport =
@@ -295,8 +300,8 @@ class AdPayEventExportCommand extends BaseCommand
 
             $this->updateEventLogWithAdUserData($adUser, $eventsToExport);
 
-            $timeStart = (clone $dateFromTemporary)->modify('+1 second');
-            $timeEnd = clone $dateToTemporary;
+            $timeStart = $dateFromTemporary->modify('+1 second');
+            $timeEnd = $dateToTemporary;
 
             $views = DemandEventMapper::mapEventCollectionToArray(
                 $eventsToExport->filter(
@@ -326,8 +331,8 @@ class AdPayEventExportCommand extends BaseCommand
 
     private function exportConversionsInPacks(
         AdPay $adPay,
-        DateTime $dateFrom,
-        DateTime $dateTo,
+        DateTimeImmutable $dateFrom,
+        DateTimeImmutable $dateTo,
         bool $isCommandExecutedAutomatically
     ): void {
         $this->info(
@@ -350,14 +355,14 @@ class AdPayEventExportCommand extends BaseCommand
         }
         $packInterval = (int)ceil($seconds / $packCount);
 
-        $dateToTemporary = clone $dateFrom;
+        $dateToTemporary = $dateFrom;
 
         for ($pack = 0; $pack < $packCount; $pack++) {
-            $dateFromTemporary = clone $dateToTemporary;
-            $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
+            $dateFromTemporary = $dateToTemporary;
+            $dateToTemporary = $dateToTemporary->modify(sprintf('+%d seconds', $packInterval));
 
             if ($dateToTemporary > $dateTo) {
-                $dateToTemporary = clone $dateTo;
+                $dateToTemporary = $dateTo;
             }
 
             $conversionsToExport = Conversion::where('created_at', '>', $dateFromTemporary)->where(
@@ -378,8 +383,8 @@ class AdPayEventExportCommand extends BaseCommand
                 )
             );
 
-            $timeStart = (clone $dateFromTemporary)->modify('+1 second');
-            $timeEnd = clone $dateToTemporary;
+            $timeStart = $dateFromTemporary->modify('+1 second');
+            $timeEnd = $dateToTemporary;
             $conversions = DemandEventMapper::mapConversionCollectionToArray($conversionsToExport);
 
             $adPay->addConversions(new AdPayEvents($timeStart, $timeEnd, $conversions));

@@ -22,21 +22,21 @@ declare(strict_types = 1);
 
 namespace Adshares\Demand\Application\Dto;
 
-use DateTime;
+use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
 
 class AdPayEvents implements Arrayable
 {
-    /** @var DateTime */
+    /** @var DateTimeInterface */
     private $timeStart;
 
-    /** @var DateTime */
+    /** @var DateTimeInterface */
     private $timeEnd;
 
     /** @var array */
     private $events;
 
-    public function __construct(DateTime $timeStart, DateTime $timeEnd, array $events)
+    public function __construct(DateTimeInterface $timeStart, DateTimeInterface $timeEnd, array $events)
     {
         $this->timeStart = $timeStart;
         $this->timeEnd = $timeEnd;
