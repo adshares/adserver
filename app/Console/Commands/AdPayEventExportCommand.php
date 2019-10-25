@@ -369,7 +369,7 @@ class AdPayEventExportCommand extends BaseCommand
                 'created_at',
                 '<=',
                 $dateToTemporary
-            )->with('event')->get();
+            )->with('event')->with('conversionDefinition')->get();
 
             $conversionToExportCount = count($conversionsToExport);
             $this->info(

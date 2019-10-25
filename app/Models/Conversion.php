@@ -34,6 +34,7 @@ use Illuminate\Support\Collection;
  * @property int id
  * @property string uuid
  * @property Carbon created_at
+ * @property ConversionDefinition conversionDefinition
  * @property EventLog event
  * @property int event_logs_id
  * @property string group_id

@@ -34,6 +34,7 @@ class DemandEventMapper
         return $events->map(
             function (EventLog $eventLog) {
                 $mapped = self::mapEventLog($eventLog);
+                $mapped['id'] = $eventLog->event_id;
                 $mapped['time'] = $eventLog->created_at->getTimestamp();
 
                 return $mapped;
@@ -48,8 +49,9 @@ class DemandEventMapper
                 $event = $conversion->event;
 
                 $mapped = self::mapEventLog($event);
+                $mapped['id'] = $conversion->uuid;
                 $mapped['time'] = $conversion->created_at->getTimestamp();
-                $mapped['conversion_id'] = $conversion->uuid;
+                $mapped['conversion_id'] = $conversion->conversionDefinition->uuid;
                 $mapped['conversion_value'] = $conversion->value;
                 $mapped['group_id'] = $conversion->group_id;
                 $mapped['payment_status'] = $event->payment_status;
@@ -62,7 +64,6 @@ class DemandEventMapper
     private static function mapEventLog(EventLog $event): array
     {
         return [
-            'id' => $event->event_id,
             'case_id' => $event->case_id,
             'publisher_id' => $event->publisher_id,
             'zone_id' => $event->zone_id,
