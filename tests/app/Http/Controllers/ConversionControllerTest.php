@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Tests\Http\Controllers;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;

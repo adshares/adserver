@@ -20,25 +20,17 @@
 
 namespace Adshares\Adserver\Models;
 
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Utilities\DomainReader;
-use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Supply\Application\Dto\UserContext;
-use DateTime;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use function hex2bin;
 use Illuminate\Support\Carbon;
 use stdClass;
+use function hex2bin;
 
 /**
  * @property Carbon created_at
@@ -82,7 +74,7 @@ class EventConversionLog extends Model
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
-    
+
     public const TYPE_SHADOW_CLICK = 'shadow-click';
 
     public const TYPE_CONVERSION = 'conversion';
@@ -149,33 +141,6 @@ class EventConversionLog extends Model
         'their_userdata' => 'JsonValue',
     ];
 
-    public static function fetchUnpaidEvents(int $limit = null): Collection
-    {
-        $query = self::whereNotNull('event_value_currency')
-            ->where('event_value_currency', '>', 0)
-            ->whereNotNull('pay_to')
-            ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-24 hour'));
-
-        if ($limit !== null) {
-            $query->limit($limit);
-        }
-
-        if (DB::isMySql()) {
-            $query->getQuery()->fromRaw($query->getQuery()->from.' FORCE INDEX ('.self::INDEX_CREATED_AT.')');
-        }
-
-        return $query->get();
-    }
-
-    public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection
-    {
-        return self::whereIn('payment_id', $paymentIds)
-            ->limit($limit)
-            ->offset($offset)
-            ->get();
-    }
-
     public static function create(
         string $caseId,
         string $eventId,
@@ -214,51 +179,6 @@ class EventConversionLog extends Model
         $log->save();
     }
 
-    public static function createWithUserData(
-        string $caseId,
-        string $eventId,
-        string $bannerId,
-        ?string $zoneId,
-        string $trackingId,
-        string $publisherId,
-        string $campaignId,
-        string $advertiserId,
-        string $payTo,
-        array $context,
-        string $theirUserData,
-        string $type,
-        ?float $humanScore,
-        ?stdClass $ourUserData
-    ): self {
-        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
-
-        if ($existedEventLog) {
-            return $existedEventLog;
-        }
-
-        $log = new self();
-        $log->case_id = $caseId;
-        $log->event_id = $eventId;
-        $log->banner_id = $bannerId;
-        $log->tracking_id = $trackingId;
-        $log->zone_id = $zoneId;
-        $log->publisher_id = $publisherId;
-        $log->campaign_id = $campaignId;
-        $log->advertiser_id = $advertiserId;
-        $log->pay_to = $payTo;
-        $log->their_context = $context;
-        $log->their_userdata = $theirUserData;
-        $log->event_type = $type;
-        $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
-
-        $log->human_score = $humanScore;
-        $log->our_userdata = $ourUserData;
-
-        $log->save();
-
-        return $log;
-    }
-
     private static function fetchDomainFromMatchingEvent(string $type, string $caseId): ?string
     {
         if (self::TYPE_CLICK === $type || self::TYPE_SHADOW_CLICK === $type) {
@@ -282,67 +202,5 @@ class EventConversionLog extends Model
         }
 
         return $domain;
-    }
-
-    public static function fetchOneByEventId(string $eventId): self
-    {
-        $event = self::where('event_id', hex2bin($eventId))->first();
-
-        if (!$event) {
-            throw (new ModelNotFoundException('Model not found'))
-                ->setModel(self::class, [$eventId]);
-        }
-
-        return $event;
-    }
-
-    public static function fetchByEventIds(array $eventIds): Collection
-    {
-        $binEventIds = array_map(
-            function (string $item) {
-                return hex2bin($item);
-            },
-            $eventIds
-        );
-
-        return self::whereIn('event_id', $binEventIds)->get();
-    }
-
-    public static function fetchLastByTrackingId(string $campaignPublicId, string $trackingId): ?self
-    {
-        return self::where('campaign_id', hex2bin($campaignPublicId))
-            ->where('tracking_id', hex2bin($trackingId))
-            ->orderBy('id', 'desc')
-            ->limit(1)
-            ->first();
-    }
-
-    public function payment(): BelongsTo
-    {
-        return $this->belongsTo(Payment::class);
-    }
-
-    public static function eventClicked(string $caseId): int
-    {
-        $eventId = Utils::createCaseIdContainingEventType($caseId, self::TYPE_VIEW);
-
-        return self::where('event_id', hex2bin($eventId))
-            ->update(['is_view_clicked' => 1]);
-    }
-
-    public function updateWithUserContext(UserContext $userContext): void
-    {
-        $userId = $userContext->userId();
-        if ($userId) {
-            $this->user_id = Uuid::fromString($userId)->hex();
-        }
-        $this->human_score = $userContext->humanScore();
-        $this->our_userdata = $userContext->keywords();
-    }
-
-    public function updateWithUserData(float $humanScore, stdClass $userData): void
-    {
-        $this->human_score = $humanScore;
-        $this->our_userdata = $userData;
     }
 }
