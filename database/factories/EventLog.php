@@ -55,7 +55,7 @@ $factory->define(
             'exchange_rate' => null,
             'event_value' => null,
             'pay_to' => $faker->randomElement($addresses),
-            'reason' => 0,
+            'payment_status' => 0,
         ];
     }
 );

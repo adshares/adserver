@@ -29,7 +29,9 @@ use DateTime;
 
 class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
-    protected $signature = 'ops:stats:aggregate:advertiser {--hour=} {--B|bulk}';
+    public const COMMAND_SIGNATURE = 'ops:stats:aggregate:advertiser';
+
+    protected $signature = self::COMMAND_SIGNATURE.' {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates events data for statistics';
 
@@ -47,16 +49,17 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
     {
         $hour = $this->option('hour');
         if (null === $hour && !$this->lock()) {
-            $this->info('Command '.$this->getName().' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->getName());
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
 
         if ($hour !== null) {
             if (false === ($timestamp = strtotime($hour))) {
                 $this->error(sprintf('[Aggregate statistics] Invalid hour option format "%s"', $hour));
+                $this->release();
 
                 return;
             }
@@ -79,7 +82,8 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
             $from = $from->modify('+1 hour');
         }
 
-        $this->info('End command '.$this->getName());
+        $this->info('End command '.self::COMMAND_SIGNATURE);
+        $this->release();
     }
 
     private function aggregateForHour(DateTime $from): void

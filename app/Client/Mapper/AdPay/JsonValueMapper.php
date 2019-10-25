@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,27 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Adserver\Client\Mapper\AdPay;
 
-use Adshares\Demand\Application\Dto\AdPayEvents;
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
 
-interface AdPay
+class JsonValueMapper extends AbstractFilterMapper
 {
-    public function updateCampaign(array $campaigns): void;
+    public static function map($jsonValue)
+    {
+        $keywords = json_decode(json_encode($jsonValue), true);
 
-    public function deleteCampaign(array $campaignIds): void;
+        if (!$keywords) {
+            return new stdClass();
+        }
 
-    public function addViews(AdPayEvents $events): void;
-
-    public function addClicks(AdPayEvents $events): void;
-
-    public function addConversions(AdPayEvents $events): void;
-
-    public function getPayments(
-        int $timestamp,
-        bool $recalculate = false,
-        bool $force = false,
-        ?int $limit = null,
-        ?int $offset = null
-    ): array;
+        return self::generateNestedStructure($keywords);
+    }
 }

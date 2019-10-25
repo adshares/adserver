@@ -178,8 +178,9 @@ class DemandBlockPaymentsTest extends TestCase
         $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => 10 ** 11,
-                'reason' => 0,
+                'event_type' => $entry->event_type,
+                'value' => 10 ** 11,
+                'status' => 0,
             ];
         });
 

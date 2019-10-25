@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,29 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-namespace Adshares\Demand\Application\Service;
-
-use Adshares\Demand\Application\Dto\AdPayEvents;
-
-interface AdPay
+class ChangeEventLogsRenameColumnReason extends Migration
 {
-    public function updateCampaign(array $campaigns): void;
+    public function up(): void
+    {
+        Schema::table(
+            'event_logs',
+            function (Blueprint $table) {
+                $table->renameColumn('reason', 'payment_status');
+            }
+        );
+    }
 
-    public function deleteCampaign(array $campaignIds): void;
-
-    public function addViews(AdPayEvents $events): void;
-
-    public function addClicks(AdPayEvents $events): void;
-
-    public function addConversions(AdPayEvents $events): void;
-
-    public function getPayments(
-        int $timestamp,
-        bool $recalculate = false,
-        bool $force = false,
-        ?int $limit = null,
-        ?int $offset = null
-    ): array;
+    public function down(): void
+    {
+        Schema::table(
+            'event_logs',
+            function (Blueprint $table) {
+                $table->renameColumn('payment_status', 'reason');
+            }
+        );
+    }
 }

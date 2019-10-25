@@ -44,7 +44,7 @@ class ConversionValidator
             return false;
         }
 
-        if ($timestampCurrent - $timestampCreated > self::CACHE_ITEM_TTL_IN_MINUTES) {
+        if ($timestampCurrent - $timestampCreated > self::CACHE_ITEM_TTL_IN_MINUTES * 60) {
             return false;
         }
 

@@ -18,21 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Exceptions\Demand;
 
-namespace Adshares\Adserver\Client\Mapper\AdPay;
+use Adshares\Common\Exception\RuntimeException;
 
-use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
-use stdClass;
-
-class OurKeywordsMapper extends AbstractFilterMapper
+class AdPayReportMissingEventsException extends RuntimeException
 {
-    public static function map($keywords)
-    {
-        if (!$keywords) {
-            return new stdClass();
-        }
-
-        return self::generateNestedStructure($keywords);
-    }
 }

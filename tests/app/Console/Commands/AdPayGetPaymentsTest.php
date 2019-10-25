@@ -77,12 +77,13 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents = $events->map(static function (EventLog $entry) {
             return [
                 'event_id' => $entry->event_id,
-                'amount' => random_int(0, 100 * 10 ** 11),
-                'reason' => 0,
+                'event_type' => $entry->event_type,
+                'value' => random_int(0, 100 * 10 ** 11),
+                'status' => 0,
             ];
         });
 
-        $totalInCurrency = $calculatedEvents->sum('amount');
+        $totalInCurrency = $calculatedEvents->sum('value');
         $userBalance = (int)ceil(
             $totalInCurrency / $dummyExchangeRateRepository->fetchExchangeRate(new DateTime())->getValue()
         );
@@ -92,7 +93,11 @@ class AdPayGetPaymentsTest extends TestCase
             AdPay::class,
             function () use ($calculatedEvents) {
                 $adPay = $this->createMock(AdPay::class);
-                $adPay->method('getPayments')->willReturn($calculatedEvents->toArray());
+                $adPay->method('getPayments')->will($this->returnCallback(
+                    function ($timestamp, $recalculate, $force, $limit, $offset) use ($calculatedEvents) {
+                        return $calculatedEvents->slice($offset, $limit)->toArray();
+                    }
+                ));
 
                 return $adPay;
             }
@@ -104,14 +109,16 @@ class AdPayGetPaymentsTest extends TestCase
         $calculatedEvents->each(function (array $eventValue) {
             $eventValue['event_id'] = hex2bin($eventValue['event_id']);
 
-            $eventValue['event_value_currency'] = $eventValue['amount'];
-            unset($eventValue['amount']);
+            $eventValue['event_value_currency'] = $eventValue['value'];
+            unset($eventValue['value']);
+            $eventValue['payment_status'] = $eventValue['status'];
+            unset($eventValue['status']);
 
             $this->assertDatabaseHas('event_logs', $eventValue);
         });
     }
 
-    public function test(): void
+    public function testNormalization(): void
     {
         /** @var User $user */
         $user = factory(User::class)->times(1)->create()->each(static function (User $user) {
@@ -170,8 +177,9 @@ class AdPayGetPaymentsTest extends TestCase
                 $calculatedEvents = EventLog::all()->map(static function (EventLog $entry) {
                     return [
                         'event_id' => $entry->event_id,
-                        'amount' => 100,
-                        'reason' => 0,
+                        'event_type' => $entry->event_type,
+                        'value' => 100,
+                        'status' => 0,
                     ];
                 });
 
@@ -197,16 +205,10 @@ class AdPayGetPaymentsTest extends TestCase
         $this->artisan('ops:adpay:payments:get')
             ->assertExitCode(0);
 
-        $count = EventLog::all()->map(static function (EventLog $entry) {
-            if (Campaign::fetchByUuid($entry->campaign_id)->isDirectDeal()) {
-                self::assertEquals(100, $entry->event_value_currency);
-            } else {
-                self::assertEquals(50, $entry->event_value_currency);
-            }
-        })->count();
+        $events = EventLog::all();
 
-        self::assertEquals(3, $count);
-
+        self::assertEquals(200, $events->sum('event_value_currency'));
+        self::assertEquals(3, $events->count());
         self::assertEquals(0, $user->getBalance());
     }
 }

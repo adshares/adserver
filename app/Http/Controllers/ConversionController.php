@@ -25,8 +25,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\ConversionGroup;
-use Adshares\Adserver\Models\EventConversionLog;
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -43,8 +42,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function base64_decode;
-use function bin2hex;
-use function inet_pton;
 use function sprintf;
 
 class ConversionController extends Controller
@@ -261,10 +258,10 @@ class ConversionController extends Controller
 
         $cases = $this->findCasesConnectedWithConversion($request, $campaignPublicId);
 
-        if (!$conversionDefinition->isRepeatable()) {
+        if (!$conversionDefinition->is_repeatable) {
             $caseIds = array_keys($cases);
 
-            if (ConversionGroup::containsConversionMatchingCaseIds($conversionDefinitionId, $caseIds)) {
+            if (Conversion::wasRegisteredForDefinitionAndCaseId($conversionDefinitionId, $caseIds)) {
                 throw new BadRequestHttpException(
                     sprintf('Repeated conversion: %s', $uuid)
                 );
@@ -275,10 +272,7 @@ class ConversionController extends Controller
             $response->send();
         }
 
-        $advertiserId = $campaign->user->uuid;
         $groupId = Uuid::v4()->toString();
-        $impressionContext = Utils::getImpressionContextArray($request);
-
         $viewEventsData = $this->getViewEventsData($cases);
 
         DB::beginTransaction();
@@ -286,26 +280,9 @@ class ConversionController extends Controller
         foreach ($cases as $caseId => $weight) {
             $viewEventData = $viewEventsData[$caseId];
 
-            $event = EventConversionLog::createWithUserData(
-                $caseId,
-                Uuid::v4()->toString(),
-                $viewEventData['bannerId'],
-                $viewEventData['zoneId'],
-                $viewEventData['trackingId'],
-                $viewEventData['publisherId'],
-                $campaignPublicId,
-                $advertiserId,
-                $viewEventData['payTo'],
-                $impressionContext,
-                '',
-                EventLog::TYPE_CONVERSION,
-                $viewEventData['humanScore'],
-                $viewEventData['ourUserdata']
-            );
-
-            $eventId = $event->id;
+            $eventId = $viewEventData['eventId'];
             $partialValue = (int)floor($value * $weight);
-            ConversionGroup::register($caseId, $groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
+            Conversion::register($groupId, $eventId, $conversionDefinitionId, $partialValue, $weight);
         }
 
         DB::commit();
@@ -455,6 +432,7 @@ class ConversionController extends Controller
         foreach ($viewEvents as $viewEvent) {
             /** @var $viewEvent EventLog */
             $viewEventsData[$viewEvent->case_id] = [
+                'eventId' => $viewEvent->id,
                 'bannerId' => $viewEvent->banner_id,
                 'zoneId' => $viewEvent->zone_id,
                 'trackingId' => $viewEvent->tracking_id,

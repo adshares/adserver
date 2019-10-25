@@ -32,7 +32,7 @@ class InsertConfigAdpayEventLastExportedId extends Migration
         if (!$adpayEventExportTime) {
             DB::table('configs')->insert(
                 [
-                    'key' => Config::ADPAY_LAST_EXPORTED_EVENT_ID,
+                    'key' => 'adpay-last-exported-event-id',
                     'value' => 0,
                     'created_at' => new DateTime(),
                 ]
@@ -45,7 +45,7 @@ class InsertConfigAdpayEventLastExportedId extends Migration
         $event = DB::table('event_logs')->where('created_at', '<=', $date)->orderByDesc('id')->first();
         DB::table('configs')->updateOrInsert(
             [
-                'key' => Config::ADPAY_LAST_EXPORTED_EVENT_ID,
+                'key' => 'adpay-last-exported-event-id',
             ],
             [
                 'value' => $event->id ?? 0,
@@ -58,7 +58,7 @@ class InsertConfigAdpayEventLastExportedId extends Migration
 
     public function down(): void
     {
-        $adpayEventLastExportedId = DB::table('configs')->where('key', Config::ADPAY_LAST_EXPORTED_EVENT_ID)->first();
+        $adpayEventLastExportedId = DB::table('configs')->where('key', 'adpay-last-exported-event-id')->first();
         if (!$adpayEventLastExportedId) {
             return;
         }
@@ -78,6 +78,6 @@ class InsertConfigAdpayEventLastExportedId extends Migration
             );
         }
 
-        DB::table('configs')->where('key', Config::ADPAY_LAST_EXPORTED_EVENT_ID)->delete();
+        DB::table('configs')->where('key', 'adpay-last-exported-event-id')->delete();
     }
 }

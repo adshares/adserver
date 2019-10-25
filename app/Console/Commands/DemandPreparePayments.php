@@ -25,13 +25,20 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends BaseCommand
 {
-    protected $signature = 'ops:demand:payments:prepare {--c|chunkSize=10000}';
+    public const COMMAND_SIGNATURE = 'ops:demand:payments:prepare';
+
+    protected $signature = self::COMMAND_SIGNATURE.'
+                            {--c|chunkSize=10000}
+                            {--f|from= : Date from which unpaid events will be searched}
+                            {--t|to= : Date to which unpaid events will be searched}';
 
     protected $description = 'Prepares payments for events and license';
 
@@ -48,20 +55,33 @@ class DemandPreparePayments extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $from = $this->getDateTimeFromOption('from') ?: new DateTime('-24 hour');
+        $to = $this->getDateTimeFromOption('to');
+        if ($from !== null && $to !== null && $to < $from) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    '[DemandPreparePayments] Invalid period from (%s) to (%s)',
+                    $from->format(DateTime::ATOM),
+                    $to->format(DateTime::ATOM)
+                )
+            );
+        }
 
         while (true) {
-            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'));
+            $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
 
             $eventCount = count($events);
             $this->info("Found $eventCount payable events.");
 
             if (!$eventCount) {
+                $this->release();
+
                 return;
             }
 
@@ -110,6 +130,7 @@ class DemandPreparePayments extends BaseCommand
 
             $this->info("and a license fee of {$licensePayment->fee} clicks"
                 ." payable to {$licensePayment->account_address}.");
+            $this->release();
         }
     }
 
@@ -130,5 +151,22 @@ class DemandPreparePayments extends BaseCommand
                 $entry->paid_amount = $amountAfterFee - $operatorFee;
             }
         )->groupBy('pay_to');
+    }
+
+    private function getDateTimeFromOption(string $option): ?DateTime
+    {
+        $value = $this->option($option);
+
+        if (null === $value) {
+            return null;
+        }
+
+        if (false === ($timestamp = strtotime((string)$value))) {
+            throw new InvalidArgumentException(
+                sprintf('[DemandPreparePayments] Invalid option %s format "%s"', $option, $value)
+            );
+        }
+
+        return new DateTime('@'.$timestamp);
     }
 }

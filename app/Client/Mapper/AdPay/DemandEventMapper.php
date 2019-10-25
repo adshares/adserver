@@ -22,57 +22,60 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Carbon;
-use stdClass;
 
 class DemandEventMapper
 {
-    public static function mapEventCollectionToEventArray(Collection $events): array
+    public static function mapEventCollectionToArray(Collection $events): array
     {
         return $events->map(
-            function (EventLog $event) {
-                /** @var Carbon $createdAt */
-                $createdAt = $event->created_at;
-                $timestamp = $createdAt->getTimestamp();
-
-                $theirKeywords = new stdClass();//self::processTheirKeywords($event->their_userdata);
-                $ourUserData = json_decode(json_encode($event->our_userdata), true);
-                $ourKeywords = OurKeywordsMapper::map($ourUserData);
-
-                $mapped = [
-                    'banner_id' => $event->banner_id,
-                    'case_id' => $event->case_id,
-                    'event_type' => $event->event_type,
-                    'event_id' => $event->event_id,
-                    'timestamp' => $timestamp,
-                    'their_keywords' => $theirKeywords,
-                    'our_keywords' => $ourKeywords,
-                    'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
-                    'user_id' => $event->user_id ?? $event->tracking_id,
-                ];
-
-                if ($event->publisher_id !== null) {
-                    $mapped['publisher_id'] = $event->publisher_id;
-                }
-
-                if ($event->event_value !== null) {
-                    $mapped['event_value'] = $event->event_value;
-                }
+            function (EventLog $eventLog) {
+                $mapped = self::mapEventLog($eventLog);
+                $mapped['time'] = $eventLog->created_at->getTimestamp();
 
                 return $mapped;
             }
         )->toArray();
     }
 
-    private static function processTheirKeywords($keywords)
+    public static function mapConversionCollectionToArray(Collection $conversions): array
     {
-        if (!$keywords) {
-            return new stdClass();
-        }
+        return $conversions->map(
+            function (Conversion $conversion) {
+                $event = $conversion->event;
 
-        return array_fill_keys(explode(',', $keywords), 1);
+                $mapped = self::mapEventLog($event);
+                $mapped['time'] = $conversion->created_at->getTimestamp();
+                $mapped['conversion_id'] = $conversion->uuid;
+                $mapped['conversion_value'] = $conversion->value;
+                $mapped['group_id'] = $conversion->group_id;
+                $mapped['payment_status'] = $event->payment_status;
+
+                return $mapped;
+            }
+        )->toArray();
+    }
+
+    private static function mapEventLog(EventLog $event): array
+    {
+        return [
+            'id' => $event->event_id,
+            'case_id' => $event->case_id,
+            'publisher_id' => $event->publisher_id,
+            'zone_id' => $event->zone_id,
+            'advertiser_id' => $event->advertiser_id,
+            'campaign_id' => $event->campaign_id,
+            'banner_id' => $event->banner_id,
+            'impression_id' => $event->case_id,
+            'tracking_id' => $event->tracking_id,
+            'user_id' => $event->user_id ?? $event->tracking_id,
+            'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
+            'page_rank' => 1.0,
+            'context' => JsonValueMapper::map($event->our_context),
+            'keywords' => JsonValueMapper::map($event->our_userdata),
+        ];
     }
 }
