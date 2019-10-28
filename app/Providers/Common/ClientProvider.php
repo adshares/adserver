@@ -158,6 +158,7 @@ final class ClientProvider extends ServiceProvider
                 $timeoutForDemandService = 15;
 
                 return new GuzzleDemandClient(
+                    $app->make(ClassifierExternalRepository::class),
                     $app->make(ClassifierExternalSignatureVerifier::class),
                     $app->make(SignatureVerifier::class),
                     $timeoutForDemandService

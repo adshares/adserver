@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Getting payment report from adpay (optimization)
 ### Fixed
 - Grouping events by day in billing history
+- Importing banners when external classifier is not defined
 ### Removed
 - NetworkEventLog and related classes
 
