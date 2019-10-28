@@ -29,13 +29,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
-use function count;
 use function hex2bin;
 
 /**
  * @mixin Builder
- * @property int event_value
- * @property int event_id
+ * @property int id
  * @property string account_address
  * @property int fee
  * @property Collection|EventLog[] events
@@ -97,7 +95,7 @@ class Payment extends Model
         'tx_id' => 'TransactionId',
     ];
 
-    public static function fetchPayments(string $transactionId, string $accountAddress)
+    public static function fetchPayments(string $transactionId, string $accountAddress): Collection
     {
         return self::where('tx_id', hex2bin($transactionId))
             ->where('account_address', hex2bin($accountAddress))
@@ -123,17 +121,6 @@ class Payment extends Model
 
     public function transferableAmount(): int
     {
-        return $this->netAmount() ?? $this->fee ?? 0;
-    }
-
-    public function netAmount(): ?int
-    {
-        if (!count($this->events)) {
-            return null;
-        }
-
-        return $this->events->sum(function (EventLog $entry) {
-            return $entry->paid_amount;
-        });
+        return $this->fee ?? 0;
     }
 }

@@ -101,6 +101,7 @@ class DemandPreparePayments extends BaseCommand
                         'account_address' => $payTo,
                         'state' => Payment::STATE_NEW,
                         'completed' => 0,
+                        'fee' => $paymentGroup->sum('paid_amount'),
                     ];
 
                     $payment = new Payment();
@@ -137,7 +138,7 @@ class DemandPreparePayments extends BaseCommand
             }
 
             $totalLicenseFee = 0;
-            $groupedEvents = $this->processAndGroupByRecipient(
+            $groupedEvents = $this->processAndGroupEventsByRecipient(
                 $events,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
@@ -155,6 +156,7 @@ class DemandPreparePayments extends BaseCommand
                         'account_address' => $payTo,
                         'state' => Payment::STATE_NEW,
                         'completed' => 0,
+                        'fee' => $paymentGroup->sum('paid_amount'),
                     ];
 
                     $payment = new Payment();
@@ -182,7 +184,7 @@ class DemandPreparePayments extends BaseCommand
         }
     }
 
-    private function processAndGroupByRecipient(
+    private function processAndGroupEventsByRecipient(
         \Illuminate\Database\Eloquent\Collection $events,
         float $demandLicenseFeeCoefficient,
         float $demandOperatorFeeCoefficient,
