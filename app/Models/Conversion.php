@@ -53,6 +53,7 @@ use Illuminate\Support\Collection;
  * @property int operator_fee
  * @property int paid_amount
  * @property int payment_id
+ * @property string pay_to
  */
 class Conversion extends Model
 {
@@ -101,7 +102,8 @@ class Conversion extends Model
         int $eventId,
         int $conversionDefinitionId,
         int $value,
-        float $weight
+        float $weight,
+        string $payTo
     ): void {
         $conversion = new self();
         $conversion->case_id = $caseId;
@@ -110,6 +112,7 @@ class Conversion extends Model
         $conversion->conversion_definition_id = $conversionDefinitionId;
         $conversion->value = $value;
         $conversion->weight = $weight;
+        $conversion->pay_to = $payTo;
 
         $conversion->save();
     }
