@@ -36,6 +36,8 @@ use function hex2bin;
  * @mixin Builder
  * @property int event_value
  * @property int event_id
+ * @property string account_address
+ * @property int fee
  * @property Collection|EventLog[] events
  */
 class Payment extends Model
@@ -109,16 +111,14 @@ class Payment extends Model
             ->get();
     }
 
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(Conversion::class);
+    }
+
     public function events(): HasMany
     {
         return $this->hasMany(EventLog::class);
-    }
-
-    public function totalLicenseFee(): int
-    {
-        return $this->events->sum(static function (EventLog $entry) {
-            return $entry->license_fee;
-        });
     }
 
     public function transferableAmount(): int

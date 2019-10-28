@@ -23,9 +23,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Carbon\Carbon;
+use DateTime;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -53,6 +56,7 @@ use Illuminate\Support\Collection;
  */
 class Conversion extends Model
 {
+    use AccountAddress;
     use AutomateMutators;
     use BinHex;
 
@@ -84,6 +88,7 @@ class Conversion extends Model
         'uuid' => 'BinHex',
         'case_id' => 'BinHex',
         'group_id' => 'BinHex',
+        'pay_to' => 'AccountAddress',
     ];
 
     protected $dispatchesEvents = [
@@ -107,6 +112,28 @@ class Conversion extends Model
         $conversion->weight = $weight;
 
         $conversion->save();
+    }
+
+    public static function fetchUnpaidConversions(
+        DateTime $from,
+        ?DateTime $to = null,
+        int $limit = null
+    ): EloquentCollection {
+        $query = self::whereNotNull('event_value_currency')
+            ->where('event_value_currency', '>', 0)
+            ->whereNotNull('pay_to')
+            ->whereNull('payment_id')
+            ->where('created_at', '>=', $from);
+
+        if ($to !== null) {
+            $query->where('created_at', '<=', $to);
+        }
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     public static function fetchUnpaidConversionsForUpdateWithPaymentReport(Collection $conversionIds): Collection
