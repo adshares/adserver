@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Tests\Demand\Service;
+namespace Adshares\Tests\Demand\Application\Service;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Entity\Account;
