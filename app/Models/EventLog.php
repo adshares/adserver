@@ -101,6 +101,8 @@ WHERE event_value_currency IS NULL
   AND event_id IN (%s)
 SQL;
 
+    private const VALID_EVENT_PERIOD = '-30 days';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -319,7 +321,8 @@ SQL;
 
     public static function fetchOneByEventId(string $eventId): self
     {
-        $event = self::where('event_id', hex2bin($eventId))->first();
+        $event = self::where('event_id', hex2bin($eventId))
+            ->where('created_at', '>', new DateTime(self::VALID_EVENT_PERIOD))->first();
 
         if (!$event) {
             throw (new ModelNotFoundException('Model not found'))
@@ -344,6 +347,7 @@ SQL;
     public static function fetchLastByTrackingId(string $campaignPublicId, string $trackingId): ?self
     {
         return self::where('campaign_id', hex2bin($campaignPublicId))
+            ->where('created_at', '>', new DateTime(self::VALID_EVENT_PERIOD))
             ->where('tracking_id', hex2bin($trackingId))
             ->orderBy('id', 'desc')
             ->limit(1)
