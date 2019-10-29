@@ -35,6 +35,7 @@ class CreateConversionsTable extends Migration
                 $table->timestamps();
 
                 $table->bigInteger('event_logs_id')->unsigned();
+                $table->binary('case_id');
                 $table->binary('group_id');
                 $table->bigInteger('conversion_definition_id')->unsigned();
                 $table->bigInteger('value')->unsigned()->nullable();
@@ -48,6 +49,7 @@ class CreateConversionsTable extends Migration
                 $table->bigInteger('operator_fee')->unsigned()->nullable();
                 $table->bigInteger('paid_amount')->unsigned()->nullable();
                 $table->integer('payment_id')->nullable()->index();
+                $table->binary('pay_to')->nullable();
 
                 $table->index('created_at');
                 $table->foreign('event_logs_id')->references('id')->on('event_logs')->onUpdate('RESTRICT')->onDelete(
@@ -58,7 +60,9 @@ class CreateConversionsTable extends Migration
 
         if (DB::isMysql()) {
             DB::statement('ALTER TABLE conversions MODIFY uuid varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE conversions MODIFY case_id varbinary(16) NOT NULL');
             DB::statement('ALTER TABLE conversions MODIFY group_id varbinary(16) NOT NULL');
+            DB::statement('ALTER TABLE conversions MODIFY pay_to varbinary(6)');
         }
 
         Schema::table('conversions', function (Blueprint $table) {

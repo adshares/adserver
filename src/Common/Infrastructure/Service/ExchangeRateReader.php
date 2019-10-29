@@ -28,12 +28,13 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
+use DateTimeImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 
 class ExchangeRateReader
 {
-    private const MAX_ACCEPTABLE_INTERVAL_IN_HOURS = 24;
+    private const MAXIMAL_ACCEPTABLE_INTERVAL = '-24 hours';
 
     /** @var EloquentExchangeRateRepository */
     private $repositoryStorable;
@@ -96,17 +97,19 @@ class ExchangeRateReader
             $exchangeRate = $exchangeRateFromStorage;
         }
 
-        if ($this->isExchangeRateAcceptable($exchangeRate)) {
+        if ($this->isExchangeRateAcceptable(
+            $exchangeRate,
+            DateTimeImmutable::createFromMutable($dateTimeForComputation)
+        )) {
             return $exchangeRate;
         }
 
         throw new ExchangeRateNotAvailableException();
     }
 
-    private function isExchangeRateAcceptable(ExchangeRate $exchangeRate): bool
+    private function isExchangeRateAcceptable(ExchangeRate $exchangeRate, DateTimeImmutable $requestedDateTime): bool
     {
-        $oldestAcceptableDateTime =
-            (new DateTime())->modify(sprintf('-%d hours', self::MAX_ACCEPTABLE_INTERVAL_IN_HOURS));
+        $oldestAcceptableDateTime = $requestedDateTime->modify(self::MAXIMAL_ACCEPTABLE_INTERVAL);
 
         return $exchangeRate->getDateTime() >= $oldestAcceptableDateTime;
     }
