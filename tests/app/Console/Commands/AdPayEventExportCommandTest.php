@@ -184,7 +184,7 @@ class AdPayEventExportCommandTest extends TestCase
 
     /**
      * @dataProvider invalidOptionsProvider
-     * 
+     *
      * @param string|null $from
      * @param string|null $to
      */
