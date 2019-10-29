@@ -16,7 +16,7 @@ echo -n "0 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:exchange-rate:fetch"
 echo ""
 
-echo -n "* * * * * "
+echo -n "*/10 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:inventory:import ${_REDIRECTION}"
 echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ops:adselect:inventory:export ${_REDIRECTION}"
