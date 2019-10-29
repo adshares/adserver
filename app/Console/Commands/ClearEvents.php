@@ -87,11 +87,10 @@ class ClearEvents extends BaseCommand
                 sprintf('SELECT MIN(id) AS value FROM %s', $table)
             )->value;
             $count = DB::delete(
-                sprintf('DELETE FROM %s WHERE id BETWEEN ? AND ? AND id < ?', $table),
+                sprintf('DELETE FROM %s WHERE id BETWEEN ? AND ?', $table),
                 [
                     $offset,
-                    $offset + $chunkSize - 1,
-                    $last
+                    min($last, $offset + $chunkSize - 1),
                 ]
             );
             $deleted += $count;
