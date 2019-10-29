@@ -49,4 +49,12 @@ class SupplyBlacklistedDomainTest extends TestCase
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('127.0.0.1'));
         $this->assertTrue(SupplyBlacklistedDomain::isDomainBlacklisted('fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'));
     }
+
+    public function testBlacklistTwice(): void
+    {
+        SupplyBlacklistedDomain::register('example.com');
+        SupplyBlacklistedDomain::register('example.com');
+
+        $this->assertCount(1, SupplyBlacklistedDomain::all());
+    }
 }
