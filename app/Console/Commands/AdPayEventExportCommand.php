@@ -285,13 +285,11 @@ class AdPayEventExportCommand extends BaseCommand
                     ->where('created_at', '<=', $dateToTemporary)
                     ->get();
 
-            $eventsToExportCount = count($eventsToExport);
-
             $this->info(
                 sprintf(
                     '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
                     $pack + 1,
-                    $eventsToExportCount,
+                    count($eventsToExport),
                     $dateFromTemporary->format(DateTime::ATOM),
                     $dateToTemporary->format(DateTime::ATOM),
                     $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
@@ -371,12 +369,11 @@ class AdPayEventExportCommand extends BaseCommand
                 $dateToTemporary
             )->with('event')->with('conversionDefinition')->get();
 
-            $conversionToExportCount = count($conversionsToExport);
             $this->info(
                 sprintf(
                     '[AdPayEventExport] Pack [%d]. Conversions to export: %d (%s -> %s, %s s)',
                     $pack + 1,
-                    $conversionToExportCount,
+                    count($conversionsToExport),
                     $dateFromTemporary->format(DateTime::ATOM),
                     $dateToTemporary->format(DateTime::ATOM),
                     $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()

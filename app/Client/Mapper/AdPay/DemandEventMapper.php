@@ -48,6 +48,10 @@ class DemandEventMapper
             function (Conversion $conversion) {
                 $event = $conversion->event;
 
+                if (null === $event) {
+                    return [];
+                }
+
                 $mapped = self::mapEventLog($event);
                 $mapped['id'] = $conversion->uuid;
                 $mapped['time'] = $conversion->created_at->getTimestamp();
@@ -58,7 +62,7 @@ class DemandEventMapper
 
                 return $mapped;
             }
-        )->toArray();
+        )->filter()->toArray();
     }
 
     private static function mapEventLog(EventLog $event): array
