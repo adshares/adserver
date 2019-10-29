@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,28 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Supply\Domain\Repository;
+namespace Adshares\Adserver\Client\Mapper\AdPay;
 
-use DateTime;
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use stdClass;
 
-interface EventRepository
+class JsonValueMapper extends AbstractFilterMapper
 {
-    public const PACKAGE_SIZE = 500;
+    public static function map($jsonValue)
+    {
+        $keywords = json_decode(json_encode($jsonValue), true);
 
-    public function fetchUnpaidEventsBetweenIds(
-        int $eventIdFirst,
-        int $eventIdLast,
-        int $limit = self::PACKAGE_SIZE,
-        int $offset = 0
-    ): array;
+        if (!$keywords) {
+            return new stdClass();
+        }
 
-    public function fetchPaidEventsUpdatedAfterAdsPaymentId(
-        int $eventPaymentIdFirst,
-        int $eventPaymentIdLast,
-        int $limit = self::PACKAGE_SIZE,
-        int $offset = 0
-    ): array;
-
-    public function fetchLastUnpaidEventsByDate(DateTime $date): int;
-    public function fetchLastPaidEventsByDate(DateTime $date): int;
+        return self::generateNestedStructure($keywords);
+    }
 }

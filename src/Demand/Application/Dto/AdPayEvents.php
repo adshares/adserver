@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php
 /**
  * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
@@ -18,36 +18,37 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Response;
+declare(strict_types = 1);
 
-use Adshares\Adserver\Models\EventLog;
+namespace Adshares\Demand\Application\Dto;
+
+use DateTimeInterface;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Collection;
 
-final class PaymentDetailsResponse implements Arrayable
+class AdPayEvents implements Arrayable
 {
-    /** @var EventLog[] */
+    /** @var DateTimeInterface */
+    private $timeStart;
+
+    /** @var DateTimeInterface */
+    private $timeEnd;
+
+    /** @var array */
     private $events;
 
-    public function __construct(Collection $events)
+    public function __construct(DateTimeInterface $timeStart, DateTimeInterface $timeEnd, array $events)
     {
+        $this->timeStart = $timeStart;
+        $this->timeEnd = $timeEnd;
         $this->events = $events;
     }
 
-    public function toArray(): array
+    public function toArray()
     {
-        return $this->events->map(function (EventLog $entry) {
-            $data = $entry->toArray();
-
-            return [
-                'case_id' => $data['case_id'],
-                'event_id' => $data['event_id'],
-                'event_type' => $data['event_type'],
-                'banner_id' => $data['banner_id'],
-                'zone_id' => $data['zone_id'],
-                'publisher_id' => $data['publisher_id'],
-                'event_value' => $data['paid_amount'],
-            ];
-        })->all();
+        return [
+            'time_start' => $this->timeStart->getTimestamp(),
+            'time_end' => $this->timeEnd->getTimestamp(),
+            'events' => $this->events,
+        ];
     }
 }

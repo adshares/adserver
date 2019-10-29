@@ -4,7 +4,7 @@ class Conversion
 {
     +id
     +campaign_id
-    +{field} budget_type (in_budget, out_of_budget)
+    +{field} limit_type (in_budget, out_of_budget)
     +{field} event_type (click, register, buy)
     +type
     +value

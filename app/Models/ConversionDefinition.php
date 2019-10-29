@@ -39,7 +39,7 @@ use function route;
  * @property string uuid
  * @property int campaign_id
  * @property string name
- * @property string budget_type
+ * @property string $limit_type
  * @property string event_type
  * @property string type
  * @property int|null value
@@ -71,7 +71,7 @@ class ConversionDefinition extends Model
     protected $fillable = [
         'campaign_id',
         'name',
-        'budget_type',
+        'limit_type',
         'event_type',
         'type',
         'value',
@@ -84,7 +84,7 @@ class ConversionDefinition extends Model
         'uuid',
         'campaign_id',
         'name',
-        'budget_type',
+        'limit_type',
         'event_type',
         'type',
         'value',
@@ -100,6 +100,11 @@ class ConversionDefinition extends Model
         'link',
     ];
 
+    protected $casts = [
+        'is_value_mutable' => 'boolean',
+        'is_repeatable' => 'boolean',
+    ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
     ];
@@ -107,6 +112,11 @@ class ConversionDefinition extends Model
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
     ];
+
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
+    }
 
     public static function fetchByUuid(string $uuid): ?self
     {
@@ -120,7 +130,7 @@ class ConversionDefinition extends Model
 
     public function conversionGroups(): HasMany
     {
-        return $this->hasMany(ConversionGroup::class);
+        return $this->hasMany(Conversion::class);
     }
 
     public function getLinkAttribute()
@@ -149,9 +159,23 @@ class ConversionDefinition extends Model
         return self::ADVANCED_TYPE === $this->type;
     }
 
-    public function isRepeatable(): bool
+    public function isInCampaignBudget(): bool
     {
-        return (bool)$this->is_repeatable;
+        return self::IN_BUDGET === $this->limit_type;
+    }
+
+    public static function updateCostAndOccurrences(array $costAndOccurrencesArray): void
+    {
+        $ids = array_keys($costAndOccurrencesArray);
+        $definitions = ConversionDefinition::whereIn('id', $ids)->get();
+
+        foreach ($definitions as $definition) {
+            $data = $costAndOccurrencesArray[$definition->id];
+
+            $definition->cost = $data['cost'];
+            $definition->occurrences = $data['occurrences'];
+            $definition->save();
+        }
     }
 
     public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
@@ -170,7 +194,7 @@ class ConversionDefinition extends Model
     public static function rules(array $conversion): array
     {
         $type = $conversion['type'] ?? null;
-        $isValueMutable = $conversion['is_value_mutable'] ?? null;
+        $isValueMutable = (bool)($conversion['is_value_mutable'] ?? false);
         $rules = [
             'uuid' => 'string|nullable',
             'campaign_id' => 'required|integer',
@@ -179,22 +203,29 @@ class ConversionDefinition extends Model
             'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),
             'value' => [
                 'integer',
+                'min:0',
                 'nullable',
                 Rule::requiredIf(static function () use ($isValueMutable) {
-                    return 0 === $isValueMutable;
+                    return !$isValueMutable;
                 }),
             ],
-            'limit' => 'integer|nullable',
+            'limit' => 'integer|min:0|nullable',
         ];
 
         if ($type === self::BASIC_TYPE) {
-            $rules['budget_type'] = 'in:'.self::IN_BUDGET;
-            $rules['is_repeatable'] = 'required|in:0';
-            $rules['is_value_mutable'] = 'required|in:0';
+            $rules['limit_type'] = 'required|in:'.self::IN_BUDGET;
+            $rules['is_repeatable'] = [
+                'required',
+                Rule::in(false, 0),
+            ];
+            $rules['is_value_mutable'] = [
+                'required',
+                Rule::in(false, 0),
+            ];
         } elseif ($type === self::ADVANCED_TYPE) {
-            $rules['budget_type'] = sprintf('in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
-            $rules['is_repeatable'] = 'required|in:0,1';
-            $rules['is_value_mutable'] = 'required|in:0,1';
+            $rules['limit_type'] = sprintf('required|in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
+            $rules['is_repeatable'] = 'required|boolean';
+            $rules['is_value_mutable'] = 'required|boolean';
         }
 
         return $rules;

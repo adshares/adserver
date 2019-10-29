@@ -23,15 +23,23 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
+use DateTime;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class DemandPreparePayments extends BaseCommand
 {
-    protected $signature = 'ops:demand:payments:prepare {--c|chunkSize=10000}';
+    public const COMMAND_SIGNATURE = 'ops:demand:payments:prepare';
+
+    protected $signature = self::COMMAND_SIGNATURE.'
+                            {--c|chunkSize=10000}
+                            {--f|from= : Date from which unpaid events will be searched}
+                            {--t|to= : Date to which unpaid events will be searched}';
 
     protected $description = 'Prepares payments for events and license';
 
@@ -48,60 +56,123 @@ class DemandPreparePayments extends BaseCommand
     public function handle(): void
     {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
             return;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.self::COMMAND_SIGNATURE);
+        $from = $this->getDateTimeFromOption('from') ?: new DateTime('-24 hour');
+        $to = $this->getDateTimeFromOption('to');
+        if ($from !== null && $to !== null && $to < $from) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    '[DemandPreparePayments] Invalid period from (%s) to (%s)',
+                    $from->format(DateTime::ATOM),
+                    $to->format(DateTime::ATOM)
+                )
+            );
+        }
 
-        while (true) {
-            $events = EventLog::fetchUnpaidEvents((int)$this->option('chunkSize'));
+        $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
+        $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
+        $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
 
-            $eventCount = count($events);
-            $this->info("Found $eventCount payable events.");
-
-            if (!$eventCount) {
-                return;
-            }
-
-            $licenseAccountAddress = $this->licenseReader->getAddress()->toString();
-            $demandLicenseFeeCoefficient = $this->licenseReader->getFee(Config::LICENCE_TX_FEE);
-            $demandOperatorFeeCoefficient = Config::fetchFloatOrFail(Config::OPERATOR_TX_FEE);
-            $groupedEvents = $this->processAndGroupByRecipient(
-                $events,
+        $conversions = Conversion::fetchUnpaidConversions($from, $to);
+        $conversionCount = count($conversions);
+        $this->info("Found $conversionCount payable conversions.");
+        if ($conversionCount > 0) {
+            $totalLicenseFee = 0;
+            $groupedConversions = $this->processAndGroupConversionsByRecipient(
+                $conversions,
                 $demandLicenseFeeCoefficient,
-                $demandOperatorFeeCoefficient
+                $demandOperatorFeeCoefficient,
+                $totalLicenseFee
             );
 
-            $this->info('In that, there are '.count($groupedEvents).' recipients,');
+            $this->info(sprintf('In that, there are %d recipients,', count($groupedConversions)));
 
             DB::beginTransaction();
 
-            $payments = $groupedEvents
-                ->map(static function (Collection $paymentGroup, string $key) {
-                    return [
+            $groupedConversions->each(
+                static function (Collection $paymentGroup, string $payTo) {
+                    $paymentData = [
                         'events' => $paymentGroup,
-                        'account_address' => $key,
+                        'account_address' => $payTo,
                         'state' => Payment::STATE_NEW,
                         'completed' => 0,
+                        'fee' => $paymentGroup->sum('paid_amount'),
                     ];
-                })->map(static function (array $paymentData) {
+
                     $payment = new Payment();
                     $payment->fill($paymentData);
                     $payment->push();
-                    $payment->events()->saveMany($paymentData['events']);
-
-                    return $payment;
-                });
+                    $payment->conversions()->saveMany($paymentGroup);
+                }
+            );
 
             $licensePayment = new Payment([
                 'account_address' => $licenseAccountAddress,
                 'state' => Payment::STATE_NEW,
                 'completed' => 0,
-                'fee' => $payments->sum(static function (Payment $payment) {
-                    return $payment->totalLicenseFee();
-                }),
+                'fee' => $totalLicenseFee,
+            ]);
+
+            $licensePayment->save();
+
+            DB::commit();
+
+            $this->info("and a license fee of {$licensePayment->fee} clicks"
+                ." payable to {$licensePayment->account_address}.");
+        }
+        while (true) {
+            $events = EventLog::fetchUnpaidEvents($from, $to, (int)$this->option('chunkSize'));
+
+            $eventCount = count($events);
+            $this->info("Found $eventCount payable events.");
+
+            if (!$eventCount) {
+                $this->release();
+
+                return;
+            }
+
+            $totalLicenseFee = 0;
+            $groupedEvents = $this->processAndGroupEventsByRecipient(
+                $events,
+                $demandLicenseFeeCoefficient,
+                $demandOperatorFeeCoefficient,
+                $totalLicenseFee
+            );
+
+            $this->info(sprintf('In that, there are %d recipients,', count($groupedEvents)));
+
+            DB::beginTransaction();
+
+            $groupedEvents->map(
+                static function (Collection $paymentGroup, string $payTo) {
+                    $paymentData = [
+                        'events' => $paymentGroup,
+                        'account_address' => $payTo,
+                        'state' => Payment::STATE_NEW,
+                        'completed' => 0,
+                        'fee' => $paymentGroup->sum('paid_amount'),
+                    ];
+
+                    $payment = new Payment();
+                    $payment->fill($paymentData);
+                    $payment->push();
+                    $payment->events()->saveMany($paymentGroup);
+
+                    return $payment;
+                }
+            );
+
+            $licensePayment = new Payment([
+                'account_address' => $licenseAccountAddress,
+                'state' => Payment::STATE_NEW,
+                'completed' => 0,
+                'fee' => $totalLicenseFee,
             ]);
 
             $licensePayment->save();
@@ -113,15 +184,21 @@ class DemandPreparePayments extends BaseCommand
         }
     }
 
-    private function processAndGroupByRecipient(
+    private function processAndGroupEventsByRecipient(
         \Illuminate\Database\Eloquent\Collection $events,
         float $demandLicenseFeeCoefficient,
-        float $demandOperatorFeeCoefficient
+        float $demandOperatorFeeCoefficient,
+        int &$totalLicenseFee
     ): Collection {
         return $events->each(
-            static function (EventLog $entry) use ($demandLicenseFeeCoefficient, $demandOperatorFeeCoefficient) {
+            static function (EventLog $entry) use (
+                $demandLicenseFeeCoefficient,
+                $demandOperatorFeeCoefficient,
+                &$totalLicenseFee
+            ) {
                 $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
                 $entry->license_fee = $licenseFee;
+                $totalLicenseFee += $licenseFee;
 
                 $amountAfterFee = $entry->event_value - $licenseFee;
                 $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);
@@ -130,5 +207,47 @@ class DemandPreparePayments extends BaseCommand
                 $entry->paid_amount = $amountAfterFee - $operatorFee;
             }
         )->groupBy('pay_to');
+    }
+
+    private function processAndGroupConversionsByRecipient(
+        \Illuminate\Database\Eloquent\Collection $events,
+        float $demandLicenseFeeCoefficient,
+        float $demandOperatorFeeCoefficient,
+        int &$totalLicenseFee
+    ): Collection {
+        return $events->each(
+            static function (Conversion $entry) use (
+                $demandLicenseFeeCoefficient,
+                $demandOperatorFeeCoefficient,
+                &$totalLicenseFee
+            ) {
+                $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
+                $entry->license_fee = $licenseFee;
+                $totalLicenseFee += $licenseFee;
+
+                $amountAfterFee = $entry->event_value - $licenseFee;
+                $operatorFee = (int)floor($amountAfterFee * $demandOperatorFeeCoefficient);
+                $entry->operator_fee = $operatorFee;
+
+                $entry->paid_amount = $amountAfterFee - $operatorFee;
+            }
+        )->groupBy('pay_to');
+    }
+
+    private function getDateTimeFromOption(string $option): ?DateTime
+    {
+        $value = $this->option($option);
+
+        if (null === $value) {
+            return null;
+        }
+
+        if (false === ($timestamp = strtotime((string)$value))) {
+            throw new InvalidArgumentException(
+                sprintf('[DemandPreparePayments] Invalid option %s format "%s"', $option, $value)
+            );
+        }
+
+        return new DateTime('@'.$timestamp);
     }
 }

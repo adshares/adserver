@@ -45,13 +45,13 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
+use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 use function response;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function strrpos;
-use Validator;
 
 class CampaignsController extends Controller
 {
@@ -413,14 +413,6 @@ class CampaignsController extends Controller
         $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
 
         return self::json(['campaign' => $campaign->toArray()]);
-    }
-
-    public function getConversions(int $campaignId): JsonResponse
-    {
-        $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
-        $conversions = $campaign->toArray()['conversions'];
-
-        return self::json($conversions);
     }
 
     public function classify(int $campaignId): JsonResponse

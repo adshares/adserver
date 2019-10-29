@@ -25,7 +25,6 @@ use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
-use Adshares\Adserver\Models\NetworkEventLog;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
@@ -202,7 +201,7 @@ class SupplyController extends Controller
             throw new NotFoundHttpException();
         }
 
-        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_CLICK);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, 'click');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
@@ -283,7 +282,7 @@ class SupplyController extends Controller
         }
 
         $caseId = $request->query->get('cid');
-        $eventId = Utils::createCaseIdContainingEventType($caseId, NetworkEventLog::TYPE_VIEW);
+        $eventId = Utils::createCaseIdContainingEventType($caseId, 'view');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);

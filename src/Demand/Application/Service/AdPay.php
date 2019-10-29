@@ -22,13 +22,25 @@ declare(strict_types = 1);
 
 namespace Adshares\Demand\Application\Service;
 
+use Adshares\Demand\Application\Dto\AdPayEvents;
+
 interface AdPay
 {
     public function updateCampaign(array $campaigns): void;
 
     public function deleteCampaign(array $campaignIds): void;
 
-    public function addEvents(array $events): void;
+    public function addViews(AdPayEvents $events): void;
 
-    public function getPayments(int $timestamp, bool $force): array;
+    public function addClicks(AdPayEvents $events): void;
+
+    public function addConversions(AdPayEvents $events): void;
+
+    public function getPayments(
+        int $timestamp,
+        bool $recalculate = false,
+        bool $force = false,
+        ?int $limit = null,
+        ?int $offset = null
+    ): array;
 }

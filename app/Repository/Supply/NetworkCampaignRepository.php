@@ -26,7 +26,6 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Domain\ValueObject\Uuid;
-use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\Banner;
 use Adshares\Supply\Domain\Model\Campaign;
@@ -154,11 +153,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            try {
-                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
-            } catch (RuntimeException $exception) {
-                // backward compatibility
-            }
+            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
         }
 
         return new CampaignCollection(...$campaigns);
@@ -171,11 +166,7 @@ class NetworkCampaignRepository implements CampaignRepository
         $campaigns = [];
 
         foreach ($networkCampaigns as $networkCampaign) {
-            try {
-                $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
-            } catch (RuntimeException $exception) {
-                // backward compatibility
-            }
+            $campaigns[] = $this->createDomainCampaignFromNetworkCampaign($networkCampaign);
         }
 
         return new CampaignCollection(...$campaigns);

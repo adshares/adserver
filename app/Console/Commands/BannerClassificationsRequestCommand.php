@@ -27,7 +27,6 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\Dto\ClassifierExternal;
-use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
 use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Support\Collection;
 
@@ -84,14 +83,15 @@ class BannerClassificationsRequestCommand extends BaseCommand
             $banner = $classification->banner;
             $bannerPublicId = $banner->uuid;
             $campaign = $banner->campaign;
+            $checksum = $banner->creative_sha1;
 
             $dataSet[$classifierName]['ids'][] = $banner->id;
             $dataSet[$classifierName]['banners'][] = [
                 'id' => $bannerPublicId,
-                'checksum' => $banner->creative_sha1,
+                'checksum' => $checksum,
                 'type' => $banner->creative_type,
                 'size' => $banner->getFormattedSize(),
-                'serve_url' => route('banner-serve', ['id' => $bannerPublicId]),
+                'serve_url' => route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                 'campaign_id' => $campaign->uuid,
                 'landing_url' => $campaign->landing_url,
             ];

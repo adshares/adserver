@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use function array_merge;
@@ -47,15 +48,13 @@ class Config extends Model
 
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
-    public const ADPAY_LAST_EXPORTED_EVENT_ID = 'adpay-last-exported-event-id';
+    public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
+
+    public const ADPAY_LAST_EXPORTED_EVENT_TIME = 'adpay-last-event-time';
 
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
 
     public const ADSELECT_LAST_EXPORTED_CASE_ID = 'adselect-export-case-id';
-
-    public const ADSELECT_LAST_EXPORTED_PAID_PAYMENT_ID = 'adselect-payment-export';
-
-    public const ADSELECT_LAST_EXPORTED_UNPAID_EVENT_ID = 'adselect-event-export';
 
     public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
 
@@ -196,9 +195,9 @@ class Config extends Model
         $config->save();
     }
 
-    public static function upsertDateTime(string $key, DateTime $date): void
+    public static function upsertDateTime(string $key, DateTimeInterface $date): void
     {
-        self::upsertByKey($key, $date->format(DateTime::ATOM));
+        self::upsertByKey($key, $date->format(DateTimeInterface::ATOM));
     }
 
     public static function upsertInt(string $key, int $id): void

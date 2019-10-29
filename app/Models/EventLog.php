@@ -36,12 +36,13 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
+use Illuminate\Support\Carbon;
 use stdClass;
 
 /**
- * @property int created_at
+ * @property Carbon created_at
  * @property int updated_at
  * @property string case_id
  * @property string event_id
@@ -66,7 +67,7 @@ use stdClass;
  * @property int $operator_fee
  * @property int $paid_amount
  * @property int payment_id
- * @property int reason
+ * @property int $payment_status
  * @property int is_view_clicked
  * @property string domain
  * @property int id
@@ -79,8 +80,6 @@ class EventLog extends Model
     use BinHex;
     use JsonValue;
 
-    public const TYPE_REQUEST = 'request';
-
     public const TYPE_VIEW = 'view';
 
     public const TYPE_CLICK = 'click';
@@ -90,6 +89,17 @@ class EventLog extends Model
     public const TYPE_CONVERSION = 'conversion';
 
     public const INDEX_CREATED_AT = 'event_logs_created_at_index';
+
+    private const CHUNK_SIZE = 1000;
+
+    private const SQL_QUERY_SELECT_EVENTS_TO_UPDATE_WITH_ADPAY_REPORT_TEMPLATE = <<<SQL
+SELECT LOWER(HEX(event_id))      AS event_id,
+       LOWER(HEX(advertiser_id)) AS advertiser_id,
+       LOWER(HEX(campaign_id))   AS campaign_id
+FROM event_logs
+WHERE event_value_currency IS NULL
+  AND event_id IN (%s)
+SQL;
 
     /**
      * The attributes that are mass assignable.
@@ -117,7 +127,7 @@ class EventLog extends Model
         'event_value_currency',
         'paid_amount',
         'payment_id',
-        'reason',
+        'payment_status',
         'is_view_clicked',
         'domain',
     ];
@@ -151,13 +161,20 @@ class EventLog extends Model
         'their_userdata' => 'JsonValue',
     ];
 
-    public static function fetchUnpaidEvents(int $limit = null): Collection
-    {
+    public static function fetchUnpaidEvents(
+        DateTime $from,
+        ?DateTime $to = null,
+        int $limit = null
+    ): Collection {
         $query = self::whereNotNull('event_value_currency')
             ->where('event_value_currency', '>', 0)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
-            ->where('created_at', '>', (new DateTime())->modify('-24 hour'));
+            ->where('created_at', '>=', $from);
+
+        if ($to !== null) {
+            $query->where('created_at', '<=', $to);
+        }
 
         if ($limit !== null) {
             $query->limit($limit);
@@ -168,6 +185,20 @@ class EventLog extends Model
         }
 
         return $query->get();
+    }
+
+    public static function fetchUnpaidEventsForUpdateWithPaymentReport(array $eventIds): array
+    {
+        $result = [];
+        foreach (array_chunk($eventIds, self::CHUNK_SIZE) as $ids) {
+            $query = sprintf(
+                self::SQL_QUERY_SELECT_EVENTS_TO_UPDATE_WITH_ADPAY_REPORT_TEMPLATE,
+                str_repeat('?,', count($ids) - 1).'?'
+            );
+            $result = array_merge($result, DB::select($query, $ids));
+        }
+
+        return $result;
     }
 
     public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection
@@ -348,8 +379,23 @@ class EventLog extends Model
         $this->our_userdata = $userData;
     }
 
-    public function group(): HasOne
+    public function setStatus(int $status): void
     {
-        return $this->hasOne(ConversionGroup::class);
+        $this->payment_status = $status;
+        $this->save();
+    }
+
+    public function setValueAndStatus(int $valueCurrency, float $exchangeRateValue, int $value, int $status): void
+    {
+        $this->event_value_currency = $valueCurrency;
+        $this->exchange_rate = $exchangeRateValue;
+        $this->event_value = $value;
+        $this->payment_status = $status;
+        $this->save();
+    }
+
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(Conversion::class);
     }
 }

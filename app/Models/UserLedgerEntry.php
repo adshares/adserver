@@ -472,7 +472,12 @@ class UserLedgerEntry extends Model
                         'amount',
                         'type',
                         'status',
-                        'address_from',
+                        DB::raw(
+                            DB::isSQLite()
+                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0'
+                                .' THEN null ELSE address_from END AS address_from'
+                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, null, address_from) AS address_from'
+                        ),
                         'address_to',
                         DB::raw(
                             DB::isSQLite()

@@ -162,7 +162,7 @@ class Utils
         return $site;
     }
 
-    public static function addUrlParameter($url, $name, $value): ?string
+    public static function addUrlParameter($url, $name, $value): string
     {
         $param = $name.'='.urlencode($value);
         $qPos = strpos($url, '?');
@@ -237,10 +237,6 @@ class Utils
     public static function createCaseIdContainingEventType(string $baseCaseId, string $eventType): string
     {
         $caseId = substr($baseCaseId, 0, -2);
-
-        if ($eventType === 'request') {
-            return $caseId.'01';
-        }
 
         if ($eventType === 'view') {
             return $caseId.'02';

@@ -55,7 +55,37 @@ $factory->define(
             'exchange_rate' => null,
             'event_value' => null,
             'pay_to' => $faker->randomElement($addresses),
-            'reason' => 0,
+            'payment_status' => 0,
+            'their_context' => [
+                'site' => [
+                    'domain' => 'example.com',
+                    'inframe' => 'no',
+                    'page' => 'http://example.com/test.html',
+                    'keywords' => [0 => '',],
+                    'referrer' => '',
+                    'popup' => 0,
+                ],
+                'device' => [
+                    'ua' => 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+                    'ip' => '172.25.0.1',
+                    'ips' => [0 => '172.25.0.1',],
+                    'headers' => [
+                        'upgrade-insecure-requests' => [0 => '1',],
+                        'cookie' => [0 => 'tid=T1N2PWZTZ0tth-rxeVHxmY4bbKJJCg',],
+                        'connection' => [0 => 'keep-alive',],
+                        'referer' => [0 => 'http://example.com/test.html',],
+                        'accept-encoding' => [0 => 'gzip, deflate',],
+                        'accept-language' => [0 => 'en-US,en;q=0.5',],
+                        'accept' => [0 => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',],
+                        'user-agent' => [
+                            0 => 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0',
+                        ],
+                        'host' => [0 => 'example.com',],
+                        'content-length' => [0 => '',],
+                        'content-type' => [0 => '',],
+                    ],
+                ],
+            ],
         ];
     }
 );

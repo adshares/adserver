@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Client;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Application\Service\SignatureVerifier;
@@ -56,6 +57,9 @@ final class GuzzleDemandClient implements DemandClient
     private const PAYMENT_DETAILS_ENDPOINT = '/payment-details/{transactionId}/{accountAddress}/{date}/{signature}'
     .'?limit={limit}&offset={offset}';
 
+    /** @var ClassifierExternalRepository */
+    private $classifierRepository;
+
     /** @var ClassifierExternalSignatureVerifier */
     private $classifierExternalSignatureVerifier;
 
@@ -66,10 +70,12 @@ final class GuzzleDemandClient implements DemandClient
     private $timeout;
 
     public function __construct(
+        ClassifierExternalRepository $classifierRepository,
         ClassifierExternalSignatureVerifier $classifierExternalSignatureVerifier,
         SignatureVerifier $signatureVerifier,
         int $timeout
     ) {
+        $this->classifierRepository = $classifierRepository;
         $this->classifierExternalSignatureVerifier = $classifierExternalSignatureVerifier;
         $this->signatureVerifier = $signatureVerifier;
         $this->timeout = $timeout;
@@ -254,6 +260,7 @@ final class GuzzleDemandClient implements DemandClient
             'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
         ];
 
+        $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
         $banners = [];
         foreach ((array)$data['banners'] as $banner) {
             $banner['demand_banner_id'] = Uuid::fromString($banner['id']);
@@ -264,8 +271,8 @@ final class GuzzleDemandClient implements DemandClient
                 unset($banner['id']);
             }
 
-            $banner['classification'] = $this->processClassification($banner);
-            if (empty($banner['classification'])) {
+            $banner['classification'] = $this->validateAndMapClassification($banner);
+            if ($this->missingRequiredClassifier($classifiersRequired, $banner['classification'])) {
                 continue;
             }
 
@@ -342,7 +349,7 @@ final class GuzzleDemandClient implements DemandClient
         return NetworkBanner::findSupplyIdsByDemandIds($bannerDemandIds, $sourceAddress);
     }
 
-    private function processClassification(array $banner): array
+    private function validateAndMapClassification(array $banner): array
     {
         $classification = $banner['classification'] ?? [];
         $checksum = $banner['checksum'] ?? '';
@@ -375,5 +382,16 @@ final class GuzzleDemandClient implements DemandClient
         }
 
         return $flatClassification;
+    }
+
+    private function missingRequiredClassifier(array $classifiersRequired, array $classification): bool
+    {
+        if (empty($classifiersRequired)) {
+            return false;
+        }
+
+        $classifiers = array_keys($classification);
+
+        return empty(array_intersect($classifiersRequired, $classifiers));
     }
 }

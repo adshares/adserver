@@ -22,7 +22,6 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\GzippedStreamedResponse;
-use Adshares\Adserver\Http\Response\PaymentDetailsResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
@@ -39,6 +38,7 @@ use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use stdClass;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -48,8 +48,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function base64_decode;
-use function bin2hex;
-use function inet_pton;
 use function json_decode;
 use function sprintf;
 
@@ -62,6 +60,14 @@ class DemandController extends Controller
     private const PAYMENT_DETAILS_LIMIT_MAX = 10000;
 
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+
+    private const SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
+SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM conversions WHERE payment_id IN (%s)
+UNION
+SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_logs WHERE payment_id IN (%s)
+LIMIT ?
+OFFSET ?;
+SQL;
 
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
@@ -393,7 +399,7 @@ class DemandController extends Controller
         string $date,
         string $signature,
         Request $request
-    ): PaymentDetailsResponse {
+    ): JsonResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
         $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
@@ -422,11 +428,23 @@ class DemandController extends Controller
             throw new BadRequestHttpException(sprintf('Maximum limit of %d exceeded', self::PAYMENT_DETAILS_LIMIT_MAX));
         }
 
-        return new PaymentDetailsResponse(EventLog::fetchEvents(
-            $payments->pluck('id'),
+        return self::json($this->fetchPaidConversionsAndEvents(
+            $payments->pluck('id')->toArray(),
             $limit,
             (int)$request->get('offset', 0)
         ));
+    }
+
+    public static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
+    {
+        $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1).'?';
+        $query = sprintf(
+            self::SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE,
+            $whereInPlaceholder,
+            $whereInPlaceholder
+        );
+
+        return DB::select($query, array_merge($paymentIds, $paymentIds, [$limit, $offset]));
     }
 
     public function inventoryList(Request $request): JsonResponse
@@ -437,7 +455,7 @@ class DemandController extends Controller
         $campaigns = [];
 
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
-        
+
         $bannerIds = [];
         foreach ($activeCampaigns as $campaign) {
             foreach ($campaign->ads as $banner) {
@@ -459,15 +477,20 @@ class DemandController extends Controller
                 }
 
                 $bannerPublicId = $bannerArray['uuid'];
+                $checksum = $bannerArray['creative_sha1'];
+
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'width' => $bannerArray['creative_width'],
                     'height' => $bannerArray['creative_height'],
                     'type' => $bannerArray['creative_type'],
-                    'checksum' => $bannerArray['creative_sha1'],
-                    'serve_url' => $this->changeHost(route('banner-serve', ['id' => $bannerPublicId]), $request),
-                    'click_url' => $this->changeHost(route('banner-click', ['id' => $bannerPublicId]), $request),
-                    'view_url' => $this->changeHost(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    'checksum' => $checksum,
+                    'serve_url' => SecureUrl::change(
+                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
+                        $request
+                    ),
+                    'click_url' => SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request),
+                    'view_url' => SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
@@ -498,13 +521,5 @@ class DemandController extends Controller
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
-    }
-
-    private function changeHost(string $url, Request $request): string
-    {
-        $currentHost = $request->getSchemeAndHttpHost();
-        $bannerHost = config('app.adserver_banner_host');
-
-        return str_replace($currentHost, $bannerHost, $url);
     }
 }

@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Tests\Http\Controllers;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
-use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
@@ -60,17 +59,17 @@ final class ConversionControllerTest extends TestCase
         $event->save();
 
         $conversionValue = 100000000;
-        $conversion = new ConversionDefinition();
-        $conversion->campaign_id = $campaign->id;
-        $conversion->name = 'a';
-        $conversion->budget_type = 'in_budget';
-        $conversion->event_type = 'Purchase';
-        $conversion->type = ConversionDefinition::BASIC_TYPE;
-        $conversion->value = $conversionValue;
+        $conversionDefinition = new ConversionDefinition();
+        $conversionDefinition->campaign_id = $campaign->id;
+        $conversionDefinition->name = 'a';
+        $conversionDefinition->limit_type = 'in_budget';
+        $conversionDefinition->event_type = 'Purchase';
+        $conversionDefinition->type = ConversionDefinition::BASIC_TYPE;
+        $conversionDefinition->value = $conversionValue;
 
-        $conversion->save();
+        $conversionDefinition->save();
 
-        $url = $this->buildConversionUrl($conversion->uuid);
+        $url = $this->buildConversionUrl($conversionDefinition->uuid);
 
         $cookies = [
             'tid' => Utils::urlSafeBase64Encode(hex2bin($event->tracking_id)),
@@ -79,20 +78,13 @@ final class ConversionControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
 
-        $conversionEvent = EventConversionLog::where('event_type', EventLog::TYPE_CONVERSION)->first();
-        $eventData = [
-            'event_type' => EventConversionLog::TYPE_CONVERSION,
-            'campaign_id' => hex2bin($campaign->uuid),
-        ];
-        $this->assertDatabaseHas('event_conversion_logs', $eventData);
-
-        $conversionGroupData = [
-            'event_logs_id' => $conversionEvent->id,
-            'conversion_definition_id' => $conversion->id,
+        $conversionData = [
+            'event_logs_id' => $event->id,
+            'conversion_definition_id' => $conversionDefinition->id,
             'value' => $conversionValue,
             'weight' => 1,
         ];
-        $this->assertDatabaseHas('conversion_groups', $conversionGroupData);
+        $this->assertDatabaseHas('conversions', $conversionData);
     }
 
     private function buildConversionUrl(string $uuid): string
