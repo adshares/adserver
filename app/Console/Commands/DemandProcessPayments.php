@@ -53,7 +53,12 @@ class DemandProcessPayments extends BaseCommand
 
             if ($report->isNew()) {
                 try {
-                    $status = Artisan::call(AdPayGetPayments::COMMAND_SIGNATURE, ['--timestamp' => $timestamp]);
+                    $status =
+                        Artisan::call(
+                            AdPayGetPayments::COMMAND_SIGNATURE,
+                            ['--timestamp' => $timestamp],
+                            $this->getOutput()
+                        );
                 } catch (LogicException $logicException) {
                     $this->warn(sprintf('Command %s is locked', AdPayGetPayments::COMMAND_SIGNATURE));
 
@@ -76,7 +81,7 @@ class DemandProcessPayments extends BaseCommand
                     '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTime::ATOM),
                 ];
                 try {
-                    Artisan::call(DemandPreparePayments::COMMAND_SIGNATURE, $parameters);
+                    Artisan::call(DemandPreparePayments::COMMAND_SIGNATURE, $parameters, $this->getOutput());
                 } catch (LogicException $logicException) {
                     $this->warn(sprintf('Command %s is locked', DemandPreparePayments::COMMAND_SIGNATURE));
 
@@ -87,7 +92,7 @@ class DemandProcessPayments extends BaseCommand
 
             if ($report->isPrepared()) {
                 try {
-                    Artisan::call(DemandSendPayments::COMMAND_SIGNATURE);
+                    Artisan::call(DemandSendPayments::COMMAND_SIGNATURE, [], $this->getOutput());
                 } catch (LogicException $logicException) {
                     $this->warn(sprintf('Command %s is locked', DemandSendPayments::COMMAND_SIGNATURE));
 
@@ -99,7 +104,11 @@ class DemandProcessPayments extends BaseCommand
             if ($report->isSent()) {
                 $hour = (new DateTime('@'.$timestamp))->format(DateTime::ATOM);
                 try {
-                    Artisan::call(AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE, ['--hour' => $hour]);
+                    Artisan::call(
+                        AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE,
+                        ['--hour' => $hour],
+                        $this->getOutput()
+                    );
                 } catch (LogicException $logicException) {
                     $this->warn(
                         sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
