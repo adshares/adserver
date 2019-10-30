@@ -47,15 +47,22 @@ class AdPayCampaignExportCommand extends BaseCommand
         $now = new DateTime();
         $dateFrom = Config::fetchDateTime(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
 
-        $updatedCampaigns = Campaign::where('updated_at', '>=', $dateFrom)->with('conversions')->get();
-        $this->info('Found '.count($updatedCampaigns).' updated campaigns to export.');
+        $updatedCampaigns =
+            Campaign::where('updated_at', '>=', $dateFrom)->where('status', Campaign::STATUS_ACTIVE)->with(
+                'conversions'
+            )->get();
+        $this->info(sprintf('Found %d updated campaigns to export.', count($updatedCampaigns)));
         if (count($updatedCampaigns) > 0) {
             $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
             $adPay->updateCampaign($campaigns);
         }
 
-        $deletedCampaigns = Campaign::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
-        $this->info('Found '.count($deletedCampaigns).' deleted campaigns to export.');
+        $deletedCampaigns =
+            Campaign::withTrashed()
+                ->where('updated_at', '>=', $dateFrom)
+                ->whereIn('status', [Campaign::STATUS_INACTIVE, Campaign::STATUS_SUSPENDED])
+                ->get();
+        $this->info(sprintf('Found %d deleted campaigns to export.', count($deletedCampaigns)));
         if (count($deletedCampaigns) > 0) {
             $campaignIds = DemandCampaignMapper::mapCampaignCollectionToCampaignIds($deletedCampaigns);
             $adPay->deleteCampaign($campaignIds);

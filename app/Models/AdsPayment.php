@@ -49,4 +49,14 @@ class AdsPayment extends Model
     protected $casts = [
         'amount' => 'int',
     ];
+
+    public static function create(string $transactionId, int $amount, string $address): self
+    {
+        $adsPayment = new self();
+        $adsPayment->txid = $transactionId;
+        $adsPayment->amount = $amount;
+        $adsPayment->address = $address;
+
+        return $adsPayment;
+    }
 }

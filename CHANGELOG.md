@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2019-10-30
+### Changed
+- Merge command ads:get-tx-in and ads:process-tx
+- PHP-FPM socket name
+
 ## [1.3.0] - 2019-10-29
 ### Added
 - Banner checksum fragment to serve url
@@ -244,7 +249,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.3.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.3.1...develop
+[1.3.1]: https://github.com/adshares/adserver/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/adshares/adserver/compare/v1.2.5...v1.3.0
 [1.2.5]: https://github.com/adshares/adserver/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/adshares/adserver/compare/v1.2.3...v1.2.4

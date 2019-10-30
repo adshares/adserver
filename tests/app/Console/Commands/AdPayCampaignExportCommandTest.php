@@ -28,6 +28,7 @@ use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\MockObject\Stub;
 use function factory;
 
 class AdPayCampaignExportCommandTest extends TestCase
@@ -37,15 +38,22 @@ class AdPayCampaignExportCommandTest extends TestCase
     public function testHandle(): void
     {
         $user = factory(User::class)->create();
-        factory(Campaign::class)->create(['user_id' => $user->id]);
-        factory(Campaign::class)->create(['user_id' => $user->id, 'deleted_at' => new DateTime()]);
+        factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
+        factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
+        factory(Campaign::class)->create(
+            ['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE, 'deleted_at' => new DateTime()]
+        );
 
         $this->app->bind(
             AdPay::class,
             function () {
                 $adPayService = $this->createMock(AdPay::class);
-                $adPayService->expects(self::once())->method('updateCampaign');
-                $adPayService->expects(self::once())->method('deleteCampaign');
+                $adPayService->expects(self::once())->method('updateCampaign')->will(
+                    self::assertCampaignCount(1)
+                );
+                $adPayService->expects(self::once())->method('deleteCampaign')->will(
+                    self::assertCampaignCount(2)
+                );
 
                 return $adPayService;
             }
@@ -53,6 +61,15 @@ class AdPayCampaignExportCommandTest extends TestCase
 
         $this->artisan('ops:adpay:campaign:export')
             ->assertExitCode(0);
+    }
+
+    private static function assertCampaignCount(int $expectedCount): Stub
+    {
+        return self::returnCallback(
+            function (array $campaigns) use ($expectedCount) {
+                self::assertCount($expectedCount, $campaigns);
+            }
+        );
     }
 
     public function testHandleEmptyDb(): void
