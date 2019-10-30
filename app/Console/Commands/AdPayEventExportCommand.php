@@ -285,7 +285,7 @@ class AdPayEventExportCommand extends BaseCommand
                     ->where('created_at', '<=', $dateToTemporary)
                     ->get();
 
-            $this->info(
+            Log::debug(
                 sprintf(
                     '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
                     $pack + 1,
@@ -369,7 +369,7 @@ class AdPayEventExportCommand extends BaseCommand
                 $dateToTemporary
             )->with('event')->with('conversionDefinition')->get();
 
-            $this->info(
+            Log::debug(
                 sprintf(
                     '[AdPayEventExport] Pack [%d]. Conversions to export: %d (%s -> %s, %s s)',
                     $pack + 1,
