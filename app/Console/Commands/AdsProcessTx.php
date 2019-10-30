@@ -27,29 +27,18 @@ use Adshares\Ads\Entity\Transaction\SendManyTransactionWire;
 use Adshares\Ads\Entity\Transaction\SendOneTransaction;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
-use Adshares\Adserver\Exceptions\MissingInitialConfigurationException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\CampaignResume;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Services\Common\AdsLogReader;
-use Adshares\Adserver\Services\LicenseFeeSender;
-use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use Adshares\Common\Infrastructure\Service\LicenseReader;
-use Adshares\Supply\Application\Service\DemandClient;
-use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
-use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
-use DateTime;
 use Exception;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
-use function sprintf;
 
 class AdsProcessTx extends BaseCommand
 {
@@ -59,46 +48,36 @@ class AdsProcessTx extends BaseCommand
 
     public const EXIT_CODE_LOCKED = 2;
 
-    protected $signature = 'ads:process-tx {--c|chunkSize=5000}';
+    protected $signature = 'ads:process-tx';
 
     protected $description = 'Fetches and processes incoming transactions';
 
     /** @var string */
     private $adServerAddress;
 
+    /** @var AdsLogReader */
+    private $adsLogReader;
+
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
-
-    /** @var DemandClient $demandClient */
-    private $demandClient;
-
-    /** @var PaymentDetailsProcessor $paymentDetailsProcessor */
-    private $paymentDetailsProcessor;
 
     /** @var AdsClient */
     private $adsClient;
 
-    /** @var LicenseReader */
-    private $licenseReader;
-
     public function __construct(
         Locker $locker,
+        AdsLogReader $adsLogReader,
         ExchangeRateReader $exchangeRateReader,
-        AdsClient $adsClient,
-        LicenseReader $licenseReader
+        AdsClient $adsClient
     ) {
         parent::__construct($locker);
         $this->adServerAddress = (string)config('app.adshares_address');
+        $this->adsLogReader = $adsLogReader;
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsClient = $adsClient;
-        $this->licenseReader = $licenseReader;
     }
 
-    public function handle(
-        AdsLogReader $adsLogReader,
-        PaymentDetailsProcessor $paymentDetailsProcessor,
-        DemandClient $demandClient
-    ): int {
+    public function handle(): int {
         if (!$this->lock()) {
             $this->info('Command '.$this->getName().' already running');
 
@@ -108,14 +87,11 @@ class AdsProcessTx extends BaseCommand
         $this->info('Start command '.$this->getName());
 
         try {
-            $transactionCount = $adsLogReader->parseLog();
+            $transactionCount = $this->adsLogReader->parseLog();
             $this->info("Number of added transactions: ${transactionCount}");
         } catch (CommandException $commandException) {
             $this->error('Cannot get log');
         }
-
-        $this->demandClient = $demandClient;
-        $this->paymentDetailsProcessor = $paymentDetailsProcessor;
 
         try {
             $this->updateBlockIds($this->adsClient);
@@ -129,7 +105,7 @@ class AdsProcessTx extends BaseCommand
             return self::EXIT_CODE_CANNOT_GET_BLOCK_IDS;
         }
 
-        $dbTxs = AdsPayment::where('status', AdsPayment::STATUS_NEW)->get();
+        $dbTxs = AdsPayment::fetchByStatus(AdsPayment::STATUS_NEW);
 
         foreach ($dbTxs as $dbTx) {
             try {
@@ -209,8 +185,10 @@ class AdsProcessTx extends BaseCommand
 
     private function handleSendManyTx(AdsPayment $dbTx, SendManyTransaction $transaction): void
     {
+        $dbTx->tx_time = $transaction->getTime();
+
         if ($this->isSendManyTransactionTargetValid($transaction)) {
-            $this->handleReservedTx($dbTx, $transaction->getTime());
+            $this->handleReservedTx($dbTx);
         } else {
             $dbTx->status = AdsPayment::STATUS_INVALID;
             $dbTx->save();
@@ -231,14 +209,11 @@ class AdsProcessTx extends BaseCommand
         return false;
     }
 
-    private function handleReservedTx(AdsPayment $dbTx, DateTime $transactionTime): void
+    private function handleReservedTx(AdsPayment $dbTx): void
     {
-        if ($this->checkIfColdWalletTransaction($dbTx)) {
-            $dbTx->status = AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET;
-        } elseif (!$this->handleIfEventPayment($dbTx, $transactionTime)) {
-            $dbTx->status = AdsPayment::STATUS_RESERVED;
-        }
-
+        $dbTx->status = $this->checkIfColdWalletTransaction($dbTx)
+            ? AdsPayment::STATUS_TRANSFER_FROM_COLD_WALLET
+            : AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE;
         $dbTx->save();
     }
 
@@ -247,77 +222,10 @@ class AdsProcessTx extends BaseCommand
         return $dbTx->address === config('app.adshares_wallet_cold_address');
     }
 
-    private function handleIfEventPayment(AdsPayment $incomingPayment, DateTime $transactionTime): bool
-    {
-        if (null === ($networkHost = NetworkHost::fetchByAddress($incomingPayment->address))) {
-            return false;
-        }
-
-        $resultsCollection = new LicenseFeeSender($this->adsClient, $this->licenseReader, $incomingPayment);
-
-        $limit = (int)$this->option('chunkSize');
-        for ($offset = $incomingPayment->last_offset ?? 0, $paymentDetailsSize = $limit;
-            $paymentDetailsSize === $limit;
-            $offset += $limit) {
-            try {
-                $paymentDetails = $this->demandClient->fetchPaymentDetails(
-                    $networkHost->host,
-                    $incomingPayment->txid,
-                    $limit,
-                    $offset
-                );
-                $paymentDetailsSize = count($paymentDetails);
-                Log::debug(sprintf(
-                    '%s: offset=%d, paymentDetailsSize=%d',
-                    __FUNCTION__,
-                    $offset,
-                    $paymentDetailsSize
-                ));
-            } catch (EmptyInventoryException $exception) {
-                return false;
-            } catch (UnexpectedClientResponseException $exception) {
-                return $exception->getCode() !== Response::HTTP_NOT_FOUND;
-            }
-
-            try {
-                $processPaymentDetails = $this->paymentDetailsProcessor->processPaidEvents(
-                    $incomingPayment,
-                    $transactionTime,
-                    $paymentDetails,
-                    $resultsCollection->eventValueSum()
-                );
-
-                $resultsCollection->add($processPaymentDetails);
-            } catch (MissingInitialConfigurationException $exception) {
-                $this->error('Missing initial configuration: '.$exception->getMessage());
-
-                return true;
-            } catch (Exception $exception) {
-                $this->error('Unexpected error: '.$exception->getMessage());
-
-                return true;
-            }
-
-            $incomingPayment->last_offset = $offset;
-        }
-
-        $this->paymentDetailsProcessor->addAdIncomeToUserLedger($incomingPayment);
-
-        $incomingPayment->status = AdsPayment::STATUS_EVENT_PAYMENT;
-
-        $licensePayment = $resultsCollection->sendAllLicensePayments();
-        $this->info(sprintf(
-            'LicensePayment TX_ID: %s. Sent %d to %s.',
-            $licensePayment->tx_id,
-            $licensePayment->amount,
-            $licensePayment->receiver_address
-        ));
-
-        return true;
-    }
-
     private function handleSendOneTx(AdsPayment $dbTx, SendOneTransaction $transaction): void
     {
+        $dbTx->tx_time = $transaction->getTime();
+
         $targetAddr = $transaction->getTargetAddress();
 
         if ($targetAddr === $this->adServerAddress) {
@@ -326,7 +234,7 @@ class AdsProcessTx extends BaseCommand
             $user = User::fetchByUuid($uuid);
 
             if (null === $user) {
-                $this->handleReservedTx($dbTx, $transaction->getTime());
+                $this->handleReservedTx($dbTx);
             } else {
                 DB::beginTransaction();
 
