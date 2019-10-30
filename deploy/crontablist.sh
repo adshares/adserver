@@ -45,8 +45,6 @@ echo -n "php ${SERVICE_DIR}/artisan ops:demand:payments:block"
 echo ""
 
 echo -n "*/8 * * * * "
-echo -n "php ${SERVICE_DIR}/artisan ads:get-tx-in"
-echo -n " && "
 echo -n "php ${SERVICE_DIR}/artisan ads:process-tx"
 #echo -n " && "
 #echo -n "php ${SERVICE_DIR}/artisan ops:adselect:case-payments:export"

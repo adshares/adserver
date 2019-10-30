@@ -35,6 +35,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Services\LicenseFeeSender;
 use Adshares\Adserver\Services\PaymentDetailsProcessor;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -60,8 +61,9 @@ class AdsProcessTx extends BaseCommand
 
     protected $signature = 'ads:process-tx {--c|chunkSize=5000}';
 
-    protected $description = 'Processes incoming txs';
+    protected $description = 'Fetches and processes incoming transactions';
 
+    /** @var string */
     private $adServerAddress;
 
     /** @var ExchangeRateReader */
@@ -86,23 +88,31 @@ class AdsProcessTx extends BaseCommand
         LicenseReader $licenseReader
     ) {
         parent::__construct($locker);
-        $this->adServerAddress = config('app.adshares_address');
+        $this->adServerAddress = (string)config('app.adshares_address');
         $this->exchangeRateReader = $exchangeRateReader;
         $this->adsClient = $adsClient;
         $this->licenseReader = $licenseReader;
     }
 
     public function handle(
+        AdsLogReader $adsLogReader,
         PaymentDetailsProcessor $paymentDetailsProcessor,
         DemandClient $demandClient
     ): int {
         if (!$this->lock()) {
-            $this->info('Command '.$this->signature.' already running');
+            $this->info('Command '.$this->getName().' already running');
 
             return self::EXIT_CODE_LOCKED;
         }
 
-        $this->info('Start command '.$this->signature);
+        $this->info('Start command '.$this->getName());
+
+        try {
+            $transactionCount = $adsLogReader->parseLog();
+            $this->info("Number of added transactions: ${transactionCount}");
+        } catch (CommandException $commandException) {
+            $this->error('Cannot get log');
+        }
 
         $this->demandClient = $demandClient;
         $this->paymentDetailsProcessor = $paymentDetailsProcessor;
@@ -112,9 +122,7 @@ class AdsProcessTx extends BaseCommand
         } catch (CommandException $exc) {
             $code = $exc->getCode();
             $message = $exc->getMessage();
-            $this->error(
-                "Cannot update blocks due to CommandException:\n"."Code:\n  ${code}\n"."Message:\n  ${message}\n"
-            );
+            $this->error("Cannot update blocks due to CommandException (${code})(${message})");
 
             $this->info('Premature finish processing incoming txs.');
 
@@ -174,8 +182,7 @@ class AdsProcessTx extends BaseCommand
             $code = $exc->getCode();
             $message = $exc->getMessage();
             $this->info(
-                "Cannot get transaction [$txid] data due to CommandException:\nCode:\n  ${code}\n"
-                ."Message:\n  ${message}\n"
+                "Cannot get transaction [$txid] data due to CommandException (${code})(${message})"
             );
 
             return;

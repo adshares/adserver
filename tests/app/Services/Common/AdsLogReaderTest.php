@@ -18,71 +18,98 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+declare(strict_types = 1);
+
+namespace Adshares\Adserver\Tests\Services\Common;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Command\GetLogCommand;
 use Adshares\Ads\Exception\CommandException;
 use Adshares\Ads\Response\GetLogResponse;
-use Adshares\Adserver\Console\Commands\AdsGetTxIn;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Adserver\Tests\TestCase;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdsGetTxInTest extends TestCase
+final class AdsLogReaderTest extends TestCase
 {
     use RefreshDatabase;
 
     public function testAdsTxInConsecutiveCalls(): void
     {
-        $this->app->bind(
-            AdsClient::class,
-            function () {
-                $adsClient = $this->createMock(AdsClient::class);
-                $adsClient->method('getLog')->will(
-                    $this->returnCallback(
-                        function ($d) {
-                            if (null === $d) {
-                                $ts = 0;
-                            } else {
-                                /** @var $d DateTime */
-                                $ts = $d->getTimestamp();
-                            }
-                            switch ($ts) {
-                                case 1539606265:
-                                    $response = new GetLogResponse(json_decode($this->getLog2(), true));
-                                    break;
-                                case 0:
-                                default:
-                                    $response = new GetLogResponse(json_decode($this->getLog1(), true));
-                                    break;
-                            }
+        $adsClient = $this->createMock(AdsClient::class);
+        $adsClient->method('getLog')->will(
+            $this->returnCallback(
+                function ($d) {
+                    if (null === $d) {
+                        $ts = 0;
+                    } else {
+                        /** @var $d DateTime */
+                        $ts = $d->getTimestamp();
+                    }
+                    switch ($ts) {
+                        case 1539606265:
+                            $response = new GetLogResponse(json_decode($this->getLog2(), true));
+                            break;
+                        case 0:
+                        default:
+                            $response = new GetLogResponse(json_decode($this->getLog1(), true));
+                            break;
+                    }
 
-                            return $response;
-                        }
-                    )
-                );
-
-                return $adsClient;
-            }
+                    return $response;
+                }
+            )
         );
 
-        $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 12')->assertExitCode(0);
+        /** @var AdsClient $adsClient */
+        (new AdsLogReader($adsClient))->parseLog();
+
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $expectedDate = (new DateTime())->setTimestamp(1539606265)->format(DateTime::ATOM);
+        $expectedDate = (new DateTime('@1539606265'))->format(DateTime::ATOM);
         $this->assertEquals($expectedDate, $from->value);
         $this->assertEquals(12, AdsPayment::all()->count());
         $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
 
-        $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 0')->assertExitCode(
-            AdsGetTxIn::EXIT_CODE_SUCCESS
-        );
+        (new AdsLogReader($adsClient))->parseLog();
+
         $from = Config::where('key', Config::ADS_LOG_START)->first();
         $this->assertEquals($expectedDate, $from->value);
         $this->assertEquals(12, AdsPayment::all()->count());
         $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
+    }
+
+    public function testAdsTxInLogEmpty(): void
+    {
+        $adsClient = $this->createMock(AdsClient::class);
+        $adsClient->method('getLog')->willReturn(new GetLogResponse(json_decode($this->getLogEmpty(), true)));
+
+        /** @var AdsClient $adsClient */
+        (new AdsLogReader($adsClient))->parseLog();
+
+        $from = Config::where('key', Config::ADS_LOG_START)->first();
+        $this->assertNull($from);
+        $this->assertEquals(0, AdsPayment::all()->count());
+        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
+    }
+
+    public function testAdsTxInLogException(): void
+    {
+        $adsClient = $this->createMock(AdsClient::class);
+        $exception = new CommandException(new GetLogCommand(new DateTime()), 'Process timed out');
+        $adsClient->method('getLog')->willThrowException($exception);
+
+        $this->expectException(CommandException::class);
+
+        /** @var AdsClient $adsClient */
+        (new AdsLogReader($adsClient))->parseLog();
+
+        $from = Config::where('key', Config::ADS_LOG_START)->first();
+        $this->assertNull($from);
+        $this->assertEquals(0, AdsPayment::all()->count());
+        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 
     private function getLog2(): string
@@ -92,8 +119,7 @@ class AdsGetTxInTest extends TestCase
             "previous_block_time": "1539606208",
             "tx": {
                 "data": "11010001000000FA86C45B",
-                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0D'
-            .'95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0D'.'95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -163,8 +189,7 @@ class AdsGetTxInTest extends TestCase
             "previous_block_time": "1539606208",
             "tx": {
                 "data": "11010001000000FA86C45B",
-                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF5002'
-            .'4EED1D3BC0D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF5002'.'4EED1D3BC0D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -487,28 +512,6 @@ class AdsGetTxInTest extends TestCase
         }';
     }
 
-    public function testAdsTxInLogEmpty(): void
-    {
-        $this->app->bind(
-            AdsClient::class,
-            function () {
-                $adsClient = $this->createMock(AdsClient::class);
-                $adsClient->method('getLog')->willReturn(new GetLogResponse(json_decode($this->getLogEmpty(), true)));
-
-                return $adsClient;
-            }
-        );
-
-        $this->artisan('ads:get-tx-in')->expectsOutput('Number of added txs: 0')->assertExitCode(
-            AdsGetTxIn::EXIT_CODE_SUCCESS
-        );
-
-        $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertNull($from);
-        $this->assertEquals(0, AdsPayment::all()->count());
-        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
-    }
-
     private function getLogEmpty(): string
     {
         return '{
@@ -516,8 +519,7 @@ class AdsGetTxInTest extends TestCase
             "previous_block_time": "1539606208",
             "tx": {
                 "data": "11010001000000FA86C45B",
-                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0'
-            .'D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
+                "signature": "51C3574328936FAC497A05B0F45E5AD84D4F20D9D2B3F1AFE933FDEBCF50024EED1D3BC0'.'D95BCD2443961B742A06077E7589C78EF94B290974984226FDE8A705",
                 "time": "1539606266",
                 "account_msid": "0",
                 "account_hashin": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
@@ -543,27 +545,5 @@ class AdsGetTxInTest extends TestCase
             },
             "log": ""
         }';
-    }
-
-    public function testAdsTxInLogException(): void
-    {
-        $this->app->bind(
-            AdsClient::class,
-            function () {
-                $adsClient = $this->createMock(AdsClient::class);
-                $command = new GetLogCommand(new DateTime());
-                $exception = new CommandException($command, 'Process timed out');
-                $adsClient->method('getLog')->willThrowException($exception);
-
-                return $adsClient;
-            }
-        );
-
-        $this->artisan('ads:get-tx-in')->expectsOutput('Cannot get log')->assertExitCode(AdsGetTxIn::EXIT_CODE_ERROR);
-
-        $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $this->assertNull($from);
-        $this->assertEquals(0, AdsPayment::all()->count());
-        $this->assertEquals(0, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
     }
 }
