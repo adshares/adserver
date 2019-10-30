@@ -52,7 +52,7 @@ class AdsPayment extends Model
 
     public static function create(string $transactionId, int $amount, string $address): self
     {
-        $adsPayment = new AdsPayment();
+        $adsPayment = new self();
         $adsPayment->txid = $transactionId;
         $adsPayment->amount = $amount;
         $adsPayment->address = $address;
