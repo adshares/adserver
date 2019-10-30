@@ -25,6 +25,7 @@ use Adshares\Ads\Driver\CliDriver;
 use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdvertiserStatsRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
+use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseDecoder;
@@ -57,6 +58,13 @@ class AppServiceProvider extends ServiceProvider
                 $drv->setWorkingDir(config('app.adshares_workingdir'));
 
                 return new AdsClient($drv);
+            }
+        );
+
+        $this->app->bind(
+            AdsLogReader::class,
+            function (Application $app) {
+                return new AdsLogReader($app->make(AdsClient::class));
             }
         );
 
