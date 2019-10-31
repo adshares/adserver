@@ -133,8 +133,20 @@ class NetworkCasePayment extends Model
         int $limit,
         int $offset
     ): Collection {
-        return self::where('id', '>=', $idFrom)
-            ->where('network_case_id', '<=', $caseIdMax)
+        return self::select(
+            [
+                'network_case_payments.*',
+                'ads_payments.address as payer'
+            ]
+        )
+            ->where('network_case_payments.id', '>=', $idFrom)
+            ->where('network_case_payments.network_case_id', '<=', $caseIdMax)
+            ->join(
+                'ads_payments',
+                'network_case_payments.ads_payment_id',
+                '=',
+                'ads_payments.id'
+            )
             ->take($limit)
             ->skip($offset)
             ->get();
