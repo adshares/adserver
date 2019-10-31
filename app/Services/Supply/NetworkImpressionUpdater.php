@@ -83,7 +83,7 @@ class NetworkImpressionUpdater
 
             foreach ($impressions as $impression) {
                 /** @var $impression NetworkImpression */
-                if ($impression->human_score !== null && $impression->user_data !== null) {
+                if ($impression->user_id && $impression->human_score !== null && $impression->user_data !== null) {
                     continue;
                 }
 

@@ -41,7 +41,7 @@ use function hex2bin;
  * @property string tracking_id
  * @property string|null user_id
  * @property stdClass context
- * @property int|null human_score
+ * @property float|null human_score
  * @property string|null user_data
  * @property Collection networkCases
  * @mixin Builder
@@ -81,6 +81,10 @@ class NetworkImpression extends Model
         $log->impression_id = $impressionId;
         $log->tracking_id = $trackingId;
         $log->context = $context->toArray();
+        if ('' !== ($userId = $context->userId())) {
+            $log->user_id = $userId;
+        }
+        $log->human_score = $context->humanScore();
 
         $log->save();
     }

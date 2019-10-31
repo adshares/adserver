@@ -183,6 +183,11 @@ final class ImpressionContext
         return '';
     }
 
+    public function humanScore(): ?float
+    {
+        return $this->user['keywords']['human_score'][0] ?? null;
+    }
+
     private function flatHeaders(): array
     {
         $headers = array_map(

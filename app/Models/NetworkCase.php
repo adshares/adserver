@@ -149,11 +149,10 @@ class NetworkCase extends Model
         int $limit,
         int $offset
     ): Collection {
-        return NetworkCase::from('network_cases AS c')->select(
+        return self::select(
             [
-                'c.id AS id',
-                'c.created_at AS created_at',
-                'case_id',
+                'network_cases.id AS id',
+                'network_cases.created_at AS created_at',
                 'publisher_id',
                 'zone_id',
                 'campaign_id',
@@ -161,14 +160,21 @@ class NetworkCase extends Model
                 'impression_id',
                 'tracking_id',
                 'user_id',
-                'context',
+                'human_score',
+                'user_data',
             ]
-        )->join(
-            'network_impressions AS i',
-            function (JoinClause $join) {
-                $join->on('c.network_impression_id', '=', 'i.id');
-            }
-        )->where('c.id', '>=', $idFrom)->where('i.id', '<=', $impressionIdMax)->take($limit)->skip($offset)->get();
+        )
+            ->join(
+                'network_impressions',
+                'network_cases.network_impression_id',
+                '=',
+                'network_impressions.id'
+            )
+            ->where('network_cases.id', '>=', $idFrom)
+            ->where('network_impressions.id', '<=', $impressionIdMax)
+            ->take($limit)
+            ->skip($offset)
+            ->get();
     }
 
     public function networkCaseClick(): HasOne
