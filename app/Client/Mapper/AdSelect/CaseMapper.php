@@ -33,11 +33,6 @@ class CaseMapper
 {
     public static function map(NetworkCase $caseWithImpression): array
     {
-        $keywords = self::getNormalizedKeywords($caseWithImpression);
-        if (!$keywords) {
-            $keywords = new stdClass();
-        }
-
         return [
             'id' => $caseWithImpression->id,
             'created_at' => $caseWithImpression->created_at->format(DateTime::ATOM),
@@ -48,22 +43,6 @@ class CaseMapper
             'impression_id' => $caseWithImpression->impression_id,
             'tracking_id' => $caseWithImpression->tracking_id,
             'user_id' => $caseWithImpression->user_id,
-            'keywords' => $keywords,
         ];
-    }
-
-    private static function getNormalizedKeywords(NetworkCase $caseWithImpression): ?array
-    {
-        $keywords = null;
-
-        $context = $caseWithImpression->context;
-        if (is_object($context)
-            && property_exists($context, 'site')
-            && is_object($site = $context->site)
-            && property_exists($site, 'keywords')) {
-            $keywords = AbstractFilterMapper::generateNestedStructure(['site' => (array)$site->keywords]);
-        }
-
-        return $keywords;
     }
 }
