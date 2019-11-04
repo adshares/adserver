@@ -269,8 +269,8 @@ class SupplyProcessPaymentsTest extends TestCase
 
         $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
-        $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
 
+        $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
