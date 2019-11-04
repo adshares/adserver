@@ -128,8 +128,11 @@ SQL;
         $limit = (int)$this->option('chunkSize');
         $offset = $incomingPayment->last_offset ?? 0;
         if ($offset > 0) {
-            $sum = DB::select(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id])[0];
-            $resultsCollection->add(new PaymentProcessingResult($sum->total_amount, $sum->license_fee));
+            $paymentSum = DB::select(self::SQL_QUERY_GET_PROCESSED_PAYMENTS_AMOUNT, [$incomingPayment->id]);
+            if (!empty($paymentSum)) {
+                $sum = $paymentSum[0];
+                $resultsCollection->add(new PaymentProcessingResult($sum->total_amount, $sum->license_fee));
+            }
         }
         $transactionTime = $incomingPayment->tx_time;
 
