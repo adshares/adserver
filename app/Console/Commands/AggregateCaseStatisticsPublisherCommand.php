@@ -32,6 +32,7 @@ use Throwable;
 
 class AggregateCaseStatisticsPublisherCommand extends BaseCommand
 {
+
     protected $signature = 'ops:stats:aggregate:publisher {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates network cases data for statistics';
@@ -54,56 +55,62 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
                 return;
             }
 
-            $from = DateTimeImmutable::createFromMutable(
-                DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('@'.$timestamp))
-            );
-            $currentHour = DateTimeImmutable::createFromMutable(DateUtils::getDateTimeRoundedToCurrentHour());
-
-            $isBulk = $this->option('bulk');
-
-            while ($currentHour > $from) {
-                $this->aggregateForHour($from);
-
-                if (!$isBulk) {
-                    break;
-                }
-
-                $from = $from->modify('+1 hour');
-            }
-        } else {
-            $collection = NetworkCaseLogsHourlyMeta::fetchInvalid();
-            /** @var NetworkCaseLogsHourlyMeta $logsHourlyMeta */
-            foreach ($collection as $logsHourlyMeta) {
-                $startTime = microtime(true);
-                DB::beginTransaction();
-
-                try {
-                    $this->aggregateForHour(new DateTimeImmutable('@'.$logsHourlyMeta->id));
-
-                    if ($logsHourlyMeta->isActual()) {
-                        $logsHourlyMeta->status = NetworkCaseLogsHourlyMeta::STATUS_VALID;
-                        $logsHourlyMeta->process_time_last = (microtime(true) - $startTime) * 1000;
-                        $logsHourlyMeta->process_count = 1 + $logsHourlyMeta->process_count;
-                        $logsHourlyMeta->save();
-
-                        DB::commit();
-                    } else {
-                        DB::rollBack();
-                    }
-                } catch (Throwable $throwable) {
-                    DB::rollBack();
-                    $this->error(
-                        sprintf(
-                            'Error during aggregating publisher statistics for timestamp=%d (%s)',
-                            $logsHourlyMeta->id,
-                            $throwable->getMessage()
-                        )
-                    );
-                }
-            }
+            $this->invalidateSelectedHours($timestamp, (bool)$this->option('bulk'));
         }
 
+        $this->aggregateAllInvalidHours();
+
         $this->info('End command '.$this->getName());
+    }
+
+    private function invalidateSelectedHours(int $timestamp, bool $isBulk): void
+    {
+        $fromHour = DateUtils::roundTimestampToHour($timestamp);
+        $currentHour = DateUtils::roundTimestampToHour(time());
+
+        while ($currentHour > $fromHour) {
+            NetworkCaseLogsHourlyMeta::invalidate($fromHour);
+
+            if (!$isBulk) {
+                break;
+            }
+
+            $fromHour += DateUtils::HOUR;
+        }
+    }
+
+    private function aggregateAllInvalidHours(): void
+    {
+        $collection = NetworkCaseLogsHourlyMeta::fetchInvalid();
+        /** @var NetworkCaseLogsHourlyMeta $logsHourlyMeta */
+        foreach ($collection as $logsHourlyMeta) {
+            $startTime = microtime(true);
+            DB::beginTransaction();
+
+            try {
+                $this->aggregateForHour(new DateTimeImmutable('@'.$logsHourlyMeta->id));
+
+                if ($logsHourlyMeta->isActual()) {
+                    $logsHourlyMeta->status = NetworkCaseLogsHourlyMeta::STATUS_VALID;
+                    $logsHourlyMeta->process_time_last = (int)((microtime(true) - $startTime) * 1000);
+                    $logsHourlyMeta->process_count++;
+                    $logsHourlyMeta->save();
+
+                    DB::commit();
+                } else {
+                    DB::rollBack();
+                }
+            } catch (Throwable $throwable) {
+                DB::rollBack();
+                $this->error(
+                    sprintf(
+                        'Error during aggregating publisher statistics for timestamp=%d (%s)',
+                        $logsHourlyMeta->id,
+                        $throwable->getMessage()
+                    )
+                );
+            }
+        }
     }
 
     private function aggregateForHour(DateTimeImmutable $from): void

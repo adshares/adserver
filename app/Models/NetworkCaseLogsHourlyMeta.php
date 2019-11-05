@@ -54,7 +54,7 @@ class NetworkCaseLogsHourlyMeta extends Model
         return self::where('status', self::STATUS_INVALID)->get();
     }
 
-    public static function invalidate($id): self
+    public static function invalidate(int $id): self
     {
         $meta = self::updateOrCreate(['id' => $id], ['status' => NetworkCaseLogsHourlyMeta::STATUS_INVALID]);
         $meta->touch();
