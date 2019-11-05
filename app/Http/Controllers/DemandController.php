@@ -414,7 +414,7 @@ SQL;
 
         $payments = Payment::fetchPayments($transactionIdDecoded, $accountAddressDecoded);
 
-        if (!$payments) {
+        if ($payments->isEmpty()) {
             throw new NotFoundHttpException(
                 sprintf(
                     'Payment for given transaction %s is not found.',
@@ -435,8 +435,12 @@ SQL;
         ));
     }
 
-    public static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
+    private static function fetchPaidConversionsAndEvents(array $paymentIds, int $limit, int $offset): array
     {
+        if (empty($paymentIds)) {
+            return [];
+        }
+
         $whereInPlaceholder = str_repeat('?,', count($paymentIds) - 1).'?';
         $query = sprintf(
             self::SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE,
