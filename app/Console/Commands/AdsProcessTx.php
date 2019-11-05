@@ -77,7 +77,8 @@ class AdsProcessTx extends BaseCommand
         $this->adsClient = $adsClient;
     }
 
-    public function handle(): int {
+    public function handle(): int
+    {
         if (!$this->lock()) {
             $this->info('Command '.$this->getName().' already running');
 

@@ -50,16 +50,16 @@ WHERE ads_payment_id = ?
 SQL;
 
     private const SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE = <<<SQL
-(SELECT TRUNCATE(UNIX_TIMESTAMP(CONCAT(d, ' ', LPAD(h, 2, '0'), ':00:00')), 0) AS pay_time
- FROM
-   (
-     SELECT DISTINCT DATE(pay_time) AS d, HOUR(pay_time) AS h
-     FROM network_case_payments
-     WHERE ads_payment_id IN (%s)
-     UNION
-     SELECT DISTINCT DATE(created_at) AS d, HOUR(created_at) AS h
-     FROM network_cases
-     WHERE id IN (SELECT DISTINCT network_case_id FROM network_case_payments WHERE ads_payment_id IN (%s))) t);
+SELECT TRUNCATE(UNIX_TIMESTAMP(CONCAT(d, ' ', LPAD(h, 2, '0'), ':00:00')), 0) AS pay_time
+FROM
+  (
+    SELECT DISTINCT DATE(pay_time) AS d, HOUR(pay_time) AS h
+    FROM network_case_payments
+    WHERE ads_payment_id IN (%s)
+    UNION
+    SELECT DISTINCT DATE(created_at) AS d, HOUR(created_at) AS h
+    FROM network_cases
+    WHERE id IN (SELECT DISTINCT network_case_id FROM network_case_payments WHERE ads_payment_id IN (%s))) t;
 SQL;
 
     protected $signature = 'ops:supply:payments:process {--c|chunkSize=5000}';

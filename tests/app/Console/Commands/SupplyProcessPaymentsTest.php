@@ -68,7 +68,7 @@ class SupplyProcessPaymentsTest extends TestCase
 
         $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
     }
-    
+
     public function testAdsProcessMissingHost(): void
     {
         $adsPayment = new AdsPayment();
@@ -242,7 +242,12 @@ class SupplyProcessPaymentsTest extends TestCase
 
                 $demandClient = $this->createMock(DemandClient::class);
                 $demandClient->method('fetchPaymentDetails')->willReturnCallback(
-                    function (string $host, string $transactionId, int $limit, int $offset) use (
+                    function (
+                        string $host,
+                        string $transactionId,
+                        int $limit,
+                        int $offset
+                    ) use (
                         $dummyDemandClient,
                         &$callCount
                     ) {
