@@ -32,7 +32,6 @@ use Throwable;
 
 class AggregateCaseStatisticsPublisherCommand extends BaseCommand
 {
-
     protected $signature = 'ops:stats:aggregate:publisher {--hour=} {--B|bulk}';
 
     protected $description = 'Aggregates network cases data for statistics';

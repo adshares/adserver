@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use function time;
 
 /**
  * @property int id
@@ -40,6 +41,8 @@ class NetworkCaseLogsHourlyMeta extends Model
 
     public const STATUS_INVALID = 1;
 
+    private const MONTH = 30 * 24 * 60 * 60;
+
     /** @var array */
     protected $fillable = [
         'id',
@@ -51,7 +54,7 @@ class NetworkCaseLogsHourlyMeta extends Model
 
     public static function fetchInvalid(): Collection
     {
-        return self::where('status', self::STATUS_INVALID)->get();
+        return self::where('id', '>', time() - self::MONTH)->where('status', self::STATUS_INVALID)->get();
     }
 
     public static function invalidate(int $id): self
