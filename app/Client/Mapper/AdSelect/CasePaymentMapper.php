@@ -35,7 +35,6 @@ class CasePaymentMapper
             'paid_amount' => $payment->total_amount,
             'pay_time' => $payment->pay_time->format(DateTime::ATOM),
             'payer' => $payment->payer,
-            'transaction_id' => $payment->ads_payment_id,
         ];
     }
 }
