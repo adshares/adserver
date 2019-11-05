@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
+use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
@@ -183,6 +184,7 @@ class SupplyProcessPaymentsTest extends TestCase
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
+        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
     }
 
     public function testAdsProcessEventPaymentWithServerError(): void
@@ -279,5 +281,6 @@ class SupplyProcessPaymentsTest extends TestCase
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
+        $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
     }
 }
