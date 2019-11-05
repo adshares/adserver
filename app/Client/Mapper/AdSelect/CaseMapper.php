@@ -44,7 +44,7 @@ class CaseMapper
             'tracking_id' => $caseWithImpression->tracking_id,
             'user_id' => $caseWithImpression->user_id,
             'human_score' => null !== $caseWithImpression->human_score ? (float)$caseWithImpression->human_score : null,
-            'user_data' => $caseWithImpression->user_data,
+            'keywords' => $caseWithImpression->user_data,
         ];
     }
 }

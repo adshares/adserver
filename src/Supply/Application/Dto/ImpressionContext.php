@@ -200,9 +200,6 @@ final class ImpressionContext
         $headers['user-agent'] = ($headers['user-agent'] ?? $headers['User-Agent'] ?? false)
             ?: ($this->device['ua'] ?? '');
 
-        /** @deprecated Remove when AdUser is ready */
-        $headers['User-Agent'] = $headers['user-agent'];
-
         return $headers;
     }
 
