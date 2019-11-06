@@ -21,6 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
@@ -45,11 +46,15 @@ class DemandProcessPayments extends BaseCommand
         $this->info('Start command '.$this->getName());
 
         PaymentReport::fillMissingReports();
+        $lastAvailableTimestamp = $this->getLastAvailableTimestamp();
         $reports = PaymentReport::fetchUndone($this->getReportDateFrom());
 
         /** @var PaymentReport $report */
         foreach ($reports as $report) {
             $timestamp = $report->id;
+            if ($timestamp > $lastAvailableTimestamp) {
+                continue;
+            }
 
             if ($report->isNew()) {
                 try {
@@ -138,5 +143,18 @@ class DemandProcessPayments extends BaseCommand
         }
 
         return new DateTime('@'.$timestampFrom);
+    }
+
+    private function getLastAvailableTimestamp(): int
+    {
+        return $this->getLastExportedEventTimestamp() - PaymentReport::MIN_INTERVAL;
+    }
+
+    private function getLastExportedEventTimestamp(): int
+    {
+        return min(
+            Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME)->getTimestamp(),
+            Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME)->getTimestamp()
+        );
     }
 }
