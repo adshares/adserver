@@ -54,6 +54,8 @@ use function urlencode;
 
 class SupplyController extends Controller
 {
+    private const UNACCEPTABLE_PAGE_RANK = 0.0;
+
     public function find(
         Request $request,
         AdUser $contextProvider,
@@ -129,6 +131,10 @@ class SupplyController extends Controller
         }
 
         $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
+
+        if ($context->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+            return self::json([]);
+        }
 
         NetworkImpression::register(
             Utils::hexUuidFromBase64UrlWithChecksum($impressionId),

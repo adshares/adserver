@@ -53,6 +53,7 @@ class UtilsTest extends TestCase
         $userContext = new UserContext(
             [],
             0.4,
+            1.0,
             'HV_ockboEDXZDlp_VcGfN6Dx7DxMPw'
         );
 

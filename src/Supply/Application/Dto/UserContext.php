@@ -36,13 +36,17 @@ final class UserContext
     /** @var float */
     private $humanScore;
 
+    /** @var float */
+    private $pageRank;
+
     /** @var string */
     private $userId;
 
-    public function __construct(array $keywords, float $humanScore, string $userId)
+    public function __construct(array $keywords, float $humanScore, float $pageRank, string $userId)
     {
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
+        $this->pageRank = $pageRank;
         $this->userId = $userId;
     }
 
@@ -51,6 +55,7 @@ final class UserContext
         return new self(
             self::arrayify($body['keywords'] ?? []),
             (float)($body['human_score'] ?? AdUser::HUMAN_SCORE_ON_MISSING_FIELD),
+            (float)($body['page_rank'] ?? AdUser::PAGE_RANK_ON_MISSING_FIELD),
             $body['uuid'] ?? ''
         );
     }
@@ -68,7 +73,10 @@ final class UserContext
     {
         $keywords = array_merge(
             $this->keywords,
-            ['human_score' => [$this->humanScore]]
+            [
+                'human_score' => [$this->humanScore],
+                'page_rank' => [$this->pageRank],
+            ]
         );
 
         return [
@@ -83,6 +91,7 @@ final class UserContext
             'uid' => $this->userId,
             'keywords' => $this->keywords,
             'human_score' => $this->humanScore,
+            'page_rank' => $this->pageRank,
         ]) ?: '-';
     }
 
@@ -94,6 +103,11 @@ final class UserContext
     public function humanScore(): float
     {
         return $this->humanScore;
+    }
+
+    public function pageRank(): float
+    {
+        return $this->pageRank;
     }
 
     public function userId(): string

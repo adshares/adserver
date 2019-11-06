@@ -346,6 +346,7 @@ class ConversionController extends Controller
                     '',
                     EventLog::TYPE_CLICK,
                     $viewEventData['humanScore'],
+                    $viewEventData['pageRank'],
                     $viewEventData['ourUserdata']
                 );
             }
@@ -440,6 +441,7 @@ class ConversionController extends Controller
                 'publisherId' => $viewEvent->publisher_id,
                 'payTo' => $viewEvent->pay_to,
                 'humanScore' => null !== $viewEvent->human_score ? (float)$viewEvent->human_score : null,
+                'pageRank' => null !== $viewEvent->page_rank ? (float)$viewEvent->page_rank : null,
                 'ourUserdata' => $viewEvent->our_userdata,
             ];
         }

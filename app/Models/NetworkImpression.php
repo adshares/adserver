@@ -42,6 +42,7 @@ use function hex2bin;
  * @property string|null user_id
  * @property stdClass context
  * @property float|null human_score
+ * @property float|null page_rank
  * @property string|null user_data
  * @property Collection networkCases
  * @mixin Builder
@@ -85,6 +86,7 @@ class NetworkImpression extends Model
             $log->user_id = $userId;
         }
         $log->human_score = $context->humanScore();
+        $log->page_rank = $context->pageRank();
 
         $log->save();
     }
@@ -101,6 +103,7 @@ class NetworkImpression extends Model
             $this->user_id = Uuid::fromString($userId)->hex();
         }
         $this->human_score = $userContext->humanScore();
+        $this->page_rank = $userContext->pageRank();
         $this->user_data = $userContext->keywords();
 
         $this->save();

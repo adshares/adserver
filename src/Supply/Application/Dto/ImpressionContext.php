@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use function base64_decode;
@@ -183,9 +184,14 @@ final class ImpressionContext
         return '';
     }
 
-    public function humanScore(): ?float
+    public function humanScore(): float
     {
-        return $this->user['keywords']['human_score'][0] ?? null;
+        return $this->user['keywords']['human_score'][0] ?? AdUser::HUMAN_SCORE_ON_MISSING_FIELD;
+    }
+
+    public function pageRank(): float
+    {
+        return $this->user['keywords']['page_rank'][0] ?? AdUser::PAGE_RANK_ON_MISSING_FIELD;
     }
 
     private function flatHeaders(): array

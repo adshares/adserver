@@ -161,6 +161,7 @@ class NetworkCase extends Model
                 'tracking_id',
                 'user_id',
                 'human_score',
+                'page_rank',
                 'user_data',
             ]
         )
