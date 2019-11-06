@@ -35,7 +35,7 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
+use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -59,7 +59,7 @@ class SupplyController extends Controller
     public function find(
         Request $request,
         AdUser $contextProvider,
-        AdSelectLegacy $bannerFinder,
+        AdSelect $bannerFinder,
         string $data = null
     ) {
         $response = new Response();
@@ -99,10 +99,10 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
-        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
-            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
-            throw new BadRequestHttpException('Bad request.');
-        }
+//        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
+//            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
+//            throw new BadRequestHttpException('Bad request.');
+//        }
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }

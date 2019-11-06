@@ -81,7 +81,7 @@ class CampaignMapper
 
         $mapped['filters'] = $targeting;
 
-        return [$mapped];
+        return $mapped;
     }
 
     private static function processDateEnd(?DateTime $dateEnd): int

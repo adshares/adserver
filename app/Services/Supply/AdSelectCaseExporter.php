@@ -150,12 +150,12 @@ class AdSelectCaseExporter
             throw new RuntimeException(sprintf('No payment since %s', $periodStart->format(DateTime::ATOM)));
         }
 
-        return $payment->ads_payment_id;
+        return $payment->id;
     }
 
     private function getExportedPeriodStart(): DateTime
     {
-        return new DateTime('-2 hours');
+        return new DateTime('-2 weeks');
     }
 
     private static function setLastExportedCaseId(int $id): void
