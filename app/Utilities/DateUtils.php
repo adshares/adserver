@@ -25,6 +25,8 @@ use DateTime;
 
 final class DateUtils
 {
+    public const HOUR = 3600;
+
     public static function getDateTimeRoundedToNextHour(DateTime $date = null): DateTime
     {
         $roundedDate = (null === $date) ? new DateTime() : clone $date;
@@ -50,5 +52,10 @@ final class DateUtils
         $dateTime2->setTime((int)$dateTime2->format('H'), 0);
 
         return $dateTime1 == $dateTime2;
+    }
+
+    public static function roundTimestampToHour(int $timestamp): int
+    {
+        return ((int)floor($timestamp / self::HOUR)) * self::HOUR;
     }
 }

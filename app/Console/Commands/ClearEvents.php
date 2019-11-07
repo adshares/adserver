@@ -66,22 +66,23 @@ class ClearEvents extends BaseCommand
         $this->clearTable('network_impressions', $dateTo, $chunkSize);
         $this->clearTable('network_cases', $dateTo, $chunkSize);
         $this->clearTable('network_case_clicks', $dateTo, $chunkSize);
-        $this->clearTable('network_case_payments', $dateTo, $chunkSize);
+        $this->clearTable('network_case_payments', $dateTo, $chunkSize, 'pay_time');
 
         $this->info('Finish clearing events');
     }
 
-    private function clearTable(string $table, \DateTime $dateTo, int $chunkSize): int
+    private function clearTable(string $table, \DateTime $dateTo, int $chunkSize, string $time_column = 'created_at'): int
     {
         $this->getOutput()->write(sprintf('<info>Clearing %s', $table));
 
         $deleted = 0;
         $last = (int)DB::selectOne(
-            sprintf('SELECT MIN(id) AS value FROM %s WHERE created_at >= ?', $table),
+            sprintf('SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC LIMIT 1', $table, $time_column, $time_column),
             [$dateTo]
         )->value;
 
         do {
+            DB::beginTransaction();
             $this->getOutput()->write('.');
             $offset = (int)DB::selectOne(
                 sprintf('SELECT MIN(id) AS value FROM %s', $table)
@@ -93,6 +94,7 @@ class ClearEvents extends BaseCommand
                     min($last, $offset + $chunkSize - 1),
                 ]
             );
+            DB::commit();
             $deleted += $count;
         } while ($count > 0);
 
