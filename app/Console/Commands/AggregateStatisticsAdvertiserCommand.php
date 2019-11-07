@@ -88,7 +88,7 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
 
     private function aggregateForHour(DateTime $from): void
     {
-        $to = (clone $from)->setTime((int)$from->format('H'), 59, 59, 999);
+        $to = (clone $from)->setTime((int)$from->format('H'), 59, 59, 999999);
 
         $this->info(
             sprintf(

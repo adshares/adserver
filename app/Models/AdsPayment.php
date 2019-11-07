@@ -20,7 +20,9 @@
 
 namespace Adshares\Adserver\Models;
 
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -29,7 +31,10 @@ use Illuminate\Database\Eloquent\Model;
  * @property string address
  * @property int amount
  * @property int status
+ * @property DateTime created_at
+ * @property DateTime updated_at
  * @property int last_offset
+ * @property DateTime tx_time
  * @mixin Builder
  */
 class AdsPayment extends Model
@@ -44,10 +49,18 @@ class AdsPayment extends Model
 
     public const STATUS_TRANSFER_FROM_COLD_WALLET = 3;
 
+    public const STATUS_EVENT_PAYMENT_CANDIDATE = 4;
+
     public const STATUS_RESERVED = 64;
 
     protected $casts = [
         'amount' => 'int',
+        'status' => 'int',
+        'last_offset' => 'int',
+    ];
+
+    protected $dates = [
+        'tx_time',
     ];
 
     public static function create(string $transactionId, int $amount, string $address): self
@@ -58,5 +71,10 @@ class AdsPayment extends Model
         $adsPayment->address = $address;
 
         return $adsPayment;
+    }
+
+    public static function fetchByStatus(int $status): Collection
+    {
+        return self::where('status', $status)->get();
     }
 }

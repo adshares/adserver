@@ -44,8 +44,12 @@ echo -n "59 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:payments:block"
 echo ""
 
-echo -n "*/8 * * * * "
+echo -n "1-59/5 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ads:process-tx"
+echo ""
+
+echo -n "1-59/12 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:payments:process"
 #echo -n " && "
 #echo -n "php ${SERVICE_DIR}/artisan ops:adselect:case-payments:export"
 echo -n " && "
