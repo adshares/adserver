@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Page rank handling
+- Processing payment reports selected by id
 ### Changed
 - Export to adselect
 - Processing event payments on supply side
