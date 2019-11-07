@@ -90,13 +90,15 @@ class DemandProcessPayments extends BaseCommand
             }
 
             if ($report->isUpdated()) {
+                $preparePaymentsParameters = [
+                    '--from' => (new DateTime('@'.$timestamp))->format(DateTime::ATOM),
+                    '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTime::ATOM),
+                ];
+
                 try {
                     Artisan::call(
                         DemandPreparePayments::COMMAND_SIGNATURE,
-                        [
-                            '--from' => (new DateTime('@'.$timestamp))->format(DateTime::ATOM),
-                            '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTime::ATOM),
-                        ],
+                        $preparePaymentsParameters,
                         $this->getOutput()
                     );
                 } catch (LogicException $logicException) {
