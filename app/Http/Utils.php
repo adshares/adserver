@@ -21,15 +21,12 @@
 namespace Adshares\Adserver\Http;
 
 use Adshares\Adserver\Utilities\UuidStringGenerator;
-use Adshares\Common\Application\Service\AdUser;
-use Adshares\Common\Exception\Exception;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
-use Adshares\Supply\Application\Dto\ImpressionContextException;
+use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
-use Exception as GenericPhpException;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Response;
 use function bin2hex;
@@ -264,27 +261,11 @@ class Utils
         return $context['page']['zone'];
     }
 
-    public static function getFullContext(
-        Request $request,
-        AdUser $contextProvider,
-        string $data = null,
-        string $tid = null
+    public static function mergeImpressionContextAndUserContext(
+        ImpressionContext $impressionContext,
+        UserContext $userContext
     ): ImpressionContext {
-        $partialImpressionContext = self::getPartialImpressionContext($request, $data, $tid);
-
-        try {
-            $userContext = $contextProvider->getUserContext($partialImpressionContext);
-
-            return $partialImpressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
-        } catch (ImpressionContextException $e) {
-            Log::error(sprintf(
-                '{message: "%s","context": "%s"}',
-                Exception::cleanMessage($e->getMessage()),
-                json_encode($partialImpressionContext->toArray())
-            ));
-        }
-
-        return $partialImpressionContext;
+        return $impressionContext->withUserDataReplacedBy($userContext->toAdSelectPartialArray());
     }
 
     private static function binUserId(?string $nonce = null): string
@@ -359,7 +340,7 @@ class Utils
     {
         try {
             $bytes = random_bytes(16);
-        } catch (GenericPhpException $exception) {
+        } catch (Exception $exception) {
             $bytes = hex2bin(UuidStringGenerator::v4());
         }
 

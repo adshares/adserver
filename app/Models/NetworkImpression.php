@@ -72,7 +72,8 @@ class NetworkImpression extends Model
     public static function register(
         string $impressionId,
         string $trackingId,
-        ImpressionContext $context
+        ImpressionContext $impressionContext,
+        UserContext $userContext
     ): void {
         if (self::where('impression_id', hex2bin($impressionId))->first()) {
             return;
@@ -81,13 +82,8 @@ class NetworkImpression extends Model
         $log = new self();
         $log->impression_id = $impressionId;
         $log->tracking_id = $trackingId;
-        $log->context = $context->toArray();
-        if ('' !== ($userId = $context->userId())) {
-            $log->user_id = $userId;
-        }
-        $log->human_score = $context->humanScore();
-        $log->page_rank = $context->pageRank();
-
+        $log->context = $impressionContext->toArray();
+        $log->setFieldsDependentOnUserContext($userContext);
         $log->save();
     }
 
@@ -98,6 +94,12 @@ class NetworkImpression extends Model
 
     public function updateWithUserContext(UserContext $userContext): void
     {
+        $this->setFieldsDependentOnUserContext($userContext);
+        $this->save();
+    }
+
+    private function setFieldsDependentOnUserContext(UserContext $userContext): void
+    {
         $userId = $userContext->userId();
         if ($userId) {
             $this->user_id = Uuid::fromString($userId)->hex();
@@ -105,8 +107,6 @@ class NetworkImpression extends Model
         $this->human_score = $userContext->humanScore();
         $this->page_rank = $userContext->pageRank();
         $this->user_data = $userContext->keywords();
-
-        $this->save();
     }
 
     public function networkCases(): HasMany

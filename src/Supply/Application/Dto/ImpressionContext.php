@@ -184,16 +184,6 @@ final class ImpressionContext
         return '';
     }
 
-    public function humanScore(): float
-    {
-        return $this->user['keywords']['human_score'][0] ?? AdUser::HUMAN_SCORE_ON_MISSING_FIELD;
-    }
-
-    public function pageRank(): float
-    {
-        return $this->user['keywords']['page_rank'][0] ?? AdUser::PAGE_RANK_ON_MISSING_FIELD;
-    }
-
     private function flatHeaders(): array
     {
         $headers = array_map(

@@ -130,17 +130,20 @@ class SupplyController extends Controller
             throw new NotFoundHttpException('User not found');
         }
 
-        $context = Utils::getFullContext($request, $contextProvider, $data, $tid);
+        $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
+        $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if ($context->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+        if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
             return self::json([]);
         }
 
         NetworkImpression::register(
             Utils::hexUuidFromBase64UrlWithChecksum($impressionId),
             Utils::hexUuidFromBase64UrlWithChecksum($tid),
-            $context
+            $impressionContext,
+            $userContext
         );
+        $context = Utils::mergeImpressionContextAndUserContext($impressionContext, $userContext);
 
         return self::json($bannerFinder->findBanners($zones, $context));
     }
