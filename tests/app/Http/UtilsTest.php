@@ -53,6 +53,7 @@ class UtilsTest extends TestCase
         $userContext = new UserContext(
             [],
             0.4,
+            0.9,
             'HV_ockboEDXZDlp_VcGfN6Dx7DxMPw'
         );
 
@@ -62,7 +63,7 @@ class UtilsTest extends TestCase
         self::assertSame('1d5fe87246e81035d90e5a7f55c19f37', $uid);
 
         self::assertSame(
-            '{"uid":"HV_ockboEDXZDlp_VcGfN6Dx7DxMPw","keywords":[],"human_score":0.4}',
+            '{"uid":"HV_ockboEDXZDlp_VcGfN6Dx7DxMPw","keywords":[],"human_score":0.4,"page_rank":0.9}',
             $userContext->toString()
         );
     }

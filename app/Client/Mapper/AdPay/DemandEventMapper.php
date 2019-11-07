@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdPay;
 
+use Adshares\Adserver\Client\Mapper\JsonValueMapper;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Common\Application\Service\AdUser;
@@ -78,7 +79,7 @@ class DemandEventMapper
             'tracking_id' => $event->tracking_id,
             'user_id' => $event->user_id ?? $event->tracking_id,
             'human_score' => (float)($event->human_score ?? AdUser::HUMAN_SCORE_ON_MISSING_KEYWORD),
-            'page_rank' => 1.0,
+            'page_rank' => (float)($event->page_rank ?? AdUser::PAGE_RANK_ON_MISSING_KEYWORD),
             'context' => JsonValueMapper::map($event->our_context),
             'keywords' => JsonValueMapper::map($event->our_userdata),
         ];

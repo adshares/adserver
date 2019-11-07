@@ -30,9 +30,13 @@ interface AdUser
     public const HUMAN_SCORE_ON_CONNECTION_ERROR = 0.40;
     public const HUMAN_SCORE_ON_MISSING_FIELD = 0.41;
     public const HUMAN_SCORE_ON_MISSING_KEYWORD = 0.42;
-
     public const HUMAN_SCORE_ON_MISSING_TID = 0.43;
     public const HUMAN_SCORE_MINIMUM = 0.45;
+
+    public const PAGE_RANK_ON_CONNECTION_ERROR = 1.0;
+    public const PAGE_RANK_ON_MISSING_FIELD = 1.0;
+    public const PAGE_RANK_ON_MISSING_KEYWORD = 1.0;
+    public const PAGE_RANK_ON_MISSING_TID = 1.0;
 
     public function fetchTargetingOptions(): Taxonomy;
 
