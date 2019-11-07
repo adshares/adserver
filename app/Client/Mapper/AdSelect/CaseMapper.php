@@ -22,12 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Client\Mapper\JsonValueMapper;
 use Adshares\Adserver\Models\NetworkCase;
 use DateTime;
-use stdClass;
-use function is_object;
-use function property_exists;
 
 class CaseMapper
 {
@@ -45,7 +42,7 @@ class CaseMapper
             'user_id' => $caseWithImpression->user_id ?? $caseWithImpression->tracking_id,
             'human_score' => null !== $caseWithImpression->human_score ? (float)$caseWithImpression->human_score : null,
             'page_rank' => null !== $caseWithImpression->page_rank ? (float)$caseWithImpression->page_rank : null,
-            'keywords' => $caseWithImpression->user_data,
+            'keywords' => JsonValueMapper::map($caseWithImpression->user_data),
         ];
     }
 }

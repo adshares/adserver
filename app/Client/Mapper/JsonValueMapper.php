@@ -20,9 +20,8 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper\AdPay;
+namespace Adshares\Adserver\Client\Mapper;
 
-use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use stdClass;
 
 class JsonValueMapper extends AbstractFilterMapper
