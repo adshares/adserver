@@ -25,6 +25,7 @@ namespace Adshares\Supply\Application\Dto;
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Common\Exception\RuntimeException;
 use function base64_decode;
@@ -194,9 +195,6 @@ final class ImpressionContext
 
         $headers['user-agent'] = ($headers['user-agent'] ?? $headers['User-Agent'] ?? false)
             ?: ($this->device['ua'] ?? '');
-
-        /** @deprecated Remove when AdUser is ready */
-        $headers['User-Agent'] = $headers['user-agent'];
 
         return $headers;
     }

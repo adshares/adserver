@@ -41,7 +41,8 @@ use function hex2bin;
  * @property string tracking_id
  * @property string|null user_id
  * @property stdClass context
- * @property int|null human_score
+ * @property float|null human_score
+ * @property float|null page_rank
  * @property string|null user_data
  * @property Collection networkCases
  * @mixin Builder
@@ -71,7 +72,8 @@ class NetworkImpression extends Model
     public static function register(
         string $impressionId,
         string $trackingId,
-        ImpressionContext $context
+        ImpressionContext $impressionContext,
+        UserContext $userContext
     ): void {
         if (self::where('impression_id', hex2bin($impressionId))->first()) {
             return;
@@ -80,8 +82,8 @@ class NetworkImpression extends Model
         $log = new self();
         $log->impression_id = $impressionId;
         $log->tracking_id = $trackingId;
-        $log->context = $context->toArray();
-
+        $log->context = $impressionContext->toArray();
+        $log->setFieldsDependentOnUserContext($userContext);
         $log->save();
     }
 
@@ -92,14 +94,19 @@ class NetworkImpression extends Model
 
     public function updateWithUserContext(UserContext $userContext): void
     {
+        $this->setFieldsDependentOnUserContext($userContext);
+        $this->save();
+    }
+
+    private function setFieldsDependentOnUserContext(UserContext $userContext): void
+    {
         $userId = $userContext->userId();
         if ($userId) {
             $this->user_id = Uuid::fromString($userId)->hex();
         }
         $this->human_score = $userContext->humanScore();
+        $this->page_rank = $userContext->pageRank();
         $this->user_data = $userContext->keywords();
-
-        $this->save();
     }
 
     public function networkCases(): HasMany
