@@ -368,6 +368,8 @@ class MySqlStatsRepository implements StatsRepository
             $queryBuilder
                 ->appendCampaignIdWhereClause($campaignId)
                 ->appendBannerIdGroupBy();
+        } else {
+            $queryBuilder->appendAnyBannerId();
         }
 
         $query = $queryBuilder->build();
@@ -414,6 +416,7 @@ class MySqlStatsRepository implements StatsRepository
                 ->appendCampaignIdWhereClause($campaignId)
                 ->appendCampaignIdGroupBy();
         }
+        $queryBuilder->appendAnyBannerId();
 
         $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
@@ -512,9 +515,8 @@ class MySqlStatsRepository implements StatsRepository
             $cacheTable,
             MySqlQueryBuilder::convertDateTimeToMySqlDate($dateStart)
         );
-        $this->executeQuery($deleteQuery, $dateStart);
 
-        $subQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $groupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
@@ -522,15 +524,31 @@ class MySqlStatsRepository implements StatsRepository
             ->appendAdvertiserIdGroupBy()
             ->selectDateStartColumn($dateStart)
             ->build();
-
-        $query =
+        $groupedQuery =
             'INSERT INTO '
             .$cacheTable
             .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
             .'`domain`,`campaign_id`,`banner_id`,`advertiser_id`,`hour_timestamp`)'
-            .$subQuery;
+            .$groupedSubQuery;
 
-        $this->executeQuery($query, $dateStart);
+        $notGroupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendCampaignIdGroupBy()
+            ->appendAdvertiserIdGroupBy()
+            ->selectDateStartColumn($dateStart)
+            ->build();
+        $notGroupedQuery =
+            'INSERT INTO '
+            .$cacheTable
+            .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
+            .'`campaign_id`,`advertiser_id`,`hour_timestamp`)'
+            .$notGroupedSubQuery;
+
+        DB::beginTransaction();
+        $this->executeQuery($deleteQuery, $dateStart);
+        $this->executeQuery($groupedQuery, $dateStart);
+        $this->executeQuery($notGroupedQuery, $dateStart);
+        DB::commit();
     }
 
     private function fetch(
@@ -553,6 +571,8 @@ class MySqlStatsRepository implements StatsRepository
 
         if ($bannerId) {
             $queryBuilder->appendBannerIdWhereClause($bannerId);
+        } else {
+            $queryBuilder->appendAnyBannerId();
         }
 
         $query = $queryBuilder->build();

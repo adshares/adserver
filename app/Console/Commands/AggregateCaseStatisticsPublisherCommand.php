@@ -126,17 +126,9 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
 
         $queries = $this->prepareQueries($from, $to);
 
-        DB::beginTransaction();
-        try {
-            foreach ($queries as $query) {
-                DB::insert($query);
-            }
-        } catch (Throwable $throwable) {
-            DB::rollBack();
-
-            throw $throwable;
+        foreach ($queries as $query) {
+            DB::insert($query);
         }
-        DB::commit();
     }
 
     private function prepareQueries(DateTimeInterface $from, DateTimeInterface $to): array
@@ -149,6 +141,8 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         foreach ([
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_CASES,
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_PAYMENTS,
+            self::SQL_TEMPLATE_DELETE_AGGREGATES_NO_GROUP,
+            self::SQL_TEMPLATE_UPDATE_AGGREGATES_NO_GROUP,
         ] as $queryTemplate) {
             $queries[] = str_replace(
                 $search,
@@ -212,5 +206,67 @@ FROM network_case_payments p
 WHERE pay_time BETWEEN '#date_start' AND '#date_end'
 GROUP BY 1, 2, 3, 4
 ON DUPLICATE KEY UPDATE revenue_hour=VALUES(revenue_hour);
+SQL;
+
+    private const SQL_TEMPLATE_DELETE_AGGREGATES_NO_GROUP = <<<SQL
+DELETE FROM network_case_logs_hourly
+WHERE hour_timestamp='#date_start' AND zone_id IS NULL;
+SQL;
+
+    private const SQL_TEMPLATE_UPDATE_AGGREGATES_NO_GROUP = <<<SQL
+INSERT INTO network_case_logs_hourly (publisher_id, site_id, hour_timestamp,
+                                      views_all, views, views_unique, clicks_all, clicks, revenue_case, revenue_hour)
+SELECT
+  publisher_id,
+  site_id,
+  '#date_start'     AS hour_timestamp,
+  SUM(views_all)    AS views_all,
+  SUM(views)        AS views,
+  SUM(views_unique) AS views_unique,
+  SUM(clicks_all)   AS clicks_all,
+  SUM(clicks)       AS clicks,
+  SUM(revenue_case) AS revenue_case,
+  SUM(revenue_hour) AS revenue_hour
+FROM
+  (SELECT
+     c.publisher_id              AS publisher_id,
+     c.site_id                   AS site_id,
+     0                           AS views_all,
+     0                           AS views,
+     0                           AS views_unique,
+     0                           AS clicks_all,
+     0                           AS clicks,
+     0                           AS revenue_case,
+     SUM(p.paid_amount_currency) AS revenue_hour
+   FROM network_case_payments p
+          JOIN network_cases c ON p.network_case_id = c.id
+   WHERE pay_time BETWEEN '#date_start' AND '#date_end'
+   GROUP BY 1, 2
+
+   UNION
+
+   SELECT
+     publisher_id,
+     site_id,
+     COUNT(1)                                                  AS views_all,
+     SUM(IF(amount IS NOT NULL, 1, 0))                         AS views,
+     COUNT(DISTINCT (IF(amount IS NOT NULL, uid, NULL)))       AS views_unique,
+     SUM(IF(is_view_clicked = 1, 1, 0))                        AS clicks_all,
+     SUM(IF(is_view_clicked = 1 AND amount IS NOT NULL, 1, 0)) AS clicks,
+     SUM(IF(amount IS NOT NULL, amount, 0))                    AS revenue_case,
+     0                                                         AS revenue_hour
+   FROM
+     (SELECT
+        c.publisher_id                                                                             AS publisher_id,
+        c.site_id                                                                                  AS site_id,
+        IFNULL(i.user_id, i.tracking_id)                                                           AS uid,
+        IF(clicks.network_case_id IS NULL, 0, 1)                                                   AS is_view_clicked,
+        (SELECT SUM(paid_amount_currency) FROM network_case_payments WHERE network_case_id = c.id) AS amount
+      FROM network_cases c
+             LEFT JOIN network_case_clicks clicks ON c.id = clicks.network_case_id
+             JOIN network_impressions i ON c.network_impression_id = i.id
+      WHERE c.created_at BETWEEN '#date_start' AND '#date_end') d
+   GROUP BY 1, 2) u
+GROUP BY 1,2;
 SQL;
 }
