@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -35,7 +35,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use function factory;
 
-class CampaignsControllerTest extends TestCase
+final class CampaignsControllerTest extends TestCase
 {
     use RefreshDatabase;
 
