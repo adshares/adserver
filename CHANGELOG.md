@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export to adselect
 - Processing event payments on supply side
 - Computing statistics of publishers
+### Fixed
+- Conversion deletion during campaign change
 
 ## [1.3.2] - 2019-11-05
 ### Fixed
