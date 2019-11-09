@@ -35,7 +35,6 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use function factory;
 
-
 class CampaignsControllerTest extends TestCase
 {
     use RefreshDatabase;
