@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,10 +18,13 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+declare(strict_types = 1);
+
+namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
@@ -32,13 +35,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use function factory;
 
-final class CampaignsTest extends TestCase
+
+class CampaignsControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     private const URI = '/api/campaigns';
 
-    public function testBrowseCampaignWRequesthenNoCampaigns(): void
+    public function testBrowseCampaignRequestWhenNoCampaigns(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -130,17 +134,14 @@ final class CampaignsTest extends TestCase
     }
 
     /** @dataProvider budgetVsResponseWhenStatusChange */
-    public function testCampaignStatusChange(int $budget, int $responseCode): void
+    public function testCampaignStatusChange(int $campaignBudget, int $expectedResponseCode): void
     {
-        $user = factory(User::class)->create();
-        $this->actingAs($user, 'api');
+        $user = $this->createUser();
 
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => $budget,
+            'budget' => $campaignBudget,
         ]);
-
-        $this->assertCount(1, Campaign::where('id', $campaign->id)->get());
 
         $response = $this->putJson(
             self::URI."/{$campaign->id}/status",
@@ -149,7 +150,93 @@ final class CampaignsTest extends TestCase
             ]
         );
 
-        $response->assertStatus($responseCode);
+        $response->assertStatus($expectedResponseCode);
+    }
+
+    public function testCampaignWithConversionStatusChange(): void
+    {
+        $user = $this->createUser();
+
+        $campaign = factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => 10,
+        ]);
+        $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
+
+        $this->putJson(
+            self::URI."/{$campaign->id}/status",
+            [
+                'campaign' => ['status' => Campaign::STATUS_ACTIVE],
+            ]
+        );
+
+        $this->assertNotNull(ConversionDefinition::fetchById($conversionDefinition->id), 'Missing conversion');
+    }
+
+    /** @dataProvider bannerStatusChangeProvider */
+    public function testCampaignBannerStatusChange(
+        int $bannerStatusBefore,
+        int $bannerStatusSet,
+        int $bannerStatusExpected,
+        int $expectedResponseStatus
+    ): void {
+        $user = $this->createUser();
+        $campaign = factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => 10,
+        ]);
+        $banner = factory(Banner::class)->create([
+            'campaign_id' => $campaign->id,
+            'status' => $bannerStatusBefore,
+        ]);
+
+        $response = $this->putJson(
+            self::URI."/{$campaign->id}/banner/{$banner->id}/status",
+            [
+                'banner' => [
+                    'status' => $bannerStatusSet,
+                ],
+            ]
+        );
+
+        $response->assertStatus($expectedResponseStatus);
+        $this->assertEquals($bannerStatusExpected, Banner::find($banner->id)->status);
+    }
+
+    public function testCampaignWithConversionBannerStatusChange(): void
+    {
+        $user = $this->createUser();
+        $campaign = factory(Campaign::class)->create([
+            'user_id' => $user->id,
+            'budget' => 10,
+        ]);
+        $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
+        $banner = factory(Banner::class)->create([
+            'campaign_id' => $campaign->id,
+            'status' => Banner::STATUS_INACTIVE,
+        ]);
+
+        $this->putJson(
+            self::URI."/{$campaign->id}/banner/{$banner->id}/status",
+            [
+                'banner' => [
+                    'status' => Banner::STATUS_ACTIVE,
+                ],
+            ]
+        );
+
+        $this->assertNotNull(ConversionDefinition::fetchById($conversionDefinition->id), 'Missing conversion');
+    }
+
+    private function createUser(): User
+    {
+        $userBalance = 50;
+
+        $user = factory(User::class)->create();
+        factory(UserLedgerEntry::class)->create(['user_id' => $user->id, 'amount' => $userBalance]);
+        $this->actingAs($user, 'api');
+
+        return $user;
     }
 
     private function createCampaignForUser(User $user): int
@@ -187,7 +274,22 @@ final class CampaignsTest extends TestCase
     {
         return [
             [100, Response::HTTP_BAD_REQUEST],
-            [0, Response::HTTP_NO_CONTENT],
+            [10, Response::HTTP_NO_CONTENT],
+        ];
+    }
+
+    public function bannerStatusChangeProvider(): array
+    {
+        $nonExistentBannerStatus = 10;
+
+        return [
+            [Banner::STATUS_DRAFT, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
+            [Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
+            [Banner::STATUS_ACTIVE, Banner::STATUS_INACTIVE, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
+            [Banner::STATUS_INACTIVE, Banner::STATUS_ACTIVE, Banner::STATUS_ACTIVE, Response::HTTP_NO_CONTENT],
+            [Banner::STATUS_ACTIVE, $nonExistentBannerStatus, Banner::STATUS_INACTIVE, Response::HTTP_NO_CONTENT],
+            [Banner::STATUS_REJECTED, Banner::STATUS_ACTIVE, Banner::STATUS_REJECTED, Response::HTTP_BAD_REQUEST],
+            [Banner::STATUS_REJECTED, Banner::STATUS_INACTIVE, Banner::STATUS_REJECTED, Response::HTTP_BAD_REQUEST],
         ];
     }
 
