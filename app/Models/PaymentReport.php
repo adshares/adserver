@@ -77,6 +77,12 @@ class PaymentReport extends Model
         $this->save();
     }
 
+    public function setNew(): void
+    {
+        $this->status = self::STATUS_NEW;
+        $this->save();
+    }
+
     public function setUpdated(): void
     {
         $this->status = self::STATUS_UPDATED;
@@ -115,6 +121,11 @@ class PaymentReport extends Model
         return self::STATUS_SENT === $this->status;
     }
 
+    public static function fetchByIds(array $ids): Collection
+    {
+        return self::whereIn('id', $ids)->get();
+    }
+
     public static function fetchUndone(DateTime $from): Collection
     {
         return self::where('id', '>=', $from)->where('status', '>=', self::STATUS_NEW)->get();
@@ -122,12 +133,12 @@ class PaymentReport extends Model
 
     private static function getLast(): self
     {
-        return PaymentReport::orderBy('id', 'desc')->first();
+        return self::orderBy('id', 'desc')->first();
     }
 
     public static function fillMissingReports(): void
     {
-        $lastId = PaymentReport::getLast()->id;
+        $lastId = self::getLast()->id;
         $currentId = self::getMaximalAvailableId();
 
         while (($lastId += self::MIN_INTERVAL) <= $currentId) {
