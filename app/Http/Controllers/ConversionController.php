@@ -24,8 +24,8 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -41,9 +41,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function base64_decode;
 use function sprintf;
-use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ConversionController extends Controller
 {
