@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
@@ -26,7 +26,6 @@ use function sprintf;
 
 class ClearEvents extends BaseCommand
 {
-
     protected $signature = 'ops:events:clear {--b|before=} {--p|period=P32D} {--c|chunkSize=1000}';
 
     protected $description = 'Clear event and network event logs';
@@ -71,13 +70,22 @@ class ClearEvents extends BaseCommand
         $this->info('Finish clearing events');
     }
 
-    private function clearTable(string $table, \DateTime $dateTo, int $chunkSize, string $time_column = 'created_at'): int
-    {
+    private function clearTable(
+        string $table,
+        \DateTime $dateTo,
+        int $chunkSize,
+        string $time_column = 'created_at'
+    ): int {
         $this->getOutput()->write(sprintf('<info>Clearing %s', $table));
 
         $deleted = 0;
         $last = (int)DB::selectOne(
-            sprintf('SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC LIMIT 1', $table, $time_column, $time_column),
+            sprintf(
+                'SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC LIMIT 1',
+                $table,
+                $time_column,
+                $time_column
+            ),
             [$dateTo]
         )->value;
 
