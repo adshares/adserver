@@ -97,6 +97,10 @@ class Banner extends Model
         'deleted_at',
     ];
 
+    protected $casts = [
+        'status' => 'int',
+    ];
+
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'creative_sha1' => 'BinHex',

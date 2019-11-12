@@ -32,11 +32,12 @@ class ConversionValidator
 
     public function validateSignature(
         string $signature,
-        string $conversionUuid,
+        string $conversionDefinitionUuid,
         string $nonce,
         int $timestampCreated,
         string $value,
-        string $secret
+        string $secret,
+        string $caseId = ''
     ): bool {
         $timestampCurrent = time();
 
@@ -57,7 +58,11 @@ class ConversionValidator
         Cache::put($cacheKey, 1, self::CACHE_ITEM_TTL_IN_MINUTES);
 
         $expected = Utils::urlSafeBase64Encode(
-            hash('sha256', $conversionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$secret, true)
+            hash(
+                'sha256',
+                $conversionDefinitionUuid.Utils::urlSafeBase64Decode($nonce).$timestampCreated.$value.$caseId.$secret,
+                true
+            )
         );
 
         return hash_equals($expected, $signature);
