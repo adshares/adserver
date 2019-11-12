@@ -43,6 +43,7 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use function base64_decode;
 use function sprintf;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class ConversionController extends Controller
 {
@@ -414,7 +415,7 @@ class ConversionController extends Controller
         }
 
         if (0 === count($results)) {
-            throw new NotFoundHttpException(
+            throw new UnprocessableEntityHttpException(
                 sprintf('No matching case found for campaign: %s', $campaignPublicId)
             );
         }
