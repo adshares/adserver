@@ -292,12 +292,30 @@ class CampaignsController extends Controller
             $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
         }
 
+        $conversionsToInsert = [];
+
+        $dbConversionUuids = $campaign->conversions->pluck('uuid')->toArray();
+        $inputConversionUuids = [];
+        foreach ($conversions as $conversionInput) {
+            if (isset($conversionInput['uuid'])) {
+                $inputConversionUuids[] = $conversionInput['uuid'];
+            } else {
+                $conversion = new ConversionDefinition();
+                $conversion->fill($conversionInput);
+
+                $conversionsToInsert[] = $conversion;
+            }
+        }
+
+        $conversionUuidsToDelete = array_diff($dbConversionUuids, $inputConversionUuids);
+
         $this->campaignRepository->update(
             $campaign,
             $bannersToInsert,
             $bannersToUpdate,
             $bannersToDelete,
-            $conversions
+            $conversionsToInsert,
+            $conversionUuidsToDelete
         );
 
         if ($ads) {

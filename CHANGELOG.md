@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Processing event payments on supply side
 - Computing statistics of publishers
 ### Fixed
+- Conversion deletion during campaign change
 - Processing payment reports while event were not exported
 
 ## [1.3.2] - 2019-11-05
