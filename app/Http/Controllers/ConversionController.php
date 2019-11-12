@@ -176,53 +176,58 @@ class ConversionController extends Controller
         return $response;
     }
 
-    private function validateConversionAdvanced(Request $request, string $secret, string $conversionUuid): void
-    {
+    private function validateConversionAdvanced(
+        Request $request,
+        string $secret,
+        string $conversionDefinitionUuid
+    ): void {
         $signature = $request->input('sig');
         if (null === $signature) {
             throw new BadRequestHttpException(
-                sprintf('No signature provided for: %s', $conversionUuid)
+                sprintf('No signature provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $nonce = $request->input('nonce');
         if (null === $nonce) {
             throw new BadRequestHttpException(
-                sprintf('No nonce provided for: %s', $conversionUuid)
+                sprintf('No nonce provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $timestampCreated = $request->input('ts');
         if (null === $timestampCreated) {
             throw new BadRequestHttpException(
-                sprintf('No timestamp provided for: %s', $conversionUuid)
+                sprintf('No timestamp provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $timestampCreated = (int)$timestampCreated;
         if ($timestampCreated <= 0) {
             throw new BadRequestHttpException(
-                sprintf('Invalid timestamp for: %s', $conversionUuid)
+                sprintf('Invalid timestamp for: %s', $conversionDefinitionUuid)
             );
         }
 
         $value = $request->input('value', '');
+        $caseId = $request->input('cid', '');
 
         try {
             $isSignatureValid = $this->conversionValidator->validateSignature(
                 $signature,
-                $conversionUuid,
+                $conversionDefinitionUuid,
                 $nonce,
                 $timestampCreated,
                 $value,
-                $secret
+                $secret,
+                $caseId
             );
         } catch (RuntimeException $exception) {
             Log::info(
                 sprintf(
                     '[DemandController] conversion signature error: (%s) for: %s',
                     $exception->getMessage(),
-                    $conversionUuid
+                    $conversionDefinitionUuid
                 )
             );
 
@@ -231,7 +236,7 @@ class ConversionController extends Controller
 
         if (!$isSignatureValid) {
             throw new BadRequestHttpException(
-                sprintf('Invalid signature for: %s', $conversionUuid)
+                sprintf('Invalid signature for: %s', $conversionDefinitionUuid)
             );
         }
     }
