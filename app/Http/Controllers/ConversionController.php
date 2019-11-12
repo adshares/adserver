@@ -404,7 +404,7 @@ class ConversionController extends Controller
     {
         $cid = $request->input('cid');
         if (null !== $cid) {
-            $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, $cid);
+            $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, strtolower($cid));
         } else {
             $tid = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum(
                 $request->cookies->get('tid')
