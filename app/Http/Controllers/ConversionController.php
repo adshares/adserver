@@ -386,7 +386,7 @@ class ConversionController extends Controller
         }
 
         $value = (int)$value;
-        if ($value <= 0) {
+        if ($value < 0) {
             throw new BadRequestHttpException(
                 sprintf('Invalid value of %d for: %s', $value, $conversionDefinition->uuid)
             );
