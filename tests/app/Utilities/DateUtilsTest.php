@@ -71,6 +71,17 @@ final class DateUtilsTest extends TestCase
         );
     }
 
+    /**
+     * @dataProvider roundTimestampToHourProvider
+     *
+     * @param int $timestamp
+     * @param int $expectedTimestamp
+     */
+    public function testRoundTimestampToHour(int $timestamp, int $expectedTimestamp): void
+    {
+        $this->assertEquals($expectedTimestamp, DateUtils::roundTimestampToHour($timestamp));
+    }
+
     public function roundToNextHourProvider(): array
     {
         $table = [
@@ -100,6 +111,14 @@ final class DateUtilsTest extends TestCase
             ['2019-01-26T09:21:56+0100', '2019-01-26T10:00:00+0200', true],
             ['2019-01-26T09:21:56+0100', '2019-01-26T10:00:00+0100', false],
             ['2019-01-26T09:00:00+0100', '2019-01-26T09:00:00+0300', false],
+        ];
+    }
+
+    public function roundTimestampToHourProvider(): array
+    {
+        return [
+            [1572012000, 1572012000],
+            [1572012023, 1572012000],
         ];
     }
 

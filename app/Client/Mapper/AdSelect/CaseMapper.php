@@ -22,22 +22,14 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
-use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
+use Adshares\Adserver\Client\Mapper\JsonValueMapper;
 use Adshares\Adserver\Models\NetworkCase;
 use DateTime;
-use stdClass;
-use function is_object;
-use function property_exists;
 
 class CaseMapper
 {
     public static function map(NetworkCase $caseWithImpression): array
     {
-        $keywords = self::getNormalizedKeywords($caseWithImpression);
-        if (!$keywords) {
-            $keywords = new stdClass();
-        }
-
         return [
             'id' => $caseWithImpression->id,
             'created_at' => $caseWithImpression->created_at->format(DateTime::ATOM),
@@ -47,23 +39,10 @@ class CaseMapper
             'banner_id' => $caseWithImpression->banner_id,
             'impression_id' => $caseWithImpression->impression_id,
             'tracking_id' => $caseWithImpression->tracking_id,
-            'user_id' => $caseWithImpression->user_id,
-            'keywords' => $keywords,
+            'user_id' => $caseWithImpression->user_id ?? $caseWithImpression->tracking_id,
+            'human_score' => null !== $caseWithImpression->human_score ? (float)$caseWithImpression->human_score : null,
+            'page_rank' => null !== $caseWithImpression->page_rank ? (float)$caseWithImpression->page_rank : null,
+            'keywords' => JsonValueMapper::map($caseWithImpression->user_data),
         ];
-    }
-
-    private static function getNormalizedKeywords(NetworkCase $caseWithImpression): ?array
-    {
-        $keywords = null;
-
-        $context = $caseWithImpression->context;
-        if (is_object($context)
-            && property_exists($context, 'site')
-            && is_object($site = $context->site)
-            && property_exists($site, 'keywords')) {
-            $keywords = AbstractFilterMapper::generateNestedStructure(['site' => (array)$site->keywords]);
-        }
-
-        return $keywords;
     }
 }

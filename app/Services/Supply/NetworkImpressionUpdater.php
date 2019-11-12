@@ -82,12 +82,8 @@ class NetworkImpressionUpdater
                 NetworkImpression::whereBetween('id', [$idFrom, $idTo])->take(self::PACKAGE_SIZE)->skip($offset)->get();
 
             foreach ($impressions as $impression) {
-                /** @var $impression NetworkImpression */
-                if ($impression->human_score !== null && $impression->user_data !== null) {
-                    continue;
-                }
-
                 try {
+                    /** @var $impression NetworkImpression */
                     $impression->updateWithUserContext($this->userContext($this->adUser, $impression));
                     $updated++;
                 } catch (ImpressionContextException|RuntimeException $e) {

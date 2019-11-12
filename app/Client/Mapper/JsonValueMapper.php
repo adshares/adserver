@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,21 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Campaign;
-use Faker\Generator as Faker;
+declare(strict_types = 1);
 
-$factory->define(Campaign::class, function (Faker $faker) {
-    return [
-        'landing_url' => $faker->url,
-        'time_start' => $faker->dateTimeThisMonth()->format(DATE_ATOM),
-        'status' => Campaign::STATUS_DRAFT,
-        'name' => $faker->word,
-        'max_cpc' => '200000000000',
-        'max_cpm' => '100000000000',
-        'budget' => 10000000000000,
-        'targeting_excludes' => [],
-        'targeting_requires' => [],
-        'classification_status' => 0,
-        'classification_tags' => null,
-    ];
-});
+namespace Adshares\Adserver\Client\Mapper;
+
+use stdClass;
+
+class JsonValueMapper extends AbstractFilterMapper
+{
+    public static function map($jsonValue)
+    {
+        $keywords = json_decode(json_encode($jsonValue), true);
+
+        if (!$keywords) {
+            return new stdClass();
+        }
+
+        return self::generateNestedStructure($keywords);
+    }
+}

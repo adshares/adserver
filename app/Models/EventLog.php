@@ -58,6 +58,7 @@ use stdClass;
  * @property string our_context
  * @property array|stdClass their_context
  * @property float human_score
+ * @property float page_rank
  * @property string our_userdata
  * @property string their_userdata
  * @property int $event_value_currency
@@ -263,6 +264,7 @@ SQL;
         string $theirUserData,
         string $type,
         ?float $humanScore,
+        ?float $pageRank,
         ?stdClass $ourUserData
     ): self {
         $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
@@ -287,6 +289,7 @@ SQL;
         $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
 
         $log->human_score = $humanScore;
+        $log->page_rank = $pageRank;
         $log->our_userdata = $ourUserData;
 
         $log->save();
@@ -374,13 +377,8 @@ SQL;
             $this->user_id = Uuid::fromString($userId)->hex();
         }
         $this->human_score = $userContext->humanScore();
+        $this->page_rank = $userContext->pageRank();
         $this->our_userdata = $userContext->keywords();
-    }
-
-    public function updateWithUserData(float $humanScore, stdClass $userData): void
-    {
-        $this->human_score = $humanScore;
-        $this->our_userdata = $userData;
     }
 
     public function setStatus(int $status): void

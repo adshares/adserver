@@ -20,21 +20,21 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Client\Mapper\AdPay;
+use Adshares\Adserver\Models\ConversionDefinition;
+use Faker\Generator as Faker;
 
-use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
-use stdClass;
-
-class JsonValueMapper extends AbstractFilterMapper
-{
-    public static function map($jsonValue)
-    {
-        $keywords = json_decode(json_encode($jsonValue), true);
-
-        if (!$keywords) {
-            return new stdClass();
-        }
-
-        return self::generateNestedStructure($keywords);
+$factory->define(
+    ConversionDefinition::class,
+    function (Faker $faker) {
+        return [
+                'name' => $faker->word,
+                'limit_type' => 'in_budget',
+                'event_type' => 'Add to cart',
+                'type' => ConversionDefinition::ADVANCED_TYPE,
+                'value' => null,
+                'is_value_mutable' => true,
+                'limit' => null,
+                'is_repeatable' => true,
+        ];
     }
-}
+);

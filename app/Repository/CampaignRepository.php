@@ -22,7 +22,6 @@ namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;
 
 class CampaignRepository
@@ -105,7 +104,8 @@ class CampaignRepository
         array $bannersToInsert = [],
         array $bannersToUpdate = [],
         array $bannersToDelete = [],
-        array $conversions = []
+        array $conversionsToInsert = [],
+        array $conversionUuidsToDelete = []
     ): void {
         DB::beginTransaction();
 
@@ -131,20 +131,21 @@ class CampaignRepository
                 }
             }
 
-            $existedConversions = $this->findConversionsWhichMustStay($conversions);
-            ConversionDefinition::removeFromCampaignWithoutGivenUuids($campaign->id, $existedConversions);
-
-            foreach ($conversions as $conversionInput) {
-                if (isset($conversionInput['uuid'])
-                    && ConversionDefinition::fetchByUuid($conversionInput['uuid'])) {
-                    continue;
+            if ($conversionsToInsert) {
+                foreach ($conversionsToInsert as $conversion) {
+                    $campaign->conversions()->save($conversion);
                 }
+            }
 
-                unset($conversionInput['uuid']);
-                $conversion = new ConversionDefinition();
-                $conversion->fill($conversionInput);
+            if ($conversionUuidsToDelete) {
+                $conversionBinaryUuidsToDelete = array_map(
+                    function ($uuid) {
+                        return hex2bin($uuid);
+                    },
+                    $conversionUuidsToDelete
+                );
 
-                $campaign->conversions()->save($conversion);
+                $campaign->conversions()->whereIn('uuid', $conversionBinaryUuidsToDelete)->delete();
             }
         } catch (\Exception $ex) {
             DB::rollBack();
@@ -152,17 +153,5 @@ class CampaignRepository
         }
 
         DB::commit();
-    }
-
-    private function findConversionsWhichMustStay(array $conversions): array
-    {
-        $uuids = [];
-        foreach ($conversions as $conversion) {
-            if (isset($conversion['uuid'])) {
-                $uuids[] = $conversion['uuid'];
-            }
-        }
-
-        return $uuids;
     }
 }

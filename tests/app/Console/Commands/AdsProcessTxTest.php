@@ -90,7 +90,7 @@ class AdsProcessTxTest extends TestCase
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
     public function testAdsProcessEventPayment(): void
@@ -150,10 +150,9 @@ class AdsProcessTxTest extends TestCase
 
         $this->assertEquals(AdsPayment::STATUS_NEW, AdsPayment::all()->first()->status);
 
-        $this->artisan('ads:process-tx', ['--chunkSize' => 500])->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
+        $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
-        $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
     public function testAdsProcessValidSendMany(): void
@@ -168,7 +167,7 @@ class AdsProcessTxTest extends TestCase
 
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
-        $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
+        $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
 
     public function testAdsProcessConnectionTx(): void

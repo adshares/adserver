@@ -178,19 +178,6 @@ class ConversionDefinition extends Model
         }
     }
 
-    public static function removeFromCampaignWithoutGivenUuids(int $campaignId, array $uuids): void
-    {
-        $binaryUuids = array_map(
-            function (string $item) {
-                return hex2bin($item);
-            },
-            $uuids
-        );
-
-        self::where('campaign_id', $campaignId)
-            ->whereNotIn('uuid', $binaryUuids)->delete();
-    }
-
     public static function rules(array $conversion): array
     {
         $type = $conversion['type'] ?? null;

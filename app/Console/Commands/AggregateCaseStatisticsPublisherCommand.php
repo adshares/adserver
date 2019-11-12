@@ -22,8 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
 use DateTime;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -51,30 +54,67 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
                 return;
             }
 
-            $from = DateUtils::getDateTimeRoundedToCurrentHour((new DateTime())->setTimestamp($timestamp));
-        } else {
-            $from = DateUtils::getDateTimeRoundedToCurrentHour()->modify('-1 hour');
+            $this->invalidateSelectedHours($timestamp, (bool)$this->option('bulk'));
         }
 
-        $isBulk = $this->option('bulk');
-        $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
+        $this->aggregateAllInvalidHours();
 
-        while ($currentHour > $from) {
-            $this->aggregateForHour($from);
+        $this->info('End command '.$this->getName());
+    }
+
+    private function invalidateSelectedHours(int $timestamp, bool $isBulk): void
+    {
+        $fromHour = DateUtils::roundTimestampToHour($timestamp);
+        $currentHour = DateUtils::roundTimestampToHour(time());
+
+        while ($currentHour > $fromHour) {
+            NetworkCaseLogsHourlyMeta::invalidate($fromHour);
 
             if (!$isBulk) {
                 break;
             }
 
-            $from = $from->modify('+1 hour');
+            $fromHour += DateUtils::HOUR;
         }
-
-        $this->info('End command '.$this->getName());
     }
 
-    private function aggregateForHour(DateTime $from): void
+    private function aggregateAllInvalidHours(): void
     {
-        $to = (clone $from)->setTime((int)$from->format('H'), 59, 59, 999);
+        $collection = NetworkCaseLogsHourlyMeta::fetchInvalid();
+        /** @var NetworkCaseLogsHourlyMeta $logsHourlyMeta */
+        foreach ($collection as $logsHourlyMeta) {
+            $startTime = microtime(true);
+            DB::beginTransaction();
+
+            try {
+                $this->aggregateForHour(new DateTimeImmutable('@'.$logsHourlyMeta->id));
+
+                if ($logsHourlyMeta->isActual()) {
+                    $logsHourlyMeta->status = NetworkCaseLogsHourlyMeta::STATUS_VALID;
+                    $logsHourlyMeta->process_time_last = (int)((microtime(true) - $startTime) * 1000);
+                    $logsHourlyMeta->process_count++;
+                    $logsHourlyMeta->save();
+
+                    DB::commit();
+                } else {
+                    DB::rollBack();
+                }
+            } catch (Throwable $throwable) {
+                DB::rollBack();
+                $this->error(
+                    sprintf(
+                        'Error during aggregating publisher statistics for timestamp=%d (%s)',
+                        $logsHourlyMeta->id,
+                        $throwable->getMessage()
+                    )
+                );
+            }
+        }
+    }
+
+    private function aggregateForHour(DateTimeImmutable $from): void
+    {
+        $to = $from->setTime((int)$from->format('H'), 59, 59, 999999);
 
         $this->info(
             sprintf(
@@ -99,7 +139,7 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         DB::commit();
     }
 
-    private function prepareQueries(DateTime $from, DateTime $to): array
+    private function prepareQueries(DateTimeInterface $from, DateTimeInterface $to): array
     {
         $queries = [];
 
