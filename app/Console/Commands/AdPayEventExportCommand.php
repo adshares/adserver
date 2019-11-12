@@ -279,6 +279,10 @@ class AdPayEventExportCommand extends BaseCommand
             if ($dateToTemporary > $dateTo) {
                 $dateToTemporary = $dateTo;
             }
+            
+            if ($dateFromTemporary >= $dateToTemporary) {
+                break;
+            }
 
             $eventsToExport =
                 EventLog::where('created_at', '>', $dateFromTemporary)
@@ -361,6 +365,10 @@ class AdPayEventExportCommand extends BaseCommand
 
             if ($dateToTemporary > $dateTo) {
                 $dateToTemporary = $dateTo;
+            }
+
+            if ($dateFromTemporary >= $dateToTemporary) {
+                break;
             }
 
             $conversionsToExport = Conversion::where('created_at', '>', $dateFromTemporary)->where(
