@@ -35,15 +35,15 @@ use function zip_read;
 
 class ZipToHtml
 {
-    const DOMAIN_WHITELIST = [
+    private const DOMAIN_WHITELIST = [
         'googleapis.com',
         'gstatic.com',
         'code.createjs.com',
     ];
 
-    const MAX_ZIPPED_SIZE = 512 * 1024;
+    private const MAX_ZIPPED_SIZE = 512 * 1024;
 
-    const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
+    private const MAX_UNZIPPED_SIZE = self::MAX_ZIPPED_SIZE * 5;
 
     private $filename;
 
@@ -66,6 +66,7 @@ class ZipToHtml
                 return true;
             }
         }
+
         return false;
     }
 
@@ -328,8 +329,13 @@ class ZipToHtml
 
         $fix_script = $doc->createElement('script');
         $fix_script->textContent = file_get_contents(resource_path('js/demand/ziptohtml/fixscript.js'));
-
+        $fix_script->setAttribute('data-inject', '1');
         $body->appendChild($fix_script);
+
+        $banner_script = $doc->createElement('script');
+        $banner_script->textContent = file_get_contents(public_path('-/banner.js'));
+        $banner_script->setAttribute('data-inject', '1');
+        $body->insertBefore($banner_script, $body->firstChild);
 
         return $doc->saveHTML();
     }
@@ -435,6 +441,7 @@ class ZipToHtml
 
             ];
         }
+
         return $name;
     }
 
