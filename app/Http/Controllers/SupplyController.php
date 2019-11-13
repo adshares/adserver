@@ -99,10 +99,10 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
-//        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
-//            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
-//            throw new BadRequestHttpException('Bad request.');
-//        }
+        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
+            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
+            throw new BadRequestHttpException('Bad request.');
+        }
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
