@@ -154,6 +154,7 @@ class NetworkCase extends Model
                 'network_cases.id AS id',
                 'network_cases.created_at AS created_at',
                 'publisher_id',
+                'site_id',
                 'zone_id',
                 'campaign_id',
                 'banner_id',
