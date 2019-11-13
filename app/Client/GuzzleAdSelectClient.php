@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -90,9 +90,12 @@ class GuzzleAdSelectClient implements AdSelect
             $mapped[] = CampaignMapper::map($campaign);
         }
         try {
-            $this->client->post('/api/v1/campaigns', [
-                RequestOptions::JSON => ['campaigns' => $mapped],
-            ]);
+            $this->client->post(
+                self::URI_INVENTORY,
+                [
+                    RequestOptions::JSON => ['campaigns' => $mapped],
+                ]
+            );
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
