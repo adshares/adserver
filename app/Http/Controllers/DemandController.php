@@ -69,6 +69,18 @@ LIMIT ?
 OFFSET ?;
 SQL;
 
+    private const PLACEHOLDER_BANNER_ID = '{bid}';
+
+    private const PLACEHOLDER_CASE_ID = '{cid}';
+
+    private const PLACEHOLDER_PUBLISHER_ID = '{pid}';
+
+    private const PLACEHOLDER_SERVER_ID = '{aid}';
+
+    private const PLACEHOLDER_SITE_ID = '{sid}';
+
+    private const PLACEHOLDER_ZONE_ID = '{zid}';
+
     /** @var PaymentDetailsVerify */
     private $paymentDetailsVerify;
 
@@ -209,9 +221,24 @@ SQL;
         $url = $campaign->landing_url;
 
         $caseId = $request->query->get('cid');
+        $payTo = $request->query->get('pto');
+        $publisherId = $request->query->get('pid');
+        $context = Utils::decodeZones($request->query->get('ctx'));
+        $zoneId = $context['page']['zone'] ?? null;
+        $siteId = DomainReader::domain($context['page']['url'] ?? '');
 
-        $url = Utils::addUrlParameter($url, 'cid', $caseId);
+        $url = $this->replaceLandingUrlPlaceholders(
+            $url,
+            $caseId,
+            $bannerId,
+            $publisherId,
+            $payTo,
+            $siteId,
+            $zoneId ?: ''
+        );
         $response = new RedirectResponse($url);
+        $response->send();
+
         $impressionId = $request->query->get('iid');
 
         if ($impressionId) {
@@ -229,13 +256,8 @@ SQL;
         $trackingId = $tid
             ? Utils::hexUuidFromBase64UrlWithChecksum($tid)
             : $caseId;
-        $payTo = $request->query->get('pto');
-        $publisherId = $request->query->get('pid');
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
         $keywords = $context['page']['keywords'];
-
-        $response->send();
 
         $hasCampaignClickConversion = $campaign->hasClickConversion();
         $eventType = $hasCampaignClickConversion ? EventLog::TYPE_SHADOW_CLICK : EventLog::TYPE_CLICK;
@@ -246,7 +268,7 @@ SQL;
                 $caseId,
                 $eventId,
                 $bannerId,
-                $context['page']['zone'] ?? null,
+                $zoneId,
                 $trackingId,
                 $publisherId,
                 $campaign->uuid,
@@ -262,7 +284,7 @@ SQL;
                     $caseId,
                     $eventId,
                     $bannerId,
-                    $context['page']['zone'] ?? null,
+                    $zoneId,
                     $trackingId,
                     $publisherId,
                     $campaign->uuid,
@@ -525,5 +547,39 @@ SQL;
         $operatorFee = (int)floor($budgetAfterFee * $operatorTxFee);
 
         return $budgetAfterFee - $operatorFee;
+    }
+
+    private function replaceLandingUrlPlaceholders(
+        string $landingUrl,
+        string $caseId,
+        string $bannerId,
+        string $publisherId,
+        string $serverId,
+        string $siteId,
+        string $zoneId
+    ): string {
+        if (false === strpos($landingUrl, self::PLACEHOLDER_CASE_ID)) {
+            $landingUrl = Utils::addUrlParameter($landingUrl, 'cid', $caseId);
+        } else {
+            $landingUrl = str_replace(self::PLACEHOLDER_CASE_ID, $caseId, $landingUrl);
+        }
+
+        return str_replace(
+            [
+                self::PLACEHOLDER_BANNER_ID,
+                self::PLACEHOLDER_PUBLISHER_ID,
+                self::PLACEHOLDER_SERVER_ID,
+                self::PLACEHOLDER_SITE_ID,
+                self::PLACEHOLDER_ZONE_ID,
+            ],
+            [
+                $bannerId,
+                $publisherId,
+                $serverId,
+                $siteId,
+                $zoneId,
+            ],
+            $landingUrl
+        );
     }
 }
