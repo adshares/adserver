@@ -81,17 +81,18 @@ class GuzzleAdSelectClient implements AdSelect
         $this->client = $client;
     }
 
-    public function exportInventory(Campaign $campaign): void
+    public function exportInventory(CampaignCollection $campaigns): void
     {
-        $mapped = CampaignMapper::map($campaign);
+        $mapped = [];
 
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mapped[] = CampaignMapper::map($campaign);
+        }
         try {
-            $this->client->post(
-                self::URI_INVENTORY,
-                [
-                    RequestOptions::JSON => ['campaigns' => $mapped],
-                ]
-            );
+            $this->client->post('/api/v1/campaigns', [
+                RequestOptions::JSON => ['campaigns' => $mapped],
+            ]);
         } catch (RequestException $exception) {
             throw new UnexpectedClientResponseException(
                 sprintf(
