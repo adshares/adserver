@@ -70,7 +70,7 @@ final class CampaignMapperTest extends TestCase
 
         $campaign = CampaignFactory::createFromArray($campaignData);
 
-        $this->assertEquals($expected, CampaignMapper::map($campaign)[0]);
+        $this->assertEquals($expected, CampaignMapper::map($campaign));
     }
 
     public function testMappingCampaignWithClassification(): void
@@ -110,7 +110,7 @@ final class CampaignMapperTest extends TestCase
         ];
 
         $campaign = CampaignFactory::createFromArray($campaignDataWithClassification);
-        $mapped = CampaignMapper::map($campaign)[0];
+        $mapped = CampaignMapper::map($campaign);
         // time_end must be compared separately with timestamp range because it is overwritten
         $mappedTimeEnd = $mapped['time_end'];
         unset($mapped['time_end']);
