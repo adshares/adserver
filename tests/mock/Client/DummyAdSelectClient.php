@@ -109,8 +109,7 @@ final class DummyAdSelectClient implements AdSelect
             'network_banners.network_campaign_id',
             '=',
             'network_campaigns.id'
-        )->where('network_campaigns.status', Status::STATUS_ACTIVE
-        )->where('network_banners.size', $zone->size);
+        )->where('network_campaigns.status', Status::STATUS_ACTIVE)->where('network_banners.size', $zone->size);
     }
 
     public function exportInventory(CampaignCollection $campaigns): void
