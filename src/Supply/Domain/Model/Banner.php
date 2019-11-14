@@ -51,7 +51,7 @@ final class Banner
     /** @var string */
     private $type;
 
-    /** @var Size */
+    /** @var string */
     private $size;
 
     /** @var Status */
@@ -72,7 +72,7 @@ final class Banner
         Id $demandBannerId,
         BannerUrl $bannerUrl,
         string $type,
-        Size $size,
+        string $size,
         string $checksum,
         Status $status,
         ?array $classification = []
@@ -137,9 +137,7 @@ final class Banner
             'id' => $this->getId(),
             'demand_banner_id' => $this->getDemandBannerId(),
             'type' => $this->getType(),
-            'size' => (string)$this->size,
-            'width' => $this->size->getWidth(),
-            'height' => $this->size->getHeight(),
+            'size' => $this->size,
             'checksum' => $this->checksum,
             'serve_url' => $this->bannerUrl->getServeUrl(),
             'click_url' => $this->bannerUrl->getClickUrl(),
@@ -169,19 +167,9 @@ final class Banner
         return $this->campaign->getId();
     }
 
-    public function getWidth(): int
-    {
-        return $this->size->getWidth();
-    }
-
-    public function getHeight(): int
-    {
-        return $this->size->getHeight();
-    }
-
     public function getSize(): string
     {
-        return (string)$this->size;
+        return $this->size;
     }
 
     public function getStatus(): int

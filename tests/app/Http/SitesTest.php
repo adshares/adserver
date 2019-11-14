@@ -42,8 +42,7 @@ class SitesTest extends TestCase
                 'name',
                 'code',
                 'size' => [
-                    'width',
-                    'height',
+                    'size',
                     'label',
                 ],
                 'status',
@@ -349,16 +348,14 @@ JSON
                         "type" => "zone-type-1",
                         "name" => "title1",
                         'size' => [
-                            "width" => 100,
-                            "height" => 200,
+                            "size" => '100x200',
                         ],
                     ],
                     [
                         "status" => 1,
                         "name" => "title2",
                         'size' => [
-                            "width" => 300,
-                            "height" => 400,
+                            "size" => '300x400',
                         ],
                     ],
                 ],
@@ -371,8 +368,7 @@ JSON
                         "type" => "zone-type-1",
                         "name" => "new-title1",
                         'size' => [
-                            "width" => 100,
-                            "height" => 200,
+                            "size" => '100x200',
                         ],
                     ],
 
@@ -380,8 +376,7 @@ JSON
                         "status" => 1,
                         "name" => "new-title2",
                         'size' => [
-                            "width" => 300,
-                            "height" => 400,
+                            "size" => '300x400',
                         ],
                     ],
                 ],
@@ -394,8 +389,7 @@ JSON
                         "type" => "zone-type-1",
                         "name" => "new-title1",
                         'size' => [
-                            "width" => 100,
-                            "height" => 200,
+                            "size" => '100x200',
                         ],
                     ],
                     [
@@ -403,8 +397,7 @@ JSON
                         "status" => 1,
                         "name" => "new-title2",
                         'size' => [
-                            "width" => 300,
-                            "height" => 400,
+                            "size" => '300x400',
                         ],
                     ],
                 ],

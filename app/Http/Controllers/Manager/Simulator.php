@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
@@ -301,6 +302,8 @@ FILTERING_JSON;
                     $tags[] = 'best';
                 }
 
+                $size = Size::toDimensions($value);
+
                 return [
                     'id' => $sizeId + 1,
                     'name' => ucwords(str_replace('-', ' ', $key)),
@@ -308,8 +311,8 @@ FILTERING_JSON;
                     'label' => $key,
                     'size' => $sizeId,
                     'tags' => $tags,
-                    'width' => explode('x', $value)[0],
-                    'height' => explode('x', $value)[1],
+                    'width' => $size[0],
+                    'height' => $size[1],
                 ];
             },
             array_keys(Zone::ZONE_LABELS),

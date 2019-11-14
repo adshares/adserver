@@ -127,7 +127,7 @@ final class ImpressionContext
             $userId = $this->userId();
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
-                'banner_size' => "{$zone->width}x{$zone->height}",
+                'banner_size' => $zone->size,
                 'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
                 'site_id' => $zone->site->uuid,
                 'zone_id' => $zone->uuid,

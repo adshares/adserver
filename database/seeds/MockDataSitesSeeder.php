@@ -28,58 +28,47 @@ class MockDataSitesSeeder extends Seeder
 {
     private $zones = [
         'Leaderboard' => [
-            'width' => 728,
-            'height' => 90,
+            'size' => '728x90',
             'label' => 'leaderboard',
         ],
         'Wide Skycraper' => [
-            'width' => 160,
-            'height' => 600,
+            'size' => '160x600',
             'label' => 'wide-skyscraper',
         ],
         'Large Rectangle' => [
-            'width' => 336,
-            'height' => 280,
+            'size' => '336x280',
             'label' => 'large-rectangle',
         ],
         'Half Page' => [
-            'width' => 300,
-            'height' => 600,
+            'size' => '300x600',
             'label' => 'half-page',
         ],
         'Large Mobile' => [
-            'width' => 320,
-            'height' => 100,
+            'size' => '320x100',
             'label' => 'large-mobile-banner',
         ],
         'Leaderboard 2' => [
-            'width' => 728,
-            'height' => 90,
+            'size' => '728x90',
             'label' => 'leaderboard',
         ],
         'Leaderboard 3' => [
-            'width' => 728,
-            'height' => 90,
+            'size' => '728x90',
             'label' => 'leaderboard',
         ],
         'Large Rectangle 2' => [
-            'width' => 336,
-            'height' => 280,
+            'size' => '336x280',
             'label' => 'large-rectangle',
         ],
         'Large Mobile 2' => [
-            'width' => 320,
-            'height' => 100,
+            'size' => '320x100',
             'label' => 'large-mobile-banner',
         ],
         'Large Mobile 3' => [
-            'width' => 320,
-            'height' => 100,
+            'size' => '320x100',
             'label' => 'large-mobile-banner',
         ],
         'Wide Skyscraper 2' => [
-            'width' => 160,
-            'height' => 600,
+            'size' => '160x600',
             'label' => 'wide-skyscraper',
         ],
     ];
@@ -129,8 +118,7 @@ class MockDataSitesSeeder extends Seeder
                         'uuid' => $zone['uuid'] ?? null,
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,
-                        'width' => $zone['width'],
-                        'height' => $zone['height'],
+                        'size' => $zone['size'],
                         'label' => $zone['label'],
                     ]);
 

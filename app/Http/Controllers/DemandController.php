@@ -507,8 +507,7 @@ SQL;
 
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
-                    'width' => $bannerArray['creative_width'],
-                    'height' => $bannerArray['creative_height'],
+                    'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
                     'serve_url' => SecureUrl::change(

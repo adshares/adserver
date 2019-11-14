@@ -146,8 +146,7 @@ final class CampaignMapperTest extends TestCase
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
                     'type' => 'image',
-                    'width' => 728,
-                    'height' => 90,
+                    'size' => '728x90',
                 ],
                 [
                     'id' => Uuid::v4(),
@@ -156,8 +155,7 @@ final class CampaignMapperTest extends TestCase
                     'click_url' => 'http://localhost:8101/click/1',
                     'view_url' => 'http://localhost:8101/view/1',
                     'type' => 'image',
-                    'width' => 728,
-                    'height' => 90,
+                    'size' => '728x90',
                 ],
             ],
             'max_cpc' => 100000000001,
@@ -195,8 +193,7 @@ final class CampaignMapperTest extends TestCase
                     'view_url' => 'http://localhost:8101/view/1',
                     'type' => 'image',
                     'checksum' => 'feca8167499895B0c30bbbc3c668550161f64235',
-                    'width' => 728,
-                    'height' => 90,
+                    'size' => '728x90',
                     'classification' => [
                         'test_classifier' => [
                             'category' => [

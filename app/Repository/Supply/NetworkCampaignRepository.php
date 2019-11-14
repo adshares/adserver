@@ -57,9 +57,7 @@ class NetworkCampaignRepository implements CampaignRepository
 
     private const BANNER_TYPE_FIELD = 'type';
 
-    private const BANNER_WIDTH_FIELD = 'width';
-
-    private const BANNER_HEIGHT_FIELD = 'height';
+    private const BANNER_SZIE_FIELD = 'size';
 
     private const BANNER_CLASSIFICATION_FIELD = 'classification';
 
@@ -184,8 +182,7 @@ class NetworkCampaignRepository implements CampaignRepository
                 self::BANNER_CLICK_URL_FIELD => $networkBanner->click_url,
                 self::BANNER_VIEW_URL_FIELD => $networkBanner->view_url,
                 self::BANNER_TYPE_FIELD => $networkBanner->type,
-                self::BANNER_WIDTH_FIELD => $networkBanner->width,
-                self::BANNER_HEIGHT_FIELD => $networkBanner->height,
+                self::BANNER_SZIE_FIELD => $networkBanner->size,
                 self::STATUS_FIELD => $networkBanner->status,
                 self::BANNER_CLASSIFICATION_FIELD => $networkBanner->classification,
             ];

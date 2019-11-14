@@ -22,81 +22,64 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
 use function in_array;
 
 final class Size
 {
     public const SUPPORTED_SIZES = [
-        '300x250',
-        '336x280',
-        '728x90',
-        '300x600',
-        '320x100',
+        0 => '300x250',
+        1 => '336x280',
+        2 => '728x90',
+        3 => '300x600',
+        4 => '320x100',
         #other
-        '320x50',
-        '468x60',
-        '234x60',
-        '120x600',
-        '120x240',
-        '160x600',
-        '300x1050',
-        '970x90',
-        '970x250',
-        '250x250',
-        '200x200',
-        '180x150',
-        '125x125',
+        5 => '320x50',
+        6 => '468x60',
+        7 => '234x60',
+        8 => '120x600',
+        9 => '120x240',
+        10 => '160x600',
+        11 => '300x1050',
+        12 => '970x90',
+        13 => '970x250',
+        14 => '250x250',
+        15 => '200x200',
+        16 => '180x150',
+        17 => '125x125',
         #regional
-        '240x400',# Most popular size in Russia.
-        '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
-        '250x360', # Second most popular size in Sweden.
-        '930x180', # Very popular size in Denmark.
-        '580x400', # Very popular size in Norway.
+        18 => '240x400',# Most popular size in Russia.
+        19 => '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
+        20 => '250x360', # Second most popular size in Sweden.
+        21 => '930x180', # Very popular size in Denmark.
+        22 => '580x400', # Very popular size in Norway.
         #polish
-        '750x100', # Very popular size in Poland.
-        '750x200', # Most popular size in Poland.
-        '750x300', # Third most popular size in Poland.
+        23 => '750x100', # Very popular size in Poland.
+        24 => '750x200', # Most popular size in Poland.
+        25 => '750x300', # Third most popular size in Poland.
         # https://en.wikipedia.org/wiki/Web_banner
-        '300x100',
-        '120x90',
-        '120x60',
-        '88x31',
+        26 => '300x100',
+        27 => '120x90',
+        28 => '120x60',
+        29 => '88x31',
     ];
 
-    /** @var int */
-    private $width;
-
-    /** @var int */
-    private $height;
-
-    public function __construct(int $width, int $height)
+    public static function isValid(string $size): bool
     {
-        if (!$this->isValid($width, $height)) {
-            throw new UnsupportedBannerSizeException('Unsupported size value.');
-        }
-
-        $this->width = $width;
-        $this->height = $height;
+        return in_array($size, self::SUPPORTED_SIZES);
     }
 
-    private function isValid(int $width, int $height): bool
+    public static function fromDimensions(int $width, int $height): string
     {
-        return in_array($width.'x'.$height, self::SUPPORTED_SIZES);
+        return sprintf('%dx%d', $width, $height);
     }
 
-    public function getWidth(): int
+    public static function toDimensions(string $size): array
     {
-        return $this->width;
-    }
+        $parts = explode('x', $size);
 
-    public function getHeight(): int
-    {
-        return $this->height;
-    }
-
-    public function __toString(): string
-    {
-        return $this->width.'x'.$this->height;
+        return [
+            (int)($parts[0] ?? 0),
+            (int)($parts[1] ?? 0),
+        ];
     }
 }

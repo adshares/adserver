@@ -41,8 +41,7 @@ use function in_array;
  * @property string creative_contents
  * @property string creative_type
  * @property string creative_sha1
- * @property int creative_width
- * @property int creative_height
+ * @property string creative_size
  * @property string name
  * @property int status
  * @property Campaign campaign
@@ -85,8 +84,7 @@ class Banner extends Model
         'creative_contents',
         'creative_type',
         'creative_sha1',
-        'creative_width',
-        'creative_height',
+        'creative_size',
         'name',
         'status',
     ];
@@ -133,7 +131,7 @@ class Banner extends Model
 
     public function getFormattedSize(): string
     {
-        return $this->creative_width.'x'.$this->creative_height;
+        return $this->creative_size;
     }
 
     public function campaign(): BelongsTo

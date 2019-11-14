@@ -28,7 +28,6 @@ use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Classification;
 use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
-use Adshares\Supply\Domain\ValueObject\Size;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
@@ -76,7 +75,7 @@ final class BannerTest extends TestCase
             Uuid::v4(),
             $bannerUrl,
             $type,
-            new Size(728, 90),
+            '728x90',
             $checksum,
             Status::active()
         );
@@ -116,7 +115,7 @@ final class BannerTest extends TestCase
             $demandBannerId,
             $bannerUrl,
             $type,
-            new Size(728, 90),
+            '728x90',
             $checksum,
             Status::active()
         );
@@ -126,8 +125,6 @@ final class BannerTest extends TestCase
             'demand_banner_id' => $demandBannerId,
             'type' => 'html',
             'size' => '728x90',
-            'width' => 728,
-            'height' => 90,
             'checksum' => $checksum,
             'serve_url' => 'http://example.com/serve',
             'click_url' => 'http://example.com/click',
@@ -140,8 +137,6 @@ final class BannerTest extends TestCase
         $this->assertEquals('html', $banner->getType());
         $this->assertEquals($bannerId, $banner->getId());
         $this->assertEquals($demandBannerId, $banner->getDemandBannerId());
-        $this->assertEquals(728, $banner->getWidth());
-        $this->assertEquals(90, $banner->getHeight());
         $this->assertEquals('728x90', $banner->getSize());
         $this->assertEquals($campaignId, $banner->getCampaignId());
     }
@@ -207,7 +202,7 @@ final class BannerTest extends TestCase
         return $campaign;
     }
 
-    private function createBanner(Campaign $campaign, int $width = 300, int $height = 250): Banner
+    private function createBanner(Campaign $campaign, string $size = '300x250'): Banner
     {
         $url = new BannerUrl('http://example.com/serve', 'http://example.com/click', 'http://example.com/view');
         $banner = new Banner(
@@ -216,7 +211,7 @@ final class BannerTest extends TestCase
             Uuid::v4(),
             $url,
             'image',
-            new Size($width, $height),
+            $size,
             '',
             Status::active()
         );

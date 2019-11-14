@@ -24,6 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,6 +37,8 @@ use function hex2bin;
  * @property Site site
  * @property int id
  * @property string uuid
+ * @property string size
+ * @property string label
  * @mixin Builder
  */
 class Zone extends Model
@@ -186,10 +189,12 @@ HTML;
 
     public function getCodeAttribute()
     {
+        $size = Size::toDimensions($this->size);
+
         $replaceArr = [
             '{{zoneId}}' => $this->uuid,
-            '{{width}}' => $this->width,
-            '{{height}}' => $this->height,
+            '{{width}}' => $size[0],
+            '{{height}}' => $size[1],
             '{{selectorClass}}' => config('app.adserver_id'),
         ];
 
@@ -210,9 +215,11 @@ HTML;
 
     public function getSizeAttribute(): array
     {
+        $size = Size::toDimensions($this->size);
+
         return [
-            'width' => $this->width,
-            'height' => $this->height,
+            'width' => $size[0],
+            'height' => $size[1],
             'label' => $this->label,
             'tags' => collect(Simulator::getZoneTypes())->firstWhere('label', $this->label) ?? [],
         ];
@@ -226,42 +233,11 @@ HTML;
             $sizeLabel = self::ZONE_LABELS[$label] ?? false;
             $this->attributes['label'] = $label;
             if ($sizeLabel) {
-                $size = explode('x', $sizeLabel);
-                $this->attributes['width'] = $size[0];
-                $this->attributes['height'] = $size[1];
+                $this->attributes['size'] = $sizeLabel;
             }
         } else {
-            $this->setWidth($data['width'] ?? false);
-            $this->setHeight($data['height'] ?? false);
+            $this->attributes['size'] = Size::fromDimensions($data['width'] ?? 0, $data['height'] ?? 0);
+            $this->attributes['label'] = Simulator::findLabelBySize($this->attributes['size']);
         }
-    }
-
-    private function setWidth($width): void
-    {
-        $this->attributes['width'] = $width;
-        if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
-            $this->setSizeAttribute(
-                [
-                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
-                ]
-            );
-        }
-    }
-
-    private function setHeight($height): void
-    {
-        $this->attributes['height'] = $height;
-        if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
-            $this->setSizeAttribute(
-                [
-                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
-                ]
-            );
-        }
-    }
-
-    public function getSizeAsString(): string
-    {
-        return "{$this->attributes['width']}x{$this->attributes['height']}";
     }
 }
