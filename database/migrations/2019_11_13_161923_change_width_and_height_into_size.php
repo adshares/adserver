@@ -18,6 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -37,7 +38,11 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('creative_size', 16)->default('')->after('creative_height');
             }
         );
-        DB::update('UPDATE `banners` SET `creative_size` = CONCAT(creative_width, "x", creative_height)');
+        if (DB::isSQLite()) {
+            DB::update('UPDATE `banners` SET `creative_size` = `creative_width` || "x" || `creative_height`');
+        } else {
+            DB::update('UPDATE `banners` SET `creative_size` = CONCAT(`creative_width`, "x", `creative_height`)');
+        }
         Schema::table(
             'banners',
             function (Blueprint $table) {
@@ -52,7 +57,12 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('size', 16)->default('')->after('height');
             }
         );
-        DB::update('UPDATE `network_banners` SET `size` = CONCAT(width, "x", height)');
+        if (DB::isSQLite()) {
+            DB::update('UPDATE `network_banners` SET `size` = `width` || "x" || `height`');
+        } else {
+            DB::update('UPDATE `network_banners` SET `size` = CONCAT(`width`, "x", `height`)');
+        }
+
         Schema::table(
             'network_banners',
             function (Blueprint $table) {
@@ -67,7 +77,12 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('size', 16)->default('')->after('height');
             }
         );
-        DB::update('UPDATE `zones` SET `size` = CONCAT(width, "x", height)');
+        if (DB::isSQLite()) {
+            DB::update('UPDATE `zones` SET `size` = `width` || "x" || `height`');
+        } else {
+            DB::update('UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`)');
+        }
+
         Schema::table(
             'zones',
             function (Blueprint $table) {
