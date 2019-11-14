@@ -49,6 +49,7 @@ class AdSelectCaseExporter
      * Write a string as information output.
      *
      * @param  string $string
+     *
      * @return void
      */
     public function info($string)
@@ -90,8 +91,8 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $caseClickIdFrom;
 
         do {
-            $caseClicks =
-                NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
+            $caseClicks
+                = NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCaseClicks($caseClicks);
             $exported += count($caseClicks);
 
@@ -116,15 +117,15 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $casePaymentIdFrom;
 
         do {
-            $casePayments =
-                NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
+            $casePayments
+                = NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCasePayments($casePayments);
             $exported += count($casePayments);
 
             $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
                 $exported,
                 $casePayments->last() ? 100 - ($maxId - $casePayments->last()->id) / $totalEstimate * 100 : '100'));
-            
+
             if (count($casePayments) > 0) {
                 $casePaymentIdFrom = $casePayments->last()->id + 1;
             }
