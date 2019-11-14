@@ -34,7 +34,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
         Schema::table(
             'banners',
             function (Blueprint $table) {
-                $table->string('creative_size', 16)->after('creative_height');
+                $table->string('creative_size', 16)->default('')->after('creative_height');
             }
         );
         DB::update('UPDATE `banners` SET `creative_size` = CONCAT(creative_width, "x", creative_height)');
@@ -49,7 +49,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
         Schema::table(
             'network_banners',
             function (Blueprint $table) {
-                $table->string('size', 16)->after('height');
+                $table->string('size', 16)->default('')->after('height');
             }
         );
         DB::update('UPDATE `network_banners` SET `size` = CONCAT(width, "x", height)');
@@ -64,7 +64,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
         Schema::table(
             'zones',
             function (Blueprint $table) {
-                $table->string('size', 16)->after('height');
+                $table->string('size', 16)->default('')->after('height');
             }
         );
         DB::update('UPDATE `zones` SET `size` = CONCAT(width, "x", height)');
