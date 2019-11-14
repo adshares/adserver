@@ -228,6 +228,9 @@ class MockDataCampaignsSeeder extends Seeder
             .' \'unsafe-inline\' \'unsafe-eval\'; style-src \'self\' \'unsafe-inline\';">
         </head>
         <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="background:transparent">
+            <script data-inject="1">'
+            .file_get_contents(public_path('-/banner.js'))
+            .'</script>
             <a id="adsharesLink">
             <img src="data:image/png;base64,'
             .$base64Image
