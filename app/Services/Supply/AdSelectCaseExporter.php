@@ -70,9 +70,13 @@ class AdSelectCaseExporter
             $this->adSelectClient->exportCases($cases);
             $exported += count($cases);
 
-            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
-                $exported,
-                $cases->last() ? 100 - ($maxId - $cases->last()->id) / $totalEstimate * 100 : '100'));
+            $this->info(
+                sprintf(
+                    "[AdSelectCaseExport] exported: %d; progress=%d%%",
+                    $exported,
+                    $cases->last() ? 100 - ($maxId - $cases->last()->id) / $totalEstimate * 100 : '100'
+                )
+            );
 
             if (count($cases) > 0) {
                 $caseIdFrom = $cases->last()->id + 1;
@@ -96,9 +100,13 @@ class AdSelectCaseExporter
             $this->adSelectClient->exportCaseClicks($caseClicks);
             $exported += count($caseClicks);
 
-            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
-                $exported,
-                $caseClicks->last() ? 100 - ($maxId - $caseClicks->last()->id) / $totalEstimate * 100 : '100'));
+            $this->info(
+                sprintf(
+                    "[AdSelectCaseExport] exported: %d; progress=%d%%",
+                    $exported,
+                    $caseClicks->last() ? 100 - ($maxId - $caseClicks->last()->id) / $totalEstimate * 100 : '100'
+                )
+            );
 
             if (count($caseClicks) > 0) {
                 $caseClickIdFrom = $caseClicks->last()->id + 1;
@@ -122,9 +130,13 @@ class AdSelectCaseExporter
             $this->adSelectClient->exportCasePayments($casePayments);
             $exported += count($casePayments);
 
-            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
-                $exported,
-                $casePayments->last() ? 100 - ($maxId - $casePayments->last()->id) / $totalEstimate * 100 : '100'));
+            $this->info(
+                sprintf(
+                    "[AdSelectCaseExport] exported: %d; progress=%d%%",
+                    $exported,
+                    $casePayments->last() ? 100 - ($maxId - $casePayments->last()->id) / $totalEstimate * 100 : '100'
+                )
+            );
 
             if (count($casePayments) > 0) {
                 $casePaymentIdFrom = $casePayments->last()->id + 1;
