@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Services\Supply;
 
@@ -30,16 +30,30 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use function count;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class AdSelectCaseExporter
 {
     private const PACKAGE_SIZE = 2000;
 
     private $adSelectClient;
+    private $output;
 
-    public function __construct(AdSelect $adSelectClient)
+    public function __construct(AdSelect $adSelectClient, ConsoleOutput $output)
     {
         $this->adSelectClient = $adSelectClient;
+        $this->output = $output;
+    }
+
+    /**
+     * Write a string as information output.
+     *
+     * @param  string $string
+     * @return void
+     */
+    public function info($string)
+    {
+        $this->output->writeln("<info>$string</info>");
     }
 
     public function exportCases(int $caseIdFrom): int
@@ -53,11 +67,14 @@ class AdSelectCaseExporter
         do {
             $cases = NetworkCase::fetchCasesToExport($caseIdFrom, $impressionIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCases($cases);
-
             $exported += count($cases);
-            echo "exported: $exported; progress=", $cases->last() ? round(100-($maxId-$cases->last()->id)/$totalEstimate*100,0) : '100', "%\n";
-            if(count($cases) > 0) {
-                $caseIdFrom = $cases->last()->id+1;
+
+            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
+                $exported,
+                $cases->last() ? 100 - ($maxId - $cases->last()->id) / $totalEstimate * 100 : '100'));
+
+            if (count($cases) > 0) {
+                $caseIdFrom = $cases->last()->id + 1;
             }
         } while (count($cases) === self::PACKAGE_SIZE);
 
@@ -69,8 +86,6 @@ class AdSelectCaseExporter
         $exported = 0;
         $caseIdMax = $this->getCaseIdToExport();
 
-//        echo "caseClickIdFrom=$caseClickIdFrom, caseIdMax=$caseIdMax\n";
-
         $maxId = NetworkCaseClick::max('id');
         $totalEstimate = $maxId - $caseClickIdFrom;
 
@@ -78,11 +93,14 @@ class AdSelectCaseExporter
             $caseClicks =
                 NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCaseClicks($caseClicks);
-
             $exported += count($caseClicks);
-            echo "exported: $exported; progress=", $caseClicks->last() ? round(100-($maxId-$caseClicks->last()->id)/$totalEstimate*100,0) : '100', "%\n";
-            if(count($caseClicks) > 0) {
-                $caseClickIdFrom = $caseClicks->last()->id+1;
+
+            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
+                $exported,
+                $caseClicks->last() ? 100 - ($maxId - $caseClicks->last()->id) / $totalEstimate * 100 : '100'));
+
+            if (count($caseClicks) > 0) {
+                $caseClickIdFrom = $caseClicks->last()->id + 1;
             }
         } while (count($caseClicks) === self::PACKAGE_SIZE);
 
@@ -101,11 +119,14 @@ class AdSelectCaseExporter
             $casePayments =
                 NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCasePayments($casePayments);
-
             $exported += count($casePayments);
-            echo "exported: $exported; progress=", $casePayments->last() ? round(100-($maxId-$casePayments->last()->id)/$totalEstimate*100,0) : '100', "%\n";
-            if(count($casePayments) > 0) {
-                $casePaymentIdFrom = $casePayments->last()->id+1;
+
+            $this->info(sprintf("[AdSelectCaseExport] exported: %d; progress=%d%%",
+                $exported,
+                $casePayments->last() ? 100 - ($maxId - $casePayments->last()->id) / $totalEstimate * 100 : '100'));
+            
+            if (count($casePayments) > 0) {
+                $casePaymentIdFrom = $casePayments->last()->id + 1;
             }
         } while (count($casePayments) === self::PACKAGE_SIZE);
 
