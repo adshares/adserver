@@ -249,6 +249,7 @@ class GuzzleAdSelectClient implements AdSelect
                                 ]
                             )
                         ),
+                        'rpm' => $item['rpm'],
                     ];
                 }
             }

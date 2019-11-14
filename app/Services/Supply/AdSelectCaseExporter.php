@@ -33,7 +33,7 @@ use function count;
 
 class AdSelectCaseExporter
 {
-    private const PACKAGE_SIZE = 500;
+    private const PACKAGE_SIZE = 2000;
 
     private $adSelectClient;
 
@@ -45,20 +45,21 @@ class AdSelectCaseExporter
     public function exportCases(int $caseIdFrom): int
     {
         $exported = 0;
-        $offset = 0;
         $impressionIdMax = NetworkImpressionUpdater::getLastUpdatedId();
 
+        $maxId = NetworkCase::max('id');
+        $totalEstimate = $maxId - $caseIdFrom;
+
         do {
-            $cases = NetworkCase::fetchCasesToExport($caseIdFrom, $impressionIdMax, self::PACKAGE_SIZE, $offset);
+            $cases = NetworkCase::fetchCasesToExport($caseIdFrom, $impressionIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCases($cases);
 
             $exported += count($cases);
-            $offset += self::PACKAGE_SIZE;
+            echo "exported: $exported; progress=", $cases->last() ? round(100-($maxId-$cases->last()->id)/$totalEstimate*100,0) : '100', "%\n";
+            if(count($cases) > 0) {
+                $caseIdFrom = $cases->last()->id+1;
+            }
         } while (count($cases) === self::PACKAGE_SIZE);
-
-        if (null !== ($id = $cases->max('id'))) {
-            self::setLastExportedCaseId($id);
-        }
 
         return $exported;
     }
@@ -66,16 +67,23 @@ class AdSelectCaseExporter
     public function exportCaseClicks(int $caseClickIdFrom): int
     {
         $exported = 0;
-        $offset = 0;
-        $caseIdMax = self::getLastExportedCaseId();
+        $caseIdMax = $this->getCaseIdToExport();
+
+//        echo "caseClickIdFrom=$caseClickIdFrom, caseIdMax=$caseIdMax\n";
+
+        $maxId = NetworkCaseClick::max('id');
+        $totalEstimate = $maxId - $caseClickIdFrom;
 
         do {
             $caseClicks =
-                NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, $offset);
+                NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCaseClicks($caseClicks);
 
             $exported += count($caseClicks);
-            $offset += self::PACKAGE_SIZE;
+            echo "exported: $exported; progress=", $caseClicks->last() ? round(100-($maxId-$caseClicks->last()->id)/$totalEstimate*100,0) : '100', "%\n";
+            if(count($caseClicks) > 0) {
+                $caseClickIdFrom = $caseClicks->last()->id+1;
+            }
         } while (count($caseClicks) === self::PACKAGE_SIZE);
 
         return $exported;
@@ -84,16 +92,21 @@ class AdSelectCaseExporter
     public function exportCasePayments(int $casePaymentIdFrom): int
     {
         $exported = 0;
-        $offset = 0;
-        $caseIdMax = self::getLastExportedCaseId();
+        $caseIdMax = $this->getCaseIdToExport();
+
+        $maxId = NetworkCasePayment::max('id');
+        $totalEstimate = $maxId - $casePaymentIdFrom;
 
         do {
             $casePayments =
-                NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, $offset);
+                NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCasePayments($casePayments);
 
             $exported += count($casePayments);
-            $offset += self::PACKAGE_SIZE;
+            echo "exported: $exported; progress=", $casePayments->last() ? round(100-($maxId-$casePayments->last()->id)/$totalEstimate*100,0) : '100', "%\n";
+            if(count($casePayments) > 0) {
+                $casePaymentIdFrom = $casePayments->last()->id+1;
+            }
         } while (count($casePayments) === self::PACKAGE_SIZE);
 
         return $exported;
@@ -156,15 +169,5 @@ class AdSelectCaseExporter
     private function getExportedPeriodStart(): DateTime
     {
         return new DateTime('-2 weeks');
-    }
-
-    private static function setLastExportedCaseId(int $id): void
-    {
-        Config::upsertInt(Config::ADSELECT_LAST_EXPORTED_CASE_ID, $id);
-    }
-
-    private static function getLastExportedCaseId(): int
-    {
-        return Config::fetchInt(Config::ADSELECT_LAST_EXPORTED_CASE_ID);
     }
 }
