@@ -41,6 +41,8 @@ class NetworkCaseLogsHourlyMeta extends Model
 
     public const STATUS_INVALID = 1;
 
+    public const STATUS_ERROR = 2;
+
     private const MONTH = 30 * 24 * 60 * 60;
 
     /** @var array */
@@ -70,5 +72,13 @@ class NetworkCaseLogsHourlyMeta extends Model
         $currentUpdatedAt = self::find($this->id)->updated_at;
 
         return $this->updated_at->eq($currentUpdatedAt);
+    }
+
+    public function updateAfterProcessing(int $status, int $processTime): void
+    {
+        $this->status = $status;
+        $this->process_time_last = $processTime;
+        $this->process_count++;
+        $this->save();
     }
 }

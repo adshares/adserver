@@ -24,14 +24,15 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
 use Adshares\Adserver\Utilities\DomainReader;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use function array_map;
 use function hex2bin;
 
@@ -56,6 +57,13 @@ class NetworkCase extends Model
     use AutomateMutators;
     use BinHex;
     use JsonValue;
+
+    private const SQL_QUERY_SELECT_FIRST_CASE_ID_FROM_DATE_RANGE = <<<SQL
+SELECT id
+FROM network_cases
+WHERE created_at BETWEEN ? AND ?
+LIMIT 1;
+SQL;
 
     /** @var array */
     protected $fillable = [
@@ -124,6 +132,11 @@ class NetworkCase extends Model
                 'banner_id' => $bannerId,
             ]
         );
+    }
+
+    public static function noCasesInDateRange(DateTimeInterface $from, DateTimeInterface $to): bool
+    {
+        return empty(DB::select(self::SQL_QUERY_SELECT_FIRST_CASE_ID_FROM_DATE_RANGE, [$from, $to]));
     }
 
     public static function fetchByCaseId(string $caseId): ?NetworkCase

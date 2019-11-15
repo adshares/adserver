@@ -22,6 +22,8 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Exceptions\Publisher\MissingCasesException;
+use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
 use DateTime;
@@ -90,15 +92,24 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
                 $this->aggregateForHour(new DateTimeImmutable('@'.$logsHourlyMeta->id));
 
                 if ($logsHourlyMeta->isActual()) {
-                    $logsHourlyMeta->status = NetworkCaseLogsHourlyMeta::STATUS_VALID;
-                    $logsHourlyMeta->process_time_last = (int)((microtime(true) - $startTime) * 1000);
-                    $logsHourlyMeta->process_count++;
-                    $logsHourlyMeta->save();
+                    $logsHourlyMeta->updateAfterProcessing(
+                        NetworkCaseLogsHourlyMeta::STATUS_VALID,
+                        (int)((microtime(true) - $startTime) * 1000)
+                    );
 
                     DB::commit();
                 } else {
                     DB::rollBack();
                 }
+            } catch (MissingCasesException $missingCasesException) {
+                DB::rollBack();
+
+                $logsHourlyMeta->updateAfterProcessing(
+                    NetworkCaseLogsHourlyMeta::STATUS_ERROR,
+                    (int)((microtime(true) - $startTime) * 1000)
+                );
+
+                $this->error(sprintf($missingCasesException->getMessage()));
             } catch (Throwable $throwable) {
                 DB::rollBack();
                 $this->error(
@@ -123,6 +134,16 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
                 $to->format(DateTime::ATOM)
             )
         );
+
+        if (NetworkCase::noCasesInDateRange($from, $to)) {
+            throw new MissingCasesException(
+                sprintf(
+                    '[Aggregate statistics] There are no cases from %s to %s',
+                    $from->format(DateTime::ATOM),
+                    $to->format(DateTime::ATOM)
+                )
+            );
+        }
 
         $queries = $this->prepareQueries($from, $to);
 
