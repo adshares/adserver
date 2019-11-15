@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
+use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Dto\Result\ChartResult;
@@ -38,6 +39,13 @@ use function bin2hex;
 class MySqlStatsRepository implements StatsRepository
 {
     private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
+
+    private const SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE = <<<SQL
+SELECT id
+FROM event_logs
+WHERE created_at BETWEEN ? AND ?
+LIMIT 1;
+SQL;
 
     public function fetchView(
         string $advertiserId,
@@ -508,6 +516,22 @@ class MySqlStatsRepository implements StatsRepository
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
     {
+        if (empty(
+            $this->executeQuery(
+                self::SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE,
+                $dateStart,
+                [$dateStart, $dateEnd]
+            )
+        )) {
+            throw new MissingEventsException(
+                sprintf(
+                    'No events in range from %s to %s',
+                    $dateStart->format(DateTime::ATOM),
+                    $dateEnd->format(DateTime::ATOM)
+                )
+            );
+        }
+
         $cacheTable = 'event_logs_hourly';
 
         $deleteQuery = sprintf(
@@ -583,11 +607,11 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function executeQuery(string $query, DateTime $dateStart): array
+    private function executeQuery(string $query, DateTime $dateStart, array $bindings = []): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select($query);
+        $queryResult = DB::select($query, $bindings);
         $this->unsetDbSessionTimeZone();
 
         return $queryResult;
