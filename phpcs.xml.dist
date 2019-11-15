@@ -10,5 +10,5 @@
 
     <rule ref="PHPCompatibility"/>
     <rule ref="PSR2"/>
-    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes" />
+<!--    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes" />-->
 </ruleset>

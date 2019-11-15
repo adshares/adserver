@@ -32,17 +32,17 @@ install:
   - yarn install && yarn run prod
   - composer install
   - mkdir -p storage/framework/{sessions,views,cache}
-#  - mysql -e 'CREATE DATABASE IF NOT EXISTS adserver_test;'
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS adserver_test;'
   - php artisan migrate
 
 jobs:
   include:
     - script:
-        - vendor/bin/parallel-lint --no-colors --blame --exclude vendor .
-        - vendor/bin/phpcs -s --standard=PHPCompatibility,PSR2 app src tests lib
+        - composer qa-check
 
     - script:
-        - vendor/bin/phpunit
+        - composer test-ci
+        - git fetch --unshallow
         - sonar-scanner
 
 notifications:
