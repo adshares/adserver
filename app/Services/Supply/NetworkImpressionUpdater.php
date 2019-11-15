@@ -101,7 +101,6 @@ class NetworkImpressionUpdater
             }
 
             $offset += self::PACKAGE_SIZE;
-            echo "updated: $offset\n";
             $this->setLastUpdatedId($idTo);
         } while (count($impressions) === self::PACKAGE_SIZE);
 
