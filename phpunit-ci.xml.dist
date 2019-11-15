@@ -43,4 +43,10 @@
             <directory suffix=".php">./lib</directory>
         </whitelist>
     </filter>
+
+    <logging>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+        <log type="coverage-clover" target="./storage/phpunit/coverage.xml"/>
+        <log type="junit" target="./storage/phpunit/logfile.xml"/>
+    </logging>
 </phpunit>

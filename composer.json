@@ -35,6 +35,8 @@
         "mockery/mockery": "^1.0",
         "nunomaduro/collision": "^2.0",
         "phpunit/phpunit": "^7.0",
+        "sensiolabs/security-checker": "^6.0",
+        "slevomat/coding-standard": "^5.0",
         "squizlabs/php_codesniffer": "^3.3",
         "phpcompatibility/php-compatibility": "^8.1",
         "xethron/migrations-generator": "^2.0"
@@ -64,11 +66,25 @@
         }
     },
     "scripts": {
+        "qa-check": [
+            "security-checker security:check",
+            "parallel-lint --no-colors --blame --exclude vendor --exclude bin .",
+            "phpcs -s app src tests lib"
+        ],
+        "test": "phpunit --testsuite Application,Unit",
+        "test-coverage": "@test --coverage-text",
+        "test-ci": "phpunit --configuration phpunit-ci.xml",
         "post-root-package-install": [
             "@php artisan key:generate"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump"
+        ],
+        "post-install-cmd": [
+            "@php artisan optimize"
+        ],
+        "post-update-cmd": [
+            "@php artisan optimize"
         ]
     },
     "config": {
