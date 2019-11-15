@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Client;
 
@@ -81,10 +81,14 @@ class GuzzleAdSelectClient implements AdSelect
         $this->client = $client;
     }
 
-    public function exportInventory(Campaign $campaign): void
+    public function exportInventory(CampaignCollection $campaigns): void
     {
-        $mapped = CampaignMapper::map($campaign);
+        $mapped = [];
 
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mapped[] = CampaignMapper::map($campaign);
+        }
         try {
             $this->client->post(
                 self::URI_INVENTORY,
@@ -245,6 +249,7 @@ class GuzzleAdSelectClient implements AdSelect
                                 ]
                             )
                         ),
+                        'rpm' => $item['rpm'],
                     ];
                 }
             }

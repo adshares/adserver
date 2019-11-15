@@ -54,8 +54,6 @@ class Config extends Model
 
     public const ADSELECT_INVENTORY_EXPORT_TIME = 'adselect-inventory-export';
 
-    public const ADSELECT_LAST_EXPORTED_CASE_ID = 'adselect-export-case-id';
-
     public const LAST_UPDATED_IMPRESSION_ID = 'last-updated-impression-id';
 
     public const OPERATOR_WALLET_EMAIL_LAST_TIME = 'operator-wallet-transfer-email-time';

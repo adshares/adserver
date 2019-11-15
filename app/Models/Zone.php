@@ -174,7 +174,7 @@ HTML;
 
     public static function fetchSitePublicIdByPublicId(string $publicId): string
     {
-        $zone = self::where('uuid', hex2bin($publicId))->first();
+        $zone = self::where('uuid', hex2bin($publicId))->firstOrFail();
 
         return $zone->site->uuid;
     }

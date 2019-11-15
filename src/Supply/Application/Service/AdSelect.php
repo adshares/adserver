@@ -28,7 +28,7 @@ use Illuminate\Support\Collection;
 
 interface AdSelect
 {
-    public function exportInventory(Campaign $campaign): void;
+    public function exportInventory(CampaignCollection $campaigns): void;
 
     public function deleteFromInventory(CampaignCollection $campaigns): void;
 

@@ -32,7 +32,7 @@ class CasePaymentMapper
         return [
             'id' => $payment->id,
             'case_id' => $payment->network_case_id,
-            'paid_amount' => $payment->total_amount,
+            'paid_amount' => (int)((float)$payment->total_amount * $payment->exchange_rate),
             'pay_time' => $payment->pay_time->format(DateTime::ATOM),
             'payer' => $payment->payer,
         ];

@@ -27,7 +27,7 @@ use Adshares\Supply\Domain\Model\CampaignCollection;
 
 interface AdSelectLegacy
 {
-    public function exportInventory(Campaign $campaign): void;
+    public function exportInventory(CampaignCollection $campaigns): void;
 
     public function deleteFromInventory(CampaignCollection $campaigns): void;
 
