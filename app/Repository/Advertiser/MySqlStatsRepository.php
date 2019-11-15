@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Repository\Advertiser;
 
+use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Dto\Result\ChartResult;
@@ -38,6 +39,13 @@ use function bin2hex;
 class MySqlStatsRepository implements StatsRepository
 {
     private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
+
+    private const SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE = <<<SQL
+SELECT id
+FROM event_logs
+WHERE created_at BETWEEN ? AND ?
+LIMIT 1;
+SQL;
 
     public function fetchView(
         string $advertiserId,
@@ -368,6 +376,8 @@ class MySqlStatsRepository implements StatsRepository
             $queryBuilder
                 ->appendCampaignIdWhereClause($campaignId)
                 ->appendBannerIdGroupBy();
+        } else {
+            $queryBuilder->appendAnyBannerId();
         }
 
         $query = $queryBuilder->build();
@@ -414,6 +424,7 @@ class MySqlStatsRepository implements StatsRepository
                 ->appendCampaignIdWhereClause($campaignId)
                 ->appendCampaignIdGroupBy();
         }
+        $queryBuilder->appendAnyBannerId();
 
         $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
@@ -505,6 +516,22 @@ class MySqlStatsRepository implements StatsRepository
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void
     {
+        if (empty(
+            $this->executeQuery(
+                self::SQL_QUERY_SELECT_FIRST_EVENT_ID_FROM_DATE_RANGE,
+                $dateStart,
+                [$dateStart, $dateEnd]
+            )
+        )) {
+            throw new MissingEventsException(
+                sprintf(
+                    'No events in range from %s to %s',
+                    $dateStart->format(DateTime::ATOM),
+                    $dateEnd->format(DateTime::ATOM)
+                )
+            );
+        }
+
         $cacheTable = 'event_logs_hourly';
 
         $deleteQuery = sprintf(
@@ -512,9 +539,8 @@ class MySqlStatsRepository implements StatsRepository
             $cacheTable,
             MySqlQueryBuilder::convertDateTimeToMySqlDate($dateStart)
         );
-        $this->executeQuery($deleteQuery, $dateStart);
 
-        $subQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $groupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
@@ -522,15 +548,31 @@ class MySqlStatsRepository implements StatsRepository
             ->appendAdvertiserIdGroupBy()
             ->selectDateStartColumn($dateStart)
             ->build();
-
-        $query =
+        $groupedQuery =
             'INSERT INTO '
             .$cacheTable
             .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
             .'`domain`,`campaign_id`,`banner_id`,`advertiser_id`,`hour_timestamp`)'
-            .$subQuery;
+            .$groupedSubQuery;
 
-        $this->executeQuery($query, $dateStart);
+        $notGroupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendCampaignIdGroupBy()
+            ->appendAdvertiserIdGroupBy()
+            ->selectDateStartColumn($dateStart)
+            ->build();
+        $notGroupedQuery =
+            'INSERT INTO '
+            .$cacheTable
+            .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
+            .'`campaign_id`,`advertiser_id`,`hour_timestamp`)'
+            .$notGroupedSubQuery;
+
+        DB::beginTransaction();
+        $this->executeQuery($deleteQuery, $dateStart);
+        $this->executeQuery($groupedQuery, $dateStart);
+        $this->executeQuery($notGroupedQuery, $dateStart);
+        DB::commit();
     }
 
     private function fetch(
@@ -553,6 +595,8 @@ class MySqlStatsRepository implements StatsRepository
 
         if ($bannerId) {
             $queryBuilder->appendBannerIdWhereClause($bannerId);
+        } else {
+            $queryBuilder->appendAnyBannerId();
         }
 
         $query = $queryBuilder->build();
@@ -563,11 +607,11 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function executeQuery(string $query, DateTime $dateStart): array
+    private function executeQuery(string $query, DateTime $dateStart, array $bindings = []): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
-        $queryResult = DB::select($query);
+        $queryResult = DB::select($query, $bindings);
         $this->unsetDbSessionTimeZone();
 
         return $queryResult;

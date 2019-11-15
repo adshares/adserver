@@ -203,9 +203,17 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
+    public function appendAnyBannerId(): self
+    {
+        $this->where('e.banner_id IS NULL');
+
+        return $this;
+    }
+
     public function appendBannerIdGroupBy(): self
     {
         $this->column('e.banner_id AS banner_id');
+        $this->where('e.banner_id IS NOT NULL');
         $this->groupBy('e.banner_id');
 
         return $this;
