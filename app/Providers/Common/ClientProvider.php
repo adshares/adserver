@@ -33,7 +33,6 @@ use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
 use Adshares\Adserver\Client\JsonRpcAdPayLegacyClient;
-use Adshares\Adserver\Client\JsonRpcAdSelectLegacyClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
 use Adshares\Adserver\HttpClient\JsonRpc;

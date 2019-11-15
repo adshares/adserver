@@ -24,8 +24,8 @@ use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Conversion;
+use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -41,6 +41,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function base64_decode;
 use function sprintf;
 
@@ -175,53 +176,58 @@ class ConversionController extends Controller
         return $response;
     }
 
-    private function validateConversionAdvanced(Request $request, string $secret, string $conversionUuid): void
-    {
+    private function validateConversionAdvanced(
+        Request $request,
+        string $secret,
+        string $conversionDefinitionUuid
+    ): void {
         $signature = $request->input('sig');
         if (null === $signature) {
             throw new BadRequestHttpException(
-                sprintf('No signature provided for: %s', $conversionUuid)
+                sprintf('No signature provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $nonce = $request->input('nonce');
         if (null === $nonce) {
             throw new BadRequestHttpException(
-                sprintf('No nonce provided for: %s', $conversionUuid)
+                sprintf('No nonce provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $timestampCreated = $request->input('ts');
         if (null === $timestampCreated) {
             throw new BadRequestHttpException(
-                sprintf('No timestamp provided for: %s', $conversionUuid)
+                sprintf('No timestamp provided for: %s', $conversionDefinitionUuid)
             );
         }
 
         $timestampCreated = (int)$timestampCreated;
         if ($timestampCreated <= 0) {
             throw new BadRequestHttpException(
-                sprintf('Invalid timestamp for: %s', $conversionUuid)
+                sprintf('Invalid timestamp for: %s', $conversionDefinitionUuid)
             );
         }
 
         $value = $request->input('value', '');
+        $caseId = $request->input('cid', '');
 
         try {
             $isSignatureValid = $this->conversionValidator->validateSignature(
                 $signature,
-                $conversionUuid,
+                $conversionDefinitionUuid,
                 $nonce,
                 $timestampCreated,
                 $value,
-                $secret
+                $secret,
+                $caseId
             );
         } catch (RuntimeException $exception) {
             Log::info(
                 sprintf(
                     '[DemandController] conversion signature error: (%s) for: %s',
                     $exception->getMessage(),
-                    $conversionUuid
+                    $conversionDefinitionUuid
                 )
             );
 
@@ -230,7 +236,7 @@ class ConversionController extends Controller
 
         if (!$isSignatureValid) {
             throw new BadRequestHttpException(
-                sprintf('Invalid signature for: %s', $conversionUuid)
+                sprintf('Invalid signature for: %s', $conversionDefinitionUuid)
             );
         }
     }
@@ -385,7 +391,7 @@ class ConversionController extends Controller
         }
 
         $value = (int)$value;
-        if ($value <= 0) {
+        if ($value < 0) {
             throw new BadRequestHttpException(
                 sprintf('Invalid value of %d for: %s', $value, $conversionDefinition->uuid)
             );
@@ -398,7 +404,7 @@ class ConversionController extends Controller
     {
         $cid = $request->input('cid');
         if (null !== $cid) {
-            $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, $cid);
+            $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, strtolower($cid));
         } else {
             $tid = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum(
                 $request->cookies->get('tid')
@@ -414,7 +420,7 @@ class ConversionController extends Controller
         }
 
         if (0 === count($results)) {
-            throw new NotFoundHttpException(
+            throw new UnprocessableEntityHttpException(
                 sprintf('No matching case found for campaign: %s', $campaignPublicId)
             );
         }

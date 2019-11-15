@@ -34,6 +34,7 @@ class CaseMapper
             'id' => $caseWithImpression->id,
             'created_at' => $caseWithImpression->created_at->format(DateTime::ATOM),
             'publisher_id' => $caseWithImpression->publisher_id,
+            'site_id' => $caseWithImpression->site_id,
             'zone_id' => $caseWithImpression->zone_id,
             'campaign_id' => $caseWithImpression->campaign_id,
             'banner_id' => $caseWithImpression->banner_id,

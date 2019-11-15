@@ -34,7 +34,7 @@ class AdSelectInventoryExporter
     /** @var LoggerInterface */
     private $logger;
 
-    public function __construct(AdSelectLegacy $client, CampaignRepository $repository, LoggerInterface $logger)
+    public function __construct(AdSelect $client, CampaignRepository $repository, LoggerInterface $logger)
     {
         $this->client = $client;
         $this->repository = $repository;
@@ -43,21 +43,20 @@ class AdSelectInventoryExporter
 
     public function export(CampaignCollection $campaignsToAddOrUpdate, CampaignCollection $campaignsToDelete): void
     {
-        /** @var Campaign $campaign */
-        foreach ($campaignsToAddOrUpdate as $campaign) {
+        if (!$campaignsToAddOrUpdate->isEmpty()) {
             try {
-                $this->client->exportInventory($campaign);
+                $this->client->exportInventory($campaignsToAddOrUpdate);
             } catch (UnexpectedClientResponseException $exception) {
                 if ($exception->getCode() === 500) {
                     $this->logger->error($exception->getMessage());
-                    continue;
+                    return;
                 }
 
                 $this->logger->warning($exception->getMessage());
             }
         }
 
-        if ($campaignsToDelete) {
+        if (!$campaignsToDelete->isEmpty()) {
             try {
                 $this->client->deleteFromInventory($campaignsToDelete);
 

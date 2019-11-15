@@ -18,23 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+namespace Adshares\Adserver\Exceptions\Publisher;
 
-namespace Adshares\Adserver\Client\Mapper\AdSelect;
+use Adshares\Common\Exception\RuntimeException;
 
-use Adshares\Adserver\Models\NetworkCasePayment;
-use DateTime;
-
-class CasePaymentMapper
+class MissingCasesException extends RuntimeException
 {
-    public static function map(NetworkCasePayment $payment): array
-    {
-        return [
-            'id' => $payment->id,
-            'case_id' => $payment->network_case_id,
-            'paid_amount' => (int)((float)$payment->total_amount * $payment->exchange_rate),
-            'pay_time' => $payment->pay_time->format(DateTime::ATOM),
-            'payer' => $payment->payer,
-        ];
-    }
 }

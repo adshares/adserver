@@ -115,7 +115,7 @@ final class DummyAdSelectClient implements AdSelect
         )->where('network_banners.height', $zone->height);
     }
 
-    public function exportInventory(Campaign $campaign): void
+    public function exportInventory(CampaignCollection $campaigns): void
     {
     }
 

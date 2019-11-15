@@ -64,10 +64,14 @@ class GuzzleAdSelectLegacyClient implements AdSelectLegacy
         $this->client = $client;
     }
 
-    public function exportInventory(Campaign $campaign): void
+    public function exportInventory(CampaignCollection $campaigns): void
     {
-        $mapped = CampaignMapper::map($campaign);
+        $mapped = [];
 
+        /** @var Campaign $campaign */
+        foreach ($campaigns as $campaign) {
+            $mapped[] = CampaignMapper::map($campaign);
+        }
         try {
             $this->client->post('/api/v1/campaigns', [
                 RequestOptions::JSON => ['campaigns' => $mapped],
