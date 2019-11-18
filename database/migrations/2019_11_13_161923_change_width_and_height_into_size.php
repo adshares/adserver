@@ -19,18 +19,14 @@
  */
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\Zone;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class ChangeWidthAndHeightIntoSize extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
         Schema::table(
             'banners',
@@ -47,6 +43,11 @@ class ChangeWidthAndHeightIntoSize extends Migration
             'banners',
             function (Blueprint $table) {
                 $table->dropColumn('creative_width');
+            }
+        );
+        Schema::table(
+            'banners',
+            function (Blueprint $table) {
                 $table->dropColumn('creative_height');
             }
         );
@@ -67,6 +68,11 @@ class ChangeWidthAndHeightIntoSize extends Migration
             'network_banners',
             function (Blueprint $table) {
                 $table->dropColumn('width');
+            }
+        );
+        Schema::table(
+            'network_banners',
+            function (Blueprint $table) {
                 $table->dropColumn('height');
             }
         );
@@ -87,17 +93,23 @@ class ChangeWidthAndHeightIntoSize extends Migration
             'zones',
             function (Blueprint $table) {
                 $table->dropColumn('width');
+            }
+        );
+        Schema::table(
+            'zones',
+            function (Blueprint $table) {
                 $table->dropColumn('height');
+            }
+        );
+        Schema::table(
+            'zones',
+            function (Blueprint $table) {
+                $table->dropColumn('label');
             }
         );
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::table(
             'banners',
@@ -138,11 +150,33 @@ class ChangeWidthAndHeightIntoSize extends Migration
             function (Blueprint $table) {
                 $table->integer('height')->after('size');
                 $table->integer('width')->after('size');
+                $table->string('label')->after('type');
             }
         );
-        DB::update(
-            'UPDATE `zones` SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1)'
+
+        Schema::create(
+            '__zone_labels',
+            function (Blueprint $table) {
+                $table->string('size', 16)->primary();
+                $table->string('label');
+            }
         );
+
+        foreach (Zone::SIZE_INFOS as $size => $info) {
+            DB::insert(
+                'INSERT INTO `__zone_labels`(`size`, `label`) VALUES (?, ?)',
+                [$size, $info['label'] ?? '']
+            );
+        }
+
+        DB::update(
+            'UPDATE `zones` '
+            .'SET `width` = SUBSTRING_INDEX(`size`, "x", 1), `height` = SUBSTRING_INDEX(`size`, "x", -1), '
+            .'`label` = (SELECT `label` FROM `__zone_labels` `zl` WHERE `zl`.`size` = `zones`.`size`)'
+        );
+
+        Schema::dropIfExists('__zone_labels');
+
         Schema::table(
             'zones',
             function (Blueprint $table) {
