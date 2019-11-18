@@ -129,11 +129,6 @@ class Banner extends Model
         return Size::SUPPORTED_SIZES[$size];
     }
 
-    public function getFormattedSize(): string
-    {
-        return $this->creative_size;
-    }
-
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);

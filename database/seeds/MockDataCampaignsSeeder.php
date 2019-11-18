@@ -92,7 +92,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b = $this->makeImageBanner($campaign, $size[0].'x'.$size[1], $filename);
                     $b->save();
                     $banners[] = $b;
-                    $this->command->info(" Added banner - #{$b->id} [{$b->getFormattedSize()}]");
+                    $this->command->info(" Added banner - #{$b->id} [{$b->creative_size}]");
                 }
 
                 if (empty($banners)) {
@@ -100,7 +100,7 @@ class MockDataCampaignsSeeder extends Seeder
                         $b = $this->makeImageBanner($campaign, $size);
                         $b->save();
                         $banners[] = $b;
-                        $this->command->info(" Added IMAGE banner - #{$b->id} [{$b->getFormattedSize()}]");
+                        $this->command->info(" Added IMAGE banner - #{$b->id} [{$b->creative_size}]");
                     }
                 }
 
@@ -108,7 +108,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b = $this->makeHtmlBanner($campaign, $size);
                     $b->save();
                     $banners[] = $b;
-                    $this->command->info(" Added HTML banner - #{$b->id} [{$b->getFormattedSize()}]");
+                    $this->command->info(" Added HTML banner - #{$b->id} [{$b->creative_size}]");
                 }
 
                 $this->command->info(" Added - [$campaign->landing_url] for user <{$user->email}>");

@@ -64,7 +64,7 @@ class DemandCampaignMapper
         foreach ($campaign->ads as $ad) {
             $banners[] = [
                 'id' => $ad->uuid,
-                'size' => $ad->getFormattedSize(),
+                'size' => $ad->creative_size,
                 'type' => $ad->creative_type,
             ];
         }
