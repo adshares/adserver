@@ -38,6 +38,7 @@ use function hex2bin;
  * @property int id
  * @property string uuid
  * @property string size
+ * @property array size_info
  * @property string label
  * @mixin Builder
  */
@@ -112,6 +113,44 @@ HTML;
         'micro-banner' => '88x31',
     ];
 
+    public const SIZE_INFOS = [
+        #best
+        '300x250' => ['label' => 'medium-rectangle', 'tags' => ['Desktop', 'best']],
+        '336x280' => ['label' => 'large-rectangle', 'tags' => ['Desktop', 'best']],
+        '728x90' => ['label' => 'leaderboard', 'tags' => ['Desktop', 'best']],
+        '300x600' => ['label' => 'half-page', 'tags' => ['Desktop', 'best']],
+        '320x100' => ['label' => 'large-mobile-banner', 'tags' => ['Desktop', 'best', 'Mobile']],
+        #other
+        '320x50' => ['label' => 'mobile-banner', 'tags' => ['Desktop', 'Mobile']],
+        '468x60' => ['label' => 'full-banner', 'tags' => ['Desktop']],
+        '234x60' => ['label' => 'half-banner', 'tags' => ['Desktop']],
+        '120x600' => ['label' => 'skyscraper', 'tags' => ['Desktop']],
+        '120x240' => ['label' => 'vertical-banner', 'tags' => ['Desktop']],
+        '160x600' => ['label' => 'wide-skyscraper', 'tags' => ['Desktop']],
+        '300x1050' => ['label' => 'portrait', 'tags' => ['Desktop']],
+        '970x90' => ['label' => 'large-leaderboard', 'tags' => ['Desktop']],
+        '970x250' => ['label' => 'billboard', 'tags' => ['Desktop']],
+        '250x250' => ['label' => 'square', 'tags' => ['Desktop']],
+        '200x200' => ['label' => 'small-square', 'tags' => ['Desktop']],
+        '180x150' => ['label' => 'small-rectangle', 'tags' => ['Desktop']],
+        '125x125' => ['label' => 'button', 'tags' => ['Desktop']],
+        #regional
+        '240x400' => ['label' => 'vertical-rectangle', 'tags' => ['Desktop']],
+        '980x120' => ['label' => 'panorama', 'tags' => ['Desktop']],
+        '250x360' => ['label' => 'triple-widescreen', 'tags' => ['Desktop']],
+        '930x180' => ['label' => 'top-banner', 'tags' => ['Desktop']],
+        '580x400' => ['label' => 'netboard', 'tags' => ['Desktop']],
+        #polish
+        '750x100' => ['label' => 'single-billboard', 'tags' => ['Desktop', 'PL']],
+        '750x200' => ['label' => 'double-billboard', 'tags' => ['Desktop', 'PL']],
+        '750x300' => ['label' => 'triple-billboard', 'tags' => ['Desktop', 'PL']],
+        # https://en.wikipedia.org/wiki/Web_banner
+        '300x100' => ['label' => '3-to-1-rectangle', 'tags' => ['Desktop']],
+        '120x90' => ['label' => 'button-one', 'tags' => ['Desktop']],
+        '120x60' => ['label' => 'button-two', 'tags' => ['Desktop']],
+        '88x31' => ['label' => 'micro-banner', 'tags' => ['Desktop']],
+    ];
+
     public $publisher_id;
 
     protected $fillable = [
@@ -129,13 +168,14 @@ HTML;
         'name',
         'code',
         'size',
+        'size_info',
         'status',
         'type',
         'uuid'
     ];
 
     protected $appends = [
-        'size',
+        'size_info',
         'short_headline',#@deprecated
         'code',
     ];
@@ -213,31 +253,13 @@ HTML;
         $this->name = $value;
     }
 
-    public function getSizeAttribute(): array
+    public function getSizeInfoAttribute(): array
     {
-        $size = Size::toDimensions($this->size);
+        $sizeInfo = self::SIZE_INFOS[$this->size] ?? [];
 
         return [
-            'width' => $size[0],
-            'height' => $size[1],
-            'label' => $this->label,
-            'tags' => collect(Simulator::getZoneTypes())->firstWhere('label', $this->label) ?? [],
+            'label' => $sizeInfo['label'] ?? '',
+            'tags' => $sizeInfo['tags'] ?? [],
         ];
-    }
-
-    public function setSizeAttribute(array $data): void
-    {
-        $label = $data['label'] ?? false;
-
-        if ($label) {
-            $sizeLabel = self::ZONE_LABELS[$label] ?? false;
-            $this->attributes['label'] = $label;
-            if ($sizeLabel) {
-                $this->attributes['size'] = $sizeLabel;
-            }
-        } else {
-            $this->attributes['size'] = Size::fromDimensions($data['width'] ?? 0, $data['height'] ?? 0);
-            $this->attributes['label'] = Simulator::findLabelBySize($this->attributes['size']);
-        }
     }
 }

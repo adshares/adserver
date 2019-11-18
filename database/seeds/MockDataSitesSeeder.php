@@ -126,7 +126,6 @@ class MockDataSitesSeeder extends Seeder
 
                 $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");
             }
-
         }
         DB::commit();
 
