@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -73,44 +72,6 @@ HTML;
     public const ZONE_TYPES = [
         self::TYPE_IMAGE,
         self::TYPE_HTML,
-    ];
-
-    public const ZONE_LABELS = [
-        #best
-        'medium-rectangle' => '300x250',
-        'large-rectangle' => '336x280',
-        'leaderboard' => '728x90',
-        'half-page' => '300x600',
-        'large-mobile-banner' => '320x100',
-        #other
-        'mobile-banner' => '320x50',
-        'full-banner' => '468x60',
-        'half-banner' => '234x60',
-        'skyscraper' => '120x600',
-        'vertical-banner' => '120x240',
-        'wide-skyscraper' => '160x600',
-        'portrait' => '300x1050',
-        'large-leaderboard' => '970x90',
-        'billboard' => '970x250',
-        'square' => '250x250',
-        'small-square' => '200x200',
-        'small-rectangle' => '180x150',
-        'button' => '125x125',
-        #regional
-        'vertical-rectangle' => '240x400',# Most popular size in Russia.
-        'panorama' => '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
-        'triple-widescreen' => '250x360', # Second most popular size in Sweden.
-        'top-banner' => '930x180', # Very popular size in Denmark.
-        'netboard' => '580x400', # Very popular size in Norway.
-        #polish
-        'single-billboard' => '750x100', # Very popular size in Poland.
-        'double-billboard' => '750x200', # Most popular size in Poland.
-        'triple-billboard' => '750x300', # Third most popular size in Poland.
-        # https://en.wikipedia.org/wiki/Web_banner
-        '3-to-1-rectangle' => '300x100',
-        'button-one' => '120x90',
-        'button-two' => '120x60',
-        'micro-banner' => '88x31',
     ];
 
     public const SIZE_INFOS = [
