@@ -41,9 +41,10 @@ class SitesTest extends TestCase
             '*' => [
                 'name',
                 'code',
-                'size' => [
-                    'size',
+                'size',
+                'sizeInfo' => [
                     'label',
+                    'tags',
                 ],
                 'status',
                 'type',
@@ -347,16 +348,12 @@ JSON
                         "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "title1",
-                        'size' => [
-                            "size" => '100x200',
-                        ],
+                        "size" => '125x125',
                     ],
                     [
                         "status" => 1,
                         "name" => "title2",
-                        'size' => [
-                            "size" => '300x400',
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
@@ -367,38 +364,30 @@ JSON
                         "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "new-title1",
-                        'size' => [
-                            "size" => '100x200',
-                        ],
+                        "size" => '125x125',
                     ],
 
                     [
                         "status" => 1,
                         "name" => "new-title2",
-                        'size' => [
-                            "size" => '300x400',
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
-            'bothNewZones' => [
+            'bothOldZones' => [
                 [
                     [
                         "id" => "1",
                         "status" => 0,
                         "type" => "zone-type-1",
                         "name" => "new-title1",
-                        'size' => [
-                            "size" => '100x200',
-                        ],
+                        "size" => '125x125',
                     ],
                     [
                         "id" => "2",
                         "status" => 1,
                         "name" => "new-title2",
-                        'size' => [
-                            "size" => '300x400',
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
