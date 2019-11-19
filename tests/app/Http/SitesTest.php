@@ -39,14 +39,12 @@ class SitesTest extends TestCase
         'filtering',
         'adUnits' => [
             '*' => [
-                'name',
                 'code',
+                'label',
+                'name',
                 'size',
-                'sizeInfo' => [
-                    'label',
-                    'tags',
-                ],
                 'status',
+                'tags',
                 'type',
             ],
         ],
@@ -166,15 +164,8 @@ class SitesTest extends TestCase
     "adUnits": [
       {
         "name": "ssss",
-        "type": "image",
-        "size": {
-          "label": "large-rectangle",
-          "size": 2,
-          "tags": [
-            "Desktop",
-            "best"
-          ]
-        }
+        "type": "display",
+        "size": "300x250"
       }
     ]
   }
@@ -475,14 +466,7 @@ JSON
       {
         "name": "name",
         "type": "image",
-        "size": {
-          "label": "large-rectangle",
-          "size": 2,
-          "tags": [
-            "Desktop",
-            "best"
-          ]
-        }
+        "size": "300x250"
       }
     ]
   }
