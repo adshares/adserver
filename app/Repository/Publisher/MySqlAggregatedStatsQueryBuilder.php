@@ -207,9 +207,17 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
+    public function appendAnyZoneId(): self
+    {
+        $this->where('e.zone_id IS NULL');
+
+        return $this;
+    }
+
     public function appendZoneIdGroupBy(): self
     {
         $this->column('e.zone_id AS zone_id');
+        $this->where('e.zone_id IS NOT NULL');
         $this->groupBy('e.zone_id');
 
         return $this;
