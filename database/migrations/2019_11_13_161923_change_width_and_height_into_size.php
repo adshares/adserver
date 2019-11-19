@@ -19,7 +19,7 @@
  */
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Zone;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -81,12 +81,23 @@ class ChangeWidthAndHeightIntoSize extends Migration
             'zones',
             function (Blueprint $table) {
                 $table->string('size', 16)->default('')->after('height');
+                $table->string('type')->default(Size::TYPE_DISPLAY)->change();
             }
         );
         if (DB::isSQLite()) {
-            DB::update('UPDATE `zones` SET `size` = `width` || "x" || `height`');
+            DB::update(
+                sprintf(
+                    'UPDATE `zones` SET `size` = `width` || "x" || `height`, `type` = \'%s\'',
+                    Size::TYPE_DISPLAY
+                )
+            );
         } else {
-            DB::update('UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`)');
+            DB::update(
+                sprintf(
+                    'UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`), `type` = \'%s\'',
+                    Size::TYPE_DISPLAY
+                )
+            );
         }
 
         Schema::table(
@@ -162,7 +173,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
             }
         );
 
-        foreach (Zone::SIZE_INFOS as $size => $info) {
+        foreach (Size::SIZE_INFOS as $size => $info) {
             DB::insert(
                 'INSERT INTO `__zone_labels`(`size`, `label`) VALUES (?, ?)',
                 [$size, $info['label'] ?? '']

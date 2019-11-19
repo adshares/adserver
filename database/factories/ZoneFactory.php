@@ -27,7 +27,7 @@ $factory->define(Zone::class, function (Faker $faker) {
         'uuid' => $faker->uuid,
         'name' => $faker->word,
         'status' => Zone::STATUS_ACTIVE,
-        'type' => $faker->randomElement(Zone::ZONE_TYPES),
+        'type' => Size::TYPE_DISPLAY,
         'size' => $faker->randomElement(Size::SUPPORTED_SIZES),
     ];
 });

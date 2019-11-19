@@ -37,8 +37,9 @@ use function hex2bin;
  * @property int id
  * @property string uuid
  * @property string size
- * @property array size_info
  * @property string label
+ * @property string type
+ * @property array tags
  * @mixin Builder
  */
 class Zone extends Model
@@ -65,53 +66,6 @@ HTML;
         self::STATUS_ARCHIVED,
     ];
 
-    public const TYPE_IMAGE = 'image';
-
-    public const TYPE_HTML = 'html';
-
-    public const ZONE_TYPES = [
-        self::TYPE_IMAGE,
-        self::TYPE_HTML,
-    ];
-
-    public const SIZE_INFOS = [
-        #best
-        '300x250' => ['label' => 'medium-rectangle', 'tags' => ['Desktop', 'best']],
-        '336x280' => ['label' => 'large-rectangle', 'tags' => ['Desktop', 'best']],
-        '728x90' => ['label' => 'leaderboard', 'tags' => ['Desktop', 'best']],
-        '300x600' => ['label' => 'half-page', 'tags' => ['Desktop', 'best']],
-        '320x100' => ['label' => 'large-mobile-banner', 'tags' => ['Desktop', 'best', 'Mobile']],
-        #other
-        '320x50' => ['label' => 'mobile-banner', 'tags' => ['Desktop', 'Mobile']],
-        '468x60' => ['label' => 'full-banner', 'tags' => ['Desktop']],
-        '234x60' => ['label' => 'half-banner', 'tags' => ['Desktop']],
-        '120x600' => ['label' => 'skyscraper', 'tags' => ['Desktop']],
-        '120x240' => ['label' => 'vertical-banner', 'tags' => ['Desktop']],
-        '160x600' => ['label' => 'wide-skyscraper', 'tags' => ['Desktop']],
-        '300x1050' => ['label' => 'portrait', 'tags' => ['Desktop']],
-        '970x90' => ['label' => 'large-leaderboard', 'tags' => ['Desktop']],
-        '970x250' => ['label' => 'billboard', 'tags' => ['Desktop']],
-        '250x250' => ['label' => 'square', 'tags' => ['Desktop']],
-        '200x200' => ['label' => 'small-square', 'tags' => ['Desktop']],
-        '180x150' => ['label' => 'small-rectangle', 'tags' => ['Desktop']],
-        '125x125' => ['label' => 'button', 'tags' => ['Desktop']],
-        #regional
-        '240x400' => ['label' => 'vertical-rectangle', 'tags' => ['Desktop']],
-        '980x120' => ['label' => 'panorama', 'tags' => ['Desktop']],
-        '250x360' => ['label' => 'triple-widescreen', 'tags' => ['Desktop']],
-        '930x180' => ['label' => 'top-banner', 'tags' => ['Desktop']],
-        '580x400' => ['label' => 'netboard', 'tags' => ['Desktop']],
-        #polish
-        '750x100' => ['label' => 'single-billboard', 'tags' => ['Desktop', 'PL']],
-        '750x200' => ['label' => 'double-billboard', 'tags' => ['Desktop', 'PL']],
-        '750x300' => ['label' => 'triple-billboard', 'tags' => ['Desktop', 'PL']],
-        # https://en.wikipedia.org/wiki/Web_banner
-        '300x100' => ['label' => '3-to-1-rectangle', 'tags' => ['Desktop']],
-        '120x90' => ['label' => 'button-one', 'tags' => ['Desktop']],
-        '120x60' => ['label' => 'button-two', 'tags' => ['Desktop']],
-        '88x31' => ['label' => 'micro-banner', 'tags' => ['Desktop']],
-    ];
-
     public $publisher_id;
 
     protected $fillable = [
@@ -128,9 +82,10 @@ HTML;
         'short_headline',#@deprecated
         'name',
         'code',
+        'label',
         'size',
-        'size_info',
         'status',
+        'tags',
         'type',
         'uuid'
     ];
@@ -139,6 +94,8 @@ HTML;
         'size_info',
         'short_headline',#@deprecated
         'code',
+        'label',
+        'tags',
     ];
 
     protected $touches = ['site'];
@@ -202,6 +159,16 @@ HTML;
         return strtr(self::CODE_TEMPLATE, $replaceArr);
     }
 
+    public function getLabelAttribute(): string
+    {
+        return Size::SIZE_INFOS[$this->size]['label'] ?? '';
+    }
+
+    public function getTagsAttribute(): array
+    {
+        return Size::SIZE_INFOS[$this->size]['tags'] ?? [];
+    }
+
     /** @deprecated */
     public function getShortHeadlineAttribute(): string
     {
@@ -212,15 +179,5 @@ HTML;
     public function setShortHeadlineAttribute($value): void
     {
         $this->name = $value;
-    }
-
-    public function getSizeInfoAttribute(): array
-    {
-        $sizeInfo = self::SIZE_INFOS[$this->size] ?? [];
-
-        return [
-            'label' => $sizeInfo['label'] ?? '',
-            'tags' => $sizeInfo['tags'] ?? [],
-        ];
     }
 }
