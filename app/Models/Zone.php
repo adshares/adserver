@@ -69,7 +69,6 @@ HTML;
     public $publisher_id;
 
     protected $fillable = [
-        'short_headline',#@deprecated
         'name',
         'size',
         'type',
@@ -79,7 +78,6 @@ HTML;
 
     protected $visible = [
         'id',
-        'short_headline',#@deprecated
         'name',
         'code',
         'label',
@@ -91,8 +89,6 @@ HTML;
     ];
 
     protected $appends = [
-        'size_info',
-        'short_headline',#@deprecated
         'code',
         'label',
         'tags',
@@ -167,17 +163,5 @@ HTML;
     public function getTagsAttribute(): array
     {
         return Size::SIZE_INFOS[$this->size]['tags'] ?? [];
-    }
-
-    /** @deprecated */
-    public function getShortHeadlineAttribute(): string
-    {
-        return $this->name;
-    }
-
-    /** @deprecated */
-    public function setShortHeadlineAttribute($value): void
-    {
-        $this->name = $value;
     }
 }
