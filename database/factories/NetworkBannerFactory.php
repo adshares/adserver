@@ -25,8 +25,6 @@ use Adshares\Supply\Domain\ValueObject\Size;
 use Faker\Generator as Faker;
 
 $factory->define(NetworkBanner::class, function (Faker $faker) {
-    [$width, $height] = explode('x', $faker->randomElement(Size::SUPPORTED_SIZES));
-
     return [
         'uuid' => $faker->uuid,
         'network_campaign_id' => $faker->randomDigit,
@@ -34,8 +32,7 @@ $factory->define(NetworkBanner::class, function (Faker $faker) {
         'view_url' => $faker->url,
         'click_url' => $faker->url,
         'type' => 'image',
-        'width' => $width,
-        'height' => $height,
+        'size' => $faker->randomElement(Size::SUPPORTED_SIZES),
         'checksum' => $faker->uuid,
     ];
 });

@@ -74,7 +74,7 @@ class CampaignFactory
             self::validateBanner($banner);
 
             $bannerUrl = new BannerUrl($banner['serve_url'], $banner['click_url'], $banner['view_url']);
-            $size = new Size($banner['width'], $banner['height']);
+            $size = $banner['size'];
             $demandBannerId = $banner['demand_banner_id'] ?? $banner['id'];
             $status = isset($banner['status']) ? Status::fromStatus($banner['status']) : Status::processing();
             $hash = $banner['checksum'] ?? '';
@@ -154,8 +154,7 @@ class CampaignFactory
             'serve_url',
             'click_url',
             'view_url',
-            'width',
-            'height',
+            'size',
             'type'
         ];
 
@@ -170,6 +169,10 @@ class CampaignFactory
 
         if (!array_key_exists('demand_banner_id', $data) && !array_key_exists('id', $data)) {
             throw new InvalidCampaignArgumentException('Banner id field is missing. The field is required.');
+        }
+
+        if (!in_array($data['size'], Size::SUPPORTED_SIZES)) {
+            throw new InvalidCampaignArgumentException('Unsupported image size.');
         }
     }
 }

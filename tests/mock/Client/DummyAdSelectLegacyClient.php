@@ -126,9 +126,9 @@ final class DummyAdSelectLegacyClient implements AdSelectLegacy
             "(network_campaigns.targeting_excludes NOT LIKE ? OR network_campaigns.targeting_excludes = '[]')",
             "%$key%"
         )->where('network_campaigns.status', Campaign::STATUS_ACTIVE)->where(
-            'network_banners.width',
-            $zone->width
-        )->where('network_banners.height', $zone->height)->whereIn('type', $typeDefault);
+            'network_banners.size',
+            $zone->size
+        )->whereIn('type', $typeDefault);
 
         return $queryBuilder;
     }

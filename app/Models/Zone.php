@@ -21,9 +21,9 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
-use Adshares\Adserver\Http\Controllers\Manager\Simulator;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -36,6 +36,10 @@ use function hex2bin;
  * @property Site site
  * @property int id
  * @property string uuid
+ * @property string size
+ * @property string label
+ * @property string type
+ * @property array tags
  * @mixin Builder
  */
 class Zone extends Model
@@ -62,57 +66,9 @@ HTML;
         self::STATUS_ARCHIVED,
     ];
 
-    public const TYPE_IMAGE = 'image';
-
-    public const TYPE_HTML = 'html';
-
-    public const ZONE_TYPES = [
-        self::TYPE_IMAGE,
-        self::TYPE_HTML,
-    ];
-
-    public const ZONE_LABELS = [
-        #best
-        'medium-rectangle' => '300x250',
-        'large-rectangle' => '336x280',
-        'leaderboard' => '728x90',
-        'half-page' => '300x600',
-        'large-mobile-banner' => '320x100',
-        #other
-        'mobile-banner' => '320x50',
-        'full-banner' => '468x60',
-        'half-banner' => '234x60',
-        'skyscraper' => '120x600',
-        'vertical-banner' => '120x240',
-        'wide-skyscraper' => '160x600',
-        'portrait' => '300x1050',
-        'large-leaderboard' => '970x90',
-        'billboard' => '970x250',
-        'square' => '250x250',
-        'small-square' => '200x200',
-        'small-rectangle' => '180x150',
-        'button' => '125x125',
-        #regional
-        'vertical-rectangle' => '240x400',# Most popular size in Russia.
-        'panorama' => '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
-        'triple-widescreen' => '250x360', # Second most popular size in Sweden.
-        'top-banner' => '930x180', # Very popular size in Denmark.
-        'netboard' => '580x400', # Very popular size in Norway.
-        #polish
-        'single-billboard' => '750x100', # Very popular size in Poland.
-        'double-billboard' => '750x200', # Most popular size in Poland.
-        'triple-billboard' => '750x300', # Third most popular size in Poland.
-        # https://en.wikipedia.org/wiki/Web_banner
-        '3-to-1-rectangle' => '300x100',
-        'button-one' => '120x90',
-        'button-two' => '120x60',
-        'micro-banner' => '88x31',
-    ];
-
     public $publisher_id;
 
     protected $fillable = [
-        'short_headline',#@deprecated
         'name',
         'size',
         'type',
@@ -122,19 +78,20 @@ HTML;
 
     protected $visible = [
         'id',
-        'short_headline',#@deprecated
         'name',
         'code',
+        'label',
         'size',
         'status',
+        'tags',
         'type',
         'uuid'
     ];
 
     protected $appends = [
-        'size',
-        'short_headline',#@deprecated
         'code',
+        'label',
+        'tags',
     ];
 
     protected $touches = ['site'];
@@ -186,82 +143,25 @@ HTML;
 
     public function getCodeAttribute()
     {
+        $size = Size::toDimensions($this->size);
+
         $replaceArr = [
             '{{zoneId}}' => $this->uuid,
-            '{{width}}' => $this->width,
-            '{{height}}' => $this->height,
+            '{{width}}' => $size[0],
+            '{{height}}' => $size[1],
             '{{selectorClass}}' => config('app.adserver_id'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);
     }
 
-    /** @deprecated */
-    public function getShortHeadlineAttribute(): string
+    public function getLabelAttribute(): string
     {
-        return $this->name;
+        return Size::SIZE_INFOS[$this->size]['label'] ?? '';
     }
 
-    /** @deprecated */
-    public function setShortHeadlineAttribute($value): void
+    public function getTagsAttribute(): array
     {
-        $this->name = $value;
-    }
-
-    public function getSizeAttribute(): array
-    {
-        return [
-            'width' => $this->width,
-            'height' => $this->height,
-            'label' => $this->label,
-            'tags' => collect(Simulator::getZoneTypes())->firstWhere('label', $this->label) ?? [],
-        ];
-    }
-
-    public function setSizeAttribute(array $data): void
-    {
-        $label = $data['label'] ?? false;
-
-        if ($label) {
-            $sizeLabel = self::ZONE_LABELS[$label] ?? false;
-            $this->attributes['label'] = $label;
-            if ($sizeLabel) {
-                $size = explode('x', $sizeLabel);
-                $this->attributes['width'] = $size[0];
-                $this->attributes['height'] = $size[1];
-            }
-        } else {
-            $this->setWidth($data['width'] ?? false);
-            $this->setHeight($data['height'] ?? false);
-        }
-    }
-
-    private function setWidth($width): void
-    {
-        $this->attributes['width'] = $width;
-        if ($this->attributes['width'] && ($this->attributes['height'] ?? false)) {
-            $this->setSizeAttribute(
-                [
-                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
-                ]
-            );
-        }
-    }
-
-    private function setHeight($height): void
-    {
-        $this->attributes['height'] = $height;
-        if ($this->attributes['height'] && ($this->attributes['width'] ?? false)) {
-            $this->setSizeAttribute(
-                [
-                    'label' => Simulator::findLabelBySize($this->getSizeAsString()),
-                ]
-            );
-        }
-    }
-
-    public function getSizeAsString(): string
-    {
-        return "{$this->attributes['width']}x{$this->attributes['height']}";
+        return Size::SIZE_INFOS[$this->size]['tags'] ?? [];
     }
 }

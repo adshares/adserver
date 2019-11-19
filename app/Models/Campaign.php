@@ -250,7 +250,7 @@ class Campaign extends Model
     public function getAdsAttribute()
     {
         foreach ($this->banners as &$banner) {
-            $size = $banner->getFormattedSize();
+            $size = $banner->creative_size;
             $banner['type'] = $banner['creative_type'] === 'image' ? 0 : 1;
             $banner['size'] = array_search($size, Size::SUPPORTED_SIZES);
         }
