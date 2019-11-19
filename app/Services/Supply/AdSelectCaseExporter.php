@@ -18,25 +18,25 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services\Supply;
 
-use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
-use function count;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use function count;
 
 class AdSelectCaseExporter
 {
     private const PACKAGE_SIZE = 2000;
 
     private $adSelectClient;
+
     private $output;
 
     public function __construct(AdSelect $adSelectClient, ConsoleOutput $output)
@@ -95,8 +95,7 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $caseClickIdFrom;
 
         do {
-            $caseClicks
-                = NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
+            $caseClicks = NetworkCaseClick::fetchClicksToExport($caseClickIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCaseClicks($caseClicks);
             $exported += count($caseClicks);
 
@@ -125,8 +124,8 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $casePaymentIdFrom;
 
         do {
-            $casePayments
-                = NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
+            $casePayments =
+                NetworkCasePayment::fetchPaymentsToExport($casePaymentIdFrom, $caseIdMax, self::PACKAGE_SIZE, 0);
             $this->adSelectClient->exportCasePayments($casePayments);
             $exported += count($casePayments);
 
