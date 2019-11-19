@@ -28,6 +28,6 @@ $factory->define(Zone::class, function (Faker $faker) {
         'name' => $faker->word,
         'status' => Zone::STATUS_ACTIVE,
         'type' => Size::TYPE_DISPLAY,
-        'size' => $faker->randomElement(Size::SUPPORTED_SIZES),
+        'size' => $faker->randomKey(Size::SIZE_INFOS),
     ];
 });

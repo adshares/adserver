@@ -27,7 +27,7 @@ $factory->define(Banner::class, function (Faker $faker) {
         'creative_contents' => $faker->sha1,
         'creative_type' => $faker->randomElement(['image', 'html']),
         'creative_sha1' => $faker->sha1,
-        'creative_size' => $faker->randomElement(Size::SUPPORTED_SIZES),
+        'creative_size' => $faker->randomKey(Size::SIZE_INFOS),
         'name' => $faker->word,
         'status' => Banner::STATUS_ACTIVE,
     ];

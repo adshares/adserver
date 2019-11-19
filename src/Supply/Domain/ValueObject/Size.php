@@ -22,47 +22,12 @@ declare(strict_types = 1);
 
 namespace Adshares\Supply\Domain\ValueObject;
 
-use function in_array;
+use function array_key_exists;
+use function explode;
+use function sprintf;
 
 final class Size
 {
-    public const SUPPORTED_SIZES = [
-        0 => '300x250',
-        1 => '336x280',
-        2 => '728x90',
-        3 => '300x600',
-        4 => '320x100',
-        #other
-        5 => '320x50',
-        6 => '468x60',
-        7 => '234x60',
-        8 => '120x600',
-        9 => '120x240',
-        10 => '160x600',
-        11 => '300x1050',
-        12 => '970x90',
-        13 => '970x250',
-        14 => '250x250',
-        15 => '200x200',
-        16 => '180x150',
-        17 => '125x125',
-        #regional
-        18 => '240x400',# Most popular size in Russia.
-        19 => '980x120', # Most popular size in Sweden and Finland. Can also be used as a substitute in Norway.
-        20 => '250x360', # Second most popular size in Sweden.
-        21 => '930x180', # Very popular size in Denmark.
-        22 => '580x400', # Very popular size in Norway.
-        #polish
-        23 => '750x100', # Very popular size in Poland.
-        24 => '750x200', # Most popular size in Poland.
-        25 => '750x300', # Third most popular size in Poland.
-        # https://en.wikipedia.org/wiki/Web_banner
-        26 => '300x100',
-        27 => '120x90',
-        28 => '120x60',
-        29 => '88x31',
-    ];
-
     public const TYPE_DISPLAY = 'display';
 
     public const TYPES = [
@@ -72,156 +37,156 @@ final class Size
     public const SIZE_INFOS = [
         #best
         '300x250' => [
-            'label' => 'medium-rectangle',
+            'label' => 'Medium Rectangle',
             'tags' => ['Desktop', 'best'],
             'type' => self::TYPE_DISPLAY,
         ],
         '336x280' => [
-            'label' => 'large-rectangle',
+            'label' => 'Large Rectangle',
             'tags' => ['Desktop', 'best'],
             'type' => self::TYPE_DISPLAY,
         ],
         '728x90' => [
-            'label' => 'leaderboard',
+            'label' => 'Leaderboard',
             'tags' => ['Desktop', 'best'],
             'type' => self::TYPE_DISPLAY,
         ],
         '300x600' => [
-            'label' => 'half-page',
+            'label' => 'Half Page',
             'tags' => ['Desktop', 'best'],
             'type' => self::TYPE_DISPLAY,
         ],
         '320x100' => [
-            'label' => 'large-mobile-banner',
+            'label' => 'Large Mobile Banner',
             'tags' => ['Desktop', 'best', 'Mobile'],
             'type' => self::TYPE_DISPLAY,
         ],
         #other
         '320x50' => [
-            'label' => 'mobile-banner',
+            'label' => 'Mobile Banner',
             'tags' => ['Desktop', 'Mobile'],
             'type' => self::TYPE_DISPLAY,
         ],
         '468x60' => [
-            'label' => 'full-banner',
+            'label' => 'Full Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '234x60' => [
-            'label' => 'half-banner',
+            'label' => 'Half Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '120x600' => [
-            'label' => 'skyscraper',
+            'label' => 'Skyscraper',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '120x240' => [
-            'label' => 'vertical-banner',
+            'label' => 'Vertical Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '160x600' => [
-            'label' => 'wide-skyscraper',
+            'label' => 'Wide Skyscraper',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '300x1050' => [
-            'label' => 'portrait',
+            'label' => 'Portrait',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '970x90' => [
-            'label' => 'large-leaderboard',
+            'label' => 'Large Leaderboard',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '970x250' => [
-            'label' => 'billboard',
+            'label' => 'Billboard',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '250x250' => [
-            'label' => 'square',
+            'label' => 'Square',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '200x200' => [
-            'label' => 'small-square',
+            'label' => 'Small Square',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '180x150' => [
-            'label' => 'small-rectangle',
+            'label' => 'Small Rectangle',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '125x125' => [
-            'label' => 'button',
+            'label' => 'Button',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         #regional
         '240x400' => [
-            'label' => 'vertical-rectangle',
+            'label' => 'Vertical Rectangle',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '980x120' => [
-            'label' => 'panorama',
+            'label' => 'Panorama',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '250x360' => [
-            'label' => 'triple-widescreen',
+            'label' => 'Triple Widescreen',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '930x180' => [
-            'label' => 'top-banner',
+            'label' => 'Top Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '580x400' => [
-            'label' => 'netboard',
+            'label' => 'Netboard',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         #polish
         '750x100' => [
-            'label' => 'single-billboard',
+            'label' => 'Single Billboard',
             'tags' => ['Desktop', 'PL'],
             'type' => self::TYPE_DISPLAY,
         ],
         '750x200' => [
-            'label' => 'double-billboard',
+            'label' => 'Double Billboard',
             'tags' => ['Desktop', 'PL'],
             'type' => self::TYPE_DISPLAY,
         ],
         '750x300' => [
-            'label' => 'triple-billboard',
+            'label' => 'Triple Billboard',
             'tags' => ['Desktop', 'PL'],
             'type' => self::TYPE_DISPLAY,
         ],
         # https://en.wikipedia.org/wiki/Web_banner
         '300x100' => [
-            'label' => '3-to-1-rectangle',
+            'label' => '3 to 1 Rectangle',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '120x90' => [
-            'label' => 'button-one',
+            'label' => 'Button One',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '120x60' => [
-            'label' => 'button-two',
+            'label' => 'Button Two',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
         '88x31' => [
-            'label' => 'micro-banner',
+            'label' => 'Micro Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
         ],
@@ -229,7 +194,7 @@ final class Size
 
     public static function isValid(string $size): bool
     {
-        return in_array($size, self::SUPPORTED_SIZES);
+        return array_key_exists($size, self::SIZE_INFOS);
     }
 
     public static function fromDimensions(int $width, int $height): string

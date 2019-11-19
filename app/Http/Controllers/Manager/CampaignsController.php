@@ -186,7 +186,7 @@ class CampaignsController extends Controller
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $bannerModel->creative_size = Banner::size($banner['size']);
+            $bannerModel->creative_size = Banner::size($banner['creative_size']);
             $bannerModel->creative_type = Banner::type($banner['type']);
 
             $fileName = $this->filename($banner['url']);

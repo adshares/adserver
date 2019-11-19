@@ -27,7 +27,8 @@ final class SizeTest extends TestCase
 {
     public function testIsValidSize(): void
     {
-        $this->assertTrue(Size::isValid(Size::SUPPORTED_SIZES[0]));
+        $this->assertTrue(Size::isValid(array_keys(Size::SIZE_INFOS)[0]));
+        $this->assertFalse(Size::isValid('152x1'));
         $this->assertFalse(Size::isValid('00x0'));
         $this->assertFalse(Size::isValid(''));
     }

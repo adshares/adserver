@@ -171,7 +171,7 @@ class CampaignFactory
             throw new InvalidCampaignArgumentException('Banner id field is missing. The field is required.');
         }
 
-        if (!in_array($data['size'], Size::SUPPORTED_SIZES)) {
+        if (!Size::isValid($data['size'])) {
             throw new InvalidCampaignArgumentException('Unsupported image size.');
         }
     }

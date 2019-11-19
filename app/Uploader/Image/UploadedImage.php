@@ -38,7 +38,7 @@ class UploadedImage implements UploadedFile
 
     public function __construct(string $name, string $previewUrl, array $size)
     {
-        if (!in_array($this->getFormattedSize($size), Size::SUPPORTED_SIZES, true)) {
+        if (!Size::isValid($this->getFormattedSize($size))) {
             throw new BadRequestHttpException('Unsupported image size.');
         }
 
@@ -58,10 +58,12 @@ class UploadedImage implements UploadedFile
         ];
     }
 
-    private function getFormattedSize(array $size): ?string
+    private function getFormattedSize(array $size): string
     {
         if (isset($size[0], $size[1])) {
-            return sprintf('%sx%s', $size[0], $size[1]);
+            return Size::fromDimensions((int)$size[0], (int)$size[1]);
         }
+
+        return '';
     }
 }

@@ -120,13 +120,13 @@ class Banner extends Model
         return 'html';
     }
 
-    public static function size($size)
+    public static function size(string $size): string
     {
-        if (!isset(Size::SUPPORTED_SIZES[$size])) {
+        if (!Size::isValid($size)) {
             throw new \RuntimeException(sprintf('Wrong image size.'));
         }
 
-        return Size::SUPPORTED_SIZES[$size];
+        return $size;
     }
 
     public function campaign(): BelongsTo
