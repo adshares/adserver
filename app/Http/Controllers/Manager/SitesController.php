@@ -23,8 +23,10 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
@@ -57,7 +59,8 @@ class SitesController extends Controller
             $site->save();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
-            $site->zones()->createMany($request->input('site.ad_units'));
+            $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
+            $site->zones()->createMany($inputZones->all());
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -115,7 +118,6 @@ class SitesController extends Controller
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
             $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
-
             $site->zones()->createMany($inputZones->all());
         } catch (Exception $exception) {
             DB::rollBack();
@@ -127,9 +129,55 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    private function processInputZones(Site $site, Collection $inputZones)
+    private function processInputZones(Site $site, Collection $inputZones): Collection
     {
-        foreach ($site->zones as $zone) {
+        $presentUniqueSizes = [];
+        $keysToRemove = [];
+
+        foreach ($inputZones as $key => $inputZone) {
+            if (Size::TYPE_POP !== $inputZone['type']) {
+                continue;
+            }
+
+            $size = $inputZone['size'];
+
+            if (isset($presentUniqueSizes[$size])) {
+                $keysToRemove[] = $key;
+            } else {
+                $presentUniqueSizes[$size] = $key;
+            }
+        }
+
+        foreach ($keysToRemove as $key) {
+            unset($inputZones[$key]);
+        }
+
+        /** @var Zone $zone */
+        foreach ($site->zones()->withTrashed()->get() as $zone) {
+            if (Size::TYPE_POP === $zone->type) {
+                $size = $zone->size;
+
+                if (isset($presentUniqueSizes[$size])) {
+                    if ($zone->trashed()) {
+                        $zone->restore();
+                    }
+
+                    $key = $presentUniqueSizes[$size];
+                    $zone->update($inputZones[$key]);
+                    unset($inputZones[$key]);
+                } else {
+                    if (!$zone->trashed()) {
+                        $zone->delete();
+                    }
+                }
+
+                continue;
+            }
+
+            if ($zone->trashed()) {
+                continue;
+            }
+
             $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
             if ($zoneFromInput) {
                 $zone->update($zoneFromInput);
