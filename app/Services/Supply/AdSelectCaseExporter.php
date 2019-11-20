@@ -74,7 +74,8 @@ class AdSelectCaseExporter
                 sprintf(
                     "[AdSelectCaseExport] exported: %7d; progress=%5.1f%%",
                     $exported,
-                    $cases->last() ? 100 - ($maxId - $cases->last()->id + 1) / $totalEstimate * 100 : '100'
+                    $cases->last() && $totalEstimate > 0
+                        ? 100 - ($maxId - $cases->last()->id + 1) / $totalEstimate * 100 : '100'
                 )
             );
 
@@ -104,7 +105,8 @@ class AdSelectCaseExporter
                 sprintf(
                     "[AdSelectCaseExport] exported: %7d; progress=%5.1f%%",
                     $exported,
-                    $caseClicks->last() ? 100 - ($maxId - $caseClicks->last()->id + 1) / $totalEstimate * 100 : '100'
+                    $caseClicks->last() && $totalEstimate > 0
+                        ? 100 - ($maxId - $caseClicks->last()->id + 1) / $totalEstimate * 100 : '100'
                 )
             );
 
@@ -135,7 +137,8 @@ class AdSelectCaseExporter
                 sprintf(
                     "[AdSelectCaseExport] exported: %7d; progress=%5.1f%%",
                     $exported,
-                    $casePayments->last() ? 100 - ($maxId - $casePayments->last()->id + 1) / $totalEstimate * 100 : '100'
+                    $casePayments->last() && $totalEstimate > 0
+                        ? 100 - ($maxId - $casePayments->last()->id + 1) / $totalEstimate * 100 : '100'
                 )
             );
 
