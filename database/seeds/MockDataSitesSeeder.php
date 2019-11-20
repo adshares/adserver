@@ -119,9 +119,7 @@ class MockDataSitesSeeder extends Seeder
                         'name' => $zoneNames,
                         'site_id' => $newSite->id,
                         'size' => $zone['size'],
-                        'label' => $zone['label'],
                     ]);
-
                 }
 
                 $this->command->info(" Added - [$newSite->name] for user <{$user->email}>");

@@ -32,7 +32,7 @@ $factory->define(NetworkBanner::class, function (Faker $faker) {
         'view_url' => $faker->url,
         'click_url' => $faker->url,
         'type' => 'image',
-        'size' => $faker->randomElement(Size::SUPPORTED_SIZES),
+        'size' => $faker->randomKey(Size::SIZE_INFOS),
         'checksum' => $faker->uuid,
     ];
 });

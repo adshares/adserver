@@ -280,21 +280,18 @@ FILTERING_JSON;
 
     public static function getZoneTypes(): array
     {
-        return array_map(
-            function ($size, $meta) {
-                $label = $meta['label'];
+        $types = [];
 
-                return [
-                    'name' => ucwords(str_replace('-', ' ', $label)),
-                    'label' => $label,
-                    'size' => $size,
-                    'tags' => $meta['tags'],
-                    'type' => $meta['type'],
-                ];
-            },
-            array_keys(Size::SIZE_INFOS),
-            Size::SIZE_INFOS
-        );
+        foreach (Size::SIZE_INFOS as $size => $meta) {
+            $types[] = [
+                'label' => $meta['label'],
+                'size' => $size,
+                'tags' => $meta['tags'],
+                'type' => $meta['type'],
+            ];
+        }
+
+        return $types;
     }
 
     public static function getAvailableLanguages()
