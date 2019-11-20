@@ -40,11 +40,17 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
-    public const TYPE_HTML = 'html';
+    private const TYPE_HTML = 'html';
 
-    public const TYPE_IMAGE = 'image';
+    private const TYPE_IMAGE = 'image';
 
-    public const ALLOWED_TYPES = [self::TYPE_IMAGE, self::TYPE_HTML];
+    private const TYPE_DIRECT_LINK = 'direct';
+
+    public const ALLOWED_TYPES = [
+        self::TYPE_HTML,
+        self::TYPE_IMAGE,
+        self::TYPE_DIRECT_LINK,
+    ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
 
