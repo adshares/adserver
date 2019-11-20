@@ -31,16 +31,16 @@ use Closure;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
-    
+
     public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
     {
         $this->siteClassificationUpdater = $siteClassificationUpdater;
@@ -50,6 +50,8 @@ class SitesController extends Controller
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
         $input = $request->input('site');
+        $inputZones = $request->input('site.ad_units');
+        $this->validateInputZones($inputZones);
 
         DB::beginTransaction();
 
@@ -59,8 +61,9 @@ class SitesController extends Controller
             $site->save();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
-            $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
-            $site->zones()->createMany($inputZones->all());
+            if ($inputZones) {
+                $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -109,6 +112,8 @@ class SitesController extends Controller
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
+        $inputZones = $request->input('site.ad_units');
+        $this->validateInputZones($inputZones);
 
         DB::beginTransaction();
 
@@ -117,8 +122,9 @@ class SitesController extends Controller
             $site->push();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
-            $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
-            $site->zones()->createMany($inputZones->all());
+            if ($inputZones) {
+                $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -129,17 +135,19 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    private function processInputZones(Site $site, Collection $inputZones): Collection
+    private function processInputZones(Site $site, array $inputZones): array
     {
         $presentUniqueSizes = [];
         $keysToRemove = [];
 
-        foreach ($inputZones as $key => $inputZone) {
-            if (Size::TYPE_POP !== $inputZone['type']) {
+        foreach ($inputZones as $key => &$inputZone) {
+            $size = $inputZone['size'];
+            $type = Size::SIZE_INFOS[$size]['type'];
+            $inputZone['type'] = $type;
+
+            if (Size::TYPE_POP !== $type) {
                 continue;
             }
-
-            $size = $inputZone['size'];
 
             if (isset($presentUniqueSizes[$size])) {
                 $keysToRemove[] = $key;
@@ -178,14 +186,18 @@ class SitesController extends Controller
                 continue;
             }
 
-            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-            if ($zoneFromInput) {
+            $zoneFromInput = null;
+            foreach ($inputZones as $key => $inputZone) {
+                if ($inputZone['id'] ?? null === $zone->id) {
+                    $zoneFromInput = $inputZone;
+                    unset($inputZones[$key]);
+
+                    break;
+                }
+            }
+
+            if (null !== $zoneFromInput) {
                 $zone->update($zoneFromInput);
-                $inputZones = $inputZones->reject(
-                    function ($value) use ($zone) {
-                        return (int)($value['id'] ?? "") === $zone->id;
-                    }
-                );
             } else {
                 $zone->delete();
             }
@@ -258,5 +270,25 @@ class SitesController extends Controller
         $response = new SizesResponse($siteId);
 
         return self::json($response);
+    }
+
+    private function validateInputZones($inputZones): void
+    {
+        if (null === $inputZones) {
+            return;
+        }
+
+        if (!is_array($inputZones)) {
+            throw new UnprocessableEntityHttpException('Invalid ad units type.');
+        }
+
+        foreach ($inputZones as $inputZone) {
+            if (!isset($inputZone['name']) || !is_string($inputZone['name'])) {
+                throw new UnprocessableEntityHttpException('Invalid name.');
+            }
+            if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
+                throw new UnprocessableEntityHttpException('Invalid size.');
+            }
+        }
     }
 }

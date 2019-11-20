@@ -190,7 +190,7 @@ class CampaignsController extends Controller
             $bannerModel->creative_type = Banner::type($banner['type']);
 
             try {
-                switch($banner['type']) {
+                switch ($banner['type']) {
                     case Banner::TYPE_IMAGE:
                         $content = ImageUploader::content($this->filename($banner['url']));
                         break;
