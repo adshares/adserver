@@ -25,7 +25,6 @@ namespace Adshares\Adserver\Providers\Common;
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleAdPayClient;
-use Adshares\Adserver\Client\GuzzleAdSelectLegacyClient;
 use Adshares\Adserver\Client\GuzzleAdSelectClient;
 use Adshares\Adserver\Client\GuzzleAdsOperatorClient;
 use Adshares\Adserver\Client\GuzzleAdUserClient;
@@ -49,7 +48,6 @@ use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Demand\Application\Service\AdPayLegacy;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -91,25 +89,6 @@ final class ClientProvider extends ServiceProvider
                         ]
                     )
                 );
-            }
-        );
-
-        $this->app->bind(
-            AdSelectLegacy::class,
-            function () {
-                $client = new Client(
-                    [
-                        'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                        'base_uri' => config('app.adselect_endpoint'),
-                        'timeout' => 5,
-                    ]
-                );
-
-                if ('python' === (string)config('app.x_adselect_version')) {
-                    return new JsonRpcAdSelectLegacyClient(new JsonRpc($client));
-                }
-
-                return new GuzzleAdSelectLegacyClient($client);
             }
         );
 
