@@ -30,11 +30,18 @@ class AddDomainToSites extends Migration
         Schema::table(
             'sites',
             function (Blueprint $table) {
-                $table->string('domain', 255);
+                $table->string('domain', 255)->nullable();
             }
         );
 
-        DB::update('UPDATE `sites` SET `domain` = \'\'');
+        DB::update('UPDATE `sites` SET `domain` = ""');
+
+        Schema::table(
+            'sites',
+            function (Blueprint $table) {
+                $table->string('domain', 255)->nullable(false)->change();
+            }
+        );
     }
 
     public function down(): void
