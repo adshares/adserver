@@ -155,6 +155,7 @@ class SitesController extends Controller
                 $presentUniqueSizes[$size] = $key;
             }
         }
+        unset($inputZone);
 
         foreach ($keysToRemove as $key) {
             unset($inputZones[$key]);
