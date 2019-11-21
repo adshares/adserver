@@ -37,6 +37,7 @@ use function in_array;
  * @property string uuid
  * @property int user_id
  * @property string name
+ * @property string domain
  * @property int status
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
@@ -74,6 +75,7 @@ class Site extends Model
 
     public static $rules = [
         'name' => 'required|max:64',
+        'domain' => 'required|regex:/^.+\..+$/|max:255',
         'primary_language' => 'required|max:2',
         'status' => 'required|numeric',
     ];
@@ -90,6 +92,7 @@ class Site extends Model
 
     protected $fillable = [
         'name',
+        'domain',
         'status',
         'primary_language',
         'filtering',
