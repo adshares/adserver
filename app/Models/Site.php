@@ -44,6 +44,7 @@ use function in_array;
  * @property bool $require_classified deprecated
  * @property bool $exclude_unclassified deprecated
  * @property Zone[]|Collection zones
+ * @property User user
  * @method static Site create($input = null)
  * @method static get()
  * @mixin Builder

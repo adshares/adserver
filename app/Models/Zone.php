@@ -36,6 +36,7 @@ use function hex2bin;
  * @property Site site
  * @property int id
  * @property string uuid
+ * @property int site_id
  * @property string size
  * @property string label
  * @property string type

@@ -28,8 +28,10 @@ use Adshares\Adserver\Client\Mapper\AdSelect\CaseMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\CasePaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException as DomainRuntimeException;
 use Adshares\Supply\Application\Dto\FoundBanners;
@@ -45,6 +47,7 @@ use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
+use stdClass;
 use Symfony\Component\HttpFoundation\Response;
 use function array_map;
 use function config;
@@ -149,8 +152,30 @@ class GuzzleAdSelectClient implements AdSelect
         );
 
         $zoneMap = [];
+        $sitesMap = [];
+        $pageDomain = DomainReader::domain($context->url());
+        /** @var Zone $zone */
         foreach (Zone::findByPublicIds($zoneIds) as $zone) {
-            $zoneMap[$zone->uuid] = $zone;
+            $siteId = $zone->site_id;
+
+            if (!array_key_exists($siteId, $sitesMap)) {
+                $site = $zone->site;
+
+                $sitesMap[$siteId] = [
+                    'active' => $site->status === Site::STATUS_ACTIVE,
+                    'domain' => $site->domain,
+                    'filters' => [
+                        'require' => $site->site_requires ?: new stdClass(),
+                        'exclude' => $site->site_excludes ?: new stdClass(),
+                    ],
+                    'publisher_id' => $site->user->uuid,
+                    'uuid' => $site->uuid,
+                ];
+            }
+
+            if ($pageDomain && $pageDomain === $sitesMap[$siteId]['domain'] && $sitesMap[$siteId]['active']) {
+                $zoneMap[$zone->uuid] = $zone;
+            }
         }
 
         $zoneCollection = new Collection();
@@ -166,7 +191,7 @@ class GuzzleAdSelectClient implements AdSelect
             $result = $this->client->post(
                 self::URI_FIND_BANNERS,
                 [
-                    RequestOptions::JSON => $context->adSelectRequestParams($existingZones),
+                    RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $sitesMap),
                 ]
             );
         } catch (RequestException $exception) {
