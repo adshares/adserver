@@ -120,10 +120,12 @@ SQL;
 
         $isIECompat = $request->query->has('xdr');
 
-        if ('html' === $banner->creative_type) {
+        if (Banner::TEXT_TYPE_HTML === $banner->creative_type) {
             $mime = 'text/html';
-        } else {
+        } elseif (Banner::TEXT_TYPE_IMAGE === $banner->creative_type) {
             $mime = 'image/png';
+        } else {
+            $mime = 'text/plain';
         }
 
         $response->setCallback(

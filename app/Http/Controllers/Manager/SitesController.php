@@ -23,22 +23,24 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
-    
+
     public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
     {
         $this->siteClassificationUpdater = $siteClassificationUpdater;
@@ -48,6 +50,8 @@ class SitesController extends Controller
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
         $input = $request->input('site');
+        $inputZones = $request->input('site.ad_units');
+        $this->validateInputZones($inputZones);
 
         DB::beginTransaction();
 
@@ -57,7 +61,9 @@ class SitesController extends Controller
             $site->save();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
-            $site->zones()->createMany($request->input('site.ad_units'));
+            if ($inputZones) {
+                $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -106,6 +112,8 @@ class SitesController extends Controller
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
+        $inputZones = $request->input('site.ad_units');
+        $this->validateInputZones($inputZones);
 
         DB::beginTransaction();
 
@@ -114,9 +122,9 @@ class SitesController extends Controller
             $site->push();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
-            $inputZones = $this->processInputZones($site, Collection::make($request->input('site.ad_units')));
-
-            $site->zones()->createMany($inputZones->all());
+            if ($inputZones) {
+                $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -127,17 +135,69 @@ class SitesController extends Controller
         return self::json(['message' => 'Successfully edited']);
     }
 
-    private function processInputZones(Site $site, Collection $inputZones)
+    private function processInputZones(Site $site, array $inputZones): array
     {
-        foreach ($site->zones as $zone) {
-            $zoneFromInput = $inputZones->firstWhere('id', $zone->id);
-            if ($zoneFromInput) {
-                $zone->update($zoneFromInput);
-                $inputZones = $inputZones->reject(
-                    function ($value) use ($zone) {
-                        return (int)($value['id'] ?? "") === $zone->id;
+        $presentUniqueSizes = [];
+        $keysToRemove = [];
+
+        foreach ($inputZones as $key => &$inputZone) {
+            $size = $inputZone['size'];
+            $type = Size::SIZE_INFOS[$size]['type'];
+            $inputZone['type'] = $type;
+
+            if (Size::TYPE_POP !== $type) {
+                continue;
+            }
+
+            if (isset($presentUniqueSizes[$size])) {
+                $keysToRemove[] = $key;
+            } else {
+                $presentUniqueSizes[$size] = $key;
+            }
+        }
+
+        foreach ($keysToRemove as $key) {
+            unset($inputZones[$key]);
+        }
+
+        /** @var Zone $zone */
+        foreach ($site->zones()->withTrashed()->get() as $zone) {
+            if (Size::TYPE_POP === $zone->type) {
+                $size = $zone->size;
+
+                if (isset($presentUniqueSizes[$size])) {
+                    if ($zone->trashed()) {
+                        $zone->restore();
                     }
-                );
+
+                    $key = $presentUniqueSizes[$size];
+                    $zone->update($inputZones[$key]);
+                    unset($inputZones[$key]);
+                } else {
+                    if (!$zone->trashed()) {
+                        $zone->delete();
+                    }
+                }
+
+                continue;
+            }
+
+            if ($zone->trashed()) {
+                continue;
+            }
+
+            $zoneFromInput = null;
+            foreach ($inputZones as $key => $inputZone) {
+                if ($inputZone['id'] ?? null === $zone->id) {
+                    $zoneFromInput = $inputZone;
+                    unset($inputZones[$key]);
+
+                    break;
+                }
+            }
+
+            if (null !== $zoneFromInput) {
+                $zone->update($zoneFromInput);
             } else {
                 $zone->delete();
             }
@@ -210,5 +270,25 @@ class SitesController extends Controller
         $response = new SizesResponse($siteId);
 
         return self::json($response);
+    }
+
+    private function validateInputZones($inputZones): void
+    {
+        if (null === $inputZones) {
+            return;
+        }
+
+        if (!is_array($inputZones)) {
+            throw new UnprocessableEntityHttpException('Invalid ad units type.');
+        }
+
+        foreach ($inputZones as $inputZone) {
+            if (!isset($inputZone['name']) || !is_string($inputZone['name'])) {
+                throw new UnprocessableEntityHttpException('Invalid name.');
+            }
+            if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
+                throw new UnprocessableEntityHttpException('Invalid size.');
+            }
+        }
     }
 }

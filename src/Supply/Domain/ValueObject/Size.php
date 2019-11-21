@@ -30,8 +30,11 @@ final class Size
 {
     public const TYPE_DISPLAY = 'display';
 
+    public const TYPE_POP = 'pop';
+
     public const TYPES = [
         self::TYPE_DISPLAY,
+        self::TYPE_POP,
     ];
 
     public const SIZE_INFOS = [
@@ -189,6 +192,16 @@ final class Size
             'label' => 'Micro Banner',
             'tags' => ['Desktop'],
             'type' => self::TYPE_DISPLAY,
+        ],
+        'pop-up' => [
+            'label' => 'Pop-up',
+            'tags' => ['Desktop', 'Mobile'],
+            'type' => self::TYPE_POP,
+        ],
+        'pop-under' => [
+            'label' => 'Pop-under',
+            'tags' => ['Desktop', 'Mobile'],
+            'type' => self::TYPE_POP,
         ],
     ];
 

@@ -27,7 +27,7 @@ use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Budget;
 use Adshares\Supply\Domain\ValueObject\CampaignDate;
 use Adshares\Supply\Domain\ValueObject\Classification;
-use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
+use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerTypeException;
 use Adshares\Supply\Domain\ValueObject\SourceCampaign;
 use Adshares\Supply\Domain\ValueObject\Status;
 use DateTime;
@@ -51,7 +51,7 @@ final class BannerTest extends TestCase
     public function testWhenTypeIsInvalid(string $type, bool $valid): void
     {
         if (!$valid) {
-            $this->expectException(UnsupportedBannerSizeException::class);
+            $this->expectException(UnsupportedBannerTypeException::class);
         }
 
         $campaign = new Campaign(

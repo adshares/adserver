@@ -25,18 +25,19 @@ namespace Adshares\Supply\Domain\Model;
 use Adshares\Common\Domain\Id;
 use Adshares\Supply\Domain\ValueObject\BannerUrl;
 use Adshares\Supply\Domain\ValueObject\Classification;
-use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerSizeException;
-use Adshares\Supply\Domain\ValueObject\Size;
+use Adshares\Supply\Domain\ValueObject\Exception\UnsupportedBannerTypeException;
 use Adshares\Supply\Domain\ValueObject\Status;
 
 final class Banner
 {
-    private const HTML_TYPE = 'html';
-    private const IMAGE_TYPE = 'image';
+    private const TYPE_HTML = 'html';
+    private const TYPE_IMAGE = 'image';
+    private const TYPE_DIRECT_LINK = 'direct';
 
     private const SUPPORTED_TYPES = [
-        self::HTML_TYPE,
-        self::IMAGE_TYPE,
+        self::TYPE_HTML,
+        self::TYPE_IMAGE,
+        self::TYPE_DIRECT_LINK,
     ];
 
     /** @var Id */
@@ -78,7 +79,7 @@ final class Banner
         ?array $classification = []
     ) {
         if (!in_array($type, self::SUPPORTED_TYPES, true)) {
-            throw new UnsupportedBannerSizeException(sprintf(
+            throw new UnsupportedBannerTypeException(sprintf(
                 'Unsupported banner `%s` type. Only %s are allowed.',
                 $type,
                 implode(',', self::SUPPORTED_TYPES)
