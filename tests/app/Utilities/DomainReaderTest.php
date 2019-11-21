@@ -17,19 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Utilities;
+namespace Adshares\Adserver\Tests\Utilities;
 
-use function parse_url;
-use function preg_replace;
-use const PHP_URL_HOST;
+use Adshares\Adserver\Utilities\DomainReader;
+use PHPUnit\Framework\TestCase;
 
-class DomainReader
+final class DomainReaderTest extends TestCase
 {
-    public static function domain(string $url): string
+    /**
+     * @dataProvider urlProvider
+     */
+    public function testDomainRead(string $url, string $expectedDomain): void
     {
-        return $url ? preg_replace('/^www\.(.+\.)/i', '$1', parse_url($url, PHP_URL_HOST)) : '';
+        $this->assertEquals($expectedDomain, DomainReader::domain($url));
+    }
+
+    public function urlProvider(): array
+    {
+        return [
+            ['https://example.com', 'example.com'],
+            ['https://www.example.com', 'example.com'],
+            ['https://example.com:8080/find?a=1', 'example.com'],
+        ];
     }
 }
