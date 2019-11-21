@@ -164,7 +164,6 @@ class SitesTest extends TestCase
     "adUnits": [
       {
         "name": "ssss",
-        "type": "display",
         "size": "300x250"
       }
     ]
@@ -337,7 +336,6 @@ JSON
                 [
                     [
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "title1",
                         "size" => '125x125',
                     ],
@@ -353,7 +351,6 @@ JSON
                     [
                         "id" => "1",
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "new-title1",
                         "size" => '125x125',
                     ],
@@ -370,7 +367,6 @@ JSON
                     [
                         "id" => "1",
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "new-title1",
                         "size" => '125x125',
                     ],
@@ -465,7 +461,6 @@ JSON
     "adUnits": [
       {
         "name": "name",
-        "type": "image",
         "size": "300x250"
       }
     ]

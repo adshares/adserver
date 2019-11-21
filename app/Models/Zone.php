@@ -35,6 +35,7 @@ use function hex2bin;
 /**
  * @property Site site
  * @property int id
+ * @property string code
  * @property string uuid
  * @property int site_id
  * @property string size
@@ -49,6 +50,10 @@ class Zone extends Model
 <div class="{{selectorClass}}"
     data-zone="{{zoneId}}" 
     style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
+HTML;
+
+    private const CODE_TEMPLATE_POP = <<<HTML
+<div class="{{selectorClass}}" data-zone="{{zoneId}}" data-pop="{{rate}}" style="display: none"></div>
 HTML;
 
     use SoftDeletes;
@@ -142,8 +147,19 @@ HTML;
         return $this->belongsTo(Site::class);
     }
 
-    public function getCodeAttribute()
+    public function getCodeAttribute(): string
     {
+        if (Size::TYPE_POP === $this->type) {
+            return strtr(
+                self::CODE_TEMPLATE_POP,
+                [
+                    '{{zoneId}}' => $this->uuid,
+                    '{{rate}}' => '1/1',//TODO change default value to variable
+                    '{{selectorClass}}' => config('app.adserver_id'),
+                ]
+            );
+        }
+
         $size = Size::toDimensions($this->size);
 
         $replaceArr = [

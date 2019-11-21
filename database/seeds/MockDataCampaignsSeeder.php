@@ -146,7 +146,7 @@ class MockDataCampaignsSeeder extends Seeder
         $b->fill(
             [
                 'campaign_id' => $campaign->id,
-                'creative_type' => 'image',
+                'creative_type' => Banner::TEXT_TYPE_IMAGE,
                 'creative_size' => $size,
                 'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
                 'status' => Banner::STATUS_ACTIVE,
@@ -156,7 +156,7 @@ class MockDataCampaignsSeeder extends Seeder
         if (!empty($filename)) {
             $b->creative_contents = file_get_contents($filename);
         } else {
-            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $size[0], $size[1], "CID: $campaign->id");
+            $b->creative_contents = $this->generateBannerPng(rand(1, 9), $size[0], $size[1], "CID: $campaign->id");
         }
 
         return $b;
@@ -169,7 +169,7 @@ class MockDataCampaignsSeeder extends Seeder
         $b->fill(
             [
                 'campaign_id' => $campaign->id,
-                'creative_type' => 'html',
+                'creative_type' => Banner::TEXT_TYPE_HTML,
                 'creative_size' => $size,
                 'creative_contents' => $this->generateBannerHTML(rand(1, 9), $dimensions[0], $dimensions[1]),
                 'name' => sprintf('Banner HTML %s-%s', $dimensions[0], $dimensions[1]),
@@ -180,7 +180,7 @@ class MockDataCampaignsSeeder extends Seeder
         return $b;
     }
 
-    private function generateBannernPng($id, $width, $height, $text = '')
+    private function generateBannerPng($id, $width, $height, $text = '')
     {
         $image = \imagecreatetruecolor($width, $height);
 
@@ -207,7 +207,7 @@ class MockDataCampaignsSeeder extends Seeder
 
     private function generateBannerHTML($id, $width, $height)
     {
-        $img = $this->generateBannernPng($id, $width, $height, 'HTML');
+        $img = $this->generateBannerPng($id, $width, $height, 'HTML');
         $base64Image = base64_encode($img);
 
         $server_url = env('APP_URL');
