@@ -44,7 +44,7 @@ SELECT
 	SUM(e.impressions) AS impressions,
 	ROUND(SUM(e.cost)/100000000000, 2) AS cost,
 	ROUND(1000 * (SUM(e.cost)/100000000000)/SUM(e.impressions), 2) AS cpm,
-	GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height)) AS sizes
+	GROUP_CONCAT(DISTINCT b.creative_size) AS sizes
 FROM (
 	SELECT
 		e.banner_id,
@@ -79,7 +79,7 @@ JOIN (
         GROUP_CONCAT(SUBSTRING_INDEX(SUBSTRING_INDEX(SUBSTRING_INDEX(
           SUBSTRING_INDEX(SUBSTRING_INDEX(c.landing_url, '/', 3), '://', -1), '/', 1), '?', 1), "www.", -1)) AS name,
         GROUP_CONCAT((
-            SELECT GROUP_CONCAT(DISTINCT CONCAT(b.creative_width, "x", b.creative_height))
+            SELECT GROUP_CONCAT(DISTINCT creative_size)
             FROM banners b
             WHERE b.campaign_id = c.id
         )) AS sizes
@@ -91,7 +91,7 @@ SQL;
 
     private const QUERY_BANNERS_SIZES = <<<SQL
 SELECT
-  CONCAT(b.creative_width, "x", b.creative_height) AS size,
+  creative_size AS size,
   IFNULL(SUM(e.views), 0)                          AS impressions,
   COUNT(*)                                         AS number
 FROM banners b

@@ -59,12 +59,11 @@ class AdSelectTest extends TestCase
             [
                 'network_campaign_id' => $campaign->id,
                 'status' => Status::STATUS_ACTIVE,
-                'width' => $zone->width,
-                'height' => $zone->height,
+                'size' => $zone->size,
             ]
         );
 
-        $zones = [['width' => $zone->width, 'height' => $zone->height, 'zone' => $zone->uuid]];
+        $zones = [['size' => $zone->size, 'zone' => $zone->uuid]];
         $bannerChecksum = $banner->checksum;
 
         $finder = $this->app->make(AdSelect::class);

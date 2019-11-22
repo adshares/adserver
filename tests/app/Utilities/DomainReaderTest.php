@@ -17,22 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-use Adshares\Adserver\Models\NetworkBanner;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Tests\Utilities;
 
-$factory->define(NetworkBanner::class, function (Faker $faker) {
-    return [
-        'uuid' => $faker->uuid,
-        'network_campaign_id' => $faker->randomDigit,
-        'serve_url' => $faker->url,
-        'view_url' => $faker->url,
-        'click_url' => $faker->url,
-        'type' => 'image',
-        'size' => $faker->randomKey(Size::SIZE_INFOS),
-        'checksum' => $faker->uuid,
-    ];
-});
+use Adshares\Adserver\Utilities\DomainReader;
+use PHPUnit\Framework\TestCase;
+
+final class DomainReaderTest extends TestCase
+{
+    /**
+     * @dataProvider urlProvider
+     */
+    public function testDomainRead(string $url, string $expectedDomain): void
+    {
+        $this->assertEquals($expectedDomain, DomainReader::domain($url));
+    }
+
+    public function urlProvider(): array
+    {
+        return [
+            ['https://example.com', 'example.com'],
+            ['https://www.example.com', 'example.com'],
+            ['https://example.com:8080/find?a=1', 'example.com'],
+        ];
+    }
+}

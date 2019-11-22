@@ -19,6 +19,7 @@
  */
 
 use Adshares\Adserver\Models\Zone;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Faker\Generator as Faker;
 
 $factory->define(Zone::class, function (Faker $faker) {
@@ -26,9 +27,7 @@ $factory->define(Zone::class, function (Faker $faker) {
         'uuid' => $faker->uuid,
         'name' => $faker->word,
         'status' => Zone::STATUS_ACTIVE,
-        'type' => $faker->randomElement(Zone::ZONE_TYPES),
-        'size' => [
-            'label' => $faker->randomElement(array_keys(Zone::ZONE_LABELS)),
-        ],
+        'type' => Size::TYPE_DISPLAY,
+        'size' => $faker->randomKey(Size::SIZE_INFOS),
     ];
 });

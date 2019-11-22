@@ -24,6 +24,6 @@ namespace Adshares\Supply\Domain\ValueObject\Exception;
 
 use RuntimeException;
 
-class UnsupportedBannerSizeException extends RuntimeException
+class UnsupportedBannerTypeException extends RuntimeException
 {
 }

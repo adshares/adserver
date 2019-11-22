@@ -24,6 +24,7 @@ use Faker\Generator as Faker;
 $factory->define(Site::class, function (Faker $faker) {
     return [
         'name' => $faker->words(2, true),
+        'domain' => 'example.com',
         'primary_language' => $faker->languageCode,
         'status' => Site::STATUS_ACTIVE,
     ];

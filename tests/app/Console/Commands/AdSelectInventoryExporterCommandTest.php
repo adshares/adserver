@@ -21,7 +21,7 @@
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Supply\Application\Service\AdSelectLegacy;
+use Adshares\Supply\Application\Service\AdSelect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdSelectInventoryExporterCommandTest extends TestCase
@@ -30,8 +30,8 @@ class AdSelectInventoryExporterCommandTest extends TestCase
 
     public function testExport(): void
     {
-        $this->app->bind(AdSelectLegacy::class, function () {
-            $adSelect = $this->createMock(AdSelectLegacy::class);
+        $this->app->bind(AdSelect::class, function () {
+            $adSelect = $this->createMock(AdSelect::class);
 
             return $adSelect;
         });

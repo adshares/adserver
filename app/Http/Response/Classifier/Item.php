@@ -30,10 +30,8 @@ class Item implements Arrayable
     private $bannerId;
     /** @var string */
     private $type;
-    /** @var int */
-    private $width;
-    /** @var int */
-    private $height;
+    /** @var string */
+    private $size;
     /** @var string */
     private $landingUrl;
     /** @var string */
@@ -55,8 +53,7 @@ class Item implements Arrayable
         int $bannerId,
         string $url,
         string $type,
-        int $width,
-        int $height,
+        string $size,
         string $landingUrl,
         string $sourceHost,
         int $budget,
@@ -68,8 +65,7 @@ class Item implements Arrayable
         $this->bannerId = $bannerId;
         $this->url = $url;
         $this->type = $type;
-        $this->width = $width;
-        $this->height = $height;
+        $this->size = $size;
         $this->landingUrl = $landingUrl;
         $this->sourceHost = $sourceHost;
         $this->budget = $budget;
@@ -90,8 +86,7 @@ class Item implements Arrayable
             'banner_id' => $this->bannerId,
             'url' => $this->url,
             'type' => $this->type,
-            'width' => $this->width,
-            'height' => $this->height,
+            'size' => $this->size,
             'landing_url' => $this->landingUrl,
             'source_host' => $this->sourceHost,
             'budget' => $this->budget,
