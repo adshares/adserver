@@ -161,19 +161,27 @@ class GuzzleAdSelectClient implements AdSelect
             if (!array_key_exists($siteId, $sitesMap)) {
                 $site = $zone->site;
 
-                $sitesMap[$siteId] = [
-                    'active' => $site->status === Site::STATUS_ACTIVE,
-                    'domain' => $site->domain,
-                    'filters' => [
-                        'require' => $site->site_requires ?: new stdClass(),
-                        'exclude' => $site->site_excludes ?: new stdClass(),
-                    ],
-                    'publisher_id' => $site->user->uuid,
-                    'uuid' => $site->uuid,
-                ];
+                $isActive = null !== $site && $site->status === Site::STATUS_ACTIVE && null !== ($user = $site->user);
+
+                if ($isActive) {
+                    $sitesMap[$siteId] = [
+                        'active' => true,
+                        'domain' => $site->domain,
+                        'filters' => [
+                            'require' => $site->site_requires ?: new stdClass(),
+                            'exclude' => $site->site_excludes ?: new stdClass(),
+                        ],
+                        'publisher_id' => $user->uuid,
+                        'uuid' => $site->uuid,
+                    ];
+                } else {
+                    $sitesMap[$siteId] = [
+                        'active' => false,
+                    ];
+                }
             }
 
-            if ($pageDomain && $pageDomain === $sitesMap[$siteId]['domain'] && $sitesMap[$siteId]['active']) {
+            if ($sitesMap[$siteId]['active'] && $pageDomain && $pageDomain === $sitesMap[$siteId]['domain']) {
                 $zoneMap[$zone->uuid] = $zone;
             }
         }
@@ -187,38 +195,42 @@ class GuzzleAdSelectClient implements AdSelect
             return $zone === null;
         });
 
-        try {
-            $result = $this->client->post(
-                self::URI_FIND_BANNERS,
-                [
-                    RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $sitesMap),
-                ]
-            );
-        } catch (RequestException $exception) {
-            throw new UnexpectedClientResponseException(
-                sprintf(
-                    '[ADSELECT] Find banners (%s) from %s failed (%s).',
-                    json_encode($existingZones),
-                    $this->client->getConfig()['base_uri'],
-                    $exception->getMessage()
-                ),
-                $exception->getCode(),
-                $exception
-            );
-        }
+        if ($existingZones->count() > 0) {
+            try {
+                $result = $this->client->post(
+                    self::URI_FIND_BANNERS,
+                    [
+                        RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $sitesMap),
+                    ]
+                );
+            } catch (RequestException $exception) {
+                throw new UnexpectedClientResponseException(
+                    sprintf(
+                        '[ADSELECT] Find banners (%s) from %s failed (%s).',
+                        json_encode($existingZones),
+                        $this->client->getConfig()['base_uri'],
+                        $exception->getMessage()
+                    ),
+                    $exception->getCode(),
+                    $exception
+                );
+            }
 
-        $body = (string)$result->getBody();
-        try {
-            $items = json_decode($body, true);
-        } catch (InvalidArgumentException $exception) {
-            throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
+            $body = (string)$result->getBody();
+            try {
+                $items = json_decode($body, true);
+            } catch (InvalidArgumentException $exception) {
+                throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
+            }
+            Log::debug(sprintf(
+                '%s:%s %s',
+                __METHOD__,
+                __LINE__,
+                $body
+            ));
+        } else {
+            $items = [];
         }
-        Log::debug(sprintf(
-            '%s:%s %s',
-            __METHOD__,
-            __LINE__,
-            $body
-        ));
 
         $bannerIds = [];
         foreach ($zoneCollection as $request_id => $zone) {
