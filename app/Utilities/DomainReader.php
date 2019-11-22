@@ -33,6 +33,6 @@ class DomainReader
     {
         $host = parse_url($url, PHP_URL_HOST);
 
-        return $url ? strpos($host, 'www.') === 0 ? substr($host, 4) : $host : '';
+        return $host && strpos($host, 'www.') === 0 ? substr($host, 4) : (string)$host;
     }
 }
