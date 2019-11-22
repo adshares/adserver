@@ -33,7 +33,8 @@ SELECT
   SUM(clicks)                               AS clicks,
   ROUND(SUM(e.cost) / 100000000000, 2)      AS volume
 FROM event_logs_hourly e
-WHERE e.hour_timestamp < DATE(NOW())
+WHERE e.banner_id IS NULL
+  AND e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
 GROUP BY 1;
 SQL;
@@ -52,7 +53,9 @@ FROM (
 		SUM(e.views) AS impressions,
 		SUM(e.cost) AS cost
 	FROM event_logs_hourly e
-	WHERE e.hour_timestamp < DATE(NOW()) AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
+	WHERE e.banner_id IS NOT NULL
+        AND e.hour_timestamp < DATE(NOW())
+        AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
 		AND e.domain != '' AND e.views > 0
 	GROUP BY 1, 2
 ) e
@@ -70,7 +73,9 @@ SELECT
 FROM (
     SELECT e.campaign_id, SUM(e.views) AS views, SUM(e.cost)/100000000000 AS cost
     FROM event_logs_hourly e
-    WHERE e.hour_timestamp < DATE(NOW()) AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
+    WHERE e.banner_id IS NULL
+      AND e.hour_timestamp < DATE(NOW())
+      AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
 ) e
 JOIN (
@@ -100,7 +105,8 @@ FROM banners b
        LEFT JOIN (
     SELECT e.banner_id, SUM(e.views) AS views
     FROM event_logs_hourly e
-    WHERE e.hour_timestamp < DATE(NOW())
+    WHERE e.banner_id IS NOT NULL
+      AND e.hour_timestamp < DATE(NOW())
       AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
   ) e ON e.banner_id = b.uuid
