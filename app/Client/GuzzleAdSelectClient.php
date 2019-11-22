@@ -212,7 +212,9 @@ class GuzzleAdSelectClient implements AdSelect
                         json_encode($existingZones),
                         $this->client->getConfig()['base_uri'],
                         $exception->getMessage()
-                    ), $exception->getCode(), $exception
+                    ),
+                    $exception->getCode(),
+                    $exception
                 );
             }
 
