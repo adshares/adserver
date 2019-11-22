@@ -111,46 +111,35 @@ final class ImpressionContext
     public function adUserRequestBody(): array
     {
         return [
-            'url' => $this->site['page'] ?? '',
+            'url' => $this->url(),
             'tags' => $this->site['keywords'] ?? [],
             'headers' => $this->flatHeaders(),
         ];
     }
 
-    public function adSelectRequestParams(Collection $zones): array
+    public function adSelectRequestParams(Collection $zones, array $sitesMap): array
     {
         $params = [];
 
-        /* @var Zone */
+        /** @var Zone $zone */
         foreach ($zones as $requestId => $zone) {
+            $siteMap = $sitesMap[$zone->site_id];
             $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
             $userId = $this->userId();
             $params[] = [
                 'keywords' => AbstractFilterMapper::generateNestedStructure($this->user['keywords']),
                 'banner_size' => $zone->size,
-                'publisher_id' => Zone::fetchPublisherPublicIdByPublicId($zone->uuid),
-                'site_id' => $zone->site->uuid,
+                'publisher_id' => $siteMap['publisher_id'],
+                'site_id' => $siteMap['uuid'],
                 'zone_id' => $zone->uuid,
                 'request_id' => $requestId,
                 'user_id' => !empty($userId) ? $userId : $trackingId,
                 'tracking_id' => $trackingId,
-                'banner_filters' => $this->getBannerFilters($zone),
+                'banner_filters' => $siteMap['filters'],
             ];
         }
 
         return $params;
-    }
-
-    private function getBannerFilters($zone): array
-    {
-        /** @var array $filtering */
-        $filtering = $zone->site->filtering;
-
-        $bannerFilters = [];
-        $bannerFilters['require'] = $filtering['requires'] ?: new stdClass();
-        $bannerFilters['exclude'] = $filtering['excludes'] ?: new stdClass();
-
-        return $bannerFilters;
     }
 
     public function keywords(): array
@@ -165,6 +154,11 @@ final class ImpressionContext
                 ?: ($this->originalUser['tid'] ?? '');
 
         return $trackingId;
+    }
+
+    public function url(): string
+    {
+        return $this->site['page'] ?? '';
     }
 
     public function userId(): string

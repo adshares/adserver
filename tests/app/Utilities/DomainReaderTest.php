@@ -17,26 +17,29 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
+declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Console\Commands;
+namespace Adshares\Adserver\Tests\Utilities;
 
-use Adshares\Adserver\Tests\Console\TestCase;
-use Adshares\Supply\Application\Service\AdSelect;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Adshares\Adserver\Utilities\DomainReader;
+use PHPUnit\Framework\TestCase;
 
-class AdSelectInventoryExporterCommandTest extends TestCase
+final class DomainReaderTest extends TestCase
 {
-    use RefreshDatabase;
-
-    public function testExport(): void
+    /**
+     * @dataProvider urlProvider
+     */
+    public function testDomainRead(string $url, string $expectedDomain): void
     {
-        $this->app->bind(AdSelect::class, function () {
-            $adSelect = $this->createMock(AdSelect::class);
+        $this->assertEquals($expectedDomain, DomainReader::domain($url));
+    }
 
-            return $adSelect;
-        });
-
-        $this->artisan('ops:adselect:inventory:export')
-            ->assertExitCode(0);
+    public function urlProvider(): array
+    {
+        return [
+            ['https://example.com', 'example.com'],
+            ['https://www.example.com', 'example.com'],
+            ['https://example.com:8080/find?a=1', 'example.com'],
+        ];
     }
 }
