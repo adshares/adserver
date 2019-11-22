@@ -34,14 +34,15 @@ SELECT
   SUM(clicks)                                                     AS clicks,
   ROUND((SUM(e.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_case_logs_hourly e
-WHERE e.hour_timestamp < DATE(NOW())
+WHERE e.zone_id IS NULL
+  AND e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
 GROUP BY 1;
 SQL;
 
     private const QUERY_SIZES = <<<SQL
 SELECT
-  CONCAT(z.width, "x", z.height) AS size,
+  z.size                         AS size,
   IFNULL(SUM(e.views), 0)        AS impressions,
   COUNT(*)                       AS number
 FROM zones z
@@ -49,7 +50,8 @@ FROM zones z
        LEFT JOIN (
     SELECT e.zone_id, SUM(e.views) AS views
     FROM network_case_logs_hourly e
-    WHERE e.hour_timestamp < DATE(NOW())
+    WHERE e.zone_id IS NOT NULL
+      AND e.hour_timestamp < DATE(NOW())
       AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
   ) e ON e.zone_id = z.uuid
