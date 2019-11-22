@@ -139,11 +139,13 @@ class SitesTest extends TestCase
             [
                 "status" => 0,
                 "name" => "nameA",
+                "domain" => "example.com",
                 "primaryLanguage" => "pl",
             ],
             [
                 'status' => 1,
                 "name" => "nameB",
+                "domain" => "example.com",
                 "primaryLanguage" => "en",
             ],
         ];
@@ -461,6 +463,7 @@ JSON
     "adUnits": [
       {
         "name": "name",
+        "domain": "example.com",
         "size": "300x250"
       }
     ]
