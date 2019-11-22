@@ -18,18 +18,15 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Zone;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateZonesTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
+    public function up(): void
     {
         Schema::create('zones', function (Blueprint $table) {
             $table->bigIncrements('id');
@@ -43,7 +40,7 @@ class CreateZonesTable extends Migration
             $table->integer('width');
             $table->integer('height');
             $table->integer('status')->default(Zone::STATUS_DRAFT);
-            $table->string('type')->default(Zone::TYPE_IMAGE);
+            $table->string('type')->default('image');
             $table->string('label');
 
             $table->foreign('site_id')->references('id')->on('sites')->onUpdate('RESTRICT')->onDelete('RESTRICT');
@@ -58,12 +55,7 @@ class CreateZonesTable extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
+    public function down(): void
     {
         Schema::drop('zones');
     }

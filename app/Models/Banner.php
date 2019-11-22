@@ -41,8 +41,7 @@ use function in_array;
  * @property string creative_contents
  * @property string creative_type
  * @property string creative_sha1
- * @property int creative_width
- * @property int creative_height
+ * @property string creative_size
  * @property string name
  * @property int status
  * @property Campaign campaign
@@ -52,9 +51,17 @@ use function in_array;
  */
 class Banner extends Model
 {
-    public const IMAGE_TYPE = 0;
+    public const TYPE_IMAGE = 0;
 
-    public const HTML_TYPE = 1;
+    public const TYPE_HTML = 1;
+
+    public const TYPE_DIRECT_LINK = 2;
+
+    public const TEXT_TYPE_IMAGE = 'image';
+
+    public const TEXT_TYPE_HTML = 'html';
+
+    public const TEXT_TYPE_DIRECT_LINK = 'direct';
 
     public const STATUS_DRAFT = 0;
 
@@ -85,8 +92,7 @@ class Banner extends Model
         'creative_contents',
         'creative_type',
         'creative_sha1',
-        'creative_width',
-        'creative_height',
+        'creative_size',
         'name',
         'status',
     ];
@@ -113,27 +119,39 @@ class Banner extends Model
         return in_array($status, self::STATUSES);
     }
 
-    public static function type($type): string
+    public static function type(int $type): string
     {
-        if ($type === self::IMAGE_TYPE) {
-            return 'image';
+        switch ($type) {
+            case self::TYPE_IMAGE:
+                return self::TEXT_TYPE_IMAGE;
+            case self::TYPE_HTML:
+                return self::TEXT_TYPE_HTML;
+            case self::TYPE_DIRECT_LINK:
+            default:
+                return self::TEXT_TYPE_DIRECT_LINK;
         }
-
-        return 'html';
     }
 
-    public static function size($size)
+    public static function typeAsInteger(string $type): int
     {
-        if (!isset(Size::SUPPORTED_SIZES[$size])) {
+        switch ($type) {
+            case self::TEXT_TYPE_IMAGE:
+                return self::TYPE_IMAGE;
+            case self::TEXT_TYPE_HTML:
+                return self::TYPE_HTML;
+            case self::TEXT_TYPE_DIRECT_LINK:
+            default:
+                return self::TYPE_DIRECT_LINK;
+        }
+    }
+
+    public static function size(string $size): string
+    {
+        if (!Size::isValid($size)) {
             throw new \RuntimeException(sprintf('Wrong image size.'));
         }
 
-        return Size::SUPPORTED_SIZES[$size];
-    }
-
-    public function getFormattedSize(): string
-    {
-        return $this->creative_width.'x'.$this->creative_height;
+        return $size;
     }
 
     public function campaign(): BelongsTo

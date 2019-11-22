@@ -386,6 +386,8 @@ class MySqlStatsRepository implements StatsRepository
             $queryBuilder
                 ->appendSiteIdWhereClause($siteId)
                 ->appendZoneIdGroupBy();
+        } else {
+            $queryBuilder->appendAnyZoneId();
         }
 
         $query = $queryBuilder->build();
@@ -432,6 +434,7 @@ class MySqlStatsRepository implements StatsRepository
                 ->appendSiteIdWhereClause($siteId)
                 ->appendSiteIdGroupBy();
         }
+        $queryBuilder->appendAnyZoneId();
 
         $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
@@ -541,6 +544,8 @@ class MySqlStatsRepository implements StatsRepository
 
         if ($zoneId) {
             $queryBuilder->appendZoneIdWhereClause($zoneId);
+        } else {
+            $queryBuilder->appendAnyZoneId();
         }
 
         $query = $queryBuilder->build();

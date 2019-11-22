@@ -110,9 +110,9 @@ class CampaignsController extends Controller
             throw new NotFoundHttpException(sprintf('Banner %s does not exist.', $banner));
         }
 
-        $response = ResponseFacade::make($banner->creative_contents, 200);
+        $response = ResponseFacade::make($banner->creative_contents, Response::HTTP_OK);
 
-        if ($banner->creative_type === Banner::IMAGE_TYPE) {
+        if ($banner->creative_type === Banner::TYPE_IMAGE) {
             $response->header('Content-Type', 'image/png');
         }
 
@@ -165,7 +165,7 @@ class CampaignsController extends Controller
     private function removeTemporaryUploadedFiles(array $files, Request $request): void
     {
         foreach ($files as $file) {
-            if (!isset($file['uuid'])) {
+            if (!isset($file['uuid']) && isset($file['url'])) {
                 $filename = $this->filename($file['url']);
                 $uploader = Factory::createFromExtension($filename, $request);
                 $uploader->removeTemporaryFile($filename);
@@ -183,26 +183,24 @@ class CampaignsController extends Controller
         $banners = [];
 
         foreach ($input as $banner) {
-            $size = explode('x', Banner::size($banner['size']));
-
-            if (!isset($size[0], $size[1])) {
-                throw new RuntimeException('Banner size is required.');
-            }
-
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $bannerModel->creative_width = $size[0];
-            $bannerModel->creative_height = $size[1];
+            $bannerModel->creative_size = Banner::size($banner['creative_size']);
             $bannerModel->creative_type = Banner::type($banner['type']);
 
-            $fileName = $this->filename($banner['url']);
-
             try {
-                if ($banner['type'] === Banner::HTML_TYPE) {
-                    $content = ZipUploader::content($fileName);
-                } else {
-                    $content = ImageUploader::content($fileName);
+                switch ($banner['type']) {
+                    case Banner::TYPE_IMAGE:
+                        $content = ImageUploader::content($this->filename($banner['url']));
+                        break;
+                    case Banner::TYPE_HTML:
+                        $content = ZipUploader::content($this->filename($banner['url']));
+                        break;
+                    case Banner::TYPE_DIRECT_LINK:
+                    default:
+                        $content = $banner['content'];
+                        break;
                 }
             } catch (RuntimeException $exception) {
                 Log::debug(sprintf(
@@ -272,8 +270,7 @@ class CampaignsController extends Controller
             $bannerFromInput = $banners->firstWhere('uuid', $banner->uuid);
 
             if ($bannerFromInput) {
-                $banner->name = $bannerFromInput['name']
-                    ?? "{$bannerFromInput->creative_width}x{$bannerFromInput->creative_height}";
+                $banner->name = $bannerFromInput['name'] ?? $bannerFromInput->creative_size;
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(

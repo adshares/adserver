@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
@@ -73,7 +74,11 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
 
         while ($currentHour > $from) {
-            $this->aggregateForHour($from);
+            try {
+                $this->aggregateForHour($from);
+            } catch (MissingEventsException $missingEventsException) {
+                $this->error($missingEventsException->getMessage());
+            }
 
             if (!$isBulk) {
                 break;

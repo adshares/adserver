@@ -22,16 +22,24 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Faker\Generator as Faker;
 
-$factory->define(Banner::class, function (Faker $faker) {
-    [$width, $height] = explode('x', $faker->randomElement(Size::SUPPORTED_SIZES));
+$factory->define(
+    Banner::class,
+    function (Faker $faker) {
+        $size = $faker->randomKey(Size::SIZE_INFOS);
+        $type =
+            Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
+                ? Banner::TEXT_TYPE_DIRECT_LINK
+                : $faker->randomElement(
+                [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]
+            );
 
-    return [
-        'creative_contents' => $faker->sha1,
-        'creative_type' => $faker->randomElement(['image', 'html']),
-        'creative_sha1' => $faker->sha1,
-        'creative_width' => $width,
-        'creative_height' => $height,
-        'name' => $faker->word,
-        'status' => Banner::STATUS_ACTIVE,
-    ];
-});
+        return [
+            'creative_contents' => $faker->sha1,
+            'creative_type' => $type,
+            'creative_sha1' => $faker->sha1,
+            'creative_size' => $size,
+            'name' => $faker->word,
+            'status' => Banner::STATUS_ACTIVE,
+        ];
+    }
+);

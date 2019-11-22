@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,16 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Zone;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Exceptions\Publisher;
 
-$factory->define(Zone::class, function (Faker $faker) {
-    return [
-        'uuid' => $faker->uuid,
-        'name' => $faker->word,
-        'status' => Zone::STATUS_ACTIVE,
-        'type' => Size::TYPE_DISPLAY,
-        'size' => $faker->randomKey(Size::SIZE_INFOS),
-    ];
-});
+use Adshares\Common\Exception\RuntimeException;
+
+class MissingCasesException extends RuntimeException
+{
+}

@@ -40,11 +40,17 @@ use function hex2bin;
  */
 class NetworkBanner extends Model
 {
-    public const TYPE_HTML = 'html';
+    private const TYPE_HTML = 'html';
 
-    public const TYPE_IMAGE = 'image';
+    private const TYPE_IMAGE = 'image';
 
-    public const ALLOWED_TYPES = [self::TYPE_IMAGE, self::TYPE_HTML];
+    private const TYPE_DIRECT_LINK = 'direct';
+
+    public const ALLOWED_TYPES = [
+        self::TYPE_HTML,
+        self::TYPE_IMAGE,
+        self::TYPE_DIRECT_LINK,
+    ];
 
     private const NETWORK_BANNERS_COLUMN_ID = 'network_banners.id';
 
@@ -52,9 +58,7 @@ class NetworkBanner extends Model
 
     private const NETWORK_BANNERS_COLUMN_TYPE = 'network_banners.type';
 
-    private const NETWORK_BANNERS_COLUMN_WIDTH = 'network_banners.width';
-
-    private const NETWORK_BANNERS_COLUMN_HEIGHT = 'network_banners.height';
+    private const NETWORK_BANNERS_COLUMN_SIZE = 'network_banners.size';
 
     private const NETWORK_BANNERS_COLUMN_STATUS = 'network_banners.status';
 
@@ -99,8 +103,7 @@ class NetworkBanner extends Model
         'view_url',
         'type',
         'checksum',
-        'width',
-        'height',
+        'size',
         'status',
         'classification',
     ];
@@ -277,8 +280,7 @@ class NetworkBanner extends Model
             $sizes = $networkBannerFilter->getSizes();
 
             if ($sizes) {
-                $concatSizeExpression = DB::raw("CONCAT(`network_banners`.`width`, 'x', `network_banners`.`height`)");
-                $query->whereIn($concatSizeExpression, $sizes);
+                $query->whereIn('network_banners.size', $sizes);
             }
 
             if (null !== ($networkBannerPublicId = $networkBannerFilter->getNetworkBannerPublicId())) {
@@ -296,8 +298,7 @@ class NetworkBanner extends Model
             self::NETWORK_BANNERS_COLUMN_ID,
             self::NETWORK_BANNERS_COLUMN_SERVE_URL,
             self::NETWORK_BANNERS_COLUMN_TYPE,
-            self::NETWORK_BANNERS_COLUMN_WIDTH,
-            self::NETWORK_BANNERS_COLUMN_HEIGHT,
+            self::NETWORK_BANNERS_COLUMN_SIZE,
             self::NETWORK_CAMPAIGNS_COLUMN_LANDING_URL,
             self::NETWORK_CAMPAIGNS_COLUMN_SOURCE_HOST,
             self::NETWORK_CAMPAIGNS_COLUMN_BUDGET,

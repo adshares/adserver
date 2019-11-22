@@ -38,7 +38,7 @@ class SizesResponse implements Arrayable
 
         $this->sizes = $zones->map(
             function (Zone $zone) {
-                return $zone->getSizeAsString();
+                return $zone->size;
             }
         )->unique()->values();
     }

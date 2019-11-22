@@ -160,7 +160,7 @@ final class Campaign
         return $this->campaignDate->getDateStart();
     }
 
-    public function getDateEnd(): DateTime
+    public function getDateEnd(): ?DateTime
     {
         return $this->campaignDate->getDateEnd();
     }

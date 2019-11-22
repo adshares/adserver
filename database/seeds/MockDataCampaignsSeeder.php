@@ -20,18 +20,19 @@
 
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
-use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\ConversionDefinition;
+use Adshares\Adserver\Models\User;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 class MockDataCampaignsSeeder extends Seeder
 {
     private $bannerSizes = [
-        [728, 90],
-        [750, 200],
-        [120, 600],
-        [160, 600],
+        '728x90',
+        '750x200',
+        '120x600',
+        '160x600',
     ];
 
     /**
@@ -68,7 +69,7 @@ class MockDataCampaignsSeeder extends Seeder
 
                 if (isset($cr->conversion_definitions)) {
                     foreach ($cr->conversion_definitions as $conversionData) {
-                        $name = $campaign->name . 'Conversion';
+                        $name = $campaign->name.'Conversion';
 
                         $conversion = new ConversionDefinition();
                         $conversion->name = $name;
@@ -87,10 +88,11 @@ class MockDataCampaignsSeeder extends Seeder
                 $files = glob(__DIR__."/assets/{$cr->code}/*.png");
 
                 foreach ($files as $filename) {
-                    $b = $this->makeImageBanner($campaign, getimagesize($filename), $filename);
+                    $size = getimagesize($filename);
+                    $b = $this->makeImageBanner($campaign, $size[0].'x'.$size[1], $filename);
                     $b->save();
                     $banners[] = $b;
-                    $this->command->info(" Added banner - #{$b->id} [{$b->getFormattedSize()}]");
+                    $this->command->info(" Added banner - #{$b->id} [{$b->creative_size}]");
                 }
 
                 if (empty($banners)) {
@@ -98,7 +100,7 @@ class MockDataCampaignsSeeder extends Seeder
                         $b = $this->makeImageBanner($campaign, $size);
                         $b->save();
                         $banners[] = $b;
-                        $this->command->info(" Added IMAGE banner - #{$b->id} [{$b->getFormattedSize()}]");
+                        $this->command->info(" Added IMAGE banner - #{$b->id} [{$b->creative_size}]");
                     }
                 }
 
@@ -106,7 +108,7 @@ class MockDataCampaignsSeeder extends Seeder
                     $b = $this->makeHtmlBanner($campaign, $size);
                     $b->save();
                     $banners[] = $b;
-                    $this->command->info(" Added HTML banner - #{$b->id} [{$b->getFormattedSize()}]");
+                    $this->command->info(" Added HTML banner - #{$b->id} [{$b->creative_size}]");
                 }
 
                 $this->command->info(" Added - [$campaign->landing_url] for user <{$user->email}>");
@@ -138,15 +140,14 @@ class MockDataCampaignsSeeder extends Seeder
         return $campaign;
     }
 
-    private function makeImageBanner($campaign, $size = [], $filename = null): Banner
+    private function makeImageBanner($campaign, string $size = '', $filename = null): Banner
     {
         $b = new Banner();
         $b->fill(
             [
                 'campaign_id' => $campaign->id,
-                'creative_type' => 'image',
-                'creative_width' => $size[0],
-                'creative_height' => $size[1],
+                'creative_type' => Banner::TEXT_TYPE_IMAGE,
+                'creative_size' => $size,
                 'name' => (null === $filename) ? 'seed' : basename($filename, '.png'),
                 'status' => Banner::STATUS_ACTIVE,
             ]
@@ -155,23 +156,23 @@ class MockDataCampaignsSeeder extends Seeder
         if (!empty($filename)) {
             $b->creative_contents = file_get_contents($filename);
         } else {
-            $b->creative_contents = $this->generateBannernPng(rand(1, 9), $size[0], $size[1], "CID: $campaign->id");
+            $b->creative_contents = $this->generateBannerPng(rand(1, 9), $size[0], $size[1], "CID: $campaign->id");
         }
 
         return $b;
     }
 
-    private function makeHtmlBanner($campaign, array $size): Banner
+    private function makeHtmlBanner($campaign, string $size): Banner
     {
         $b = new Banner();
+        $dimensions = Size::toDimensions($size);
         $b->fill(
             [
                 'campaign_id' => $campaign->id,
-                'creative_type' => 'html',
-                'creative_width' => $size[0],
-                'creative_height' => $size[1],
-                'creative_contents' => $this->generateBannerHTML(rand(1,9), $size[0], $size[1]),
-                'name' => sprintf('Banner HTML %s-%s', $size[0], $size[1]),
+                'creative_type' => Banner::TEXT_TYPE_HTML,
+                'creative_size' => $size,
+                'creative_contents' => $this->generateBannerHTML(rand(1, 9), $dimensions[0], $dimensions[1]),
+                'name' => sprintf('Banner HTML %s-%s', $dimensions[0], $dimensions[1]),
                 'status' => Banner::STATUS_ACTIVE,
             ]
         );
@@ -179,7 +180,7 @@ class MockDataCampaignsSeeder extends Seeder
         return $b;
     }
 
-    private function generateBannernPng($id, $width, $height, $text = '')
+    private function generateBannerPng($id, $width, $height, $text = '')
     {
         $image = \imagecreatetruecolor($width, $height);
 
@@ -206,7 +207,7 @@ class MockDataCampaignsSeeder extends Seeder
 
     private function generateBannerHTML($id, $width, $height)
     {
-        $img = $this->generateBannernPng($id, $width, $height, 'HTML');
+        $img = $this->generateBannerPng($id, $width, $height, 'HTML');
         $base64Image = base64_encode($img);
 
         $server_url = env('APP_URL');

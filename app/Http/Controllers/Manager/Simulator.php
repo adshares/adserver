@@ -21,10 +21,9 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Models\Zone;
+use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 
 class Simulator extends Controller
 {
@@ -279,42 +278,20 @@ class Simulator extends Controller
         ]
 FILTERING_JSON;
 
-    public static function findLabelBySize(string $size): string
-    {
-        return Collection::make(Zone::ZONE_LABELS)->search($size) ?: $size;
-    }
-
     public static function getZoneTypes(): array
     {
-        return array_map(
-            function ($key, $value) {
-                $sizeId = array_search($key, array_keys(Zone::ZONE_LABELS), false);
+        $types = [];
 
-                $tags = ['Desktop'];
-                if (strpos($key, 'mobile') !== false) {
-                    $tags[] = 'Mobile';
-                }
-                if (strpos($key, '-billboard') !== false) {
-                    $tags[] = 'PL';
-                }
-                if ($sizeId < 6) {
-                    $tags[] = 'best';
-                }
+        foreach (Size::SIZE_INFOS as $size => $meta) {
+            $types[] = [
+                'label' => $meta['label'],
+                'size' => $size,
+                'tags' => $meta['tags'],
+                'type' => $meta['type'],
+            ];
+        }
 
-                return [
-                    'id' => $sizeId + 1,
-                    'name' => ucwords(str_replace('-', ' ', $key)),
-                    'type' => $key,
-                    'label' => $key,
-                    'size' => $sizeId,
-                    'tags' => $tags,
-                    'width' => explode('x', $value)[0],
-                    'height' => explode('x', $value)[1],
-                ];
-            },
-            array_keys(Zone::ZONE_LABELS),
-            Zone::ZONE_LABELS
-        );
+        return $types;
     }
 
     public static function getAvailableLanguages()

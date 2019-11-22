@@ -39,14 +39,12 @@ class SitesTest extends TestCase
         'filtering',
         'adUnits' => [
             '*' => [
-                'name',
                 'code',
-                'size' => [
-                    'width',
-                    'height',
-                    'label',
-                ],
+                'label',
+                'name',
+                'size',
                 'status',
+                'tags',
                 'type',
             ],
         ],
@@ -141,11 +139,13 @@ class SitesTest extends TestCase
             [
                 "status" => 0,
                 "name" => "nameA",
+                "domain" => "example.com",
                 "primaryLanguage" => "pl",
             ],
             [
                 'status' => 1,
                 "name" => "nameB",
+                "domain" => "example.com",
                 "primaryLanguage" => "en",
             ],
         ];
@@ -166,15 +166,7 @@ class SitesTest extends TestCase
     "adUnits": [
       {
         "name": "ssss",
-        "type": "image",
-        "size": {
-          "label": "large-rectangle",
-          "size": 2,
-          "tags": [
-            "Desktop",
-            "best"
-          ]
-        }
+        "size": "300x250"
       }
     ]
   }
@@ -346,20 +338,13 @@ JSON
                 [
                     [
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "title1",
-                        'size' => [
-                            "width" => 100,
-                            "height" => 200,
-                        ],
+                        "size" => '125x125',
                     ],
                     [
                         "status" => 1,
                         "name" => "title2",
-                        'size' => [
-                            "width" => 300,
-                            "height" => 400,
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
@@ -368,44 +353,30 @@ JSON
                     [
                         "id" => "1",
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "new-title1",
-                        'size' => [
-                            "width" => 100,
-                            "height" => 200,
-                        ],
+                        "size" => '125x125',
                     ],
 
                     [
                         "status" => 1,
                         "name" => "new-title2",
-                        'size' => [
-                            "width" => 300,
-                            "height" => 400,
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
-            'bothNewZones' => [
+            'bothOldZones' => [
                 [
                     [
                         "id" => "1",
                         "status" => 0,
-                        "type" => "zone-type-1",
                         "name" => "new-title1",
-                        'size' => [
-                            "width" => 100,
-                            "height" => 200,
-                        ],
+                        "size" => '125x125',
                     ],
                     [
                         "id" => "2",
                         "status" => 1,
                         "name" => "new-title2",
-                        'size' => [
-                            "width" => 300,
-                            "height" => 400,
-                        ],
+                        "size" => '300x250',
                     ],
                 ],
             ],
@@ -488,19 +459,12 @@ JSON
     },
     "status": 0,
     "name": "nameA",
+    "domain": "example.com",
     "primaryLanguage": "pl",
     "adUnits": [
       {
         "name": "name",
-        "type": "image",
-        "size": {
-          "label": "large-rectangle",
-          "size": 2,
-          "tags": [
-            "Desktop",
-            "best"
-          ]
-        }
+        "size": "300x250"
       }
     ]
   }
