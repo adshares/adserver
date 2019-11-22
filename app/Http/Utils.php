@@ -98,6 +98,9 @@ class Utils
             $propStrs = explode(self::PROP_GLUE, $zoneStr);
             foreach ($propStrs as $propStr) {
                 $prop = explode(self::VALUE_GLUE, $propStr);
+                if (!isset($prop[1]) || !isset($fields[$prop[0]])) {
+                    throw new RuntimeException('Unprocessable property during decoding zones');
+                }
                 $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
             }
             $data[] = $zone;

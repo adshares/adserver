@@ -35,6 +35,7 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Exception;
@@ -92,7 +93,11 @@ class SupplyController extends Controller
             $data = substr($data, 0, $index);
         }
 
-        $decodedQueryData = Utils::decodeZones($data);
+        try {
+            $decodedQueryData = Utils::decodeZones($data);
+        } catch (RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        }
         $zones = $decodedQueryData['zones'] ?? [];
 
         if (!$zones) {
@@ -212,7 +217,11 @@ class SupplyController extends Controller
 
         $eventId = Utils::createCaseIdContainingEventType($caseId, 'click');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+        try {
+            $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+        } catch (RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        }
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $impressionId = $request->query->get('iid');
 
@@ -293,7 +302,11 @@ class SupplyController extends Controller
         $caseId = $request->query->get('cid');
         $eventId = Utils::createCaseIdContainingEventType($caseId, 'view');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
-        $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+        try {
+            $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+        } catch (RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        }
         $publisherId = Zone::fetchPublisherPublicIdByPublicId($zoneId);
         $siteId = Zone::fetchSitePublicIdByPublicId($zoneId);
 
