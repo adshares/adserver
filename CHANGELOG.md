@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Incorrect find.js context
 - Adserver doubled statistic
+- Add keywords sanitizing
 
 ## [1.4.1] - 2019-11-22
 ### Fixed
