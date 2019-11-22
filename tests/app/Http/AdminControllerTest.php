@@ -144,8 +144,8 @@ final class AdminControllerTest extends TestCase
         $response->assertJson([
             'settings' =>
                 [
-                    'hotwalletMinValue' => 2000000000000000,
-                    'hotwalletMaxValue' => 50000000000000000,
+                    'hotwalletMinValue' => 500000000000000,
+                    'hotwalletMaxValue' => 2000000000000000,
                     'coldWalletIsActive' => 0,
                     'coldWalletAddress' => '',
                     'adserverName' => 'AdServer',
@@ -167,8 +167,8 @@ final class AdminControllerTest extends TestCase
         $response->assertJson([
             'settings' =>
                 [
-                    'hotwalletMinValue' => 2000000000000000,
-                    'hotwalletMaxValue' => 50000000000000000,
+                    'hotwalletMinValue' => 500000000000000,
+                    'hotwalletMaxValue' => 2000000000000000,
                     'hotwalletIsActive' => 0,
                     'hotwalletAddress' => '',
                     'adserverName' => 'AdServer',

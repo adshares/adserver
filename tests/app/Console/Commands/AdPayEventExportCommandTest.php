@@ -147,36 +147,7 @@ class AdPayEventExportCommandTest extends TestCase
             }
         );
 
-        $event = $this->insertEventConversion(true);
-        $eventDate = $event->created_at->format(DateTime::ATOM);
-
-        $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
-    }
-
-    public function testExportConversionWhenMatchingEventWasDeleted(): void
-    {
-        $this->bindAdUser();
-
-        $this->app->bind(
-            AdPay::class,
-            function () {
-                $adPay = $this->createMock(AdPay::class);
-
-                $adPay->expects(self::atLeastOnce())->method('addViews')->will(
-                    self::checkEventCount(0)
-                );
-                $adPay->expects(self::atLeastOnce())->method('addClicks')->will(
-                    self::checkEventCount(0)
-                );
-                $adPay->expects(self::atLeastOnce())->method('addConversions')->will(
-                    self::checkEventCount(0)
-                );
-
-                return $adPay;
-            }
-        );
-
-        $event = $this->insertEventConversion(false);
+        $event = $this->insertEventConversion();
         $eventDate = $event->created_at->format(DateTime::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
@@ -257,7 +228,7 @@ class AdPayEventExportCommandTest extends TestCase
         return $this->insertEvent(EventLog::TYPE_CLICK);
     }
 
-    private function insertEventConversion(bool $withViewEvent): Conversion
+    private function insertEventConversion(): Conversion
     {
         $user = factory(User::class)->create();
         $campaign = factory(Campaign::class)->create(
@@ -302,10 +273,6 @@ class AdPayEventExportCommandTest extends TestCase
             1,
             '0001-00000001-8B4E'
         );
-
-        if (!$withViewEvent) {
-            $eventLog->delete();
-        }
 
         return Conversion::first();
     }
