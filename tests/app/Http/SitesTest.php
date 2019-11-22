@@ -459,11 +459,11 @@ JSON
     },
     "status": 0,
     "name": "nameA",
+    "domain": "example.com",
     "primaryLanguage": "pl",
     "adUnits": [
       {
         "name": "name",
-        "domain": "example.com",
         "size": "300x250"
       }
     ]
