@@ -195,7 +195,9 @@ class GuzzleAdSelectClient implements AdSelect
             return $zone === null;
         });
 
-        if ($existingZones->count() > 0) {
+        if ($existingZones->isEmpty()) {
+            $items = [];
+        } else {
             try {
                 $result = $this->client->post(
                     self::URI_FIND_BANNERS,
@@ -210,9 +212,7 @@ class GuzzleAdSelectClient implements AdSelect
                         json_encode($existingZones),
                         $this->client->getConfig()['base_uri'],
                         $exception->getMessage()
-                    ),
-                    $exception->getCode(),
-                    $exception
+                    ), $exception->getCode(), $exception
                 );
             }
 
@@ -222,14 +222,14 @@ class GuzzleAdSelectClient implements AdSelect
             } catch (InvalidArgumentException $exception) {
                 throw new DomainRuntimeException(sprintf('[ADSELECT] Find Banners. Invalid json data (%s).', $body));
             }
-            Log::debug(sprintf(
-                '%s:%s %s',
-                __METHOD__,
-                __LINE__,
-                $body
-            ));
-        } else {
-            $items = [];
+            Log::debug(
+                sprintf(
+                    '%s:%s %s',
+                    __METHOD__,
+                    __LINE__,
+                    $body
+                )
+            );
         }
 
         $bannerIds = [];
