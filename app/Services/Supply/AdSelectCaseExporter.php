@@ -207,6 +207,6 @@ class AdSelectCaseExporter
 
     private function getExportedPeriodStart(): DateTime
     {
-        return new DateTime('-2 weeks');
+        return new DateTime('-2 days');
     }
 }
