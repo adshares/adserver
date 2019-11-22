@@ -444,7 +444,7 @@ var getPageKeywords = function (doc) {
     }
 
     if (metaKeywords.content) {
-        var tmp = metaKeywords.content.split(',');
+        var tmp = metaKeywords.content.replace(/[\t\r\n]/g, ',').split(',');
         var n = Math.min(MAX_KEYWORDS, tmp.length);
         var tmp2 = [];
         for (var i = 0; i < n; i++) {
