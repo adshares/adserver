@@ -27,11 +27,14 @@ before_install:
   - pecl install libsodium
   - phpenv config-add .travis/php.ini
   - composer self-update
+  - cp .env.testing.dist .env.testing
+  - mkdir -p storage/app
+  - mkdir -p storage/framework/{sessions,views,cache}
+  - chmod 777 -R storage
 
 install:
   - yarn install && yarn run prod
-  - composer install
-  - mkdir -p storage/framework/{sessions,views,cache}
+  - composer install --no-interaction
   - mysql -e 'CREATE DATABASE IF NOT EXISTS adserver_test;'
   - php artisan migrate
 
@@ -42,7 +45,6 @@ jobs:
 
     - script:
         - composer test-ci
-        - git fetch --unshallow
         - sonar-scanner
 
 notifications:
