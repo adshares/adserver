@@ -33,6 +33,7 @@ use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
@@ -47,6 +48,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function base64_decode;
 use function json_decode;
 use function sprintf;
@@ -225,7 +227,11 @@ SQL;
         $caseId = $request->query->get('cid');
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
-        $context = Utils::decodeZones($request->query->get('ctx'));
+        try {
+            $context = Utils::decodeZones($request->query->get('ctx'));
+        } catch (RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        }
         $zoneId = $context['page']['zone'] ?? null;
         $siteId = DomainReader::domain($context['page']['url'] ?? '');
 
@@ -331,7 +337,11 @@ SQL;
         $payTo = $request->query->get('pto');
         $publisherId = $request->query->get('pid');
 
-        $context = Utils::decodeZones($request->query->get('ctx'));
+        try {
+            $context = Utils::decodeZones($request->query->get('ctx'));
+        } catch (RuntimeException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
+        }
         $keywords = $context['page']['keywords'] ?? '';
 
         $adUserEndpoint = config('app.aduser_base_url');
