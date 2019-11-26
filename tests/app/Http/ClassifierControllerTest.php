@@ -28,6 +28,8 @@ use Adshares\Adserver\Models\NetworkCampaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Illuminate\Database\Eloquent\Collection;
+use Symfony\Component\HttpFoundation\Response;
 use function factory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function urlencode;
@@ -41,7 +43,6 @@ final class ClassifierControllerTest extends TestCase
     public function testGlobalWhenThereIsNoClassifications(): void
     {
         $user = factory(User::class)->create();
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -49,7 +50,6 @@ final class ClassifierControllerTest extends TestCase
         factory(NetworkBanner::class)->create(['network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['network_campaign_id' => 2]);
-        factory(Classification::class)->create();
 
         $response = $this->getJson(self::CLASSIFICATION_LIST);
         $content = json_decode($response->getContent(), true);
@@ -72,7 +72,6 @@ final class ClassifierControllerTest extends TestCase
     public function testGlobalWhenThereIsOnlyGlobalClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -95,15 +94,17 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsOnlySiteClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
-        factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3, 'user_id' => 1]);
+        $site = factory(Site::class)->create();
+        factory(Classification::class)->create(
+            ['banner_id' => 1, 'status' => 0, 'site_id' => $site->id, 'user_id' => 1]
+        );
 
-        $response = $this->getJson(self::CLASSIFICATION_LIST.'/3');
+        $response = $this->getJson(self::CLASSIFICATION_LIST.'/'.$site->id);
         $content = json_decode($response->getContent(), true);
         $items = $content['items'];
 
@@ -116,12 +117,12 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsGlobalAndSiteClassification(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 2, 'network_campaign_id' => 1]);
+        factory(Site::class)->create(['id' => 3]);
         factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 3, 'user_id' => 1]);
         factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => null, 'user_id' => 1]);
 
@@ -138,7 +139,6 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeGlobalStatusWhenDoesNotExistInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -158,13 +158,12 @@ final class ClassifierControllerTest extends TestCase
             ->first();
 
         $this->assertFalse($classification->status);
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testChangeGlobalStatusWhenExistsInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -185,7 +184,7 @@ final class ClassifierControllerTest extends TestCase
             ->first();
 
         $this->assertTrue($classification->status);
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testRejectGloballyWhenForSiteExistsInDb(): void
@@ -196,6 +195,7 @@ final class ClassifierControllerTest extends TestCase
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
+        factory(Site::class)->create(['id' => 3]);
         factory(Classification::class)->create(['banner_id' => 1, 'status' => 1, 'site_id' => 3, 'user_id' => 1]);
 
         $data = [
@@ -206,7 +206,7 @@ final class ClassifierControllerTest extends TestCase
         ];
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST, $data);
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
 
         /** @var Collection $classification */
         $classification = Classification::where('banner_id', 1)
@@ -220,7 +220,6 @@ final class ClassifierControllerTest extends TestCase
     public function testChangeSiteStatusWhenDoesNotExistInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
@@ -235,22 +234,18 @@ final class ClassifierControllerTest extends TestCase
 
         $response = $this->patchJson(self::CLASSIFICATION_LIST.'/1', $data);
 
-        $classification = Classification::where('banner_id', 1)
-            ->where('site_id', 1)
-            ->first();
-
-        $this->assertTrue($classification->status);
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertNull(Classification::first());
+        $this->assertEquals(Response::HTTP_FORBIDDEN, $response->getStatusCode());
     }
 
     public function testChangeSiteStatusWhenExistsInDb(): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         factory(NetworkCampaign::class)->create(['id' => 1]);
         factory(NetworkBanner::class)->create(['id' => 1, 'network_campaign_id' => 1]);
+        factory(Site::class)->create(['id' => 5]);
         factory(Classification::class)->create(['banner_id' => 1, 'status' => 0, 'site_id' => 5, 'user_id' => 1]);
 
         $data = [
@@ -267,7 +262,7 @@ final class ClassifierControllerTest extends TestCase
             ->first();
 
         $this->assertTrue($classification->status);
-        $this->assertEquals(204, $response->getStatusCode());
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     /**
@@ -278,7 +273,6 @@ final class ClassifierControllerTest extends TestCase
     public function testSiteWhenThereIsGlobalAndSiteClassificationFilteringByLandingUrl(string $url): void
     {
         $user = factory(User::class)->create(['id' => 1]);
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         $site = factory(Site::class)->create(['id' => 1, 'user_id' => $user->id]);

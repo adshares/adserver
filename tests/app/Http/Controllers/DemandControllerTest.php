@@ -58,7 +58,6 @@ final class DemandControllerTest extends TestCase
         );
 
         $user = factory(User::class)->create();
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         $accountAddress = '0001-00000001-0001';
@@ -106,7 +105,6 @@ final class DemandControllerTest extends TestCase
     public function testInventoryList(): void
     {
         $user = factory(User::class)->create();
-        $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
         $campaignDraft = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_DRAFT]);
