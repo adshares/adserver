@@ -73,7 +73,10 @@
             "@php artisan config:clear",
             "phpunit --testsuite Application,Unit"
         ],
-        "test-coverage": "@test --coverage-text",
+        "test-coverage": [
+            "@php artisan config:clear",
+            "phpunit --testsuite Application,Unit --coverage-text"
+        ],
         "test-ci": [
             "@php artisan config:clear",
             "phpunit --configuration phpunit-ci.xml"
