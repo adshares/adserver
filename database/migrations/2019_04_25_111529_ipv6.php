@@ -30,19 +30,6 @@ class Ipv6 extends Migration
         if (DB::isMysql()) {
             DB::statement('ALTER TABLE event_logs MODIFY ip VARBINARY(16)');
             DB::statement('ALTER TABLE network_event_logs MODIFY ip VARBINARY(16)');
-        } else {
-            Schema::table(
-                'event_logs',
-                function (Blueprint $table) {
-                    $table->binary('ip', 16)->change();
-                }
-            );
-            Schema::table(
-                'network_event_logs',
-                function (Blueprint $table) {
-                    $table->binary('ip', 16)->change();
-                }
-            );
         }
     }
 

@@ -62,19 +62,6 @@ FROM
     WHERE id IN (SELECT DISTINCT network_case_id FROM network_case_payments WHERE ads_payment_id IN (%s))) t;
 SQL;
 
-    private const SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE_SQLITE = <<<SQL
-SELECT CAST(strftime('%%s', d || ' ' || h || ':00:00') AS INT) AS pay_time
-FROM
-  (
-    SELECT DISTINCT DATE(pay_time) AS d, strftime('%%H', pay_time) AS h
-    FROM network_case_payments
-    WHERE ads_payment_id IN (%s)
-    UNION
-    SELECT DISTINCT DATE(created_at) AS d, strftime('%%H', created_at) AS h
-    FROM network_cases
-    WHERE id IN (SELECT DISTINCT network_case_id FROM network_case_payments WHERE ads_payment_id IN (%s))) t;
-SQL;
-
     protected $signature = 'ops:supply:payments:process {--c|chunkSize=5000}';
 
     protected $description = 'Processes payments for events';
@@ -225,8 +212,7 @@ SQL;
 
         $whereInPlaceholder = str_repeat('?,', count($adsPaymentIds) - 1).'?';
         $query = sprintf(
-            DB::isSQLite() ? self::SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE_SQLITE
-                : self::SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE,
+            self::SQL_QUERY_SELECT_TIMESTAMPS_TO_UPDATE_TEMPLATE,
             $whereInPlaceholder,
             $whereInPlaceholder
         );
