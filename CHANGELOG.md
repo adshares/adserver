@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased
 ### Changed
 - PHPUnit tests use MySQL database
+### Fixed
+- Invalid size in internal classifier
 
 ## [1.4.2] - 2019-11-22
 ### Fixed

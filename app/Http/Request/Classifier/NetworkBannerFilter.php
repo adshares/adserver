@@ -25,6 +25,7 @@ namespace Adshares\Adserver\Http\Request\Classifier;
 use Adshares\Adserver\Models\NetworkBanner;
 use Adshares\Common\Domain\ValueObject\Exception\InvalidUuidException;
 use Adshares\Common\Domain\ValueObject\Uuid;
+use Adshares\Supply\Domain\ValueObject\Size;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use function json_decode;
@@ -152,7 +153,7 @@ class NetworkBannerFilter
         }
 
         foreach ($this->sizes as $size) {
-            if (1 !== preg_match('/^\d+x\d+$/', $size)) {
+            if (!Size::isValid($size)) {
                 throw new InvalidArgumentException(sprintf('[NetworkBannerFilter] Invalid size (%s)', $size));
             }
         }
