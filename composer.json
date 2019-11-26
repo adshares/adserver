@@ -74,7 +74,10 @@
             "phpunit --testsuite Application,Unit"
         ],
         "test-coverage": "@test --coverage-text",
-        "test-ci": "phpunit --configuration phpunit-ci.xml",
+        "test-ci": [
+            "@php artisan config:clear",
+            "phpunit --configuration phpunit-ci.xml"
+        ],
         "post-root-package-install": [
             "@php artisan key:generate"
         ],
