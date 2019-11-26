@@ -27,7 +27,6 @@ before_install:
   - pecl install libsodium
   - phpenv config-add .travis/php.ini
   - composer self-update
-  - cp .env.testing.dist .env.testing
   - mkdir -p storage/app
   - mkdir -p storage/framework/{sessions,views,cache}
   - chmod 777 -R storage
