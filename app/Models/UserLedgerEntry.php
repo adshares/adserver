@@ -472,25 +472,11 @@ class UserLedgerEntry extends Model
                         'amount',
                         'type',
                         'status',
-                        DB::raw(
-                            DB::isSQLite()
-                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0'
-                                .' THEN null ELSE address_from END AS address_from'
-                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, null, address_from) AS address_from'
-                        ),
+                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, null, address_from) AS address_from'),
                         'address_to',
-                        DB::raw(
-                            DB::isSQLite()
-                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0 THEN null ELSE txid END AS txid'
-                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'
-                        ),
+                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, null, txid) AS txid'),
                         'created_at',
-                        DB::raw(
-                            DB::isSQLite()
-                                ? 'CASE WHEN type IN (3, 4, 5, 6) AND status = 0 '
-                                .'THEN date(created_at) ELSE created_at END AS date_helper'
-                                : 'IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'
-                        ),
+                        DB::raw('IF(type IN (3, 4, 5, 6) AND status = 0, date(created_at), created_at) AS date_helper'),
                     ]
                 )->where('user_id', $userId)->whereNull('deleted_at');
 

@@ -34,11 +34,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('creative_size', 16)->default('')->after('creative_height');
             }
         );
-        if (DB::isSQLite()) {
-            DB::update('UPDATE `banners` SET `creative_size` = `creative_width` || "x" || `creative_height`');
-        } else {
-            DB::update('UPDATE `banners` SET `creative_size` = CONCAT(`creative_width`, "x", `creative_height`)');
-        }
+        DB::update('UPDATE `banners` SET `creative_size` = CONCAT(`creative_width`, "x", `creative_height`)');
         Schema::table(
             'banners',
             function (Blueprint $table) {
@@ -58,11 +54,7 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('size', 16)->default('')->after('height');
             }
         );
-        if (DB::isSQLite()) {
-            DB::update('UPDATE `network_banners` SET `size` = `width` || "x" || `height`');
-        } else {
-            DB::update('UPDATE `network_banners` SET `size` = CONCAT(`width`, "x", `height`)');
-        }
+        DB::update('UPDATE `network_banners` SET `size` = CONCAT(`width`, "x", `height`)');
 
         Schema::table(
             'network_banners',
@@ -84,21 +76,12 @@ class ChangeWidthAndHeightIntoSize extends Migration
                 $table->string('type')->default(Size::TYPE_DISPLAY)->change();
             }
         );
-        if (DB::isSQLite()) {
-            DB::update(
-                sprintf(
-                    'UPDATE `zones` SET `size` = `width` || "x" || `height`, `type` = \'%s\'',
-                    Size::TYPE_DISPLAY
-                )
-            );
-        } else {
-            DB::update(
-                sprintf(
-                    'UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`), `type` = \'%s\'',
-                    Size::TYPE_DISPLAY
-                )
-            );
-        }
+        DB::update(
+            sprintf(
+                'UPDATE `zones` SET `size` = CONCAT(`width`, "x", `height`), `type` = \'%s\'',
+                Size::TYPE_DISPLAY
+            )
+        );
 
         Schema::table(
             'zones',
