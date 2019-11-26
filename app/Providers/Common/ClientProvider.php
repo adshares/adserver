@@ -31,10 +31,8 @@ use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
-use Adshares\Adserver\Client\JsonRpcAdPayLegacyClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
-use Adshares\Adserver\HttpClient\JsonRpc;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
@@ -47,7 +45,6 @@ use Adshares\Common\Application\Service\LicenseProvider;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use Adshares\Common\Infrastructure\Service\PhpAdsClient;
 use Adshares\Demand\Application\Service\AdPay;
-use Adshares\Demand\Application\Service\AdPayLegacy;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
@@ -60,23 +57,6 @@ final class ClientProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->bind(
-            AdPayLegacy::class,
-            function () {
-                return new JsonRpcAdPayLegacyClient(
-                    new JsonRpc(
-                        new Client(
-                            [
-                                'headers' => ['Content-Type' => 'application/json', 'Cache-Control' => 'no-cache'],
-                                'base_uri' => config('app.adpay_endpoint'),
-                                'timeout' => 300,
-                            ]
-                        )
-                    )
-                );
-            }
-        );
-
         $this->app->bind(
             AdPay::class,
             function () {
