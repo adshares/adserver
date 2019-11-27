@@ -104,10 +104,14 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
-        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
-            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
-            throw new BadRequestHttpException('Bad request.');
+        if(env('APP_ENV') == 'production') {
+            if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
+                || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')
+            ) {
+                throw new BadRequestHttpException('Bad request.');
+            }
         }
+
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
@@ -138,8 +142,10 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            return self::json([]);
+        if(env('APP_ENV') == 'production') {
+            if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+                return self::json([]);
+            }
         }
 
         NetworkImpression::register(

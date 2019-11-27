@@ -268,6 +268,8 @@ class GuzzleAdSelectClient implements AdSelect
                         'zone_id' => $zoneIds[$requestId],
                         'pay_from' => $campaign->source_address,
                         'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                        'type' => $banner->type,
+                        'size' => $banner->size,
                         'serve_url' => $banner->serve_url,
                         'creative_sha1' => $banner->checksum,
                         'click_url' => SecureUrl::change(

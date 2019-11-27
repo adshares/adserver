@@ -464,7 +464,7 @@ var getBrowserContext = function () {
         url: topwin.location.href,
         keywords: getPageKeywords(topdoc),
         ref: topdoc.referrer,
-        pop: topwin.opener !== null ? 1 : 0
+        pop: topwin.opener !== null && topwin.opener !== undefined ? 1 : 0
         // agent: window.navigator.userAgent
     }
 };
@@ -497,8 +497,13 @@ var parseZoneOptions = function(str) {
 var abd;
 
 var getActiveZones = function(call_func) {
-    var tags = document.querySelectorAll(selectorClass + '[data-zone]');
-    var n = tags.length;
+    var _tags = document.querySelectorAll(selectorClass + '[data-zone]');
+    var n = _tags.length;
+
+    var tags = [];
+    for(var i=0;i<n;i++) {
+        tags[i] = _tags[i];
+    }
 
     if (n == 0) {
         return;
@@ -524,9 +529,12 @@ var getActiveZones = function(call_func) {
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
             var isData = (parts.shift() == "data");
-            if (isData) {
+            if (isData && typeof param[parts.join('-')] == 'undefined') {
                 param[parts.join('-')] = tag.attributes[j].value;
             }
+        }
+        if(param.options) {
+            param.options = parseZoneOptions(param.options);
         }
         if (param.zone) {
             valid++;
@@ -535,7 +543,7 @@ var getActiveZones = function(call_func) {
                 id: param.zone,
                 width: param.width,
                 height: param.height,
-                options: parseZoneOptions(param.options),
+                options: (param.options),
                 destElement: tag
             };
 
@@ -606,7 +614,6 @@ domReady(function () {
         }
 
         fetchURL(url, options).then(function (banners) {
-
             zones.forEach(function(zone, i) {
                 if (!zone.destElement) {
                     console.log('no element to replace');
@@ -648,7 +655,11 @@ domReady(function () {
 
         addListener(topwin, 'message', function (event) {
             var has_access = dwmthACL.some(function(win) {
-                return win && (win === event.source);
+                try {
+                    return win && (win === event.source);
+                } catch(e) {
+                    return false;
+                }
             });
             if (has_access && event.data)
             {
@@ -738,16 +749,29 @@ var fetchBanner = function (banner, context) {
 
         var displayBanner = function () {
             var caller;
-            if (data.type.indexOf('image/') != -1) {
+
+            if (banner.type == 'image') {
                 caller = createImageFromData;
-            } else {
+            } else if (banner.type == 'html') {
                 caller = createIframeFromData;
-//                data.bytes = data.bytes
-//                 .replace("'{{ADSHARES_JSON}}'", JSON.stringify({'context':
-//                 context, 'click_url': addUrlParam(banner.click_url, 'cid',
-//                 banner.cid)}))
-//                 .replace('{{ADSHARES_CLICK_URL}}',
-//                 addUrlParam(banner.click_url, 'cid', banner.cid));
+            } else if (banner.type == 'direct') {
+                createLinkFromData(data, function(url) {
+                    if(!validURL(url)) {
+                        //console.log('invalid direct link', url);
+                        url = banner.serve_url;
+                    }
+                    addPop(banner.size,
+                        url,
+                        $pick(context.zone.options.count, 1),
+                        $pick(context.zone.options.interval, 1),
+                        $pick(context.zone.options.burst, 1),
+                        function () {
+                            dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
+                        }
+                    );
+
+                });
+                return;
             }
             caller(data, function (element) {
                 element = prepareElement(context, banner, element);

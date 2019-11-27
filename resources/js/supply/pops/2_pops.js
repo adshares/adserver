@@ -8,7 +8,7 @@ var addPop;
     var executeCount = 0;
 
     var saveLog = function (popLog) {
-        let minTimestamp = (new Date()).getTime() - 48 * 3600 * 1000;
+        let minTimestamp = (new Date()).getTime() / 1000 - 48 * 3600;
         let valid = [];
         for (let i = 0, n = popLog.length; i < n; i++) {
             let log = popLog[i];
@@ -16,16 +16,22 @@ var addPop;
                 valid.push(log);
             }
         }
-        store.set('dwmth-pops', valid);
+        store.set('dwmth-pops' + selectorClass, valid);
     };
 
     var loadLog = function () {
-        return store.get('dwmth-pops') || [];
+        return store.get('dwmth-pops' + selectorClass) || [];
     }
 
-    executeProxy = function () {
-        if (!executeProxyTimer) {
-            executeProxyTimer = setTimeout(executePop, 1);
+    executeProxy = function (e) {
+        let target = e.target;
+        while(target && target != document.body) {
+            if(target.tagName == 'A') {
+                if (!executeProxyTimer) {
+                    executeProxyTimer = setTimeout(executePop, 1);
+                }
+            }
+            target = target.parentElement;
         }
     };
 
@@ -36,8 +42,9 @@ var addPop;
      * @param count - max popups per timespan
      * @param timespan
      * @param burst - popup limit on single page load
+     * @param callback - triggered after popup is displayed
      */
-    addPop = function (type, url, count, timespan, burst) {
+    addPop = function (type, url, count, timespan, burst, callback) {
         if (currentPop) {
             popQueue.push(arguments);
             return;
@@ -46,7 +53,8 @@ var addPop;
         preparePop.apply(this, arguments)
     };
 
-    preparePop = function (type, url, count, timespan, burst) {
+    preparePop = function (type, url, count, timespan, burst, callback) {
+
         if (count <= 0) {
             return false;
         }
@@ -54,7 +62,7 @@ var addPop;
         if (timespan > 0) {
             let popLog = loadLog();
             let inTimespan = 0;
-            let minTimestamp = (new Date()).getTime() - timespan * 3600 * 1000;
+            let minTimestamp = (new Date()).getTime()/1000 - timespan * 3600;
             for (let i = 0, n = popLog.length; i < n; i++) {
                 let log = popLog[i];
                 if (log.time >= minTimestamp) {
@@ -80,7 +88,7 @@ var addPop;
             let href = link.getAttribute('href');
             let target = link.getAttribute('target');
             if (href) {
-                if (type === 'popup') {
+                if (type === 'pop-up') {
                     link.setAttribute('href', url);
                     link.setAttribute('data-orghref', href);
                     if (target) {
@@ -103,7 +111,22 @@ var addPop;
         removeListener(document, 'click', executeProxy, true);
         removeListener(document, 'click', executeProxy, false);
 
-        if (currentPop[0] === 'popup') {
+        executeCount++;
+        let popLog = loadLog();
+        popLog.push({
+            // type: currentPop[0],
+            time: Math.round((new Date()).getTime()/1000)
+        });
+        saveLog(popLog);
+        if(currentPop[5]) {
+            try {
+                currentPop[5]();
+            } catch (e) {
+
+            }
+        }
+
+        if (currentPop[0] === 'pop-up') {
             let links = document.getElementsByTagName('a');
             for (let i = 0, n = links.length; i < n; i++) {
                 let link = links[i];
@@ -120,17 +143,10 @@ var addPop;
                     link.removeAttribute('target');
                 }
             }
-        } else if (currentPop[0] === 'popunder') {
-            window.location = currentPop[1];
+        } else if (currentPop[0] === 'pop-under') {
+            let url = currentPop[1];
+            setTimeout(function(){window.location.href = url;}, 2000);
         }
-
-        executeCount++;
-        let popLog = loadLog();
-        popLog.push({
-            // type: currentPop[0],
-            time: (new Date()).getTime()
-        });
-        saveLog(popLog);
 
         currentPop = null;
         while (popQueue.length > 0) {
