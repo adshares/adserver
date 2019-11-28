@@ -104,10 +104,14 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
-        if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
-            || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')) {
-            throw new BadRequestHttpException('Bad request.');
+        if (config('app.env') != 'dev') {
+            if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
+                || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')
+            ) {
+                throw new BadRequestHttpException('Bad request.');
+            }
         }
+
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
@@ -116,7 +120,8 @@ class SupplyController extends Controller
         }
         if ($decodedQueryData['page']['pop'] ?? false) {
             if (DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
-                != DomainReader::domain($decodedQueryData['page']['url'] ?? '')) {
+                != DomainReader::domain($decodedQueryData['page']['url'] ?? '')
+            ) {
                 throw new BadRequestHttpException('Bad request.');
             }
         }
@@ -138,8 +143,10 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            return self::json([]);
+        if (config('app.env') != 'dev') {
+            if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+                return self::json([]);
+            }
         }
 
         NetworkImpression::register(
@@ -158,7 +165,7 @@ class SupplyController extends Controller
         $params = [
             config('app.serve_base_url'),
             config('app.aduser_base_url'),
-            '.'.config('app.adserver_id'),
+            '.' . config('app.adserver_id'),
         ];
 
         $jsPath = public_path('-/find.js');
@@ -182,10 +189,10 @@ class SupplyController extends Controller
         $response->setCache(
             [
                 'last_modified' => new DateTime(),
-                'max_age' => 3600 * 24 * 1,
-                's_maxage' => 3600 * 24 * 1,
-                'private' => false,
-                'public' => true,
+                'max_age'       => 3600 * 24 * 1,
+                's_maxage'      => 3600 * 24 * 1,
+                'private'       => false,
+                'public'        => true,
             ]
         );
 
@@ -271,11 +278,11 @@ class SupplyController extends Controller
             $qPos = strpos($url, '?');
 
             if (false === $qPos) {
-                $url .= '?'.$qString;
+                $url .= '?' . $qString;
             } elseif ($qPos === strlen($url) - 1) {
                 $url .= $qString;
             } else {
-                $url .= '&'.$qString;
+                $url .= '&' . $qString;
             }
         }
 
@@ -404,34 +411,34 @@ class SupplyController extends Controller
         $info = $networkHost->info ?? null;
 
         $data = [
-            'url' => $banner->serve_url,
-            'supplyName' => config('app.name'),
-            'supplyTermsUrl' => config('app.terms_url'),
-            'supplyPrivacyUrl' => config('app.privacy_url'),
-            'supplyPanelUrl' => config('app.adpanel_url'),
+            'url'                   => $banner->serve_url,
+            'supplyName'            => config('app.name'),
+            'supplyTermsUrl'        => config('app.terms_url'),
+            'supplyPrivacyUrl'      => config('app.privacy_url'),
+            'supplyPanelUrl'        => config('app.adpanel_url'),
             'supplyBannerReportUrl' => SecureUrl::change(
                 route(
                     'report-ad',
                     [
                         'banner_id' => $bannerId,
-                        'case_id' => $caseId,
+                        'case_id'   => $caseId,
                     ]
                 )
             ),
-            'supplyBannerRejectUrl' => config('app.adpanel_url').'/publisher/classifier/'.$bannerId,
-            'demand' => false,
-            'bannerType' => $banner->type,
+            'supplyBannerRejectUrl' => config('app.adpanel_url') . '/publisher/classifier/' . $bannerId,
+            'demand'                => false,
+            'bannerType'            => $banner->type,
         ];
 
         if ($info) {
             $data = array_merge(
                 $data,
                 [
-                    'demand' => true,
-                    'demandName' => $info->getName(),
-                    'demandTermsUrl' => $info->getTermsUrl() ?? null,
+                    'demand'           => true,
+                    'demandName'       => $info->getName(),
+                    'demandTermsUrl'   => $info->getTermsUrl() ?? null,
                     'demandPrivacyUrl' => $info->getPrivacyUrl() ?? null,
-                    'demandPanelUrl' => $info->getPanelUrl(),
+                    'demandPanelUrl'   => $info->getPanelUrl(),
                 ]
             );
         }

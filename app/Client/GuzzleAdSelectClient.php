@@ -154,8 +154,11 @@ class GuzzleAdSelectClient implements AdSelect
         $zoneMap = [];
         $sitesMap = [];
         $pageDomain = DomainReader::domain($context->url());
+
+        $zoneList = Zone::findByPublicIds($zoneIds);
         /** @var Zone $zone */
-        foreach (Zone::findByPublicIds($zoneIds) as $zone) {
+        for ($i = 0; $i < count($zoneList); $i++) {
+            $zone = $zoneList[$i];
             $siteId = $zone->site_id;
 
             if (!array_key_exists($siteId, $sitesMap)) {
@@ -165,15 +168,25 @@ class GuzzleAdSelectClient implements AdSelect
 
                 if ($isActive) {
                     $sitesMap[$siteId] = [
-                        'active' => true,
-                        'domain' => $site->domain,
-                        'filters' => [
+                        'active'       => true,
+                        'domain'       => $site->domain,
+                        'filters'      => [
                             'require' => $site->site_requires ?: new stdClass(),
                             'exclude' => $site->site_excludes ?: new stdClass(),
                         ],
                         'publisher_id' => $user->uuid,
-                        'uuid' => $site->uuid,
+                        'uuid'         => $site->uuid,
                     ];
+
+                    // always include active pop zones
+                    foreach ($site->zones as $popupZone) {
+                        if (!in_array($popupZone->uuid, $zoneIds)) {
+                            if ($popupZone->type == 'pop' && $popupZone->status == Zone::STATUS_ACTIVE) {
+                                $zoneIds[] = $popupZone->uuid;
+                                $zoneList[] = $popupZone;
+                            }
+                        }
+                    }
                 } else {
                     $sitesMap[$siteId] = [
                         'active' => false,
@@ -191,9 +204,11 @@ class GuzzleAdSelectClient implements AdSelect
             $zoneCollection[] = $zoneMap[$id] ?? null;
         }
 
-        $existingZones = $zoneCollection->reject(static function ($zone) {
-            return $zone === null;
-        });
+        $existingZones = $zoneCollection->reject(
+            static function ($zone) {
+                return $zone === null;
+            }
+        );
 
         if ($existingZones->isEmpty()) {
             $items = [];
@@ -264,31 +279,33 @@ class GuzzleAdSelectClient implements AdSelect
                 } else {
                     $campaign = $banner->campaign;
                     yield [
-                        'id' => $bannerId,
-                        'zone_id' => $zoneIds[$requestId],
-                        'pay_from' => $campaign->source_address,
-                        'pay_to' => AdsUtils::normalizeAddress(config('app.adshares_address')),
-                        'serve_url' => $banner->serve_url,
+                        'id'            => $bannerId,
+                        'zone_id'       => $zoneIds[$requestId],
+                        'pay_from'      => $campaign->source_address,
+                        'pay_to'        => AdsUtils::normalizeAddress(config('app.adshares_address')),
+                        'type'          => $banner->type,
+                        'size'          => $banner->size,
+                        'serve_url'     => $banner->serve_url,
                         'creative_sha1' => $banner->checksum,
-                        'click_url' => SecureUrl::change(
+                        'click_url'     => SecureUrl::change(
                             route(
                                 'log-network-click',
                                 [
                                     'id' => $banner->uuid,
-                                    'r' => Utils::urlSafeBase64Encode($banner->click_url),
+                                    'r'  => Utils::urlSafeBase64Encode($banner->click_url),
                                 ]
                             )
                         ),
-                        'view_url' => SecureUrl::change(
+                        'view_url'      => SecureUrl::change(
                             route(
                                 'log-network-view',
                                 [
                                     'id' => $banner->uuid,
-                                    'r' => Utils::urlSafeBase64Encode($banner->view_url),
+                                    'r'  => Utils::urlSafeBase64Encode($banner->view_url),
                                 ]
                             )
                         ),
-                        'rpm' => $item['rpm'],
+                        'rpm'           => $item['rpm'],
                     ];
                 }
             }

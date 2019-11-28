@@ -187,6 +187,25 @@ function createIframeFromData(data, domInsertCallback) {
     }
 }
 
+function createLinkFromData(data, callback)
+{
+    if (requestBlob && data instanceof Blob) // blob
+    {
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            callback(reader.result);
+        };
+
+        if (reader.readAsBinaryString)
+            reader.readAsBinaryString(data);
+        else
+            reader.readAsText(data);
+    } else {
+        callback(data.bytes);
+    }
+}
+
 function createImageFromData(data, domInsertCallback) {
     var image = new Image();
     getDataURI(data, function (dataUri) {   
