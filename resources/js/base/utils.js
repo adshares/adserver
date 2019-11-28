@@ -23,15 +23,18 @@ var addUrlParam = function (url, names, value) {
     return url;
 };
 
+
+var $isset = function (value) {
+    return value !== null && value !== undefined;
+};
+
 var $pick = function (value, ifnull) {
-    if (value === null || value === undefined)
-        return ifnull;
-    return value;
-}
+    return $isset(value) ? value : ifnull;
+};
 
 function validURL(str) {
     var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
+        '((([a-z\\d]([a-z\\d-_]*[a-z\\d])*)\\.)+[a-z]{2,}|'+ // domain name
         '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
         '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
         '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string

@@ -1,4 +1,5 @@
 var addPop;
+var checkPopLimits;
 
 (function() {
 
@@ -39,12 +40,12 @@ var addPop;
      *
      * @param type
      * @param url
-     * @param count - max popups per timespan
-     * @param timespan
+     * @param count - max popups per interval
+     * @param interval
      * @param burst - popup limit on single page load
      * @param callback - triggered after popup is displayed
      */
-    addPop = function (type, url, count, timespan, burst, callback) {
+    addPop = function (type, url, count, interval, burst, callback) {
         if (currentPop) {
             popQueue.push(arguments);
             return;
@@ -53,16 +54,17 @@ var addPop;
         preparePop.apply(this, arguments)
     };
 
-    preparePop = function (type, url, count, timespan, burst, callback) {
 
+    checkPopLimits = function(count, interval)
+    {
         if (count <= 0) {
             return false;
         }
 
-        if (timespan > 0) {
+        if (interval > 0) {
             let popLog = loadLog();
             let inTimespan = 0;
-            let minTimestamp = (new Date()).getTime()/1000 - timespan * 3600;
+            let minTimestamp = (new Date()).getTime()/1000 - interval * 3600;
             for (let i = 0, n = popLog.length; i < n; i++) {
                 let log = popLog[i];
                 if (log.time >= minTimestamp) {
@@ -73,6 +75,15 @@ var addPop;
                 return false;
             }
         }
+
+        return true;
+    };
+
+    preparePop = function (type, url, count, interval, burst, callback) {
+        if(!checkPopLimits(count, interval)) {
+            return false;
+        }
+
 
         if (burst && burst <= executeCount) {
             return false;

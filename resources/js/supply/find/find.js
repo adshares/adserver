@@ -524,17 +524,14 @@ var getActiveZones = function(call_func) {
         }
         tag.__dwmth = 1;
         param = {};
-        param.width = parseInt(tag.offsetWidth) || parseInt(tag.style.width);
-        param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height);
+        param.width = parseInt(tag.offsetWidth) || parseInt(tag.style.width) || 0;
+        param.height = parseInt(tag.offsetHeight) || parseInt(tag.style.height) || 0;
         for (var j = 0, m = tag.attributes.length; j < m; j++) {
             var parts = tag.attributes[j].name.split('-');
             var isData = (parts.shift() == "data");
             if (isData && typeof param[parts.join('-')] == 'undefined') {
                 param[parts.join('-')] = tag.attributes[j].value;
             }
-        }
-        if(param.options) {
-            param.options = parseZoneOptions(param.options);
         }
         if (param.zone) {
             valid++;
@@ -543,9 +540,18 @@ var getActiveZones = function(call_func) {
                 id: param.zone,
                 width: param.width,
                 height: param.height,
-                options: (param.options),
+                options: parseZoneOptions(param.options),
                 destElement: tag
             };
+
+            //popups
+            if($isset(zone.options.count) && $isset(zone.options.interval)) {
+                // Do not ask for popups if over limit
+                if(!checkPopLimits(zone.options.count, zone.options.interval)) {
+                    zone.__invalid = true;
+                    param.__invalid = true;
+                }
+            }
 
             zone.backfill = findBackfillCode(tag);
 

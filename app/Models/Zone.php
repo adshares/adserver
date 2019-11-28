@@ -53,7 +53,7 @@ class Zone extends Model
 HTML;
 
     private const CODE_TEMPLATE_POP = <<<HTML
-<div class="{{selectorClass}}" data-zone="{{zoneId}}" data-pop="{{rate}}" style="display: none"></div>
+<div class="{{selectorClass}}" data-zone="{{zoneId}}" data-options="count={{count}},interval={{interval}},burst={{burst}}" style="display: none"></div>
 HTML;
 
     use SoftDeletes;
@@ -154,7 +154,9 @@ HTML;
                 self::CODE_TEMPLATE_POP,
                 [
                     '{{zoneId}}' => $this->uuid,
-                    '{{rate}}' => '1/1',//TODO change default value to variable
+                    '{{count}}' => '1',//TODO change default value to variable
+                    '{{interval}}' => '1',//TODO change default value to variable
+                    '{{burst}}' => '1',//TODO change default value to variable
                     '{{selectorClass}}' => config('app.adserver_id'),
                 ]
             );
