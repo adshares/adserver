@@ -33,27 +33,29 @@ use function array_unique;
 use function hex2bin;
 
 /**
- * @property Site site
- * @property int id
+ * @property Site   site
+ * @property int    id
  * @property string code
  * @property string uuid
- * @property int site_id
+ * @property int    site_id
  * @property string size
  * @property string label
  * @property string type
- * @property array tags
+ * @property array  tags
  * @mixin Builder
  */
 class Zone extends Model
 {
-    private const CODE_TEMPLATE = <<<HTML
-<div class="{{selectorClass}}"
-    data-zone="{{zoneId}}" 
-    style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
+    private const CODE_TEMPLATE
+        = <<<HTML
+<div class="{selectorClass}"
+    data-zone="{zoneId}" 
+    style="width:{width}px;height:{height}px;display: inline-block;margin: 0 auto"></div>
 HTML;
 
-    private const CODE_TEMPLATE_POP = <<<HTML
-<div class="{{selectorClass}}" data-zone="{{zoneId}}" data-options="count={{count}},interval={{interval}},burst={{burst}}" style="display: none"></div>
+    private const CODE_TEMPLATE_POP
+        = <<<HTML
+<div class="{selectorClass}" data-zone="{zoneId}" data-options="count={count},interval={interval},burst={burst}" style="display:none"></div>
 HTML;
 
     use SoftDeletes;
@@ -66,49 +68,55 @@ HTML;
 
     public const STATUS_ARCHIVED = 2;
 
-    public const STATUSES = [
-        self::STATUS_DRAFT,
-        self::STATUS_ACTIVE,
-        self::STATUS_ARCHIVED,
-    ];
+    public const STATUSES
+        = [
+            self::STATUS_DRAFT,
+            self::STATUS_ACTIVE,
+            self::STATUS_ARCHIVED,
+        ];
 
     public $publisher_id;
 
-    protected $fillable = [
-        'name',
-        'size',
-        'type',
-        'status',
-        'uuid',
-    ];
+    protected $fillable
+        = [
+            'name',
+            'size',
+            'type',
+            'status',
+            'uuid',
+        ];
 
-    protected $visible = [
-        'id',
-        'name',
-        'code',
-        'label',
-        'size',
-        'status',
-        'tags',
-        'type',
-        'uuid'
-    ];
+    protected $visible
+        = [
+            'id',
+            'name',
+            'code',
+            'label',
+            'size',
+            'status',
+            'tags',
+            'type',
+            'uuid'
+        ];
 
-    protected $appends = [
-        'code',
-        'label',
-        'tags',
-    ];
+    protected $appends
+        = [
+            'code',
+            'label',
+            'tags',
+        ];
 
     protected $touches = ['site'];
 
-    protected $traitAutomate = [
-        'uuid' => 'BinHex',
-    ];
+    protected $traitAutomate
+        = [
+            'uuid' => 'BinHex',
+        ];
 
-    protected $dispatchesEvents = [
-        'creating' => GenerateUUID::class,
-    ];
+    protected $dispatchesEvents
+        = [
+            'creating' => GenerateUUID::class,
+        ];
 
     public static function fetchByPublicId(string $uuid): ?Zone
     {
@@ -117,12 +125,14 @@ HTML;
 
     public static function findByPublicIds(array $publicIds): Collection
     {
-        $binUniquePublicIds = array_unique(array_map(
-            function (string $item) {
-                return hex2bin($item);
-            },
-            $publicIds
-        ));
+        $binUniquePublicIds = array_unique(
+            array_map(
+                function (string $item) {
+                    return hex2bin($item);
+                },
+                $publicIds
+            )
+        );
 
         return self::whereIn('uuid', $binUniquePublicIds)->get();
     }
@@ -153,11 +163,11 @@ HTML;
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
-                    '{{zoneId}}' => $this->uuid,
-                    '{{count}}' => '1',//TODO change default value to variable
-                    '{{interval}}' => '1',//TODO change default value to variable
-                    '{{burst}}' => '1',//TODO change default value to variable
-                    '{{selectorClass}}' => config('app.adserver_id'),
+                    '{zoneId}'        => $this->uuid,
+                    '{count}'         => '1',//TODO change default value to variable
+                    '{interval}'      => '1',//TODO change default value to variable
+                    '{burst}'         => '1',//TODO change default value to variable
+                    '{selectorClass}' => config('app.adserver_id'),
                 ]
             );
         }
@@ -165,10 +175,10 @@ HTML;
         $size = Size::toDimensions($this->size);
 
         $replaceArr = [
-            '{{zoneId}}' => $this->uuid,
-            '{{width}}' => $size[0],
-            '{{height}}' => $size[1],
-            '{{selectorClass}}' => config('app.adserver_id'),
+            '{zoneId}'        => $this->uuid,
+            '{width}'         => $size[0],
+            '{height}'        => $size[1],
+            '{selectorClass}' => config('app.adserver_id'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);

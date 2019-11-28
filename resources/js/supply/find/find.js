@@ -788,17 +788,21 @@ var fetchBanner = function (banner, context) {
 
         var displayIfVisible = function()
         {
-            if (isVisible(banner.destElement)) {
+            if (banner.type == 'direct') {
                 displayBanner();
             } else {
-                var n=0,fn;
-                setTimeout(fn = function () {
-                    if (isVisible(banner.destElement)) {
-                        displayBanner();
-                    } else {
-                        setTimeout(fn, n++ < 10 ? 200 : 1000);
-                    }
-                }, 100);
+                if (isVisible(banner.destElement)) {
+                    displayBanner();
+                } else {
+                    var n = 0, fn;
+                    setTimeout(fn = function () {
+                        if (isVisible(banner.destElement)) {
+                            displayBanner();
+                        } else {
+                            setTimeout(fn, n++ < 10 ? 200 : 1000);
+                        }
+                    }, 100);
+                }
             }
         };
 
