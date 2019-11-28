@@ -41,6 +41,7 @@ use function hex2bin;
  * @property string size
  * @property string label
  * @property string type
+ * @property int status
  * @property array  tags
  * @mixin Builder
  */
