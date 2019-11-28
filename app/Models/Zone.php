@@ -48,15 +48,14 @@ class Zone extends Model
 {
     private const CODE_TEMPLATE
         = <<<HTML
-<div class="{selectorClass}"
-    data-zone="{zoneId}" 
-    style="width:{width}px;height:{height}px;display: inline-block;margin: 0 auto"></div>
+<div class="{{selectorClass}}"
+    data-zone="{{zoneId}}" 
+    style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
 HTML;
 
     private const CODE_TEMPLATE_POP
-        = <<<HTML
-<div class="{selectorClass}" data-zone="{zoneId}" data-options="count={count},interval={interval},burst={burst}" style="display:none"></div>
-HTML;
+        = '<div class="{{selectorClass}}" data-zone="{{zoneId}}" '.
+           'data-options="count={{count}},interval={{interval}},burst={{burst}}" style="display: none"></div>';
 
     use SoftDeletes;
     use AutomateMutators;
@@ -163,11 +162,11 @@ HTML;
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
-                    '{zoneId}'        => $this->uuid,
-                    '{count}'         => '1',//TODO change default value to variable
-                    '{interval}'      => '1',//TODO change default value to variable
-                    '{burst}'         => '1',//TODO change default value to variable
-                    '{selectorClass}' => config('app.adserver_id'),
+                    '{{zoneId}}'        => $this->uuid,
+                    '{{count}}'         => '1',//TODO change default value to variable
+                    '{{interval}}'      => '1',//TODO change default value to variable
+                    '{{burst}}'         => '1',//TODO change default value to variable
+                    '{{selectorClass}}' => config('app.adserver_id'),
                 ]
             );
         }
@@ -175,10 +174,10 @@ HTML;
         $size = Size::toDimensions($this->size);
 
         $replaceArr = [
-            '{zoneId}'        => $this->uuid,
-            '{width}'         => $size[0],
-            '{height}'        => $size[1],
-            '{selectorClass}' => config('app.adserver_id'),
+            '{{zoneId}}'        => $this->uuid,
+            '{{width}}'         => $size[0],
+            '{{height}}'        => $size[1],
+            '{{selectorClass}}' => config('app.adserver_id'),
         ];
 
         return strtr(self::CODE_TEMPLATE, $replaceArr);
