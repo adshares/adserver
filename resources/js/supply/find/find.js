@@ -620,13 +620,8 @@ domReady(function () {
         }
 
         fetchURL(url, options).then(function (banners) {
-            zones.forEach(function(zone, i) {
-                if (!zone.destElement) {
-                    console.log('no element to replace');
-                    return;
-                }
-
-                var banner = banners[i];
+            banners.forEach(function(banner, i) {
+                var zone = zones[i] || {options: {}};
 
                 if (!banner || typeof banner != 'object') {
                     insertBackfill(zone.destElement, zone.backfill);
@@ -646,7 +641,7 @@ domReady(function () {
                 if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
                     insertBackfill(zone.destElement, zone.backfill);
                 } else {
-                    fetchBanner(banner, {page: params[0], zone: params[i + 1]});
+                    fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
                 }
             });
         }, function() {
@@ -717,7 +712,7 @@ var addTrackingImage = function (url) {
     return img;
 };
 
-var fetchBanner = function (banner, context) {
+var fetchBanner = function (banner, context, zone_options) {
     fetchURL(banner.serve_url, {
         binary: true,
         noCredentials: true
@@ -763,14 +758,13 @@ var fetchBanner = function (banner, context) {
             } else if (banner.type == 'direct') {
                 createLinkFromData(data, function(url) {
                     if(!validURL(url)) {
-                        //console.log('invalid direct link', url);
                         url = banner.serve_url;
-                    }
+                    };
                     addPop(banner.size,
                         url,
-                        $pick(context.zone.options.count, 1),
-                        $pick(context.zone.options.interval, 1),
-                        $pick(context.zone.options.burst, 1),
+                        $pick(zone_options.count, 1),
+                        $pick(zone_options.interval, 1),
+                        $pick(zone_options.burst, 1),
                         function () {
                             dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
                         }
@@ -780,6 +774,10 @@ var fetchBanner = function (banner, context) {
                 return;
             }
             caller(data, function (element) {
+                if(!banner.destElement) {
+                    console.log('warning: no element to replace');
+                    return;
+                }
                 element = prepareElement(context, banner, element);
                 replaceTag(banner.destElement, element);
                 sendViewEvent(element);
@@ -788,7 +786,7 @@ var fetchBanner = function (banner, context) {
 
         var displayIfVisible = function()
         {
-            if (banner.type == 'direct') {
+            if (banner.type == 'direct' || !banner.destElement) {
                 displayBanner();
             } else {
                 if (isVisible(banner.destElement)) {
