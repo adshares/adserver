@@ -225,7 +225,7 @@ class SupplyController extends Controller
         $eventId = Utils::createCaseIdContainingEventType($caseId, 'click');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         try {
-            $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+            $zoneId = Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
@@ -310,7 +310,7 @@ class SupplyController extends Controller
         $eventId = Utils::createCaseIdContainingEventType($caseId, 'view');
         $payTo = AdsUtils::normalizeAddress(config('app.adshares_address'));
         try {
-            $zoneId = Utils::getZoneFromContext($request->query->get('ctx'));
+            $zoneId = Utils::getZoneIdFromContext($request->query->get('ctx'));
         } catch (RuntimeException $exception) {
             throw new UnprocessableEntityHttpException($exception->getMessage(), $exception);
         }
@@ -344,15 +344,10 @@ class SupplyController extends Controller
     {
         if (!$request->query->has('r')
             || !$request->query->has('ctx')
-            || !$this->isUuidValid($request->query->get('cid'))
+            || !Utils::isUuidValid($request->query->get('cid'))
         ) {
             throw new BadRequestHttpException('Invalid parameters.');
         }
-    }
-
-    private function isUuidValid($uuid): bool
-    {
-        return is_string($uuid) && 1 === preg_match('/^[0-9a-f]{32}$/i', $uuid);
     }
 
     /**
@@ -451,7 +446,7 @@ class SupplyController extends Controller
 
     public function reportAd(string $caseId, string $bannerId): string
     {
-        if (!$this->isUuidValid($caseId) || !$this->isUuidValid($bannerId)) {
+        if (!Utils::isUuidValid($caseId) || !Utils::isUuidValid($bannerId)) {
             throw new UnprocessableEntityHttpException();
         }
 

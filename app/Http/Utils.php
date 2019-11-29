@@ -253,15 +253,21 @@ class Utils
         throw new RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
     }
 
-    public static function getZoneFromContext(string $zoneStr)
+    public static function getZoneIdFromContext(string $zoneStr): string
     {
         $context = self::decodeZones($zoneStr);
 
         if (!isset($context['page']['zone'])) {
-            throw new RuntimeException(sprintf('Could not found zone id.'));
+            throw new RuntimeException('Could not found zone id.');
         }
 
-        return $context['page']['zone'];
+        $zoneId = $context['page']['zone'];
+
+        if (!Utils::isUuidValid($zoneId)) {
+            throw new RuntimeException(sprintf('Invalid zone id format (%s)', $zoneId));
+        }
+
+        return $zoneId;
     }
 
     public static function mergeImpressionContextAndUserContext(
@@ -348,5 +354,10 @@ class Utils
         }
 
         return Utils::urlSafeBase64Encode($bytes);
+    }
+
+    public static function isUuidValid($uuid): bool
+    {
+        return is_string($uuid) && 1 === preg_match('/^[0-9a-f]{32}$/i', $uuid);
     }
 }
