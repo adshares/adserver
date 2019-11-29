@@ -258,7 +258,7 @@ class Utils
         $context = self::decodeZones($zoneStr);
 
         if (!isset($context['page']['zone'])) {
-            throw new RuntimeException('Could not found zone id.');
+            throw new RuntimeException('Missing zone id');
         }
 
         $zoneId = $context['page']['zone'];
