@@ -258,12 +258,12 @@ class GuzzleAdSelectClient implements AdSelect
             }
         }
 
-        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneIds));
+        $banners = iterator_to_array($this->fetchInOrderOfAppearance($bannerIds, $zoneCollection));
 
         return new FoundBanners($banners);
     }
 
-    private function fetchInOrderOfAppearance(array $params, array $zoneIds): Generator
+    private function fetchInOrderOfAppearance(array $params, Collection $zoneCollection): Generator
     {
         foreach ($params as $requestId => $bannerIds) {
             foreach ($bannerIds as $item) {
@@ -277,10 +277,12 @@ class GuzzleAdSelectClient implements AdSelect
 
                     yield null;
                 } else {
+                    $zone = $zoneCollection[$requestId];
                     $campaign = $banner->campaign;
                     yield [
                         'id'            => $bannerId,
-                        'zone_id'       => $zoneIds[$requestId],
+                        'publisher_id'  => $zone->site->user->uuid,
+                        'zone_id'       => $zone->uuid,
                         'pay_from'      => $campaign->source_address,
                         'pay_to'        => AdsUtils::normalizeAddress(config('app.adshares_address')),
                         'type'          => $banner->type,

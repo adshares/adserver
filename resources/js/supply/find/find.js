@@ -712,6 +712,27 @@ var addTrackingImage = function (url) {
     return img;
 };
 
+var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId)
+{
+    if(url.indexOf('{cid}') === -1) {
+        url = addUrlParam(url, 'cid', caseId);
+    } else {
+        url = url.replace('{cid}', caseId);
+    }
+
+    return url.replace('{bid}', bannerId)
+        .replace('{pid}', publisherId)
+        .replace('{aid}', serverId)
+        .replace('{sid}', siteId)
+        .replace('{zid}', zoneId);
+};
+var getDomain = function(url)
+{
+    var a = document.createElement('a');
+    a.href = url;
+    return a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
+}
+
 var fetchBanner = function (banner, context, zone_options) {
     fetchURL(banner.serve_url, {
         binary: true,
@@ -757,9 +778,10 @@ var fetchBanner = function (banner, context, zone_options) {
                 caller = createIframeFromData;
             } else if (banner.type == 'direct') {
                 createLinkFromData(data, function(url) {
-                    if(!validURL(url)) {
+                    if(url.length > 1024) {
                         url = banner.serve_url;
-                    };
+                    }
+                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
                     addPop(banner.size,
                         url,
                         $pick(zone_options.count, 1),
