@@ -49,8 +49,6 @@ class ConversionController extends Controller
 {
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
-    private const UUID_LENGTH = 32;
-
     /** @var CampaignRepository */
     private $campaignRepository;
 
@@ -464,9 +462,9 @@ class ConversionController extends Controller
 
     private function validateUuid(string $uuid): void
     {
-        if (self::UUID_LENGTH !== strlen($uuid)) {
+        if (!Utils::isUuidValid($uuid)) {
             throw new BadRequestHttpException(
-                sprintf('Invalid id: %s', $uuid)
+                sprintf('Invalid id (%s)', $uuid)
             );
         }
     }
