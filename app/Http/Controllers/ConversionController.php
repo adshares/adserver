@@ -247,13 +247,11 @@ class ConversionController extends Controller
 
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
-        $isAdvanced = $conversionDefinition->isAdvanced();
-
         $value = $this->getConversionValue($request, $conversionDefinition);
 
         $campaign = Campaign::find($conversionDefinition->campaign_id);
 
-        if ($isAdvanced) {
+        if ($conversionDefinition->isAdvanced()) {
             $secret = $campaign->secret;
 
             $this->validateConversionAdvanced($request, $secret, $uuid);
@@ -375,10 +373,6 @@ class ConversionController extends Controller
 
     private function getConversionValue(Request $request, ConversionDefinition $conversionDefinition): int
     {
-        if (!$conversionDefinition->isAdvanced()) {
-            return $conversionDefinition->value;
-        }
-
         if ($request->has('value')) {
             $value = is_numeric($request->input('value')) ? $request->input('value') * 10 ** 11 : null;
         } else {
