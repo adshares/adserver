@@ -373,7 +373,7 @@ class ConversionController extends Controller
 
     private function getConversionValue(Request $request, ConversionDefinition $conversionDefinition): int
     {
-        if ($request->has('value')) {
+        if ($conversionDefinition->is_value_mutable && $request->has('value')) {
             $value = is_numeric($request->input('value')) ? $request->input('value') * 10 ** 11 : null;
         } else {
             $value = $conversionDefinition->value;

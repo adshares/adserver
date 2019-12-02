@@ -47,6 +47,7 @@ use function route;
  * @property bool is_repeatable
  * @property int cost
  * @property int occurrences
+ * @property string link
  */
 class ConversionDefinition extends Model
 {
@@ -130,7 +131,7 @@ class ConversionDefinition extends Model
         return $this->hasMany(Conversion::class);
     }
 
-    public function getLinkAttribute()
+    public function getLinkAttribute(): string
     {
         $params = [
             'uuid' => $this->uuid,
@@ -193,6 +194,7 @@ class ConversionDefinition extends Model
                     return !$isValueMutable;
                 }),
             ],
+            'is_value_mutable' => 'required|boolean',
         ];
 
         if ($type === self::BASIC_TYPE) {
@@ -201,14 +203,9 @@ class ConversionDefinition extends Model
                 'required',
                 Rule::in(false, 0),
             ];
-            $rules['is_value_mutable'] = [
-                'required',
-                Rule::in(false, 0),
-            ];
         } elseif ($type === self::ADVANCED_TYPE) {
             $rules['limit_type'] = sprintf('required|in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
             $rules['is_repeatable'] = 'required|boolean';
-            $rules['is_value_mutable'] = 'required|boolean';
         }
 
         return $rules;
