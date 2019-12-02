@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Global postback
+### Removed
+- Conversion budget
 
 ## [1.4.3] - 2019-11-26
 ### Changed

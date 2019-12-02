@@ -44,7 +44,6 @@ use function route;
  * @property string type
  * @property int|null value
  * @property bool is_value_mutable
- * @property int|null limit
  * @property bool is_repeatable
  * @property int cost
  * @property int occurrences
@@ -76,7 +75,6 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'is_value_mutable',
-        'limit',
         'is_repeatable',
     ];
 
@@ -89,7 +87,6 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'is_value_mutable',
-        'limit',
         'is_repeatable',
         'link',
         'cost',
@@ -196,7 +193,6 @@ class ConversionDefinition extends Model
                     return !$isValueMutable;
                 }),
             ],
-            'limit' => 'integer|min:0|nullable',
         ];
 
         if ($type === self::BASIC_TYPE) {

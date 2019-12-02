@@ -34,8 +34,7 @@
             "limit_type": "out_of_budget",
             "event_type": "Purchase",
             "type": "advanced",
-            "value": "100000000000",
-            "limit": "10000000000000"
+            "value": "100000000000"
           }
         ]
       },

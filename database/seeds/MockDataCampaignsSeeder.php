@@ -78,7 +78,6 @@ class MockDataCampaignsSeeder extends Seeder
                         $conversion->event_type = $conversionData->event_type;
                         $conversion->type = $conversionData->type;
                         $conversion->value = $conversionData->value ?? null;
-                        $conversion->limit = $conversionData->limit ?? null;
                         $conversion->save();
                     }
                 }
