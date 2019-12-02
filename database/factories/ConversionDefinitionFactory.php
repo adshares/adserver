@@ -33,7 +33,6 @@ $factory->define(
                 'type' => ConversionDefinition::ADVANCED_TYPE,
                 'value' => null,
                 'is_value_mutable' => true,
-                'limit' => null,
                 'is_repeatable' => true,
         ];
     }
