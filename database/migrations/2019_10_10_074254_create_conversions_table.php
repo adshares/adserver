@@ -52,9 +52,6 @@ class CreateConversionsTable extends Migration
                 $table->binary('pay_to')->nullable();
 
                 $table->index('created_at');
-                $table->foreign('event_logs_id')->references('id')->on('event_logs')->onUpdate('RESTRICT')->onDelete(
-                    'CASCADE'
-                );
             }
         );
 
