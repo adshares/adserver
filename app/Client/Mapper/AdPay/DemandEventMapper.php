@@ -70,6 +70,7 @@ class DemandEventMapper
     {
         return [
             'case_id' => $event->case_id,
+            'case_time' => $event->created_at->getTimestamp(),
             'publisher_id' => $event->publisher_id,
             'zone_id' => $event->zone_id,
             'advertiser_id' => $event->advertiser_id,
