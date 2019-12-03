@@ -134,23 +134,21 @@ class MySqlStatsQueryBuilder extends MySqlQueryBuilder
 
     private function selectBaseStatsColumns(): void
     {
-        $filterEventValid = 'AND e.event_value_currency IS NOT NULL AND e.payment_status = 0';
+        $filterEventValid = 'e.event_value_currency IS NOT NULL AND e.payment_status = 0';
 
         $this->column(
             sprintf(
-                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1 %s, 1, 0)) AS clicks",
+                "SUM(IF(e.event_type = '%s' AND e.is_view_clicked = 1 AND %s, 1, 0)) AS clicks",
                 EventLog::TYPE_VIEW,
                 $filterEventValid
             )
         );
         $this->column(
-            sprintf("SUM(IF(e.event_type = '%s' %s, 1, 0)) AS views", EventLog::TYPE_VIEW, $filterEventValid)
+            sprintf("SUM(IF(e.event_type = '%s' AND %s, 1, 0)) AS views", EventLog::TYPE_VIEW, $filterEventValid)
         );
         $this->column(
             sprintf(
-                "SUM(IF(e.event_type IN ('%s', '%s') %s, e.event_value_currency, 0)) AS cost",
-                EventLog::TYPE_CLICK,
-                EventLog::TYPE_VIEW,
+                "SUM(IF(%s, e.event_value_currency, 0)) AS cost",
                 $filterEventValid
             )
         );
