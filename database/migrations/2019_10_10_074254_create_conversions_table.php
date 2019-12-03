@@ -34,7 +34,7 @@ class CreateConversionsTable extends Migration
                 $table->binary('uuid');
                 $table->timestamps();
 
-                $table->bigInteger('event_logs_id')->unsigned();
+                $table->bigInteger('event_logs_id')->unsigned()->index();
                 $table->binary('case_id');
                 $table->binary('group_id');
                 $table->bigInteger('conversion_definition_id')->unsigned();
@@ -52,9 +52,6 @@ class CreateConversionsTable extends Migration
                 $table->binary('pay_to')->nullable();
 
                 $table->index('created_at');
-                $table->foreign('event_logs_id')->references('id')->on('event_logs')->onUpdate('RESTRICT')->onDelete(
-                    'CASCADE'
-                );
             }
         );
 

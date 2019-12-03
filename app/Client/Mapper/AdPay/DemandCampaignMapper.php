@@ -80,9 +80,7 @@ class DemandCampaignMapper
                     [
                         'uuid',
                         'limit_type',
-                        'limit',
                         'is_repeatable',
-                        'cost',
                     ]
                 );
             }

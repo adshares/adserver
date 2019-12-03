@@ -18,22 +18,29 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Adshares\Adserver\Models\ConversionDefinition;
-use Faker\Generator as Faker;
-
-$factory->define(
-    ConversionDefinition::class,
-    function (Faker $faker) {
-        return [
-                'name' => $faker->word,
-                'limit_type' => 'in_budget',
-                'event_type' => 'Add to cart',
-                'type' => ConversionDefinition::ADVANCED_TYPE,
-                'value' => null,
-                'is_value_mutable' => true,
-                'is_repeatable' => true,
-        ];
+class DropLimitFromConversionDefinition extends Migration
+{
+    public function up(): void
+    {
+        Schema::table(
+            'conversion_definitions',
+            function (Blueprint $table) {
+                $table->dropColumn('limit');
+            }
+        );
     }
-);
+
+    public function down(): void
+    {
+        Schema::table(
+            'conversion_definitions',
+            function (Blueprint $table) {
+                $table->bigInteger('limit')->nullable()->after('is_value_mutable');
+            }
+        );
+    }
+}
