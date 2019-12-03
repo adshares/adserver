@@ -34,7 +34,7 @@ class CreateConversionsTable extends Migration
                 $table->binary('uuid');
                 $table->timestamps();
 
-                $table->bigInteger('event_logs_id')->unsigned();
+                $table->bigInteger('event_logs_id')->unsigned()->index();
                 $table->binary('case_id');
                 $table->binary('group_id');
                 $table->bigInteger('conversion_definition_id')->unsigned();
