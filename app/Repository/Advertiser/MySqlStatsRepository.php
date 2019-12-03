@@ -47,6 +47,74 @@ WHERE created_at BETWEEN ? AND ?
 LIMIT 1;
 SQL;
 
+    private const DELETE_FROM_EVENT_LOGS_HOURLY_WHERE_HOUR_TIMESTAMP = <<<SQL
+DELETE FROM event_logs_hourly WHERE hour_timestamp = ?;
+SQL;
+    
+    private const INSERT_EVENT_LOGS_HOURLY_GROUPED = <<<SQL
+INSERT INTO event_logs_hourly (`advertiser_id`, `campaign_id`, `banner_id`, `domain`, `clicks`, `views`, `cost`,
+                               `clicks_all`, `views_all`, `views_unique`, `hour_timestamp`)
+SELECT s.advertiser_id                                            AS advertiser_id,
+       s.campaign_id                                              AS campaign_id,
+       s.banner_id                                                AS banner_id,
+       s.domain                                                   AS domain,
+       SUM(s.clicks)                                              AS clicks,
+       SUM(s.views)                                               AS views,
+       SUM(s.cost)                                                AS cost,
+       SUM(s.is_click)                                            AS clicksAll,
+       SUM(s.is_view)                                             AS viewsAll,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
+       ?                                      AS start_date
+FROM (
+         SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
+                   e.payment_status = 0, 1, 0)                                                            AS clicks,
+                IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.payment_status = 0, 1,
+                   0)                                                                                     AS views,
+                IF(e.event_value_currency IS NOT NULL AND e.payment_status = 0, e.event_value_currency, 0) +
+                IFNULL((SELECT SUM(event_value_currency) FROM conversions WHERE event_logs_id = e.id), 0) AS cost,
+                IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
+                IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
+                IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
+                IFNULL(e.domain, '')                                                                      AS domain,
+                e.banner_id                                                                               AS banner_id,
+                e.campaign_id                                                                             AS campaign_id,
+                e.advertiser_id                                                                           AS advertiser_id
+         FROM event_logs e
+         WHERE e.created_at BETWEEN ? AND ?
+     ) s
+GROUP BY 1, 2, 3, 4;
+SQL;
+
+    private const INSERT_EVENT_LOGS_HOURLY_UNGROUPED = <<<SQL
+INSERT INTO event_logs_hourly (`campaign_id`, `advertiser_id`, `clicks`, `views`, `cost`, `clicks_all`, `views_all`,
+                               `views_unique`, `hour_timestamp`)
+SELECT s.advertiser_id                                            AS advertiser_id,
+       s.campaign_id                                              AS campaign_id,
+       SUM(s.clicks)                                              AS clicks,
+       SUM(s.views)                                               AS views,
+       SUM(s.cost)                                                AS cost,
+       SUM(s.is_click)                                            AS clicksAll,
+       SUM(s.is_view)                                             AS viewsAll,
+       COUNT(DISTINCT (CASE WHEN s.views = 1 THEN s.user_id END)) AS viewsUnique,
+       ?                                      AS start_date
+FROM (
+         SELECT IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.event_value_currency IS NOT NULL AND
+                   e.payment_status = 0, 1, 0)                                                            AS clicks,
+                IF(e.event_type = 'view' AND e.event_value_currency IS NOT NULL AND e.payment_status = 0, 1,
+                   0)                                                                                     AS views,
+                IF(e.event_value_currency IS NOT NULL AND e.payment_status = 0, e.event_value_currency, 0) +
+                IFNULL((SELECT SUM(event_value_currency) FROM conversions WHERE event_logs_id = e.id), 0) AS cost,
+                IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
+                IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
+                IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
+                e.campaign_id                                                                             AS campaign_id,
+                e.advertiser_id                                                                           AS advertiser_id
+         FROM event_logs e
+         WHERE e.created_at BETWEEN ? AND ?
+     ) s
+GROUP BY 1, 2;
+SQL;
+
     public function fetchView(
         string $advertiserId,
         string $resolution,
@@ -532,46 +600,22 @@ SQL;
             );
         }
 
-        $cacheTable = 'event_logs_hourly';
-
-        $deleteQuery = sprintf(
-            "DELETE FROM %s WHERE hour_timestamp='%s'",
-            $cacheTable,
-            MySqlQueryBuilder::convertDateTimeToMySqlDate($dateStart)
-        );
-
-        $groupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
-            ->setDateRange($dateStart, $dateEnd)
-            ->appendDomainGroupBy()
-            ->appendCampaignIdGroupBy()
-            ->appendBannerIdGroupBy()
-            ->appendAdvertiserIdGroupBy()
-            ->selectDateStartColumn($dateStart)
-            ->build();
-        $groupedQuery =
-            'INSERT INTO '
-            .$cacheTable
-            .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
-            .'`domain`,`campaign_id`,`banner_id`,`advertiser_id`,`hour_timestamp`)'
-            .$groupedSubQuery;
-
-        $notGroupedSubQuery = (new MySqlStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
-            ->setDateRange($dateStart, $dateEnd)
-            ->appendCampaignIdGroupBy()
-            ->appendAdvertiserIdGroupBy()
-            ->selectDateStartColumn($dateStart)
-            ->build();
-        $notGroupedQuery =
-            'INSERT INTO '
-            .$cacheTable
-            .' (`clicks`,`views`,`cost`,`clicks_all`,`views_all`,`views_unique`,'
-            .'`campaign_id`,`advertiser_id`,`hour_timestamp`)'
-            .$notGroupedSubQuery;
-
         DB::beginTransaction();
-        $this->executeQuery($deleteQuery, $dateStart);
-        $this->executeQuery($groupedQuery, $dateStart);
-        $this->executeQuery($notGroupedQuery, $dateStart);
+        $this->executeQuery(
+            self::DELETE_FROM_EVENT_LOGS_HOURLY_WHERE_HOUR_TIMESTAMP,
+            $dateStart,
+            [$dateStart]
+        );
+        $this->executeQuery(
+            self::INSERT_EVENT_LOGS_HOURLY_GROUPED,
+            $dateStart,
+            [$dateStart, $dateStart, $dateEnd]
+        );
+        $this->executeQuery(
+            self::INSERT_EVENT_LOGS_HOURLY_UNGROUPED,
+            $dateStart,
+            [$dateStart, $dateStart, $dateEnd]
+        );
         DB::commit();
     }
 
@@ -602,9 +646,7 @@ SQL;
         $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
 
-        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
-
-        return $result;
+        return $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
     }
 
     private function executeQuery(string $query, DateTime $dateStart, array $bindings = []): array
