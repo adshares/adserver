@@ -35,7 +35,14 @@ use function hex2bin;
  * @mixin Builder
  * @property int id
  * @property string account_address
+ * @property string|null account_hashin
+ * @property string|null account_hashout
+ * @property string|null account_msid
+ * @property string|null tx_data
+ * @property string|null tx_id
+ * @property int|null tx_time
  * @property int fee
+ * @property string state
  * @property Collection|EventLog[] events
  */
 class Payment extends Model

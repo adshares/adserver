@@ -96,7 +96,7 @@ final class AdsUtils
         return intval(max($fee, self::TXS_MIN_FEE));
     }
 
-    public static function encodeTxId($hexTxId)
+    public static function encodeTxId($hexTxId): string
     {
         $hexTxId = strtoupper($hexTxId);
 
