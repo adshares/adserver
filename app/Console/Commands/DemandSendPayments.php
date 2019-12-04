@@ -47,7 +47,7 @@ class DemandSendPayments extends BaseCommand
         $allPayments = Payment::fetchByStatus(Payment::STATE_NEW, false);
         /** @var $zeroPayments Collection */
         /** @var $payments Collection */
-        [$zeroPayments, $payments] = $allPayments->partition(function(Payment $payment) {
+        [$zeroPayments, $payments] = $allPayments->partition(function (Payment $payment) {
             return $payment->fee === 0;
         });
         $zeroPayments->each(function (Payment $payment) {
