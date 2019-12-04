@@ -82,7 +82,13 @@ FROM (
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
      ) s
-GROUP BY 1, 2, 3, 4;
+GROUP BY 1, 2, 3, 4
+HAVING clicks > 0
+    OR views > 0
+    OR cost > 0
+    OR clicksAll > 0
+    OR viewsAll > 0
+    OR viewsUnique > 0;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_UNGROUPED = <<<SQL
@@ -112,7 +118,13 @@ FROM (
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
      ) s
-GROUP BY 1, 2;
+GROUP BY 1, 2
+HAVING clicks > 0
+    OR views > 0
+    OR cost > 0
+    OR clicksAll > 0
+    OR viewsAll > 0
+    OR viewsUnique > 0;
 SQL;
 
     public function fetchView(
