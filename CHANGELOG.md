@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Global postback
+### Fixed
+- Zero transfers between adservers
 ### Removed
 - Conversion budget
 
@@ -32,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pops ad units support
 - Site domain support
 ### Changed
-- Transform width and hight into size 
+- Transform width and height into size 
 - Default page rank to 0
 
 ## [1.3.3] - 2019-11-15
