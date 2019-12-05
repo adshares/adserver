@@ -44,10 +44,10 @@ use function route;
  * @property string type
  * @property int|null value
  * @property bool is_value_mutable
- * @property int|null limit
  * @property bool is_repeatable
  * @property int cost
  * @property int occurrences
+ * @property string link
  */
 class ConversionDefinition extends Model
 {
@@ -76,7 +76,6 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'is_value_mutable',
-        'limit',
         'is_repeatable',
     ];
 
@@ -89,7 +88,6 @@ class ConversionDefinition extends Model
         'type',
         'value',
         'is_value_mutable',
-        'limit',
         'is_repeatable',
         'link',
         'cost',
@@ -133,7 +131,7 @@ class ConversionDefinition extends Model
         return $this->hasMany(Conversion::class);
     }
 
-    public function getLinkAttribute()
+    public function getLinkAttribute(): string
     {
         $params = [
             'uuid' => $this->uuid,
@@ -196,7 +194,7 @@ class ConversionDefinition extends Model
                     return !$isValueMutable;
                 }),
             ],
-            'limit' => 'integer|min:0|nullable',
+            'is_value_mutable' => 'required|boolean',
         ];
 
         if ($type === self::BASIC_TYPE) {
@@ -205,14 +203,9 @@ class ConversionDefinition extends Model
                 'required',
                 Rule::in(false, 0),
             ];
-            $rules['is_value_mutable'] = [
-                'required',
-                Rule::in(false, 0),
-            ];
         } elseif ($type === self::ADVANCED_TYPE) {
             $rules['limit_type'] = sprintf('required|in:%s,%s', self::IN_BUDGET, self::OUT_OF_BUDGET);
             $rules['is_repeatable'] = 'required|boolean';
-            $rules['is_value_mutable'] = 'required|boolean';
         }
 
         return $rules;

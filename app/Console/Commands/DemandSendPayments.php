@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
+use Illuminate\Database\Eloquent\Collection;
 
 class DemandSendPayments extends BaseCommand
 {
@@ -43,7 +44,16 @@ class DemandSendPayments extends BaseCommand
 
         $this->info('Start command '.self::COMMAND_SIGNATURE);
 
-        $payments = Payment::fetchByStatus(Payment::STATE_NEW, false);
+        $allPayments = Payment::fetchByStatus(Payment::STATE_NEW, false);
+        /** @var $zeroPayments Collection */
+        /** @var $payments Collection */
+        [$zeroPayments, $payments] = $allPayments->partition(function (Payment $payment) {
+            return $payment->fee === 0;
+        });
+        $zeroPayments->each(function (Payment $payment) {
+            $payment->state = Payment::STATE_SENT;
+            $payment->save();
+        });
 
         $paymentCount = count($payments);
         $this->info("Found $paymentCount sendable payments.");
@@ -59,12 +69,16 @@ class DemandSendPayments extends BaseCommand
         try {
             $tx = $ads->sendPayments($payments);
         } catch (AdsException $exception) {
-            if ($exception->getCode() === AdsException::LOW_LEVEL_BALANCE) {
-                $this->error('[DemandSendPayments] Insufficient funds on Operator Account.');
-                $this->release();
+            $this->error(
+                sprintf(
+                    '[DemandSendPayments] AdsException (%d) (%s)',
+                    $exception->getCode(),
+                    $exception->getMessage()
+                )
+            );
+            $this->release();
 
-                return;
-            }
+            return;
         }
 
         $payments->each(function (Payment $payment) use ($tx) {

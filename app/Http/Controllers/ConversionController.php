@@ -49,8 +49,6 @@ class ConversionController extends Controller
 {
     private const ONE_PIXEL_GIF_DATA = 'R0lGODlhAQABAIABAP///wAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 
-    private const UUID_LENGTH = 32;
-
     /** @var CampaignRepository */
     private $campaignRepository;
 
@@ -247,13 +245,11 @@ class ConversionController extends Controller
 
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
-        $isAdvanced = $conversionDefinition->isAdvanced();
-
         $value = $this->getConversionValue($request, $conversionDefinition);
 
         $campaign = Campaign::find($conversionDefinition->campaign_id);
 
-        if ($isAdvanced) {
+        if ($conversionDefinition->isAdvanced()) {
             $secret = $campaign->secret;
 
             $this->validateConversionAdvanced($request, $secret, $uuid);
@@ -375,11 +371,7 @@ class ConversionController extends Controller
 
     private function getConversionValue(Request $request, ConversionDefinition $conversionDefinition): int
     {
-        if (!$conversionDefinition->isAdvanced()) {
-            return $conversionDefinition->value;
-        }
-
-        if ($request->has('value')) {
+        if ($conversionDefinition->is_value_mutable && $request->has('value')) {
             $value = is_numeric($request->input('value')) ? $request->input('value') * 10 ** 11 : null;
         } else {
             $value = $conversionDefinition->value;
@@ -470,9 +462,9 @@ class ConversionController extends Controller
 
     private function validateUuid(string $uuid): void
     {
-        if (self::UUID_LENGTH !== strlen($uuid)) {
+        if (!Utils::isUuidValid($uuid)) {
             throw new BadRequestHttpException(
-                sprintf('Invalid id: %s', $uuid)
+                sprintf('Invalid id (%s)', $uuid)
             );
         }
     }

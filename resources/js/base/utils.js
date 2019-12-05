@@ -1,4 +1,3 @@
-
 var UrlSafeBase64Encode = function (data) {
     return btoa(window.unescape(window.encodeURIComponent(data))).replace(/=|\+|\//g, function (x) {
         return x == '+' ? '-' : (x == '/' ? '_' : '')
@@ -25,3 +24,10 @@ var addUrlParam = function (url, names, value) {
 };
 
 
+var $isset = function (value) {
+    return value !== null && value !== undefined;
+};
+
+var $pick = function (value, ifnull) {
+    return $isset(value) ? value : ifnull;
+};

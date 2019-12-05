@@ -159,13 +159,9 @@ class AdPayPaymentReportProcessor
 
         $campaignBudget = $this->advertisers[$advertiserPublicId]['campaigns'][$campaignPublicId]['budgetLeft'];
         $wallet = $this->advertisers[$advertiserPublicId]['walletLeft'];
-        $conversionLimit = $this->conversionDefinitions[$definitionId]['limitLeft'];
         $conversionIsInCampaignBudget = $this->conversionDefinitions[$definitionId]['isInCampaignBudget'];
 
         $maxAvailableValue = $conversionIsInCampaignBudget ? (int)min($wallet, $campaignBudget) : $wallet;
-        if (null !== $conversionLimit) {
-            $maxAvailableValue = (int)min($maxAvailableValue, $conversionLimit);
-        }
         $value = $calculation['value'];
 
         if ($value > $maxAvailableValue) {
@@ -178,9 +174,6 @@ class AdPayPaymentReportProcessor
         }
 
         $this->advertisers[$advertiserPublicId]['walletLeft'] = $wallet - $value;
-        if (null !== $conversionLimit) {
-            $this->conversionDefinitions[$definitionId]['limitLeft'] = $conversionLimit - $value;
-        }
 
         $this->conversionDefinitions[$definitionId]['cost'] += $value;
         $this->conversionDefinitions[$definitionId]['occurrences']++;
@@ -244,7 +237,6 @@ class AdPayPaymentReportProcessor
             $cost = $definition->cost;
 
             $this->conversionDefinitions[$definitionId] = [
-                'limitLeft' => null !== $definition->limit ? $definition->limit - $cost : null,
                 'isInCampaignBudget' => $definition->isInCampaignBudget(),
                 'cost' => $cost,
                 'occurrences' => $definition->occurrences,

@@ -48,3 +48,11 @@ var addListener = function (element, event, handler, phase) {
         return element.attachEvent('on' + event, handler);
     }
 };
+
+var removeListener = function (element, event, handler, phase) {
+    if (element.removeEventListener) {
+        return element.removeEventListener(event, handler, phase);
+    } else {
+        return element.detachEvent('on' + event, handler);
+    }
+};
