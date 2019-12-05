@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Invalid size in internal classifier
 
+## [1.4.3] - 2019-11-26
+### Changed
+- PHPUnit tests use MySQL database
+### Fixed
+- Invalid size in internal classifier
+
 ## [1.4.2] - 2019-11-22
 ### Fixed
 - Incorrect find.js context
