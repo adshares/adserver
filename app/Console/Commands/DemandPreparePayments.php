@@ -25,10 +25,13 @@ use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\EventLog;
+use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -65,6 +68,8 @@ class DemandPreparePayments extends BaseCommand
         $from = $this->getDateTimeFromOption('from') ?: new DateTime('-24 hour');
         $to = $this->getDateTimeFromOption('to');
         if ($from !== null && $to !== null && $to < $from) {
+            $this->release();
+
             throw new InvalidArgumentException(
                 sprintf(
                     '[DemandPreparePayments] Invalid period from (%s) to (%s)',
@@ -83,29 +88,31 @@ class DemandPreparePayments extends BaseCommand
         $this->info("Found $conversionCount payable conversions.");
         if ($conversionCount > 0) {
             $totalLicenseFee = 0;
+            $eventLogIds = [];
             $groupedConversions = $this->processAndGroupConversionsByRecipient(
                 $conversions,
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
-                $totalLicenseFee
+                $totalLicenseFee,
+                $eventLogIds
             );
 
             $this->info(sprintf('In that, there are %d recipients,', count($groupedConversions)));
 
             DB::beginTransaction();
 
+            foreach (EventLog::fetchCreationHourTimestampByIds($eventLogIds) as $timestamp) {
+                EventLogsHourlyMeta::invalidate($timestamp);
+            }
+
             $groupedConversions->each(
                 static function (Collection $paymentGroup, string $payTo) {
-                    $paymentData = [
-                        'events' => $paymentGroup,
+                    $payment = new Payment([
                         'account_address' => $payTo,
                         'state' => Payment::STATE_NEW,
                         'completed' => 0,
                         'fee' => $paymentGroup->sum('paid_amount'),
-                    ];
-
-                    $payment = new Payment();
-                    $payment->fill($paymentData);
+                    ]);
                     $payment->push();
                     $payment->conversions()->saveMany($paymentGroup);
                 }
@@ -132,9 +139,7 @@ class DemandPreparePayments extends BaseCommand
             $this->info("Found $eventCount payable events.");
 
             if (!$eventCount) {
-                $this->release();
-
-                return;
+                break;
             }
 
             $totalLicenseFee = 0;
@@ -149,22 +154,16 @@ class DemandPreparePayments extends BaseCommand
 
             DB::beginTransaction();
 
-            $groupedEvents->map(
+            $groupedEvents->each(
                 static function (Collection $paymentGroup, string $payTo) {
-                    $paymentData = [
-                        'events' => $paymentGroup,
+                    $payment = new Payment([
                         'account_address' => $payTo,
                         'state' => Payment::STATE_NEW,
                         'completed' => 0,
                         'fee' => $paymentGroup->sum('paid_amount'),
-                    ];
-
-                    $payment = new Payment();
-                    $payment->fill($paymentData);
+                    ]);
                     $payment->push();
                     $payment->events()->saveMany($paymentGroup);
-
-                    return $payment;
                 }
             );
 
@@ -182,6 +181,9 @@ class DemandPreparePayments extends BaseCommand
             $this->info("and a license fee of {$licensePayment->fee} clicks"
                 ." payable to {$licensePayment->account_address}.");
         }
+
+        $this->invalidateStatisticsForPreparedEvents($from, $to);
+        $this->release();
     }
 
     private function processAndGroupEventsByRecipient(
@@ -213,14 +215,18 @@ class DemandPreparePayments extends BaseCommand
         \Illuminate\Database\Eloquent\Collection $events,
         float $demandLicenseFeeCoefficient,
         float $demandOperatorFeeCoefficient,
-        int &$totalLicenseFee
+        int &$totalLicenseFee,
+        array &$eventLogIds
     ): Collection {
         return $events->each(
             static function (Conversion $entry) use (
                 $demandLicenseFeeCoefficient,
                 $demandOperatorFeeCoefficient,
-                &$totalLicenseFee
+                &$totalLicenseFee,
+                &$eventLogIds
             ) {
+                $eventLogIds[] = $entry->event_logs_id;
+
                 $licenseFee = (int)floor($entry->event_value * $demandLicenseFeeCoefficient);
                 $entry->license_fee = $licenseFee;
                 $totalLicenseFee += $licenseFee;
@@ -249,5 +255,16 @@ class DemandPreparePayments extends BaseCommand
         }
 
         return new DateTime('@'.$timestamp);
+    }
+
+    private function invalidateStatisticsForPreparedEvents(DateTimeInterface $from, ?DateTimeInterface $to):void
+    {
+        $timestamp = DateUtils::roundTimestampToHour($from->getTimestamp());
+        $toTimestamp = null !== $to ? $to->getTimestamp() : time();
+
+        while ($timestamp < $toTimestamp) {
+            EventLogsHourlyMeta::invalidate($timestamp);
+            $timestamp += DateUtils::HOUR;
+        }
     }
 }

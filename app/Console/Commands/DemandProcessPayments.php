@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
@@ -117,26 +118,20 @@ class DemandProcessPayments extends BaseCommand
 
                     continue;
                 }
-                $report->setSent();
-            }
-
-            if ($report->isSent()) {
-                $hour = (new DateTime('@'.$timestamp))->format(DateTime::ATOM);
-                try {
-                    Artisan::call(
-                        AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE,
-                        ['--hour' => $hour],
-                        $this->getOutput()
-                    );
-                } catch (LogicException $logicException) {
-                    $this->warn(
-                        sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
-                    );
-
-                    continue;
-                }
                 $report->setDone();
             }
+        }
+
+        try {
+            Artisan::call(
+                AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE,
+                [],
+                $this->getOutput()
+            );
+        } catch (LogicException $logicException) {
+            $this->warn(
+                sprintf('Command %s is locked', AggregateStatisticsAdvertiserCommand::COMMAND_SIGNATURE)
+            );
         }
 
         $this->info('End command '.$this->getName());

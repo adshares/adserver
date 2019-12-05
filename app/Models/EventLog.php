@@ -30,7 +30,6 @@ use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -204,14 +203,6 @@ SQL;
         return $result;
     }
 
-    public static function fetchEvents(Arrayable $paymentIds, int $limit, int $offset): Collection
-    {
-        return self::whereIn('payment_id', $paymentIds)
-            ->limit($limit)
-            ->offset($offset)
-            ->get();
-    }
-
     public static function create(
         string $caseId,
         string $eventId,
@@ -347,6 +338,15 @@ SQL;
         return self::whereIn('event_id', $binEventIds)->get();
     }
 
+    public static function fetchCreationHourTimestampByIds(array $ids): array
+    {
+        return self::select(DB::raw('DISTINCT FLOOR(UNIX_TIMESTAMP(created_at)/3600)*3600 AS ts'))
+            ->whereIn('id', $ids)
+            ->get()
+            ->pluck('ts')
+            ->all();
+    }
+
     public static function fetchLastByTrackingId(string $campaignPublicId, string $trackingId): ?self
     {
         return self::where('campaign_id', hex2bin($campaignPublicId))
@@ -379,21 +379,6 @@ SQL;
         $this->human_score = $userContext->humanScore();
         $this->page_rank = $userContext->pageRank();
         $this->our_userdata = $userContext->keywords();
-    }
-
-    public function setStatus(int $status): void
-    {
-        $this->payment_status = $status;
-        $this->save();
-    }
-
-    public function setValueAndStatus(int $valueCurrency, float $exchangeRateValue, int $value, int $status): void
-    {
-        $this->event_value_currency = $valueCurrency;
-        $this->exchange_rate = $exchangeRateValue;
-        $this->event_value = $value;
-        $this->payment_status = $status;
-        $this->save();
     }
 
     public function conversions(): HasMany
