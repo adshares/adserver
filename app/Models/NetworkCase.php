@@ -158,7 +158,6 @@ SQL;
 
     public static function fetchCasesToExport(
         int $idFrom,
-        int $impressionIdMax,
         int $limit,
         int $offset
     ): Collection {
@@ -166,6 +165,7 @@ SQL;
             [
                 'network_cases.id AS id',
                 'network_cases.created_at AS created_at',
+                'network_impression_id',
                 'publisher_id',
                 'site_id',
                 'zone_id',
@@ -186,7 +186,6 @@ SQL;
                 'network_impressions.id'
             )
             ->where('network_cases.id', '>=', $idFrom)
-            ->where('network_impressions.id', '<=', $impressionIdMax)
             ->take($limit)
             ->skip($offset)
             ->get();

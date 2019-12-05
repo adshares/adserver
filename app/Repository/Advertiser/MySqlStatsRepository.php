@@ -92,7 +92,7 @@ HAVING clicks > 0
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_UNGROUPED = <<<SQL
-INSERT INTO event_logs_hourly (`campaign_id`, `advertiser_id`, `clicks`, `views`, `cost`, `clicks_all`, `views_all`,
+INSERT INTO event_logs_hourly (`advertiser_id`, `campaign_id`, `clicks`, `views`, `cost`, `clicks_all`, `views_all`,
                                `views_unique`, `hour_timestamp`)
 SELECT s.advertiser_id                                            AS advertiser_id,
        s.campaign_id                                              AS campaign_id,

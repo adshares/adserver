@@ -75,11 +75,10 @@ class NetworkImpressionUpdater
         }
 
         $updated = 0;
-        $offset = 0;
 
         do {
             $impressions =
-                NetworkImpression::whereBetween('id', [$idFrom, $idTo])->take(self::PACKAGE_SIZE)->skip($offset)->get();
+                NetworkImpression::whereBetween('id', [$idFrom, $idTo])->take(self::PACKAGE_SIZE)->get();
             $n = count($impressions);
 
             foreach ($impressions as $impression) {
@@ -100,8 +99,12 @@ class NetworkImpressionUpdater
                 }
             }
 
-            $offset += self::PACKAGE_SIZE;
-            $this->setLastUpdatedId($idTo);
+            if($n > 0) {
+                $idFrom = $impressions->last()->id;
+                $this->setLastUpdatedId($idFrom);
+                $idFrom++;
+
+            }
         } while (count($impressions) === self::PACKAGE_SIZE);
 
         return $updated;
