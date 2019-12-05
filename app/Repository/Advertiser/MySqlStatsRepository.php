@@ -77,8 +77,8 @@ FROM (
                 IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
                 IFNULL(e.domain, '')                                                                      AS domain,
                 e.banner_id                                                                               AS banner_id,
-                e.campaign_id                                                                             AS campaign_id,
-                e.advertiser_id                                                                           AS advertiser_id
+                e.campaign_id                                                                           AS campaign_id,
+                e.advertiser_id                                                                         AS advertiser_id
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
      ) s
@@ -113,8 +113,8 @@ FROM (
                 IF(e.event_type = 'view' AND e.is_view_clicked = 1, 1, 0)                                 AS is_click,
                 IF(e.event_type = 'view', 1, 0)                                                           AS is_view,
                 IFNULL(e.user_id, e.tracking_id)                                                          AS user_id,
-                e.campaign_id                                                                             AS campaign_id,
-                e.advertiser_id                                                                           AS advertiser_id
+                e.campaign_id                                                                           AS campaign_id,
+                e.advertiser_id                                                                         AS advertiser_id
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
      ) s
