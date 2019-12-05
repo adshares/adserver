@@ -730,7 +730,9 @@ var getDomain = function(url)
 {
     var a = document.createElement('a');
     a.href = url;
-    return a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
+    var host = a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
+    var colonPos = host.indexOf(':');
+    return colonPos == -1 ? host : host.substr(0, colonPos);
 }
 
 var fetchBanner = function (banner, context, zone_options) {
