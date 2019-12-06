@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use function hex2bin;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection as SupportCollection;
 use stdClass;
 
 /**
@@ -379,6 +380,15 @@ SQL;
         $this->human_score = $userContext->humanScore();
         $this->page_rank = $userContext->pageRank();
         $this->our_userdata = $userContext->keywords();
+    }
+
+    public static function updatePaymentIdByIds(int $paymentId, SupportCollection $ids): int
+    {
+        return self::whereIn('id', $ids)
+            ->update([
+                'payment_id' => $paymentId,
+                'updated_at' => new DateTime(),
+            ]);
     }
 
     public function conversions(): HasMany
