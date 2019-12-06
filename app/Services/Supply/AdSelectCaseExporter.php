@@ -29,6 +29,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Illuminate\Support\Collection;
 use function count;
 
 class AdSelectCaseExporter
@@ -66,7 +67,16 @@ class AdSelectCaseExporter
         $totalEstimate = $maxId - $caseIdFrom + 1;
 
         do {
-            $cases = NetworkCase::fetchCasesToExport($caseIdFrom, $impressionIdMax, self::PACKAGE_SIZE, 0);
+            $caseCandidates = NetworkCase::fetchCasesToExport($caseIdFrom, self::PACKAGE_SIZE, 0);
+            $cases = new Collection();
+            foreach($caseCandidates as $case) {
+                if($case->network_impression_id < $impressionIdMax) {
+                    $cases->push($case);
+                } else {
+                    break;
+                }
+            }
+
             $this->adSelectClient->exportCases($cases);
             $exported += count($cases);
 
