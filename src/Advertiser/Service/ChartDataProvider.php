@@ -39,6 +39,7 @@ final class ChartDataProvider
         StatsRepository::TYPE_CPC => 'fetchCpc',
         StatsRepository::TYPE_CPM => 'fetchCpm',
         StatsRepository::TYPE_SUM => 'fetchSum',
+        StatsRepository::TYPE_SUM_BY_PAYMENT => 'fetchSumPayment',
         StatsRepository::TYPE_CTR => 'fetchCtr',
     ];
 

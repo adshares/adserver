@@ -39,6 +39,7 @@ interface StatsRepository
     public const TYPE_CPC = 'cpc';
     public const TYPE_CPM = 'cpm';
     public const TYPE_SUM = 'sum';
+    public const TYPE_SUM_BY_PAYMENT = 'sumPayment';
     public const TYPE_CTR = 'ctr';
     public const TYPE_STATS = 'stats';
     public const TYPE_STATS_REPORT = 'statsReport';
@@ -123,6 +124,14 @@ interface StatsRepository
     ): ChartResult;
 
     public function fetchSum(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult;
+
+    public function fetchSumPayment(
         string $advertiserId,
         string $resolution,
         DateTime $dateStart,

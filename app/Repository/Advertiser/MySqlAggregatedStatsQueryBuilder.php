@@ -39,6 +39,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_CLICK,
         StatsRepository::TYPE_CLICK_ALL,
         StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_SUM_BY_PAYMENT,
         StatsRepository::TYPE_STATS,
         StatsRepository::TYPE_STATS_REPORT,
     ];
@@ -81,6 +82,9 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_SUM:
                 $this->column('SUM(e.cost) AS c');
+                break;
+            case StatsRepository::TYPE_SUM_BY_PAYMENT:
+                $this->column('SUM(e.cost_payment) AS c');
                 break;
             case StatsRepository::TYPE_STATS:
                 $this->selectBaseStatsColumns();

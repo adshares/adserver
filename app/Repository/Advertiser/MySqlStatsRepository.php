@@ -481,6 +481,25 @@ SQL;
         return new ChartResult($result);
     }
 
+    public function fetchSumPayment(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        $result = $this->fetch(
+            StatsRepository::TYPE_SUM_BY_PAYMENT,
+            $advertiserId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $campaignId
+        );
+
+        return new ChartResult($result);
+    }
+
     public function fetchCtr(
         string $advertiserId,
         string $resolution,
