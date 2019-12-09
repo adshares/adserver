@@ -84,7 +84,7 @@ FROM (
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
 
-         UNION
+         UNION ALL
 
          SELECT 0                               AS clicks,
                 0                               AS views,
@@ -104,7 +104,7 @@ FROM (
              WHERE created_at BETWEEN ? AND ?
          )
 
-         UNION
+         UNION ALL
 
          SELECT 0                                 AS clicks,
                 0                                 AS views,
@@ -164,7 +164,7 @@ FROM (
          FROM event_logs e
          WHERE e.created_at BETWEEN ? AND ?
 
-         UNION
+         UNION ALL
 
          SELECT 0                               AS clicks,
                 0                               AS views,
@@ -182,7 +182,7 @@ FROM (
              WHERE created_at BETWEEN ? AND ?
          )
 
-         UNION
+         UNION ALL
 
          SELECT 0                                 AS clicks,
                 0                                 AS views,
