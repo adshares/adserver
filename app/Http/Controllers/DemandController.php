@@ -65,7 +65,7 @@ class DemandController extends Controller
 
     private const SQL_QUERY_SELECT_EVENTS_FOR_PAYMENT_DETAILS_TEMPLATE = <<<SQL
 SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM conversions WHERE payment_id IN (%s)
-UNION
+UNION ALL
 SELECT LOWER(HEX(case_id)) AS case_id, paid_amount AS event_value FROM event_logs WHERE payment_id IN (%s)
 LIMIT ?
 OFFSET ?;
