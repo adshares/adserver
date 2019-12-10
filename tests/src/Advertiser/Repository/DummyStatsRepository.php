@@ -185,6 +185,23 @@ class DummyStatsRepository implements StatsRepository
         return new ChartResult($data);
     }
 
+    public function fetchSumPayment(
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId = null
+    ): ChartResult {
+        $data = [
+            ['2019-01-01T15:00:00+00:00', 141],
+            ['2019-01-01T16:00:00+00:00', 241],
+            ['2019-01-01T17:00:00+00:00', 341],
+            ['2019-01-01T18:00:00+00:00', 441],
+        ];
+
+        return new ChartResult($data);
+    }
+
     public function fetchCtr(
         string $advertiserId,
         string $resolution,

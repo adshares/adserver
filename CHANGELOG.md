@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.6] - 2019-12-10
+### Changed
+- Update advertiser statistics for hours affected by conversions
+- Export payments for cases valued zero
+
 ## [1.4.5] - 2019-12-05
 ### Changed
 - Update statistics with conversions
@@ -312,7 +317,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.5...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.6...develop
+[1.4.6]: https://github.com/adshares/adserver/compare/v1.4.5...v1.4.6
 [1.4.5]: https://github.com/adshares/adserver/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/adshares/adserver/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/adshares/adserver/compare/v1.4.2...v1.4.3

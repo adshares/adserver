@@ -40,12 +40,10 @@ class PaymentReport extends Model
     public const STATUS_ERROR = 1;
 
     public const STATUS_NEW = 2;
-    
+
     public const STATUS_UPDATED = 3;
-    
+
     public const STATUS_PREPARED = 4;
-    
-    public const STATUS_SENT = 5;
 
     public static function register(int $id): self
     {
@@ -95,12 +93,6 @@ class PaymentReport extends Model
         $this->save();
     }
 
-    public function setSent(): void
-    {
-        $this->status = self::STATUS_SENT;
-        $this->save();
-    }
-
     public function isNew(): bool
     {
         return self::STATUS_NEW === $this->status;
@@ -114,11 +106,6 @@ class PaymentReport extends Model
     public function isPrepared(): bool
     {
         return self::STATUS_PREPARED === $this->status;
-    }
-
-    public function isSent(): bool
-    {
-        return self::STATUS_SENT === $this->status;
     }
 
     public static function fetchByIds(array $ids): Collection

@@ -26,8 +26,10 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,6 +56,7 @@ use Illuminate\Support\Collection;
  * @property int paid_amount
  * @property int payment_id
  * @property string pay_to
+ * @mixin Builder
  */
 class Conversion extends Model
 {
@@ -123,7 +126,7 @@ class Conversion extends Model
         int $limit = null
     ): EloquentCollection {
         $query = self::whereNotNull('event_value_currency')
-            ->where('event_value_currency', '>', 0)
+            ->where('payment_status', AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->where('created_at', '>=', $from);
@@ -180,6 +183,15 @@ class Conversion extends Model
         $this->event_value = $value;
         $this->payment_status = $status;
         $this->save();
+    }
+
+    public static function updatePaymentIdByIds(int $paymentId, Collection $ids): int
+    {
+        return self::whereIn('id', $ids)
+            ->update([
+                'payment_id' => $paymentId,
+                'updated_at' => new DateTime(),
+            ]);
     }
 
     public function conversionDefinition(): BelongsTo
