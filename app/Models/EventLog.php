@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Traits\AccountAddress;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\JsonValue;
+use Adshares\Adserver\Services\Demand\AdPayPaymentReportProcessor;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -170,7 +171,7 @@ SQL;
         int $limit = null
     ): Collection {
         $query = self::whereNotNull('event_value_currency')
-            ->where('event_value_currency', '>', 0)
+            ->where('payment_status', AdPayPaymentReportProcessor::STATUS_PAYMENT_ACCEPTED)
             ->whereNotNull('pay_to')
             ->whereNull('payment_id')
             ->where('created_at', '>=', $from);
