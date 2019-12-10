@@ -40,6 +40,7 @@ Route::get('/stats/demand/campaigns', [StatisticsGlobalController::class, 'fetch
 Route::get('/stats/demand/banners/sizes', [StatisticsGlobalController::class, 'fetchDemandBannersSizes']);
 
 Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetchSupplyStatistics']);
+Route::get('/stats/supply/domains', [StatisticsGlobalController::class, 'fetchSupplyDomains']);
 Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fetchSupplyZonesSizes']);
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);

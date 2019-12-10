@@ -75,6 +75,13 @@ class StatisticsGlobalController extends Controller
         return $this->supplyRepository->fetchStatistics($totalFee);
     }
 
+    public function fetchSupplyDomains()
+    {
+        $totalFee = $this->totalFeeReader->getTotalFeeSupply();
+        return $this->supplyRepository->fetchDomains($totalFee);
+    }
+
+
     public function fetchSupplyZonesSizes()
     {
         return $this->supplyRepository->fetchZonesSizes();

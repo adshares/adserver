@@ -40,6 +40,21 @@ WHERE e.zone_id IS NULL
 GROUP BY 1;
 SQL;
 
+    private const QUERY_DOMAINS = <<<SQL
+SELECT
+  s.domain                                                          AS name,
+  SUM(l.views)                                                      AS impressions,
+  SUM(l.clicks)                                                     AS clicks,
+  ROUND((SUM(l.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
+FROM network_case_logs_hourly l JOIN sites s ON l.site_id = s.uuid
+WHERE 
+  l.domain is null
+  AND l.hour_timestamp < DATE(NOW())
+  AND l.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
+GROUP BY 1
+HAVING impressions > 0;
+SQL;
+
     private const QUERY_SIZES = <<<SQL
 SELECT
   z.size                         AS size,
@@ -76,5 +91,18 @@ SQL;
     public function fetchZonesSizes(): array
     {
         return DB::select(self::QUERY_SIZES);
+    }
+
+    public function fetchDomains(float $totalFee): array
+    {
+        if ($totalFee >= 1) {
+            throw new RuntimeException('Fee coefficient is greater or equal 1.');
+        }
+
+        $volumeCoefficient = 1 - $totalFee;
+
+        $query = str_replace('#volume_coefficient', $volumeCoefficient, self::QUERY_DOMAINS);
+
+        return DB::select($query);
     }
 }
