@@ -56,8 +56,8 @@ class StatisticsGlobalController extends Controller
 
     public function fetchDemandDomains(Request $request)
     {
-        $days = max(1, min(30, $request->get('days', 30)));
-        $offset = max(0, min(30 - $days, $request->get('offset', 0)));
+        $days = max(1, min(30, (int)$request->get('days', 30)));
+        $offset = max(0, min(30 - $days, (int)$request->get('offset', 0)));
         return $this->demandRepository->fetchDomains($days, $offset);
     }
 
@@ -80,8 +80,8 @@ class StatisticsGlobalController extends Controller
 
     public function fetchSupplyDomains(Request $request)
     {
-        $days = max(1, min(30, $request->get('days', 30)));
-        $offset = max(0, min(30 - $days, $request->get('offset', 0)));
+        $days = max(1, min(30, (int)$request->get('days', 30)));
+        $offset = max(0, min(30 - $days, (int)$request->get('offset', 0)));
 
         $totalFee = $this->totalFeeReader->getTotalFeeSupply();
         return $this->supplyRepository->fetchDomains($totalFee, $days, $offset);
