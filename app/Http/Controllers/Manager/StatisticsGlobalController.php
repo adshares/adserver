@@ -18,11 +18,12 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Illuminate\Http\Request;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
@@ -53,9 +54,11 @@ class StatisticsGlobalController extends Controller
         return $this->demandRepository->fetchStatistics();
     }
 
-    public function fetchDemandDomains()
+    public function fetchDemandDomains(Request $request)
     {
-        return $this->demandRepository->fetchDomains();
+        $days = max(1, min(30, $request->get('days', 30)));
+        $offset = max(0, min(30 - $days, $request->get('offset', 0)));
+        return $this->demandRepository->fetchDomains($days, $offset);
     }
 
     public function fetchDemandCampaigns()
@@ -75,10 +78,13 @@ class StatisticsGlobalController extends Controller
         return $this->supplyRepository->fetchStatistics($totalFee);
     }
 
-    public function fetchSupplyDomains()
+    public function fetchSupplyDomains(Request $request)
     {
+        $days = max(1, min(30, $request->get('days', 30)));
+        $offset = max(0, min(30 - $days, $request->get('offset', 0)));
+
         $totalFee = $this->totalFeeReader->getTotalFeeSupply();
-        return $this->supplyRepository->fetchDomains($totalFee);
+        return $this->supplyRepository->fetchDomains($totalFee, $days, $offset);
     }
 
 

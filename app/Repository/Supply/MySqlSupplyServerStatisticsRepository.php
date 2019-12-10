@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Repository\Supply;
 
@@ -49,8 +49,8 @@ SELECT
 FROM network_case_logs_hourly l JOIN sites s ON l.site_id = s.uuid
 WHERE 
   l.domain is null
-  AND l.hour_timestamp < DATE(NOW())
-  AND l.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
+  AND l.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
+  AND l.hour_timestamp >= DATE(NOW()) - INTERVAL #offset+#days DAY
 GROUP BY 1
 HAVING impressions > 0;
 SQL;
@@ -93,7 +93,7 @@ SQL;
         return DB::select(self::QUERY_SIZES);
     }
 
-    public function fetchDomains(float $totalFee): array
+    public function fetchDomains(float $totalFee, int $days, int $offset): array
     {
         if ($totalFee >= 1) {
             throw new RuntimeException('Fee coefficient is greater or equal 1.');
@@ -101,7 +101,19 @@ SQL;
 
         $volumeCoefficient = 1 - $totalFee;
 
-        $query = str_replace('#volume_coefficient', $volumeCoefficient, self::QUERY_DOMAINS);
+        $query = str_replace(
+            [
+                '#volume_coefficient',
+                '#days',
+                '#offset',
+            ],
+            [
+                $volumeCoefficient,
+                $days,
+                $offset
+            ],
+            self::QUERY_DOMAINS
+        );
 
         return DB::select($query);
     }
