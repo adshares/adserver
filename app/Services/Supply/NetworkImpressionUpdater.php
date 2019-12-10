@@ -99,11 +99,10 @@ class NetworkImpressionUpdater
                 }
             }
 
-            if($n > 0) {
+            if ($n > 0) {
                 $idFrom = $impressions->last()->id;
                 $this->setLastUpdatedId($idFrom);
                 $idFrom++;
-
             }
         } while (count($impressions) === self::PACKAGE_SIZE);
 

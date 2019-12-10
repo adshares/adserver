@@ -69,8 +69,8 @@ class AdSelectCaseExporter
         do {
             $caseCandidates = NetworkCase::fetchCasesToExport($caseIdFrom, self::PACKAGE_SIZE, 0);
             $cases = new Collection();
-            foreach($caseCandidates as $case) {
-                if($case->network_impression_id < $impressionIdMax) {
+            foreach ($caseCandidates as $case) {
+                if ($case->network_impression_id < $impressionIdMax) {
                     $cases->push($case);
                 } else {
                     break;

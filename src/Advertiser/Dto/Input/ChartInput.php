@@ -39,6 +39,7 @@ final class ChartInput
         StatsRepository::TYPE_CPC,
         StatsRepository::TYPE_CPM,
         StatsRepository::TYPE_SUM,
+        StatsRepository::TYPE_SUM_BY_PAYMENT,
         StatsRepository::TYPE_CTR,
     ];
 

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- Update advertiser statistics for hours affected by conversions
 - Export payments for cases valued zero
 
 ## [1.4.5] - 2019-12-05

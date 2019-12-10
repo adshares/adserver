@@ -24,9 +24,12 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
+use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class AggregateStatisticsAdvertiserCommand extends BaseCommand
 {
@@ -65,30 +68,72 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
                 return;
             }
 
-            $from = DateUtils::getDateTimeRoundedToCurrentHour((new DateTime())->setTimestamp($timestamp));
-        } else {
-            $from = DateUtils::getDateTimeRoundedToCurrentHour()->modify('-1 hour');
+            $this->invalidateSelectedHours($timestamp, (bool)$this->option('bulk'));
         }
 
-        $isBulk = $this->option('bulk');
-        $currentHour = DateUtils::getDateTimeRoundedToCurrentHour();
+        $this->aggregateAllInvalidHours();
 
-        while ($currentHour > $from) {
-            try {
-                $this->aggregateForHour($from);
-            } catch (MissingEventsException $missingEventsException) {
-                $this->error($missingEventsException->getMessage());
-            }
+        $this->info('End command '.self::COMMAND_SIGNATURE);
+        $this->release();
+    }
+
+    private function invalidateSelectedHours(int $timestamp, bool $isBulk): void
+    {
+        $fromHour = DateUtils::roundTimestampToHour($timestamp);
+        $currentHour = DateUtils::roundTimestampToHour(time());
+
+        while ($currentHour > $fromHour) {
+            EventLogsHourlyMeta::invalidate($fromHour);
 
             if (!$isBulk) {
                 break;
             }
 
-            $from = $from->modify('+1 hour');
+            $fromHour += DateUtils::HOUR;
         }
+    }
 
-        $this->info('End command '.self::COMMAND_SIGNATURE);
-        $this->release();
+    private function aggregateAllInvalidHours(): void
+    {
+        $collection = EventLogsHourlyMeta::fetchInvalid();
+        /** @var EventLogsHourlyMeta $logsHourlyMeta */
+        foreach ($collection as $logsHourlyMeta) {
+            $startTime = microtime(true);
+            DB::beginTransaction();
+
+            try {
+                $this->aggregateForHour(new DateTime('@'.$logsHourlyMeta->id));
+
+                if ($logsHourlyMeta->isActual()) {
+                    $logsHourlyMeta->updateAfterProcessing(
+                        EventLogsHourlyMeta::STATUS_VALID,
+                        (int)((microtime(true) - $startTime) * 1000)
+                    );
+
+                    DB::commit();
+                } else {
+                    DB::rollBack();
+                }
+            } catch (MissingEventsException $missingEventsException) {
+                DB::rollBack();
+
+                $logsHourlyMeta->updateAfterProcessing(
+                    EventLogsHourlyMeta::STATUS_ERROR,
+                    (int)((microtime(true) - $startTime) * 1000)
+                );
+
+                $this->error($missingEventsException->getMessage());
+            } catch (Throwable $throwable) {
+                DB::rollBack();
+                $this->error(
+                    sprintf(
+                        'Error during aggregating publisher statistics for timestamp=%d (%s)',
+                        $logsHourlyMeta->id,
+                        $throwable->getMessage()
+                    )
+                );
+            }
+        }
     }
 
     private function aggregateForHour(DateTime $from): void
