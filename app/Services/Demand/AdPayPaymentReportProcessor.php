@@ -33,6 +33,8 @@ use stdClass;
 
 class AdPayPaymentReportProcessor
 {
+    public const STATUS_PAYMENT_ACCEPTED = 0;
+
     /** @var ExchangeRate */
     private $exchangeRate;
 
@@ -57,7 +59,7 @@ class AdPayPaymentReportProcessor
             throw new RuntimeException('Missing event status');
         }
 
-        if (0 !== ($status = $calculation['status'])) {
+        if (self::STATUS_PAYMENT_ACCEPTED !== ($status = $calculation['status'])) {
             return $this->getEventStatus($status);
         }
 
@@ -117,7 +119,7 @@ class AdPayPaymentReportProcessor
             throw new RuntimeException('Missing conversion status');
         }
 
-        if (0 !== ($status = $calculation['status'])) {
+        if (self::STATUS_PAYMENT_ACCEPTED !== ($status = $calculation['status'])) {
             $conversion->setStatus($status);
 
             return;
