@@ -348,7 +348,7 @@ SQL;
 
         if ($adUserEndpoint) {
             $adUserUrl = sprintf(
-                '%s/register/%s/%s/%s.htm',
+                '%s/register/%s/%s/%s.html',
                 $adUserEndpoint,
                 urlencode(config('app.adserver_id')),
                 $tid ?: Utils::base64UrlEncodeWithChecksumFromBinUuidString(hex2bin($caseId)),
