@@ -42,6 +42,7 @@ interface AdUser
     public const PAGE_INFO_UNKNOWN = 'unknown';
     public const PAGE_INFO_HIGH_IVR = 'high-ivr';
     public const PAGE_INFO_HIGH_CTR = 'high-ctr';
+    public const PAGE_INFO_LOW_CTR = 'low-ctr';
     public const PAGE_INFO_POOR_TRAFFIC = 'poor-traffic';
     public const PAGE_INFO_POOR_CONTENT = 'poor-content';
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
