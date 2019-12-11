@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Register URL extension
+- Do not require TLS/SSL on publisher site
 
 ## [1.4.6] - 2019-12-10
 ### Changed
