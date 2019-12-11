@@ -383,15 +383,6 @@ SQL;
         $this->our_userdata = $userContext->keywords();
     }
 
-    public static function updatePaymentIdByIds(int $paymentId, SupportCollection $ids): int
-    {
-        return self::whereIn('id', $ids)
-            ->update([
-                'payment_id' => $paymentId,
-                'updated_at' => new DateTime(),
-            ]);
-    }
-
     public function conversions(): HasMany
     {
         return $this->hasMany(Conversion::class);
