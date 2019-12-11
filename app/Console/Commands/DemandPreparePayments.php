@@ -114,7 +114,11 @@ class DemandPreparePayments extends BaseCommand
                         'fee' => $paymentGroup->sum('paid_amount'),
                     ]);
                     $payment->push();
-                    Conversion::updatePaymentIdByIds($payment->id, $paymentGroup->pluck('id'));
+                    foreach ($paymentGroup as $row) {
+                        $row->payment_id = $payment->id;
+                        $row->updated_at = new DateTime();
+                        $row->save();
+                    }
                 }
             );
 
@@ -163,7 +167,11 @@ class DemandPreparePayments extends BaseCommand
                         'fee' => $paymentGroup->sum('paid_amount'),
                     ]);
                     $payment->push();
-                    EventLog::updatePaymentIdByIds($payment->id, $paymentGroup->pluck('id'));
+                    foreach ($paymentGroup as $row) {
+                        $row->payment_id = $payment->id;
+                        $row->updated_at = new DateTime();
+                        $row->save();
+                    }
                 }
             );
 

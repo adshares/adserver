@@ -185,15 +185,6 @@ class Conversion extends Model
         $this->save();
     }
 
-    public static function updatePaymentIdByIds(int $paymentId, Collection $ids): int
-    {
-        return self::whereIn('id', $ids)
-            ->update([
-                'payment_id' => $paymentId,
-                'updated_at' => new DateTime(),
-            ]);
-    }
-
     public function conversionDefinition(): BelongsTo
     {
         return $this->belongsTo(ConversionDefinition::class);
