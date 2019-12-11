@@ -135,9 +135,16 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if (config('app.env') != 'dev') {
-            if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-                return self::json([]);
+
+        if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+            if ($userContext->pageRankInfo() == Aduser::PAGE_INFO_UNKNOWN) {
+                foreach ($zones as &$zone) {
+                    $zone['options']['cpa_only'] = true;
+                }
+            } else {
+                if (config('app.env') != 'dev') {
+                    return self::json([]);
+                }
             }
         }
 
