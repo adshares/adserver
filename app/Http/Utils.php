@@ -74,11 +74,11 @@ class Utils
         }
 
         return [
-            'site' => self::getSiteContext($request, $context),
+            'site'   => self::getSiteContext($request, $context),
             'device' => [
-                'ua' => $request->userAgent(),
-                'ip' => $request->ip(),
-                'ips' => $request->ips(),
+                'ua'      => $request->userAgent(),
+                'ip'      => $request->ip(),
+                'ips'     => $request->ips(),
                 'headers' => $request->headers->all(),
             ],
         ];
@@ -103,6 +103,14 @@ class Utils
                 }
                 $zone[$fields[$prop[0]]] = is_numeric($prop[1]) ? floatval($prop[1]) : $prop[1];
             }
+            $opts = [];
+            if (isset($zone['options'])) {
+                foreach (explode(',', $zone['options']) as $entry) {
+                    list($key, $value) = explode('=', trim($entry), 2);
+                    $opts[trim($key)] = trim($value);
+                }
+            }
+            $zone['options'] = $opts;
             $data[] = $zone;
         }
 
@@ -164,14 +172,14 @@ class Utils
 
     public static function addUrlParameter($url, $name, $value): string
     {
-        $param = $name.'='.urlencode($value);
+        $param = $name . '=' . urlencode($value);
         $qPos = strpos($url, '?');
         if (false === $qPos) {
-            return $url.'?'.$param;
+            return $url . '?' . $param;
         } elseif ($qPos === strlen($url) - 1) {
-            return $url.$param;
+            return $url . $param;
         } else {
-            return $url.'&'.$param;
+            return $url . '&' . $param;
         }
     }
 
@@ -198,10 +206,10 @@ class Utils
 
         $response->setCache(
             [
-                'etag' => self::generateEtag($tid, $contentSha1),
+                'etag'          => self::generateEtag($tid, $contentSha1),
                 'last_modified' => $contentModified,
-                'max_age' => 0,
-                'private' => true,
+                'max_age'       => 0,
+                'private'       => true,
             ]
         );
 
@@ -231,7 +239,7 @@ class Utils
     {
         $sha1 = pack('H*', $contentSha1);
 
-        return self::urlSafeBase64Encode(substr($sha1, 0, 6).strrev(self::urlSafeBase64Decode($tid)));
+        return self::urlSafeBase64Encode(substr($sha1, 0, 6) . strrev(self::urlSafeBase64Decode($tid)));
     }
 
     public static function createCaseIdContainingEventType(string $baseCaseId, string $eventType): string
@@ -239,15 +247,15 @@ class Utils
         $caseId = substr($baseCaseId, 0, -2);
 
         if ($eventType === 'view') {
-            return $caseId.'02';
+            return $caseId . '02';
         }
 
         if ($eventType === 'click') {
-            return $caseId.'03';
+            return $caseId . '03';
         }
 
         if ($eventType === 'shadow-click') {
-            return $caseId.'04';
+            return $caseId . '04';
         }
 
         throw new RuntimeException(sprintf('Invalid event type %s for case id %s', $eventType, $baseCaseId));
@@ -328,7 +336,7 @@ class Utils
             throw new RuntimeException('UserId should be a 16-byte binary format string.');
         }
 
-        return self::urlSafeBase64Encode($id.self::checksum($id));
+        return self::urlSafeBase64Encode($id . self::checksum($id));
     }
 
     private static function checksum(string $id)
@@ -337,7 +345,7 @@ class Utils
             throw new RuntimeException('Id should be a 16-byte binary format string.');
         }
 
-        return substr(sha1($id.config('app.adserver_secret'), true), 0, 6);
+        return substr(sha1($id . config('app.adserver_secret'), true), 0, 6);
     }
 
     public static function hexUuidFromBase64UrlWithChecksum(string $trackingId): string

@@ -144,8 +144,10 @@ class GuzzleAdSelectClient implements AdSelect
 
     public function findBanners(array $zones, ImpressionContext $context): FoundBanners
     {
+        $zoneInputByUuid = [];
         $zoneIds = array_map(
-            static function (array $zone) {
+            static function (array $zone) use(&$zoneInputByUuid) {
+                $zoneInputByUuid[(string)$zone['zone']] = $zone;
                 return strtolower((string)$zone['zone']);
             },
             $zones
@@ -213,11 +215,17 @@ class GuzzleAdSelectClient implements AdSelect
         if ($existingZones->isEmpty()) {
             $items = [];
         } else {
+
+            $zoneInput = [];
+            foreach ($existingZones as $zone) {
+                $zoneInput[] = $zoneInputByUuid[$zone->uuid] ?? [];
+            }
+
             try {
                 $result = $this->client->post(
                     self::URI_FIND_BANNERS,
                     [
-                        RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $sitesMap),
+                        RequestOptions::JSON => $context->adSelectRequestParams($existingZones, $zoneInput, $sitesMap),
                     ]
                 );
             } catch (RequestException $exception) {

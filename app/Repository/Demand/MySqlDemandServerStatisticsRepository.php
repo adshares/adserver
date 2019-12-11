@@ -54,8 +54,8 @@ FROM (
 		SUM(e.cost) AS cost
 	FROM event_logs_hourly e
 	WHERE e.banner_id IS NOT NULL
-        AND e.hour_timestamp < DATE(NOW())
-        AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
+        AND e.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
+        AND e.hour_timestamp >= DATE(NOW()) - INTERVAL #offset+#days DAY
 		AND e.domain != '' AND e.views > 0
 	GROUP BY 1, 2
 ) e
@@ -120,9 +120,21 @@ SQL;
         return DB::select(self::QUERY_STATISTICS);
     }
 
-    public function fetchDomains(): array
+    public function fetchDomains(int $days, int $offset): array
     {
-        return DB::select(self::QUERY_DOMAINS);
+        $query = str_replace(
+            [
+                '#days',
+                '#offset',
+            ],
+            [
+                $days,
+                $offset
+            ],
+            self::QUERY_DOMAINS
+        );
+
+        return DB::select($query);
     }
 
     public function fetchCampaigns(): array

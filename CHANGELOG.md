@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.7] - 2019-12-11
+### Changed
+- Register URL extension
+- Do not require TLS/SSL on publisher site
+- Show CPA banners for unknown sites
+
 ## [1.4.6] - 2019-12-10
 ### Changed
 - Update advertiser statistics for hours affected by conversions
@@ -317,7 +323,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.6...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.7...develop
+[1.4.7]: https://github.com/adshares/adserver/compare/v1.4.6...v1.4.7
 [1.4.6]: https://github.com/adshares/adserver/compare/v1.4.5...v1.4.6
 [1.4.5]: https://github.com/adshares/adserver/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/adshares/adserver/compare/v1.4.3...v1.4.4

@@ -117,7 +117,7 @@ final class ImpressionContext
         ];
     }
 
-    public function adSelectRequestParams(Collection $zones, array $sitesMap): array
+    public function adSelectRequestParams(Collection $zones, array $zonesInput, array $sitesMap): array
     {
         $params = [];
 
@@ -132,6 +132,7 @@ final class ImpressionContext
                 'publisher_id' => $siteMap['publisher_id'],
                 'site_id' => $siteMap['uuid'],
                 'zone_id' => $zone->uuid,
+                'zone_options' => $zonesInput[$requestId]['options'] ?? [],
                 'request_id' => $requestId,
                 'user_id' => !empty($userId) ? $userId : $trackingId,
                 'tracking_id' => $trackingId,

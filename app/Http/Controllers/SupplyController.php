@@ -104,14 +104,6 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
-        if (config('app.env') != 'dev') {
-            if (stristr($decodedQueryData['page']['url'] ?? '', 'http://')
-                || stristr($decodedQueryData['page']['ref'] ?? '', 'http://')
-            ) {
-                throw new BadRequestHttpException('Bad request.');
-            }
-        }
-
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
@@ -143,9 +135,16 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if (config('app.env') != 'dev') {
-            if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-                return self::json([]);
+
+        if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
+            if ($userContext->pageRankInfo() == Aduser::PAGE_INFO_UNKNOWN) {
+                foreach ($zones as &$zone) {
+                    $zone['options']['cpa_only'] = true;
+                }
+            } else {
+                if (config('app.env') != 'dev') {
+                    return self::json([]);
+                }
             }
         }
 
@@ -372,7 +371,7 @@ class SupplyController extends Controller
         );
 
         $adUserUrl = sprintf(
-            '%s/register/%s/%s/%s.htm',
+            '%s/register/%s/%s/%s.html',
             config('app.aduser_base_url'),
             urlencode(config('app.adserver_id')),
             $trackingId,
