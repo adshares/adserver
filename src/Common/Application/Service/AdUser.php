@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
@@ -37,6 +37,14 @@ interface AdUser
     public const PAGE_RANK_ON_MISSING_FIELD = 0.0;
     public const PAGE_RANK_ON_MISSING_KEYWORD = 0.0;
     public const PAGE_RANK_ON_MISSING_TID = 0.0;
+
+    public const PAGE_INFO_OK = 'ok';
+    public const PAGE_INFO_UNKNOWN = 'unknown';
+    public const PAGE_INFO_HIGH_IVR = 'high-ivr';
+    public const PAGE_INFO_HIGH_CTR = 'high-ctr';
+    public const PAGE_INFO_POOR_TRAFFIC = 'poor-traffic';
+    public const PAGE_INFO_POOR_CONTENT = 'poor-content';
+    public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
 
     public function fetchTargetingOptions(): Taxonomy;
 
