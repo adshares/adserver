@@ -609,7 +609,7 @@ var extraBannerCheck = function(banner, code)
     }
 }
 
-var bannersToLoad = null;
+var bannersToLoad = 0;
 var bannerLoaded = function() {
     bannersToLoad--;
     if(bannersToLoad <= 0) {
@@ -635,7 +635,7 @@ domReady(function () {
         }
 
         fetchURL(url, options).then(function (banners) {
-            bannersToLoad = banners.length;
+            bannersToLoad = 0;
 
             banners.forEach(function(banner, i) {
                 var zone = zones[i] || {options: {}};
@@ -658,6 +658,7 @@ domReady(function () {
                 if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
                     insertBackfill(zone.destElement, zone.backfill);
                 } else {
+                    bannersToLoad++;
                     fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
                 }
             });
@@ -669,6 +670,7 @@ domReady(function () {
                 }
                 insertBackfill(zone.destElement, zone.backfill);
             });
+            allBannersLoaded();
         });
 
         addListener(topwin, 'message', function (event) {
