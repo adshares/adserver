@@ -609,6 +609,14 @@ var extraBannerCheck = function(banner, code)
     }
 }
 
+var bannersToLoad = null;
+var bannerLoaded = function() {
+    bannersToLoad--;
+    if(bannersToLoad <= 0) {
+        allBannersLoaded();
+    }
+};
+
 domReady(function () {
     aduserPixel(getImpressionId());
     getActiveZones(function(zones, params) {
@@ -627,6 +635,8 @@ domReady(function () {
         }
 
         fetchURL(url, options).then(function (banners) {
+            bannersToLoad = banners.length;
+
             banners.forEach(function(banner, i) {
                 var zone = zones[i] || {options: {}};
 
@@ -740,6 +750,42 @@ var getDomain = function(url)
     var host = a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
     var colonPos = host.indexOf(':');
     return colonPos == -1 ? host : host.substr(0, colonPos);
+};
+
+var popCandidates = [];
+var addPopCandidate = function(args, rpm)
+{
+    popCandidates.push({args: args, rpm: rpm});
+}
+
+function shuffle(array) {
+    var tmp, current, top = array.length;
+
+    if(top) while(--top) {
+        current = Math.floor(Math.random() * (top + 1));
+        tmp = array[current];
+        array[current] = array[top];
+        array[top] = tmp;
+    }
+
+    return array;
+}
+
+var allBannersLoaded = function()
+{
+    var hasNulls = popCandidates.some(function(x) {
+        return x.rpm === null;
+    });
+    if(hasNulls) {
+        shuffle(popCandidates);
+    } else {
+        popCandidates.sort(function (x, y) {
+            return hasNulls ? (Math.random() > 0.5 ? -1 : 1) : (x.rpm >= y.rpm ? -1 : 1);
+        });
+    }
+    popCandidates.forEach(function(item) {
+        addPop.apply(this, item.args);
+    });
 }
 
 var fetchBanner = function (banner, context, zone_options) {
@@ -791,14 +837,14 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serve_url;
                     }
                     url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
-                    addPop(banner.size,
+                    addPopCandidate([banner.size,
                         url,
                         $pick(zone_options.count, 1),
                         $pick(zone_options.interval, 1),
                         $pick(zone_options.burst, 1),
                         function () {
                             dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
-                        }
+                        }], banner.rpm
                     );
 
                 });
@@ -850,8 +896,10 @@ var fetchBanner = function (banner, context, zone_options) {
         } else {
             displayIfVisible();
         }
+        bannerLoaded();
     }, function () {
         console.log('could not fetch url', banner);
         insertBackfill(banner.destElement, banner.backfill);
+        bannerLoaded();
     });
 };
