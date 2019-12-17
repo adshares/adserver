@@ -32,6 +32,13 @@ try {
 }
 var topdoc = topwin.document;
 
+var winOpen = (function(open)
+{
+    return function() {
+        return open.apply(topwin, arguments);
+    }
+})(topwin.open);
+
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -127,7 +134,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                         return;
                     }
                     var url = context.click_url;
-                    if (!topwin.open(url, '_blank')) {
+                    if (!winOpen(url, '_blank')) {
                         topwin.location.href = url;
                     }
                     // prevent double click
