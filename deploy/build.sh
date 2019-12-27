@@ -20,7 +20,7 @@ chmod 664 storage/app/reported-ads.txt
 
 ln -sf ${SERVICE_DIR}/storage/app/public public/storage
 
-composer install --no-dev
+composer install --no-dev --optimize-autoloader
 
 yarn install
 yarn run prod
