@@ -219,11 +219,7 @@ SQL;
         string $userData,
         string $type
     ): void {
-        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
-
-        if ($existedEventLog) {
-            return;
-        }
+        DB::beginTransaction();
 
         $log = new self();
         $log->case_id = $caseId;
@@ -239,8 +235,14 @@ SQL;
         $log->their_userdata = $userData;
         $log->event_type = $type;
         $log->domain = self::fetchDomainFromMatchingEvent($type, $caseId) ?: self::getDomainFromContext($context);
+        $log->created_at = new DateTime();
+        $log->updated_at = new DateTime();
 
-        $log->save();
+        $attr = $log->getAttributes();
+        $query = "INSERT INTO event_logs (". implode(',', array_keys($attr)) .") select ?". str_repeat(",?", count($attr)-1) ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+        DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
+
+        DB::commit();
     }
 
     public static function createWithUserData(
@@ -259,12 +261,8 @@ SQL;
         ?float $humanScore,
         ?float $pageRank,
         ?stdClass $ourUserData
-    ): self {
-        $existedEventLog = self::where('event_id', hex2bin($eventId))->first();
-
-        if ($existedEventLog) {
-            return $existedEventLog;
-        }
+    ): void {
+        DB::beginTransaction();
 
         $log = new self();
         $log->case_id = $caseId;
@@ -284,10 +282,14 @@ SQL;
         $log->human_score = $humanScore;
         $log->page_rank = $pageRank;
         $log->our_userdata = $ourUserData;
+        $log->created_at = new DateTime();
+        $log->updated_at = new DateTime();
 
-        $log->save();
+        $attr = $log->getAttributes();
+        $query = "INSERT INTO event_logs (". implode(',', array_keys($attr)) .") select ?". str_repeat(",?", count($attr)-1) ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+        DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
 
-        return $log;
+        DB::commit();
     }
 
     private static function fetchDomainFromMatchingEvent(string $type, string $caseId): ?string
