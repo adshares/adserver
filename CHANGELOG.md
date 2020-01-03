@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Edit content in direct ads
 ### Changed
-- Content filed name in direct ads
+- Content field name in direct ads
 
 ## [1.4.7] - 2019-12-11
 ### Changed
