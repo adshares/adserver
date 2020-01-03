@@ -45,8 +45,13 @@ final class UserContext
     /** @var string */
     private $userId;
 
-    public function __construct(array $keywords, float $humanScore, float $pageRank, string $pageRankInfo, string $userId)
-    {
+    public function __construct(
+        array $keywords,
+        float $humanScore,
+        float $pageRank,
+        string $pageRankInfo,
+        string $userId
+    ) {
         $this->keywords = $keywords;
         $this->humanScore = $humanScore;
         $this->pageRank = $pageRank;

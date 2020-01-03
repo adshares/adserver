@@ -146,8 +146,9 @@ class GuzzleAdSelectClient implements AdSelect
     {
         $zoneInputByUuid = [];
         $zoneIds = array_map(
-            static function (array $zone) use(&$zoneInputByUuid) {
+            static function (array $zone) use (&$zoneInputByUuid) {
                 $zoneInputByUuid[(string)$zone['zone']] = $zone;
+
                 return strtolower((string)$zone['zone']);
             },
             $zones
@@ -215,7 +216,6 @@ class GuzzleAdSelectClient implements AdSelect
         if ($existingZones->isEmpty()) {
             $items = [];
         } else {
-
             $zoneInput = [];
             foreach ($existingZones as $zone) {
                 $zoneInput[] = $zoneInputByUuid[$zone->uuid] ?? [];

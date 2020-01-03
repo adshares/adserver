@@ -37,10 +37,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use function hex2bin;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection as SupportCollection;
 use stdClass;
+use function hex2bin;
 
 /**
  * @property Carbon created_at
@@ -239,7 +238,12 @@ SQL;
         $log->updated_at = new DateTime();
 
         $attr = $log->getAttributes();
-        $query = "INSERT INTO event_logs (". implode(',', array_keys($attr)) .") select ?". str_repeat(",?", count($attr)-1) ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+        $query =
+            "INSERT INTO event_logs ("
+            .implode(',', array_keys($attr))
+            .") select ?"
+            .str_repeat(",?", count($attr) - 1)
+            ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
         DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
 
         DB::commit();
@@ -286,7 +290,12 @@ SQL;
         $log->updated_at = new DateTime();
 
         $attr = $log->getAttributes();
-        $query = "INSERT INTO event_logs (". implode(',', array_keys($attr)) .") select ?". str_repeat(",?", count($attr)-1) ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
+        $query =
+            "INSERT INTO event_logs ("
+            .implode(',', array_keys($attr))
+            .") select ?"
+            .str_repeat(",?", count($attr) - 1)
+            ." from DUAL WHERE not exists(select * from event_logs where event_id = ?)";
         DB::affectingStatement($query, array_merge(array_values($attr), [$attr['event_id']]));
 
         DB::commit();
