@@ -199,7 +199,7 @@ class CampaignsController extends Controller
                         break;
                     case Banner::TYPE_DIRECT_LINK:
                     default:
-                        $content = $banner['content'];
+                        $content = $banner['creative_contents'];
                         break;
                 }
             } catch (RuntimeException $exception) {
@@ -271,6 +271,9 @@ class CampaignsController extends Controller
 
             if ($bannerFromInput) {
                 $banner->name = $bannerFromInput['name'] ?? $bannerFromInput->creative_size;
+                if ($banner->creative_type === Banner::TEXT_TYPE_DIRECT_LINK) {
+                    $banner->creative_contents = $bannerFromInput['creative_contents'] ?? '';
+                }
                 $bannersToUpdate[] = $banner;
 
                 $banners = $banners->reject(

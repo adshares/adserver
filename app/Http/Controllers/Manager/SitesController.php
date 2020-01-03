@@ -189,7 +189,7 @@ class SitesController extends Controller
 
             $zoneFromInput = null;
             foreach ($inputZones as $key => $inputZone) {
-                if ($inputZone['id'] ?? null === $zone->id) {
+                if (($inputZone['id'] ?? null) === $zone->id) {
                     $zoneFromInput = $inputZone;
                     unset($inputZones[$key]);
 

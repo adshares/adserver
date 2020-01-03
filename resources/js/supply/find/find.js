@@ -32,6 +32,13 @@ try {
 }
 var topdoc = topwin.document;
 
+var winOpen = (function(open)
+{
+    return function() {
+        return open.apply(topwin, arguments);
+    }
+})(topwin.open);
+
 var encodeZones = function (zone_data) {
     var VALUE_GLUE = "\t";
     var PROP_GLUE = "\r";
@@ -127,7 +134,7 @@ var prepareElement = function (context, banner, element, contextParam) {
                         return;
                     }
                     var url = context.click_url;
-                    if (!topwin.open(url, '_blank')) {
+                    if (!winOpen(url, '_blank')) {
                         topwin.location.href = url;
                     }
                     // prevent double click
@@ -602,6 +609,14 @@ var extraBannerCheck = function(banner, code)
     }
 }
 
+var bannersToLoad = 0;
+var bannerLoaded = function() {
+    bannersToLoad--;
+    if(bannersToLoad <= 0) {
+        allBannersLoaded();
+    }
+};
+
 domReady(function () {
     aduserPixel(getImpressionId());
     getActiveZones(function(zones, params) {
@@ -620,6 +635,8 @@ domReady(function () {
         }
 
         fetchURL(url, options).then(function (banners) {
+            bannersToLoad = 0;
+
             banners.forEach(function(banner, i) {
                 var zone = zones[i] || {options: {}};
 
@@ -641,6 +658,7 @@ domReady(function () {
                 if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
                     insertBackfill(zone.destElement, zone.backfill);
                 } else {
+                    bannersToLoad++;
                     fetchBanner(banner, {page: params[0], zone: params[i + 1] || {}}, zone.options);
                 }
             });
@@ -652,6 +670,7 @@ domReady(function () {
                 }
                 insertBackfill(zone.destElement, zone.backfill);
             });
+            allBannersLoaded();
         });
 
         addListener(topwin, 'message', function (event) {
@@ -733,6 +752,42 @@ var getDomain = function(url)
     var host = a.host.indexOf('www.') === 0 ? a.host.substr(4) :a.host;
     var colonPos = host.indexOf(':');
     return colonPos == -1 ? host : host.substr(0, colonPos);
+};
+
+var popCandidates = [];
+var addPopCandidate = function(args, rpm)
+{
+    popCandidates.push({args: args, rpm: rpm});
+}
+
+function shuffle(array) {
+    var tmp, current, top = array.length;
+
+    if(top) while(--top) {
+        current = Math.floor(Math.random() * (top + 1));
+        tmp = array[current];
+        array[current] = array[top];
+        array[top] = tmp;
+    }
+
+    return array;
+}
+
+var allBannersLoaded = function()
+{
+    var hasNulls = popCandidates.some(function(x) {
+        return x.rpm === null;
+    });
+    if(hasNulls) {
+        shuffle(popCandidates);
+    } else {
+        popCandidates.sort(function (x, y) {
+            return hasNulls ? (Math.random() > 0.5 ? -1 : 1) : (x.rpm >= y.rpm ? -1 : 1);
+        });
+    }
+    popCandidates.forEach(function(item) {
+        addPop.apply(this, item.args);
+    });
 }
 
 var fetchBanner = function (banner, context, zone_options) {
@@ -784,14 +839,14 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serve_url;
                     }
                     url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
-                    addPop(banner.size,
+                    addPopCandidate([banner.size,
                         url,
                         $pick(zone_options.count, 1),
                         $pick(zone_options.interval, 1),
                         $pick(zone_options.burst, 1),
                         function () {
                             dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
-                        }
+                        }], banner.rpm
                     );
 
                 });
@@ -843,8 +898,10 @@ var fetchBanner = function (banner, context, zone_options) {
         } else {
             displayIfVisible();
         }
+        bannerLoaded();
     }, function () {
         console.log('could not fetch url', banner);
         insertBackfill(banner.destElement, banner.backfill);
+        bannerLoaded();
     });
 };

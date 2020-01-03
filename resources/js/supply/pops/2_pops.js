@@ -3,6 +3,8 @@ var checkPopLimits;
 
 (function() {
 
+    var orgWindowOpen = window.open;
+
     var popQueue = [];
     var currentPop = null;
     var preparePop, executePop, executeProxy, executeProxyTimer;
@@ -89,6 +91,7 @@ var checkPopLimits;
             return false;
         }
 
+        window.open = function() {return window;};
         currentPop = arguments;
         addListener(document, 'click', executeProxy, true);
         addListener(document, 'click', executeProxy, false);
@@ -121,6 +124,7 @@ var checkPopLimits;
 
         removeListener(document, 'click', executeProxy, true);
         removeListener(document, 'click', executeProxy, false);
+        window.open = orgWindowOpen;
 
         executeCount++;
         let popLog = loadLog();
