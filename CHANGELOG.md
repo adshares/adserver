@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.8] - 2020-01-03
+### Added
+- Edit content in direct ads
+### Changed
+- Content filed name in direct ads
+
 ## [1.4.7] - 2019-12-11
 ### Changed
 - Register URL extension
