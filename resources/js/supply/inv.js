@@ -113,49 +113,52 @@ function createIframeFromData(data, domInsertCallback) {
     if (!iframeDataUri) {
         iframe.src = 'about:blank';
         iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
-        domInsertCallback(iframe);
 
-        var fn = function (contents) {
-            var doc = iframe.contentWindow.document;
-            var doc_iframe = doc.createElement('iframe');
-            doc_iframe.setAttribute('id', 'frame');
-            doc_iframe.src = 'about:blank';
-            prepareIframe(doc_iframe);
 
-            var csp = doc.createElement('meta');
-            csp.setAttribute('http-equiv', "Content-Security-Policy");
-            csp.setAttribute('content', "frame-src data: blob:; child-src data: blob:; default-src 'unsafe-inline' data: blob:");
+        iframe.onload = function() {
+            var fn = function (contents) {
+                var doc = iframe.contentWindow.document;
+                var doc_iframe = doc.createElement('iframe');
+                doc_iframe.setAttribute('id', 'frame');
+                doc_iframe.src = 'about:blank';
+                prepareIframe(doc_iframe);
 
-            iframe.contentWindow.eval(proxyScript);
-            
-            setTimeout(function() {
+                var csp = doc.createElement('meta');
+                csp.setAttribute('http-equiv', "Content-Security-Policy");
+                csp.setAttribute('content', "frame-src data: blob:; child-src data: blob:; default-src 'unsafe-inline' data: blob:");
 
-                doc.head.appendChild(csp);
-                doc.body.appendChild(doc_iframe);
-                doc_iframe.contentWindow.contents = contents;
-                doc_iframe.src = 'javascript:window["contents"]';
+                iframe.contentWindow.eval(proxyScript);
 
-                doc_iframe.setAttribute('sandbox', "allow-scripts");
-            }, 1);
-        };
+                setTimeout(function () {
 
-        if (requestBlob && data instanceof Blob) // blob
-        {
-            var reader = new FileReader();
+                    doc.head.appendChild(csp);
+                    doc.body.appendChild(doc_iframe);
+                    doc_iframe.contentWindow.contents = contents;
+                    doc_iframe.src = 'javascript:window["contents"]';
 
-            reader.onload = function (e) {
-
-                fn(reader.result);
+                    doc_iframe.setAttribute('sandbox', "allow-scripts");
+                }, 1);
             };
 
-            if (reader.readAsBinaryString)
-                reader.readAsBinaryString(data);
-            else
-                reader.readAsText(data);
-        } else {
-            fn(data.bytes);
+            if (requestBlob && data instanceof Blob) // blob
+            {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+
+                    fn(reader.result);
+                };
+
+                if (reader.readAsBinaryString)
+                    reader.readAsBinaryString(data);
+                else
+                    reader.readAsText(data);
+            } else {
+                fn(data.bytes);
+            }
         }
 
+        domInsertCallback(iframe);
     } else {
         iframe.setAttribute('sandbox', "allow-scripts" + (isFirefox ? "" : " allow-same-origin"));
 
