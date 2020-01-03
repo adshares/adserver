@@ -31,6 +31,7 @@ class EvenTrackingId extends Migration
             'event_logs',
             function (Blueprint $table) {
                 $table->renameColumn('user_id', 'tracking_id');
+                $table->index([DB::raw('tracking_id(4)')], 'tracking_id');
             }
         );
         Schema::table(
@@ -56,6 +57,7 @@ class EvenTrackingId extends Migration
         Schema::table(
             'event_logs',
             function (Blueprint $table) {
+                $table->dropIndex('tracking_id');
                 $table->renameColumn('tracking_id', 'user_id');
             }
         );
