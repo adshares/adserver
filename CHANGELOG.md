@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.9] - 2020-01-07
+### Fixed
+- User context constructor usage
+
 ## [1.4.8] - 2020-01-03
 ### Added
 - Edit content in direct ads
 ### Changed
-- Content filed name in direct ads
+- Content field name in direct ads
 
 ## [1.4.7] - 2019-12-11
 ### Changed
@@ -329,7 +333,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.7...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.9...develop
+[1.4.9]: https://github.com/adshares/adserver/compare/v1.4.8...v1.4.9
+[1.4.8]: https://github.com/adshares/adserver/compare/v1.4.7...v1.4.8
 [1.4.7]: https://github.com/adshares/adserver/compare/v1.4.6...v1.4.7
 [1.4.6]: https://github.com/adshares/adserver/compare/v1.4.5...v1.4.6
 [1.4.5]: https://github.com/adshares/adserver/compare/v1.4.4...v1.4.5
