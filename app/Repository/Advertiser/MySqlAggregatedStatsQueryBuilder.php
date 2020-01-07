@@ -30,7 +30,7 @@ use function sprintf;
 
 class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 {
-    protected const TABLE_NAME = 'event_logs_hourly e';
+    protected const TABLE_NAME = 'event_logs_hourly_stats e';
 
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
@@ -41,7 +41,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_SUM,
         StatsRepository::TYPE_SUM_BY_PAYMENT,
         StatsRepository::TYPE_STATS,
-        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
@@ -89,9 +88,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
             case StatsRepository::TYPE_STATS:
                 $this->selectBaseStatsColumns();
                 break;
-            case StatsRepository::TYPE_STATS_REPORT:
-                $this->selectBaseStatsReportColumns();
-                break;
         }
     }
 
@@ -100,15 +96,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->column('SUM(e.clicks) AS clicks');
         $this->column('SUM(e.views) AS views');
         $this->column('SUM(e.cost) AS cost');
-    }
-
-    private function selectBaseStatsReportColumns(): void
-    {
-        $this->selectBaseStatsColumns();
-
-        $this->column('SUM(e.clicks_all) AS clicksAll');
-        $this->column('SUM(e.views_all) AS viewsAll');
-        $this->column('SUM(e.views_unique) AS viewsUnique');
     }
 
     private function withoutRemovedCampaigns(): void
@@ -230,20 +217,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('cost>0');
-
-        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
-            $this->having('clicksAll>0');
-            $this->having('viewsAll>0');
-            $this->having('viewsUnique>0');
-        }
-
-        return $this;
-    }
-
-    public function appendDomainGroupBy(): self
-    {
-        $this->column("IFNULL(e.domain, '') AS domain");
-        $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
     }
