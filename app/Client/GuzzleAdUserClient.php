@@ -73,6 +73,7 @@ final class GuzzleAdUserClient implements AdUser
                 $partialContext->keywords(),
                 AdUser::HUMAN_SCORE_ON_MISSING_TID,
                 AdUser::PAGE_RANK_ON_MISSING_TID,
+                '',
                 Utils::hexUserId()
             );
         }
@@ -98,6 +99,7 @@ final class GuzzleAdUserClient implements AdUser
                 $partialContext->keywords(),
                 AdUser::HUMAN_SCORE_ON_CONNECTION_ERROR,
                 AdUser::PAGE_RANK_ON_CONNECTION_ERROR,
+                '',
                 Utils::hexUuidFromBase64UrlWithChecksum($partialContext->trackingId())
             );
         }
