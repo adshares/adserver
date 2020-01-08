@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Empty direct banner content to campaign landing URL
 - Remove filtering option "Content Type"
+### Fixed
+- Deleting always at least one row during events clear command (ops:events:clear)
 
 ## [1.4.9] - 2020-01-07
 ### Fixed
