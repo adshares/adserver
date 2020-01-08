@@ -466,7 +466,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $queryBuilder = (new MySqlAggregatedStatsReportQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendSiteIdGroupBy()

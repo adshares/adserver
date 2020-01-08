@@ -164,6 +164,8 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_PAYMENTS,
             self::SQL_TEMPLATE_DELETE_AGGREGATES_NO_GROUP,
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_NO_GROUP,
+            self::SQL_TEMPLATE_DELETE_STATS_AGGREGATES,
+            self::SQL_TEMPLATE_INSERT_STATS_AGGREGATES,
         ] as $queryTemplate) {
             $queries[] = str_replace(
                 $search,
@@ -289,5 +291,38 @@ FROM
       WHERE c.created_at BETWEEN '#date_start' AND '#date_end') d
    GROUP BY 1, 2) u
 GROUP BY 1,2;
+SQL;
+
+    private const SQL_TEMPLATE_DELETE_STATS_AGGREGATES = <<<SQL
+DELETE FROM network_case_logs_hourly_stats WHERE hour_timestamp = '#date_start';
+SQL;
+
+    private const SQL_TEMPLATE_INSERT_STATS_AGGREGATES = <<<SQL
+INSERT INTO network_case_logs_hourly_stats (publisher_id,
+                                            site_id,
+                                            zone_id,
+                                            views_all,
+                                            views,
+                                            views_unique,
+                                            clicks_all,
+                                            clicks,
+                                            revenue_case,
+                                            revenue_hour,
+                                            hour_timestamp)
+SELECT
+  publisher_id,
+  site_id,
+  zone_id,
+  SUM(views_all),
+  SUM(views),
+  SUM(views_unique),
+  SUM(clicks_all),
+  SUM(clicks),
+  SUM(revenue_case),
+  SUM(revenue_hour),
+  '#date_start'
+FROM network_case_logs_hourly
+WHERE hour_timestamp = '#date_start'
+GROUP BY 1, 2, 3;
 SQL;
 }

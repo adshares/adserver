@@ -30,7 +30,7 @@ use function sprintf;
 
 class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 {
-    protected const TABLE_NAME = 'network_case_logs_hourly e';
+    protected const TABLE_NAME = 'network_case_logs_hourly_stats e';
 
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
@@ -41,7 +41,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_REVENUE_BY_CASE,
         StatsRepository::TYPE_REVENUE_BY_HOUR,
         StatsRepository::TYPE_STATS,
-        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
@@ -88,9 +87,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_STATS:
                 $this->selectBaseStatsColumns();
-                break;
-            case StatsRepository::TYPE_STATS_REPORT:
-                $this->selectBaseStatsReportColumns();
                 break;
         }
     }
@@ -230,20 +226,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('revenue>0');
-
-        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
-            $this->having('clicksAll>0');
-            $this->having('viewsAll>0');
-            $this->having('viewsUnique>0');
-        }
-
-        return $this;
-    }
-
-    public function appendDomainGroupBy(): self
-    {
-        $this->column("IFNULL(e.domain, '') AS domain");
-        $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
     }

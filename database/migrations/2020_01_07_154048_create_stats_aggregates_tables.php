@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateStatsAggregatesTables extends Migration
 {
-    private const SQL_INSERT_ADVERTISER_STATISTICS_AGGREGATES = <<<SQL
+    private const SQL_INSERT_STATISTICS_AGGREGATES_ADVERTISERS = <<<SQL
 INSERT INTO event_logs_hourly_stats (hour_timestamp,
                                      advertiser_id,
                                      campaign_id,
@@ -52,12 +52,54 @@ FROM event_logs_hourly
 GROUP BY 1, 2, 3, 4;
 SQL;
 
+    private const SQL_INSERT_STATISTICS_AGGREGATES_PUBLISHERS = <<<SQL
+INSERT INTO network_case_logs_hourly_stats (hour_timestamp,
+                                            publisher_id,
+                                            site_id,
+                                            zone_id,
+                                            revenue_case,
+                                            revenue_hour,
+                                            views_all,
+                                            views,
+                                            views_unique,
+                                            clicks_all,
+                                            clicks)
+SELECT hour_timestamp,
+       publisher_id,
+       site_id,
+       zone_id,
+       SUM(revenue_case),
+       SUM(revenue_hour),
+       SUM(views_all),
+       SUM(views),
+       SUM(views_unique),
+       SUM(clicks_all),
+       SUM(clicks)
+FROM network_case_logs_hourly
+GROUP BY 1, 2, 3, 4;
+SQL;
+
     public function up(): void
+    {
+        $this->createTableEventLogsHourlyStatsForAdvertisers();
+        DB::statement(self::SQL_INSERT_STATISTICS_AGGREGATES_ADVERTISERS);
+        
+        $this->createTableEventLogsHourlyStatsForPublishers();
+        DB::statement(self::SQL_INSERT_STATISTICS_AGGREGATES_PUBLISHERS);
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('event_logs_hourly_stats');
+        Schema::dropIfExists('network_case_logs_hourly_stats');
+    }
+
+    private function createTableEventLogsHourlyStatsForAdvertisers(): void
     {
         Schema::create(
             'event_logs_hourly_stats',
             function (Blueprint $table) {
-                $table->increments('id');
+                $table->bigIncrements('id');
                 $table->timestamp('hour_timestamp');
 
                 $table->binary('advertiser_id');
@@ -81,16 +123,57 @@ SQL;
         Schema::table(
             'event_logs_hourly_stats',
             function (Blueprint $table) {
-                $table->index('hour_timestamp');
-                $table->index(['advertiser_id', 'campaign_id']);
+                $table->unique(
+                    [
+                        'hour_timestamp',
+                        'advertiser_id',
+                        'campaign_id',
+                        'banner_id',
+                    ],
+                    'event_logs_hourly_stats_index'
+                );
+            }
+        );
+    }
+
+    private function createTableEventLogsHourlyStatsForPublishers(): void
+    {
+        Schema::create(
+            'network_case_logs_hourly_stats',
+            function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->timestamp('hour_timestamp')->useCurrent();
+                $table->binary('publisher_id');
+                $table->binary('site_id');
+                $table->binary('zone_id')->nullable();
+
+                $table->bigInteger('revenue_case')->default(0);
+                $table->bigInteger('revenue_hour')->default(0);
+                $table->unsignedInteger('views_all')->default(0);
+                $table->unsignedInteger('views')->default(0);
+                $table->unsignedInteger('views_unique')->default(0);
+                $table->unsignedInteger('clicks_all')->default(0);
+                $table->unsignedInteger('clicks')->default(0);
             }
         );
 
-        DB::statement(self::SQL_INSERT_ADVERTISER_STATISTICS_AGGREGATES);
-    }
+        DB::statement('ALTER TABLE network_case_logs_hourly_stats MODIFY publisher_id varbinary(16) NOT NULL');
+        DB::statement('ALTER TABLE network_case_logs_hourly_stats MODIFY site_id varbinary(16) NOT NULL');
+        DB::statement('ALTER TABLE network_case_logs_hourly_stats MODIFY zone_id varbinary(16)');
 
-    public function down(): void
-    {
-        Schema::dropIfExists('event_logs_hourly_stats');
+        Schema::table(
+            'network_case_logs_hourly_stats',
+            function (Blueprint $table) {
+                $table->unique(
+                    [
+                        'hour_timestamp',
+                        'publisher_id',
+                        'site_id',
+                        'zone_id',
+                    ],
+                    'network_case_logs_hourly_stats_index'
+                );
+            }
+        );
     }
 }
