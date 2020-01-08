@@ -66,27 +66,6 @@ final class MultipleExternalClassifierAdClassifyClient implements AdClassify
             }
         }
 
-        $data[] = $this->getOptionType();
-
         return TaxonomyFactory::fromArray(['data' => $data]);
-    }
-
-    private function getOptionType(): array
-    {
-        return [
-            "type" => "dict",
-            "label" => "Content Type",
-            "key" => "type",
-            "list" => [
-                [
-                    "label" => "HTML",
-                    "value" => "html",
-                ],
-                [
-                    "label" => "Image",
-                    "value" => "image",
-                ],
-            ],
-        ];
     }
 }
