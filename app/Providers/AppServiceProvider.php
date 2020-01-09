@@ -26,6 +26,7 @@ use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdverti
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Adserver\Services\NowPayments;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Application\Service\LicenseDecoder;
@@ -135,6 +136,13 @@ class AppServiceProvider extends ServiceProvider
                     $app->make(EloquentExchangeRateRepository::class),
                     $app->make(ExchangeRateRepository::class)
                 );
+            }
+        );
+
+        $this->app->bind(
+            NowPayments::class,
+            function (Application $app) {
+                return new NowPayments();
             }
         );
     }

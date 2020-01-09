@@ -29,12 +29,14 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -257,6 +259,19 @@ class WalletController extends Controller
         ];
 
         return self::json($resp);
+    }
+
+    public function nowPayments(NowPayments $nowPayments, Request $request): RedirectResponse
+    {
+        $user = Auth::user();
+        $amount = (float)$request->get('amount', 10);
+
+        return redirect()->away($nowPayments->getPaymentUrl($user, $amount));
+    }
+
+    public function nowPaymentsNotify(): Response
+    {
+        return response()->noContent();
     }
 
     public function history(Request $request): JsonResponse
