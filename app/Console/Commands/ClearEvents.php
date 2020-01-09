@@ -81,7 +81,7 @@ class ClearEvents extends BaseCommand
         $deleted = 0;
         $firstLeftRecord = DB::selectOne(
             sprintf(
-                'SELECT id AS value FROM %s WHERE %s > ? ORDER BY %s ASC LIMIT 1',
+                'SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC, id ASC LIMIT 1',
                 $table,
                 $time_column,
                 $time_column
