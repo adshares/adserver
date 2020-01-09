@@ -25,6 +25,13 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateStatsAggregatesTables extends Migration
 {
+    private const SQL_DELETE_FROM_EVENT_LOGS_HOURLY_NULL_BANNER_ID = <<<SQL
+DELETE FROM event_logs_hourly WHERE banner_id IS NULL;
+SQL;
+    private const SQL_DELETE_FROM_NETWORK_CASE_LOGS_HOURLY_NULL_ZONE_ID = <<<SQL
+DELETE FROM network_case_logs_hourly WHERE zone_id IS NULL;
+SQL;
+
     private const SQL_INSERT_STATISTICS_AGGREGATES_ADVERTISERS = <<<SQL
 INSERT INTO event_logs_hourly_stats (hour_timestamp,
                                      advertiser_id,
@@ -83,9 +90,11 @@ SQL;
     {
         $this->createTableEventLogsHourlyStatsForAdvertisers();
         DB::statement(self::SQL_INSERT_STATISTICS_AGGREGATES_ADVERTISERS);
-        
+        DB::statement(self::SQL_DELETE_FROM_EVENT_LOGS_HOURLY_NULL_BANNER_ID);
+
         $this->createTableEventLogsHourlyStatsForPublishers();
         DB::statement(self::SQL_INSERT_STATISTICS_AGGREGATES_PUBLISHERS);
+        DB::statement(self::SQL_DELETE_FROM_NETWORK_CASE_LOGS_HOURLY_NULL_ZONE_ID);
     }
 
     public function down(): void
