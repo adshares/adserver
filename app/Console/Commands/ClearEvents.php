@@ -90,20 +90,17 @@ class ClearEvents extends BaseCommand
         );
 
         if (null === $firstLeftRecord) {
-            $this->getOutput()->writeln('</info>');
-            $this->info(
-                sprintf(
-                    'All data added to table %s before %s should be deleted.',
-                    $table,
-                    $dateTo->format(\DateTime::ATOM)
-                )
-            );
-            $this->warn(sprintf('Check data the above data and delete it manually.'));
+            $last = (int)DB::selectOne(sprintf('SELECT MAX(id) AS value FROM %s', $table))->value;
 
-            return 0;
+            if (!$last) {
+                $this->getOutput()->writeln('</info>');
+                $this->info(sprintf('Table %s is empty.', $table));
+
+                return 0;
+            }
+        } else {
+            $last = (int)$firstLeftRecord->value - 1;
         }
-
-        $last = (int)$firstLeftRecord->value - 1;
 
         do {
             DB::beginTransaction();
