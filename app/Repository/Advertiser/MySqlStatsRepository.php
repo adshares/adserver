@@ -671,7 +671,7 @@ SQL;
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlAggregatedStatsReportQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
+        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS_REPORT))
             ->setDateRange($dateStart, $dateEnd)
             ->appendDomainGroupBy()
             ->appendCampaignIdGroupBy()
