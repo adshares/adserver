@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
+- CPA only page rank support
 - Empty direct banner content to campaign landing URL
 - Remove filtering option "Content Type"
 
