@@ -105,6 +105,7 @@ class CampaignRepository
         array $bannersToUpdate = [],
         array $bannersToDelete = [],
         array $conversionsToInsert = [],
+        array $conversionsToUpdate = [],
         array $conversionUuidsToDelete = []
     ): void {
         DB::beginTransaction();
@@ -134,6 +135,12 @@ class CampaignRepository
             if ($conversionsToInsert) {
                 foreach ($conversionsToInsert as $conversion) {
                     $campaign->conversions()->save($conversion);
+                }
+            }
+
+            if ($conversionsToUpdate) {
+                foreach ($conversionsToUpdate as $conversion) {
+                    $conversion->update();
                 }
             }
 
