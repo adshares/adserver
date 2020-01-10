@@ -65,6 +65,17 @@ final class NowPayments
         $this->exchangeUrl = config('app.now_payments_exchange_url');
     }
 
+    public function info(): ?array
+    {
+        return empty($this->apiKey)
+            ? null
+            : [
+                'min_amount' => $this->minAmount,
+                'exchange_rate' => $this->getExchangeRate(),
+                'currency' => $this->currency,
+            ];
+    }
+
     public function getPaymentUrl(User $user, float $amount): string
     {
         $amount = round($amount, 2);
@@ -115,15 +126,22 @@ final class NowPayments
         return sprintf('%s?data=%s', self::NOW_PAYMENTS_URL, rawurlencode(json_encode($data)));
     }
 
-    public function info(): ?array
+    public function notify(string $uuid, array $params): void
     {
-        return empty($this->apiKey)
-            ? null
-            : [
-                'min_amount' => $this->minAmount,
-                'exchange_rate' => $this->getExchangeRate(),
-                'currency' => $this->currency,
-            ];
+        $user = User::fetchByUuid($uuid);
+
+        $userId = $user !== null ? $user->id : 0;
+        $orderId = $params['order_id'] ?? '';
+        $status = $params['payment_status'] ?? '';
+        $paymentId = $params['payment_id'] ?? null;
+        $amount = $params['actually_paid'] ?? null;
+
+        try {
+            $log = NowPaymentsLog::create($userId, $orderId, $status, $amount, $paymentId, $params);
+            $log->save();
+        } catch (QueryException $exception) {
+            Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
+        }
     }
 
     private function getExchangeRate(): float
