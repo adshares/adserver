@@ -77,14 +77,6 @@ class WalletController extends Controller
 
     private const FIELD_TYPES = 'types';
 
-    private const FIELD_MIN_AMOUNT = 'min_amount';
-
-    private const FIELD_EXCHANGE_RATE = 'exchange_rate';
-
-    private const FIELD_CURRENCY = 'currency';
-
-    private const FIELD_AVAILABLE_CURRENCIES = 'available_currencies';
-
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
@@ -265,18 +257,6 @@ class WalletController extends Controller
         $resp = [
             self::FIELD_ADDRESS => $address->toString(),
             self::FIELD_MESSAGE => $message,
-        ];
-
-        return self::json($resp);
-    }
-
-    public function nowPaymentsInfo(NowPayments $nowPayments, Request $request): JsonResponse
-    {
-        $resp = [
-            self::FIELD_MIN_AMOUNT => $nowPayments->getMinAmount(),
-            self::FIELD_EXCHANGE_RATE => $nowPayments->getExchangeRate(),
-            self::FIELD_CURRENCY => $nowPayments->getCurrency(),
-            self::FIELD_AVAILABLE_CURRENCIES => $nowPayments->getAvailableCurrencies(),
         ];
 
         return self::json($resp);

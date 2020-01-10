@@ -26,16 +26,11 @@ use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 final class NowPayments
 {
-    const NOW_PAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
-
     const NOW_PAYMENTS_URL = 'https://nowpayments.io/payment';
 
     /** @var string */
@@ -68,59 +63,6 @@ final class NowPayments
         $this->minAmount = (int)config('app.now_payments_min_amount');
         $this->fee = (float)config('app.now_payments_fee');
         $this->exchangeUrl = config('app.now_payments_exchange_url');
-    }
-
-    public function getCurrency(): string
-    {
-        return $this->currency;
-    }
-
-    public function getMinAmount(): int
-    {
-        return $this->minAmount;
-    }
-
-    public function getExchangeRate(): float
-    {
-        try {
-            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(null, $this->currency)->toArray();
-        } catch (ExchangeRateNotAvailableException $exception) {
-            Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
-
-            return 0;
-        }
-
-        return $exchangeRate['value'] / (1 - $this->fee);
-    }
-
-    public function getAvailableCurrencies(): array
-    {
-        $cacheKey = self::class.'-available-currencies';
-
-        if (!Cache::has($cacheKey)) {
-            $list = [];
-            try {
-                $client = new Client();
-                $response = $client->get(
-                    self::NOW_PAYMENTS_API_URL.'/currencies',
-                    ['headers' => ['x-api-key' => $this->apiKey]]
-                );
-                if ($response->getStatusCode() == 200) {
-                    $list = json_decode((string)$response->getBody(), true);
-                }
-            } catch (RequestException $exception) {
-                Log::error(sprintf('[NowPayments] Cannot get available currencies: %s', $exception->getMessage()));
-
-                return [];
-            }
-
-            $currencies = array_map('strtoupper', $list['currencies'] ?? []);
-            sort($currencies);
-
-            Cache::put($cacheKey, $currencies, 1440);
-        }
-
-        return Cache::get($cacheKey, []);
     }
 
     public function getPaymentUrl(User $user, float $amount): string
@@ -171,5 +113,29 @@ final class NowPayments
         }
 
         return sprintf('%s?data=%s', self::NOW_PAYMENTS_URL, rawurlencode(json_encode($data)));
+    }
+
+    public function info(): ?array
+    {
+        return empty($this->apiKey)
+            ? null
+            : [
+                'min_amount' => $this->minAmount,
+                'exchange_rate' => $this->getExchangeRate(),
+                'currency' => $this->currency,
+            ];
+    }
+
+    private function getExchangeRate(): float
+    {
+        try {
+            $exchangeRate = $this->exchangeRateReader->fetchExchangeRate(null, $this->currency)->toArray();
+        } catch (ExchangeRateNotAvailableException $exception) {
+            Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
+
+            return 0;
+        }
+
+        return $exchangeRate['value'] / (1 - $this->fee);
     }
 }
