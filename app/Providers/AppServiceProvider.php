@@ -142,7 +142,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             NowPayments::class,
             function (Application $app) {
-                return new NowPayments();
+                return new NowPayments(
+                    $app->make(ExchangeRateReader::class)
+                );
             }
         );
     }

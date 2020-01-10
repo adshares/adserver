@@ -78,6 +78,14 @@ class WalletController extends Controller
 
     private const FIELD_TYPES = 'types';
 
+    private const FIELD_MIN_AMOUNT = 'min_amount';
+
+    private const FIELD_EXCHANGE_RATE = 'exchange_rate';
+
+    private const FIELD_CURRENCY = 'currency';
+
+    private const FIELD_AVAILABLE_CURRENCIES = 'available_currencies';
+
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
     public function calculateWithdrawal(Request $request): JsonResponse
@@ -261,7 +269,19 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function nowPayments(NowPayments $nowPayments, Request $request): RedirectResponse
+    public function nowPaymentsInfo(NowPayments $nowPayments, Request $request): JsonResponse
+    {
+        $resp = [
+            self::FIELD_MIN_AMOUNT => $nowPayments->getMinAmount(),
+            self::FIELD_EXCHANGE_RATE => $nowPayments->getExchangeRate(),
+            self::FIELD_CURRENCY => $nowPayments->getCurrency(),
+            self::FIELD_AVAILABLE_CURRENCIES => $nowPayments->getAvailableCurrencies(),
+        ];
+
+        return self::json($resp);
+    }
+
+    public function nowPaymentsInit(NowPayments $nowPayments, Request $request): RedirectResponse
     {
         $user = Auth::user();
         $amount = (float)$request->get('amount', 10);

@@ -92,7 +92,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('wallet.confirm-withdrawal');
     Route::delete('wallet/cancel-withdrawal/{entry}', [WalletController::class, 'cancelWithdrawal'])
         ->name('wallet.cancel-withdrawal');
-    Route::get('now-payments', [WalletController::class, 'nowPayments']);
+    Route::get('now-payments/info', [WalletController::class, 'nowPaymentsInfo']);
+    Route::get('now-payments/init', [WalletController::class, 'nowPaymentsInit']);
 
 // statistics
     Route::get(
