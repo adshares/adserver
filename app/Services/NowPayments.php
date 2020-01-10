@@ -133,7 +133,7 @@ final class NowPayments
                 sprintf('[NowPayments] Requested amount (%f) must be greater than %d', $amount, $this->minAmount)
             );
 
-            return $panelUrl;
+            return '';
         }
 
         $orderId = sprintf(

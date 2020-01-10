@@ -36,7 +36,6 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -85,6 +84,8 @@ class WalletController extends Controller
     private const FIELD_CURRENCY = 'currency';
 
     private const FIELD_AVAILABLE_CURRENCIES = 'available_currencies';
+
+    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
@@ -281,12 +282,16 @@ class WalletController extends Controller
         return self::json($resp);
     }
 
-    public function nowPaymentsInit(NowPayments $nowPayments, Request $request): RedirectResponse
+    public function nowPaymentsInit(NowPayments $nowPayments, Request $request): JsonResponse
     {
         $user = Auth::user();
         $amount = (float)$request->get('amount', 10);
 
-        return redirect()->away($nowPayments->getPaymentUrl($user, $amount));
+        $resp = [
+            self::FIELD_NOW_PAYMENTS_URL => $nowPayments->getPaymentUrl($user, $amount)
+        ];
+
+        return self::json($resp);
     }
 
     public function nowPaymentsNotify(): Response
