@@ -126,7 +126,7 @@ final class NowPayments
         return sprintf('%s?data=%s', self::NOW_PAYMENTS_URL, rawurlencode(json_encode($data)));
     }
 
-    public function notify(string $uuid, array $params): void
+    public function notify(string $uuid, array $params, array $headers = []): void
     {
         $user = User::fetchByUuid($uuid);
 
@@ -137,7 +137,17 @@ final class NowPayments
         $amount = $params['actually_paid'] ?? null;
 
         try {
-            $log = NowPaymentsLog::create($userId, $orderId, $status, $amount, $paymentId, $params);
+            $log = NowPaymentsLog::create(
+                $userId,
+                $orderId,
+                $status,
+                $amount,
+                $paymentId,
+                [
+                    'params' => $params,
+                    'headers' => $headers,
+                ]
+            );
             $log->save();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));

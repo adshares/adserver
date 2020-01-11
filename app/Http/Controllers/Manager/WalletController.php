@@ -276,7 +276,7 @@ class WalletController extends Controller
 
     public function nowPaymentsNotify(string $uuid, NowPayments $nowPayments, Request $request): Response
     {
-        $nowPayments->notify($uuid, $request->all());
+        $nowPayments->notify($uuid, $request->all(), $request->headers->all());
 
         return response()->noContent();
     }
