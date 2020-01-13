@@ -38,6 +38,7 @@ use function bin2hex;
 class MySqlStatsRepository implements StatsRepository
 {
     private const PLACEHOLDER_FOR_EMPTY_DOMAIN = 'N/A';
+    private const MAX_PERIOD_WHEN_LIVE_RESULT_IS_NEEDED = 48*60*60;
 
     public function fetchView(
         string $publisherId,
@@ -46,7 +47,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
+        $result = $this->fetchUpdatedWithLiveResult(
             StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
@@ -54,24 +55,6 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
-
-        $now = new DateTime();
-        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
-            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
-
-            if (null !== $resultIndexToFill) {
-                $resultLive = $this->fetchLive(
-                    StatsRepository::TYPE_VIEW,
-                    $publisherId,
-                    $resolution,
-                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
-                    $now,
-                    $siteId
-                );
-
-                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
-            }
-        }
 
         return new ChartResult($result);
     }
@@ -83,7 +66,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
+        $result = $this->fetchUpdatedWithLiveResult(
             StatsRepository::TYPE_VIEW_ALL,
             $publisherId,
             $resolution,
@@ -91,24 +74,6 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
-
-        $now = new DateTime();
-        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
-            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
-
-            if (null !== $resultIndexToFill) {
-                $resultLive = $this->fetchLive(
-                    StatsRepository::TYPE_VIEW_ALL,
-                    $publisherId,
-                    $resolution,
-                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
-                    $now,
-                    $siteId
-                );
-
-                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
-            }
-        }
 
         return new ChartResult($result);
     }
@@ -159,7 +124,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetch(
+        $result = $this->fetchUpdatedWithLiveResult(
             StatsRepository::TYPE_VIEW_UNIQUE,
             $publisherId,
             $resolution,
@@ -167,24 +132,6 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
-
-        $now = new DateTime();
-        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
-            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
-
-            if (null !== $resultIndexToFill) {
-                $resultLive = $this->fetchLive(
-                    StatsRepository::TYPE_VIEW_UNIQUE,
-                    $publisherId,
-                    $resolution,
-                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
-                    $now,
-                    $siteId
-                );
-
-                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
-            }
-        }
 
         return new ChartResult($result);
     }
@@ -579,6 +526,44 @@ class MySqlStatsRepository implements StatsRepository
         return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
+    private function fetchUpdatedWithLiveResult(
+        string $type,
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $result = $this->fetch(
+            $type,
+            $publisherId,
+            $resolution,
+            $dateStart,
+            $dateEnd,
+            $siteId
+        );
+
+        $now = new DateTime();
+        if (StatsRepository::RESOLUTION_HOUR === $resolution && $this->isLiveResultNeeded($dateStart, $dateEnd, $now)) {
+            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
+
+            if (null !== $resultIndexToFill) {
+                $resultLive = $this->fetchLive(
+                    $type,
+                    $publisherId,
+                    $resolution,
+                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
+                    $now,
+                    $siteId
+                );
+
+                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
+            }
+        }
+
+        return $result;
+    }
+
     private function fetch(
         string $type,
         string $publisherId,
@@ -939,5 +924,15 @@ SQL;
         }
 
         return $result;
+    }
+
+    private function isLiveResultNeeded(
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        DateTime $now
+    ): bool {
+        return ($dateEnd->getTimestamp() - $dateStart->getTimestamp()) <= self::MAX_PERIOD_WHEN_LIVE_RESULT_IS_NEEDED
+            && $dateStart < $now
+            && $dateEnd > $now;
     }
 }
