@@ -167,17 +167,9 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function appendAnyZoneId(): self
-    {
-        $this->where('e.zone_id IS NULL');
-
-        return $this;
-    }
-
     public function appendZoneIdGroupBy(): self
     {
         $this->column('e.zone_id AS zone_id');
-        $this->where('e.zone_id IS NOT NULL');
         $this->groupBy('e.zone_id');
 
         return $this;
@@ -187,9 +179,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->column('e.site_id AS site_id');
         $this->groupBy('e.site_id');
-        $this->having('clicks>0');
         $this->having('views>0');
-        $this->having('revenue>0');
 
         return $this;
     }
