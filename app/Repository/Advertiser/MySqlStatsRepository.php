@@ -51,6 +51,10 @@ SQL;
 DELETE FROM event_logs_hourly WHERE hour_timestamp = ?;
 SQL;
 
+    private const DELETE_FROM_EVENT_LOGS_HOURLY_STATS_WHERE_HOUR_TIMESTAMP = <<<SQL
+DELETE FROM event_logs_hourly_stats WHERE hour_timestamp = ?;
+SQL;
+
     private const INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN = <<<SQL
 INSERT INTO event_logs_hourly (`advertiser_id`, `campaign_id`, `banner_id`, `domain`, `clicks`, `views`, `cost`,
                                `cost_payment`, `clicks_all`, `views_all`, `views_unique`, `hour_timestamp`)
@@ -135,9 +139,37 @@ HAVING clicks > 0
     OR viewsUnique > 0;
 SQL;
 
-    private const INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_CAMPAIGN = <<<SQL
-INSERT INTO event_logs_hourly (`advertiser_id`, `campaign_id`, `clicks`, `views`, `cost`, `cost_payment`, `clicks_all`,
-                               `views_all`, `views_unique`, `hour_timestamp`)
+    private const INSERT_EVENT_LOGS_HOURLY_STATS = <<<SQL
+INSERT INTO event_logs_hourly_stats (advertiser_id,
+                                     campaign_id,
+                                     banner_id,
+                                     cost,
+                                     cost_payment,
+                                     clicks,
+                                     views,
+                                     clicks_all,
+                                     views_all,
+                                     views_unique,
+                                     hour_timestamp)
+SELECT advertiser_id,
+       campaign_id,
+       banner_id,
+       SUM(cost),
+       SUM(cost_payment),
+       SUM(clicks),
+       SUM(views),
+       SUM(clicks_all),
+       SUM(views_all),
+       SUM(views_unique),
+       ? as hour_timestamp
+FROM event_logs_hourly
+WHERE hour_timestamp = ?
+GROUP BY 1, 2, 3;
+SQL;
+
+    private const INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN = <<<SQL
+INSERT INTO event_logs_hourly_stats (`advertiser_id`, `campaign_id`, `clicks`, `views`, `cost`, `cost_payment`,
+                                     `clicks_all`, `views_all`, `views_unique`, `hour_timestamp`)
 SELECT s.advertiser_id                                            AS advertiser_id,
        s.campaign_id                                              AS campaign_id,
        SUM(s.clicks)                                              AS clicks,
@@ -726,8 +758,19 @@ SQL;
             $dateStart,
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );
+
         $this->executeQuery(
-            self::INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_CAMPAIGN,
+            self::DELETE_FROM_EVENT_LOGS_HOURLY_STATS_WHERE_HOUR_TIMESTAMP,
+            $dateStart,
+            [$dateStart]
+        );
+        $this->executeQuery(
+            self::INSERT_EVENT_LOGS_HOURLY_STATS,
+            $dateStart,
+            [$dateStart, $dateStart]
+        );
+        $this->executeQuery(
+            self::INSERT_EVENT_LOGS_HOURLY_STATS_GROUPED_BY_CAMPAIGN,
             $dateStart,
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );

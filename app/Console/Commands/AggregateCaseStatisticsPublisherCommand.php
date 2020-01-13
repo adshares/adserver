@@ -162,8 +162,9 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         foreach ([
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_CASES,
             self::SQL_TEMPLATE_UPDATE_AGGREGATES_WITH_PAYMENTS,
-            self::SQL_TEMPLATE_DELETE_AGGREGATES_NO_GROUP,
-            self::SQL_TEMPLATE_UPDATE_AGGREGATES_NO_GROUP,
+            self::SQL_TEMPLATE_DELETE_STATS_AGGREGATES,
+            self::SQL_TEMPLATE_INSERT_STATS_AGGREGATES,
+            self::SQL_TEMPLATE_INSERT_STATS_AGGREGATES_GROUPED_BY_SITE,
         ] as $queryTemplate) {
             $queries[] = str_replace(
                 $search,
@@ -229,25 +230,53 @@ GROUP BY 1, 2, 3, 4
 ON DUPLICATE KEY UPDATE revenue_hour=VALUES(revenue_hour);
 SQL;
 
-    private const SQL_TEMPLATE_DELETE_AGGREGATES_NO_GROUP = <<<SQL
-DELETE FROM network_case_logs_hourly
-WHERE hour_timestamp='#date_start' AND zone_id IS NULL;
+    private const SQL_TEMPLATE_DELETE_STATS_AGGREGATES = <<<SQL
+DELETE FROM network_case_logs_hourly_stats WHERE hour_timestamp = '#date_start';
 SQL;
 
-    private const SQL_TEMPLATE_UPDATE_AGGREGATES_NO_GROUP = <<<SQL
-INSERT INTO network_case_logs_hourly (publisher_id, site_id, hour_timestamp,
-                                      views_all, views, views_unique, clicks_all, clicks, revenue_case, revenue_hour)
+    private const SQL_TEMPLATE_INSERT_STATS_AGGREGATES = <<<SQL
+INSERT INTO network_case_logs_hourly_stats (publisher_id,
+                                            site_id,
+                                            zone_id,
+                                            views_all,
+                                            views,
+                                            views_unique,
+                                            clicks_all,
+                                            clicks,
+                                            revenue_case,
+                                            revenue_hour,
+                                            hour_timestamp)
 SELECT
   publisher_id,
   site_id,
-  '#date_start'     AS hour_timestamp,
-  SUM(views_all)    AS views_all,
-  SUM(views)        AS views,
-  SUM(views_unique) AS views_unique,
-  SUM(clicks_all)   AS clicks_all,
-  SUM(clicks)       AS clicks,
-  SUM(revenue_case) AS revenue_case,
-  SUM(revenue_hour) AS revenue_hour
+  zone_id,
+  SUM(views_all),
+  SUM(views),
+  SUM(views_unique),
+  SUM(clicks_all),
+  SUM(clicks),
+  SUM(revenue_case),
+  SUM(revenue_hour),
+  '#date_start'
+FROM network_case_logs_hourly
+WHERE hour_timestamp = '#date_start'
+GROUP BY 1, 2, 3;
+SQL;
+
+    private const SQL_TEMPLATE_INSERT_STATS_AGGREGATES_GROUPED_BY_SITE = <<<SQL
+INSERT INTO network_case_logs_hourly_stats (publisher_id, site_id, hour_timestamp, views_all, views, views_unique,
+                                            clicks_all, clicks, revenue_case, revenue_hour)
+SELECT
+  publisher_id,
+  site_id,
+  '#date_start',
+  SUM(views_all),
+  SUM(views),
+  SUM(views_unique),
+  SUM(clicks_all),
+  SUM(clicks) ,
+  SUM(revenue_case),
+  SUM(revenue_hour)
 FROM
   (SELECT
      c.publisher_id              AS publisher_id,

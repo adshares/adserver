@@ -30,8 +30,6 @@ use function sprintf;
 
 class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 {
-    protected const TABLE_NAME = 'network_case_logs_hourly e';
-
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
         StatsRepository::TYPE_VIEW_UNIQUE,
@@ -59,7 +57,8 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     protected function getTableName(): string
     {
-        return self::TABLE_NAME;
+        return (StatsRepository::TYPE_STATS_REPORT === $this->getType())
+            ? 'network_case_logs_hourly e' : 'network_case_logs_hourly_stats e';
     }
 
     private function selectBaseColumns(string $type): void
