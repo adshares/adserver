@@ -24,7 +24,6 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
@@ -33,6 +32,7 @@ use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use function bin2hex;
 
@@ -807,7 +807,7 @@ SQL;
         return $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
     }
 
-    private function executeQuery(string $query, DateTime $dateStart, array $bindings = []): array
+    private function executeQuery(string $query, DateTimeInterface $dateStart, array $bindings = []): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
