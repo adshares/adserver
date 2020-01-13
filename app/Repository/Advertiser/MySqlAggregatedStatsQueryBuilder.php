@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Repository\StatsRepository;
-use DateTime;
+use DateTimeInterface;
 use function in_array;
 use function sprintf;
 
@@ -131,7 +131,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function setDateRange(DateTime $dateStart, DateTime $dateEnd): self
+    public function setDateRange(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): self
     {
         $this->where(
             sprintf(

@@ -31,6 +31,7 @@ use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use function bin2hex;
 
@@ -54,6 +55,24 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
+        $now = new DateTime();
+        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
+            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
+
+            if (null !== $resultIndexToFill) {
+                $resultLive = $this->fetchLive(
+                    StatsRepository::TYPE_VIEW,
+                    $publisherId,
+                    $resolution,
+                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
+                    $now,
+                    $siteId
+                );
+
+                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
+            }
+        }
+
         return new ChartResult($result);
     }
 
@@ -72,6 +91,24 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
+
+        $now = new DateTime();
+        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
+            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
+
+            if (null !== $resultIndexToFill) {
+                $resultLive = $this->fetchLive(
+                    StatsRepository::TYPE_VIEW_ALL,
+                    $publisherId,
+                    $resolution,
+                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
+                    $now,
+                    $siteId
+                );
+
+                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
+            }
+        }
 
         return new ChartResult($result);
     }
@@ -130,6 +167,24 @@ class MySqlStatsRepository implements StatsRepository
             $dateEnd,
             $siteId
         );
+
+        $now = new DateTime();
+        if (StatsRepository::RESOLUTION_HOUR === $resolution && $dateEnd > $now) {
+            $resultIndexToFill = $this->getFirstIndexToFillWithLiveData($result);
+
+            if (null !== $resultIndexToFill) {
+                $resultLive = $this->fetchLive(
+                    StatsRepository::TYPE_VIEW_UNIQUE,
+                    $publisherId,
+                    $resolution,
+                    DateTime::createFromFormat(DateTime::ATOM, $result[$resultIndexToFill][0]),
+                    $now,
+                    $siteId
+                );
+
+                $result = $this->updateResultWithLiveResult($result, $resultLive, $resultIndexToFill);
+            }
+        }
 
         return new ChartResult($result);
     }
@@ -551,12 +606,33 @@ class MySqlStatsRepository implements StatsRepository
         $query = $queryBuilder->build();
         $queryResult = $this->executeQuery($query, $dateStart);
 
-        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
-
-        return $result;
+        return $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
     }
 
-    private function executeQuery(string $query, DateTime $dateStart): array
+    private function fetchLive(
+        string $type,
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $queryBuilder = (new MySqlLiveStatsQueryBuilder($type))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendResolution($resolution);
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId);
+        }
+
+        $query = $queryBuilder->build();
+        $queryResult = $this->executeQuery($query, $dateStart);
+
+        return $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+    }
+
+    private function executeQuery(string $query, DateTimeInterface $dateStart): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
@@ -737,7 +813,7 @@ class MySqlStatsRepository implements StatsRepository
     {
         foreach ($emptyResult as $key => $value) {
             if (isset($formattedResult[$key])) {
-                $emptyResult[$key] = $formattedResult[$key];
+                $emptyResult[$key] = (int)$formattedResult[$key];
             }
         }
 
@@ -833,5 +909,35 @@ SQL;
         }
 
         return DB::select($query);
+    }
+
+    private function getFirstIndexToFillWithLiveData(array $result): ?int
+    {
+        $zeroValueIndex = null;
+
+        for ($index = count($result) - 1; $index >= 0; $index--) {
+            if (0 !== $result[$index][1]) {
+                break;
+            }
+
+            $zeroValueIndex = $index;
+        }
+
+        return $zeroValueIndex;
+    }
+
+    private function updateResultWithLiveResult(array $result, array $resultLive, int $resultIndexToFill): array
+    {
+        $resultCount = count($result);
+        foreach ($resultLive as $item) {
+            if ($resultIndexToFill >= $resultCount) {
+                break;
+            }
+
+            $result[$resultIndexToFill][1] = $item[1];
+            $resultIndexToFill++;
+        }
+
+        return $result;
     }
 }

@@ -28,23 +28,18 @@ use DateTimeInterface;
 use function in_array;
 use function sprintf;
 
-class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
+class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 {
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
         StatsRepository::TYPE_VIEW_UNIQUE,
         StatsRepository::TYPE_VIEW_ALL,
-        StatsRepository::TYPE_CLICK,
-        StatsRepository::TYPE_CLICK_ALL,
-        StatsRepository::TYPE_REVENUE_BY_CASE,
-        StatsRepository::TYPE_REVENUE_BY_HOUR,
-        StatsRepository::TYPE_STATS,
-        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
     {
         $this->selectBaseColumns($type);
+        $this->join('network_impressions i', 'e.network_impression_id = i.id');
         $this->withoutRemovedSites();
 
         parent::__construct($type);
@@ -57,57 +52,24 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     protected function getTableName(): string
     {
-        return (StatsRepository::TYPE_STATS_REPORT === $this->getType())
-            ? 'network_case_logs_hourly e' : 'network_case_logs_hourly_stats e';
+        return 'network_cases e';
     }
 
     private function selectBaseColumns(string $type): void
     {
         switch ($type) {
             case StatsRepository::TYPE_VIEW:
-                $this->column('SUM(e.views) AS c');
+                $this->column('SUM(IF(i.human_score >= 0.5, 1, 0)) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_ALL:
-                $this->column('SUM(e.views_all) AS c');
-                break;
-            case StatsRepository::TYPE_CLICK:
-                $this->column('SUM(e.clicks) AS c');
-                break;
-            case StatsRepository::TYPE_CLICK_ALL:
-                $this->column('SUM(e.clicks_all) AS c');
+                $this->column('COUNT(1) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_UNIQUE:
-                $this->column('SUM(e.views_unique) AS c');
-                break;
-            case StatsRepository::TYPE_REVENUE_BY_CASE:
-                $this->column('SUM(e.revenue_case) AS c');
-                break;
-            case StatsRepository::TYPE_REVENUE_BY_HOUR:
-                $this->column('SUM(e.revenue_hour) AS c');
-                break;
-            case StatsRepository::TYPE_STATS:
-                $this->selectBaseStatsColumns();
-                break;
-            case StatsRepository::TYPE_STATS_REPORT:
-                $this->selectBaseStatsReportColumns();
+                $this->column(
+                    'COUNT(DISTINCT (IF(i.human_score >= 0.5, IFNULL(i.user_id, i.tracking_id), NULL))) AS c'
+                );
                 break;
         }
-    }
-
-    private function selectBaseStatsColumns(): void
-    {
-        $this->column('SUM(e.clicks) AS clicks');
-        $this->column('SUM(e.views) AS views');
-        $this->column('SUM(e.revenue_case) AS revenue');
-    }
-
-    private function selectBaseStatsReportColumns(): void
-    {
-        $this->selectBaseStatsColumns();
-
-        $this->column('SUM(e.clicks_all) AS clicksAll');
-        $this->column('SUM(e.views_all) AS viewsAll');
-        $this->column('SUM(e.views_unique) AS viewsUnique');
     }
 
     private function withoutRemovedSites(): void
@@ -135,7 +97,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->where(
             sprintf(
-                'e.hour_timestamp BETWEEN \'%s\' AND \'%s\'',
+                'e.created_at BETWEEN \'%s\' AND \'%s\'',
                 $this->convertDateTimeToMySqlDate($dateStart),
                 $this->convertDateTimeToMySqlDate($dateEnd)
             )
@@ -148,44 +110,43 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($resolution) {
             case StatsRepository::RESOLUTION_HOUR:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->column('DAY(e.hour_timestamp) AS d');
-                $this->column('HOUR(e.hour_timestamp) AS h');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
-                $this->groupBy('DAY(e.hour_timestamp)');
-                $this->groupBy('HOUR(e.hour_timestamp)');
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->column('DAY(e.created_at) AS d');
+                $this->column('HOUR(e.created_at) AS h');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
+                $this->groupBy('DAY(e.created_at)');
+                $this->groupBy('HOUR(e.created_at)');
                 break;
             case StatsRepository::RESOLUTION_DAY:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->column('DAY(e.hour_timestamp) AS d');
-
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
-                $this->groupBy('DAY(e.hour_timestamp)');
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->column('DAY(e.created_at) AS d');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
+                $this->groupBy('DAY(e.created_at)');
                 break;
             case StatsRepository::RESOLUTION_WEEK:
-                $this->column('YEARWEEK(e.hour_timestamp, 3) as yw');
-                $this->groupBy('YEARWEEK(e.hour_timestamp, 3)');
+                $this->column('YEARWEEK(e.created_at, 3) as yw');
+                $this->groupBy('YEARWEEK(e.created_at, 3)');
                 break;
             case StatsRepository::RESOLUTION_MONTH:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('MONTH(e.created_at) as m');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('MONTH(e.created_at)');
                 break;
             case StatsRepository::RESOLUTION_QUARTER:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('QUARTER(e.hour_timestamp) as q');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('QUARTER(e.hour_timestamp)');
+                $this->column('YEAR(e.created_at) AS y');
+                $this->column('QUARTER(e.created_at) as q');
+                $this->groupBy('YEAR(e.created_at)');
+                $this->groupBy('QUARTER(e.created_at)');
                 break;
             case StatsRepository::RESOLUTION_YEAR:
             default:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->groupBy('YEAR(e.hour_timestamp)');
+                $this->column('YEAR(e.created_at) AS y');
+                $this->groupBy('YEAR(e.created_at)');
                 break;
         }
 
@@ -229,12 +190,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('revenue>0');
-
-        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
-            $this->having('clicksAll>0');
-            $this->having('viewsAll>0');
-            $this->having('viewsUnique>0');
-        }
 
         return $this;
     }
