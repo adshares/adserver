@@ -313,7 +313,7 @@ SQL;
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateInvalidRate((int)$resultViewsAll[$i][1], (int)$resultViews[$i][1]),
+                self::calculateInvalidRate((int)$resultViewsAll[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -409,7 +409,7 @@ SQL;
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultClicks[$i][0],
-                $this->calculateInvalidRate((int)$resultClicksAll[$i][1], (int)$resultClicks[$i][1]),
+                self::calculateInvalidRate((int)$resultClicksAll[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -448,7 +448,7 @@ SQL;
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultClicks[$i][0],
-                $this->calculateCpc((int)$resultSum[$i][1], (int)$resultClicks[$i][1]),
+                self::calculateCpc((int)$resultSum[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -487,7 +487,7 @@ SQL;
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateCpm((int)$resultSum[$i][1], (int)$resultViews[$i][1]),
+                self::calculateCpm((int)$resultSum[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -564,7 +564,7 @@ SQL;
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateCtr((int)$resultClicks[$i][1], (int)$resultViews[$i][1]),
+                self::calculateCtr((int)$resultClicks[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -607,9 +607,9 @@ SQL;
             $calculation = new Calculation(
                 $clicks,
                 $views,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateCpc($cost, $clicks),
-                $this->calculateCpm($cost, $views),
+                self::calculateCtr($clicks, $views),
+                self::calculateCpc($cost, $clicks),
+                self::calculateCpm($cost, $views),
                 $cost
             );
 
@@ -653,9 +653,9 @@ SQL;
             $calculation = new Calculation(
                 $clicks,
                 $views,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateCpc($cost, $clicks),
-                $this->calculateCpm($cost, $views),
+                self::calculateCtr($clicks, $views),
+                self::calculateCpc($cost, $clicks),
+                self::calculateCpm($cost, $views),
                 $cost
             );
         } else {
@@ -702,14 +702,14 @@ SQL;
             $calculation = new ReportCalculation(
                 $clicks,
                 $clicksAll,
-                $this->calculateInvalidRate($clicksAll, $clicks),
+                self::calculateInvalidRate($clicksAll, $clicks),
                 $views,
                 $viewsAll,
-                $this->calculateInvalidRate($viewsAll, $views),
+                self::calculateInvalidRate($viewsAll, $views),
                 (int)$row->viewsUnique,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateCpc($cost, $clicks),
-                $this->calculateCpm($cost, $views),
+                self::calculateCtr($clicks, $views),
+                self::calculateCpc($cost, $clicks),
+                self::calculateCpm($cost, $views),
                 $cost,
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
@@ -839,10 +839,7 @@ SQL;
         $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
         $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
 
-        $result = $this->mapResult($joinedResult);
-        $result = $this->overwriteStartDate($dateStart, $result);
-
-        return $result;
+        return self::overwriteStartDate($dateStart, self::mapResult($joinedResult));
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
@@ -995,7 +992,7 @@ SQL;
         return $emptyResult;
     }
 
-    private function mapResult(array $joinedResult): array
+    private static function mapResult(array $joinedResult): array
     {
         $result = [];
         foreach ($joinedResult as $key => $value) {
@@ -1005,31 +1002,31 @@ SQL;
         return $result;
     }
 
-    private function overwriteStartDate(DateTime $dateStart, array $result): array
+    private static function overwriteStartDate(DateTimeInterface $dateStart, array $result): array
     {
         if (count($result) > 0) {
-            $result[0][0] = $dateStart->format(DateTime::ATOM);
+            $result[0][0] = $dateStart->format(DateTimeInterface::ATOM);
         }
 
         return $result;
     }
 
-    private function calculateCpc(int $cost, int $clicks): int
+    private static function calculateCpc(int $cost, int $clicks): int
     {
         return (0 === $clicks) ? 0 : (int)round($cost / $clicks);
     }
 
-    private function calculateCpm(int $cost, int $views): int
+    private static function calculateCpm(int $cost, int $views): int
     {
         return (0 === $views) ? 0 : (int)round($cost / $views * 1000);
     }
 
-    private function calculateCtr(int $clicks, int $views): float
+    private static function calculateCtr(int $clicks, int $views): float
     {
         return (0 === $views) ? 0 : $clicks / $views;
     }
 
-    private function calculateInvalidRate(int $totalCount, int $validCount): float
+    private static function calculateInvalidRate(int $totalCount, int $validCount): float
     {
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
