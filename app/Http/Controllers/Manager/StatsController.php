@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
+use Adshares\Advertiser\Dto\Input\ConversionDataInput;
 use Adshares\Advertiser\Dto\Input\InvalidInputException;
 use Adshares\Advertiser\Dto\Input\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
@@ -86,7 +87,7 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $campaignId = $this->getCampaignIdFromRequest($request);
+        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -101,7 +102,7 @@ class StatsController extends Controller
                 $resolution,
                 $from,
                 $to,
-                $campaignId
+                $campaignUuid
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -158,7 +159,7 @@ class StatsController extends Controller
         return $date;
     }
 
-    private function getCampaignIdFromRequest(Request $request): ?string
+    private function getCampaignFromRequest(Request $request): ?Campaign
     {
         $campaignId = $request->input('campaign_id');
 
@@ -172,7 +173,7 @@ class StatsController extends Controller
             throw new NotFoundHttpException('Campaign does not exists.');
         }
 
-        return $campaign->uuid;
+        return $campaign;
     }
 
     private function validateChartInputParameters(
@@ -195,7 +196,7 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $campaignId = $this->getCampaignIdFromRequest($request);
+        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -208,7 +209,7 @@ class StatsController extends Controller
                 $user->uuid,
                 $from,
                 $to,
-                $campaignId
+                $campaignUuid
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -228,7 +229,7 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $campaignId = $this->getCampaignIdFromRequest($request);
+        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -241,7 +242,7 @@ class StatsController extends Controller
                 $user->uuid,
                 $from,
                 $to,
-                $campaignId
+                $campaignUuid
             );
         } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
@@ -253,6 +254,37 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
 
         return new JsonResponse(['total' => $total, 'data' => $data]);
+    }
+
+    public function advertiserStatsConversions(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): JsonResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignId = $this->getCampaignFromRequest($request)->id ?? null;
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $this->validateChartInputParameters($from, $to);
+        $this->validateUserAsAdvertiser($user);
+
+        try {
+            $input = new ConversionDataInput(
+                $user->id,
+                $from,
+                $to,
+                $campaignId
+            );
+        } catch (AdvertiserInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->advertiserStatsDataProvider->fetchConversionData($input);
+
+        return self::json($result->toArray());
     }
 
     public function publisherStats(
@@ -332,7 +364,7 @@ class StatsController extends Controller
     ): StreamedResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $campaignId = $this->getCampaignIdFromRequest($request);
+        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -348,7 +380,7 @@ class StatsController extends Controller
                 $isAdmin ? null : $user->uuid,
                 $from,
                 $to,
-                $campaignId
+                $campaignUuid
             );
         } catch (InvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);

@@ -24,9 +24,10 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
@@ -34,6 +35,7 @@ use Adshares\Advertiser\Dto\Result\Stats\Total;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
 use DateTimeZone;
+use Doctrine\DBAL\Exception\ServerException;
 use function bin2hex;
 
 class MySqlStatsRepository implements StatsRepository
@@ -1087,5 +1089,42 @@ SQL;
         }
 
         return DB::select($query);
+    }
+
+    public function fetchStatsConversion(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null
+    ): ConversionDataCollection {
+        $builder = DB::table('conversions_hourly')
+            ->where('hour_timestamp', '>=', $dateStart)
+            ->where('hour_timestamp', '<=', $dateEnd)
+            ->where('advertiser_id', $advertiserId)
+            ->selectRaw(
+                'campaign_id, '
+                .'(SELECT name FROM conversion_definitions WHERE id=conversion_definition_id) AS name, '
+                .'SUM(cost) AS cost, SUM(occurrences) AS occurrences'
+            )
+            ->groupBy('campaign_id', 'conversion_definition_id');
+
+        if (null !== $campaignId) {
+            $builder->where('campaign_id', $campaignId);
+        }
+
+        $queryResult = $builder->get();
+
+        $result = [];
+
+        foreach ($queryResult as $entry) {
+            $result[] = new ConversionDataEntry(
+                $entry->campaign_id,
+                $entry->name,
+                (int)$entry->cost,
+                (int)$entry->occurrences
+            );
+        }
+
+        return new ConversionDataCollection($result);
     }
 }

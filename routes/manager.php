@@ -100,6 +100,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     );
     Route::get('campaigns/stats/table/{date_start}/{date_end}', [StatsController::class, 'advertiserStats']);
     Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::class, 'advertiserStatsWithTotal']);
+    Route::get('campaigns/stats/kw/{date_start}/{date_end}', [StatsController::class, 'advertiserStatsConversions']);
     Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
         [StatsController::class, 'publisherChart']);
     Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);
