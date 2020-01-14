@@ -268,7 +268,7 @@ class WalletController extends Controller
         $amount = (float)$request->get('amount', 10);
 
         $resp = [
-            self::FIELD_NOW_PAYMENTS_URL => $nowPayments->getPaymentUrl($user, $amount)
+            self::FIELD_NOW_PAYMENTS_URL => $nowPayments->getPaymentUrl($user, $amount),
         ];
 
         return self::json($resp);
@@ -276,7 +276,24 @@ class WalletController extends Controller
 
     public function nowPaymentsNotify(string $uuid, NowPayments $nowPayments, Request $request): Response
     {
-        $nowPayments->notify($uuid, $request->all(), $request->headers->all());
+        $headerHash = $request->headers->get('x-nowpayments-sig');
+        $params = $request->request->all();
+        $hash = $nowPayments->hash($params);
+
+        if ($headerHash !== $hash) {
+            Log::warning(sprintf('[NowPayments] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
+
+            return response()->noContent(422);
+        }
+
+        $user = User::fetchByUuid($uuid);
+        if ($user === null) {
+            Log::warning(sprintf('[NowPayments] Cannot find user (%s)', $uuid));
+
+            return response()->noContent(422);
+        }
+
+        $nowPayments->notify($user, $params);
 
         return response()->noContent();
     }

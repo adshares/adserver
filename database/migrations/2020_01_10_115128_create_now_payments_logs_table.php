@@ -21,8 +21,9 @@ class CreateNowPaymentsLogsTable extends Migration
                 $table->bigInteger('user_id')->index();
                 $table->string('order_id', 24)->index();
                 $table->string('status', 16);
-                $table->decimal('amount')->nullable();
-                $table->bigInteger('payment_id')->nullable()->index();
+                $table->decimal('amount', 14, 8);
+                $table->string('currency', 16);
+                $table->string('payment_id', 16)->nullable()->index();
                 $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));
                 $table->json('context');
             }

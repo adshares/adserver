@@ -30,8 +30,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property int user_id
  * @property string order_id
  * @property string status
- * @property float|null amount
- * @property int|null payment_id
+ * @property float amount
+ * @property string currency
+ * @property string|null payment_id
  * @property DateTime created_at
  * @property array context
  * @mixin Builder
@@ -60,6 +61,10 @@ final class NowPaymentsLog extends Model
 
     const STATUS_EXPIRED = 'expired';
 
+    const STATUS_DEPOSIT_INIT = 'deposit-init';
+
+    const STATUS_DEPOSIT = 'deposit';
+
     public $timestamps = false;
 
     protected $casts = [
@@ -78,8 +83,9 @@ final class NowPaymentsLog extends Model
         int $userId,
         string $orderId,
         string $status,
-        float $amount = null,
-        int $paymentId = null,
+        float $amount,
+        string $currency,
+        string $paymentId = null,
         array $context = []
     ): NowPaymentsLog {
         $log = new self();
@@ -87,6 +93,7 @@ final class NowPaymentsLog extends Model
         $log->order_id = $orderId;
         $log->status = $status;
         $log->amount = $amount;
+        $log->currency = $currency;
         $log->payment_id = $paymentId;
         $log->context = $context;
 

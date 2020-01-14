@@ -22,15 +22,22 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class NowPayments
 {
+    const NOW_PAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
+
     const NOW_PAYMENTS_URL = 'https://nowpayments.io/payment';
 
     /** @var string */
@@ -117,7 +124,16 @@ final class NowPayments
         ];
 
         try {
-            $log = NowPaymentsLog::create($user->id, $orderId, NowPaymentsLog::STATUS_INIT, $amount, null, $data);
+            $log =
+                NowPaymentsLog::create(
+                    $user->id,
+                    $orderId,
+                    NowPaymentsLog::STATUS_INIT,
+                    $amount,
+                    $this->currency,
+                    null,
+                    $data
+                );
             $log->save();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
@@ -126,31 +142,65 @@ final class NowPayments
         return sprintf('%s?data=%s', self::NOW_PAYMENTS_URL, rawurlencode(json_encode($data)));
     }
 
-    public function notify(string $uuid, array $params, array $headers = []): void
+    public function hash(array $params): string
     {
-        $user = User::fetchByUuid($uuid);
+        $allowed = [
+            'actually_paid',
+            'order_description',
+            'order_id',
+            'pay_address',
+            'pay_amount',
+            'pay_currency',
+            'payment_id',
+            'payment_status',
+            'price_amount',
+            'price_currency',
+            'created_at',
+            'updated_at',
+        ];
 
-        $userId = $user !== null ? $user->id : 0;
+        $filtered = array_filter(
+            $params,
+            function ($key) use ($allowed) {
+                return in_array($key, $allowed);
+            },
+            ARRAY_FILTER_USE_KEY
+        );
+
+        ksort($filtered);
+
+        return hash_hmac(
+            'sha512',
+            json_encode($filtered, JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES),
+            $this->ipnSecret
+        );
+    }
+
+    public function notify(User $user, array $params): void
+    {
         $orderId = $params['order_id'] ?? '';
         $status = $params['payment_status'] ?? '';
-        $paymentId = $params['payment_id'] ?? null;
-        $amount = $params['actually_paid'] ?? null;
+        $paymentId = $params['payment_id'] ?? '';
+        $amount = (float)($params['actually_paid'] ?? 0);
+        $currency = strtoupper($params['pay_currency'] ?? '');
 
         try {
             $log = NowPaymentsLog::create(
-                $userId,
+                $user->id,
                 $orderId,
                 $status,
                 $amount,
+                $currency,
                 $paymentId,
-                [
-                    'params' => $params,
-                    'headers' => $headers,
-                ]
+                $params
             );
             $log->save();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
+        }
+
+        if ($status = NowPaymentsLog::STATUS_FINISHED) {
+            $this->prepareDeposit($user, $amount, $currency, $orderId, $paymentId);
         }
     }
 
@@ -165,5 +215,155 @@ final class NowPayments
         }
 
         return $exchangeRate['value'] / (1 - $this->fee);
+    }
+
+    private function saveDeposit(
+        bool $processed,
+        User $user,
+        float $amount,
+        string $orderId,
+        string $paymentId,
+        array $data = []
+    ): bool {
+        $ledgerTxId = sprintf('NP:%s', $paymentId);
+        $entry = UserLedgerEntry::fetchByTxId($user->id, $ledgerTxId);
+
+        if ($entry !== null && $entry->status === UserLedgerEntry::STATUS_ACCEPTED) {
+            Log::error(
+                sprintf('[NowPayments] Order %s (%s) is already deposited [#%d]', $orderId, $paymentId, $entry->id)
+            );
+
+            return false;
+        }
+
+        $clicks = (int)($amount * 1e11);
+        $status = $processed ? UserLedgerEntry::STATUS_ACCEPTED : UserLedgerEntry::STATUS_PROCESSING;
+        if ($entry === null) {
+            $entry = UserLedgerEntry::construct(
+                $user->id,
+                $clicks,
+                $status,
+                UserLedgerEntry::TYPE_DEPOSIT
+            )->processed($ledgerTxId);
+        } else {
+            $entry->amount = $clicks;
+            $entry->status = $status;
+        }
+
+        try {
+            $entry->save();
+        } catch (Throwable $throwable) {
+            Log::error(
+                sprintf('[NowPayments] Error during deposit (%s): %s', $paymentId, $throwable->getMessage())
+            );
+
+            return false;
+        }
+
+        try {
+            $log = NowPaymentsLog::create(
+                $user->id,
+                $orderId,
+                $processed ? NowPaymentsLog::STATUS_DEPOSIT : NowPaymentsLog::STATUS_DEPOSIT_INIT,
+                $amount,
+                'ADS',
+                $paymentId,
+                array_merge(
+                    $data,
+                    [
+                        'ledgerTxId' => $ledgerTxId,
+                        'clicks' => $clicks,
+                    ]
+                )
+            );
+            $log->save();
+            DB::commit();
+        } catch (QueryException $exception) {
+            Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
+        }
+
+        return true;
+    }
+
+    private function prepareDeposit(
+        User $user,
+        float $amount,
+        string $currency,
+        string $orderId,
+        string $paymentId
+    ): void {
+        $middleAmount = $this->getEstimatePrice($amount, $currency);
+        $adsAmount = $middleAmount / $this->getExchangeRate();
+
+        $result = $this->saveDeposit(
+            false,
+            $user,
+            $adsAmount,
+            $orderId,
+            $paymentId,
+            [
+                'amount' => $amount,
+                'currency' => $currency,
+                'middleAmount' => $middleAmount,
+                'middleCurrency' => $this->currency,
+                'adsAmount' => $adsAmount,
+            ]
+        );
+
+        if (!$result) {
+            return;
+        }
+
+        if (empty($this->exchangeUrl)) {
+            $this->deposit($user, $adsAmount, $orderId, $paymentId);
+        } else {
+            $this->exchangeDeposit($user, $middleAmount, $adsAmount, $orderId, $paymentId);
+        }
+    }
+
+    private function deposit(User $user, float $amount, string $orderId, string $paymentId): void
+    {
+        if ($amount == 0) {
+            Log::warning('[NowPayments] Cannot deposit 0 ADS');
+
+            return;
+        }
+
+        $this->saveDeposit(true, $user, $amount, $orderId, $paymentId);
+    }
+
+    private function exchangeDeposit(
+        User $user,
+        float $amount,
+        float $adsAmount,
+        string $orderId,
+        string $paymentId
+    ): void {
+    }
+
+    public function getEstimatePrice(float $amount, string $currency): float
+    {
+        $rate = 0;
+        try {
+            $client = new Client();
+            $response = $client->get(
+                self::NOW_PAYMENTS_API_URL.'/estimate?'.http_build_query(
+                    ['amount' => 100, 'currency_from' => $this->currency, 'currency_to' => $currency]
+                ),
+                ['headers' => ['x-api-key' => $this->apiKey]]
+            );
+            if ($response->getStatusCode() == 200) {
+                $data = json_decode((string)$response->getBody(), true);
+                $rate = 100 / (float)($data['estimated_amount'] ?? 0);
+            }
+        } catch (RequestException $exception) {
+            Log::error(
+                sprintf('[NowPayments] Cannot get estimated price for "%s": %s', $currency, $exception->getMessage())
+            );
+
+            return 0;
+        }
+
+        return $amount * $rate;
     }
 }
