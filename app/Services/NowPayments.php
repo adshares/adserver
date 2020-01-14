@@ -334,7 +334,7 @@ final class NowPayments
         }
 
         if ($this->useExchange) {
-            return $this->exchangeDeposit($user, $middleAmount, $adsAmount, $orderId, $paymentId);
+            return $this->exchangeDeposit($user, $middleAmount, $adsAmount, $paymentId);
         } else {
             return $this->deposit($user, $adsAmount, $orderId, $paymentId);
         }
@@ -359,7 +359,6 @@ final class NowPayments
         User $user,
         float $amount,
         float $adsAmount,
-        string $orderId,
         string $paymentId
     ): bool {
         if ($amount == 0) {
