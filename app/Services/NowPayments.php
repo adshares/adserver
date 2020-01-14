@@ -22,7 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services;
 
+use Adshares\Ads\Util\AdsConverter;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -30,8 +32,10 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 final class NowPayments
@@ -61,15 +65,19 @@ final class NowPayments
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader)
+    /** @var Exchange */
+    private $exchange;
+
+    public function __construct(ExchangeRateReader $exchangeRateReader, Exchange $exchange)
     {
         $this->exchangeRateReader = $exchangeRateReader;
+        $this->exchange = $exchange;
         $this->apiKey = config('app.now_payments_api_key');
         $this->ipnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
         $this->minAmount = (int)config('app.now_payments_min_amount');
         $this->fee = (float)config('app.now_payments_fee');
-        $this->exchangeUrl = config('app.now_payments_exchange_url');
+        $this->useExchange = config('app.now_payments_exchange');
     }
 
     public function info(): ?array
@@ -176,7 +184,7 @@ final class NowPayments
         );
     }
 
-    public function notify(User $user, array $params): void
+    public function notify(User $user, array $params): bool
     {
         $orderId = $params['order_id'] ?? '';
         $status = $params['payment_status'] ?? '';
@@ -200,8 +208,19 @@ final class NowPayments
         }
 
         if ($status = NowPaymentsLog::STATUS_FINISHED) {
-            $this->prepareDeposit($user, $amount, $currency, $orderId, $paymentId);
+            return $this->prepareDeposit($user, $amount, $currency, $orderId, $paymentId);
         }
+
+        return true;
+    }
+
+    public function exchange(User $user, array $params): bool
+    {
+        $orderId = $params['orderId'] ?? '';
+        $paymentId = $params['paymentId'] ?? '';
+        $amount = (float)($params['adsAmount'] ?? 0);
+
+        return $this->deposit($user, $amount, $orderId, $paymentId);
     }
 
     private function getExchangeRate(): float
@@ -236,7 +255,7 @@ final class NowPayments
             return false;
         }
 
-        $clicks = (int)($amount * 1e11);
+        $clicks = AdsConverter::adsToClicks($amount);
         $status = $processed ? UserLedgerEntry::STATUS_ACCEPTED : UserLedgerEntry::STATUS_PROCESSING;
         if ($entry === null) {
             $entry = UserLedgerEntry::construct(
@@ -291,7 +310,7 @@ final class NowPayments
         string $currency,
         string $orderId,
         string $paymentId
-    ): void {
+    ): bool {
         $middleAmount = $this->getEstimatePrice($amount, $currency);
         $adsAmount = $middleAmount / $this->getExchangeRate();
 
@@ -311,25 +330,29 @@ final class NowPayments
         );
 
         if (!$result) {
-            return;
+            return false;
         }
 
-        if (empty($this->exchangeUrl)) {
-            $this->deposit($user, $adsAmount, $orderId, $paymentId);
+        if ($this->useExchange) {
+            return $this->exchangeDeposit($user, $middleAmount, $adsAmount, $orderId, $paymentId);
         } else {
-            $this->exchangeDeposit($user, $middleAmount, $adsAmount, $orderId, $paymentId);
+            return $this->deposit($user, $adsAmount, $orderId, $paymentId);
         }
     }
 
-    private function deposit(User $user, float $amount, string $orderId, string $paymentId): void
+    private function deposit(User $user, float $amount, string $orderId, string $paymentId): bool
     {
         if ($amount == 0) {
             Log::warning('[NowPayments] Cannot deposit 0 ADS');
 
-            return;
+            return false;
         }
 
-        $this->saveDeposit(true, $user, $amount, $orderId, $paymentId);
+        if ($this->saveDeposit(true, $user, $amount, $orderId, $paymentId)) {
+            Mail::to($user)->queue(new DepositProcessed(AdsConverter::adsToClicks($amount)));
+        }
+
+        return true;
     }
 
     private function exchangeDeposit(
@@ -338,7 +361,20 @@ final class NowPayments
         float $adsAmount,
         string $orderId,
         string $paymentId
-    ): void {
+    ): bool {
+        if ($amount == 0) {
+            Log::warning('[NowPayments] Cannot exchange 0 ADS');
+
+            return false;
+        }
+
+        return $this->exchange->request(
+            $amount,
+            $this->currency,
+            $adsAmount,
+            $paymentId,
+            route('now-payments.exchange', ['uuid' => $user->uuid])
+        );
     }
 
     public function getEstimatePrice(float $amount, string $currency): float
@@ -350,7 +386,7 @@ final class NowPayments
                 self::NOW_PAYMENTS_API_URL.'/estimate?'.http_build_query(
                     ['amount' => 100, 'currency_from' => $this->currency, 'currency_to' => $currency]
                 ),
-                ['headers' => ['x-api-key' => $this->apiKey]]
+                [RequestOptions::HEADERS => ['x-api-key' => $this->apiKey]]
             );
             if ($response->getStatusCode() == 200) {
                 $data = json_decode((string)$response->getBody(), true);

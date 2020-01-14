@@ -50,3 +50,4 @@ Route::get('/policies/terms.html', [InfoController::class, 'terms']);
 Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name('newsletter-unsubscribe');
 
 Route::post('/now-payments/notify/{uuid}', [WalletController::class, 'nowPaymentsNotify'])->name('now-payments.notify');
+Route::post('/now-payments/exchange/{uuid}', [WalletController::class, 'nowPaymentsExchange'])->name('now-payments.exchange');

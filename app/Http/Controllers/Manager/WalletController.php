@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Adserver\Services\Exchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -293,9 +294,37 @@ class WalletController extends Controller
             return response()->noContent(422);
         }
 
-        $nowPayments->notify($user, $params);
+        $result = $nowPayments->notify($user, $params);
 
-        return response()->noContent();
+        return response()->noContent($result ? 204 : 422);
+    }
+
+    public function nowPaymentsExchange(
+        string $uuid,
+        Exchange $exchange,
+        NowPayments $nowPayments,
+        Request $request
+    ): Response {
+        $headerHash = $request->headers->get('x-api-sig');
+        $params = $request->json()->all();
+        $hash = $exchange->hash($params);
+
+        if ($headerHash !== $hash) {
+            Log::warning(sprintf('[Exchange] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
+
+            return response()->noContent(422);
+        }
+
+        $user = User::fetchByUuid($uuid);
+        if ($user === null) {
+            Log::warning(sprintf('[Exchange] Cannot find user (%s)', $uuid));
+
+            return response()->noContent(422);
+        }
+
+        $result = $nowPayments->exchange($user, $params);
+
+        return response()->noContent($result ? 204 : 422);
     }
 
     public function history(Request $request): JsonResponse

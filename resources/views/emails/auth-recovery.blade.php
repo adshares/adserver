@@ -9,6 +9,7 @@ Please use button below to setup your new password
 Setup new password
 @endcomponent
 
-Thanks,<br>
-{{ config('app.name') }}
+Thanks,
+
+{{ config('app.name') }} Team
 @endcomponent

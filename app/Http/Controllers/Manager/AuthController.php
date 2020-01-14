@@ -259,7 +259,7 @@ class AuthController extends Controller
         return self::json($token->uuid);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, NowPayments $nowPayments): JsonResponse
     {
         if (Auth::guard()->attempt(
             $request->only('email', 'password'),
@@ -267,7 +267,7 @@ class AuthController extends Controller
         )) {
             Auth::user()->generateApiKey();
 
-            return $this->check();
+            return $this->check($nowPayments);
         }
 
         return response()->json([], Response::HTTP_BAD_REQUEST);

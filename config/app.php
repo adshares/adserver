@@ -125,7 +125,10 @@ return [
     'now_payments_currency' => env('NOW_PAYMENTS_CURRENCY', 'USD'),
     'now_payments_min_amount' => env('NOW_PAYMENTS_MIN_AMOUNT', 0),
     'now_payments_fee' => env('NOW_PAYMENTS_FEE', 0),
-    'now_payments_exchange_url' => env('NOW_PAYMENTS_EXCHANGE_URL'),
+    'now_payments_exchange' => env('NOW_PAYMENTS_EXCHANGE', false),
+    'exchange_api_url' => env('EXCHANGE_API_URL'),
+    'exchange_api_key' => env('EXCHANGE_API_KEY'),
+    'exchange_api_secret' => env('EXCHANGE_API_SECRET'),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

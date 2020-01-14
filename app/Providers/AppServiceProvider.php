@@ -26,6 +26,7 @@ use Adshares\Adserver\Repository\Advertiser\MySqlStatsRepository as MysqlAdverti
 use Adshares\Adserver\Repository\Common\EloquentExchangeRateRepository;
 use Adshares\Adserver\Repository\Publisher\MySqlStatsRepository as MysqlPublisherStatsRepository;
 use Adshares\Adserver\Services\Common\AdsLogReader;
+use Adshares\Adserver\Services\Exchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Advertiser\Repository\StatsRepository as AdvertiserStatsRepository;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
@@ -140,10 +141,18 @@ class AppServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(
+            Exchange::class,
+            function (Application $app) {
+                return new Exchange();
+            }
+        );
+
+        $this->app->bind(
             NowPayments::class,
             function (Application $app) {
                 return new NowPayments(
-                    $app->make(ExchangeRateReader::class)
+                    $app->make(ExchangeRateReader::class),
+                    $app->make(Exchange::class)
                 );
             }
         );
