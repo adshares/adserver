@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controllers\InfoController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\SettingsController;
 use Adshares\Adserver\Http\Controllers\Manager\StatisticsGlobalController;
+use Adshares\Adserver\Http\Controllers\Manager\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [InfoController::class, 'info'])
@@ -47,3 +48,6 @@ Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
 
 Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name('newsletter-unsubscribe');
+
+Route::post('/now-payments/notify/{uuid}', [WalletController::class, 'nowPaymentsNotify'])->name('now-payments.notify');
+Route::post('/now-payments/exchange/{uuid}', [WalletController::class, 'nowPaymentsExchange'])->name('now-payments.exchange');

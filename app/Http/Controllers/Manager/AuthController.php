@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\NowPayments;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -224,7 +225,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function check(): JsonResponse
+    public function check(NowPayments $nowPayments): JsonResponse
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
@@ -236,7 +237,15 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
+        return self::json(
+            array_merge(
+                $user->toArray(),
+                [
+                    'exchange_rate' => $exchangeRate,
+                    'now_payments' => $nowPayments->info(),
+                ]
+            )
+        );
     }
 
     public function impersonate(User $user): JsonResponse
@@ -250,7 +259,7 @@ class AuthController extends Controller
         return self::json($token->uuid);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, NowPayments $nowPayments): JsonResponse
     {
         if (Auth::guard()->attempt(
             $request->only('email', 'password'),
@@ -258,7 +267,7 @@ class AuthController extends Controller
         )) {
             Auth::user()->generateApiKey();
 
-            return $this->check();
+            return $this->check($nowPayments);
         }
 
         return response()->json([], Response::HTTP_BAD_REQUEST);
