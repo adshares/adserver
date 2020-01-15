@@ -27,7 +27,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
 
-final class Exchange
+final class AdsExchange
 {
     /** @var string */
     private $apiUrl;
@@ -48,16 +48,16 @@ final class Exchange
     public function request(
         float $amount,
         string $currency,
-        float $adsAmount,
-        string $paymentId,
-        string $callback
+        string $callbackUrl,
+        ?string $paymentId = null,
+        ?float $adsAmount = null
     ): bool {
         $data = [
             'amount' => $amount,
             'currency' => strtoupper($currency),
             'adsAmount' => $adsAmount,
             'paymentId' => $paymentId,
-            'callback' => $callback,
+            'callbackUrl' => $callbackUrl,
             'time' => time(),
         ];
 

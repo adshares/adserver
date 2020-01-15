@@ -29,7 +29,7 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
-use Adshares\Adserver\Services\Exchange;
+use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
@@ -301,7 +301,7 @@ class WalletController extends Controller
 
     public function nowPaymentsExchange(
         string $uuid,
-        Exchange $exchange,
+        AdsExchange $exchange,
         NowPayments $nowPayments,
         Request $request
     ): Response {

@@ -33,6 +33,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -64,13 +65,13 @@ final class NowPayments
     /** @var ExchangeRateReader */
     private $exchangeRateReader;
 
-    /** @var Exchange */
-    private $exchange;
+    /** @var AdsExchange */
+    private $adsExchange;
 
-    public function __construct(ExchangeRateReader $exchangeRateReader, Exchange $exchange)
+    public function __construct(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange)
     {
         $this->exchangeRateReader = $exchangeRateReader;
-        $this->exchange = $exchange;
+        $this->adsExchange = $adsExchange;
         $this->apiKey = config('app.now_payments_api_key');
         $this->ipnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
@@ -367,12 +368,12 @@ final class NowPayments
             return false;
         }
 
-        return $this->exchange->request(
+        return $this->adsExchange->request(
             $amount,
             $this->currency,
-            $adsAmount,
+            route('now-payments.exchange', ['uuid' => $user->uuid]),
             $paymentId,
-            route('now-payments.exchange', ['uuid' => $user->uuid])
+            $adsAmount
         );
     }
 
@@ -387,7 +388,7 @@ final class NowPayments
                 ),
                 [RequestOptions::HEADERS => ['x-api-key' => $this->apiKey]]
             );
-            if ($response->getStatusCode() == 200) {
+            if ($response->getStatusCode() === Response::HTTP_OK) {
                 $data = json_decode((string)$response->getBody(), true);
                 $rate = 100 / (float)($data['estimated_amount'] ?? 0);
             }
