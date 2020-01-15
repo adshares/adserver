@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2020-01-15
+### Added
+- NowPayments integration
+- Edit conversions
+### Changed
+- CPA only page rank support
+- Empty direct banner content to campaign landing URL
+- Remove filtering option "Content Type"
+- Queries for statistics data (charts/tables) to increase performance
+### Fixed
+- Deleting always at least one row during events clear command (ops:events:clear)
+
 ## [1.4.9] - 2020-01-07
 ### Fixed
 - User context constructor usage
@@ -333,7 +345,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.4.9...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.0...develop
+[1.5.0]: https://github.com/adshares/adserver/compare/v1.4.9...v1.5.0
 [1.4.9]: https://github.com/adshares/adserver/compare/v1.4.8...v1.4.9
 [1.4.8]: https://github.com/adshares/adserver/compare/v1.4.7...v1.4.8
 [1.4.7]: https://github.com/adshares/adserver/compare/v1.4.6...v1.4.7

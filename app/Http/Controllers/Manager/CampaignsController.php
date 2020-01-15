@@ -135,13 +135,13 @@ class CampaignsController extends Controller
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
 
+        $campaign = new Campaign($input);
+
         $banners = [];
 
         if (isset($input['ads']) && count($input['ads']) > 0) {
-            $banners = $this->prepareBannersFromInput($input['ads']);
+            $banners = $this->prepareBannersFromInput($input['ads'], $campaign->landing_url);
         }
-
-        $campaign = new Campaign($input);
         $this->campaignRepository->save($campaign, $banners);
 
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
@@ -178,7 +178,7 @@ class CampaignsController extends Controller
         return substr($imageUrl, strrpos($imageUrl, '/') + 1);
     }
 
-    private function prepareBannersFromInput(array $input): array
+    private function prepareBannersFromInput(array $input, string $campaignLandingUrl): array
     {
         $banners = [];
 
@@ -199,7 +199,8 @@ class CampaignsController extends Controller
                         break;
                     case Banner::TYPE_DIRECT_LINK:
                     default:
-                        $content = $banner['creative_contents'];
+                        $content =
+                            empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'];
                         break;
                 }
             } catch (RuntimeException $exception) {
@@ -272,7 +273,9 @@ class CampaignsController extends Controller
             if ($bannerFromInput) {
                 $banner->name = $bannerFromInput['name'] ?? $bannerFromInput->creative_size;
                 if ($banner->creative_type === Banner::TEXT_TYPE_DIRECT_LINK) {
-                    $banner->creative_contents = $bannerFromInput['creative_contents'] ?? '';
+                    $banner->creative_contents =
+                        empty($bannerFromInput['creative_contents']) ? $campaign->landing_url
+                            : $bannerFromInput['creative_contents'];
                 }
                 $bannersToUpdate[] = $banner;
 
@@ -289,25 +292,43 @@ class CampaignsController extends Controller
         }
 
         if ($banners) {
-            $bannersToInsert = $this->prepareBannersFromInput($banners->toArray());
+            $bannersToInsert = $this->prepareBannersFromInput($banners->toArray(), $campaign->landing_url);
         }
 
         $conversionsToInsert = [];
+        $conversionsToUpdate = [];
+        $dbConversions = $campaign->conversions->keyBy('uuid');
 
-        $dbConversionUuids = $campaign->conversions->pluck('uuid')->toArray();
-        $inputConversionUuids = [];
         foreach ($conversions as $conversionInput) {
-            if (isset($conversionInput['uuid'])) {
-                $inputConversionUuids[] = $conversionInput['uuid'];
-            } else {
+            if (!isset($conversionInput['uuid'])) {
                 $conversion = new ConversionDefinition();
                 $conversion->fill($conversionInput);
 
                 $conversionsToInsert[] = $conversion;
+
+                continue;
+            }
+
+            if (isset($dbConversions[$conversionInput['uuid']])) {
+                /** @var ConversionDefinition $conversion */
+                $conversion = $dbConversions[$conversionInput['uuid']];
+
+                if ($conversionInput['type'] === $conversion->type) {
+                    $conversion->name = $conversionInput['name'];
+                    $conversion->limit_type = $conversionInput['limit_type'];
+                    $conversion->event_type = $conversionInput['event_type'];
+                    $conversion->value = $conversionInput['value'];
+                    $conversion->is_value_mutable = $conversionInput['is_value_mutable'];
+                    $conversion->is_repeatable = $conversionInput['is_repeatable'];
+
+                    $conversionsToUpdate[] = $conversion;
+                }
+
+                unset($dbConversions[$conversionInput['uuid']]);
             }
         }
 
-        $conversionUuidsToDelete = array_diff($dbConversionUuids, $inputConversionUuids);
+        $conversionUuidsToDelete = $dbConversions->keys()->all();
 
         $this->campaignRepository->update(
             $campaign,
@@ -315,6 +336,7 @@ class CampaignsController extends Controller
             $bannersToUpdate,
             $bannersToDelete,
             $conversionsToInsert,
+            $conversionsToUpdate,
             $conversionUuidsToDelete
         );
 

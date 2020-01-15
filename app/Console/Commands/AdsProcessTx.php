@@ -29,6 +29,7 @@ use Adshares\Ads\Exception\CommandException;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\CampaignResume;
+use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
@@ -254,6 +255,8 @@ class AdsProcessTx extends BaseCommand
 
                 $ledgerEntry->save();
                 $adsPayment->save();
+
+                Mail::to($user)->queue(new DepositProcessed($amount));
 
                 try {
                     $reactivatedCount = $this->reactivateSuspendedCampaigns($user);

@@ -57,6 +57,8 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
+    private const CPA_ONLY_PAGE_RANK = -1.0;
+
     public function find(
         Request $request,
         AdUser $contextProvider,
@@ -135,9 +137,8 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            if ($userContext->pageRankInfo() == Aduser::PAGE_INFO_UNKNOWN) {
+            if ($userContext->pageRank() == self::CPA_ONLY_PAGE_RANK) {
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }

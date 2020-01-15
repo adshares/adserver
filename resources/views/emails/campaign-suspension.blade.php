@@ -7,7 +7,7 @@ In order to deposit ADS coins into your account, please log in to the platform, 
 You can transfer ADS coins either form your ADS wallet or from an exchange.
 Once there are sufficient funds on your account, your campaigns will be automatically resumed and you will get an e-mail notification.
 
-Kind regards,
+Thanks,
 
 {{ config('app.name') }} Team
 @endcomponent
