@@ -68,7 +68,7 @@ final class Exchange
                 [
                     RequestOptions::HEADERS => [
                         'x-api-key' => $this->apiKey,
-                        'x-api-sign' => $this->hash($data),
+                        'x-api-hash' => $this->hash($data),
                     ],
                     RequestOptions::JSON => $data,
                 ]

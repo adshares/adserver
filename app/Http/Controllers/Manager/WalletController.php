@@ -305,7 +305,7 @@ class WalletController extends Controller
         NowPayments $nowPayments,
         Request $request
     ): Response {
-        $headerHash = $request->headers->get('x-api-sig');
+        $headerHash = $request->headers->get('x-api-hash');
         $params = $request->json()->all();
         $hash = $exchange->hash($params);
 
