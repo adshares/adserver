@@ -296,21 +296,39 @@ class CampaignsController extends Controller
         }
 
         $conversionsToInsert = [];
+        $conversionsToUpdate = [];
+        $dbConversions = $campaign->conversions->keyBy('uuid');
 
-        $dbConversionUuids = $campaign->conversions->pluck('uuid')->toArray();
-        $inputConversionUuids = [];
         foreach ($conversions as $conversionInput) {
-            if (isset($conversionInput['uuid'])) {
-                $inputConversionUuids[] = $conversionInput['uuid'];
-            } else {
+            if (!isset($conversionInput['uuid'])) {
                 $conversion = new ConversionDefinition();
                 $conversion->fill($conversionInput);
 
                 $conversionsToInsert[] = $conversion;
+
+                continue;
+            }
+
+            if (isset($dbConversions[$conversionInput['uuid']])) {
+                /** @var ConversionDefinition $conversion */
+                $conversion = $dbConversions[$conversionInput['uuid']];
+
+                if ($conversionInput['type'] === $conversion->type) {
+                    $conversion->name = $conversionInput['name'];
+                    $conversion->limit_type = $conversionInput['limit_type'];
+                    $conversion->event_type = $conversionInput['event_type'];
+                    $conversion->value = $conversionInput['value'];
+                    $conversion->is_value_mutable = $conversionInput['is_value_mutable'];
+                    $conversion->is_repeatable = $conversionInput['is_repeatable'];
+
+                    $conversionsToUpdate[] = $conversion;
+                }
+
+                unset($dbConversions[$conversionInput['uuid']]);
             }
         }
 
-        $conversionUuidsToDelete = array_diff($dbConversionUuids, $inputConversionUuids);
+        $conversionUuidsToDelete = $dbConversions->keys()->all();
 
         $this->campaignRepository->update(
             $campaign,
@@ -318,6 +336,7 @@ class CampaignsController extends Controller
             $bannersToUpdate,
             $bannersToDelete,
             $conversionsToInsert,
+            $conversionsToUpdate,
             $conversionUuidsToDelete
         );
 

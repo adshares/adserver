@@ -79,15 +79,28 @@ class ClearEvents extends BaseCommand
         $this->getOutput()->write(sprintf('<info>Clearing %s', $table));
 
         $deleted = 0;
-        $last = (int)DB::selectOne(
+        $firstLeftRecord = DB::selectOne(
             sprintf(
-                'SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC LIMIT 1',
+                'SELECT id AS value FROM %s WHERE %s >= ? ORDER BY %s ASC, id ASC LIMIT 1',
                 $table,
                 $time_column,
                 $time_column
             ),
             [$dateTo]
-        )->value;
+        );
+
+        if (null === $firstLeftRecord) {
+            $last = (int)DB::selectOne(sprintf('SELECT MAX(id) AS value FROM %s', $table))->value;
+
+            if (!$last) {
+                $this->getOutput()->writeln('</info>');
+                $this->info(sprintf('Table %s is empty.', $table));
+
+                return 0;
+            }
+        } else {
+            $last = (int)$firstLeftRecord->value - 1;
+        }
 
         do {
             DB::beginTransaction();

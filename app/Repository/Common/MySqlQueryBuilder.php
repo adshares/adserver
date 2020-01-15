@@ -43,7 +43,7 @@ abstract class MySqlQueryBuilder
     protected $havingConditions = [];
     protected $joins = [];
 
-    /** @var @var string */
+    /** @var string */
     private $type;
 
     public function __construct(string $type)
