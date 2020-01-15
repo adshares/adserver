@@ -207,7 +207,7 @@ final class NowPayments
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
         }
 
-        if ($status = NowPaymentsLog::STATUS_FINISHED) {
+        if ($status === NowPaymentsLog::STATUS_FINISHED) {
             return $this->prepareDeposit($user, $amount, $currency, $orderId, $paymentId);
         }
 
