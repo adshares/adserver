@@ -23,7 +23,6 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Services;
 
 use Adshares\Ads\Util\AdsConverter;
-use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Mail\DepositProcessed;
 use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
@@ -296,7 +295,6 @@ final class NowPayments
                 )
             );
             $log->save();
-            DB::commit();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
         }
