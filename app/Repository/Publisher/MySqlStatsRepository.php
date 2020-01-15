@@ -47,7 +47,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
@@ -66,7 +66,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_VIEW_ALL,
             $publisherId,
             $resolution,
@@ -85,7 +85,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $resultViewsAll = $this->fetchUpdatedWithLiveResult(
+        $resultViewsAll = $this->fetch(
             StatsRepository::TYPE_VIEW_ALL,
             $publisherId,
             $resolution,
@@ -94,7 +94,7 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        $resultViews = $this->fetchUpdatedWithLiveResult(
+        $resultViews = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
@@ -124,7 +124,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_VIEW_UNIQUE,
             $publisherId,
             $resolution,
@@ -143,7 +143,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
@@ -162,7 +162,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_CLICK_ALL,
             $publisherId,
             $resolution,
@@ -181,7 +181,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $resultClicksAll = $this->fetchUpdatedWithLiveResult(
+        $resultClicksAll = $this->fetch(
             StatsRepository::TYPE_CLICK_ALL,
             $publisherId,
             $resolution,
@@ -190,7 +190,7 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        $resultClicks = $this->fetchUpdatedWithLiveResult(
+        $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
@@ -220,7 +220,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $resultSum = $this->fetchUpdatedWithLiveResult(
+        $resultSum = $this->fetch(
             StatsRepository::TYPE_REVENUE_BY_CASE,
             $publisherId,
             $resolution,
@@ -229,7 +229,7 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        $resultClicks = $this->fetchUpdatedWithLiveResult(
+        $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
@@ -259,7 +259,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $resultSum = $this->fetchUpdatedWithLiveResult(
+        $resultSum = $this->fetch(
             StatsRepository::TYPE_REVENUE_BY_CASE,
             $publisherId,
             $resolution,
@@ -268,7 +268,7 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        $resultViews = $this->fetchUpdatedWithLiveResult(
+        $resultViews = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
@@ -298,7 +298,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_REVENUE_BY_CASE,
             $publisherId,
             $resolution,
@@ -317,7 +317,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $result = $this->fetchUpdatedWithLiveResult(
+        $result = $this->fetch(
             StatsRepository::TYPE_REVENUE_BY_HOUR,
             $publisherId,
             $resolution,
@@ -336,7 +336,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): ChartResult {
-        $resultClicks = $this->fetchUpdatedWithLiveResult(
+        $resultClicks = $this->fetch(
             StatsRepository::TYPE_CLICK,
             $publisherId,
             $resolution,
@@ -345,7 +345,7 @@ class MySqlStatsRepository implements StatsRepository
             $siteId
         );
 
-        $resultViews = $this->fetchUpdatedWithLiveResult(
+        $resultViews = $this->fetch(
             StatsRepository::TYPE_VIEW,
             $publisherId,
             $resolution,
@@ -583,7 +583,7 @@ class MySqlStatsRepository implements StatsRepository
         return new DataCollection(array_merge($result, $resultWithoutEvents));
     }
 
-    private function fetchUpdatedWithLiveResult(
+    private function fetch(
         string $type,
         string $publisherId,
         string $resolution,
@@ -598,7 +598,7 @@ class MySqlStatsRepository implements StatsRepository
             ->modify('-1 hour');
 
         if ($dateStart < $dateThreshold) {
-            $queryResult = $this->fetch(
+            $queryResult = $this->fetchAggregates(
                 $type,
                 $publisherId,
                 $resolution,
@@ -630,7 +630,7 @@ class MySqlStatsRepository implements StatsRepository
         return self::overwriteStartDate($dateStart, self::mapResult($joinedResult));
     }
 
-    private function fetch(
+    private function fetchAggregates(
         string $type,
         string $publisherId,
         string $resolution,
