@@ -589,13 +589,14 @@ class MySqlStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId
+        ?string $siteId,
+        ?string $zoneId = null
     ): array {
         $dateTimeZone = $dateStart->getTimezone();
-        $concatenatedResult = [];
-
         $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))
             ->modify('-1 hour');
+
+        $concatenatedResult = [];
 
         if ($dateStart < $dateThreshold) {
             $queryResult = $this->fetchAggregates(
@@ -604,7 +605,8 @@ class MySqlStatsRepository implements StatsRepository
                 $resolution,
                 $dateStart,
                 min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
-                $siteId
+                $siteId,
+                $zoneId
             );
 
             $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
@@ -617,7 +619,8 @@ class MySqlStatsRepository implements StatsRepository
                 $resolution,
                 max($dateStart, $dateThreshold),
                 $dateEnd,
-                $siteId
+                $siteId,
+                $zoneId
             );
 
             $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
@@ -665,7 +668,8 @@ class MySqlStatsRepository implements StatsRepository
         string $resolution,
         DateTime $dateStart,
         DateTime $dateEnd,
-        ?string $siteId
+        ?string $siteId,
+        ?string $zoneId = null
     ): array {
         $queryBuilder = (new MySqlLiveStatsQueryBuilder($type))
             ->setPublisherId($publisherId)
@@ -674,6 +678,10 @@ class MySqlStatsRepository implements StatsRepository
 
         if ($siteId) {
             $queryBuilder->appendSiteIdWhereClause($siteId);
+        }
+
+        if ($zoneId) {
+            $queryBuilder->appendZoneIdWhereClause($zoneId);
         }
 
         $query = $queryBuilder->build();

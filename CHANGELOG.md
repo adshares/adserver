@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty direct banner content to campaign landing URL
 - Remove filtering option "Content Type"
 - Queries for statistics data (charts/tables) to increase performance
-- Publisher's View Chart for current day is updated live
+- Advertisers' and Publishers' statistics are updated live
 ### Fixed
 - Deleting always at least one row during events clear command (ops:events:clear)
 

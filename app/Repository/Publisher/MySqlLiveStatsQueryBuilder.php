@@ -44,35 +44,7 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     public function __construct(string $type)
     {
         $this->selectBaseColumns($type);
-        
-        if (in_array($type, [
-            StatsRepository::TYPE_VIEW,
-            StatsRepository::TYPE_VIEW_UNIQUE,
-            StatsRepository::TYPE_CLICK,
-        ])) {
-            $this->join('network_impressions i', 'e.network_impression_id = i.id');
-        }
-        
-        if (in_array($type, [
-            StatsRepository::TYPE_CLICK,
-            StatsRepository::TYPE_CLICK_ALL,
-        ])) {
-            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id');
-        }
-        
-        if (in_array($type, [
-            StatsRepository::TYPE_REVENUE_BY_CASE,
-            StatsRepository::TYPE_REVENUE_BY_HOUR,
-        ])) {
-            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id');
-        }
-
-        if (StatsRepository::TYPE_STATS === $type) {
-            $this->join('network_impressions i', 'e.network_impression_id = i.id', 'LEFT');
-            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id', 'LEFT');
-            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id', 'LEFT');
-        }
-
+        $this->addJoins($type);
         $this->withoutRemovedSites();
 
         parent::__construct($type);
@@ -251,5 +223,45 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
         $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
+    }
+
+    private function addJoins(string $type): void
+    {
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_VIEW,
+                StatsRepository::TYPE_VIEW_UNIQUE,
+                StatsRepository::TYPE_CLICK,
+            ]
+        )) {
+            $this->join('network_impressions i', 'e.network_impression_id = i.id');
+        }
+
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_CLICK,
+                StatsRepository::TYPE_CLICK_ALL,
+            ]
+        )) {
+            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id');
+        }
+
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_REVENUE_BY_CASE,
+                StatsRepository::TYPE_REVENUE_BY_HOUR,
+            ]
+        )) {
+            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id');
+        }
+
+        if (StatsRepository::TYPE_STATS === $type) {
+            $this->join('network_impressions i', 'e.network_impression_id = i.id', 'LEFT');
+            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id', 'LEFT');
+            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id', 'LEFT');
+        }
     }
 }

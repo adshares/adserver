@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
@@ -577,45 +578,86 @@ SQL;
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setDateRange($dateStart, $dateEnd)
-            ->appendCampaignIdGroupBy();
+        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
+            ->modify('-1 hour');
 
-        if (null !== $advertiserId) {
-            $queryBuilder->setAdvertiserId($advertiserId);
-        } else {
-            $queryBuilder->appendAdvertiserIdGroupBy();
+        $queryResult = [];
+        $queryResultLive = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchStatsAggregates(
+                $advertiserId,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $campaignId
+            );
         }
 
-        if ($campaignId) {
-            $queryBuilder
-                ->appendCampaignIdWhereClause($campaignId)
-                ->appendBannerIdGroupBy();
-        } else {
-            $queryBuilder->appendAnyBannerId();
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchStatsLive(
+                $advertiserId,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $campaignId
+            );
         }
 
-        $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
+        $checkAdvertiserId = $advertiserId === null;
+        $checkBannerId = $campaignId !== null;
+
+        $combined = [];
+        foreach (array_merge($queryResult, $queryResultLive) as $row) {
+            $advertiserId = $checkAdvertiserId ? bin2hex($row->advertiser_id) : 0;
+            $campaignId = bin2hex($row->campaign_id);
+            $bannerId = $checkBannerId ? bin2hex($row->banner_id) : 0;
+
+            if (!array_key_exists($advertiserId, $combined)) {
+                $combined[$advertiserId] = [];
+            }
+            if (!array_key_exists($campaignId, $combined[$advertiserId])) {
+                $combined[$advertiserId][$campaignId] = [];
+            }
+            if (!array_key_exists($bannerId, $combined[$advertiserId][$campaignId])) {
+                $combined[$advertiserId][$campaignId][$bannerId] = [
+                    'clicks' => (int)$row->clicks,
+                    'views' => (int)$row->views,
+                    'cost' => (int)$row->cost,
+                ];
+            } else {
+                $combined[$advertiserId][$campaignId][$bannerId]['clicks'] =
+                    $combined[$advertiserId][$campaignId][$bannerId]['clicks'] + (int)$row->clicks;
+                $combined[$advertiserId][$campaignId][$bannerId]['views'] =
+                    $combined[$advertiserId][$campaignId][$bannerId]['views'] + (int)$row->views;
+                $combined[$advertiserId][$campaignId][$bannerId]['cost'] =
+                    $combined[$advertiserId][$campaignId][$bannerId]['cost'] + (int)$row->cost;
+            }
+        }
 
         $result = [];
-        foreach ($queryResult as $row) {
-            $clicks = (int)$row->clicks;
-            $views = (int)$row->views;
-            $cost = (int)$row->cost;
+        foreach ($combined as $advertiserId => $advertiserData) {
+            foreach ($advertiserData as $campaignId => $campaignData) {
+                foreach ($campaignData as $bannerId => $bannerData) {
+                    $clicks = $bannerData['clicks'];
+                    $views = $bannerData['views'];
+                    $cost = $bannerData['cost'];
 
-            $calculation = new Calculation(
-                $clicks,
-                $views,
-                self::calculateCtr($clicks, $views),
-                self::calculateCpc($cost, $clicks),
-                self::calculateCpm($cost, $views),
-                $cost
-            );
+                    $calculation = new Calculation(
+                        $clicks,
+                        $views,
+                        self::calculateCtr($clicks, $views),
+                        self::calculateCpc($cost, $clicks),
+                        self::calculateCpm($cost, $views),
+                        $cost
+                    );
 
-            $bannerId = ($campaignId !== null) ? bin2hex($row->banner_id) : null;
-            $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($row->advertiser_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
+                    $result[] = new DataEntry(
+                        $calculation,
+                        $campaignId,
+                        $checkBannerId ? $bannerId : null,
+                        $checkAdvertiserId ? $advertiserId : null
+                    );
+                }
+            }
         }
 
         return new DataCollection($result);
@@ -627,40 +669,56 @@ SQL;
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
-        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setDateRange($dateStart, $dateEnd);
+        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
+            ->modify('-1 hour');
 
-        if (null !== $advertiserId) {
-            $queryBuilder->setAdvertiserId($advertiserId);
+        $queryResult = [];
+        $queryResultLive = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchStatsTotalAggregates(
+                $advertiserId,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $campaignId
+            );
         }
 
-        if ($campaignId) {
-            $queryBuilder
-                ->appendCampaignIdWhereClause($campaignId)
-                ->appendCampaignIdGroupBy();
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchStatsTotalLive(
+                $advertiserId,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $campaignId
+            );
         }
-        $queryBuilder->appendAnyBannerId();
-
-        $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
 
         if (!empty($queryResult)) {
             $row = $queryResult[0];
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
             $cost = (int)$row->cost;
-
-            $calculation = new Calculation(
-                $clicks,
-                $views,
-                self::calculateCtr($clicks, $views),
-                self::calculateCpc($cost, $clicks),
-                self::calculateCpm($cost, $views),
-                $cost
-            );
         } else {
-            $calculation = new Calculation(0, 0, 0, 0, 0, 0);
+            $clicks = 0;
+            $views = 0;
+            $cost = 0;
         }
+
+        if (!empty($queryResultLive)) {
+            $row = $queryResultLive[0];
+            $clicks += (int)$row->clicks;
+            $views += (int)$row->views;
+            $cost += (int)$row->cost;
+        }
+
+        $calculation = new Calculation(
+            $clicks,
+            $views,
+            self::calculateCtr($clicks, $views),
+            self::calculateCpc($cost, $clicks),
+            self::calculateCpm($cost, $views),
+            $cost
+        );
 
         return new Total($calculation, $campaignId);
     }
@@ -786,6 +844,56 @@ SQL;
         ?string $campaignId,
         ?string $bannerId = null
     ): array {
+        $dateTimeZone = $dateStart->getTimezone();
+        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))
+            ->modify('-1 hour');
+
+        $concatenatedResult = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchAggregates(
+                $type,
+                $advertiserId,
+                $resolution,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $campaignId,
+                $bannerId
+            );
+
+            $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
+        }
+
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchLive(
+                $type,
+                $advertiserId,
+                $resolution,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $campaignId,
+                $bannerId
+            );
+
+            $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
+            $concatenatedResult = self::joinResultWithResultLive($concatenatedResult, $concatenatedResultLive);
+        }
+
+        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
+        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
+
+        return self::overwriteStartDate($dateStart, self::mapResult($joinedResult));
+    }
+
+    private function fetchAggregates(
+        string $type,
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId,
+        ?string $bannerId
+    ): array {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
             ->setAdvertiserId($advertiserId)
             ->setDateRange($dateStart, $dateEnd)
@@ -802,9 +910,42 @@ SQL;
         }
 
         $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
 
-        return $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchLive(
+        string $type,
+        string $advertiserId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId,
+        ?string $bannerId
+    ): array {
+        if (in_array($type, [
+            StatsRepository::TYPE_SUM,
+            StatsRepository::TYPE_SUM_BY_PAYMENT,
+        ])) {
+            return [];
+        }
+
+        $queryBuilder = (new MySqlLiveStatsQueryBuilder($type))
+            ->setAdvertiserId($advertiserId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendResolution($resolution);
+
+        if ($campaignId) {
+            $queryBuilder->appendCampaignIdWhereClause($campaignId);
+        }
+
+        if ($bannerId) {
+            $queryBuilder->appendBannerIdWhereClause($bannerId);
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
     }
 
     private function executeQuery(string $query, DateTimeInterface $dateStart, array $bindings = []): array
@@ -826,20 +967,6 @@ SQL;
     private function unsetDbSessionTimeZone(): void
     {
         DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
-    }
-
-    private function processQueryResult(
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        array $queryResult
-    ): array {
-        $dateTimeZone = $dateStart->getTimezone();
-        $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
-        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
-        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
-
-        return self::overwriteStartDate($dateStart, self::mapResult($joinedResult));
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
@@ -885,7 +1012,7 @@ SQL;
             }
 
             $d = $date->format(DateTime::ATOM);
-            $formattedResult[$d] = $row->c;
+            $formattedResult[$d] = (int)$row->c;
         }
 
         return $formattedResult;
@@ -992,6 +1119,19 @@ SQL;
         return $emptyResult;
     }
 
+    private static function joinResultWithResultLive(array $result, array $resultLive): array
+    {
+        foreach ($resultLive as $key => $value) {
+            if (isset($result[$key])) {
+                $result[$key] = $result[$key] + $resultLive[$key];
+            } else {
+                $result[$key] = $resultLive[$key];
+            }
+        }
+
+        return $result;
+    }
+
     private static function mapResult(array $joinedResult): array
     {
         $result = [];
@@ -1084,5 +1224,106 @@ SQL;
         }
 
         return DB::select($query);
+    }
+
+    private function fetchStatsAggregates(
+        ?string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId
+    ): array {
+        $queryBuilder =
+            (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd)
+                ->appendCampaignIdGroupBy();
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        } else {
+            $queryBuilder->appendAdvertiserIdGroupBy();
+        }
+
+        if ($campaignId) {
+            $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy();
+        } else {
+            $queryBuilder->appendAnyBannerId();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsLive(
+        ?string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId
+    ): array {
+        $queryBuilder =
+            (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd)
+                ->appendCampaignIdGroupBy();
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        } else {
+            $queryBuilder->appendAdvertiserIdGroupBy();
+        }
+
+        if ($campaignId) {
+            $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendBannerIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsTotalAggregates(
+        ?string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId
+    ): array {
+        $queryBuilder =
+            (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        }
+
+        if ($campaignId) {
+            $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendCampaignIdGroupBy();
+        }
+        $queryBuilder->appendAnyBannerId();
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsTotalLive(
+        ?string $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $campaignId
+    ): array {
+        $queryBuilder =
+            (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $advertiserId) {
+            $queryBuilder->setAdvertiserId($advertiserId);
+        }
+
+        if ($campaignId) {
+            $queryBuilder->appendCampaignIdWhereClause($campaignId)->appendCampaignIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
     }
 }
