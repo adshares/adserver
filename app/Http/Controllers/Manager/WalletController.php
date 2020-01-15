@@ -281,22 +281,22 @@ class WalletController extends Controller
         $params = $request->request->all();
         $hash = $nowPayments->hash($params);
 
-        if ($headerHash !== $hash) {
+        if (!hash_equals($hash, $headerHash)) {
             Log::warning(sprintf('[NowPayments] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
 
-            return response()->noContent(422);
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user = User::fetchByUuid($uuid);
         if ($user === null) {
             Log::warning(sprintf('[NowPayments] Cannot find user (%s)', $uuid));
 
-            return response()->noContent(422);
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $result = $nowPayments->notify($user, $params);
 
-        return response()->noContent($result ? 204 : 422);
+        return response()->noContent($result ? Response::HTTP_NO_CONTENT : Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function nowPaymentsExchange(
@@ -309,22 +309,22 @@ class WalletController extends Controller
         $params = $request->json()->all();
         $hash = $exchange->hash($params);
 
-        if ($headerHash !== $hash) {
+        if (!hash_equals($hash, $headerHash)) {
             Log::warning(sprintf('[Exchange] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
 
-            return response()->noContent(422);
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user = User::fetchByUuid($uuid);
         if ($user === null) {
             Log::warning(sprintf('[Exchange] Cannot find user (%s)', $uuid));
 
-            return response()->noContent(422);
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $result = $nowPayments->exchange($user, $params);
 
-        return response()->noContent($result ? 204 : 422);
+        return response()->noContent($result ? Response::HTTP_NO_CONTENT : Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function history(Request $request): JsonResponse

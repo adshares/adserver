@@ -350,9 +350,11 @@ final class NowPayments
 
         if ($this->saveDeposit(true, $user, $amount, $orderId, $paymentId)) {
             Mail::to($user)->queue(new DepositProcessed(AdsConverter::adsToClicks($amount)));
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private function exchangeDeposit(
