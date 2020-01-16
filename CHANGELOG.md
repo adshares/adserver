@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move NowPayments info from check to depositInfo
 ### Fixed
 - Https in NowPayments callback
+- Global statistics
 
 ## [1.5.0] - 2020-01-15
 ### Added
