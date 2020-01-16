@@ -57,6 +57,9 @@ final class NowPayments
     /** @var int */
     private $minAmount;
 
+    /** @var int */
+    private $maxAmount;
+
     /** @var float */
     private $fee;
 
@@ -77,6 +80,7 @@ final class NowPayments
         $this->ipnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
         $this->minAmount = (int)config('app.now_payments_min_amount');
+        $this->maxAmount = (int)config('app.now_payments_max_amount');
         $this->fee = (float)config('app.now_payments_fee');
         $this->useExchange = config('app.now_payments_exchange');
     }
@@ -87,6 +91,7 @@ final class NowPayments
             ? null
             : [
                 'min_amount' => $this->minAmount,
+                'max_amount' => $this->maxAmount,
                 'exchange_rate' => $this->getExchangeRate(),
                 'currency' => $this->currency,
             ];

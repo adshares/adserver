@@ -78,6 +78,8 @@ class WalletController extends Controller
 
     private const FIELD_TYPES = 'types';
 
+    private const FIELD_NOW_PAYMENTS = 'now_payments';
+
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
@@ -247,7 +249,7 @@ class WalletController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function depositInfo(): JsonResponse
+    public function depositInfo(NowPayments $nowPayments): JsonResponse
     {
         $user = Auth::user();
         $uuid = $user->uuid;
@@ -258,6 +260,7 @@ class WalletController extends Controller
         $resp = [
             self::FIELD_ADDRESS => $address->toString(),
             self::FIELD_MESSAGE => $message,
+            self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
         ];
 
         return self::json($resp);
