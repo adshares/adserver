@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -56,6 +57,9 @@ final class NowPayments
     /** @var int */
     private $minAmount;
 
+    /** @var int */
+    private $maxAmount;
+
     /** @var float */
     private $fee;
 
@@ -76,6 +80,7 @@ final class NowPayments
         $this->ipnSecret = config('app.now_payments_ipn_secret');
         $this->currency = config('app.now_payments_currency');
         $this->minAmount = (int)config('app.now_payments_min_amount');
+        $this->maxAmount = (int)config('app.now_payments_max_amount');
         $this->fee = (float)config('app.now_payments_fee');
         $this->useExchange = config('app.now_payments_exchange');
     }
@@ -86,6 +91,7 @@ final class NowPayments
             ? null
             : [
                 'min_amount' => $this->minAmount,
+                'max_amount' => $this->maxAmount,
                 'exchange_rate' => $this->getExchangeRate(),
                 'currency' => $this->currency,
             ];
@@ -112,7 +118,7 @@ final class NowPayments
         $data = [
             'dataSource' => "woocommerce",
             'apiKey' => $this->apiKey,
-            'ipnURL' => route('now-payments.notify', ['uuid' => $user->uuid]),
+            'ipnURL' => SecureUrl::change(route('now-payments.notify', ['uuid' => $user->uuid])),
             'successURL' => $panelUrl.'/now-payments/success',
             'cancelURL' => $panelUrl.'/now-payments/canceled',
             'orderID' => $orderId,
@@ -371,7 +377,7 @@ final class NowPayments
         return $this->adsExchange->request(
             $amount,
             $this->currency,
-            route('now-payments.exchange', ['uuid' => $user->uuid]),
+            SecureUrl::change(route('now-payments.exchange', ['uuid' => $user->uuid])),
             $paymentId,
             $adsAmount
         );

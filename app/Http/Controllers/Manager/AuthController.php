@@ -225,7 +225,7 @@ class AuthController extends Controller
         return self::json($user->toArray());
     }
 
-    public function check(NowPayments $nowPayments): JsonResponse
+    public function check(): JsonResponse
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate()->toArray();
@@ -240,10 +240,7 @@ class AuthController extends Controller
         return self::json(
             array_merge(
                 $user->toArray(),
-                [
-                    'exchange_rate' => $exchangeRate,
-                    'now_payments' => $nowPayments->info(),
-                ]
+                ['exchange_rate' => $exchangeRate]
             )
         );
     }
@@ -259,7 +256,7 @@ class AuthController extends Controller
         return self::json($token->uuid);
     }
 
-    public function login(Request $request, NowPayments $nowPayments): JsonResponse
+    public function login(Request $request): JsonResponse
     {
         if (Auth::guard()->attempt(
             $request->only('email', 'password'),
@@ -267,7 +264,7 @@ class AuthController extends Controller
         )) {
             Auth::user()->generateApiKey();
 
-            return $this->check($nowPayments);
+            return $this->check();
         }
 
         return response()->json([], Response::HTTP_BAD_REQUEST);
