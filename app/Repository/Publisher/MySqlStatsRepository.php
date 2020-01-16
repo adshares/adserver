@@ -374,8 +374,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
         $queryResult = [];
         $queryResultLive = [];
@@ -465,8 +464,7 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
         $queryResult = [];
         $queryResultLive = [];
@@ -593,8 +591,7 @@ class MySqlStatsRepository implements StatsRepository
         ?string $zoneId = null
     ): array {
         $dateTimeZone = $dateStart->getTimezone();
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateTimeZone);
 
         $concatenatedResult = [];
 
@@ -1063,5 +1060,10 @@ SQL;
         $query = $queryBuilder->build();
 
         return $this->executeQuery($query, $dateStart);
+    }
+
+    private function getDateThresholdForLiveData(DateTimeZone $dateTimeZone): DateTime
+    {
+        return DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))->modify('-1 hour');
     }
 }

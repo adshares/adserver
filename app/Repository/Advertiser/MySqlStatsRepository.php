@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
@@ -578,8 +579,7 @@ SQL;
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection {
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
         $queryResult = [];
         $queryResultLive = [];
@@ -669,8 +669,7 @@ SQL;
         DateTime $dateEnd,
         ?string $campaignId = null
     ): Total {
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateStart->getTimezone()))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
         $queryResult = [];
         $queryResultLive = [];
@@ -845,8 +844,7 @@ SQL;
         ?string $bannerId = null
     ): array {
         $dateTimeZone = $dateStart->getTimezone();
-        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))
-            ->modify('-1 hour');
+        $dateThreshold = $this->getDateThresholdForLiveData($dateTimeZone);
 
         $concatenatedResult = [];
 
@@ -1325,5 +1323,19 @@ SQL;
         $query = $queryBuilder->build();
 
         return $this->executeQuery($query, $dateStart);
+    }
+
+    private function getDateThresholdForLiveData(DateTimeZone $dateTimeZone): DateTime
+    {
+        $dateThreshold = DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone));
+
+        $timestampPreviousHour = $dateThreshold->getTimestamp() - DateUtils::HOUR;
+        $paymentReport = PaymentReport::fetchById($timestampPreviousHour);
+
+        if (null === $paymentReport || $paymentReport->isNew() || $paymentReport->isFailed()) {
+            $dateThreshold->modify('-1 hour');
+        }
+
+        return $dateThreshold;
     }
 }
