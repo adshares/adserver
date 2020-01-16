@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NowPaymentsLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -112,7 +113,7 @@ final class NowPayments
         $data = [
             'dataSource' => "woocommerce",
             'apiKey' => $this->apiKey,
-            'ipnURL' => route('now-payments.notify', ['uuid' => $user->uuid]),
+            'ipnURL' => SecureUrl::change(route('now-payments.notify', ['uuid' => $user->uuid])),
             'successURL' => $panelUrl.'/now-payments/success',
             'cancelURL' => $panelUrl.'/now-payments/canceled',
             'orderID' => $orderId,
@@ -371,7 +372,7 @@ final class NowPayments
         return $this->adsExchange->request(
             $amount,
             $this->currency,
-            route('now-payments.exchange', ['uuid' => $user->uuid]),
+            SecureUrl::change(route('now-payments.exchange', ['uuid' => $user->uuid])),
             $paymentId,
             $adsAmount
         );
