@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Advertisers' and Publishers' statistics are updated live
 ### Fixed
 - Add fee to ADS exchange request
 
@@ -25,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Empty direct banner content to campaign landing URL
 - Remove filtering option "Content Type"
 - Queries for statistics data (charts/tables) to increase performance
-- Advertisers' and Publishers' statistics are updated live
 ### Fixed
 - Deleting always at least one row during events clear command (ops:events:clear)
 
