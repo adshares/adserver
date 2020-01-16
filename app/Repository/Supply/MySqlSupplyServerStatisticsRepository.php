@@ -34,8 +34,7 @@ SELECT
   SUM(clicks)                                                     AS clicks,
   ROUND((SUM(e.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_case_logs_hourly e
-WHERE e.zone_id IS NULL
-  AND e.hour_timestamp < DATE(NOW())
+WHERE e.hour_timestamp < DATE(NOW())
   AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
 GROUP BY 1;
 SQL;
@@ -47,9 +46,7 @@ SELECT
   SUM(l.clicks)                                                     AS clicks,
   ROUND((SUM(l.revenue_case) / 100000000000) / #volume_coefficient, 2) AS volume
 FROM network_case_logs_hourly l JOIN sites s ON l.site_id = s.uuid
-WHERE 
-  l.domain is null
-  AND l.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
+WHERE l.hour_timestamp < DATE(NOW()) - INTERVAL #offset DAY
   AND l.hour_timestamp >= DATE(NOW()) - INTERVAL #offset+#days DAY
 GROUP BY 1
 HAVING impressions > 0;
@@ -65,8 +62,7 @@ FROM zones z
        LEFT JOIN (
     SELECT e.zone_id, SUM(e.views) AS views
     FROM network_case_logs_hourly e
-    WHERE e.zone_id IS NOT NULL
-      AND e.hour_timestamp < DATE(NOW())
+    WHERE e.hour_timestamp < DATE(NOW())
       AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 30 DAY
     GROUP BY 1
   ) e ON e.zone_id = z.uuid

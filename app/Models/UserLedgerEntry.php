@@ -37,8 +37,10 @@ use const PHP_INT_MAX;
 
 /**
  * @mixin Builder
+ * @property int|null id
  * @property int status
  * @property int type
+ * @property int amount
  */
 class UserLedgerEntry extends Model
 {
@@ -290,6 +292,15 @@ class UserLedgerEntry extends Model
     public static function fetchBlockedAmountByUserId(int $userId): int
     {
         return (int)self::blockedEntriesByUserId($userId)->sum('amount');
+    }
+
+    public static function fetchByTxId(int $userId, string $txId): ?self
+    {
+        return self::where('user_id', $userId)
+            ->where('txid', $txId)
+            ->where('type', self::TYPE_DEPOSIT)
+            ->whereIn('status', [self::STATUS_ACCEPTED, self::STATUS_PROCESSING])
+            ->first();
     }
 
     private static function blockedEntries(): Builder

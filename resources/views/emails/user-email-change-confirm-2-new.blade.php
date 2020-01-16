@@ -9,6 +9,7 @@ Please confirm this is your new email that you want to link with your Adshares a
 Confirm and save new email
 @endcomponent
 
-Thanks,<br>
-{{ config('app.name') }}
+Thanks,
+
+{{ config('app.name') }} Team
 @endcomponent

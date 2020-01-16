@@ -120,6 +120,16 @@ return [
     'license_id' => substr(env('ADSHARES_LICENSE_KEY', env('ADSHARES_LICENSE_SERVER_KEY')), 0, 10),
     'serve_base_url' => env('SERVE_BASE_URL') ?: $appUrl,
     'main_js_base_url' => env('MAIN_JS_BASE_URL') ?: $appUrl,
+    'now_payments_api_key' => env('NOW_PAYMENTS_API_KEY'),
+    'now_payments_ipn_secret' => env('NOW_PAYMENTS_IPN_SECRET'),
+    'now_payments_currency' => env('NOW_PAYMENTS_CURRENCY', 'USD'),
+    'now_payments_min_amount' => env('NOW_PAYMENTS_MIN_AMOUNT', 25),
+    'now_payments_max_amount' => env('NOW_PAYMENTS_MAX_AMOUNT', 1000),
+    'now_payments_fee' => env('NOW_PAYMENTS_FEE', 0),
+    'now_payments_exchange' => env('NOW_PAYMENTS_EXCHANGE', false),
+    'exchange_api_url' => env('EXCHANGE_API_URL'),
+    'exchange_api_key' => env('EXCHANGE_API_KEY'),
+    'exchange_api_secret' => env('EXCHANGE_API_SECRET'),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

@@ -9,6 +9,7 @@ Please confirm your email change request, once confirmed you will receive anothe
 Confirm email change request
 @endcomponent
 
-Thanks,<br>
-{{ config('app.name') }}
+Thanks,
+
+{{ config('app.name') }} Team
 @endcomponent
