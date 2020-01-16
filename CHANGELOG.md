@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.5.1] - 2020-01-16
 ### Changed
 - Move NowPayments info from check to depositInfo
 ### Fixed
@@ -350,7 +352,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.0...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.1...develop
+[1.5.1]: https://github.com/adshares/adserver/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/adshares/adserver/compare/v1.4.9...v1.5.0
 [1.4.9]: https://github.com/adshares/adserver/compare/v1.4.8...v1.4.9
 [1.4.8]: https://github.com/adshares/adserver/compare/v1.4.7...v1.4.8
