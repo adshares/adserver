@@ -28,7 +28,7 @@ use DateTimeInterface;
 use function in_array;
 use function sprintf;
 
-class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
+class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 {
     private const ALLOWED_TYPES = [
         StatsRepository::TYPE_VIEW,
@@ -39,12 +39,12 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         StatsRepository::TYPE_REVENUE_BY_CASE,
         StatsRepository::TYPE_REVENUE_BY_HOUR,
         StatsRepository::TYPE_STATS,
-        StatsRepository::TYPE_STATS_REPORT,
     ];
 
     public function __construct(string $type)
     {
         $this->selectBaseColumns($type);
+        $this->addJoins($type);
         $this->withoutRemovedSites();
 
         parent::__construct($type);
@@ -57,57 +57,40 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     protected function getTableName(): string
     {
-        return (StatsRepository::TYPE_STATS_REPORT === $this->getType())
-            ? 'network_case_logs_hourly e' : 'network_case_logs_hourly_stats e';
+        return 'network_cases e';
     }
 
     private function selectBaseColumns(string $type): void
     {
         switch ($type) {
             case StatsRepository::TYPE_VIEW:
-                $this->column('SUM(e.views) AS c');
+            case StatsRepository::TYPE_CLICK:
+                $this->column('SUM(IF(i.human_score >= 0.5, 1, 0)) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_ALL:
-                $this->column('SUM(e.views_all) AS c');
-                break;
-            case StatsRepository::TYPE_CLICK:
-                $this->column('SUM(e.clicks) AS c');
-                break;
             case StatsRepository::TYPE_CLICK_ALL:
-                $this->column('SUM(e.clicks_all) AS c');
+                $this->column('COUNT(1) AS c');
                 break;
             case StatsRepository::TYPE_VIEW_UNIQUE:
-                $this->column('SUM(e.views_unique) AS c');
+                $this->column(
+                    'COUNT(DISTINCT (IF(i.human_score >= 0.5, IFNULL(i.user_id, i.tracking_id), NULL))) AS c'
+                );
                 break;
             case StatsRepository::TYPE_REVENUE_BY_CASE:
-                $this->column('SUM(e.revenue_case) AS c');
-                break;
             case StatsRepository::TYPE_REVENUE_BY_HOUR:
-                $this->column('SUM(e.revenue_hour) AS c');
+                $this->column('IFNULL(SUM(ncp.paid_amount_currency),0) AS c');
                 break;
             case StatsRepository::TYPE_STATS:
                 $this->selectBaseStatsColumns();
-                break;
-            case StatsRepository::TYPE_STATS_REPORT:
-                $this->selectBaseStatsReportColumns();
                 break;
         }
     }
 
     private function selectBaseStatsColumns(): void
     {
-        $this->column('SUM(e.clicks) AS clicks');
-        $this->column('SUM(e.views) AS views');
-        $this->column('SUM(e.revenue_case) AS revenue');
-    }
-
-    private function selectBaseStatsReportColumns(): void
-    {
-        $this->selectBaseStatsColumns();
-
-        $this->column('SUM(e.clicks_all) AS clicksAll');
-        $this->column('SUM(e.views_all) AS viewsAll');
-        $this->column('SUM(e.views_unique) AS viewsUnique');
+        $this->column('SUM(IF(i.human_score >= 0.5 AND clicks.network_case_id IS NOT NULL, 1, 0)) AS clicks');
+        $this->column('SUM(IF(i.human_score >= 0.5, 1, 0)) AS views');
+        $this->column('IFNULL(SUM(ncp.paid_amount_currency), 0) AS revenue');
     }
 
     private function withoutRemovedSites(): void
@@ -133,9 +116,11 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     public function setDateRange(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): self
     {
+        $dateColumn = StatsRepository::TYPE_REVENUE_BY_HOUR === $this->getType() ? 'ncp.pay_time' : 'e.created_at';
+
         $this->where(
             sprintf(
-                'e.hour_timestamp BETWEEN \'%s\' AND \'%s\'',
+                $dateColumn." BETWEEN '%s' AND '%s'",
                 $this->convertDateTimeToMySqlDate($dateStart),
                 $this->convertDateTimeToMySqlDate($dateEnd)
             )
@@ -146,47 +131,54 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendResolution(string $resolution): self
     {
+        $dateColumn = StatsRepository::TYPE_REVENUE_BY_HOUR === $this->getType() ? 'ncp.pay_time' : 'e.created_at';
+
         switch ($resolution) {
             case StatsRepository::RESOLUTION_HOUR:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->column('DAY(e.hour_timestamp) AS d');
-                $this->column('HOUR(e.hour_timestamp) AS h');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
-                $this->groupBy('DAY(e.hour_timestamp)');
-                $this->groupBy('HOUR(e.hour_timestamp)');
+                $resolutionColumns = [
+                    ['YEAR(%s)', 'y'],
+                    ['MONTH(%s)', 'm'],
+                    ['DAY(%s)', 'd'],
+                    ['HOUR(%s)', 'h'],
+                ];
                 break;
             case StatsRepository::RESOLUTION_DAY:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->column('DAY(e.hour_timestamp) AS d');
-
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
-                $this->groupBy('DAY(e.hour_timestamp)');
+                $resolutionColumns = [
+                    ['YEAR(%s)', 'y'],
+                    ['MONTH(%s)', 'm'],
+                    ['DAY(%s)', 'd'],
+                ];
                 break;
             case StatsRepository::RESOLUTION_WEEK:
-                $this->column('YEARWEEK(e.hour_timestamp, 3) as yw');
-                $this->groupBy('YEARWEEK(e.hour_timestamp, 3)');
+                $resolutionColumns = [
+                    ['YEARWEEK(%s, 3)', 'yw'],
+                ];
                 break;
             case StatsRepository::RESOLUTION_MONTH:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('MONTH(e.hour_timestamp) as m');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('MONTH(e.hour_timestamp)');
+                $resolutionColumns = [
+                    ['YEAR(%s)', 'y'],
+                    ['MONTH(%s)', 'm'],
+                ];
                 break;
             case StatsRepository::RESOLUTION_QUARTER:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->column('QUARTER(e.hour_timestamp) as q');
-                $this->groupBy('YEAR(e.hour_timestamp)');
-                $this->groupBy('QUARTER(e.hour_timestamp)');
+                $resolutionColumns = [
+                    ['YEAR(%s)', 'y'],
+                    ['QUARTER(%s)', 'q'],
+                ];
                 break;
             case StatsRepository::RESOLUTION_YEAR:
             default:
-                $this->column('YEAR(e.hour_timestamp) AS y');
-                $this->groupBy('YEAR(e.hour_timestamp)');
+                $resolutionColumns = [
+                    ['YEAR(%s)', 'y'],
+                ];
                 break;
+        }
+
+        foreach ($resolutionColumns as $resolutionColumn) {
+            $alias = $resolutionColumn[1];
+            $column = sprintf('%s AS %s', sprintf($resolutionColumn[0], $dateColumn), $alias);
+            $this->column($column);
+            $this->groupBy($alias);
         }
 
         return $this;
@@ -206,17 +198,9 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         return $this;
     }
 
-    public function appendAnyZoneId(): self
-    {
-        $this->where('e.zone_id IS NULL');
-
-        return $this;
-    }
-
     public function appendZoneIdGroupBy(): self
     {
         $this->column('e.zone_id AS zone_id');
-        $this->where('e.zone_id IS NOT NULL');
         $this->groupBy('e.zone_id');
 
         return $this;
@@ -230,12 +214,6 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->having('views>0');
         $this->having('revenue>0');
 
-        if (StatsRepository::TYPE_STATS_REPORT === $this->getType()) {
-            $this->having('clicksAll>0');
-            $this->having('viewsAll>0');
-            $this->having('viewsUnique>0');
-        }
-
         return $this;
     }
 
@@ -245,5 +223,45 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
         $this->groupBy("IFNULL(e.domain, '')");
 
         return $this;
+    }
+
+    private function addJoins(string $type): void
+    {
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_VIEW,
+                StatsRepository::TYPE_VIEW_UNIQUE,
+                StatsRepository::TYPE_CLICK,
+            ]
+        )) {
+            $this->join('network_impressions i', 'e.network_impression_id = i.id');
+        }
+
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_CLICK,
+                StatsRepository::TYPE_CLICK_ALL,
+            ]
+        )) {
+            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id');
+        }
+
+        if (in_array(
+            $type,
+            [
+                StatsRepository::TYPE_REVENUE_BY_CASE,
+                StatsRepository::TYPE_REVENUE_BY_HOUR,
+            ]
+        )) {
+            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id');
+        }
+
+        if (StatsRepository::TYPE_STATS === $type) {
+            $this->join('network_impressions i', 'e.network_impression_id = i.id', 'LEFT');
+            $this->join('network_case_clicks clicks', 'e.id = clicks.network_case_id', 'LEFT');
+            $this->join('network_case_payments ncp', 'e.id = ncp.network_case_id', 'LEFT');
+        }
     }
 }
