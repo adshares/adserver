@@ -42,7 +42,7 @@ FROM (
          SELECT group_id,
                 conversion_definition_id,
                 MIN(created_at)             AS created_at,
-                IFNULL(SUM(event_value), 0) AS cost
+                IFNULL(SUM(event_value_currency), 0) AS cost
          FROM conversions
          GROUP BY 1, 2
      ) s

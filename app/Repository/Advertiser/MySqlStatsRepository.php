@@ -274,7 +274,7 @@ SELECT s.conversion_definition_id AS conversion_definition_id,
 FROM (
          SELECT group_id,
                 conversion_definition_id,
-                IFNULL(SUM(event_value), 0) AS cost
+                IFNULL(SUM(event_value_currency), 0) AS cost
          FROM conversions
          WHERE created_at BETWEEN ? AND ?
          GROUP BY 1, 2
