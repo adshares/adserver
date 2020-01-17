@@ -274,7 +274,6 @@ SELECT s.conversion_definition_id AS conversion_definition_id,
 FROM (
          SELECT group_id,
                 conversion_definition_id,
-                MIN(created_at)             AS created_at,
                 IFNULL(SUM(event_value), 0) AS cost
          FROM conversions
          WHERE created_at BETWEEN ? AND ?
