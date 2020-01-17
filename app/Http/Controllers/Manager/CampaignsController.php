@@ -146,12 +146,8 @@ class CampaignsController extends Controller
 
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
-        try {
-            $campaign->changeStatus($status, $exchangeRate);
-
+        if ($campaign->changeStatus($status, $exchangeRate)) {
             $this->campaignRepository->save($campaign);
-        } catch (InvalidArgumentException $e) {
-            Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->id}] cannot be started.");
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
@@ -344,18 +340,8 @@ class CampaignsController extends Controller
             $this->removeTemporaryUploadedFiles($ads, $request);
         }
 
-        if ($status !== $campaign->status) {
-            try {
-                $campaign->changeStatus($status, $exchangeRate);
-
-                $this->campaignRepository->save($campaign);
-            } catch (InvalidArgumentException $e) {
-                Log::debug(
-                    "Notify user [{$campaign->user_id}]"
-                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
-                    ." {$e->getMessage()}"
-                );
-            }
+        if ($campaign->changeStatus($status, $exchangeRate)) {
+            $this->campaignRepository->save($campaign);
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
@@ -395,12 +381,7 @@ class CampaignsController extends Controller
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
-        try {
-            $campaign->changeStatus($status, $exchangeRate);
-        } catch (InvalidArgumentException $e) {
-            Log::debug("Notify user [{$campaign->user_id}]"
-                ." that the campaign [{$campaign->id}] status cannot be set to [{$status}].");
-
+        if (!$campaign->changeStatus($status, $exchangeRate)) {
             return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
         }
 
