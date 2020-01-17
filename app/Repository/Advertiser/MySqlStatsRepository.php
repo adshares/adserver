@@ -1405,19 +1405,23 @@ SQL;
         DateTime $dateEnd,
         ?int $campaignId = null
     ): ConversionDataCollection {
-        $builder = DB::table('conversions_hourly')
-            ->where('hour_timestamp', '>=', $dateStart)
-            ->where('hour_timestamp', '<=', $dateEnd)
-            ->where('advertiser_id', $advertiserId)
+        $builder = DB::table('conversions_hourly AS ch')
+            ->where('ch.hour_timestamp', '>=', $dateStart)
+            ->where('ch.hour_timestamp', '<=', $dateEnd)
+            ->where('ch.advertiser_id', $advertiserId)
             ->selectRaw(
-                'campaign_id, '
-                .'(SELECT name FROM conversion_definitions WHERE id=conversion_definition_id) AS name, '
-                .'SUM(cost) AS cost, SUM(occurrences) AS occurrences'
+                'ch.campaign_id AS campaign_id,'
+                .'cd.uuid AS uuid,'
+                .'cd.name AS name,'
+                .'cd.event_type AS event_type,'
+                .'SUM(ch.cost) AS cost,'
+                .'SUM(ch.occurrences) AS occurrences'
             )
-            ->groupBy('campaign_id', 'conversion_definition_id');
+            ->join('conversion_definitions AS cd', 'ch.conversion_definition_id', '=', 'cd.id')
+            ->groupBy('ch.campaign_id', 'ch.conversion_definition_id');
 
         if (null !== $campaignId) {
-            $builder->where('campaign_id', $campaignId);
+            $builder->where('ch.campaign_id', $campaignId);
         }
 
         $queryResult = $builder->get();
@@ -1427,7 +1431,9 @@ SQL;
         foreach ($queryResult as $entry) {
             $result[] = new ConversionDataEntry(
                 $entry->campaign_id,
+                bin2hex($entry->uuid),
                 $entry->name,
+                $entry->event_type,
                 (int)$entry->cost,
                 (int)$entry->occurrences
             );
