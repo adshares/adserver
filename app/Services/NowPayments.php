@@ -92,7 +92,7 @@ final class NowPayments
             : [
                 'min_amount' => $this->minAmount,
                 'max_amount' => $this->maxAmount,
-                'exchange_rate' => $this->getExchangeRate(),
+                'exchange_rate' => $this->getExchangeRate() / (1 - $this->fee),
                 'currency' => $this->currency,
             ];
     }
@@ -138,16 +138,15 @@ final class NowPayments
         ];
 
         try {
-            $log =
-                NowPaymentsLog::create(
-                    $user->id,
-                    $orderId,
-                    NowPaymentsLog::STATUS_INIT,
-                    $amount,
-                    $this->currency,
-                    null,
-                    $data
-                );
+            $log = NowPaymentsLog::create(
+                $user->id,
+                $orderId,
+                NowPaymentsLog::STATUS_INIT,
+                $amount,
+                $this->currency,
+                null,
+                $data
+            );
             $log->save();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
@@ -192,9 +191,9 @@ final class NowPayments
 
     public function notify(User $user, array $params): bool
     {
-        $orderId = $params['order_id'] ?? '';
-        $status = $params['payment_status'] ?? '';
-        $paymentId = $params['payment_id'] ?? '';
+        $orderId = (string)($params['order_id'] ?? '');
+        $status = (string)($params['payment_status'] ?? '');
+        $paymentId = (string)($params['payment_id'] ?? '');
         $amount = (float)($params['actually_paid'] ?? 0);
         $currency = strtoupper($params['pay_currency'] ?? '');
 
@@ -239,7 +238,7 @@ final class NowPayments
             return 0;
         }
 
-        return $exchangeRate['value'] / (1 - $this->fee);
+        return (float)$exchangeRate['value'];
     }
 
     private function saveDeposit(
@@ -317,7 +316,9 @@ final class NowPayments
         string $paymentId
     ): bool {
         $middleAmount = $this->getEstimatePrice($amount, $currency);
-        $adsAmount = $middleAmount / $this->getExchangeRate();
+        $middleFee = $middleAmount * $this->fee;
+        $exchangeAmount = $middleAmount - $middleFee;
+        $adsAmount = $exchangeAmount / $this->getExchangeRate();
 
         $result = $this->saveDeposit(
             false,
@@ -329,6 +330,7 @@ final class NowPayments
                 'amount' => $amount,
                 'currency' => $currency,
                 'middleAmount' => $middleAmount,
+                'middleFee' => $middleFee,
                 'middleCurrency' => $this->currency,
                 'adsAmount' => $adsAmount,
             ]
@@ -339,7 +341,7 @@ final class NowPayments
         }
 
         if ($this->useExchange) {
-            return $this->exchangeDeposit($user, $middleAmount, $adsAmount, $paymentId);
+            return $this->exchangeDeposit($user, $exchangeAmount, $adsAmount, $paymentId);
         } else {
             return $this->deposit($user, $adsAmount, $orderId, $paymentId);
         }

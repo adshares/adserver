@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Common;
 
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use RuntimeException;
 use function implode;
@@ -126,7 +127,7 @@ abstract class MySqlQueryBuilder
         $this->type = $type;
     }
 
-    public static function convertDateTimeToMySqlDate(DateTime $dateTime): string
+    public static function convertDateTimeToMySqlDate(DateTimeInterface $dateTime): string
     {
         return $dateTime->format('Y-m-d H:i:s');
     }

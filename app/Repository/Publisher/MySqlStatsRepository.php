@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
 use Adshares\Publisher\Dto\Result\Stats\DataCollection;
@@ -31,6 +32,7 @@ use Adshares\Publisher\Dto\Result\Stats\ReportCalculation;
 use Adshares\Publisher\Dto\Result\Stats\Total;
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use function bin2hex;
 
@@ -108,7 +110,7 @@ class MySqlStatsRepository implements StatsRepository
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateInvalidRate((int)$resultViewsAll[$i][1], (int)$resultViews[$i][1]),
+                self::calculateInvalidRate((int)$resultViewsAll[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -204,7 +206,7 @@ class MySqlStatsRepository implements StatsRepository
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultClicks[$i][0],
-                $this->calculateInvalidRate((int)$resultClicksAll[$i][1], (int)$resultClicks[$i][1]),
+                self::calculateInvalidRate((int)$resultClicksAll[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -243,7 +245,7 @@ class MySqlStatsRepository implements StatsRepository
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultClicks[$i][0],
-                $this->calculateRpc((int)$resultSum[$i][1], (int)$resultClicks[$i][1]),
+                self::calculateRpc((int)$resultSum[$i][1], (int)$resultClicks[$i][1]),
             ];
         }
 
@@ -282,7 +284,7 @@ class MySqlStatsRepository implements StatsRepository
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateRpm((int)$resultSum[$i][1], (int)$resultViews[$i][1]),
+                self::calculateRpm((int)$resultSum[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -359,7 +361,7 @@ class MySqlStatsRepository implements StatsRepository
         for ($i = 0; $i < $rowCount; $i++) {
             $result[] = [
                 $resultViews[$i][0],
-                $this->calculateCtr((int)$resultClicks[$i][1], (int)$resultViews[$i][1]),
+                self::calculateCtr((int)$resultClicks[$i][1], (int)$resultViews[$i][1]),
             ];
         }
 
@@ -372,45 +374,85 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): DataCollection {
-        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setDateRange($dateStart, $dateEnd)
-            ->appendSiteIdGroupBy();
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
-        if (null !== $publisherId) {
-            $queryBuilder->setPublisherId($publisherId);
-        } else {
-            $queryBuilder->appendPublisherIdGroupBy();
+        $queryResult = [];
+        $queryResultLive = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchStatsAggregates(
+                $publisherId,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $siteId
+            );
         }
 
-        if ($siteId) {
-            $queryBuilder
-                ->appendSiteIdWhereClause($siteId)
-                ->appendZoneIdGroupBy();
-        } else {
-            $queryBuilder->appendAnyZoneId();
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchStatsLive(
+                $publisherId,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $siteId
+            );
         }
 
-        $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
+        $checkPublisherId = $publisherId === null;
+        $checkZoneId = $siteId !== null;
+
+        $combined = [];
+        foreach (array_merge($queryResult, $queryResultLive) as $row) {
+            $publisherId = $checkPublisherId ? bin2hex($row->publisher_id) : 0;
+            $siteId = bin2hex($row->site_id);
+            $zoneId = $checkZoneId ? bin2hex($row->zone_id) : 0;
+
+            if (!array_key_exists($publisherId, $combined)) {
+                $combined[$publisherId] = [];
+            }
+            if (!array_key_exists($siteId, $combined[$publisherId])) {
+                $combined[$publisherId][$siteId] = [];
+            }
+            if (!array_key_exists($zoneId, $combined[$publisherId][$siteId])) {
+                $combined[$publisherId][$siteId][$zoneId] = [
+                    'clicks' => (int)$row->clicks,
+                    'views' => (int)$row->views,
+                    'revenue' => (int)$row->revenue,
+                ];
+            } else {
+                $combined[$publisherId][$siteId][$zoneId]['clicks'] =
+                    $combined[$publisherId][$siteId][$zoneId]['clicks'] + (int)$row->clicks;
+                $combined[$publisherId][$siteId][$zoneId]['views'] =
+                    $combined[$publisherId][$siteId][$zoneId]['views'] + (int)$row->views;
+                $combined[$publisherId][$siteId][$zoneId]['revenue'] =
+                    $combined[$publisherId][$siteId][$zoneId]['revenue'] + (int)$row->revenue;
+            }
+        }
 
         $result = [];
-        foreach ($queryResult as $row) {
-            $clicks = (int)$row->clicks;
-            $views = (int)$row->views;
-            $revenue = (int)$row->revenue;
+        foreach ($combined as $publisherId => $publisherData) {
+            foreach ($publisherData as $siteId => $siteData) {
+                foreach ($siteData as $zoneId => $zoneData) {
+                    $clicks = $zoneData['clicks'];
+                    $views = $zoneData['views'];
+                    $revenue = $zoneData['revenue'];
 
-            $calculation = new Calculation(
-                $clicks,
-                $views,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateRpc($revenue, $clicks),
-                $this->calculateRpm($revenue, $views),
-                $revenue
-            );
+                    $calculation = new Calculation(
+                        $clicks,
+                        $views,
+                        self::calculateCtr($clicks, $views),
+                        self::calculateRpc($revenue, $clicks),
+                        self::calculateRpm($revenue, $views),
+                        $revenue
+                    );
 
-            $zoneId = ($siteId !== null) ? bin2hex($row->zone_id) : null;
-            $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
+                    $result[] = new DataEntry(
+                        $calculation,
+                        $siteId,
+                        $checkZoneId ? $zoneId : null,
+                        $checkPublisherId ? $publisherId : null
+                    );
+                }
+            }
         }
 
         return new DataCollection($result);
@@ -422,40 +464,55 @@ class MySqlStatsRepository implements StatsRepository
         DateTime $dateEnd,
         ?string $siteId = null
     ): Total {
-        $queryBuilder = (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
-            ->setDateRange($dateStart, $dateEnd);
+        $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
-        if (null !== $publisherId) {
-            $queryBuilder->setPublisherId($publisherId);
+        $queryResult = [];
+        $queryResultLive = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchStatsTotalAggregates(
+                $publisherId,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $siteId
+            );
         }
 
-        if ($siteId) {
-            $queryBuilder
-                ->appendSiteIdWhereClause($siteId)
-                ->appendSiteIdGroupBy();
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchStatsTotalLive(
+                $publisherId,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $siteId
+            );
         }
-        $queryBuilder->appendAnyZoneId();
-
-        $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
 
         if (!empty($queryResult)) {
             $row = $queryResult[0];
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
             $revenue = (int)$row->revenue;
-
-            $calculation = new Calculation(
-                $clicks,
-                $views,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateRpc($revenue, $clicks),
-                $this->calculateRpm($revenue, $views),
-                $revenue
-            );
         } else {
-            $calculation = new Calculation(0, 0, 0, 0, 0, 0);
+            $clicks = 0;
+            $views = 0;
+            $revenue = 0;
         }
+
+        if (!empty($queryResultLive)) {
+            $row = $queryResultLive[0];
+            $clicks += (int)$row->clicks;
+            $views += (int)$row->views;
+            $revenue += (int)$row->revenue;
+        }
+
+        $calculation = new Calculation(
+            $clicks,
+            $views,
+            self::calculateCtr($clicks, $views),
+            self::calculateRpc($revenue, $clicks),
+            self::calculateRpm($revenue, $views),
+            $revenue
+        );
 
         return new Total($calculation, $siteId);
     }
@@ -497,14 +554,14 @@ class MySqlStatsRepository implements StatsRepository
             $calculation = new ReportCalculation(
                 $clicks,
                 $clicksAll,
-                $this->calculateInvalidRate($clicksAll, $clicks),
+                self::calculateInvalidRate($clicksAll, $clicks),
                 $views,
                 $viewsAll,
-                $this->calculateInvalidRate($viewsAll, $views),
+                self::calculateInvalidRate($viewsAll, $views),
                 (int)$row->viewsUnique,
-                $this->calculateCtr($clicks, $views),
-                $this->calculateRpc($revenue, $clicks),
-                $this->calculateRpm($revenue, $views),
+                self::calculateCtr($clicks, $views),
+                self::calculateRpc($revenue, $clicks),
+                self::calculateRpm($revenue, $views),
                 $revenue,
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
@@ -533,6 +590,55 @@ class MySqlStatsRepository implements StatsRepository
         ?string $siteId,
         ?string $zoneId = null
     ): array {
+        $dateTimeZone = $dateStart->getTimezone();
+        $dateThreshold = $this->getDateThresholdForLiveData($dateTimeZone);
+
+        $concatenatedResult = [];
+
+        if ($dateStart < $dateThreshold) {
+            $queryResult = $this->fetchAggregates(
+                $type,
+                $publisherId,
+                $resolution,
+                $dateStart,
+                min($dateEnd, (clone $dateThreshold)->modify('-1 second')),
+                $siteId,
+                $zoneId
+            );
+
+            $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
+        }
+
+        if ($dateThreshold < $dateEnd) {
+            $queryResultLive = $this->fetchLive(
+                $type,
+                $publisherId,
+                $resolution,
+                max($dateStart, $dateThreshold),
+                $dateEnd,
+                $siteId,
+                $zoneId
+            );
+
+            $concatenatedResultLive = self::concatenateDateColumns($dateTimeZone, $queryResultLive, $resolution);
+            $concatenatedResult = self::joinResultWithResultLive($concatenatedResult, $concatenatedResultLive);
+        }
+
+        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
+        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
+
+        return self::overwriteStartDate($dateStart, self::mapResult($joinedResult));
+    }
+
+    private function fetchAggregates(
+        string $type,
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId,
+        ?string $zoneId = null
+    ): array {
         $queryBuilder = (new MySqlAggregatedStatsQueryBuilder($type))
             ->setPublisherId($publisherId)
             ->setDateRange($dateStart, $dateEnd)
@@ -549,14 +655,38 @@ class MySqlStatsRepository implements StatsRepository
         }
 
         $query = $queryBuilder->build();
-        $queryResult = $this->executeQuery($query, $dateStart);
 
-        $result = $this->processQueryResult($resolution, $dateStart, $dateEnd, $queryResult);
-
-        return $result;
+        return $this->executeQuery($query, $dateStart);
     }
 
-    private function executeQuery(string $query, DateTime $dateStart): array
+    private function fetchLive(
+        string $type,
+        string $publisherId,
+        string $resolution,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId,
+        ?string $zoneId = null
+    ): array {
+        $queryBuilder = (new MySqlLiveStatsQueryBuilder($type))
+            ->setPublisherId($publisherId)
+            ->setDateRange($dateStart, $dateEnd)
+            ->appendResolution($resolution);
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId);
+        }
+
+        if ($zoneId) {
+            $queryBuilder->appendZoneIdWhereClause($zoneId);
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function executeQuery(string $query, DateTimeInterface $dateStart): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
         $this->setDbSessionTimezone($dateTimeZone);
@@ -575,23 +705,6 @@ class MySqlStatsRepository implements StatsRepository
     private function unsetDbSessionTimeZone(): void
     {
         DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
-    }
-
-    private function processQueryResult(
-        string $resolution,
-        DateTime $dateStart,
-        DateTime $dateEnd,
-        array $queryResult
-    ): array {
-        $dateTimeZone = $dateStart->getTimezone();
-        $concatenatedResult = self::concatenateDateColumns($dateTimeZone, $queryResult, $resolution);
-        $emptyResult = self::createEmptyResult($dateTimeZone, $resolution, $dateStart, $dateEnd);
-        $joinedResult = self::joinResultWithEmpty($concatenatedResult, $emptyResult);
-
-        $result = $this->mapResult($joinedResult);
-        $result = $this->overwriteStartDate($dateStart, $result);
-
-        return $result;
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
@@ -637,7 +750,7 @@ class MySqlStatsRepository implements StatsRepository
             }
 
             $d = $date->format(DateTime::ATOM);
-            $formattedResult[$d] = $row->c;
+            $formattedResult[$d] = (int)$row->c;
         }
 
         return $formattedResult;
@@ -744,7 +857,20 @@ class MySqlStatsRepository implements StatsRepository
         return $emptyResult;
     }
 
-    private function mapResult(array $joinedResult): array
+    private static function joinResultWithResultLive(array $result, array $resultLive): array
+    {
+        foreach ($resultLive as $key => $value) {
+            if (isset($result[$key])) {
+                $result[$key] = $result[$key] + $resultLive[$key];
+            } else {
+                $result[$key] = $resultLive[$key];
+            }
+        }
+
+        return $result;
+    }
+
+    private static function mapResult(array $joinedResult): array
     {
         $result = [];
         foreach ($joinedResult as $key => $value) {
@@ -754,31 +880,31 @@ class MySqlStatsRepository implements StatsRepository
         return $result;
     }
 
-    private function overwriteStartDate(DateTime $dateStart, array $result): array
+    private static function overwriteStartDate(DateTimeInterface $dateStart, array $result): array
     {
         if (count($result) > 0) {
-            $result[0][0] = $dateStart->format(DateTime::ATOM);
+            $result[0][0] = $dateStart->format(DateTimeInterface::ATOM);
         }
 
         return $result;
     }
 
-    private function calculateRpc(int $revenue, int $clicks): int
+    private static function calculateRpc(int $revenue, int $clicks): int
     {
         return (0 === $clicks) ? 0 : (int)round($revenue / $clicks);
     }
 
-    private function calculateRpm(int $revenue, int $views): int
+    private static function calculateRpm(int $revenue, int $views): int
     {
         return (0 === $views) ? 0 : (int)round($revenue / $views * 1000);
     }
 
-    private function calculateCtr(int $clicks, int $views): float
+    private static function calculateCtr(int $clicks, int $views): float
     {
         return (0 === $views) ? 0 : $clicks / $views;
     }
 
-    private function calculateInvalidRate(int $totalCount, int $validCount): float
+    private static function calculateInvalidRate(int $totalCount, int $validCount): float
     {
         return (0 === $totalCount) ? 0 : ($totalCount - $validCount) / $totalCount;
     }
@@ -833,5 +959,111 @@ SQL;
         }
 
         return DB::select($query);
+    }
+
+    private function fetchStatsAggregates(
+        ?string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $queryBuilder =
+            (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd)
+                ->appendSiteIdGroupBy();
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        } else {
+            $queryBuilder->appendPublisherIdGroupBy();
+        }
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy();
+        } else {
+            $queryBuilder->appendAnyZoneId();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsLive(
+        ?string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $queryBuilder =
+            (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd)
+                ->appendSiteIdGroupBy();
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        } else {
+            $queryBuilder->appendPublisherIdGroupBy();
+        }
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId)->appendZoneIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsTotalAggregates(
+        ?string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $queryBuilder =
+            (new MySqlAggregatedStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        }
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId)->appendSiteIdGroupBy();
+        }
+        $queryBuilder->appendAnyZoneId();
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function fetchStatsTotalLive(
+        ?string $publisherId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?string $siteId
+    ): array {
+        $queryBuilder =
+            (new MySqlLiveStatsQueryBuilder(StatsRepository::TYPE_STATS))
+                ->setDateRange($dateStart, $dateEnd);
+
+        if (null !== $publisherId) {
+            $queryBuilder->setPublisherId($publisherId);
+        }
+
+        if ($siteId) {
+            $queryBuilder->appendSiteIdWhereClause($siteId)->appendSiteIdGroupBy();
+        }
+
+        $query = $queryBuilder->build();
+
+        return $this->executeQuery($query, $dateStart);
+    }
+
+    private function getDateThresholdForLiveData(DateTimeZone $dateTimeZone): DateTime
+    {
+        return DateUtils::getDateTimeRoundedToCurrentHour(new DateTime('now', $dateTimeZone))->modify('-1 hour');
     }
 }
