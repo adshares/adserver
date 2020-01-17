@@ -58,10 +58,11 @@ class CampaignRepository
     /**
      * @param Campaign $campaign
      * @param array $banners
+     * @param array $conversions
      *
      * @throws \Exception
      */
-    public function save(Campaign $campaign, array $banners = []): void
+    public function save(Campaign $campaign, array $banners = [], array $conversions = []): void
     {
         DB::beginTransaction();
 
@@ -71,6 +72,12 @@ class CampaignRepository
             if ($banners) {
                 foreach ($banners as $banner) {
                     $campaign->banners()->save($banner);
+                }
+            }
+
+            if ($conversions) {
+                foreach ($conversions as $conversion) {
+                    $campaign->conversions()->save($conversion);
                 }
             }
         } catch (\Exception $ex) {
