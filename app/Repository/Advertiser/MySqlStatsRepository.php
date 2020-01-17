@@ -51,12 +51,23 @@ WHERE created_at BETWEEN ? AND ?
 LIMIT 1;
 SQL;
 
+    private const SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE = <<<SQL
+SELECT id
+FROM conversions
+WHERE created_at BETWEEN ? AND ?
+LIMIT 1;
+SQL;
+
     private const DELETE_FROM_EVENT_LOGS_HOURLY_WHERE_HOUR_TIMESTAMP = <<<SQL
 DELETE FROM event_logs_hourly WHERE hour_timestamp = ?;
 SQL;
 
     private const DELETE_FROM_EVENT_LOGS_HOURLY_STATS_WHERE_HOUR_TIMESTAMP = <<<SQL
 DELETE FROM event_logs_hourly_stats WHERE hour_timestamp = ?;
+SQL;
+
+    private const DELETE_FROM_CONVERSIONS_HOURLY_WHERE_HOUR_TIMESTAMP = <<<SQL
+DELETE FROM conversions_hourly WHERE hour_timestamp = ?;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN = <<<SQL
@@ -245,6 +256,33 @@ HAVING clicks > 0
     OR clicksAll > 0
     OR viewsAll > 0
     OR viewsUnique > 0;
+SQL;
+
+    private const INSERT_CONVERSIONS_HOURLY = <<<SQL
+INSERT INTO conversions_hourly (conversion_definition_id,
+                                advertiser_id,
+                                campaign_id,
+                                cost,
+                                occurrences,
+                                hour_timestamp)
+SELECT s.conversion_definition_id AS conversion_definition_id,
+       c.user_id                  AS advertiser_id,
+       c.id                       AS campaign_id,
+       SUM(s.cost)                AS cost,
+       COUNT(1)                   AS occurrences,
+       ?      AS hour_timestamp
+FROM (
+         SELECT group_id,
+                conversion_definition_id,
+                MIN(created_at)             AS created_at,
+                IFNULL(SUM(event_value), 0) AS cost
+         FROM conversions
+         WHERE created_at BETWEEN ? AND ?
+         GROUP BY 1, 2
+     ) s
+         JOIN conversion_definitions cd on s.conversion_definition_id = cd.id
+         JOIN campaigns c on cd.campaign_id = c.id
+GROUP BY 1;
 SQL;
 
     public function fetchView(
@@ -834,6 +872,27 @@ SQL;
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );
         DB::commit();
+
+        if (!empty(
+            $this->executeQuery(
+                self::SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE,
+                $dateStart,
+                [$dateStart, $dateEnd]
+            )
+        )) {
+            DB::beginTransaction();
+            $this->executeQuery(
+                self::DELETE_FROM_CONVERSIONS_HOURLY_WHERE_HOUR_TIMESTAMP,
+                $dateStart,
+                [$dateStart]
+            );
+            $this->executeQuery(
+                self::INSERT_CONVERSIONS_HOURLY,
+                $dateStart,
+                [$dateStart, $dateStart, $dateEnd]
+            );
+            DB::commit();
+        }
     }
 
     private function fetch(
