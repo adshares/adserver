@@ -85,7 +85,7 @@ final class NowPaymentsLog extends Model
         string $status,
         float $amount,
         string $currency,
-        string $paymentId = null,
+        ?string $paymentId = null,
         array $context = []
     ): NowPaymentsLog {
         $log = new self();

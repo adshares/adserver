@@ -138,16 +138,15 @@ final class NowPayments
         ];
 
         try {
-            $log =
-                NowPaymentsLog::create(
-                    $user->id,
-                    $orderId,
-                    NowPaymentsLog::STATUS_INIT,
-                    $amount,
-                    $this->currency,
-                    null,
-                    $data
-                );
+            $log = NowPaymentsLog::create(
+                $user->id,
+                $orderId,
+                NowPaymentsLog::STATUS_INIT,
+                $amount,
+                $this->currency,
+                null,
+                $data
+            );
             $log->save();
         } catch (QueryException $exception) {
             Log::error(sprintf('[NowPayments] Cannot save payment log: %s', $exception->getMessage()));
@@ -192,9 +191,9 @@ final class NowPayments
 
     public function notify(User $user, array $params): bool
     {
-        $orderId = $params['order_id'] ?? '';
-        $status = $params['payment_status'] ?? '';
-        $paymentId = $params['payment_id'] ?? '';
+        $orderId = (string)($params['order_id'] ?? '');
+        $status = (string)($params['payment_status'] ?? '');
+        $paymentId = (string)($params['payment_id'] ?? '');
         $amount = (float)($params['actually_paid'] ?? 0);
         $currency = strtoupper($params['pay_currency'] ?? '');
 
