@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -33,7 +34,35 @@ class UsersController extends Controller
     {
         $query = $request->get('q');
         if ($query) {
-            return User::where('email', 'LIKE', '%'.$query.'%')->paginate();
+            $domains =
+                DB::select(
+                    'SELECT DISTINCT user_id from sites WHERE deleted_at IS NULL AND domain LIKE ? LIMIT 100',
+                    ['%'.$query.'%']
+                );
+            $campaigns =
+                DB::select(
+                    'SELECT DISTINCT user_id from campaigns WHERE deleted_at IS NULL AND landing_url LIKE ? LIMIT 100',
+                    ['%'.$query.'%']
+                );
+
+            $ids = array_unique(
+                array_merge(
+                    array_map(
+                        function ($row) {
+                            return $row->user_id;
+                        },
+                        $domains
+                    ),
+                    array_map(
+                        function ($row) {
+                            return $row->user_id;
+                        },
+                        $campaigns
+                    )
+                )
+            );
+
+            return User::where('email', 'LIKE', '%'.$query.'%')->orWhereIn('id', $ids)->paginate();
         }
 
         return User::paginate();

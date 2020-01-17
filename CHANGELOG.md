@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.5.2] - 2020-01-17
+### Added
+- Search by domain in admin panel
 ### Changed
 - Advertisers' and Publishers' statistics are updated live
 ### Fixed
