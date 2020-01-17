@@ -28,6 +28,7 @@ use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\NowPayments;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -236,7 +237,12 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        return self::json(array_merge($user->toArray(), ['exchange_rate' => $exchangeRate]));
+        return self::json(
+            array_merge(
+                $user->toArray(),
+                ['exchange_rate' => $exchangeRate]
+            )
+        );
     }
 
     public function impersonate(User $user): JsonResponse

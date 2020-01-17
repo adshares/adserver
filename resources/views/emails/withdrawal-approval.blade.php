@@ -11,6 +11,7 @@ Please confirm your withdrawal request.
 Confirm Withdrawal
 @endcomponent
 
-Thanks,<br>
-{{ config('app.name') }}
+Thanks,
+
+{{ config('app.name') }} Team
 @endcomponent

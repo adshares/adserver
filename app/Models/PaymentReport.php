@@ -98,6 +98,11 @@ class PaymentReport extends Model
         return self::STATUS_NEW === $this->status;
     }
 
+    public function isFailed(): bool
+    {
+        return self::STATUS_ERROR === $this->status;
+    }
+
     public function isUpdated(): bool
     {
         return self::STATUS_UPDATED === $this->status;
@@ -106,6 +111,11 @@ class PaymentReport extends Model
     public function isPrepared(): bool
     {
         return self::STATUS_PREPARED === $this->status;
+    }
+
+    public static function fetchById(int $id): ?self
+    {
+        return self::find($id);
     }
 
     public static function fetchByIds(array $ids): Collection

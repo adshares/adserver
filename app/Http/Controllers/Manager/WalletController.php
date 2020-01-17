@@ -29,6 +29,8 @@ use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
+use Adshares\Adserver\Services\AdsExchange;
+use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
@@ -75,6 +77,10 @@ class WalletController extends Controller
     private const FIELD_TOTAL = 'total';
 
     private const FIELD_TYPES = 'types';
+
+    private const FIELD_NOW_PAYMENTS = 'now_payments';
+
+    private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
 
@@ -243,7 +249,7 @@ class WalletController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    public function depositInfo(): JsonResponse
+    public function depositInfo(NowPayments $nowPayments): JsonResponse
     {
         $user = Auth::user();
         $uuid = $user->uuid;
@@ -254,9 +260,74 @@ class WalletController extends Controller
         $resp = [
             self::FIELD_ADDRESS => $address->toString(),
             self::FIELD_MESSAGE => $message,
+            self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
         ];
 
         return self::json($resp);
+    }
+
+    public function nowPaymentsInit(NowPayments $nowPayments, Request $request): JsonResponse
+    {
+        $user = Auth::user();
+        $amount = (float)$request->get('amount', 10);
+
+        $resp = [
+            self::FIELD_NOW_PAYMENTS_URL => $nowPayments->getPaymentUrl($user, $amount),
+        ];
+
+        return self::json($resp);
+    }
+
+    public function nowPaymentsNotify(string $uuid, NowPayments $nowPayments, Request $request): Response
+    {
+        $headerHash = $request->headers->get('x-nowpayments-sig');
+        $params = $request->request->all();
+        $hash = $nowPayments->hash($params);
+
+        if (!hash_equals($hash, $headerHash)) {
+            Log::warning(sprintf('[NowPayments] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user = User::fetchByUuid($uuid);
+        if ($user === null) {
+            Log::warning(sprintf('[NowPayments] Cannot find user (%s)', $uuid));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $result = $nowPayments->notify($user, $params);
+
+        return response()->noContent($result ? Response::HTTP_NO_CONTENT : Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function nowPaymentsExchange(
+        string $uuid,
+        AdsExchange $exchange,
+        NowPayments $nowPayments,
+        Request $request
+    ): Response {
+        $headerHash = $request->headers->get('x-api-hash');
+        $params = $request->json()->all();
+        $hash = $exchange->hash($params);
+
+        if (!hash_equals($hash, $headerHash)) {
+            Log::warning(sprintf('[Exchange] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $user = User::fetchByUuid($uuid);
+        if ($user === null) {
+            Log::warning(sprintf('[Exchange] Cannot find user (%s)', $uuid));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $result = $nowPayments->exchange($user, $params);
+
+        return response()->noContent($result ? Response::HTTP_NO_CONTENT : Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function history(Request $request): JsonResponse

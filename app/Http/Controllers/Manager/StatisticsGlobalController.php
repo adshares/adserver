@@ -58,6 +58,7 @@ class StatisticsGlobalController extends Controller
     {
         $days = max(1, min(30, (int)$request->get('days', 30)));
         $offset = max(0, min(30 - $days, (int)$request->get('offset', 0)));
+
         return $this->demandRepository->fetchDomains($days, $offset);
     }
 
@@ -84,6 +85,7 @@ class StatisticsGlobalController extends Controller
         $offset = max(0, min(30 - $days, (int)$request->get('offset', 0)));
 
         $totalFee = $this->totalFeeReader->getTotalFeeSupply();
+
         return $this->supplyRepository->fetchDomains($totalFee, $days, $offset);
     }
 
