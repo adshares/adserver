@@ -44,6 +44,7 @@ FROM (
                 MIN(created_at)             AS created_at,
                 IFNULL(SUM(event_value_currency), 0) AS cost
          FROM conversions
+         WHERE payment_id IS NOT NULL
          GROUP BY 1, 2
      ) s
          JOIN conversion_definitions cd on s.conversion_definition_id = cd.id
