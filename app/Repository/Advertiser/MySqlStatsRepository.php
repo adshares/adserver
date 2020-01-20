@@ -1412,8 +1412,6 @@ SQL;
             ->selectRaw(
                 'ch.campaign_id AS campaign_id,'
                 .'cd.uuid AS uuid,'
-                .'cd.name AS name,'
-                .'cd.event_type AS event_type,'
                 .'SUM(ch.cost) AS cost,'
                 .'SUM(ch.occurrences) AS occurrences'
             )
@@ -1432,8 +1430,6 @@ SQL;
             $result[] = new ConversionDataEntry(
                 $entry->campaign_id,
                 bin2hex($entry->uuid),
-                $entry->name,
-                $entry->event_type,
                 (int)$entry->cost,
                 (int)$entry->occurrences
             );

@@ -30,12 +30,6 @@ class ConversionDataEntry
     /** @var string */
     private $conversionUuid;
 
-    /** @var string */
-    private $name;
-
-    /** @var string */
-    private $eventType;
-
     /** @var int */
     private $cost;
 
@@ -45,15 +39,11 @@ class ConversionDataEntry
     public function __construct(
         int $campaignId,
         string $conversionUuid,
-        string $name,
-        string $eventType,
         int $cost,
         int $occurrences
     ) {
         $this->campaignId = $campaignId;
         $this->conversionUuid = $conversionUuid;
-        $this->name = $name;
-        $this->eventType = $eventType;
         $this->cost = $cost;
         $this->occurrences = $occurrences;
     }
@@ -63,8 +53,6 @@ class ConversionDataEntry
         return [
             'campaign_id' => $this->campaignId,
             'uuid' => $this->conversionUuid,
-            'name' => $this->name,
-            'event_type' => $this->eventType,
             'cost' => $this->cost,
             'occurrences' => $this->occurrences,
         ];
