@@ -46,13 +46,13 @@ class DataCollection
 
     public function toArray(): array
     {
-        $data = [];
+        $arr = [];
 
         /** @var DataEntry $entry */
         foreach ($this->data as $entry) {
-            $data[] = $entry->toArray();
+            $arr[] = $entry->toArray();
         }
 
-        return $data;
+        return $arr;
     }
 }

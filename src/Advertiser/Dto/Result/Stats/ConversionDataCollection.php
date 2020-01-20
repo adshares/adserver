@@ -46,13 +46,13 @@ class ConversionDataCollection
 
     public function toArray(): array
     {
-        $data = [];
+        $arr = [];
 
         /** @var ConversionDataEntry $entry */
         foreach ($this->data as $entry) {
-            $data[] = $entry->toArray();
+            $arr[] = $entry->toArray();
         }
 
-        return $data;
+        return $arr;
     }
 }
