@@ -24,7 +24,7 @@ use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
-use Adshares\Common\Domain\ValueObject\SecureUrl;
+use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -159,9 +159,7 @@ class Site extends Model
 
     public function getCodeAttribute(): string
     {
-        $scriptUrl = (new SecureUrl(route('supply-find.js')))->toString();
-
-        return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
+        return SiteCodeGenerator::getCommonCode();
     }
 
     public function setStatusAttribute($value): void

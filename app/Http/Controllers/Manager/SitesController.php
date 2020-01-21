@@ -21,9 +21,13 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Publisher\SiteCodeConfig;
+use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
@@ -271,6 +275,18 @@ class SitesController extends Controller
         $response = new SizesResponse($siteId);
 
         return self::json($response);
+    }
+
+    public function sitesCode(Site $site, GetSiteCode $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user->isEmailConfirmed) {
+            return self::json(['code' => 'Confirm email to get code']);
+        }
+
+        return self::json(['code' => SiteCodeGenerator::generate($site, $request->toConfig())]);
     }
 
     private function validateInputZones($inputZones): void

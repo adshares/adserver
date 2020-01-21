@@ -72,6 +72,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.sites.count');
     Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
         ->name('app.sites.change_status');
+    Route::get('sites/{site}/code', [SitesController::class, 'sitesCode'])
+        ->name('app.sites.code');
 
 # actions
     Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
