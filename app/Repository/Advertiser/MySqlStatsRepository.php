@@ -28,6 +28,8 @@ use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\ReportCalculation;
@@ -49,12 +51,23 @@ WHERE created_at BETWEEN ? AND ?
 LIMIT 1;
 SQL;
 
+    private const SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE = <<<SQL
+SELECT id
+FROM conversions
+WHERE created_at BETWEEN ? AND ?
+LIMIT 1;
+SQL;
+
     private const DELETE_FROM_EVENT_LOGS_HOURLY_WHERE_HOUR_TIMESTAMP = <<<SQL
 DELETE FROM event_logs_hourly WHERE hour_timestamp = ?;
 SQL;
 
     private const DELETE_FROM_EVENT_LOGS_HOURLY_STATS_WHERE_HOUR_TIMESTAMP = <<<SQL
 DELETE FROM event_logs_hourly_stats WHERE hour_timestamp = ?;
+SQL;
+
+    private const DELETE_FROM_CONVERSIONS_HOURLY_WHERE_HOUR_TIMESTAMP = <<<SQL
+DELETE FROM conversions_hourly WHERE hour_timestamp = ?;
 SQL;
 
     private const INSERT_EVENT_LOGS_HOURLY_GROUPED_BY_DOMAIN = <<<SQL
@@ -243,6 +256,33 @@ HAVING clicks > 0
     OR clicksAll > 0
     OR viewsAll > 0
     OR viewsUnique > 0;
+SQL;
+
+    private const INSERT_CONVERSIONS_HOURLY = <<<SQL
+INSERT INTO conversions_hourly (conversion_definition_id,
+                                advertiser_id,
+                                campaign_id,
+                                cost,
+                                occurrences,
+                                hour_timestamp)
+SELECT s.conversion_definition_id AS conversion_definition_id,
+       c.user_id                  AS advertiser_id,
+       c.id                       AS campaign_id,
+       SUM(s.cost)                AS cost,
+       COUNT(1)                   AS occurrences,
+       ?      AS hour_timestamp
+FROM (
+         SELECT group_id,
+                conversion_definition_id,
+                IFNULL(SUM(event_value_currency), 0) AS cost
+         FROM conversions
+         WHERE created_at BETWEEN ? AND ?
+           AND payment_id IS NOT NULL
+         GROUP BY 1, 2
+     ) s
+         JOIN conversion_definitions cd on s.conversion_definition_id = cd.id
+         JOIN campaigns c on cd.campaign_id = c.id
+GROUP BY 1;
 SQL;
 
     public function fetchView(
@@ -832,6 +872,27 @@ SQL;
             [$dateStart, $dateStart, $dateEnd, $dateStart, $dateEnd, $dateStart, $dateEnd]
         );
         DB::commit();
+
+        if (!empty(
+            $this->executeQuery(
+                self::SQL_QUERY_SELECT_FIRST_CONVERSION_ID_FROM_DATE_RANGE,
+                $dateStart,
+                [$dateStart, $dateEnd]
+            )
+        )) {
+            DB::beginTransaction();
+            $this->executeQuery(
+                self::DELETE_FROM_CONVERSIONS_HOURLY_WHERE_HOUR_TIMESTAMP,
+                $dateStart,
+                [$dateStart]
+            );
+            $this->executeQuery(
+                self::INSERT_CONVERSIONS_HOURLY,
+                $dateStart,
+                [$dateStart, $dateStart, $dateEnd]
+            );
+            DB::commit();
+        }
     }
 
     private function fetch(
@@ -1337,5 +1398,44 @@ SQL;
         }
 
         return $dateThreshold;
+    }
+
+    public function fetchStatsConversion(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null
+    ): ConversionDataCollection {
+        $builder = DB::table('conversions_hourly AS ch')
+            ->where('ch.hour_timestamp', '>=', $dateStart)
+            ->where('ch.hour_timestamp', '<=', $dateEnd)
+            ->where('ch.advertiser_id', $advertiserId)
+            ->selectRaw(
+                'ch.campaign_id AS campaign_id,'
+                .'cd.uuid AS uuid,'
+                .'SUM(ch.cost) AS cost,'
+                .'SUM(ch.occurrences) AS occurrences'
+            )
+            ->join('conversion_definitions AS cd', 'ch.conversion_definition_id', '=', 'cd.id')
+            ->groupBy('ch.campaign_id', 'ch.conversion_definition_id');
+
+        if (null !== $campaignId) {
+            $builder->where('ch.campaign_id', $campaignId);
+        }
+
+        $queryResult = $builder->get();
+
+        $result = [];
+
+        foreach ($queryResult as $entry) {
+            $result[] = new ConversionDataEntry(
+                $entry->campaign_id,
+                bin2hex($entry->uuid),
+                (int)$entry->cost,
+                (int)$entry->occurrences
+            );
+        }
+
+        return new ConversionDataCollection($result);
     }
 }
