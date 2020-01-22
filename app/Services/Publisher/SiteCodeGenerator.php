@@ -93,7 +93,7 @@ CODE;
 
     public static function getCommonCode(?SiteCodeConfig $config = null): string
     {
-        $proxyMainJs = $config !== null ? $config->isUserResponsibleForMainJsProxy() : false;
+        $proxyMainJs = $config !== null && $config->isUserResponsibleForMainJsProxy();
         $scriptUrl = $proxyMainJs ? '/main.js' : (new SecureUrl(route('supply-find.js')))->toString();
 
         return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
