@@ -22,37 +22,39 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Dto\Result\Stats;
 
-use RuntimeException;
-
-class DataCollection
+class ConversionDataEntry
 {
-    private $data = [];
+    /** @var int */
+    private $campaignId;
 
-    public function __construct(array $data)
-    {
-        $this->validate($data);
+    /** @var string */
+    private $conversionUuid;
 
-        $this->data = $data;
-    }
+    /** @var int */
+    private $cost;
 
-    private function validate(array $data): void
-    {
-        foreach ($data as $entry) {
-            if (!$entry instanceof DataEntry) {
-                throw new RuntimeException('Invalid object in the collection.');
-            }
-        }
+    /** @var int */
+    private $occurrences;
+
+    public function __construct(
+        int $campaignId,
+        string $conversionUuid,
+        int $cost,
+        int $occurrences
+    ) {
+        $this->campaignId = $campaignId;
+        $this->conversionUuid = $conversionUuid;
+        $this->cost = $cost;
+        $this->occurrences = $occurrences;
     }
 
     public function toArray(): array
     {
-        $arr = [];
-
-        /** @var DataEntry $entry */
-        foreach ($this->data as $entry) {
-            $arr[] = $entry->toArray();
-        }
-
-        return $arr;
+        return [
+            'campaign_id' => $this->campaignId,
+            'uuid' => $this->conversionUuid,
+            'cost' => $this->cost,
+            'occurrences' => $this->occurrences,
+        ];
     }
 }

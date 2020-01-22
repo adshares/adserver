@@ -24,7 +24,7 @@ namespace Adshares\Advertiser\Dto\Result\Stats;
 
 use RuntimeException;
 
-class DataCollection
+class ConversionDataCollection
 {
     private $data = [];
 
@@ -38,7 +38,7 @@ class DataCollection
     private function validate(array $data): void
     {
         foreach ($data as $entry) {
-            if (!$entry instanceof DataEntry) {
+            if (!$entry instanceof ConversionDataEntry) {
                 throw new RuntimeException('Invalid object in the collection.');
             }
         }
@@ -48,7 +48,7 @@ class DataCollection
     {
         $arr = [];
 
-        /** @var DataEntry $entry */
+        /** @var ConversionDataEntry $entry */
         foreach ($this->data as $entry) {
             $arr[] = $entry->toArray();
         }
