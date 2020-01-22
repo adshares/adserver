@@ -28,7 +28,7 @@ class CampaignRepository
 {
     public function find()
     {
-        return (new Campaign())->get();
+        return (new Campaign())->with('conversions')->get();
     }
 
     public function fetchActiveCampaigns()
