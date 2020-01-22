@@ -47,9 +47,9 @@ class GetSiteCode extends FormRequest
         $isFallback = $this->filterBoolean($values, 'is_fallback');
         $minCpm = $values['min_cpm'] ?? null;
 
-        if (isset($values['pop_burst']) && isset($values['pop_interval']) && isset($values['pop_burst'])) {
+        if (isset($values['pop_count']) && isset($values['pop_interval']) && isset($values['pop_burst'])) {
             $popConfig = new SiteCodeConfigPops(
-                (int)$values['pop_burst'],
+                (int)$values['pop_count'],
                 (int)$values['pop_interval'],
                 (int)$values['pop_burst']
             );
