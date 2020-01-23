@@ -163,13 +163,14 @@ CODE;
 
         $options = [];
         if ($config->isCustomFallback()) {
-            $options[] = "\t\t<!-- place here your custom fallback code -->";
+            $options[] =
+                "\t\t<!-- place here code executed when we are not able to provide ads that meet your criteria -->";
         }
         if ($config->isAdBlockOnly()) {
-            $options[] = "\t\t<!-- place here fallback code for ad blocks -->";
+            $options[] = "\t\t<!-- place here code executed when ad blockers are not active -->";
         }
         if (null !== $config->getMinCpm()) {
-            $options[] = "\t\t<!-- place here fallback code when minimal cpm cannot be fulfilled -->";
+            $options[] = "\t\t<!-- place here code executed when minimum CPM requirement cannot be fulfilled -->";
         }
 
         if (empty($options)) {
