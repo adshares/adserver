@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Minimal budget settings
 - Conversions' statistics endpoint
+- Site's codes endpoint
 
 ## [1.5.2] - 2020-01-17
 ### Added
