@@ -23,7 +23,6 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Exceptions\ConsoleCommandException;
 use Adshares\Adserver\Models\Config;
-use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
