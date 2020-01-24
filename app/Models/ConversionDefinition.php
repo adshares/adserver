@@ -182,7 +182,6 @@ class ConversionDefinition extends Model
         $isValueMutable = (bool)($conversion['is_value_mutable'] ?? false);
         $rules = [
             'uuid' => 'string|nullable',
-            'campaign_id' => 'required|integer',
             'name' => 'required|max:255',
             'event_type' => 'required|max:50',
             'type' => sprintf('required|in:%s', implode(',', self::ALLOWED_TYPES)),

@@ -29,7 +29,6 @@ use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
-use Adshares\Supply\Domain\ValueObject\Size;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -55,6 +54,8 @@ use function hex2bin;
  * @property array|null|string strategy_name
  * @property float bid
  * @property int budget
+ * @property int max_cpc
+ * @property int max_cpm
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
@@ -110,7 +111,7 @@ class Campaign extends Model
     ];
 
     protected $dispatchesEvents = [
-        'creating' => CampaignCreating::class
+        'creating' => CampaignCreating::class,
     ];
 
     protected $fillable = [
@@ -161,12 +162,16 @@ class Campaign extends Model
 
     public static function suspendAllForUserId(int $userId): int
     {
-        return self::fetchByUserId($userId)->filter(function (self $campaign) {
-            return $campaign->status === Campaign::STATUS_ACTIVE;
-        })->each(function (Campaign $campaign) {
-            $campaign->status = Campaign::STATUS_SUSPENDED;
-            $campaign->save();
-        })->count();
+        return self::fetchByUserId($userId)->filter(
+            function (self $campaign) {
+                return $campaign->status === Campaign::STATUS_ACTIVE;
+            }
+        )->each(
+            function (Campaign $campaign) {
+                $campaign->status = Campaign::STATUS_SUSPENDED;
+                $campaign->save();
+            }
+        )->count();
     }
 
     public static function isStatusAllowed(int $status): bool
@@ -194,23 +199,27 @@ class Campaign extends Model
     public static function fetchRequiredBudgetsPerUser(): Collection
     {
         $query = self::where('status', self::STATUS_ACTIVE)
-            ->where(static function ($q) {
-                $dateTime = DateUtils::getDateTimeRoundedToNextHour();
-                $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
-            });
+            ->where(
+                static function ($q) {
+                    $dateTime = DateUtils::getDateTimeRoundedToNextHour();
+                    $q->where('time_end', '>=', $dateTime)->orWhere('time_end', null);
+                }
+            );
 
         /** @var Collection $all */
         $all = $query->get();
 
         return $all->groupBy('user_id')
-            ->map(static function (Collection $collection) {
-                return $collection->reduce(
-                    static function (AdvertiserBudget $carry, Campaign $campaign) {
-                        return $carry->add($campaign->advertiserBudget());
-                    },
-                    new AdvertiserBudget()
-                );
-            });
+            ->map(
+                static function (Collection $collection) {
+                    return $collection->reduce(
+                        static function (AdvertiserBudget $carry, Campaign $campaign) {
+                            return $carry->add($campaign->advertiserBudget());
+                        },
+                        new AdvertiserBudget()
+                    );
+                }
+            );
     }
 
     private static function fetchRequiredBudgetForAllCampaignsInCurrentPeriod(): AdvertiserBudget
@@ -318,13 +327,19 @@ class Campaign extends Model
         ];
     }
 
-    public function changeStatus(int $status, ExchangeRate $exchangeRate): void
+    public function changeStatus(int $status, ExchangeRate $exchangeRate): bool
     {
-        if ($status === $this->status) {
-            return;
+        if (!self::isStatusAllowed($status)) {
+            return false;
         }
 
-        self::failIfInvalidStatus($status);
+        if ($status === self::STATUS_ACTIVE && !$this->checkBudget()) {
+            $status = self::STATUS_INACTIVE;
+        }
+
+        if ($status === $this->status) {
+            return false;
+        }
 
         $budget = self::fetchRequiredBudgetForAllCampaignsInCurrentPeriod();
 
@@ -332,15 +347,39 @@ class Campaign extends Model
             $budget = $budget->add($this->getBudgetForCurrentDateTime());
         }
 
-        $this->updateBlockadeOrFailIfNotAllowed(
+        if (!$this->updateBlockadeOrFailIfNotAllowed(
             $exchangeRate->toClick($budget->total()),
             $exchangeRate->toClick($budget->bonusable())
-        );
+        )) {
+            return false;
+        }
 
         $this->status = $status;
+
+        return true;
     }
 
-    private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): void
+    private function checkBudget(): bool
+    {
+        if ($this->budget < config('app.campaign_min_budget')) {
+            return false;
+        }
+
+        if ($this->max_cpm >= config('app.campaign_min_cpm')) {
+            return true;
+        }
+
+        foreach ($this->conversions as $conversion) {
+            /** @var $conversion ConversionDefinition */
+            if ($conversion->value >= config('app.campaign_min_cpa')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function updateBlockadeOrFailIfNotAllowed(int $total, int $bonusable): bool
     {
         DB::beginTransaction();
 
@@ -351,19 +390,12 @@ class Campaign extends Model
         } catch (InvalidArgumentException $exception) {
             DB::rollBack();
 
-            throw $exception;
+            return false;
         }
 
         DB::commit();
-    }
 
-    private static function failIfInvalidStatus(int $value): void
-    {
-        if (!self::isStatusAllowed($value)) {
-            throw new InvalidArgumentException(
-                sprintf('Status must be one of [%s]', implode(',', self::STATUSES))
-            );
-        }
+        return true;
     }
 
     private function getBudgetForCurrentDateTime(): AdvertiserBudget

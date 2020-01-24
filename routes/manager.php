@@ -78,6 +78,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('notifications', [NotificationsController::class, 'read']);
     Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
 
+    Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
     Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
     Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
     Route::get('options/sites/languages', [OptionsController::class, 'languages']);

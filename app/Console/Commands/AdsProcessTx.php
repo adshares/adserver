@@ -300,8 +300,9 @@ class AdsProcessTx extends BaseCommand
             });
 
             $suspendedCampaigns->each(static function (Campaign $campaign) use ($exchangeRate) {
-                $campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate);
-                $campaign->save();
+                if ($campaign->changeStatus(Campaign::STATUS_ACTIVE, $exchangeRate)) {
+                    $campaign->save();
+                }
             });
 
             return $suspendedCampaigns->count();

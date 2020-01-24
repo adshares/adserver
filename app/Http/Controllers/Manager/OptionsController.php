@@ -36,6 +36,17 @@ class OptionsController extends Controller
         $this->optionsRepository = $optionsRepository;
     }
 
+    public function campaigns(): JsonResponse
+    {
+        return self::json(
+            [
+                'min_budget' => config('app.campaign_min_budget'),
+                'min_cpm' => config('app.campaign_min_cpm'),
+                'min_cpa' => config('app.campaign_min_cpa'),
+            ]
+        );
+    }
+
     public function targeting(): JsonResponse
     {
         return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()));
