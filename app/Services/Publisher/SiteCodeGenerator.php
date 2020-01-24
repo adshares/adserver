@@ -49,42 +49,37 @@ class SiteCodeGenerator
             $zoneCode = self::getZoneCode($zone, $config);
 
             if (Size::TYPE_POP === $zone->type) {
-                $popsCodes[] = "<!-- {$zone->name} -->";
-                $popsCodes[] = $zoneCode;
+                $popsCodes[] = "<!-- {$zone->name} -->\n".$zoneCode;
             } else {
-                $displayCodes[] = "<!-- {$zone->name} {$zone->size} -->";
-                $displayCodes[] = $zoneCode;
+                $displayCodes[] = "<!-- {$zone->name} {$zone->size} -->\n".$zoneCode;
             }
         }
 
         $code = <<<CODE
-<!-- -->
 <!-- Common code for all ad units, should be inserted into head section -->
-<!-- -->
 {$commonCode}
+<!-- End of common code -->
 CODE;
 
         if (count($popsCodes) > 0) {
-            $popsCodes = join("\n", $popsCodes);
+            $popsCodes = join("\n\n", $popsCodes);
             $code .= <<<CODE
 
 
-<!-- -->
 <!-- Code for pops -->
-<!-- -->
 {$popsCodes}
+<!-- End of code for pops-->
 CODE;
         }
 
         if (count($displayCodes) > 0) {
-            $displayCodes = join("\n", $displayCodes);
+            $displayCodes = join("\n\n", $displayCodes);
             $code .= <<<CODE
 
 
-<!-- -->
 <!-- Code for ad units -->
-<!-- -->
 {$displayCodes}
+<!-- End of code for ad units -->
 CODE;
         }
 
@@ -164,7 +159,7 @@ CODE;
         $options = [];
         if ($config->isCustomFallback()) {
             $options[] =
-                "\t\t<!-- place here code executed when we are not able to provide ads that meet your criteria -->";
+                "\t\t<!-- place here custom fallback code -->";
         }
         if ($config->isAdBlockOnly()) {
             $options[] = "\t\t<!-- place here code executed when ad blockers are not active -->";
