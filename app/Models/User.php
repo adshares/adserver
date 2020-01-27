@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Hash;
  * @property string referral_id
  * @property int|null referrer_user_id
  * @property int subscribe
+ * @property bool isEmailConfirmed
  * @mixin Builder
  */
 class User extends Authenticatable

@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\Result\ChartResult;
 use Adshares\Advertiser\Dto\Result\Stats\Calculation;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataEntry;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
@@ -269,6 +270,15 @@ class DummyStatsRepository implements StatsRepository
         ?string $campaignId = null
     ): DataCollection {
         // TODO: Implement fetchStatsToReport() method.
+    }
+
+    public function fetchStatsConversion(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null
+    ): ConversionDataCollection {
+        // TODO: Implement fetchStatsConversion() method.
     }
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void

@@ -72,12 +72,15 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.sites.count');
     Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
         ->name('app.sites.change_status');
+    Route::get('sites/{site}/code', [SitesController::class, 'sitesCode'])
+        ->name('app.sites.code');
 
 # actions
     Route::get('config/adshares-address', [ConfigController::class, 'adsharesAddress']);
     Route::get('notifications', [NotificationsController::class, 'read']);
     Route::get('settings/notifications', [SettingsController::class, 'readNotifications']);
 
+    Route::get('options/campaigns', [OptionsController::class, 'campaigns']);
     Route::get('options/campaigns/targeting', [OptionsController::class, 'targeting']);
     Route::get('options/sites/filtering', [OptionsController::class, 'filtering']);
     Route::get('options/sites/languages', [OptionsController::class, 'languages']);
@@ -101,6 +104,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     );
     Route::get('campaigns/stats/table/{date_start}/{date_end}', [StatsController::class, 'advertiserStats']);
     Route::get('campaigns/stats/table2/{date_start}/{date_end}', [StatsController::class, 'advertiserStatsWithTotal']);
+    Route::get('campaigns/stats/kw/{date_start}/{date_end}', [StatsController::class, 'advertiserStatsConversions']);
     Route::get('sites/stats/chart/{type}/{resolution}/{date_start}/{date_end}',
         [StatsController::class, 'publisherChart']);
     Route::get('sites/stats/table/{date_start}/{date_end}', [StatsController::class, 'publisherStats']);

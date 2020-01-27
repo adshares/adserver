@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Advertiser\Repository;
 
 use Adshares\Advertiser\Dto\Result\ChartResult;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
 use Adshares\Advertiser\Dto\Result\Stats\Total;
 use DateTime;
@@ -167,6 +168,13 @@ interface StatsRepository
         DateTime $dateEnd,
         ?string $campaignId = null
     ): DataCollection;
+
+    public function fetchStatsConversion(
+        int $advertiserId,
+        DateTime $dateStart,
+        DateTime $dateEnd,
+        ?int $campaignId = null
+    ): ConversionDataCollection;
 
     public function aggregateStatistics(DateTime $dateStart, DateTime $dateEnd): void;
 }

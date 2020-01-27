@@ -22,7 +22,9 @@ declare(strict_types = 1);
 
 namespace Adshares\Advertiser\Service;
 
+use Adshares\Advertiser\Dto\Input\ConversionDataInput;
 use Adshares\Advertiser\Dto\Input\StatsInput;
+use Adshares\Advertiser\Dto\Result\Stats\ConversionDataCollection;
 use Adshares\Advertiser\Dto\Result\StatsResult;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Advertiser\Dto\Result\Stats\DataCollection;
@@ -54,6 +56,16 @@ class StatsDataProvider
         );
 
         return new StatsResult($total, $data);
+    }
+
+    public function fetchConversionData(ConversionDataInput $input): ConversionDataCollection
+    {
+        return $this->repository->fetchStatsConversion(
+            $input->getAdvertiserId(),
+            $input->getDateStart(),
+            $input->getDateEnd(),
+            $input->getCampaignId()
+        );
     }
 
     public function fetchReportData(StatsInput $input): DataCollection

@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Models;
 use Adshares\Adserver\Events\GenerateUUID;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +36,7 @@ use function hex2bin;
 /**
  * @property Site   site
  * @property int    id
+ * @property string name
  * @property string code
  * @property string uuid
  * @property int    site_id
@@ -47,17 +49,6 @@ use function hex2bin;
  */
 class Zone extends Model
 {
-    private const CODE_TEMPLATE
-        = <<<HTML
-<div class="{{selectorClass}}"
-    data-zone="{{zoneId}}" 
-    style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto"></div>
-HTML;
-
-    private const CODE_TEMPLATE_POP
-        = '<div class="{{selectorClass}}" data-zone="{{zoneId}}" '.
-           'data-options="count={{count}},interval={{interval}},burst={{burst}}" style="display: none"></div>';
-
     use SoftDeletes;
     use AutomateMutators;
     use BinHex;
@@ -159,29 +150,7 @@ HTML;
 
     public function getCodeAttribute(): string
     {
-        if (Size::TYPE_POP === $this->type) {
-            return strtr(
-                self::CODE_TEMPLATE_POP,
-                [
-                    '{{zoneId}}'        => $this->uuid,
-                    '{{count}}'         => '1',//TODO change default value to variable
-                    '{{interval}}'      => '1',//TODO change default value to variable
-                    '{{burst}}'         => '1',//TODO change default value to variable
-                    '{{selectorClass}}' => config('app.adserver_id'),
-                ]
-            );
-        }
-
-        $size = Size::toDimensions($this->size);
-
-        $replaceArr = [
-            '{{zoneId}}'        => $this->uuid,
-            '{{width}}'         => $size[0],
-            '{{height}}'        => $size[1],
-            '{{selectorClass}}' => config('app.adserver_id'),
-        ];
-
-        return strtr(self::CODE_TEMPLATE, $replaceArr);
+        return SiteCodeGenerator::getZoneCode($this);
     }
 
     public function getLabelAttribute(): string

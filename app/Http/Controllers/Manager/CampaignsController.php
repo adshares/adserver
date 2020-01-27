@@ -47,10 +47,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
-use function response;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function response;
 use function strrpos;
 
 class CampaignsController extends Controller
@@ -137,21 +137,20 @@ class CampaignsController extends Controller
 
         $campaign = new Campaign($input);
 
-        $banners = [];
-
+        $banners = $conversions = [];
         if (isset($input['ads']) && count($input['ads']) > 0) {
             $banners = $this->prepareBannersFromInput($input['ads'], $campaign->landing_url);
         }
-        $this->campaignRepository->save($campaign, $banners);
+        if (isset($input['conversions']) && count($input['conversions']) > 0) {
+            $conversions = $this->prepareConversionsFromInput($input['conversions']);
+        }
+
+        $this->campaignRepository->save($campaign, $banners, $conversions);
 
         $this->removeTemporaryUploadedFiles((array)$input['ads'], $request);
 
-        try {
-            $campaign->changeStatus($status, $exchangeRate);
-
+        if ($campaign->changeStatus($status, $exchangeRate)) {
             $this->campaignRepository->save($campaign);
-        } catch (InvalidArgumentException $e) {
-            Log::debug("Notify user [{$campaign->user_id}] that the campaign [{$campaign->id}] cannot be started.");
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
@@ -204,12 +203,14 @@ class CampaignsController extends Controller
                         break;
                 }
             } catch (RuntimeException $exception) {
-                Log::debug(sprintf(
-                    'Banner (name: %s, type: %s) could not be added (%s).',
-                    $banner['name'],
-                    $banner['type'],
-                    $exception->getMessage()
-                ));
+                Log::debug(
+                    sprintf(
+                        'Banner (name: %s, type: %s) could not be added (%s).',
+                        $banner['name'],
+                        $banner['type'],
+                        $exception->getMessage()
+                    )
+                );
 
                 continue;
             }
@@ -220,6 +221,13 @@ class CampaignsController extends Controller
         }
 
         return $banners;
+    }
+
+    private function prepareConversionsFromInput(array $input): array
+    {
+        $this->validateConversions($input);
+
+        return $input;
     }
 
     public function browse(): JsonResponse
@@ -254,8 +262,7 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
-        $conversions = $input['conversions'] ?? [];
-        $this->validateConversions($campaignId, $conversions);
+        $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
         $status = $campaign->status;
@@ -344,18 +351,8 @@ class CampaignsController extends Controller
             $this->removeTemporaryUploadedFiles($ads, $request);
         }
 
-        if ($status !== $campaign->status) {
-            try {
-                $campaign->changeStatus($status, $exchangeRate);
-
-                $this->campaignRepository->save($campaign);
-            } catch (InvalidArgumentException $e) {
-                Log::debug(
-                    "Notify user [{$campaign->user_id}]"
-                    ." that the campaign [{$campaign->id}] cannot be saved with status [{$status}]."
-                    ." {$e->getMessage()}"
-                );
-            }
+        if ($campaign->changeStatus($status, $exchangeRate)) {
+            $this->campaignRepository->save($campaign);
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
@@ -363,20 +360,21 @@ class CampaignsController extends Controller
         return self::json([], Response::HTTP_NO_CONTENT);
     }
 
-    private function validateConversions(int $campaignId, array $conversions): void
+    private function validateConversions(array $conversions): void
     {
         foreach ($conversions as $conversion) {
-            $conversion['campaign_id'] = $campaignId;
             $validator = Validator::make($conversion, ConversionDefinition::rules($conversion));
 
             if ($validator->fails()) {
                 $errors = $validator->errors()->toArray();
-                throw new HttpResponseException(response()->json(
-                    [
-                        'errors' => $errors,
-                    ],
-                    JsonResponse::HTTP_BAD_REQUEST
-                ));
+                throw new HttpResponseException(
+                    response()->json(
+                        [
+                            'errors' => $errors,
+                        ],
+                        JsonResponse::HTTP_BAD_REQUEST
+                    )
+                );
             }
         }
     }
@@ -395,12 +393,7 @@ class CampaignsController extends Controller
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
-        try {
-            $campaign->changeStatus($status, $exchangeRate);
-        } catch (InvalidArgumentException $e) {
-            Log::debug("Notify user [{$campaign->user_id}]"
-                ." that the campaign [{$campaign->id}] status cannot be set to [{$status}].");
-
+        if (!$campaign->changeStatus($status, $exchangeRate)) {
             return self::json([], Response::HTTP_BAD_REQUEST, ["Cannot set status to {$status}"]);
         }
 

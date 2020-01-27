@@ -20,39 +20,38 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Advertiser\Dto\Result\Stats;
+namespace Adshares\Adserver\Services\Publisher;
 
-use RuntimeException;
-
-class DataCollection
+class SiteCodeConfigPops
 {
-    private $data = [];
+    /** @var int */
+    private $count;
 
-    public function __construct(array $data)
+    /** @var int */
+    private $interval;
+
+    /** @var int */
+    private $burst;
+
+    public function __construct(int $count = 1, int $interval = 1, int $burst = 1)
     {
-        $this->validate($data);
-
-        $this->data = $data;
+        $this->count = $count;
+        $this->interval = $interval;
+        $this->burst = $burst;
     }
 
-    private function validate(array $data): void
+    public function getCount(): int
     {
-        foreach ($data as $entry) {
-            if (!$entry instanceof DataEntry) {
-                throw new RuntimeException('Invalid object in the collection.');
-            }
-        }
+        return $this->count;
     }
 
-    public function toArray(): array
+    public function getInterval(): int
     {
-        $arr = [];
+        return $this->interval;
+    }
 
-        /** @var DataEntry $entry */
-        foreach ($this->data as $entry) {
-            $arr[] = $entry->toArray();
-        }
-
-        return $arr;
+    public function getBurst(): int
+    {
+        return $this->burst;
     }
 }
