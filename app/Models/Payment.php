@@ -28,12 +28,16 @@ use Adshares\Adserver\Models\Traits\TransactionId;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use function hex2bin;
 
 /**
  * @mixin Builder
  * @property int id
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property string account_address
  * @property string|null account_hashin
  * @property string|null account_hashout
