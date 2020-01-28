@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\TargetingReach;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -50,6 +51,18 @@ class OptionsController extends Controller
     public function targeting(): JsonResponse
     {
         return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()));
+    }
+
+    public function targetingReach(TargetingReach $request): JsonResponse
+    {
+        $targeting = $request->toArray()['targeting'];
+        // TODO get targeting reach
+        $reach = rand(0, (int)(3*10e6));
+
+        $requires = $targeting['requires'];
+        $excludes = $targeting['excludes'];
+
+        return self::json(['reach' => $reach]);
     }
 
     public function filtering(): JsonResponse
