@@ -177,13 +177,13 @@ CODE;
 
         $options = [];
         if ($config->isCustomFallback()) {
-            $options[] = "\t\t<!-- place here custom fallback code -->";
+            $options[] = "\t\tplace here custom fallback code";
         }
         if ($config->isAdBlockOnly()) {
-            $options[] = "\t\t<!-- place here code executed when ad blockers are not active -->";
+            $options[] = "\t\tplace here code executed when ad blockers are not active";
         }
         if (null !== $config->getMinCpm()) {
-            $options[] = "\t\t<!-- place here code executed when minimum CPM requirement cannot be fulfilled -->";
+            $options[] = "\t\tplace here code executed when minimum CPM requirement cannot be fulfilled";
         }
 
         if (empty($options)) {
@@ -192,6 +192,6 @@ CODE;
 
         $fallback = join("\n", $options)."\n";
 
-        return "\n\t<style type=\"app/backfill\">\n{$fallback}\t</style>\n";
+        return "\n\t<!--backfill\n{$fallback}\t-->\n";
     }
 }
