@@ -33,7 +33,7 @@ class SiteCodeGenerator
     .'style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto">{{fallback}}</div>';
 
     private const CODE_TEMPLATE_POP = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
-    .'data-options="count={{count}},interval={{interval}},burst={{burst}}" style="display: none">{{fallback}}</div>';
+    .'style="display: none">{{fallback}}</div>';
 
     public static function generate(Site $site, ?SiteCodeConfig $config = null): string
     {
@@ -97,17 +97,12 @@ CODE;
     public static function getZoneCode(Zone $zone, ?SiteCodeConfig $config = null): string
     {
         if (Size::TYPE_POP === $zone->type) {
-            $siteCodeConfigPops = null === $config ? new SiteCodeConfigPops() : $config->getConfigPops();
-
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
                     '{{zoneId}}' => $zone->uuid,
-                    '{{count}}' => $siteCodeConfigPops->getCount(),
-                    '{{interval}}' => $siteCodeConfigPops->getInterval(),
-                    '{{burst}}' => $siteCodeConfigPops->getBurst(),
                     '{{selectorClass}}' => config('app.adserver_id'),
-                    '{{dataOptions}}' => self::getDataOptions($config),
+                    '{{dataOptions}}' => self::getDataOptionsForPops($config),
                     '{{fallback}}' => self::getFallback($config),
                 ]
             );
@@ -150,6 +145,30 @@ CODE;
         return "data-options=\"{$dataOptions}\" ";
     }
 
+    private static function getDataOptionsForPops(?SiteCodeConfig $config): string
+    {
+        $siteCodeConfigPops = null === $config ? new SiteCodeConfigPops() : $config->getConfigPops();
+
+        $options = [
+            'count='.$siteCodeConfigPops->getCount(),
+            'interval='.$siteCodeConfigPops->getInterval(),
+            'burst='.$siteCodeConfigPops->getBurst(),
+        ];
+
+        if (null !== $config) {
+            if ($config->isAdBlockOnly()) {
+                $options[] = 'adblock_only';
+            }
+            if (null !== $config->getMinCpm()) {
+                $options[] = 'min_cpm='.$config->getMinCpm();
+            }
+        }
+
+        $dataOptions = join(',', $options);
+
+        return "data-options=\"{$dataOptions}\" ";
+    }
+
     private static function getFallback(?SiteCodeConfig $config): string
     {
         if (null === $config) {
@@ -158,8 +177,7 @@ CODE;
 
         $options = [];
         if ($config->isCustomFallback()) {
-            $options[] =
-                "\t\t<!-- place here custom fallback code -->";
+            $options[] = "\t\t<!-- place here custom fallback code -->";
         }
         if ($config->isAdBlockOnly()) {
             $options[] = "\t\t<!-- place here code executed when ad blockers are not active -->";
