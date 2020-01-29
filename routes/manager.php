@@ -72,7 +72,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.sites.count');
     Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
         ->name('app.sites.change_status');
-    Route::get('sites/{site}/code', [SitesController::class, 'sitesCode'])
+    Route::get('sites/{site}/code', [SitesController::class, 'sitesCode']);//deprecated
+    Route::get('sites/{site}/codes', [SitesController::class, 'sitesCodes'])
         ->name('app.sites.code');
 
 # actions

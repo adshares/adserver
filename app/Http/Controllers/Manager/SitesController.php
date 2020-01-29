@@ -277,16 +277,38 @@ class SitesController extends Controller
         return self::json($response);
     }
 
+    /**
+     * @deprecated This function is deprecated and will be removed in the future.
+     * Use sitesCodes instead.
+     * @see sitesCodes replacement for this function
+     * 
+     * @param Site $site
+     * @param GetSiteCode $request
+     *
+     * @return JsonResponse
+     */
     public function sitesCode(Site $site, GetSiteCode $request): JsonResponse
     {
         /** @var User $user */
         $user = Auth::user();
 
         if (!$user->isEmailConfirmed) {
-            return self::json(['code' => 'Confirm email to get code']);
+            return self::json(['code' => 'Confirm e-mail to get code']);
         }
 
-        return self::json(['code' => SiteCodeGenerator::generate($site, $request->toConfig())]);
+        return self::json(['code' => SiteCodeGenerator::generateAsSingleString($site, $request->toConfig())]);
+    }
+
+    public function sitesCodes(Site $site, GetSiteCode $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (!$user->isEmailConfirmed) {
+            return self::json(['message' => 'Confirm e-mail to get code'], JsonResponse::HTTP_FORBIDDEN);
+        }
+
+        return self::json(['codes' => SiteCodeGenerator::generate($site, $request->toConfig())]);
     }
 
     private function validateInputZones($inputZones): void
