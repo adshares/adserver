@@ -281,7 +281,7 @@ class SitesController extends Controller
      * @deprecated This function is deprecated and will be removed in the future.
      * Use sitesCodes instead.
      * @see sitesCodes replacement for this function
-     * 
+     *
      * @param Site $site
      * @param GetSiteCode $request
      *
