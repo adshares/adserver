@@ -168,6 +168,7 @@ class BannerClassification extends Model
             /** @var BannerClassification $row */
             if (!array_key_exists($row->classifier, $result)) {
                 $result[$row->classifier] = [
+                    'classifier' => $row->classifier,
                     'status' => $row->status,
                     'keywords' => $row->keywords ?? [],
                 ];
@@ -182,7 +183,7 @@ class BannerClassification extends Model
             }
         }
 
-        return $result;
+        return array_values($result);
     }
 
     public function banner(): BelongsTo
