@@ -63,6 +63,7 @@ use function hex2bin;
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property array classifications
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder
@@ -136,6 +137,7 @@ class Campaign extends Model
         'uuid',
         'created_at',
         'updated_at',
+        'classifications',
         'classification_status',
         'classification_tags',
         'basic_information',

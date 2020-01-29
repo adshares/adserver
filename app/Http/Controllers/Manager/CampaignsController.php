@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
@@ -233,6 +234,10 @@ class CampaignsController extends Controller
     public function browse(): JsonResponse
     {
         $campaigns = $this->campaignRepository->find();
+
+        foreach ($campaigns as $campaign) {
+            $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
+        }
 
         return self::json($campaigns);
     }
@@ -444,6 +449,7 @@ class CampaignsController extends Controller
     public function read(int $campaignId): JsonResponse
     {
         $campaign = $this->campaignRepository->fetchCampaignByIdWithConversions($campaignId);
+        $campaign->classifications = BannerClassification::fetchCampaignClassifications($campaign->id);
 
         return self::json(['campaign' => $campaign->toArray()]);
     }
