@@ -158,7 +158,7 @@ final class CampaignsControllerTest extends TestCase
 
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10,
+            'budget' => 10*10e9,
         ]);
         $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
 
@@ -182,7 +182,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10,
+            'budget' => 10*10e9,
         ]);
         $banner = factory(Banner::class)->create([
             'campaign_id' => $campaign->id,
@@ -207,7 +207,7 @@ final class CampaignsControllerTest extends TestCase
         $user = $this->createUser();
         $campaign = factory(Campaign::class)->create([
             'user_id' => $user->id,
-            'budget' => 10,
+            'budget' => 10*10e9,
         ]);
         $conversionDefinition = factory(ConversionDefinition::class)->create(['campaign_id' => $campaign->id]);
         $banner = factory(Banner::class)->create([
@@ -229,7 +229,7 @@ final class CampaignsControllerTest extends TestCase
 
     private function createUser(): User
     {
-        $userBalance = 50;
+        $userBalance = 50*10e9;
 
         $user = factory(User::class)->create();
         factory(UserLedgerEntry::class)->create(['user_id' => $user->id, 'amount' => $userBalance]);
@@ -263,7 +263,7 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenCreatingCampaign(): array
     {
         return [
-            [100, Response::HTTP_CREATED],
+            [1e11, Response::HTTP_CREATED],
             [0, Response::HTTP_CREATED],
             [-11, Response::HTTP_BAD_REQUEST],
         ];
@@ -272,8 +272,8 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenStatusChange(): array
     {
         return [
-            [100, Response::HTTP_BAD_REQUEST],
-            [10, Response::HTTP_NO_CONTENT],
+            [100*1e9, Response::HTTP_BAD_REQUEST],
+            [10*1e9, Response::HTTP_NO_CONTENT],
         ];
     }
 
@@ -350,10 +350,10 @@ final class CampaignsControllerTest extends TestCase
     {
         // campaignBudget,isDirectDeal,ads,bonus,expectedCampaignStatus
         return [
-            'not direct deal, has only crypto' => [100, false, 100, 0, Campaign::STATUS_ACTIVE],
-            'not direct deal, has only bonus' => [100, false, 0, 100, Campaign::STATUS_ACTIVE],
-            'direct deal, has only crypto' => [100, true, 100, 0, Campaign::STATUS_ACTIVE],
-            'direct deal, has only bonus' => [100, true, 0, 100, Campaign::STATUS_DRAFT],
+            'not direct deal, has only crypto' => [1e11, false, 1e11, 0, Campaign::STATUS_ACTIVE],
+            'not direct deal, has only bonus' => [1e11, false, 0, 1e11, Campaign::STATUS_ACTIVE],
+            'direct deal, has only crypto' => [1e11, true, 1e11, 0, Campaign::STATUS_ACTIVE],
+            'direct deal, has only bonus' => [1e11, true, 0, 1e11, Campaign::STATUS_DRAFT],
         ];
     }
 }
