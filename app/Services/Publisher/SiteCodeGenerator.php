@@ -35,7 +35,7 @@ class SiteCodeGenerator
     private const CODE_TEMPLATE_POP = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
     .'style="display: none">{{fallback}}</div>';
 
-    public static function generate(Site $site, ?SiteCodeConfig $config = null): string
+    public static function generateAsSingleString(Site $site, ?SiteCodeConfig $config = null): string
     {
         if (null === $config) {
             $config = SiteCodeConfig::default();
@@ -84,6 +84,37 @@ CODE;
         }
 
         return $code;
+    }
+
+    public static function generate(Site $site, ?SiteCodeConfig $config = null): array
+    {
+        if (null === $config) {
+            $config = SiteCodeConfig::default();
+        }
+
+        $popsCodes = [];
+        $displayCodes = [];
+        foreach ($site->zones as $zone) {
+            $zoneCode = self::getZoneCode($zone, $config);
+
+            if (Size::TYPE_POP === $zone->type) {
+                $popsCodes[] = [
+                    'label' => $zone->name,
+                    'code' => $zoneCode,
+                ];
+            } else {
+                $displayCodes[] = [
+                    'label' => "{$zone->name} {$zone->size}",
+                    'code' => $zoneCode,
+                ];
+            }
+        }
+
+        return [
+            'common' => self::getCommonCode($config),
+            'pops' => $popsCodes,
+            'ad_units' => $displayCodes,
+        ];
     }
 
     public static function getCommonCode(?SiteCodeConfig $config = null): string
