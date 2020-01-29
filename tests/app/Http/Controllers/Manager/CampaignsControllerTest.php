@@ -272,8 +272,8 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenStatusChange(): array
     {
         return [
-            [100*1e9, Response::HTTP_BAD_REQUEST],
-            [10*1e9, Response::HTTP_NO_CONTENT],
+            'insufficient funds' => [300*1e9, Response::HTTP_BAD_REQUEST],
+            'sufficient funds' => [10*1e9, Response::HTTP_NO_CONTENT],
         ];
     }
 
