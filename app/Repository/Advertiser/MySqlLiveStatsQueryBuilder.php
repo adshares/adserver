@@ -61,14 +61,17 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     {
         switch ($type) {
             case StatsRepository::TYPE_VIEW:
-                $this->column("SUM(IF(e.event_type = 'view' AND e.human_score >= 0.5, 1, 0)) AS c");
+                $this->column(
+                    "SUM(IF(e.event_type = 'view' AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS c"
+                );
                 break;
             case StatsRepository::TYPE_VIEW_ALL:
                 $this->column("SUM(IF(e.event_type = 'view', 1, 0)) AS c");
                 break;
             case StatsRepository::TYPE_CLICK:
                 $this->column(
-                    "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.human_score >= 0.5, 1, 0)) AS c"
+                    "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 "
+                    .'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS c'
                 );
                 break;
             case StatsRepository::TYPE_CLICK_ALL:
@@ -76,7 +79,8 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
                 break;
             case StatsRepository::TYPE_VIEW_UNIQUE:
                 $this->column(
-                    "COUNT(DISTINCT (CASE WHEN e.event_type = 'view' AND e.human_score >= 0.5 "
+                    "COUNT(DISTINCT (CASE WHEN e.event_type = 'view' "
+                    .'AND (e.human_score >= 0.5 OR e.human_score IS NULL) '
                     .'THEN IFNULL(e.user_id, e.tracking_id) END)) AS c'
                 );
                 break;
@@ -89,9 +93,12 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
     private function selectBaseStatsColumns(): void
     {
         $this->column(
-            "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 AND e.human_score >= 0.5, 1, 0)) AS clicks"
+            "SUM(IF(e.event_type = 'view' AND e.is_view_clicked = 1 "
+            .'AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS clicks'
         );
-        $this->column("SUM(IF(e.event_type = 'view' AND e.human_score >= 0.5, 1, 0)) AS views");
+        $this->column(
+            "SUM(IF(e.event_type = 'view' AND (e.human_score >= 0.5 OR e.human_score IS NULL), 1, 0)) AS views"
+        );
         $this->column('0 AS cost');
     }
 

@@ -24,7 +24,9 @@ namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
+use Adshares\Adserver\Utilities\ArrayUtils;
 use DateTime;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
@@ -37,6 +39,9 @@ use Illuminate\Support\Collection;
  * @property string|null signature
  * @property DateTime|null signed_at
  * @property int status
+ * @method static Builder where(mixed $column, mixed $operator = null, mixed $value = null, string $boolean = 'and')
+ * @method static Builder whereIn(string $column, mixed $values, string $boolean = 'and', bool $not = false)
+ * @method static Builder join($table, $first, $operator = null, $second = null, $type = 'inner', $where = false)
  */
 class BannerClassification extends Model
 {
@@ -116,7 +121,10 @@ class BannerClassification extends Model
 
     public static function fetchByBannerIdAndClassifier(int $bannerId, string $classifier): ?self
     {
-        return BannerClassification::where('banner_id', $bannerId)->where('classifier', $classifier)->first();
+        /** @var BannerClassification $item */
+        $item = BannerClassification::where('banner_id', $bannerId)->where('classifier', $classifier)->first();
+
+        return $item;
     }
 
     public static function fetchClassifiedByBannerIds(array $bannerIds): Collection
@@ -129,6 +137,7 @@ class BannerClassification extends Model
 
         return $grouped->map(
             function ($item) {
+                /** @var Collection $item */
                 return $item->keyBy('classifier');
             }
         );
@@ -140,6 +149,41 @@ class BannerClassification extends Model
             'status',
             [BannerClassification::STATUS_NEW, BannerClassification::STATUS_ERROR]
         )->get();
+    }
+
+    public static function fetchCampaignClassifications(int $campaignId): array
+    {
+        /** @var Collection $grouped */
+        $grouped = BannerClassification::join(
+            'banners',
+            'banner_classifications.banner_id',
+            '=',
+            'banners.id'
+        )->where('banners.campaign_id', $campaignId)->get(
+            ['banner_id', 'classifier', 'keywords', 'banner_classifications.status']
+        );
+
+        $result = [];
+        foreach ($grouped as $row) {
+            /** @var BannerClassification $row */
+            if (!array_key_exists($row->classifier, $result)) {
+                $result[$row->classifier] = [
+                    'classifier' => $row->classifier,
+                    'status' => $row->status,
+                    'keywords' => $row->keywords ?? [],
+                ];
+            } else {
+                $result[$row->classifier]['keywords'] =
+                    ArrayUtils::deepUniqueMerge($result[$row->classifier]['keywords'], $row->keywords ?? []);
+                if (in_array($row->status, [self::STATUS_ERROR, self::STATUS_FAILURE])) {
+                    $result[$row->classifier]['status'] = $row->status;
+                } elseif (!in_array($result[$row->classifier]['status'], [self::STATUS_ERROR, self::STATUS_FAILURE])) {
+                    $result[$row->classifier]['status'] = min($result[$row->classifier]['status'], $row->status);
+                }
+            }
+        }
+
+        return array_values($result);
     }
 
     public function banner(): BelongsTo

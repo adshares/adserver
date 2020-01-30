@@ -18,9 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Payment;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreatePaymentsTable extends Migration
 {
@@ -57,6 +59,8 @@ class CreatePaymentsTable extends Migration
                     ]);
 
                 $table->boolean('completed')->default(false);
+
+                $table->index('created_at');
             });
 
         if (DB::isMysql()) {

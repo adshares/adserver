@@ -478,13 +478,18 @@ var getBrowserContext = function () {
 
 var findBackfillCode = function(container) {
     var tag = container.querySelectorAll('[type="app/backfill"]')[0];
-    if(tag) return tag.textContent;
-    for(var i=0,n=container.childNodes.length; i<n; i++) {
-        if(container.childNodes[i].nodeType === 8) {
-            return container.childNodes[i].textContent;
+    var text = null;
+    if(tag) {
+        text = tag.textContent;
+    } else {
+        for (var i = 0, n = container.childNodes.length; i < n; i++) {
+            if (container.childNodes[i].nodeType === 8) {
+                text = container.childNodes[i].textContent;
+                break;
+            }
         }
     }
-    return null;
+    return text ? text.replace('<*!--', '<!--').replace('--*>', '-->') : null;
 }
 
 var parseZoneOptions = function(str) {
@@ -562,23 +567,17 @@ var getActiveZones = function(call_func) {
 
             zone.backfill = findBackfillCode(tag);
 
-            if(zone.options.min_cpm > 0) {
-                zone.__invalid = true;
-                param.__invalid = true;
-                insertBackfill(tag, zone.backfill);
-            } else {
-                if (zone.options.adblock_only) {
-                    waiting++;
-                    abd = abd || new BlockDetector();
-                    abd.detect(function () {
-                        waiting--;
-                    }, function () {
-                        zone.__invalid = true;
-                        param.__invalid = true;
-                        waiting--;
-                        insertBackfill(tag, zone.backfill);
-                    })
-                }
+            if (zone.options.adblock_only) {
+                waiting++;
+                abd = abd || new BlockDetector();
+                abd.detect(function () {
+                    waiting--;
+                }, function () {
+                    zone.__invalid = true;
+                    param.__invalid = true;
+                    waiting--;
+                    insertBackfill(tag, zone.backfill);
+                })
             }
 
         }
@@ -655,7 +654,7 @@ domReady(function () {
                 banner.destElement = zone.destElement;
                 banner.backfill = zone.backfill;
 
-                if (zone.options.min_cpm > 0 /* banner.expected_cpm */) {
+                if (zone.options.min_cpm > banner.rpm) {
                     insertBackfill(zone.destElement, zone.backfill);
                 } else {
                     bannersToLoad++;
