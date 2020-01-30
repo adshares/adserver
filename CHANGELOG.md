@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Indexes in migrations for payments and network_case_payments tables
+### Fixed
+- Advertisers' live stats contain last 10 minutes
 
 ## [1.5.3] - 2020-01-27
 ### Added
