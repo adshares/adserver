@@ -128,7 +128,7 @@ return [
     'now_payments_currency' => env('NOW_PAYMENTS_CURRENCY', 'USD'),
     'now_payments_min_amount' => (int)env('NOW_PAYMENTS_MIN_AMOUNT', 25),
     'now_payments_max_amount' => (int)env('NOW_PAYMENTS_MAX_AMOUNT', 1000),
-    'now_payments_fee' => (int)env('NOW_PAYMENTS_FEE', 0),
+    'now_payments_fee' => (float)env('NOW_PAYMENTS_FEE', 0),
     'now_payments_exchange' => (bool)env('NOW_PAYMENTS_EXCHANGE', false),
     'exchange_api_url' => env('EXCHANGE_API_URL'),
     'exchange_api_key' => env('EXCHANGE_API_KEY'),
