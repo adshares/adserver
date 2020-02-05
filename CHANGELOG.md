@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.5] - 2020-02-05
+### Fixed
+- NowPayments no fee
+- Keys in campaign keywords
+
 ## [1.5.4] - 2020-01-30
 ### Added
 - Classifications in campaigns endpoint
@@ -374,7 +379,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.4...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.5...develop
+[1.5.5]: https://github.com/adshares/adserver/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/adshares/adserver/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/adshares/adserver/compare/v1.5.2...v1.5.3
 [1.5.2]: https://github.com/adshares/adserver/compare/v1.5.1...v1.5.2
