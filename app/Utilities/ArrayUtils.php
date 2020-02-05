@@ -57,6 +57,6 @@ final class ArrayUtils
             }
         }
 
-        return array_unique($result);
+        return array_values(array_unique($result));
     }
 }
