@@ -61,11 +61,6 @@ class ClassifierExternalKeywordsSerializer
             return false;
         }
 
-        return self::isAssoc($arr);
-    }
-
-    private static function isAssoc(array $arr): bool
-    {
-        return array_keys($arr) !== range(0, count($arr) - 1);
+        return ArrayUtils::isAssoc($arr);
     }
 }

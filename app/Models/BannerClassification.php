@@ -174,7 +174,7 @@ class BannerClassification extends Model
                 ];
             } else {
                 $result[$row->classifier]['keywords'] =
-                    ArrayUtils::deepUniqueMerge($result[$row->classifier]['keywords'], $row->keywords ?? []);
+                    ArrayUtils::deepMerge($result[$row->classifier]['keywords'], $row->keywords ?? []);
                 if (in_array($row->status, [self::STATUS_ERROR, self::STATUS_FAILURE])) {
                     $result[$row->classifier]['status'] = $row->status;
                 } elseif (!in_array($result[$row->classifier]['status'], [self::STATUS_ERROR, self::STATUS_FAILURE])) {

@@ -24,6 +24,11 @@ namespace Adshares\Adserver\Utilities;
 
 final class ArrayUtils
 {
+    public static function isAssoc(array $arr): bool
+    {
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+
     public static function deepMerge(array ...$arrays): array
     {
         $result = [];
@@ -39,24 +44,6 @@ final class ArrayUtils
             }
         }
 
-        return $result;
-    }
-
-    public static function deepUniqueMerge(array ...$arrays): array
-    {
-        $result = [];
-        foreach ($arrays as $array) {
-            foreach ($array as $key => $value) {
-                if (is_integer($key)) {
-                    $result[] = $value;
-                } elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
-                    $result[$key] = self::deepUniqueMerge($result[$key], $value);
-                } else {
-                    $result[$key] = $value;
-                }
-            }
-        }
-
-        return array_values(array_unique($result));
+        return self::isAssoc($result) ? $result : array_values(array_unique($result));
     }
 }
