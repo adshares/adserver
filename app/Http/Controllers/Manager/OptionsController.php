@@ -21,8 +21,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Requests\TargetingReach;
+use Adshares\Adserver\Http\Requests\TargetingReachRequest;
+use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -53,16 +55,20 @@ class OptionsController extends Controller
         return self::json(new OptionsSelector($this->optionsRepository->fetchTargetingOptions()));
     }
 
-    public function targetingReach(TargetingReach $request): JsonResponse
+    public function targetingReach(TargetingReachRequest $request): JsonResponse
     {
         $targeting = $request->toArray()['targeting'];
-        // TODO get targeting reach
-        $reach = rand(0, (int)(3*10e6));
 
-        $requires = $targeting['requires'];
-        $excludes = $targeting['excludes'];
+        $requires = AbstractFilterMapper::generateNestedStructure($targeting['requires']);
+        $excludes = AbstractFilterMapper::generateNestedStructure($targeting['excludes']);
 
-        return self::json(['reach' => $reach]);
+        $targetingReach = (new TargetingReachComputer())->compute($requires, $excludes);
+
+        if (null === $targetingReach) {
+            return self::json(['message' => 'No data'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        return self::json($targetingReach->toArray());
     }
 
     public function filtering(): JsonResponse

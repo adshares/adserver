@@ -21,17 +21,18 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
-use Adshares\Adserver\Services\Advertiser\TargetingReachComputer;
+use Adshares\Adserver\Models\NetworkHost;
+use Adshares\Adserver\Services\Advertiser\NetworkVectorComputer;
 use DateInterval;
 use DateTimeImmutable;
 use Exception;
 use function sprintf;
 
-class ComputeTargetingReach extends BaseCommand
+class TargetingReachCompute extends BaseCommand
 {
-    protected $signature = "ops:targeting-reach:compute {--b|before=-2 hours} {--p|period=P1D}";
+    protected $signature = 'ops:targeting-reach:compute {--b|before=-2 hours} {--p|period=P1D}';
 
-    protected $description = 'Computes targeting reach and rates';
+    protected $description = 'Computes vectors of targeting reach and rates';
 
     public function handle(): void
     {
@@ -49,7 +50,7 @@ class ComputeTargetingReach extends BaseCommand
             $dateTo = new DateTimeImmutable($before);
             $dateFrom = $dateTo->sub(new DateInterval($period));
         } catch (Exception $e) {
-            $this->error($e->getMessage());
+            $this->error('[TargetingReachCompute] '.$e->getMessage());
 
             return;
         }
@@ -62,13 +63,33 @@ class ComputeTargetingReach extends BaseCommand
             )
         );
 
+        if (null === ($adServerId = $this->fetchAdserverId())) {
+            $this->error('[TargetingReachCompute] Cannot find adserver Id');
+
+            return;
+        }
+
         $startTime = microtime(true);
-        
-        $computer = new TargetingReachComputer();
-        $computer->compute($dateFrom, $dateTo);
+
+        (new NetworkVectorComputer($adServerId))->compute($dateFrom, $dateTo);
 
         $this->info(sprintf('Computing time: %.3f seconds', microtime(true) - $startTime));
 
         $this->info('Finish computing targeting reach');
+    }
+
+    private function fetchAdserverId(): ?int
+    {
+        $adserverAddress = (string)config('app.adshares_address');
+        $networkHosts = NetworkHost::fetchHosts();
+
+        /** @var NetworkHost $networkHost */
+        foreach ($networkHosts as $networkHost) {
+            if ($adserverAddress === $networkHost->address) {
+                return $networkHost->id;
+            }
+        }
+
+        return null;
     }
 }

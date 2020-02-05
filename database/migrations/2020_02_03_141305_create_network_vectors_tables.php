@@ -22,30 +22,49 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTargetingReachTable extends Migration
+class CreateNetworkVectorsTables extends Migration
 {
-    private const TABLE_TARGETING_REACH = 'targeting_reach';
+    private const TABLE_VECTORS = 'network_vectors';
+
+    private const TABLE_VECTORS_METAS = 'network_vectors_metas';
 
     public function up(): void
     {
         $keyLengthMaximum = strlen('site:domain:') + 255;
 
         Schema::create(
-            self::TABLE_TARGETING_REACH,
+            self::TABLE_VECTORS_METAS,
+            function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->bigInteger('network_host_id');
+                $table->timestamps();
+                $table->unsignedBigInteger('total_events_count');
+            }
+        );
+
+        Schema::create(
+            self::TABLE_VECTORS,
             function (Blueprint $table) use ($keyLengthMaximum) {
                 $table->bigIncrements('id');
-                $table->string('key', $keyLengthMaximum)->unique();
+                $table->bigInteger('network_host_id');
+                $table->string('key', $keyLengthMaximum);
                 $table->unsignedMediumInteger('occurrences');
                 $table->bigInteger('percentile_25');
                 $table->bigInteger('percentile_50');
                 $table->bigInteger('percentile_75');
+                $table->bigInteger('not_percentile_25');
+                $table->bigInteger('not_percentile_50');
+                $table->bigInteger('not_percentile_75');
                 $table->binary('data');
+
+                $table->index(['network_host_id', 'key']);
             }
         );
     }
 
     public function down(): void
     {
-        Schema::dropIfExists(self::TABLE_TARGETING_REACH);
+        Schema::dropIfExists(self::TABLE_VECTORS);
+        Schema::dropIfExists(self::TABLE_VECTORS_METAS);
     }
 }

@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Http\Requests;
 
-class TargetingReach extends FormRequest
+class TargetingReachRequest extends FormRequest
 {
     public function rules(): array
     {
