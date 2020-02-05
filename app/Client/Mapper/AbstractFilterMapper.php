@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Client\Mapper;
 
+use Adshares\Adserver\Utilities\ArrayUtils;
 use function array_combine;
 use function array_filter;
 use function array_keys;
@@ -59,7 +60,7 @@ abstract class AbstractFilterMapper
 
     public static function generateNestedStructure(array $data): array
     {
-        return self::isAssoc($data) ? self::modifyDomain(self::flatten($data)) : $data;
+        return ArrayUtils::isAssoc($data) ? self::modifyDomain(self::flatten($data)) : $data;
     }
 
     private static function isAssocAndNotEmpty(array $arr): bool
@@ -68,7 +69,7 @@ abstract class AbstractFilterMapper
             return false;
         }
 
-        return self::isAssoc($arr);
+        return ArrayUtils::isAssoc($arr);
     }
 
     private static function allKeysAreNumeric(array $value): bool
@@ -104,10 +105,5 @@ abstract class AbstractFilterMapper
         $mapped = array_map($callback, $flattened, $keys);
 
         return array_combine($keys, $mapped);
-    }
-
-    private static function isAssoc(array $arr): bool
-    {
-        return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
