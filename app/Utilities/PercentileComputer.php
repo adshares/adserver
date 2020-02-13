@@ -27,17 +27,6 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 class PercentileComputer
 {
-//    private $totalBuckets = 0;
-//
-//    /** @var int */
-//    private $maxBuckets;
-//
-//    /** @var mixed */
-//    private $min;
-//
-//    /** @var mixed */
-//    private $max;
-//
     /** @var int */
     private $totalCount = 0;
 

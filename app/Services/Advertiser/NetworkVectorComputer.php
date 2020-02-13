@@ -45,7 +45,7 @@ class NetworkVectorComputer
     private const KEY_PERCENTILES = 'percentiles';
 
     /** @var int */
-    private $adServerId;
+    private $adserverId;
 
     /** @var string */
     private $binaryStringBase;
@@ -67,7 +67,7 @@ class NetworkVectorComputer
 
     public function __construct(int $adServerId)
     {
-        $this->adServerId = $adServerId;
+        $this->adserverId = $adServerId;
 
         $this->binaryStringBase = hex2bin('00');
         $this->masks = [
@@ -200,11 +200,11 @@ SQL
     {
         DB::beginTransaction();
         try {
-            DB::table('network_vectors')->where('network_host_id', $this->adServerId)->delete();
+            DB::table('network_vectors')->where('network_host_id', $this->adserverId)->delete();
             if ($this->binaryStringLength > 0) {
                 DB::table('network_vectors')->insert(
                     [
-                        'network_host_id' => $this->adServerId,
+                        'network_host_id' => $this->adserverId,
                         'key' => self::TOTAL,
                         'data' => str_repeat(hex2bin('FF'), $this->binaryStringLength),
                         'occurrences' => 8 * $this->binaryStringLength,
@@ -220,7 +220,7 @@ SQL
             foreach ($this->categories as $category => $data) {
                 DB::table('network_vectors')->insert(
                     [
-                        'network_host_id' => $this->adServerId,
+                        'network_host_id' => $this->adserverId,
                         'key' => $category,
                         'data' => $data[self::KEY_DATA],
                         'occurrences' => $data[self::KEY_COUNT],
@@ -233,7 +233,7 @@ SQL
                     ]
                 );
             }
-            NetworkVectorsMeta::upsert($this->adServerId, $eventsAllCount);
+            NetworkVectorsMeta::upsert($this->adserverId, $eventsAllCount);
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();

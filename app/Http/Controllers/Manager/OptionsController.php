@@ -65,7 +65,10 @@ class OptionsController extends Controller
         $targetingReach = (new TargetingReachComputer())->compute($requires, $excludes);
 
         if (null === $targetingReach) {
-            return self::json(['message' => 'No data'], JsonResponse::HTTP_NOT_FOUND);
+            return self::json(
+                ['code' => JsonResponse::HTTP_NOT_FOUND, 'message' => 'No data'],
+                JsonResponse::HTTP_NOT_FOUND
+            );
         }
 
         return self::json($targetingReach->toArray());
