@@ -125,7 +125,10 @@ class TargetingReachComputer
                 }
 
                 $tmpVector = new TargetingReachVector(
-                    $row->data, $row->percentile_25, $row->percentile_50, $row->percentile_75
+                    $row->data,
+                    $row->percentile_25,
+                    $row->percentile_50,
+                    $row->percentile_75
                 );
 
                 if (null === $orVector) {
@@ -165,7 +168,10 @@ class TargetingReachComputer
                 }
 
                 $tmpVector = new TargetingReachVector(
-                    $row->data, $row->not_percentile_25, $row->not_percentile_50, $row->not_percentile_75
+                    $row->data,
+                    $row->not_percentile_25,
+                    $row->not_percentile_50,
+                    $row->not_percentile_75
                 );
 
                 if (null === $vector) {
