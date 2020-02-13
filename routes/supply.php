@@ -35,6 +35,8 @@ Route::get('/supply/register', [SupplyController::class, 'register']);
 Route::get('/l/n/view/{id}', [SupplyController::class, 'logNetworkView']);
 Route::get('/l/n/click/{id}', [SupplyController::class, 'logNetworkClick']);
 
+Route::get('/supply/targeting-reach', [SupplyController::class, 'targetingReachList']);
+
 ### simulator ###
 Route::get('/get-data/{id}', [Simulator::class, 'userData']);
 

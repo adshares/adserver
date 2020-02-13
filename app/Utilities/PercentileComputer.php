@@ -68,32 +68,6 @@ class PercentileComputer
             $this->campaigns[$campaignId][self::KEY_AVERAGE] =
                 ($this->campaigns[$campaignId][self::KEY_AVERAGE] * ($count - 1) + $value) / $count;
         }
-
-//        if (null === $this->buckets) {
-//            $this->buckets = [[$value, $value, 1]];
-//            $this->min = $this->max = $value;
-//            $this->totalBuckets = 1;
-//        } else {
-//            if ($value < $this->min) {
-//                $this->min = $value;
-//                array_unshift($this->buckets, [$value, $value, 1]);
-//                $this->totalBuckets++;
-//            } elseif ($value > $this->max) {
-//                $this->max = $value;
-//                array_push($this->buckets, [$value, $value, 1]);
-//                $this->totalBuckets++;
-//            } elseif ($value === $this->min) {
-//                ++$this->buckets[0][2];
-//            } elseif ($value === $this->max) {
-//                ++$this->buckets[$this->totalBuckets - 1][2];
-//            } else {
-//                $this->insertBucket($value);
-//            }
-//        }
-//
-//        if ($this->totalBuckets > $this->maxBuckets) {
-//            $this->mergeBuckets();
-//        }
     }
 
     public function percentiles(array $percentiles = [25, 50, 75]): array

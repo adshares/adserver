@@ -80,16 +80,10 @@ class TargetingReachCompute extends BaseCommand
 
     private function fetchAdserverId(): ?int
     {
-        $adserverAddress = (string)config('app.adshares_address');
-        $networkHosts = NetworkHost::fetchHosts();
-
-        /** @var NetworkHost $networkHost */
-        foreach ($networkHosts as $networkHost) {
-            if ($adserverAddress === $networkHost->address) {
-                return $networkHost->id;
-            }
+        if (null === ($networkHost = NetworkHost::fetchByAddress((string)config('app.adshares_address')))) {
+            return null;
         }
 
-        return null;
+        return $networkHost->id;
     }
 }

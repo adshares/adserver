@@ -31,6 +31,7 @@ use Adshares\Adserver\Client\GuzzleAdUserClient;
 use Adshares\Adserver\Client\GuzzleClassifierExternalClient;
 use Adshares\Adserver\Client\GuzzleDemandClient;
 use Adshares\Adserver\Client\GuzzleLicenseClient;
+use Adshares\Adserver\Client\GuzzleSupplyClient;
 use Adshares\Adserver\Client\LocalPublisherBannerClassifier;
 use Adshares\Adserver\Client\MultipleExternalClassifierAdClassifyClient;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
@@ -48,6 +49,7 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\BannerClassifier;
 use Adshares\Supply\Application\Service\DemandClient;
+use Adshares\Supply\Application\Service\SupplyClient;
 use GuzzleHttp\Client;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
@@ -121,6 +123,15 @@ final class ClientProvider extends ServiceProvider
                     $app->make(SignatureVerifier::class),
                     $timeoutForDemandService
                 );
+            }
+        );
+
+        $this->app->bind(
+            SupplyClient::class,
+            function () {
+                $timeoutForSupplyService = 15;
+
+                return new GuzzleSupplyClient($timeoutForSupplyService);
             }
         );
 

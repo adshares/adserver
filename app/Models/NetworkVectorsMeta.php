@@ -47,6 +47,11 @@ class NetworkVectorsMeta extends Model
         return self::whereIn('network_host_id', $networkHostIds)->delete();
     }
 
+    public static function fetchByNetworkHostId(int $networkHostId): ?self
+    {
+        return self::where('network_host_id', $networkHostId)->first();
+    }
+
     public static function fetch(): Collection
     {
         return self::all();

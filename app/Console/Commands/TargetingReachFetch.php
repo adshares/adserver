@@ -21,11 +21,15 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
+use Adshares\Common\Exception\RuntimeException;
+use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
+use Adshares\Supply\Application\Service\SupplyClient;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 use function sprintf;
 
@@ -34,6 +38,16 @@ class TargetingReachFetch extends BaseCommand
     protected $signature = 'ops:targeting-reach:fetch';
 
     protected $description = 'Fetches vectors of targeting reach and rates from remote ad servers';
+
+    /** @var SupplyClient */
+    private $client;
+
+    public function __construct(Locker $locker, SupplyClient $client)
+    {
+        $this->client = $client;
+
+        parent::__construct($locker);
+    }
 
     public function handle(): void
     {
@@ -56,9 +70,8 @@ class TargetingReachFetch extends BaseCommand
         /** @var NetworkHost $networkHost */
         foreach ($networkHosts as $networkHost) {
             if ($adserverAddress !== $networkHost->address) {
-                $networkHostId = $networkHost->id;
-                /** @var NetworkVectorsMeta $meta */
-                $meta = $networkVectorsMetas->get($networkHostId);
+                /** @var NetworkVectorsMeta|null $meta */
+                $meta = $networkVectorsMetas->get($networkHost->id);
 
                 if (null === $meta || $meta->updated_at < $dateThreshold) {
                     $this->fetchAndStoreRemote($networkHost);
@@ -85,7 +98,7 @@ class TargetingReachFetch extends BaseCommand
         } catch (Throwable $throwable) {
             DB::rollBack();
 
-            Log::warning(
+            $this->warn(
                 sprintf(
                     '[TargetingReachFetch] Exception during deleting network vectors (%s)',
                     $throwable->getMessage()
@@ -96,8 +109,50 @@ class TargetingReachFetch extends BaseCommand
 
     private function fetchAndStoreRemote(NetworkHost $networkHost): void
     {
+        try {
+            $targetingReach = $this->client->fetchTargetingReach($networkHost->host);
+        } catch (RuntimeException|EmptyInventoryException|UnexpectedClientResponseException $exception) {
+            $this->warn(
+                sprintf(
+                    '[TargetingReachFetch] Exception during fetching from %s (%s)',
+                    $networkHost->host,
+                    $exception->getMessage()
+                )
+            );
+
+            return;
+        }
+
         $networkHostId = $networkHost->id;
-        $networkHost = $networkHost->host;
-        //TODO fetch from remote host
+        $totalEventsCount = $targetingReach['meta']['total_events_count'];
+
+        DB::beginTransaction();
+        try {
+            DB::table('network_vectors')->where('network_host_id', $networkHostId)->delete();
+            foreach ($targetingReach['categories'] as $data) {
+                DB::table('network_vectors')->insert(
+                    [
+                        'network_host_id' => $networkHostId,
+                        'key' => $data['key'],
+                        'data' => base64_decode($data['key']),
+                        'occurrences' => $data['occurrences'],
+                        'percentile_25' => $data['percentile_25'],
+                        'percentile_50' => $data['percentile_50'],
+                        'percentile_75' => $data['percentile_75'],
+                        'not_percentile_25' => $data['not_percentile_25'],
+                        'not_percentile_50' => $data['not_percentile_50'],
+                        'not_percentile_75' => $data['not_percentile_75'],
+                    ]
+                );
+            }
+            NetworkVectorsMeta::upsert($networkHostId, $totalEventsCount);
+            DB::commit();
+        } catch (Throwable $throwable) {
+            DB::rollBack();
+
+            $this->warn(
+                sprintf('Exception during storing data from %s (%s)', $networkHost->host, $throwable->getMessage())
+            );
+        }
     }
 }

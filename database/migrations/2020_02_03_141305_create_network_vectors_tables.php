@@ -36,7 +36,7 @@ class CreateNetworkVectorsTables extends Migration
             self::TABLE_VECTORS_METAS,
             function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->bigInteger('network_host_id');
+                $table->bigInteger('network_host_id')->unique();
                 $table->timestamps();
                 $table->unsignedBigInteger('total_events_count');
             }

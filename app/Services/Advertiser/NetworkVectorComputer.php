@@ -201,20 +201,22 @@ SQL
         DB::beginTransaction();
         try {
             DB::table('network_vectors')->where('network_host_id', $this->adServerId)->delete();
-            DB::table('network_vectors')->insert(
-                [
-                    'network_host_id' => $this->adServerId,
-                    'key' => self::TOTAL,
-                    'data' => str_repeat(hex2bin('FF'), $this->binaryStringLength),
-                    'occurrences' => 8 * $this->binaryStringLength,
-                    'percentile_25' => $this->totalPercentiles[0],
-                    'percentile_50' => $this->totalPercentiles[1],
-                    'percentile_75' => $this->totalPercentiles[2],
-                    'not_percentile_25' => $this->totalPercentiles[0],
-                    'not_percentile_50' => $this->totalPercentiles[1],
-                    'not_percentile_75' => $this->totalPercentiles[2],
-                ]
-            );
+            if ($this->binaryStringLength > 0) {
+                DB::table('network_vectors')->insert(
+                    [
+                        'network_host_id' => $this->adServerId,
+                        'key' => self::TOTAL,
+                        'data' => str_repeat(hex2bin('FF'), $this->binaryStringLength),
+                        'occurrences' => 8 * $this->binaryStringLength,
+                        'percentile_25' => $this->totalPercentiles[0],
+                        'percentile_50' => $this->totalPercentiles[1],
+                        'percentile_75' => $this->totalPercentiles[2],
+                        'not_percentile_25' => $this->totalPercentiles[0],
+                        'not_percentile_50' => $this->totalPercentiles[1],
+                        'not_percentile_75' => $this->totalPercentiles[2],
+                    ]
+                );
+            }
             foreach ($this->categories as $category => $data) {
                 DB::table('network_vectors')->insert(
                     [
