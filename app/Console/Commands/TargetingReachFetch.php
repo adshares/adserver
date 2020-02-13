@@ -134,7 +134,7 @@ class TargetingReachFetch extends BaseCommand
                     [
                         'network_host_id' => $networkHostId,
                         'key' => $data['key'],
-                        'data' => base64_decode($data['key']),
+                        'data' => base64_decode($data['data']),
                         'occurrences' => $data['occurrences'],
                         'percentile_25' => $data['percentile_25'],
                         'percentile_50' => $data['percentile_50'],
