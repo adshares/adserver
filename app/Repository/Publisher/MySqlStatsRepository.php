@@ -401,30 +401,36 @@ class MySqlStatsRepository implements StatsRepository
         $checkZoneId = $siteId !== null;
 
         $combined = [];
+        $siteIdToNameMap = [];
+        $zoneIdToNameMap = [];
         foreach (array_merge($queryResult, $queryResultLive) as $row) {
             $publisherId = $checkPublisherId ? bin2hex($row->publisher_id) : 0;
-            $siteId = bin2hex($row->site_id);
-            $zoneId = $checkZoneId ? bin2hex($row->zone_id) : 0;
+            $rowSiteId = $row->site_id;
+            $siteIdToNameMap[$rowSiteId] = $row->site_name;
+            $zoneId = $checkZoneId ? $row->zone_id : 0;
+            if ($checkZoneId) {
+                $zoneIdToNameMap[$zoneId] = $row->zone_name;
+            }
 
             if (!array_key_exists($publisherId, $combined)) {
                 $combined[$publisherId] = [];
             }
-            if (!array_key_exists($siteId, $combined[$publisherId])) {
-                $combined[$publisherId][$siteId] = [];
+            if (!array_key_exists($rowSiteId, $combined[$publisherId])) {
+                $combined[$publisherId][$rowSiteId] = [];
             }
-            if (!array_key_exists($zoneId, $combined[$publisherId][$siteId])) {
-                $combined[$publisherId][$siteId][$zoneId] = [
+            if (!array_key_exists($zoneId, $combined[$publisherId][$rowSiteId])) {
+                $combined[$publisherId][$rowSiteId][$zoneId] = [
                     'clicks' => (int)$row->clicks,
                     'views' => (int)$row->views,
                     'revenue' => (int)$row->revenue,
                 ];
             } else {
-                $combined[$publisherId][$siteId][$zoneId]['clicks'] =
-                    $combined[$publisherId][$siteId][$zoneId]['clicks'] + (int)$row->clicks;
-                $combined[$publisherId][$siteId][$zoneId]['views'] =
-                    $combined[$publisherId][$siteId][$zoneId]['views'] + (int)$row->views;
-                $combined[$publisherId][$siteId][$zoneId]['revenue'] =
-                    $combined[$publisherId][$siteId][$zoneId]['revenue'] + (int)$row->revenue;
+                $combined[$publisherId][$rowSiteId][$zoneId]['clicks'] =
+                    $combined[$publisherId][$rowSiteId][$zoneId]['clicks'] + (int)$row->clicks;
+                $combined[$publisherId][$rowSiteId][$zoneId]['views'] =
+                    $combined[$publisherId][$rowSiteId][$zoneId]['views'] + (int)$row->views;
+                $combined[$publisherId][$rowSiteId][$zoneId]['revenue'] =
+                    $combined[$publisherId][$rowSiteId][$zoneId]['revenue'] + (int)$row->revenue;
             }
         }
 
@@ -448,7 +454,9 @@ class MySqlStatsRepository implements StatsRepository
                     $result[] = new DataEntry(
                         $calculation,
                         $siteId,
+                        $siteIdToNameMap[$siteId],
                         $checkZoneId ? $zoneId : null,
+                        $checkZoneId ? $zoneIdToNameMap[$zoneId] : null,
                         $checkPublisherId ? $publisherId : null
                     );
                 }
@@ -466,6 +474,8 @@ class MySqlStatsRepository implements StatsRepository
     ): Total {
         $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
+        $rowSiteId = null;
+        $rowSiteName = null;
         $queryResult = [];
         $queryResultLive = [];
 
@@ -492,6 +502,10 @@ class MySqlStatsRepository implements StatsRepository
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
             $revenue = (int)$row->revenue;
+            if (null !== $siteId) {
+                $rowSiteId = $row->site_id;
+                $rowSiteName = $row->site_name;
+            }
         } else {
             $clicks = 0;
             $views = 0;
@@ -503,6 +517,10 @@ class MySqlStatsRepository implements StatsRepository
             $clicks += (int)$row->clicks;
             $views += (int)$row->views;
             $revenue += (int)$row->revenue;
+            if (null !== $siteId) {
+                $rowSiteId = $row->site_id;
+                $rowSiteName = $row->site_name;
+            }
         }
 
         $calculation = new Calculation(
@@ -514,7 +532,7 @@ class MySqlStatsRepository implements StatsRepository
             $revenue
         );
 
-        return new Total($calculation, $siteId);
+        return new Total($calculation, $rowSiteId, $rowSiteName);
     }
 
     public function fetchStatsToReport(
@@ -566,9 +584,15 @@ class MySqlStatsRepository implements StatsRepository
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
-            $zoneId = ($row->zone_id !== null) ? bin2hex($row->zone_id) : null;
             $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->site_id), $zoneId, $selectedPublisherId);
+            $result[] = new DataEntry(
+                $calculation,
+                $row->site_id,
+                $row->site_name,
+                $row->zone_id,
+                $row->zone_name,
+                $selectedPublisherId
+            );
         }
 
         $resultWithoutEvents =
@@ -914,11 +938,11 @@ class MySqlStatsRepository implements StatsRepository
         $result = [];
 
         foreach ($allZones as $zone) {
-            $binaryZoneId = $zone->zone_id;
+            $zoneId = $zone->zone_id;
             $isZonePresent = false;
 
             foreach ($queryResult as $row) {
-                if ($row->zone_id === $binaryZoneId) {
+                if ($row->zone_id === $zoneId) {
                     $isZonePresent = true;
                     break;
                 }
@@ -931,8 +955,10 @@ class MySqlStatsRepository implements StatsRepository
                 $result[] =
                     new DataEntry(
                         $calculation,
-                        bin2hex($zone->site_id),
-                        bin2hex($binaryZoneId),
+                        $zone->site_id,
+                        $zone->site_name,
+                        $zoneId,
+                        $zone->zone_name,
                         $selectedPublisherId
                     );
             }
@@ -944,7 +970,7 @@ class MySqlStatsRepository implements StatsRepository
     private function fetchAllZonesWithSiteAndUser(?string $publisherId, ?string $siteId): array
     {
         $query = <<<SQL
-SELECT u.uuid AS user_id, s.uuid AS site_id, z.uuid AS zone_id
+SELECT u.uuid AS user_id, s.id AS site_id, s.name AS site_name, z.id AS zone_id, z.name AS zone_name
 FROM users u
        JOIN sites s ON u.id = s.user_id
        JOIN zones z ON z.site_id = s.id

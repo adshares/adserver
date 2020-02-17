@@ -25,11 +25,9 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Stats\AdvertiserReportResponse;
 use Adshares\Adserver\Http\Response\Stats\PublisherReportResponse;
-use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\Zone;
 use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\Input\ConversionDataInput;
 use Adshares\Advertiser\Dto\Input\InvalidInputException;
@@ -42,7 +40,6 @@ use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Dto\Input\InvalidInputException as PublisherInvalidInputException;
 use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
-use Closure;
 use DateTime;
 use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
@@ -190,39 +187,6 @@ class StatsController extends Controller
         }
     }
 
-    public function advertiserStats(
-        Request $request,
-        string $dateStart,
-        string $dateEnd
-    ): JsonResponse {
-        $from = $this->createDateTime($dateStart);
-        $to = $this->createDateTime($dateEnd);
-        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
-
-        /** @var User $user */
-        $user = Auth::user();
-
-        $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsAdvertiser($user);
-
-        try {
-            $input = new AdvertiserStatsInput(
-                $user->uuid,
-                $from,
-                $to,
-                $campaignUuid
-            );
-        } catch (AdvertiserInvalidInputException $exception) {
-            throw new BadRequestHttpException($exception->getMessage(), $exception);
-        }
-
-        $result = $this->advertiserStatsDataProvider->fetch($input);
-
-        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
-
-        return new JsonResponse($data);
-    }
-
     public function advertiserStatsWithTotal(
         Request $request,
         string $dateStart,
@@ -251,10 +215,12 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetch($input);
 
-        $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->getData());
-
-        return new JsonResponse(['total' => $total, 'data' => $data]);
+        return new JsonResponse(
+            [
+                'total' => $result->getTotal(),
+                'data' => $result->getData(),
+            ]
+        );
     }
 
     public function advertiserStatsConversions(
@@ -288,39 +254,6 @@ class StatsController extends Controller
         return self::json($result->toArray());
     }
 
-    public function publisherStats(
-        Request $request,
-        string $dateStart,
-        string $dateEnd
-    ): JsonResponse {
-        $from = $this->createDateTime($dateStart);
-        $to = $this->createDateTime($dateEnd);
-        $siteId = $this->getSiteIdFromRequest($request);
-
-        /** @var User $user */
-        $user = Auth::user();
-
-        $this->validateChartInputParameters($from, $to);
-        $this->validateUserAsPublisher($user);
-
-        try {
-            $input = new PublisherStatsInput(
-                $user->uuid,
-                $from,
-                $to,
-                $siteId
-            );
-        } catch (PublisherInvalidInputException $exception) {
-            throw new BadRequestHttpException($exception->getMessage(), $exception);
-        }
-
-        $result = $this->publisherStatsDataProvider->fetch($input);
-
-        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
-
-        return new JsonResponse($data);
-    }
-
     public function publisherReport(
         Request $request,
         string $dateStart,
@@ -352,7 +285,7 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetchReportData($input);
 
-        $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
+        $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
         return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
@@ -389,7 +322,7 @@ class StatsController extends Controller
 
         $result = $this->advertiserStatsDataProvider->fetchReportData($input);
 
-        $data = $this->transformIdAndFilterNullFromAdvertiserData($result->toArray());
+        $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
         return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
@@ -423,51 +356,12 @@ class StatsController extends Controller
 
         $result = $this->publisherStatsDataProvider->fetch($input);
 
-        $total = $this->transformPublicIdToPrivateId($result->getTotal());
-        $data = $this->transformIdAndFilterNullFromPublisherData($result->getData());
-
-        return new JsonResponse(['total' => $total, 'data' => $data]);
-    }
-
-    private function transformPublicIdToPrivateId(array $item): array
-    {
-        if (isset($item['advertiserId'])) {
-            $user = User::fetchByUuid($item['advertiserId']);
-            $item['advertiserId'] = $user->id ?? null;
-            $item['advertiser'] = $user->email ?? null;
-        }
-
-        if (isset($item['campaignId'])) {
-            $campaign = Campaign::fetchByUuid($item['campaignId']);
-            $item['campaignId'] = $campaign->id ?? null;
-            $item['campaignName'] = $campaign->name ?? null;
-        }
-
-        if (isset($item['bannerId'])) {
-            $banner = Banner::fetchBanner($item['bannerId']);
-            $item['bannerId'] = $banner->id ?? null;
-            $item['bannerName'] = $banner->name ?? null;
-        }
-
-        if (isset($item['publisherId'])) {
-            $user = User::fetchByUuid($item['publisherId']);
-            $item['publisherId'] = $user->id ?? null;
-            $item['publisher'] = $user->email ?? null;
-        }
-
-        if (isset($item['siteId'])) {
-            $site = Site::fetchByPublicId($item['siteId']);
-            $item['siteId'] = $site->id ?? null;
-            $item['siteName'] = $site->name ?? null;
-        }
-
-        if (isset($item['zoneId'])) {
-            $zone = Zone::fetchByPublicId($item['zoneId']);
-            $item['zoneId'] = $zone->id ?? null;
-            $item['zoneName'] = $zone->name ?? null;
-        }
-
-        return $item;
+        return new JsonResponse(
+            [
+                'total' => $result->getTotal(),
+                'data' => $result->getData(),
+                ]
+        );
     }
 
     private function getSiteIdFromRequest(Request $request): ?string
@@ -485,37 +379,6 @@ class StatsController extends Controller
         }
 
         return $site->uuid;
-    }
-
-    private function callbackTransformingId(): Closure
-    {
-        return function ($item) {
-            return $this->transformPublicIdToPrivateId($item);
-        };
-    }
-
-    private function callbackFilteringNullFromAdvertiserStats(): Closure
-    {
-        return function (array $item) {
-            if ((array_key_exists('campaignId', $item) && is_null($item['campaignId']))
-                || (array_key_exists('bannerId', $item) && is_null($item['bannerId']))) {
-                return false;
-            }
-
-            return true;
-        };
-    }
-
-    private function callbackFilteringNullFromPublisherStats(): Closure
-    {
-        return function (array $item) {
-            if ((array_key_exists('siteId', $item) && is_null($item['siteId']))
-                || (array_key_exists('zoneId', $item) && is_null($item['zoneId']))) {
-                return false;
-            }
-
-            return true;
-        };
     }
 
     private function validateUserAsPublisher(User $user): void
@@ -540,22 +403,6 @@ class StatsController extends Controller
                 )
             );
         }
-    }
-
-    private function transformIdAndFilterNullFromAdvertiserData(array $resultData): array
-    {
-        $data = array_map($this->callbackTransformingId(), $resultData);
-        $data = array_values(array_filter($data, $this->callbackFilteringNullFromAdvertiserStats()));
-
-        return $data;
-    }
-
-    private function transformIdAndFilterNullFromPublisherData(array $resultData): array
-    {
-        $data = array_map($this->callbackTransformingId(), $resultData);
-        $data = array_values(array_filter($data, $this->callbackFilteringNullFromPublisherStats()));
-
-        return $data;
     }
 
     private function formatReportName(DateTimeInterface $from, DateTimeInterface $to): string

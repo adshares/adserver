@@ -27,24 +27,34 @@ class DataEntry
     /** @var Calculation */
     private $calculation;
 
-    /** @var string */
+    /** @var int */
     private $siteId;
 
-    /** @var string|null */
+    /** @var string */
+    private $siteName;
+
+    /** @var int|null */
     private $zoneId;
+
+    /** @var string|null */
+    private $zoneName;
 
     /** @var string|null */
     private $publisherId;
 
     public function __construct(
         Calculation $calculation,
-        string $siteId,
-        ?string $zoneId = null,
+        int $siteId,
+        string $siteName,
+        ?int $zoneId = null,
+        ?string $zoneName = null,
         ?string $publisherId = null
     ) {
         $this->calculation = $calculation;
         $this->siteId = $siteId;
+        $this->siteName = $siteName;
         $this->zoneId = $zoneId;
+        $this->zoneName = $zoneName;
         $this->publisherId = $publisherId;
     }
 
@@ -52,9 +62,11 @@ class DataEntry
     {
         $data = $this->calculation->toArray();
         $data['siteId'] = $this->siteId;
+        $data['siteName'] = $this->siteName;
 
-        if ($this->zoneId) {
+        if ($this->zoneId && $this->zoneName) {
             $data['zoneId'] = $this->zoneId;
+            $data['zoneName'] = $this->zoneName;
         }
 
         if ($this->publisherId) {

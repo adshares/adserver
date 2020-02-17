@@ -236,17 +236,46 @@ class DummyStatsRepository implements StatsRepository
             $bannerId2 = $banners[1]->uuid;
             $bannerId3 = $banners[2]->uuid;
             $bannerId4 = $banners[3]->uuid;
+            $bannerName1 = $banners[0]->name;
+            $bannerName2 = $banners[1]->name;
+            $bannerName3 = $banners[2]->name;
+            $bannerName4 = $banners[3]->name;
         }
 
         $campaigns = $user->campaigns;
 
-        $campaignUuid = $campaigns[0]->uuid;
+        $campaignId = $campaigns[0]->id;
+        $campaignName = $campaigns[0]->name;
 
         $data = [
-            new DataEntry(new Calculation(1, 1, 1, 1, 1, 1), $campaignUuid, $bannerId1 ?? null),
-            new DataEntry(new Calculation(2, 2, 2, 2, 2, 2), $campaignUuid, $bannerId2 ?? null),
-            new DataEntry(new Calculation(3, 3, 3, 3, 3, 3), $campaignUuid, $bannerId3 ?? null),
-            new DataEntry(new Calculation(4, 4, 4, 4, 4, 4), $campaignUuid, $bannerId4 ?? null),
+            new DataEntry(
+                new Calculation(1, 1, 1, 1, 1, 1),
+                $campaignId,
+                $campaignName,
+                $bannerId1 ?? null,
+                $bannerName1 ?? null
+            ),
+            new DataEntry(
+                new Calculation(2, 2, 2, 2, 2, 2),
+                $campaignId,
+                $campaignName,
+                $bannerId2 ?? null,
+                $bannerName2 ?? null
+            ),
+            new DataEntry(
+                new Calculation(3, 3, 3, 3, 3, 3),
+                $campaignId,
+                $campaignName,
+                $bannerId3 ?? null,
+                $bannerName3 ?? null
+            ),
+            new DataEntry(
+                new Calculation(4, 4, 4, 4, 4, 4),
+                $campaignId,
+                $campaignName,
+                $bannerId4 ?? null,
+                $bannerName4 ?? null
+            ),
         ];
 
         return new DataCollection($data);
