@@ -30,14 +30,13 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\Input\ConversionDataInput;
-use Adshares\Advertiser\Dto\Input\InvalidInputException;
+use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
 use Adshares\Advertiser\Dto\Input\StatsInput as AdvertiserStatsInput;
 use Adshares\Advertiser\Service\ChartDataProvider as AdvertiserChartDataProvider;
 use Adshares\Advertiser\Service\StatsDataProvider as AdvertiserStatsDataProvider;
-use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
 use Adshares\Publisher\Dto\Input\ChartInput as PublisherChartInput;
-use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Dto\Input\InvalidInputException as PublisherInvalidInputException;
+use Adshares\Publisher\Dto\Input\StatsInput as PublisherStatsInput;
 use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use DateTime;
@@ -316,7 +315,7 @@ class StatsController extends Controller
                 $to,
                 $campaignUuid
             );
-        } catch (InvalidInputException $exception) {
+        } catch (AdvertiserInvalidInputException $exception) {
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
@@ -360,7 +359,7 @@ class StatsController extends Controller
             [
                 'total' => $result->getTotal(),
                 'data' => $result->getData(),
-                ]
+            ]
         );
     }
 
