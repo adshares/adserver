@@ -44,6 +44,7 @@ use Adshares\Publisher\Service\ChartDataProvider as PublisherChartDataProvider;
 use Adshares\Publisher\Service\StatsDataProvider as PublisherStatsDataProvider;
 use Closure;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -354,7 +355,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromPublisherData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, config('app.name'), $isAdmin))->response();
+        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
     }
 
     public function advertiserReport(
@@ -391,7 +392,7 @@ class StatsController extends Controller
         $data = $this->transformIdAndFilterNullFromAdvertiserData($result->toArray());
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, config('app.name'), $isAdmin))->response();
+        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
     }
 
     public function publisherStatsWithTotal(
@@ -557,7 +558,7 @@ class StatsController extends Controller
         return $data;
     }
 
-    private function formatReportName(\DateTime $from, \DateTime $to)
+    private function formatReportName(DateTimeInterface $from, DateTimeInterface $to): string
     {
         return sprintf(
             '%s_%s',
