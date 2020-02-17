@@ -32,8 +32,10 @@ use Adshares\Adserver\Repository\Common\MySqlQueryBuilder;
 use Adshares\Adserver\Services\AdsExchange;
 use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
+use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Exception\InvalidArgumentException;
+use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
@@ -78,11 +80,40 @@ class WalletController extends Controller
 
     private const FIELD_TYPES = 'types';
 
+    private const FIELD_BTC = 'btc';
+
     private const FIELD_NOW_PAYMENTS = 'now_payments';
 
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
     private const VALIDATOR_RULE_REQUIRED = 'required';
+
+    public function withdrawalInfo(ExchangeRateReader $exchangeRateReader, AdsExchange $adsExchange): JsonResponse
+    {
+        $btcInfo = null;
+        if (config('app.btc_withdraw')) {
+            $fee = config('app.btc_withdraw_fee');
+            $rate = 0;
+            try {
+                $exchangeRate = $exchangeRateReader->fetchExchangeRate(null, 'BTC')->toArray();
+                $rate = (float)$exchangeRate['value'];
+            } catch (ExchangeRateNotAvailableException $exception) {
+                Log::error(sprintf('[NowPayments] Cannot fetch exchange rate: %s', $exception->getMessage()));
+            }
+
+            $btcInfo = [
+                'minAmount' => config('app.btc_withdraw_min_amount'),
+                'maxAmount' => config('app.btc_withdraw_max_amount'),
+                'exchangeRate' => $rate / (1 - $fee),
+            ];
+        }
+
+        $resp = [
+            self::FIELD_BTC => $btcInfo,
+        ];
+
+        return self::json($resp);
+    }
 
     public function calculateWithdrawal(Request $request): JsonResponse
     {
