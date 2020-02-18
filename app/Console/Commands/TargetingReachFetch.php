@@ -136,12 +136,12 @@ class TargetingReachFetch extends BaseCommand
                         'key' => $data['key'],
                         'data' => base64_decode($data['data']),
                         'occurrences' => $data['occurrences'],
-                        'percentile_25' => $data['percentile_25'],
-                        'percentile_50' => $data['percentile_50'],
-                        'percentile_75' => $data['percentile_75'],
-                        'not_percentile_25' => $data['not_percentile_25'],
-                        'not_percentile_50' => $data['not_percentile_50'],
-                        'not_percentile_75' => $data['not_percentile_75'],
+                        'cpm_25' => $data['cpm_25'],
+                        'cpm_50' => $data['cpm_50'],
+                        'cpm_75' => $data['cpm_75'],
+                        'negation_cpm_25' => $data['negation_cpm_25'],
+                        'negation_cpm_50' => $data['negation_cpm_50'],
+                        'negation_cpm_75' => $data['negation_cpm_75'],
                     ]
                 );
             }

@@ -40,9 +40,9 @@ class NetworkVectorComputer
 
     private const KEY_DATA = 'data';
 
-    private const KEY_PERCENTILE_COMPUTER = 'computer';
+    private const KEY_CPM_PERCENTILE_COMPUTER = 'computer';
 
-    private const KEY_PERCENTILES = 'percentiles';
+    private const KEY_CPM_PERCENTILES = 'cpm';
 
     /** @var int */
     private $adserverId;
@@ -60,10 +60,10 @@ class NetworkVectorComputer
     private $masks;
 
     /** @var PercentileComputer */
-    private $totalPercentileComputer;
+    private $totalCpmPercentileComputer;
 
     /** @var array */
-    private $totalPercentiles;
+    private $totalCpmPercentiles;
 
     public function __construct(int $adServerId)
     {
@@ -89,7 +89,7 @@ class NetworkVectorComputer
         $events = $this->fetchEvents($dateFrom, $dateTo);
         $eventsAllCount = $this->fetchAllEventsCount($dateFrom, $dateTo);
         $this->binaryStringLength = (int)ceil(count($events) / 8);
-        $this->totalPercentileComputer = new PercentileComputer();
+        $this->totalCpmPercentileComputer = new PercentileComputer();
 
         foreach ($events as $index => $event) {
             $campaignId = $event->campaign_id;
@@ -98,7 +98,7 @@ class NetworkVectorComputer
             $domain = $event->domain;
             $size = $event->size;
 
-            $this->totalPercentileComputer->add($campaignId, $eventValue);
+            $this->totalCpmPercentileComputer->add($campaignId, $eventValue);
 
             $charIndex = (int)($index / 8);
             $bitIndex = $index % 8;
@@ -121,7 +121,7 @@ class NetworkVectorComputer
             $this->addToCategories('size:'.$size, $charIndex, $bitIndex, $campaignId, $eventValue);
         }
 
-        $this->computePercentiles();
+        $this->computeCpmPercentiles();
         $this->storeData($eventsAllCount);
     }
 
@@ -177,22 +177,22 @@ SQL
         } else {
             $this->categories[$key][self::KEY_COUNT] = 1;
             $this->categories[$key][self::KEY_DATA] = str_repeat($this->binaryStringBase, $this->binaryStringLength);
-            $this->categories[$key][self::KEY_PERCENTILE_COMPUTER] = new PercentileComputer();
+            $this->categories[$key][self::KEY_CPM_PERCENTILE_COMPUTER] = new PercentileComputer();
         }
         $this->categories[$key][self::KEY_DATA][$charIndex] =
             $this->categories[$key][self::KEY_DATA][$charIndex] | $this->masks[$bitIndex];
-        $this->categories[$key][self::KEY_PERCENTILE_COMPUTER]->add($campaignId, $eventValue);
+        $this->categories[$key][self::KEY_CPM_PERCENTILE_COMPUTER]->add($campaignId, $eventValue);
     }
 
-    private function computePercentiles(): void
+    private function computeCpmPercentiles(): void
     {
-        $percentiles = [25, 50, 75];
+        $cpmPercentileRanks = [25, 50, 75];
 
-        $this->totalPercentiles = $this->totalPercentileComputer->percentiles($percentiles);
+        $this->totalCpmPercentiles = $this->totalCpmPercentileComputer->percentiles($cpmPercentileRanks);
 
         foreach ($this->categories as $category => $data) {
-            $result = $data[self::KEY_PERCENTILE_COMPUTER]->percentiles($percentiles);
-            $this->categories[$category][self::KEY_PERCENTILES] = array_merge($result, $this->totalPercentiles);
+            $result = $data[self::KEY_CPM_PERCENTILE_COMPUTER]->percentiles($cpmPercentileRanks);
+            $this->categories[$category][self::KEY_CPM_PERCENTILES] = array_merge($result, $this->totalCpmPercentiles);
         }
     }
 
@@ -208,12 +208,12 @@ SQL
                         'key' => self::TOTAL,
                         'data' => str_repeat(hex2bin('FF'), $this->binaryStringLength),
                         'occurrences' => 8 * $this->binaryStringLength,
-                        'percentile_25' => $this->totalPercentiles[0],
-                        'percentile_50' => $this->totalPercentiles[1],
-                        'percentile_75' => $this->totalPercentiles[2],
-                        'not_percentile_25' => $this->totalPercentiles[0],
-                        'not_percentile_50' => $this->totalPercentiles[1],
-                        'not_percentile_75' => $this->totalPercentiles[2],
+                        'cpm_25' => $this->totalCpmPercentiles[0],
+                        'cpm_50' => $this->totalCpmPercentiles[1],
+                        'cpm_75' => $this->totalCpmPercentiles[2],
+                        'negation_cpm_25' => $this->totalCpmPercentiles[0],
+                        'negation_cpm_50' => $this->totalCpmPercentiles[1],
+                        'negation_cpm_75' => $this->totalCpmPercentiles[2],
                     ]
                 );
             }
@@ -224,12 +224,12 @@ SQL
                         'key' => $category,
                         'data' => $data[self::KEY_DATA],
                         'occurrences' => $data[self::KEY_COUNT],
-                        'percentile_25' => $data[self::KEY_PERCENTILES][0],
-                        'percentile_50' => $data[self::KEY_PERCENTILES][1],
-                        'percentile_75' => $data[self::KEY_PERCENTILES][2],
-                        'not_percentile_25' => $data[self::KEY_PERCENTILES][3],
-                        'not_percentile_50' => $data[self::KEY_PERCENTILES][4],
-                        'not_percentile_75' => $data[self::KEY_PERCENTILES][5],
+                        'cpm_25' => $data[self::KEY_CPM_PERCENTILES][0],
+                        'cpm_50' => $data[self::KEY_CPM_PERCENTILES][1],
+                        'cpm_75' => $data[self::KEY_CPM_PERCENTILES][2],
+                        'negation_cpm_25' => $data[self::KEY_CPM_PERCENTILES][3],
+                        'negation_cpm_50' => $data[self::KEY_CPM_PERCENTILES][4],
+                        'negation_cpm_75' => $data[self::KEY_CPM_PERCENTILES][5],
                     ]
                 );
             }

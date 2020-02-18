@@ -30,13 +30,13 @@ class TargetingReach implements Arrayable
     private $occurrences = 0;
 
     /** @var float */
-    private $percentile25 = 0;
+    private $cpm25 = 0;
 
     /** @var float */
-    private $percentile50 = 0;
+    private $cpm50 = 0;
 
     /** @var float */
-    private $percentile75 = 0;
+    private $cpm75 = 0;
 
     public function add(TargetingReachVector $vector, int $totalEventsCount): void
     {
@@ -47,15 +47,12 @@ class TargetingReach implements Arrayable
             return;
         }
 
-        $this->percentile25 =
-            ($this->occurrences * $this->percentile25 + $additionalOccurrences * $vector->getPercentile25())
-            / $totalOccurrences;
-        $this->percentile50 =
-            ($this->occurrences * $this->percentile50 + $additionalOccurrences * $vector->getPercentile50())
-            / $totalOccurrences;
-        $this->percentile75 =
-            ($this->occurrences * $this->percentile75 + $additionalOccurrences * $vector->getPercentile75())
-            / $totalOccurrences;
+        $this->cpm25 =
+            ($this->occurrences * $this->cpm25 + $additionalOccurrences * $vector->getCpm25()) / $totalOccurrences;
+        $this->cpm50 =
+            ($this->occurrences * $this->cpm50 + $additionalOccurrences * $vector->getCpm50()) / $totalOccurrences;
+        $this->cpm75 =
+            ($this->occurrences * $this->cpm75 + $additionalOccurrences * $vector->getCpm75()) / $totalOccurrences;
 
         $this->occurrences = $totalOccurrences;
     }
@@ -64,10 +61,10 @@ class TargetingReach implements Arrayable
     {
         return [
             'occurrences' => (int)round($this->occurrences),
-            'percentiles' => [
-                '25' => (int)round($this->percentile25 * 1e3),
-                '50' => (int)round($this->percentile50 * 1e3),
-                '75' => (int)round($this->percentile75 * 1e3),
+            'cpm_percentiles' => [
+                '25' => (int)round($this->cpm25 * 1e3),
+                '50' => (int)round($this->cpm50 * 1e3),
+                '75' => (int)round($this->cpm75 * 1e3),
             ],
         ];
     }

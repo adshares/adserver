@@ -30,20 +30,20 @@ class TargetingReachVector
     private $data;
 
     /** @var int */
-    private $percentile25;
+    private $cpm25;
 
     /** @var int */
-    private $percentile50;
+    private $cpm50;
 
     /** @var int */
-    private $percentile75;
+    private $cpm75;
 
-    public function __construct(string $data, int $percentile25, int $percentile50, int $percentile75)
+    public function __construct(string $data, int $cpm25, int $cpm50, int $cpm75)
     {
         $this->data = $data;
-        $this->percentile25 = $percentile25;
-        $this->percentile50 = $percentile50;
-        $this->percentile75 = $percentile75;
+        $this->cpm25 = $cpm25;
+        $this->cpm50 = $cpm50;
+        $this->cpm75 = $cpm75;
     }
 
     public function and(self $vector): self
@@ -73,7 +73,7 @@ class TargetingReachVector
 
     public function not(): self
     {
-        return new self(BinaryStringUtils::not($this->data), $this->percentile25, $this->percentile50, $this->percentile75);
+        return new self(BinaryStringUtils::not($this->data), $this->cpm25, $this->cpm50, $this->cpm75);
     }
 
     public function or(self $vector): self
@@ -112,15 +112,9 @@ class TargetingReachVector
 
         return new self(
             $data,
-            (int)round(
-                ($weightThis * $this->percentile25 + $weightOther * $vectorOther->getPercentile25()) / $weightsSum
-            ),
-            (int)round(
-                ($weightThis * $this->percentile50 + $weightOther * $vectorOther->getPercentile50()) / $weightsSum
-            ),
-            (int)round(
-                ($weightThis * $this->percentile75 + $weightOther * $vectorOther->getPercentile75()) / $weightsSum
-            )
+            (int)round(($weightThis * $this->cpm25 + $weightOther * $vectorOther->getCpm25()) / $weightsSum),
+            (int)round(($weightThis * $this->cpm50 + $weightOther * $vectorOther->getCpm50()) / $weightsSum),
+            (int)round(($weightThis * $this->cpm75 + $weightOther * $vectorOther->getCpm75()) / $weightsSum)
         );
     }
 
@@ -134,18 +128,18 @@ class TargetingReachVector
         return BinaryStringUtils::count($this->data) / (8 * strlen($this->data));
     }
 
-    public function getPercentile25(): int
+    public function getCpm25(): int
     {
-        return $this->percentile25;
+        return $this->cpm25;
     }
 
-    public function getPercentile50(): int
+    public function getCpm50(): int
     {
-        return $this->percentile50;
+        return $this->cpm50;
     }
 
-    public function getPercentile75(): int
+    public function getCpm75(): int
     {
-        return $this->percentile75;
+        return $this->cpm75;
     }
 }

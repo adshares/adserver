@@ -49,12 +49,12 @@ class CreateNetworkVectorsTables extends Migration
                 $table->bigInteger('network_host_id');
                 $table->string('key', $keyLengthMaximum);
                 $table->unsignedMediumInteger('occurrences');
-                $table->bigInteger('percentile_25');
-                $table->bigInteger('percentile_50');
-                $table->bigInteger('percentile_75');
-                $table->bigInteger('not_percentile_25');
-                $table->bigInteger('not_percentile_50');
-                $table->bigInteger('not_percentile_75');
+                $table->bigInteger('cpm_25');
+                $table->bigInteger('cpm_50');
+                $table->bigInteger('cpm_75');
+                $table->bigInteger('negation_cpm_25');
+                $table->bigInteger('negation_cpm_50');
+                $table->bigInteger('negation_cpm_75');
                 $table->binary('data');
 
                 $table->index(['network_host_id', 'key']);

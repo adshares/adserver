@@ -74,12 +74,12 @@ class TargetingReachComputer
         $rows = DB::table('network_vectors')->select(
             [
                 'key',
-                'percentile_25',
-                'percentile_50',
-                'percentile_75',
-                'not_percentile_25',
-                'not_percentile_50',
-                'not_percentile_75',
+                'cpm_25',
+                'cpm_50',
+                'cpm_75',
+                'negation_cpm_25',
+                'negation_cpm_50',
+                'negation_cpm_75',
                 'data',
             ]
         )->where('network_host_id', $adServerId)->whereIn('key', $keys)->get()->keyBy('key');
@@ -108,7 +108,7 @@ class TargetingReachComputer
                 return null;
             }
 
-            return new TargetingReachVector($row->data, $row->percentile_25, $row->percentile_50, $row->percentile_75);
+            return new TargetingReachVector($row->data, $row->cpm_25, $row->cpm_50, $row->cpm_75);
         }
 
         /** @var TargetingReachVector|null $vector */
@@ -126,9 +126,9 @@ class TargetingReachComputer
 
                 $tmpVector = new TargetingReachVector(
                     $row->data,
-                    $row->percentile_25,
-                    $row->percentile_50,
-                    $row->percentile_75
+                    $row->cpm_25,
+                    $row->cpm_50,
+                    $row->cpm_75
                 );
 
                 if (null === $orVector) {
@@ -169,9 +169,9 @@ class TargetingReachComputer
 
                 $tmpVector = new TargetingReachVector(
                     $row->data,
-                    $row->not_percentile_25,
-                    $row->not_percentile_50,
-                    $row->not_percentile_75
+                    $row->negation_cpm_25,
+                    $row->negation_cpm_50,
+                    $row->negation_cpm_75
                 );
 
                 if (null === $vector) {

@@ -59,15 +59,15 @@ class PercentileComputer
         }
     }
 
-    public function percentiles(array $percentiles = [25, 50, 75]): array
+    public function percentiles(array $percentileRanks = [25, 50, 75]): array
     {
-        if (0 === count($percentiles) || !$this->campaigns) {
+        if (0 === count($percentileRanks) || !$this->campaigns) {
             return [];
         }
 
-        sort($percentiles);
+        sort($percentileRanks);
 
-        $cutOff = (int)((1 - $percentiles[0] / 100) * $this->totalCount);
+        $cutOff = (int)((1 - $percentileRanks[0] / 100) * $this->totalCount);
         $cutArray = $this->processCampaigns($cutOff);
         $cutArrayItemCount = count($cutArray);
 
@@ -142,7 +142,7 @@ class PercentileComputer
             $k = $nextK;
         }
 
-        return $this->getPercentilesFromCutArray($cutArray, $percentiles);
+        return $this->getPercentilesFromCutArray($cutArray, $percentileRanks);
     }
 
     private function mergeDuplicatedAverages(array $arr): array
@@ -266,7 +266,7 @@ class PercentileComputer
         return $this->mergeDuplicatedAverages(array_slice($tmp, 0, $index + 1));
     }
 
-    private function getPercentilesFromCutArray(array $cutArray, array $percentiles): array
+    private function getPercentilesFromCutArray(array $cutArray, array $percentileRanks): array
     {
         $cutOff = array_reduce(
             $cutArray,
@@ -278,9 +278,9 @@ class PercentileComputer
 
         $result = [];
         $percentilesIndex = 0;
-        $percentilesArrayCount = count($percentiles);
+        $percentilesArrayCount = count($percentileRanks);
         $currentCount = $this->totalCount - $cutOff;
-        $percentileCount = $this->totalCount * $percentiles[$percentilesIndex] / 100;
+        $percentileCount = $this->totalCount * $percentileRanks[$percentilesIndex] / 100;
 
         for ($i = count($cutArray) - 1; $i >= 0; $i--) {
             $currentCount += $cutArray[$i][self::KEY_COUNT];
@@ -292,7 +292,7 @@ class PercentileComputer
                     return $result;
                 }
 
-                $percentileCount = $this->totalCount * $percentiles[$percentilesIndex] / 100;
+                $percentileCount = $this->totalCount * $percentileRanks[$percentilesIndex] / 100;
             }
         }
 
