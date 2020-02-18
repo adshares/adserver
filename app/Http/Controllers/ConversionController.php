@@ -37,7 +37,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -68,7 +67,7 @@ class ConversionController extends Controller
         $this->eventCaseFinder = $eventCaseFinder;
     }
 
-    public function conversion(string $uuid, Request $request): JsonResponse
+    public function conversion(string $uuid, Request $request): Response
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
@@ -121,7 +120,7 @@ class ConversionController extends Controller
         return $response;
     }
 
-    public function conversionClick(string $campaignUuid, Request $request): JsonResponse
+    public function conversionClick(string $campaignUuid, Request $request): Response
     {
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
