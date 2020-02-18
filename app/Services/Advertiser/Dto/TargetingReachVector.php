@@ -48,11 +48,11 @@ class TargetingReachVector
 
     public function and(self $vector): self
     {
-        $andData = (string)($this->data & $vector->getData());
+        $andData = BinaryStringUtils::and($this->data, $vector->getData());
 
-        $bitsA = BinaryStringUtils::countSetBitsInBinaryString($this->data);
-        $bitsB = BinaryStringUtils::countSetBitsInBinaryString($vector->getData());
-        $bitsAandB = BinaryStringUtils::countSetBitsInBinaryString($andData);
+        $bitsA = BinaryStringUtils::count($this->data);
+        $bitsB = BinaryStringUtils::count($vector->getData());
+        $bitsAandB = BinaryStringUtils::count($andData);
 
         if ($bitsA === $bitsAandB && $bitsB === $bitsAandB) {
             $xA = 1;
@@ -73,17 +73,17 @@ class TargetingReachVector
 
     public function not(): self
     {
-        return new self((string)~$this->data, $this->percentile25, $this->percentile50, $this->percentile75);
+        return new self(BinaryStringUtils::not($this->data), $this->percentile25, $this->percentile50, $this->percentile75);
     }
 
     public function or(self $vector): self
     {
-        $andData = (string)($this->data & $vector->getData());
-        $orData = (string)($this->data | $vector->getData());
+        $andData = BinaryStringUtils::and($this->data, $vector->getData());
+        $orData = BinaryStringUtils::or($this->data, $vector->getData());
 
-        $bitsA = BinaryStringUtils::countSetBitsInBinaryString($this->data);
-        $bitsB = BinaryStringUtils::countSetBitsInBinaryString($vector->getData());
-        $bitsAandB = BinaryStringUtils::countSetBitsInBinaryString($andData);
+        $bitsA = BinaryStringUtils::count($this->data);
+        $bitsB = BinaryStringUtils::count($vector->getData());
+        $bitsAandB = BinaryStringUtils::count($andData);
 
         if ($bitsB === $bitsAandB && $bitsA === $bitsAandB) {
             $yA = 1;
@@ -131,7 +131,7 @@ class TargetingReachVector
 
     public function getOccurrencePercent(): float
     {
-        return BinaryStringUtils::countSetBitsInBinaryString($this->data) / (8 * strlen($this->data));
+        return BinaryStringUtils::count($this->data) / (8 * strlen($this->data));
     }
 
     public function getPercentile25(): int

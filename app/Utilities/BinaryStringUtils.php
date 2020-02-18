@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Utilities;
 
 final class BinaryStringUtils
 {
-    public static function countSetBitsInBinaryString(string $string): int
+    public static function count(string $string): int
     {
         $count = 0;
         $length = strlen($string);
@@ -35,17 +35,17 @@ final class BinaryStringUtils
         return $count;
     }
 
-    public static function andBinaryString(string $stringA, string $stringB): string
+    public static function and(string $stringA, string $stringB): string
     {
         return (string)($stringA & $stringB);
     }
 
-    public static function notBinaryString(string $string): string
+    public static function not(string $string): string
     {
         return (string)~$string;
     }
 
-    public static function orBinaryString(string $stringA, string $stringB): string
+    public static function or(string $stringA, string $stringB): string
     {
         return (string)($stringA | $stringB);
     }

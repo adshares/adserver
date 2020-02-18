@@ -35,7 +35,7 @@ final class BinaryStringUtilsTest extends TestCase
      */
     public function testCountSetBits(string $binaryString, int $expectedBitsCount): void
     {
-        $this->assertEquals($expectedBitsCount, BinaryStringUtils::countSetBitsInBinaryString($binaryString));
+        $this->assertEquals($expectedBitsCount, BinaryStringUtils::count($binaryString));
     }
 
     /**
@@ -47,7 +47,7 @@ final class BinaryStringUtilsTest extends TestCase
      */
     public function testAndString(string $binaryStringA, string $binaryStringB, string $expectedBinaryString): void
     {
-        $this->assertEquals($expectedBinaryString, BinaryStringUtils::andBinaryString($binaryStringA, $binaryStringB));
+        $this->assertEquals($expectedBinaryString, BinaryStringUtils::and($binaryStringA, $binaryStringB));
     }
 
     /**
@@ -58,7 +58,7 @@ final class BinaryStringUtilsTest extends TestCase
      */
     public function testNotString(string $binaryString, string $expectedBinaryString): void
     {
-        $this->assertEquals($expectedBinaryString, BinaryStringUtils::notBinaryString($binaryString));
+        $this->assertEquals($expectedBinaryString, BinaryStringUtils::not($binaryString));
     }
 
     /**
@@ -70,7 +70,7 @@ final class BinaryStringUtilsTest extends TestCase
      */
     public function testOrString(string $binaryStringA, string $binaryStringB, string $expectedBinaryString): void
     {
-        $this->assertEquals($expectedBinaryString, BinaryStringUtils::orBinaryString($binaryStringA, $binaryStringB));
+        $this->assertEquals($expectedBinaryString, BinaryStringUtils::or($binaryStringA, $binaryStringB));
     }
 
     public function countSetBitsProvider(): array
