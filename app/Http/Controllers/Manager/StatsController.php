@@ -44,6 +44,7 @@ use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -287,7 +288,7 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
+        return (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseStream();
     }
 
     public function advertiserReport(
@@ -324,7 +325,44 @@ class StatsController extends Controller
         $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
 
-        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->response();
+        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseStream();
+    }
+
+    public function advertiserReportFile(
+        Request $request,
+        string $dateStart,
+        string $dateEnd
+    ): BinaryFileResponse {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
+
+        /** @var User $user */
+        $user = Auth::user();
+        $isAdmin = $user->isAdmin();
+
+        $this->validateChartInputParameters($from, $to);
+        if (!$isAdmin) {
+            $this->validateUserAsAdvertiser($user);
+        }
+
+        try {
+            $input = new AdvertiserStatsInput(
+                $isAdmin ? null : $user->uuid,
+                $from,
+                $to,
+                $campaignUuid
+            );
+        } catch (AdvertiserInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $result = $this->advertiserStatsDataProvider->fetchReportData($input);
+
+        $data = $result->toArray();
+        $name = $this->formatReportName($from, $to);
+
+        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseFile();
     }
 
     public function publisherStatsWithTotal(

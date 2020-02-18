@@ -110,6 +110,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('sites/stats/table2/{date_start}/{date_end}', [StatsController::class, 'publisherStatsWithTotal']);
 
     Route::get('sites/stats/report/{date_start}/{date_end}', [StatsController::class, 'publisherReport']);
+    Route::get('campaigns/stats/report2/{date_start}/{date_end}', [StatsController::class, 'advertiserReportFile']);
     Route::get('campaigns/stats/report/{date_start}/{date_end}', [StatsController::class, 'advertiserReport']);
 
     Route::get('classifications/{site_id?}', [ClassifierController::class, 'fetch']);

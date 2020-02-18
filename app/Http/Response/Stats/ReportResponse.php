@@ -22,10 +22,13 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
+use Adshares\Common\Domain\ValueObject\Uuid;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 abstract class ReportResponse
@@ -45,29 +48,51 @@ abstract class ReportResponse
         $this->creator = $creator;
     }
 
-    public function response(): StreamedResponse
+    public function responseStream(): StreamedResponse
     {
-        $filename = sprintf(
-            'report_%s.xlsx',
-            strtolower(preg_replace('[^a-zA-Z0-9_-]', '_', $this->name))
-        );
-
-        $headers = [
-            'Content-type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename=' . $filename,
-            'Pragma' => 'no-cache',
-            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-            'Expires' => '0'
-        ];
+        $filename = $this->createFilename();
+        $headers = $this->prepareHeaders($filename);
 
         $file = function () {
             $this->generateXLSXFile();
         };
 
-        return new StreamedResponse($file, 200, $headers);
+        return new StreamedResponse($file, StreamedResponse::HTTP_OK, $headers);
     }
 
-    private function generateXLSXFile(): void
+    public function responseFile(): BinaryFileResponse
+    {
+        $filename = $this->createFilename();
+        $headers = $this->prepareHeaders($filename);
+
+        $path = Storage::disk('local')->path('public/banners/');
+        $uri = $path.Uuid::v4();
+
+        $this->generateXLSXFile($uri);
+
+        return response()->download($uri, $filename, $headers)->deleteFileAfterSend(true);
+    }
+
+    private function createFilename(): string
+    {
+        return sprintf(
+            'report_%s.xlsx',
+            strtolower(preg_replace('[^a-zA-Z0-9_-]', '_', $this->name))
+        );
+    }
+
+    private function prepareHeaders(string $filename): array
+    {
+        return [
+            'Content-type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename='.$filename,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0'
+        ];
+    }
+
+    private function generateXLSXFile(string $uri = 'php://output'): void
     {
         $spreadsheet = new Spreadsheet();
 
@@ -94,7 +119,8 @@ abstract class ReportResponse
         foreach ($this->columns() as $column => $prop) {
             $coordinate = chr($x) . $y;
             $sheet->setCellValue($coordinate, $column);
-            $sheet->getStyle($coordinate)->getFont()->setBold(true);
+            $headerStyle = $sheet->getStyle($coordinate);
+            $headerStyle->getFont()->setBold(true);
 
             if (!empty($prop['width'])) {
                 $sheet->getColumnDimension(chr($x))->setWidth($prop['width']);
@@ -109,13 +135,13 @@ abstract class ReportResponse
             }
             if (!empty($prop['fill'])) {
                 $fills[$x] = $prop['fill'];
-                $sheet->getStyle($coordinate)->getFill()
+                $headerStyle->getFill()
                     ->setFillType(Fill::FILL_SOLID)
                     ->getStartColor()->setRGB($fills[$x]);
             }
             if (!empty($prop['color'])) {
                 $colors[$x] = $prop['color'];
-                $sheet->getStyle($coordinate)->getFont()->getColor()->setRGB($colors[$x]);
+                $headerStyle->getFont()->getColor()->setRGB($colors[$x]);
             }
 
             ++$x;
@@ -128,25 +154,36 @@ abstract class ReportResponse
                 $coordinate = chr($x) . $y;
                 $sheet->setCellValue($coordinate, $cell);
 
-                if (!empty($formats[$x])) {
-                    $sheet->getStyle($coordinate)->getNumberFormat()->setFormatCode($formats[$x]);
-                }
-                if (!empty($fills[$x])) {
-                    $sheet->getStyle($coordinate)->getFill()
-                        ->setFillType(Fill::FILL_SOLID)
-                        ->getStartColor()->setRGB($fills[$x]);
-                }
-                if (!empty($colors[$x])) {
-                    $sheet->getStyle($coordinate)->getFont()->getColor()->setRGB($colors[$x]);
-                }
-
                 ++$x;
             }
             ++$y;
         }
 
-        --$x;
         --$y;
+
+        if ($y > 1) {
+            $x = ord('A');
+            foreach ($this->columns() as $column => $prop) {
+                $coordinate = chr($x).'2:'.chr($x).$y;
+                $cellStyle = $sheet->getStyle($coordinate);
+
+                if (!empty($formats[$x])) {
+                    $cellStyle->getNumberFormat()->setFormatCode($formats[$x]);
+                }
+                if (!empty($fills[$x])) {
+                    $cellStyle->getFill()
+                        ->setFillType(Fill::FILL_SOLID)
+                        ->getStartColor()->setRGB($fills[$x]);
+                }
+                if (!empty($colors[$x])) {
+                    $cellStyle->getFont()->getColor()->setRGB($colors[$x]);
+                }
+
+                ++$x;
+            }
+        }
+
+        --$x;
 
         $sheet->getStyle(sprintf('A1:%s%d', chr($x), $y))->getBorders()->applyFromArray([
             'allBorders' => [
@@ -163,7 +200,7 @@ abstract class ReportResponse
 
 
         $writer = new Xlsx($spreadsheet);
-        $writer->save('php://output');
+        $writer->save($uri);
     }
 
     abstract protected function columns(): array;
