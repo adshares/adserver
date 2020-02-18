@@ -100,13 +100,11 @@ class AdvertiserReportResponse extends ReportResponse
 
     protected function columns(): array
     {
-        $columns = self::ADVERTISER_COLUMNS;
-
         if ($this->isAdmin) {
-            array_unshift($columns, ['User' => []]);
+            return array_merge(['User' => []], self::ADVERTISER_COLUMNS);
         }
 
-        return $columns;
+        return self::ADVERTISER_COLUMNS;
     }
 
     protected function rows(): array

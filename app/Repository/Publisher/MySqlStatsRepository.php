@@ -403,13 +403,21 @@ class MySqlStatsRepository implements StatsRepository
         $combined = [];
         $siteIdToNameMap = [];
         $zoneIdToNameMap = [];
+        $publisherIdToEmailMap = [];
         foreach (array_merge($queryResult, $queryResultLive) as $row) {
-            $publisherId = $checkPublisherId ? bin2hex($row->publisher_id) : 0;
+            if ($checkPublisherId) {
+                $publisherId = $row->publisher_id;
+                $publisherIdToEmailMap[$publisherId] = $row->publisher_email;
+            } else {
+                $publisherId = 0;
+            }
             $rowSiteId = $row->site_id;
             $siteIdToNameMap[$rowSiteId] = $row->site_name;
-            $zoneId = $checkZoneId ? $row->zone_id : 0;
             if ($checkZoneId) {
+                $zoneId = $row->zone_id;
                 $zoneIdToNameMap[$zoneId] = $row->zone_name;
+            } else {
+                $zoneId = 0;
             }
 
             if (!array_key_exists($publisherId, $combined)) {
@@ -457,7 +465,8 @@ class MySqlStatsRepository implements StatsRepository
                         $siteIdToNameMap[$siteId],
                         $checkZoneId ? $zoneId : null,
                         $checkZoneId ? $zoneIdToNameMap[$zoneId] : null,
-                        $checkPublisherId ? $publisherId : null
+                        $checkPublisherId ? $publisherId : null,
+                        $checkPublisherId ? $publisherIdToEmailMap[$publisherId] : null
                     );
                 }
             }
@@ -584,14 +593,21 @@ class MySqlStatsRepository implements StatsRepository
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
-            $selectedPublisherId = ($publisherId === null) ? bin2hex($row->publisher_id) : null;
+            if (null === $publisherId) {
+                $selectedPublisherId = $row->publisher_id;
+                $selectedPublisherEmail = $row->publisher_email;
+            } else {
+                $selectedPublisherId = null;
+                $selectedPublisherEmail = null;
+            }
             $result[] = new DataEntry(
                 $calculation,
                 $row->site_id,
                 $row->site_name,
                 $row->zone_id,
                 $row->zone_name,
-                $selectedPublisherId
+                $selectedPublisherId,
+                $selectedPublisherEmail
             );
         }
 
@@ -951,7 +967,13 @@ class MySqlStatsRepository implements StatsRepository
             if (!$isZonePresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedPublisherId = ($publisherId === null) ? bin2hex($zone->user_id) : null;
+                if (null === $publisherId) {
+                    $selectedPublisherId = $zone->user_id;
+                    $selectedPublisherEmail = $zone->user_email;
+                } else {
+                    $selectedPublisherId = null;
+                    $selectedPublisherEmail = null;
+                }
                 $result[] =
                     new DataEntry(
                         $calculation,
@@ -959,7 +981,8 @@ class MySqlStatsRepository implements StatsRepository
                         $zone->site_name,
                         $zoneId,
                         $zone->zone_name,
-                        $selectedPublisherId
+                        $selectedPublisherId,
+                        $selectedPublisherEmail
                     );
             }
         }
@@ -970,11 +993,16 @@ class MySqlStatsRepository implements StatsRepository
     private function fetchAllZonesWithSiteAndUser(?string $publisherId, ?string $siteId): array
     {
         $query = <<<SQL
-SELECT u.uuid AS user_id, s.id AS site_id, s.name AS site_name, z.id AS zone_id, z.name AS zone_name
+SELECT u.id    AS user_id,
+       u.email AS user_email,
+       s.id    AS site_id,
+       s.name  AS site_name,
+       z.id    AS zone_id,
+       z.name  AS zone_name
 FROM users u
-       JOIN sites s ON u.id = s.user_id
-       JOIN zones z ON z.site_id = s.id
-WHERE s.deleted_at IS NULL
+         JOIN sites s ON u.id = s.user_id
+         JOIN zones z ON z.site_id = s.id
+WHERE s.deleted_at IS NULL;
 SQL;
 
         if (null !== $publisherId) {

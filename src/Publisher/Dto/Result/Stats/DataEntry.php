@@ -39,8 +39,11 @@ class DataEntry
     /** @var string|null */
     private $zoneName;
 
-    /** @var string|null */
+    /** @var int|null */
     private $publisherId;
+
+    /** @var string|null */
+    private $publisherEmail;
 
     public function __construct(
         Calculation $calculation,
@@ -48,7 +51,8 @@ class DataEntry
         string $siteName,
         ?int $zoneId = null,
         ?string $zoneName = null,
-        ?string $publisherId = null
+        ?int $publisherId = null,
+        ?string $publisherEmail = null
     ) {
         $this->calculation = $calculation;
         $this->siteId = $siteId;
@@ -56,6 +60,7 @@ class DataEntry
         $this->zoneId = $zoneId;
         $this->zoneName = $zoneName;
         $this->publisherId = $publisherId;
+        $this->publisherEmail = $publisherEmail;
     }
 
     public function toArray(): array
@@ -69,8 +74,9 @@ class DataEntry
             $data['zoneName'] = $this->zoneName;
         }
 
-        if ($this->publisherId) {
+        if ($this->publisherId && $this->publisherEmail) {
             $data['publisherId'] = $this->publisherId;
+            $data['publisher'] = $this->publisherEmail;
         }
 
         return $data;

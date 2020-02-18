@@ -117,8 +117,10 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendAdvertiserIdGroupBy(): self
     {
-        $this->column('e.advertiser_id AS advertiser_id');
-        $this->groupBy('e.advertiser_id');
+        $this->join('users', 'users.uuid = e.advertiser_id');
+        $this->column('users.id AS advertiser_id');
+        $this->column('users.email AS advertiser_email');
+        $this->groupBy('users.uuid');
 
         return $this;
     }

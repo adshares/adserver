@@ -125,8 +125,10 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendPublisherIdGroupBy(): self
     {
-        $this->column('e.publisher_id AS publisher_id');
-        $this->groupBy('e.publisher_id');
+        $this->join('users', 'users.uuid = e.publisher_id');
+        $this->column('users.id AS publisher_id');
+        $this->column('users.email AS publisher_email');
+        $this->groupBy('users.uuid');
 
         return $this;
     }
