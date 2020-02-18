@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Targeting Reach: computing, exchange between adservers
+### Fixed
+- Conversion redirect response
 
 ## [1.5.5] - 2020-02-05
 ### Fixed
