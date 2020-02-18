@@ -1002,7 +1002,7 @@ SELECT u.id    AS user_id,
 FROM users u
          JOIN sites s ON u.id = s.user_id
          JOIN zones z ON z.site_id = s.id
-WHERE s.deleted_at IS NULL;
+WHERE s.deleted_at IS NULL
 SQL;
 
         if (null !== $publisherId) {

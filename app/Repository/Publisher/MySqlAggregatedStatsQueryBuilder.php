@@ -137,7 +137,7 @@ class MySqlAggregatedStatsQueryBuilder extends MySqlQueryBuilder
     {
         $this->where(
             sprintf(
-                'e.hour_timestamp BETWEEN \'%s\' AND \'%s\'',
+                "e.hour_timestamp BETWEEN '%s' AND '%s'",
                 $this->convertDateTimeToMySqlDate($dateStart),
                 $this->convertDateTimeToMySqlDate($dateEnd)
             )

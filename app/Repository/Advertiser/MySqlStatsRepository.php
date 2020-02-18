@@ -1326,7 +1326,7 @@ SELECT u.id    AS user_id,
 FROM users u
          JOIN campaigns c ON u.id = c.user_id
          JOIN banners b ON b.campaign_id = c.id
-WHERE c.deleted_at IS NULL;
+WHERE c.deleted_at IS NULL
 SQL;
 
         if (null !== $advertiserId) {
