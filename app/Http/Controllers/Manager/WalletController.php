@@ -194,12 +194,12 @@ class WalletController extends Controller
 
         if ($token['payload']['request']['currency'] === 'BTC') {
             if (false === $exchange->transfer(
-                    $token['payload']['request']['amount'],
-                    $token['payload']['request']['currency'],
-                    $token['payload']['request']['to'],
-                    SecureUrl::change(route('withdraw.exchange')),
-                    $token['payload']['ledgerEntry']
-                )) {
+                $token['payload']['request']['amount'],
+                $token['payload']['request']['currency'],
+                $token['payload']['request']['to'],
+                SecureUrl::change(route('withdraw.exchange')),
+                $token['payload']['ledgerEntry']
+            )) {
                 $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
                 $userLedgerEntry->save();
             }
@@ -313,7 +313,11 @@ class WalletController extends Controller
             $request->all(),
             [
                 self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', "min:$minAmount", "max:$maxAmount"],
-                self::FIELD_TO => [self::VALIDATOR_RULE_REQUIRED, 'regex:/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/', 'string'],
+                self::FIELD_TO => [
+                    self::VALIDATOR_RULE_REQUIRED,
+                    'regex:/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/',
+                    'string',
+                ],
             ]
         )->validate();
 
