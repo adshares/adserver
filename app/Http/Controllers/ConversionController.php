@@ -401,7 +401,16 @@ class ConversionController extends Controller
         if (null !== $cid) {
             $results = $this->eventCaseFinder->findByCaseId($campaignPublicId, strtolower($cid));
         } else {
-            $tid = Utils::hexUuidFromBase64UrlWithChecksum($request->cookies->get('tid'));
+            $tid = $request->cookies->get('tid') ? Utils::hexUuidFromBase64UrlWithChecksum(
+                $request->cookies->get('tid')
+            ) : null;
+
+            if (null === $tid) {
+                throw new BadRequestHttpException(
+                    sprintf('Missing case id for campaign: %s', $campaignPublicId)
+                );
+            }
+
             $results = $this->eventCaseFinder->findByTrackingId($campaignPublicId, $tid);
         }
 
@@ -463,11 +472,6 @@ class ConversionController extends Controller
         $cid = $request->input('cid');
         if (null !== $cid && !Utils::isUuidValid($cid)) {
             throw new BadRequestHttpException(sprintf('Invalid cid (%s)', $cid));
-        }
-
-        $tid = $request->cookies->get('tid');
-        if (null !== $tid && !Utils::isUuidValid($tid)) {
-            throw new BadRequestHttpException(sprintf('Invalid tid (%s)', $tid));
         }
     }
 
