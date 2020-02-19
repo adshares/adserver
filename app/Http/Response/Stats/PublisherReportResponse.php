@@ -96,13 +96,11 @@ class PublisherReportResponse extends ReportResponse
 
     protected function columns(): array
     {
-        $columns = self::PUBLISHER_COLUMNS;
-
         if ($this->isAdmin) {
-            array_unshift($columns, ['User' => []]);
+            return array_merge(['User' => []], self::PUBLISHER_COLUMNS);
         }
 
-        return $columns;
+        return self::PUBLISHER_COLUMNS;
     }
 
     protected function rows(): array
