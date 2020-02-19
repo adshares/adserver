@@ -37,7 +37,6 @@ use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -68,8 +67,10 @@ class ConversionController extends Controller
         $this->eventCaseFinder = $eventCaseFinder;
     }
 
-    public function conversion(string $uuid, Request $request): JsonResponse
+    public function conversion(string $uuid, Request $request): Response
     {
+        $this->validateRequest($uuid, $request);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -89,6 +90,8 @@ class ConversionController extends Controller
 
     public function conversionGif(string $uuid, Request $request): Response
     {
+        $this->validateRequest($uuid, $request);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -121,8 +124,10 @@ class ConversionController extends Controller
         return $response;
     }
 
-    public function conversionClick(string $campaignUuid, Request $request): JsonResponse
+    public function conversionClick(string $campaignUuid, Request $request): Response
     {
+        $this->validateRequest($campaignUuid, $request);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -142,6 +147,8 @@ class ConversionController extends Controller
 
     public function conversionClickGif(string $campaignUuid, Request $request): Response
     {
+        $this->validateRequest($campaignUuid, $request);
+
         if (null === $request->input('cid') && null === $request->cookies->get('tid')) {
             $baseUrlNext = $this->selectNextBaseUrl($request);
 
@@ -241,8 +248,6 @@ class ConversionController extends Controller
 
     private function processConversion(string $uuid, Request $request, Response $response = null): void
     {
-        $this->validateUuid($uuid);
-
         $conversionDefinition = $this->fetchConversionDefinitionOrFail($uuid);
 
         $value = $this->getConversionValue($request, $conversionDefinition);
@@ -293,8 +298,6 @@ class ConversionController extends Controller
 
     private function processConversionClick(string $campaignUuid, Request $request, Response $response = null): void
     {
-        $this->validateUuid($campaignUuid);
-
         $campaign = Campaign::fetchByUuid($campaignUuid);
 
         if (null === $campaign) {
@@ -460,12 +463,15 @@ class ConversionController extends Controller
         return $urls[$key + 1] ?? null;
     }
 
-    private function validateUuid(string $uuid): void
+    private function validateRequest(string $uuid, Request $request): void
     {
         if (!Utils::isUuidValid($uuid)) {
-            throw new BadRequestHttpException(
-                sprintf('Invalid id (%s)', $uuid)
-            );
+            throw new BadRequestHttpException(sprintf('Invalid id (%s)', $uuid));
+        }
+
+        $cid = $request->input('cid');
+        if (null !== $cid && !Utils::isUuidValid($cid)) {
+            throw new BadRequestHttpException(sprintf('Invalid cid (%s)', $cid));
         }
     }
 
