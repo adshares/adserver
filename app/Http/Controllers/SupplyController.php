@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseClick;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
+use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
@@ -37,11 +38,13 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
+use Carbon\Carbon;
 use DateTime;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -473,5 +476,61 @@ class SupplyController extends Controller
         $domain = DomainReader::domain($url);
 
         return SupplyBlacklistedDomain::isDomainBlacklisted($domain);
+    }
+
+    public function targetingReachList(): Response
+    {
+        if (null === ($networkHost = NetworkHost::fetchByAddress((string)config('app.adshares_address')))) {
+            return response(
+                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver id'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        if (null === ($meta = NetworkVectorsMeta::fetchByNetworkHostId($networkHost->id))) {
+            return response(
+                ['code' => Response::HTTP_INTERNAL_SERVER_ERROR, 'message' => 'Cannot get adserver meta'],
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
+
+        $rows = DB::table('network_vectors')->select(
+            [
+                'key',
+                'occurrences',
+                'cpm_25',
+                'cpm_50',
+                'cpm_75',
+                'negation_cpm_25',
+                'negation_cpm_50',
+                'negation_cpm_75',
+                'data',
+            ]
+        )->where('network_host_id', $networkHost->id)->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'key' => $row->key,
+                'occurrences' => $row->occurrences,
+                'cpm_25' => $row->cpm_25,
+                'cpm_50' => $row->cpm_50,
+                'cpm_75' => $row->cpm_75,
+                'negation_cpm_25' => $row->negation_cpm_25,
+                'negation_cpm_50' => $row->negation_cpm_50,
+                'negation_cpm_75' => $row->negation_cpm_75,
+                'data' => base64_encode($row->data),
+            ];
+        }
+
+        return response(
+            [
+                'meta' => [
+                    'total_events_count' => $meta->total_events_count,
+                    'updated_at' => $meta->updated_at->format(Carbon::ATOM),
+                    ],
+                'categories' => $result,
+            ]
+        );
     }
 }
