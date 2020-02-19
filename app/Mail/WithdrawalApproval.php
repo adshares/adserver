@@ -34,14 +34,17 @@ class WithdrawalApproval extends Mailable
 
     private $amount;
 
+    private $currency;
+
     private $target;
 
     private $fee;
 
-    public function __construct($tokenId, $amount, $fee, $target)
+    public function __construct(string $tokenId, int $amount, string $currency, int $fee, string $target)
     {
         $this->tokenId = $tokenId;
         $this->amount = $amount;
+        $this->currency = $currency;
         $this->target = $target;
         $this->fee = $fee;
     }
@@ -51,6 +54,7 @@ class WithdrawalApproval extends Mailable
         $variables = [
             'url' => config('app.adpanel_url')."/auth/withdrawal-confirmation/{$this->tokenId}",
             'amount' => AdsConverter::clicksToAds($this->amount),
+            'currency' => strtoupper($this->currency),
             'fee' => AdsConverter::clicksToAds($this->fee),
             'total' => AdsConverter::clicksToAds($this->amount + $this->fee),
             'target' => $this->target,

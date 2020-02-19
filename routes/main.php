@@ -51,3 +51,5 @@ Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUns
 
 Route::post('/now-payments/notify/{uuid}', [WalletController::class, 'nowPaymentsNotify'])->name('now-payments.notify');
 Route::post('/now-payments/exchange/{uuid}', [WalletController::class, 'nowPaymentsExchange'])->name('now-payments.exchange');
+
+Route::post('/withdraw/exchange', [WalletController::class, 'withdrawExchange'])->name('withdraw.exchange');
