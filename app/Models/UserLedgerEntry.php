@@ -41,6 +41,10 @@ use const PHP_INT_MAX;
  * @property int status
  * @property int type
  * @property int amount
+ * @property string address_from
+ * @property string address_to
+ * @property string currency
+ * @property int currency_amount
  */
 class UserLedgerEntry extends Model
 {
@@ -153,12 +157,16 @@ class UserLedgerEntry extends Model
 
     private static function queryForEntriesRelevantForBalance()
     {
-        return self::where(function (Builder $query) {
-            $query->where('status', self::STATUS_ACCEPTED)
-                ->orWhere(function (Builder $query) {
-                    self::queryModificationForAwaitingPayments($query);
-                });
-        })->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
+        return self::where(
+            function (Builder $query) {
+                $query->where('status', self::STATUS_ACCEPTED)
+                    ->orWhere(
+                        function (Builder $query) {
+                            self::queryModificationForAwaitingPayments($query);
+                        }
+                    );
+            }
+        )->whereIn('type', array_merge(self::CREDIT_TYPES, self::DEBIT_TYPES));
     }
 
     private static function queryForEntriesRelevantForWalletBalance()
@@ -251,13 +259,21 @@ class UserLedgerEntry extends Model
             ->where('user_id', $userId);
     }
 
-    public static function construct(int $userId, int $amount, int $status, int $type): self
-    {
+    public static function construct(
+        int $userId,
+        int $amount,
+        int $status,
+        int $type,
+        string $currency = 'ADS',
+        ?int $currencyAmount = null
+    ): self {
         $userLedgerEntry = new self();
         $userLedgerEntry->user_id = $userId;
         $userLedgerEntry->amount = $amount;
         $userLedgerEntry->status = $status;
         $userLedgerEntry->type = $type;
+        $userLedgerEntry->currency = $currency;
+        $userLedgerEntry->currency_amount = $currencyAmount;
 
         return $userLedgerEntry;
     }
@@ -331,10 +347,12 @@ class UserLedgerEntry extends Model
             );
         }
 
-        return array_filter([
-            self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
-            self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
-        ]);
+        return array_filter(
+            [
+                self::insertAdExpense($status, $userId, $bonusableAmount, self::TYPE_BONUS_EXPENSE),
+                self::insertAdExpense($status, $userId, $payableAmount, self::TYPE_AD_EXPENSE),
+            ]
+        );
     }
 
     public static function blockAdExpense(int $userId, int $totalAmount, int $maxBonus = PHP_INT_MAX): array
@@ -407,7 +425,7 @@ class UserLedgerEntry extends Model
         $this->attributes['status'] = $status;
     }
 
-    public function addressed(string $addressFrom, string $addressTo): self
+    public function addressed(?string $addressFrom, ?string $addressTo): self
     {
         $this->address_from = $addressFrom;
         $this->address_to = $addressTo;

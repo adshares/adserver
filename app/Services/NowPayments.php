@@ -223,7 +223,7 @@ final class NowPayments
     {
         $orderId = $params['orderId'] ?? '';
         $paymentId = $params['paymentId'] ?? '';
-        $amount = (float)($params['adsAmount'] ?? 0);
+        $amount = (float)($params['tragetAmount'] ?? 0);
 
         return $this->deposit($user, $amount, $orderId, $paymentId);
     }
@@ -376,7 +376,7 @@ final class NowPayments
             return false;
         }
 
-        return $this->adsExchange->request(
+        return $this->adsExchange->exchange(
             $amount,
             $this->currency,
             SecureUrl::change(route('now-payments.exchange', ['uuid' => $user->uuid])),

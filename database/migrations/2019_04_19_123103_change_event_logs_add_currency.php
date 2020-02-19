@@ -32,7 +32,7 @@ class ChangeEventLogsAddCurrency extends Migration
         Schema::table(
             'exchange_rates',
             function (Blueprint $table) {
-                $table->decimal('value', 9, 5)->change();
+                $table->decimal('value', 12, 8)->change();
             }
         );
 

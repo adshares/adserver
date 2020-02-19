@@ -30,7 +30,6 @@ use Illuminate\Database\QueryException;
 
 class FetchExchangeRateCommand extends BaseCommand
 {
-
     protected $signature = 'ops:exchange-rate:fetch';
 
     protected $description = 'Fetch exchange rate';
@@ -61,22 +60,29 @@ class FetchExchangeRateCommand extends BaseCommand
         }
 
         $this->info('Start command '.$this->signature);
+        $currencies = config('app.exchange_currencies');
+        if (empty($currencies)) {
+            $this->warn('Exchange currencies list is empty');
 
-        $exchangeRate = $this->repositoryRemote->fetchExchangeRate();
-        $this->info(sprintf('Exchange rate: %s', $exchangeRate->toString()));
-
-        try {
-            $this->repositoryStorable->storeExchangeRate($exchangeRate);
-        } catch (QueryException $queryException) {
-            if (SqlUtils::isDuplicatedEntry($queryException)) {
-                $this->warn('Exchange rate is already in database');
-
-                return;
-            }
-
-            throw $queryException;
+            return;
         }
 
-        $this->info('Exchange rate has been fetched and stored');
+        foreach ($currencies as $currency) {
+            $this->info(sprintf('Fetching %s rate', $currency));
+            $exchangeRate = $this->repositoryRemote->fetchExchangeRate(null, $currency);
+            $this->info(sprintf('Exchange rate: %s', $currency, $exchangeRate->toString()));
+
+            try {
+                $this->repositoryStorable->storeExchangeRate($exchangeRate);
+            } catch (QueryException $queryException) {
+                if (SqlUtils::isDuplicatedEntry($queryException)) {
+                    $this->warn('Exchange rate is already in database');
+                    continue;
+                }
+                throw $queryException;
+            }
+        }
+
+        $this->info('Exchange rates has been fetched and stored');
     }
 }
