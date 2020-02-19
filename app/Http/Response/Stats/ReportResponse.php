@@ -65,7 +65,7 @@ abstract class ReportResponse
         $filename = $this->createFilename();
         $headers = $this->prepareHeaders($filename);
 
-        $path = Storage::disk('local')->path('public/banners/');
+        $path = Storage::disk('local')->path('public/reports/');
         $uri = $path.Uuid::v4();
 
         $this->generateXLSXFile($uri);
