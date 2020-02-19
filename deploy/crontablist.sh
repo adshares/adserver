@@ -68,6 +68,14 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:serve-domains:update"
 echo ""
 
+echo -n "35 3 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:targeting-reach:compute"
+echo ""
+
+echo -n "45 */3 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:targeting-reach:fetch"
+echo ""
+
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
 {
     echo -n "*/30 * * * * "

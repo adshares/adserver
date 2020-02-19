@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2020-02-19
+### Added
+- Targeting Reach: computing, exchange between adservers
+- BTC withdraw
+### Fixed
+- Conversion redirect response
+- Reports optimization
+
 ## [1.5.5] - 2020-02-05
 ### Fixed
 - NowPayments no fee
@@ -379,7 +387,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.5.5...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.6.0...develop
+[1.6.0]: https://github.com/adshares/adserver/compare/v1.5.5...v1.6.0
 [1.5.5]: https://github.com/adshares/adserver/compare/v1.5.4...v1.5.5
 [1.5.4]: https://github.com/adshares/adserver/compare/v1.5.3...v1.5.4
 [1.5.3]: https://github.com/adshares/adserver/compare/v1.5.2...v1.5.3

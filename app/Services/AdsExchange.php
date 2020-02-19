@@ -45,41 +45,48 @@ final class AdsExchange
         $this->apiSecret = config('app.exchange_api_secret');
     }
 
-    public function request(
+    public function exchange(
         float $amount,
         string $currency,
         string $callbackUrl,
         ?string $paymentId = null,
-        ?float $adsAmount = null
+        ?float $targetAmount = null
     ): bool {
         $data = [
+            'operation' => 'exchange',
             'amount' => $amount,
             'currency' => strtoupper($currency),
-            'adsAmount' => $adsAmount,
+            'targetAmount' => $targetAmount,
+            'targetCurrency' => 'BTC',
             'paymentId' => $paymentId,
             'callbackUrl' => $callbackUrl,
             'time' => time(),
         ];
 
-        try {
-            $client = new Client();
-            $client->post(
-                $this->apiUrl,
-                [
-                    RequestOptions::HEADERS => [
-                        'x-api-key' => $this->apiKey,
-                        'x-api-hash' => $this->hash($data),
-                    ],
-                    RequestOptions::JSON => $data,
-                ]
-            );
-        } catch (RequestException $exception) {
-            Log::error(sprintf('[Exchange] Cannot request exchange: %s', $exception->getMessage()));
+        return $this->request($data);
+    }
 
-            return false;
-        }
+    public function transfer(
+        float $amount,
+        string $targetCurrency,
+        string $targetAddress,
+        string $callbackUrl,
+        ?string $paymentId = null,
+        ?float $targetAmount = null
+    ): bool {
+        $data = [
+            'operation' => 'transfer',
+            'amount' => $amount,
+            'currency' => 'ADS',
+            'targetAmount' => $targetAmount,
+            'targetCurrency' => strtoupper($targetCurrency),
+            'targetAddress' => $targetAddress,
+            'paymentId' => $paymentId,
+            'callbackUrl' => $callbackUrl,
+            'time' => time(),
+        ];
 
-        return true;
+        return $this->request($data);
     }
 
     public function hash(array $params): string
@@ -108,5 +115,28 @@ final class AdsExchange
             json_encode($filtered, JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES),
             $this->apiSecret
         );
+    }
+
+    private function request(array $data): bool
+    {
+        try {
+            $client = new Client();
+            $client->post(
+                $this->apiUrl,
+                [
+                    RequestOptions::HEADERS => [
+                        'x-api-key' => $this->apiKey,
+                        'x-api-hash' => $this->hash($data),
+                    ],
+                    RequestOptions::JSON => $data,
+                ]
+            );
+        } catch (RequestException $exception) {
+            Log::error(sprintf('[Exchange] Cannot request exchange: %s', $exception->getMessage()));
+
+            return false;
+        }
+
+        return true;
     }
 }
