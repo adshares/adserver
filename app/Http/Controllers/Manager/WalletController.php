@@ -192,10 +192,11 @@ class WalletController extends Controller
         $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
         $userLedgerEntry->save();
 
-        if ($token['payload']['request']['currency'] === 'BTC') {
+        $currency = $token['payload']['request']['currency'] ?? 'ADS';
+        if ($currency === 'BTC') {
             if (false === $exchange->transfer(
                 $token['payload']['request']['amount'],
-                $token['payload']['request']['currency'],
+                $currency,
                 $token['payload']['request']['to'],
                 SecureUrl::change(route('withdraw.exchange')),
                 $token['payload']['ledgerEntry']
