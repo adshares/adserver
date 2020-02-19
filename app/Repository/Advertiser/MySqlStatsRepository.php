@@ -646,30 +646,44 @@ SQL;
         $checkBannerId = $campaignId !== null;
 
         $combined = [];
+        $campaignIdToNameMap = [];
+        $bannerIdToNameMap = [];
+        $advertiserIdToEmailMap = [];
         foreach (array_merge($queryResult, $queryResultLive) as $row) {
-            $advertiserId = $checkAdvertiserId ? bin2hex($row->advertiser_id) : 0;
-            $campaignId = bin2hex($row->campaign_id);
-            $bannerId = $checkBannerId ? bin2hex($row->banner_id) : 0;
+            if ($checkAdvertiserId) {
+                $advertiserId = $row->advertiser_id;
+                $advertiserIdToEmailMap[$advertiserId] = $row->advertiser_name;
+            } else {
+                $advertiserId = 0;
+            }
+            $rowCampaignId = $row->campaign_id;
+            $campaignIdToNameMap[$rowCampaignId] = $row->campaign_name;
+            if ($checkBannerId) {
+                $bannerId = $row->banner_id;
+                $bannerIdToNameMap[$bannerId] = $row->banner_name;
+            } else {
+                $bannerId = 0;
+            }
 
             if (!array_key_exists($advertiserId, $combined)) {
                 $combined[$advertiserId] = [];
             }
-            if (!array_key_exists($campaignId, $combined[$advertiserId])) {
-                $combined[$advertiserId][$campaignId] = [];
+            if (!array_key_exists($rowCampaignId, $combined[$advertiserId])) {
+                $combined[$advertiserId][$rowCampaignId] = [];
             }
-            if (!array_key_exists($bannerId, $combined[$advertiserId][$campaignId])) {
-                $combined[$advertiserId][$campaignId][$bannerId] = [
+            if (!array_key_exists($bannerId, $combined[$advertiserId][$rowCampaignId])) {
+                $combined[$advertiserId][$rowCampaignId][$bannerId] = [
                     'clicks' => (int)$row->clicks,
                     'views' => (int)$row->views,
                     'cost' => (int)$row->cost,
                 ];
             } else {
-                $combined[$advertiserId][$campaignId][$bannerId]['clicks'] =
-                    $combined[$advertiserId][$campaignId][$bannerId]['clicks'] + (int)$row->clicks;
-                $combined[$advertiserId][$campaignId][$bannerId]['views'] =
-                    $combined[$advertiserId][$campaignId][$bannerId]['views'] + (int)$row->views;
-                $combined[$advertiserId][$campaignId][$bannerId]['cost'] =
-                    $combined[$advertiserId][$campaignId][$bannerId]['cost'] + (int)$row->cost;
+                $combined[$advertiserId][$rowCampaignId][$bannerId]['clicks'] =
+                    $combined[$advertiserId][$rowCampaignId][$bannerId]['clicks'] + (int)$row->clicks;
+                $combined[$advertiserId][$rowCampaignId][$bannerId]['views'] =
+                    $combined[$advertiserId][$rowCampaignId][$bannerId]['views'] + (int)$row->views;
+                $combined[$advertiserId][$rowCampaignId][$bannerId]['cost'] =
+                    $combined[$advertiserId][$rowCampaignId][$bannerId]['cost'] + (int)$row->cost;
             }
         }
 
@@ -693,8 +707,11 @@ SQL;
                     $result[] = new DataEntry(
                         $calculation,
                         $campaignId,
+                        $campaignIdToNameMap[$campaignId],
                         $checkBannerId ? $bannerId : null,
-                        $checkAdvertiserId ? $advertiserId : null
+                        $checkBannerId ? $bannerIdToNameMap[$bannerId] : null,
+                        $checkAdvertiserId ? $advertiserId : null,
+                        $checkAdvertiserId ? $advertiserIdToEmailMap[$advertiserId] : null
                     );
                 }
             }
@@ -711,6 +728,8 @@ SQL;
     ): Total {
         $dateThreshold = $this->getDateThresholdForLiveData($dateStart->getTimezone());
 
+        $rowCampaignId = null;
+        $rowCampaignName = null;
         $queryResult = [];
         $queryResultLive = [];
 
@@ -737,6 +756,10 @@ SQL;
             $clicks = (int)$row->clicks;
             $views = (int)$row->views;
             $cost = (int)$row->cost;
+            if (null !== $campaignId) {
+                $rowCampaignId = $row->campaign_id;
+                $rowCampaignName = $row->campaign_name;
+            }
         } else {
             $clicks = 0;
             $views = 0;
@@ -748,6 +771,10 @@ SQL;
             $clicks += (int)$row->clicks;
             $views += (int)$row->views;
             $cost += (int)$row->cost;
+            if (null !== $campaignId) {
+                $rowCampaignId = $row->campaign_id;
+                $rowCampaignName = $row->campaign_name;
+            }
         }
 
         $calculation = new Calculation(
@@ -759,7 +786,7 @@ SQL;
             $cost
         );
 
-        return new Total($calculation, $campaignId);
+        return new Total($calculation, $rowCampaignId, $rowCampaignName);
     }
 
     public function fetchStatsToReport(
@@ -811,9 +838,22 @@ SQL;
                 $row->domain ?: self::PLACEHOLDER_FOR_EMPTY_DOMAIN
             );
 
-            $bannerId = ($row->banner_id !== null) ? bin2hex($row->banner_id) : null;
-            $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($row->advertiser_id) : null;
-            $result[] = new DataEntry($calculation, bin2hex($row->campaign_id), $bannerId, $selectedAdvertiserId);
+            if (null === $advertiserId) {
+                $selectedAdvertiserId = $row->advertiser_id;
+                $selectedAdvertiserEmail = $row->advertiser_email;
+            } else {
+                $selectedAdvertiserId = null;
+                $selectedAdvertiserEmail = null;
+            }
+            $result[] = new DataEntry(
+                $calculation,
+                $row->campaign_id,
+                $row->campaign_name,
+                $row->banner_id,
+                $row->banner_name,
+                $selectedAdvertiserId,
+                $selectedAdvertiserEmail
+            );
         }
 
         $resultWithoutEvents =
@@ -1238,11 +1278,11 @@ SQL;
         $result = [];
 
         foreach ($allBanners as $banner) {
-            $binaryBannerId = $banner->banner_id;
+            $bannerId = $banner->banner_id;
             $isBannerPresent = false;
 
             foreach ($queryResult as $row) {
-                if ($row->banner_id === $binaryBannerId) {
+                if ($row->banner_id === $bannerId) {
                     $isBannerPresent = true;
                     break;
                 }
@@ -1251,13 +1291,22 @@ SQL;
             if (!$isBannerPresent) {
                 $calculation =
                     new ReportCalculation(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self::PLACEHOLDER_FOR_EMPTY_DOMAIN);
-                $selectedAdvertiserId = ($advertiserId === null) ? bin2hex($banner->user_id) : null;
+                if (null === $advertiserId) {
+                    $selectedAdvertiserId = $banner->user_id;
+                    $selectedAdvertiserEmail = $banner->user_email;
+                } else {
+                    $selectedAdvertiserId = null;
+                    $selectedAdvertiserEmail = null;
+                }
                 $result[] =
                     new DataEntry(
                         $calculation,
-                        bin2hex($banner->campaign_id),
-                        bin2hex($binaryBannerId),
-                        $selectedAdvertiserId
+                        $banner->campaign_id,
+                        $banner->campaign_name,
+                        $bannerId,
+                        $banner->banner_name,
+                        $selectedAdvertiserId,
+                        $selectedAdvertiserEmail
                     );
             }
         }
@@ -1268,10 +1317,15 @@ SQL;
     private function fetchAllBannersWithCampaignAndUser(?string $advertiserId, ?string $campaignId): array
     {
         $query = <<<SQL
-SELECT u.uuid AS user_id, c.uuid AS campaign_id, b.uuid AS banner_id
+SELECT u.id    AS user_id,
+       u.email AS user_email,
+       c.id    AS campaign_id,
+       c.name  AS campaign_name,
+       b.id    AS banner_id,
+       b.name  AS banner_name
 FROM users u
-       JOIN campaigns c ON u.id = c.user_id
-       JOIN banners b ON b.campaign_id = c.id
+         JOIN campaigns c ON u.id = c.user_id
+         JOIN banners b ON b.campaign_id = c.id
 WHERE c.deleted_at IS NULL
 SQL;
 

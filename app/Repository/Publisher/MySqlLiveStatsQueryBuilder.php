@@ -108,8 +108,10 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendPublisherIdGroupBy(): self
     {
-        $this->column('e.publisher_id AS publisher_id');
-        $this->groupBy('e.publisher_id');
+        $this->join('users', 'users.uuid = e.publisher_id');
+        $this->column('users.id AS publisher_id');
+        $this->column('users.email AS publisher_email');
+        $this->groupBy('users.uuid');
 
         return $this;
     }
@@ -200,16 +202,19 @@ class MySqlLiveStatsQueryBuilder extends MySqlQueryBuilder
 
     public function appendZoneIdGroupBy(): self
     {
-        $this->column('e.zone_id AS zone_id');
-        $this->groupBy('e.zone_id');
+        $this->join('zones z', 'z.uuid = e.zone_id');
+        $this->column('z.id AS zone_id');
+        $this->column('z.name AS zone_name');
+        $this->groupBy('z.id');
 
         return $this;
     }
 
     public function appendSiteIdGroupBy(): self
     {
-        $this->column('e.site_id AS site_id');
-        $this->groupBy('e.site_id');
+        $this->column('s.id AS site_id');
+        $this->column('s.name AS site_name');
+        $this->groupBy('s.id');
         $this->having('clicks>0');
         $this->having('views>0');
         $this->having('revenue>0');

@@ -166,7 +166,7 @@ then
         yarn install
         yarn run dev
 
-        mkdir -p storage/app/public/banners
+        mkdir -p storage/app/public/{banners,reports}
         chmod a+rwX -R storage
     else
         if [ ${OPT_CLEAN} -eq 1 ]

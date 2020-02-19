@@ -27,38 +27,56 @@ class DataEntry
     /** @var Calculation */
     private $calculation;
 
-    /** @var string */
+    /** @var int */
     private $campaignId;
 
-    /** @var string|null */
+    /** @var string */
+    private $campaignName;
+
+    /** @var int|null */
     private $bannerId;
 
     /** @var string|null */
+    private $bannerName;
+
+    /** @var int|null */
     private $advertiserId;
+
+    /** @var string|null */
+    private $advertiserEmail;
 
     public function __construct(
         Calculation $calculation,
-        string $campaignId,
-        ?string $bannerId = null,
-        ?string $advertiserId = null
+        int $campaignId,
+        string $campaignName,
+        ?int $bannerId = null,
+        ?string $bannerName = null,
+        ?int $advertiserId = null,
+        ?string $advertiserEmail = null
     ) {
         $this->calculation = $calculation;
         $this->campaignId = $campaignId;
+        $this->campaignName = $campaignName;
         $this->bannerId = $bannerId;
+        $this->bannerName = $bannerName;
         $this->advertiserId = $advertiserId;
+        $this->advertiserEmail = $advertiserEmail;
     }
 
     public function toArray(): array
     {
         $data = $this->calculation->toArray();
         $data['campaignId'] = $this->campaignId;
+        $data['campaignName'] = $this->campaignName;
 
-        if ($this->bannerId) {
+        if ($this->bannerId && $this->bannerName) {
             $data['bannerId'] = $this->bannerId;
+            $data['bannerName'] = $this->bannerName;
         }
 
-        if ($this->advertiserId) {
+        if ($this->advertiserId && $this->advertiserEmail) {
             $data['advertiserId'] = $this->advertiserId;
+            $data['advertiser'] = $this->advertiserEmail;
         }
 
         return $data;

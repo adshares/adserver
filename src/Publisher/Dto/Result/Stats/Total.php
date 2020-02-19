@@ -24,21 +24,29 @@ namespace Adshares\Publisher\Dto\Result\Stats;
 
 class Total
 {
+    /** @var Calculation */
     private $calculation;
+
+    /** @var int|null */
     private $siteId;
 
-    public function __construct(Calculation $calculation, ?string $siteId = null)
+    /** @var string|null */
+    private $siteName;
+
+    public function __construct(Calculation $calculation, ?int $siteId = null, ?string $siteName = null)
     {
         $this->calculation = $calculation;
         $this->siteId = $siteId;
+        $this->siteName = $siteName;
     }
 
     public function toArray(): array
     {
         $data = $this->calculation->toArray();
 
-        if ($this->siteId !== null) {
+        if (null !== $this->siteId && null !== $this->siteName) {
             $data['siteId'] = $this->siteId;
+            $data['siteName'] = $this->siteName;
         }
 
         return $data;
