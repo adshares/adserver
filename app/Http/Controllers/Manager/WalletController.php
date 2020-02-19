@@ -34,6 +34,7 @@ use Adshares\Adserver\Services\NowPayments;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Domain\ValueObject\AccountId;
+use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
@@ -168,7 +169,7 @@ class WalletController extends Controller
         }
     }
 
-    public function confirmWithdrawal(Request $request): JsonResponse
+    public function confirmWithdrawal(Request $request, AdsExchange $exchange): JsonResponse
     {
         Validator::make($request->all(), ['token' => 'required'])->validate();
 
@@ -191,12 +192,25 @@ class WalletController extends Controller
         $userLedgerEntry->status = UserLedgerEntry::STATUS_PENDING;
         $userLedgerEntry->save();
 
-        AdsSendOne::dispatch(
-            $userLedgerEntry,
-            $token['payload']['request']['to'],
-            $token['payload']['request']['amount'],
-            $token['payload']['request']['memo'] ?? ''
-        );
+        if ($token['payload']['request']['currency'] === 'BTC') {
+            if (false === $exchange->transfer(
+                    $token['payload']['request']['amount'],
+                    $token['payload']['request']['currency'],
+                    $token['payload']['request']['to'],
+                    SecureUrl::change(route('withdraw.exchange')),
+                    $token['payload']['ledgerEntry']
+                )) {
+                $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
+                $userLedgerEntry->save();
+            }
+        } else {
+            AdsSendOne::dispatch(
+                $userLedgerEntry,
+                $token['payload']['request']['to'],
+                $token['payload']['request']['amount'],
+                $token['payload']['request']['memo'] ?? ''
+            );
+        }
 
         DB::commit();
 
@@ -218,6 +232,15 @@ class WalletController extends Controller
     }
 
     public function withdraw(Request $request): JsonResponse
+    {
+        if ($request->get('currency') === 'BTC') {
+            return $this->withdrawBtc($request);
+        }
+
+        return $this->withdrawAds($request);
+    }
+
+    private function withdrawAds(Request $request): JsonResponse
     {
         $addressFrom = $this->getAdServerAdsAddress();
 
@@ -270,6 +293,7 @@ class WalletController extends Controller
             new WithdrawalApproval(
                 Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
                 $amount,
+                'ADS',
                 $fee,
                 $addressTo->toString()
             )
@@ -278,6 +302,93 @@ class WalletController extends Controller
         DB::commit();
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    private function withdrawBtc(Request $request): JsonResponse
+    {
+        $minAmount = 1e11 * config('app.btc_withdraw_min_amount');
+        $maxAmount = 1e11 * config('app.btc_withdraw_max_amount');
+
+        Validator::make(
+            $request->all(),
+            [
+                self::FIELD_AMOUNT => [self::VALIDATOR_RULE_REQUIRED, 'integer', "min:$minAmount", "max:$maxAmount"],
+                self::FIELD_TO => [self::VALIDATOR_RULE_REQUIRED, 'regex:/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/', 'string'],
+            ]
+        )->validate();
+
+        $amount = (int)$request->input(self::FIELD_AMOUNT);
+        $addressTo = $request->input(self::FIELD_TO);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $amount) {
+            return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $ledgerEntry = UserLedgerEntry::construct(
+            $user->id,
+            -$amount,
+            UserLedgerEntry::STATUS_AWAITING_APPROVAL,
+            UserLedgerEntry::TYPE_WITHDRAWAL,
+            'BTC'
+        )->addressed(null, $addressTo);
+
+        DB::beginTransaction();
+
+        if (!$ledgerEntry->save()) {
+            return self::json([], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $payload = [
+            'request' => $request->all(),
+            'ledgerEntry' => $ledgerEntry->id,
+        ];
+
+        Mail::to($user)->queue(
+            new WithdrawalApproval(
+                Token::generate(Token::EMAIL_APPROVE_WITHDRAWAL, $user, $payload)->uuid,
+                $amount,
+                'BTC',
+                0,
+                $addressTo
+            )
+        );
+
+        DB::commit();
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function withdrawExchange(
+        AdsExchange $exchange,
+        Request $request
+    ): Response {
+        $headerHash = $request->headers->get('x-api-hash', '');
+        $params = $request->json()->all();
+        $hash = $exchange->hash($params);
+
+        if (!hash_equals($hash, $headerHash)) {
+            Log::warning(sprintf('[Exchange] Header hash (%s) mismatched params hash (%s)', $headerHash, $hash));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $paymentId = $params['paymentId'] ?? -1;
+        $userLedgerEntry = UserLedgerEntry::find($paymentId);
+        if ($userLedgerEntry === null) {
+            Log::warning(sprintf('[Exchange] Cannot find user ledger entry (%s)', $paymentId));
+
+            return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $status = $params['status'] ?? null;
+        $userLedgerEntry->status =
+            $status === 'success' ? UserLedgerEntry::STATUS_ACCEPTED : UserLedgerEntry::STATUS_SYS_ERROR;
+        $userLedgerEntry->save();
+
+        return response()->noContent(Response::HTTP_NO_CONTENT);
     }
 
     public function depositInfo(NowPayments $nowPayments): JsonResponse
@@ -339,7 +450,7 @@ class WalletController extends Controller
         NowPayments $nowPayments,
         Request $request
     ): Response {
-        $headerHash = $request->headers->get('x-api-hash');
+        $headerHash = $request->headers->get('x-api-hash', '');
         $params = $request->json()->all();
         $hash = $exchange->hash($params);
 

@@ -41,6 +41,10 @@ use const PHP_INT_MAX;
  * @property int status
  * @property int type
  * @property int amount
+ * @property string address_from
+ * @property string address_to
+ * @property string currency
+ * @property int currency_amount
  */
 class UserLedgerEntry extends Model
 {
@@ -251,13 +255,15 @@ class UserLedgerEntry extends Model
             ->where('user_id', $userId);
     }
 
-    public static function construct(int $userId, int $amount, int $status, int $type): self
+    public static function construct(int $userId, int $amount, int $status, int $type, string $currency = 'ADS', ?int $currencyAmount = null): self
     {
         $userLedgerEntry = new self();
         $userLedgerEntry->user_id = $userId;
         $userLedgerEntry->amount = $amount;
         $userLedgerEntry->status = $status;
         $userLedgerEntry->type = $type;
+        $userLedgerEntry->currency = $currency;
+        $userLedgerEntry->currency_amount = $currencyAmount;
 
         return $userLedgerEntry;
     }
@@ -407,7 +413,7 @@ class UserLedgerEntry extends Model
         $this->attributes['status'] = $status;
     }
 
-    public function addressed(string $addressFrom, string $addressTo): self
+    public function addressed(?string $addressFrom, ?string $addressTo): self
     {
         $this->address_from = $addressFrom;
         $this->address_to = $addressTo;
