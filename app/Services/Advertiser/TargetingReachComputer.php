@@ -30,10 +30,10 @@ use Illuminate\Support\Facades\DB;
 
 class TargetingReachComputer
 {
-    public function compute(array $requires, array $excludes): ?TargetingReach
+    public function compute(array $requires, array $excludes): TargetingReach
     {
         $networkVectorsMetas = NetworkVectorsMeta::fetch();
-        $targetingReach = null;
+        $targetingReach = new TargetingReach();
 
         /** @var NetworkVectorsMeta $networkVectorsMeta */
         foreach ($networkVectorsMetas as $networkVectorsMeta) {
@@ -43,9 +43,6 @@ class TargetingReachComputer
                 continue;
             }
 
-            if (null === $targetingReach) {
-                $targetingReach = new TargetingReach();
-            }
             $targetingReach->add($record, $networkVectorsMeta->total_events_count);
         }
 
