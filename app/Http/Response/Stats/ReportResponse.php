@@ -60,17 +60,12 @@ abstract class ReportResponse
         return new StreamedResponse($file, StreamedResponse::HTTP_OK, $headers);
     }
 
-    public function responseFile(): BinaryFileResponse
+    public function saveAsFile(string $uuid): void
     {
-        $filename = $this->createFilename();
-        $headers = $this->prepareHeaders($filename);
-
         $path = Storage::disk('local')->path('public/reports/');
-        $uri = $path.Uuid::v4();
+        $uri = $path.$uuid;
 
         $this->generateXLSXFile($uri);
-
-        return response()->download($uri, $filename, $headers)->deleteFileAfterSend(true);
     }
 
     private function createFilename(): string
