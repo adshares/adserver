@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Repository\Advertiser;
 
 use Adshares\Adserver\Exceptions\Advertiser\MissingEventsException;
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Dto\Result\ChartResult;
@@ -785,6 +786,12 @@ SQL;
             self::calculateCpm($cost, $views),
             $cost
         );
+
+        if (null !== $campaignId && (null === $rowCampaignId || null === $rowCampaignName)) {
+            $campaign = Campaign::fetchByUuid($campaignId);
+            $rowCampaignId = $campaign->id ?? null;
+            $rowCampaignName = $campaign->name ?? null;
+        }
 
         return new Total($calculation, $rowCampaignId, $rowCampaignName);
     }

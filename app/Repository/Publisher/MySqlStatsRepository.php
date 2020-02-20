@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Repository\Publisher;
 
 use Adshares\Adserver\Facades\DB;
+use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Publisher\Dto\Result\ChartResult;
 use Adshares\Publisher\Dto\Result\Stats\Calculation;
@@ -540,6 +541,12 @@ class MySqlStatsRepository implements StatsRepository
             self::calculateRpm($revenue, $views),
             $revenue
         );
+
+        if (null !== $siteId && (null === $rowSiteId || null === $rowSiteName)) {
+            $site = Site::fetchByPublicId($siteId);
+            $rowSiteId = $site->id ?? null;
+            $rowSiteName = $site->name ?? null;
+        }
 
         return new Total($calculation, $rowSiteId, $rowSiteName);
     }
