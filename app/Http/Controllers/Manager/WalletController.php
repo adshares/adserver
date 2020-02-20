@@ -195,12 +195,12 @@ class WalletController extends Controller
         $currency = $token['payload']['request']['currency'] ?? 'ADS';
         if ($currency === 'BTC') {
             if (false === $exchange->transfer(
-                $token['payload']['request']['amount'],
-                $currency,
-                $token['payload']['request']['to'],
-                SecureUrl::change(route('withdraw.exchange')),
-                $token['payload']['ledgerEntry']
-            )) {
+                    $token['payload']['request']['amount'],
+                    $currency,
+                    $token['payload']['request']['to'],
+                    SecureUrl::change(route('withdraw.exchange')),
+                    $token['payload']['ledgerEntry']
+                )) {
                 $userLedgerEntry->status = UserLedgerEntry::STATUS_NET_ERROR;
                 $userLedgerEntry->save();
             }
@@ -472,9 +472,16 @@ class WalletController extends Controller
             return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $result = $nowPayments->exchange($user, $params);
+        $status = $params['status'] ?? null;
+        if ($status === 'success') {
+            if (false === ($result = $nowPayments->exchange($user, $params))) {
+                return response()->noContent(Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+        } else {
+            Log::warning(sprintf('[Exchange] Cannot exchange deposit (%s): %s', $uuid, $status));
+        }
 
-        return response()->noContent($result ? Response::HTTP_NO_CONTENT : Response::HTTP_UNPROCESSABLE_ENTITY);
+        return response()->noContent(Response::HTTP_NO_CONTENT);
     }
 
     public function history(Request $request): JsonResponse
