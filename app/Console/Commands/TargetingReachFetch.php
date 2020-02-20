@@ -22,6 +22,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Common\Exception\RuntimeException;
@@ -134,7 +135,7 @@ class TargetingReachFetch extends BaseCommand
                     [
                         'network_host_id' => $networkHostId,
                         'key' => $data['key'],
-                        'data' => base64_decode($data['data']),
+                        'data' => Utils::urlSafeBase64Decode($data['data']),
                         'occurrences' => $data['occurrences'],
                         'cpm_25' => $data['cpm_25'],
                         'cpm_50' => $data['cpm_50'],

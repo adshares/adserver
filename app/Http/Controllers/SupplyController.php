@@ -519,7 +519,7 @@ class SupplyController extends Controller
                 'negation_cpm_25' => $row->negation_cpm_25,
                 'negation_cpm_50' => $row->negation_cpm_50,
                 'negation_cpm_75' => $row->negation_cpm_75,
-                'data' => base64_encode($row->data),
+                'data' => Utils::urlSafeBase64Encode($row->data),
             ];
         }
 
