@@ -57,7 +57,7 @@ final class AdsExchange
             'amount' => $amount,
             'currency' => strtoupper($currency),
             'targetAmount' => $targetAmount,
-            'targetCurrency' => 'BTC',
+            'targetCurrency' => 'ADS',
             'paymentId' => $paymentId,
             'callbackUrl' => $callbackUrl,
             'time' => time(),
