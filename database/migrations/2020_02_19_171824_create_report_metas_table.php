@@ -47,7 +47,7 @@ class CreateReportMetasTable extends Migration
                 )->default(ReportMeta::STATE_PREPARING);
                 $table->string('name', ReportMeta::NAME_LENGTH_MAX);
 
-                $table->index('created_at');
+                $table->index('updated_at');
             }
         );
 

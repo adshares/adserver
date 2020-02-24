@@ -68,6 +68,10 @@ echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:serve-domains:update"
 echo ""
 
+echo -n "45 2 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:reports:clear"
+echo ""
+
 echo -n "35 3 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:targeting-reach:compute"
 echo ""

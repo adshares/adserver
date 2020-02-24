@@ -22,13 +22,11 @@ declare(strict_types=1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
-use Adshares\Common\Domain\ValueObject\Uuid;
-use Illuminate\Support\Facades\Storage;
+use Adshares\Adserver\Services\Common\ReportsStorage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 abstract class ReportResponse
@@ -62,8 +60,7 @@ abstract class ReportResponse
 
     public function saveAsFile(string $uuid): void
     {
-        $path = Storage::disk('local')->path('public/reports/');
-        $uri = $path.$uuid;
+        $uri = ReportsStorage::getPath().$uuid;
 
         $this->generateXLSXFile($uri);
     }

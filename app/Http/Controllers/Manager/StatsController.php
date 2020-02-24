@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ReportMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Common\ReportsStorage;
 use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\Input\ConversionDataInput;
 use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
@@ -47,7 +48,6 @@ use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -452,15 +452,15 @@ class StatsController extends Controller
             throw new BadRequestHttpException('Report not ready');
         }
 
-        $path = Storage::disk('local')->path('public/reports/');
-        $uri = $path.$reportMeta->uuid;
-        $exists = Storage::disk('local')->exists('public/reports/'.$reportMeta->uuid);
+        $reportUuid = $reportMeta->uuid;
 
-        if (!$exists) {
+        if (!ReportsStorage::exists($reportUuid)) {
             $reportMeta->delete();
 
             throw new BadRequestHttpException('Report deleted');
         }
+
+        $uri = ReportsStorage::getPath().$reportUuid;
 
         $filename = sprintf(
             'report_%s.xlsx',

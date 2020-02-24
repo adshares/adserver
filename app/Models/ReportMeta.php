@@ -21,9 +21,11 @@
 namespace Adshares\Adserver\Models;
 
 use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Events\ReportMetaDeleting;
 use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Common\Exception\InvalidArgumentException;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -60,6 +62,7 @@ class ReportMeta extends Model
 
     protected $dispatchesEvents = [
         'creating' => GenerateUUID::class,
+        'deleting' => ReportMetaDeleting::class,
     ];
 
     public const NAME_LENGTH_MAX = 255;
@@ -79,17 +82,14 @@ class ReportMeta extends Model
         self::TYPE_PUBLISHER,
     ];
 
-    public function delete(): ?bool
-    {
-        $this->state = self::STATE_DELETED;
-        $this->save();
-
-        return parent::delete();
-    }
-
     public static function fetchByUserId(int $userId): Collection
     {
         return self::where('user_id', $userId)->get();
+    }
+
+    public static function fetchOlderThan(DateTime $dateTime): Collection
+    {
+        return self::where('updated_at', '<', $dateTime)->get();
     }
 
     public static function fetchByUserIdAndUuid(int $userId, string $uuid): ?self
