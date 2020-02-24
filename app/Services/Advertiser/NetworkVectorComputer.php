@@ -95,6 +95,7 @@ class NetworkVectorComputer
             $campaignId = $event->campaign_id;
             $userData = $event->user_data;
             $eventValue = (int)$event->paid_amount_currency;
+            $domain = $event->site_domain;
             $size = $event->size;
 
             $this->totalCpmPercentileComputer->add($campaignId, $eventValue);
@@ -103,15 +104,16 @@ class NetworkVectorComputer
             $bitIndex = $index % 8;
 
             $data = json_decode($userData, true);
+            unset($data['site']);
+
+            if ($domain) {
+                $data['site']['domain'] = $domain;
+            }
+
             $mapped = AbstractFilterMapper::generateNestedStructure($data);
 
             foreach ($mapped as $category => $values) {
-                $isDomain = 'site:domain' === $category;
-
                 foreach ($values as $value) {
-                    if ($isDomain && false !== strpos($value, '/')) {
-                        continue;
-                    }
                     $this->addToCategories($category.':'.$value, $charIndex, $bitIndex, $campaignId, $eventValue);
                 }
             }
@@ -134,20 +136,23 @@ class NetworkVectorComputer
 SELECT b.network_campaign_id    AS campaign_id,
        i.user_data              AS user_data,
        sub.paid_amount_currency AS paid_amount_currency,
+       s.domain                 AS site_domain,
        b.size                   AS size
 FROM (
          SELECT c.id                        AS id,
                 c.network_impression_id     AS network_impression_id,
                 c.banner_id                 AS banner_id,
+                c.site_id                   AS site_id,
                 SUM(p.paid_amount_currency) AS paid_amount_currency
          FROM network_cases c
                   JOIN network_case_payments p ON c.id = p.network_case_id
          WHERE c.created_at BETWEEN ? AND ?
          GROUP BY c.id
      ) sub
-         JOIN network_impressions i on sub.network_impression_id = i.id
-         JOIN network_banners b on sub.banner_id = b.uuid
-WHERE ((@index := @index + 1) * @SAMPLES_COUNT) % @EVENTS_COUNT < @SAMPLES_COUNT
+         JOIN network_impressions i ON sub.network_impression_id = i.id
+         JOIN network_banners b ON sub.banner_id = b.uuid
+         JOIN sites s ON sub.site_id = s.uuid
+WHERE ((@index := @index + 1) * @SAMPLES_COUNT) % @EVENTS_COUNT < @SAMPLES_COUNT;
 SQL
             ,
             [$dateFrom, $dateTo]
@@ -175,6 +180,7 @@ SQL
             $this->categories[$key][self::KEY_DATA] = str_repeat($this->binaryStringBase, $this->binaryStringLength);
             $this->categories[$key][self::KEY_CPM_PERCENTILE_COMPUTER] = new PercentileComputer();
         }
+
         $this->categories[$key][self::KEY_DATA][$charIndex] =
             $this->categories[$key][self::KEY_DATA][$charIndex] | $this->masks[$bitIndex];
         $this->categories[$key][self::KEY_CPM_PERCENTILE_COMPUTER]->add($campaignId, $eventValue);
@@ -248,7 +254,6 @@ SET @EVENTS_COUNT := (
              SELECT c.id                        AS id,
                     c.network_impression_id     AS network_impression_id,
                     c.banner_id                 AS banner_id,
-                    c.domain                    AS domain,
                     SUM(p.paid_amount_currency) AS paid_amount_currency
              FROM network_cases c
                       JOIN network_case_payments p ON c.id = p.network_case_id
