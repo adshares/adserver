@@ -34,7 +34,7 @@ class NetworkVectorComputer
 {
     public const TOTAL = 'total';
 
-    private const SAMPLES_COUNT = 1e5;
+    private const SAMPLES_COUNT = 1e4;
 
     private const KEY_COUNT = 'count';
 
