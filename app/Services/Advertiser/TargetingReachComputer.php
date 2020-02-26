@@ -22,9 +22,11 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Services\Advertiser;
 
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Services\Advertiser\Dto\TargetingReach;
 use Adshares\Adserver\Services\Advertiser\Dto\TargetingReachVector;
+use Adshares\Adserver\Utilities\BinaryStringUtils;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +54,13 @@ class TargetingReachComputer
     private function computeForServer(int $adServerId, array $requires, array $excludes): ?TargetingReachVector
     {
         $keys = [];
+        $siteRequired = [];
+        $siteExcluded = [];
+
+        if (isset($requires['site:domain'])) {
+            $siteRequired = self::escapeArrayForPregMatch($requires['site:domain']);
+            unset($requires['site:domain']);
+        }
 
         if (!$requires) {
             $keys[] = NetworkVectorComputer::TOTAL;
@@ -62,6 +71,12 @@ class TargetingReachComputer
                 $keys[] = $category.':'.$value;
             }
         }
+
+        if (isset($excludes['site:domain'])) {
+            $siteExcluded = self::escapeArrayForPregMatch($excludes['site:domain']);
+            unset($excludes['site:domain']);
+        }
+
         foreach ($excludes as $category => $values) {
             foreach ($values as $value) {
                 $keys[] = $category.':'.$value;
@@ -79,12 +94,38 @@ class TargetingReachComputer
                 'negation_cpm_75',
                 'data',
             ]
-        )->where('network_host_id', $adServerId)->whereIn('key', $keys)->get()->keyBy('key');
+        )->where('network_host_id', $adServerId)->where(
+            function ($query) use ($keys) {
+                $query->whereIn('key', $keys)->orWhere('key', 'like', 'site:domain:%');
+            }
+        )->get()->keyBy('key');
+
+        if (count($siteRequired) > 0) {
+            $requiredRegExp = self::getRegularExpressionForSiteDomains($siteRequired);
+            foreach ($rows as $key => $row) {
+                if (1 === preg_match($requiredRegExp, $key)) {
+                    $requires['site:domain'][] = substr($key, 12);
+                }
+            }
+
+            if (!isset($requires['site:domain'])) {
+                return null;
+            }
+        }
 
         $vector = $this->computeRequiredVector($requires, $rows);
 
         if (null === $vector) {
             return null;
+        }
+
+        if (count($siteExcluded) > 0) {
+            $excludedRegExp = self::getRegularExpressionForSiteDomains($siteExcluded);
+            foreach ($rows as $key => $row) {
+                if (1 === preg_match($excludedRegExp, $key)) {
+                    $excludes['site:domain'][] = substr($key, 12);
+                }
+            }
         }
 
         $exclusionsVector = $this->computeExclusionsVector($excludes, $rows);
@@ -93,7 +134,7 @@ class TargetingReachComputer
             $vector = $vector->and($exclusionsVector);
         }
 
-        return $vector;
+        return $this->useBidStrategyRank($vector, $rows);
     }
 
     private function computeRequiredVector(array $requires, Collection $rows): ?TargetingReachVector
@@ -121,12 +162,7 @@ class TargetingReachComputer
                     continue;
                 }
 
-                $tmpVector = new TargetingReachVector(
-                    $row->data,
-                    $row->cpm_25,
-                    $row->cpm_50,
-                    $row->cpm_75
-                );
+                $tmpVector = new TargetingReachVector($row->data, $row->cpm_25, $row->cpm_50, $row->cpm_75);
 
                 if (null === $orVector) {
                     $orVector = $tmpVector;
@@ -184,5 +220,79 @@ class TargetingReachComputer
         }
 
         return $vector;
+    }
+
+    private static function escapeArrayForPregMatch(array $array): array
+    {
+        return array_map(
+            function ($item) {
+                return preg_quote($item);
+            },
+            $array
+        );
+    }
+
+    private static function getRegularExpressionForSiteDomains(array $siteDomains): string
+    {
+        return '/^site:domain:(.+\.)?('.join('|', $siteDomains).')$/i';
+    }
+
+    private static function useBidStrategyRank(TargetingReachVector $vector, Collection $rows): TargetingReachVector
+    {
+        $vectorData = $vector->getData();
+        $vectorCpm25 = $vector->getCpm25();
+        $vectorCpm50 = $vector->getCpm50();
+        $vectorCpm75 = $vector->getCpm75();
+
+        $countProcessed = 0;
+        $cpm25 = 0;
+        $cpm50 = 0;
+        $cpm75 = 0;
+
+        $totalCount = BinaryStringUtils::count($vectorData);
+        $bidStrategies = BidStrategy::fetchAllWithReducedRank();
+        /** @var BidStrategy $bidStrategy */
+        foreach ($bidStrategies as $bidStrategy) {
+            if ($countProcessed >= $totalCount) {
+                break;
+            }
+
+            $row = $rows->get($bidStrategy->category);
+
+            if (null === $row) {
+                continue;
+            }
+
+            $count = BinaryStringUtils::count(BinaryStringUtils::and($vectorData, $row->data));
+
+            if (0 === $count) {
+                continue;
+            }
+
+            $rank = $bidStrategy->rank;
+            if ($rank < 0.001) {
+                $vectorData = BinaryStringUtils::and($vectorData, BinaryStringUtils::not($row->data));
+                $totalCount -= $count;
+
+                continue;
+            }
+
+            $countProcessedTmp = $countProcessed + $count;
+
+            $cpm25 = ($countProcessed * $cpm25 + $count * ($vectorCpm25 / $rank)) / $countProcessedTmp;
+            $cpm50 = ($countProcessed * $cpm50 + $count * ($vectorCpm50 / $rank)) / $countProcessedTmp;
+            $cpm75 = ($countProcessed * $cpm75 + $count * ($vectorCpm75 / $rank)) / $countProcessedTmp;
+
+            $countProcessed = $countProcessedTmp;
+        }
+
+        if ($totalCount > $countProcessed) {
+            $count = $totalCount - $countProcessed;
+            $cpm25 = ($countProcessed * $cpm25 + $count * $vectorCpm25) / $totalCount;
+            $cpm50 = ($countProcessed * $cpm50 + $count * $vectorCpm50) / $totalCount;
+            $cpm75 = ($countProcessed * $cpm75 + $count * $vectorCpm75) / $totalCount;
+        }
+
+        return new TargetingReachVector($vectorData, (int)$cpm25, (int)$cpm50, (int)$cpm75);
     }
 }

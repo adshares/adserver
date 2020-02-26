@@ -47,6 +47,8 @@ interface AdUser
     public const PAGE_INFO_POOR_CONTENT = 'poor-content';
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
 
+    public function fetchDomainRank(string $domain): float;
+
     public function fetchTargetingOptions(): Taxonomy;
 
     public function getUserContext(ImpressionContext $context): UserContext;

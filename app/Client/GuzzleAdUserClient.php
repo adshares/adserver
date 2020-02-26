@@ -29,9 +29,11 @@ use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use InvalidArgumentException;
 use function config;
 use function GuzzleHttp\json_decode;
 use function sprintf;
@@ -46,6 +48,30 @@ final class GuzzleAdUserClient implements AdUser
     public function __construct(Client $client)
     {
         $this->client = $client;
+    }
+
+    public function fetchDomainRank(string $domain): float
+    {
+        $path = self::API_PATH.'/domain/'.urlencode($domain);
+        try {
+            $response = $this->client->get($path);
+            $body = json_decode((string)$response->getBody());
+        } catch (InvalidArgumentException|RequestException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    '{"url": "%s", "path": "%s",  "message": "%s"}',
+                    (string)$this->client->getConfig('base_uri'),
+                    $path,
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        if (!isset($body->rank) || !is_numeric($body->rank)) {
+            throw new UnexpectedClientResponseException('Unexpected response format from the AdUser');
+        }
+
+        return $body->rank;
     }
 
     public function fetchTargetingOptions(): Taxonomy

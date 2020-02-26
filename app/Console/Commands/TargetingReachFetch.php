@@ -30,7 +30,9 @@ use Adshares\Supply\Application\Service\Exception\EmptyInventoryException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Adshares\Supply\Application\Service\SupplyClient;
 use DateTimeImmutable;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Console\Exception\LogicException;
 use Throwable;
 use function array_chunk;
 use function sprintf;
@@ -81,6 +83,12 @@ class TargetingReachFetch extends BaseCommand
                     $this->fetchAndStoreRemote($networkHost);
                 }
             }
+        }
+
+        try {
+            Artisan::call(UpdateBidStrategy::COMMAND_SIGNATURE, [], $this->getOutput());
+        } catch (LogicException $logicException) {
+            $this->warn(sprintf('Command %s is locked', UpdateBidStrategy::COMMAND_SIGNATURE));
         }
 
         $this->info('Finish fetching targeting reach');

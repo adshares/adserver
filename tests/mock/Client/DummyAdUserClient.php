@@ -34,6 +34,11 @@ use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
+    public function fetchDomainRank(string $domain): float
+    {
+        return 1;
+    }
+
     public function fetchTargetingOptions(): Taxonomy
     {
         $path = base_path('tests/app/targeting_schema.json');
