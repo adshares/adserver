@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Reports stored on the server
+### Changed
+- Counting set bits in binary string
 ### Fixed
 - Publishers' domains in targeting reach
 
