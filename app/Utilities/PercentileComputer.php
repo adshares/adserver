@@ -148,18 +148,18 @@ class PercentileComputer
     private function mergeDuplicatedAverages(array $arr): array
     {
         $lastAverage = -1;
-        $indexToDelete = [];
+        $indexesToDelete = [];
 
         foreach ($arr as $index => $entry) {
             if ($entry[self::KEY_AVERAGE] === $lastAverage) {
-                $indexToDelete[] = $index;
+                $indexesToDelete[] = $index;
             }
 
             $lastAverage = $entry[self::KEY_AVERAGE];
         }
 
-        if ($indexToDelete) {
-            foreach ($indexToDelete as $index) {
+        if ($indexesToDelete) {
+            foreach (array_reverse($indexesToDelete) as $index) {
                 $arr[$index - 1][self::KEY_COUNT] += $arr[$index][self::KEY_COUNT];
                 unset($arr[$index]);
             }
