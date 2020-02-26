@@ -25,9 +25,13 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\Stats\AdvertiserReportResponse;
 use Adshares\Adserver\Http\Response\Stats\PublisherReportResponse;
+use Adshares\Adserver\Http\Response\Stats\ReportsListResponse;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\ReportMeta;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Common\ReportsStorage;
 use Adshares\Advertiser\Dto\Input\ChartInput as AdvertiserChartInput;
 use Adshares\Advertiser\Dto\Input\ConversionDataInput;
 use Adshares\Advertiser\Dto\Input\InvalidInputException as AdvertiserInvalidInputException;
@@ -120,7 +124,7 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $siteId = $this->getSiteIdFromRequest($request);
+        $siteId = $this->getSiteFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -261,7 +265,7 @@ class StatsController extends Controller
     ): StreamedResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $siteId = $this->getSiteIdFromRequest($request);
+        $siteId = $this->getSiteFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -328,14 +332,12 @@ class StatsController extends Controller
         return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseStream();
     }
 
-    public function advertiserReportFile(
-        Request $request,
-        string $dateStart,
-        string $dateEnd
-    ): BinaryFileResponse {
+    public function advertiserReportFileCreate(Request $request, string $dateStart, string $dateEnd): JsonResponse
+    {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $campaignUuid = $this->getCampaignFromRequest($request)->uuid ?? null;
+        $campaign = $this->getCampaignFromRequest($request);
+        $campaignUuid = $campaign->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -357,12 +359,129 @@ class StatsController extends Controller
             throw new BadRequestHttpException($exception->getMessage(), $exception);
         }
 
-        $result = $this->advertiserStatsDataProvider->fetchReportData($input);
-
-        $data = $result->toArray();
         $name = $this->formatReportName($from, $to);
+        $reportMeta = ReportMeta::register(
+            $user->id,
+            $name.'_'.($campaign->name ?? 'all_campaigns'),
+            ReportMeta::TYPE_ADVERTISER
+        );
 
-        return (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))->responseFile();
+        $response = new JsonResponse(['uuid' => $reportMeta->uuid]);
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+        $response->send();
+
+        $result = $this->advertiserStatsDataProvider->fetchReportData($input);
+        $data = $result->toArray();
+        (new AdvertiserReportResponse($data, $name, (string)config('app.name'), $isAdmin))
+            ->saveAsFile($reportMeta->uuid);
+
+        $reportMeta->ready();
+
+        return $response;
+    }
+
+    public function publisherReportFileCreate(Request $request, string $dateStart, string $dateEnd): JsonResponse
+    {
+        $from = $this->createDateTime($dateStart);
+        $to = $this->createDateTime($dateEnd);
+        $site = $this->getSiteFromRequest($request);
+        $siteId = $site->uuid ?? null;
+
+        /** @var User $user */
+        $user = Auth::user();
+        $isAdmin = $user->isAdmin();
+
+        $this->validateChartInputParameters($from, $to);
+        if (!$isAdmin) {
+            $this->validateUserAsPublisher($user);
+        }
+
+        try {
+            $input = new PublisherStatsInput(
+                $isAdmin ? null : $user->uuid,
+                $from,
+                $to,
+                $siteId
+            );
+        } catch (PublisherInvalidInputException $exception) {
+            throw new BadRequestHttpException($exception->getMessage(), $exception);
+        }
+
+        $name = $this->formatReportName($from, $to);
+        $reportMeta = ReportMeta::register(
+            $user->id,
+            $name.'_'.($site->name ?? 'all_sites'),
+            ReportMeta::TYPE_PUBLISHER
+        );
+
+        $response = new JsonResponse(['uuid' => $reportMeta->uuid]);
+        if ($request->headers->has('Origin')) {
+            $response->headers->set('Access-Control-Allow-Origin', $request->headers->get('Origin'));
+        }
+        $response->send();
+
+        $result = $this->publisherStatsDataProvider->fetchReportData($input);
+        $data = $result->toArray();
+
+        (new PublisherReportResponse($data, $name, (string)config('app.name'), $isAdmin))
+            ->saveAsFile($reportMeta->uuid);
+
+        $reportMeta->ready();
+
+        return $response;
+    }
+
+    public function reportDownload(string $uuid): BinaryFileResponse
+    {
+        if (!Utils::isUuidValid($uuid)) {
+            throw new BadRequestHttpException(sprintf('Invalid uuid format (%s)', $uuid));
+        }
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        $reportMeta = ReportMeta::fetchByUserIdAndUuid($user->id, $uuid);
+
+        if (null === $reportMeta) {
+            throw new BadRequestHttpException('Report deleted');
+        }
+
+        if (ReportMeta::STATE_READY !== $reportMeta->state) {
+            throw new BadRequestHttpException('Report not ready');
+        }
+
+        $reportUuid = $reportMeta->uuid;
+
+        if (!ReportsStorage::exists($reportUuid)) {
+            $reportMeta->delete();
+
+            throw new BadRequestHttpException('Report deleted');
+        }
+
+        $uri = ReportsStorage::getPath().$reportUuid;
+
+        $filename = sprintf(
+            'report_%s.xlsx',
+            strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '_', $reportMeta->name))
+        );
+
+        $headers = [
+            'Access-Control-Expose-Headers' => 'Content-Disposition',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename='.$filename,
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        return response()->download($uri, $filename, $headers);
+    }
+
+    public function reportList(): JsonResponse
+    {
+        return self::json(new ReportsListResponse(ReportMeta::fetchByUserId(Auth::user()->id)));
     }
 
     public function publisherStatsWithTotal(
@@ -372,7 +491,7 @@ class StatsController extends Controller
     ): JsonResponse {
         $from = $this->createDateTime($dateStart);
         $to = $this->createDateTime($dateEnd);
-        $siteId = $this->getSiteIdFromRequest($request);
+        $siteId = $this->getSiteFromRequest($request)->uuid ?? null;
 
         /** @var User $user */
         $user = Auth::user();
@@ -401,7 +520,7 @@ class StatsController extends Controller
         );
     }
 
-    private function getSiteIdFromRequest(Request $request): ?string
+    private function getSiteFromRequest(Request $request): ?Site
     {
         $siteId = $request->input('site_id');
 
@@ -415,7 +534,7 @@ class StatsController extends Controller
             throw new NotFoundHttpException('Site does not exists.');
         }
 
-        return $site->uuid;
+        return $site;
     }
 
     private function validateUserAsPublisher(User $user): void
