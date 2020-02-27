@@ -28,8 +28,19 @@ final class BinaryStringUtils
     {
         $count = 0;
         $length = strlen($string);
-        for ($index = 0; $index < $length; $index++) {
+        $index = 0;
+
+        while ($length >= 4) {
+            $count += self::countSetBitsIn32BitsInteger(unpack('N', substr($string, $index, 4))[1]);
+
+            $index += 4;
+            $length -= 4;
+        }
+        while ($length > 0) {
             $count += self::countSetBitsIn32BitsInteger(ord(substr($string, $index, 1)));
+
+            $index++;
+            $length--;
         }
 
         return $count;
@@ -52,9 +63,9 @@ final class BinaryStringUtils
 
     private static function countSetBitsIn32BitsInteger(int $value): int
     {
-        $value = $value - (($value >> 1) & 0x55555555);
-        $value = ($value & 0x33333333) + (($value >> 2) & 0x33333333);
+        $count = $value - (($value >> 1) & 0x55555555);
+        $count = (($count >> 2) & 0x33333333) + ($count & 0x33333333);
 
-        return (((($value + ($value >> 4)) & 0xF0F0F0F) * 0x1010101) >> 24);
+        return ((((($count >> 4) + $count) & 0x0F0F0F0F) * 0x01010101) >> 24) & 0xFF;
     }
 }
