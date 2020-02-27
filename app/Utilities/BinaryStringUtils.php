@@ -24,23 +24,19 @@ namespace Adshares\Adserver\Utilities;
 
 final class BinaryStringUtils
 {
+    private const INTEGER_BYTES_COUNT = 4;
+
     public static function count(string $string): int
     {
         $count = 0;
-        $length = strlen($string);
-        $index = 0;
 
-        while ($length >= 4) {
-            $count += self::countSetBitsIn32BitsInteger(unpack('N', substr($string, $index, 4))[1]);
-
-            $index += 4;
-            $length -= 4;
+        $leftBytesCount = strlen($string) % self::INTEGER_BYTES_COUNT;
+        if ($leftBytesCount > 0) {
+            $string .= str_repeat(hex2bin('00'), self::INTEGER_BYTES_COUNT - $leftBytesCount);
         }
-        while ($length > 0) {
-            $count += self::countSetBitsIn32BitsInteger(ord(substr($string, $index, 1)));
 
-            $index++;
-            $length--;
+        foreach (unpack('N*', $string) as $integer32) {
+            $count += self::countSetBitsIn32BitsInteger($integer32);
         }
 
         return $count;
