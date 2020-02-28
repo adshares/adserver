@@ -157,34 +157,11 @@ final class NowPayments
 
     public function hash(array $params): string
     {
-        $allowed = [
-            'actually_paid',
-            'order_description',
-            'order_id',
-            'pay_address',
-            'pay_amount',
-            'pay_currency',
-            'payment_id',
-            'payment_status',
-            'price_amount',
-            'price_currency',
-            'created_at',
-            'updated_at',
-        ];
-
-        $filtered = array_filter(
-            $params,
-            function ($key) use ($allowed) {
-                return in_array($key, $allowed);
-            },
-            ARRAY_FILTER_USE_KEY
-        );
-
-        ksort($filtered);
+        ksort($params);
 
         return hash_hmac(
             'sha512',
-            json_encode($filtered, JSON_NUMERIC_CHECK | JSON_UNESCAPED_SLASHES),
+            json_encode($params),
             $this->ipnSecret
         );
     }
