@@ -161,7 +161,7 @@ final class NowPayments
 
         return hash_hmac(
             'sha512',
-            json_encode($params,JSON_UNESCAPED_SLASHES),
+            json_encode($params, JSON_UNESCAPED_SLASHES),
             $this->ipnSecret
         );
     }
