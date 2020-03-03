@@ -32,7 +32,9 @@ use Illuminate\Http\Request;
 
 class UsersController extends Controller
 {
-    const MIN_DAY_VIEWS = 500;
+    const MIN_DAY_VIEWS = 1000;
+
+    const MAX_CHANGE = 9.999;
 
     public function browse(Request $request): LengthAwarePaginator
     {
@@ -76,20 +78,21 @@ class UsersController extends Controller
     {
         if (strtolower((string)$request->get('g')) === 'user') {
             $emailColumn = 'u.email';
-            $domainColumn = 'GROUP_CONCAT(DISTINCT s.domain)';
+            $domainColumn = 'GROUP_CONCAT(DISTINCT s.domain SEPARATOR ", ")';
             $groupBy = 'u.email';
         } else {
-            $emailColumn = 'GROUP_CONCAT(DISTINCT u.email)';
+            $emailColumn = 'GROUP_CONCAT(DISTINCT u.email SEPARATOR ", ")';
             $domainColumn = 's.domain';
             $groupBy = 's.domain';
         }
 
-        if (strtolower((string)$request->get('i')) === 'week') {
-            $interval = 7;
-        } else {
+        if (strtolower((string)$request->get('i')) === 'day') {
             $interval = 1;
+        } else {
+            $interval = 7;
         }
 
+        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
         $query = '%'.$request->get('q', '').'%';
 
         $publishers =
@@ -134,7 +137,7 @@ class UsersController extends Controller
                 ) lp ON lp.site_id = s.uuid
                 WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?)
                 GROUP BY %s
-                HAVING current_views >= %d OR last_views >= %d
+                HAVING current_views >= ? OR last_views >= ?
                 ',
                     $emailColumn,
                     $domainColumn,
@@ -142,13 +145,13 @@ class UsersController extends Controller
                     $interval * 2,
                     $interval,
                     Site::STATUS_ACTIVE,
-                    $groupBy,
-                    self::MIN_DAY_VIEWS * $interval,
-                    self::MIN_DAY_VIEWS * $interval
+                    $groupBy
                 ),
                 [
                     $query,
                     $query,
+                    $viewsLimit * $interval,
+                    $viewsLimit * $interval,
                 ]
             );
 
@@ -166,22 +169,32 @@ class UsersController extends Controller
                     'domain' => $row->domain,
                     'views' => (int)$row->current_views,
                     'viewsDiff' => $row->current_views - $row->last_views,
-                    'viewsChange' => ($row->current_views - $row->last_views) / max(1, $row->last_views),
+                    'viewsChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_views - $row->last_views) / ($row->last_views == 0 ? 1 : $row->last_views)
+                    ),
                     'ivr' => $currentIvr,
                     'ivrDiff' => $currentIvr - $lastIvr,
-                    'ivrChange' => ($currentIvr - $lastIvr) / max(1, $lastIvr),
+                    'ivrChange' => min(self::MAX_CHANGE, ($currentIvr - $lastIvr) / ($lastIvr == 0 ? 1 : $lastIvr)),
                     'clicks' => (int)$row->current_clicks,
                     'clicksDiff' => $row->current_clicks - $row->last_clicks,
-                    'clicksChange' => ($row->current_clicks - $row->last_clicks) / max(1, $row->last_clicks),
+                    'clicksChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_clicks - $row->last_clicks) / ($row->last_clicks == 0 ? 1 : $row->last_clicks)
+                    ),
                     'ctr' => $currentCtr,
                     'ctrDiff' => $currentCtr - $lastCtr,
-                    'ctrChange' => ($currentCtr - $lastCtr) / max(1, $lastCtr),
+                    'ctrChange' => min(self::MAX_CHANGE, ($currentCtr - $lastCtr) / ($lastCtr == 0 ? 1 : $lastCtr)),
                     'revenue' => (int)$row->current_revenue,
                     'revenueDiff' => $row->current_revenue - $row->last_revenue,
-                    'revenueChange' => ($row->current_revenue - $row->last_revenue) / max(1, $row->last_revenue),
+                    'revenueChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_revenue - $row->last_revenue) / ($row->last_revenue == 0 ? 1
+                            : $row->last_revenue)
+                    ),
                     'rpm' => $currentRpm,
                     'rpmDiff' => $currentRpm - $lastRpm,
-                    'rpmChange' => ($currentRpm - $lastRpm) / max(1, $lastRpm),
+                    'rpmChange' => min(self::MAX_CHANGE, ($currentRpm - $lastRpm) / ($lastRpm == 0 ? 1 : $lastRpm)),
                 ];
             },
             $publishers
