@@ -120,7 +120,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR AND NOW() - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lc ON lc.site_id = s.uuid
                 LEFT JOIN (
@@ -132,7 +133,8 @@ class UsersController extends Controller
                         SUM(l.views_unique) AS views_unique,
                         SUM(l.clicks) AS clicks
                     FROM network_case_logs_hourly_stats l
-                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR AND NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
                     GROUP BY l.site_id
                 ) lp ON lp.site_id = s.uuid
                 WHERE s.deleted_at IS NULL AND s.status = %d AND (s.domain LIKE ? OR u.email LIKE ?)
