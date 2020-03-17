@@ -38,8 +38,9 @@ class UploadedImage implements UploadedFile
 
     public function __construct(string $name, string $previewUrl, array $size)
     {
-        if (!Size::isValid($this->getFormattedSize($size))) {
-            throw new BadRequestHttpException('Unsupported image size.');
+        $formattedSize = $this->getFormattedSize($size);
+        if (!Size::isValid($formattedSize)) {
+            throw new BadRequestHttpException('Unsupported image size: ' . $formattedSize);
         }
 
         $this->name = $name;
