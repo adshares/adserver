@@ -198,7 +198,11 @@ class Utils
                 $tid,
                 new DateTime('+ 1 month'),
                 '/',
-                $request->getHost()
+                $request->getHost(),
+                config('app.banner_force_https'),
+                true,
+                false,
+                'none'
             )
         );
 
