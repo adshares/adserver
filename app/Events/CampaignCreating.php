@@ -34,7 +34,7 @@ class CampaignCreating
 
     public function __construct(MyCampaign $campaign)
     {
-        $campaign->uuid = UuidStringGenerator::v4();
+        $campaign->uuid2 = UuidStringGenerator::v4();
         $campaign->secret = Utils::base64Encoded16BytesSecret();
     }
 }
