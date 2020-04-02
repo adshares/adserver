@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Events;
 
 use Adshares\Adserver\Http\Utils;
-use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\MyCampaign;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -32,7 +32,7 @@ class CampaignCreating
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(Campaign $campaign)
+    public function __construct(MyCampaign $campaign)
     {
         $campaign->uuid = UuidStringGenerator::v4();
         $campaign->secret = Utils::base64Encoded16BytesSecret();

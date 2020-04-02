@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Jobs;
 
-use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\MyCampaign;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Common\Application\Service\AdClassify;
 use Illuminate\Bus\Queueable;
@@ -61,7 +61,7 @@ class ClassifyCampaign implements ShouldQueue
             $this->banners
         );
 
-        $campaign = Campaign::campaignById($this->campaignId);
+        $campaign = MyCampaign::campaignById($this->campaignId);
 
         $campaign->classification_tags = implode(',', $tags);
         $campaign->classification_status = 2;

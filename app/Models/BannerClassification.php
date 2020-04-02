@@ -32,7 +32,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
 /**
- * @property Banner banner
+ * @property MyBanner banner
  * @property int banner_id
  * @property string classifier
  * @property array|null keywords
@@ -188,6 +188,6 @@ class BannerClassification extends Model
 
     public function banner(): BelongsTo
     {
-        return $this->belongsTo(Banner::class, 'banner_id');
+        return $this->belongsTo(MyBanner::class, 'banner_id');
     }
 }

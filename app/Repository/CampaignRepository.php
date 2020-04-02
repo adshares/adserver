@@ -21,19 +21,19 @@
 namespace Adshares\Adserver\Repository;
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\MyCampaign;
 use DateTime;
 
 class CampaignRepository
 {
     public function find()
     {
-        return (new Campaign())->with('conversions')->get();
+        return (new MyCampaign())->with('conversions')->get();
     }
 
     public function fetchActiveCampaigns()
     {
-        $query = Campaign::where('status', Campaign::STATUS_ACTIVE);
+        $query = MyCampaign::where('status', MyCampaign::STATUS_ACTIVE);
 
         $query->where(
             function ($q) {
@@ -45,24 +45,24 @@ class CampaignRepository
         return $query->get();
     }
 
-    public function fetchCampaignById(int $campaignId): Campaign
+    public function fetchCampaignById(int $campaignId): MyCampaign
     {
-        return (new Campaign())->findOrFail($campaignId);
+        return (new MyCampaign())->findOrFail($campaignId);
     }
 
-    public function fetchCampaignByIdWithConversions(int $campaignId): Campaign
+    public function fetchCampaignByIdWithConversions(int $campaignId): MyCampaign
     {
-        return (new Campaign())->with('conversions')->findOrFail($campaignId);
+        return (new MyCampaign())->with('conversions')->findOrFail($campaignId);
     }
 
     /**
-     * @param Campaign $campaign
+     * @param MyCampaign $campaign
      * @param array $banners
      * @param array $conversions
      *
      * @throws \Exception
      */
-    public function save(Campaign $campaign, array $banners = [], array $conversions = []): void
+    public function save(MyCampaign $campaign, array $banners = [], array $conversions = []): void
     {
         DB::beginTransaction();
 
@@ -88,7 +88,7 @@ class CampaignRepository
         DB::commit();
     }
 
-    public function delete(Campaign $campaign): void
+    public function delete(MyCampaign $campaign): void
     {
         DB::beginTransaction();
 
@@ -107,7 +107,7 @@ class CampaignRepository
     }
 
     public function update(
-        Campaign $campaign,
+        MyCampaign $campaign,
         array $bannersToInsert = [],
         array $bannersToUpdate = [],
         array $bannersToDelete = [],

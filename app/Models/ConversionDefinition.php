@@ -123,7 +123,7 @@ class ConversionDefinition extends Model
 
     public function campaign(): BelongsTo
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(MyCampaign::class);
     }
 
     public function conversionGroups(): HasMany

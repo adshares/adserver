@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Events;
 
-use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\MyBanner;
 use Adshares\Lib\DOMDocumentSafe;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +29,7 @@ class CreativeSha1
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(Banner $model)
+    public function __construct(MyBanner $model)
     {
         if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
             $model->creative_sha1 = $sha1;

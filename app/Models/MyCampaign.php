@@ -58,7 +58,7 @@ use function hex2bin;
  * @property int max_cpm
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
- * @property Banner[]|Collection banners
+ * @property MyBanner[]|Collection banners
  * @property Collection conversions
  * @property User user
  * @property string secret
@@ -68,7 +68,7 @@ use function hex2bin;
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder
  */
-class Campaign extends Model
+class MyCampaign extends Model
 {
     use Ownership;
     use SoftDeletes;
@@ -166,11 +166,11 @@ class Campaign extends Model
     {
         return self::fetchByUserId($userId)->filter(
             function (self $campaign) {
-                return $campaign->status === Campaign::STATUS_ACTIVE;
+                return $campaign->status === MyCampaign::STATUS_ACTIVE;
             }
         )->each(
-            function (Campaign $campaign) {
-                $campaign->status = Campaign::STATUS_SUSPENDED;
+            function (MyCampaign $campaign) {
+                $campaign->status = MyCampaign::STATUS_SUSPENDED;
                 $campaign->save();
             }
         )->count();
@@ -215,7 +215,7 @@ class Campaign extends Model
             ->map(
                 static function (Collection $collection) {
                     return $collection->reduce(
-                        static function (AdvertiserBudget $carry, Campaign $campaign) {
+                        static function (AdvertiserBudget $carry, MyCampaign $campaign) {
                             return $carry->add($campaign->advertiserBudget());
                         },
                         new AdvertiserBudget()
@@ -236,7 +236,7 @@ class Campaign extends Model
         $statics = $query->get();
 
         return $statics->reduce(
-            static function (AdvertiserBudget $carry, Campaign $campaign) {
+            static function (AdvertiserBudget $carry, MyCampaign $campaign) {
                 return $carry->add($campaign->advertiserBudget());
             },
             new AdvertiserBudget()
@@ -245,7 +245,7 @@ class Campaign extends Model
 
     public function banners(): HasMany
     {
-        return $this->hasMany(Banner::class);
+        return $this->hasMany(MyBanner::class);
     }
 
     public function conversions(): HasMany
@@ -261,7 +261,7 @@ class Campaign extends Model
     public function getAdsAttribute()
     {
         foreach ($this->banners as &$banner) {
-            $banner['type'] = Banner::typeAsInteger($banner->creative_type);
+            $banner['type'] = MyBanner::typeAsInteger($banner->creative_type);
         }
 
         return $this->banners;
@@ -425,13 +425,13 @@ class Campaign extends Model
     {
         return in_array(
             $this->conversion_click,
-            [Campaign::CONVERSION_CLICK_BASIC, Campaign::CONVERSION_CLICK_ADVANCED],
+            [MyCampaign::CONVERSION_CLICK_BASIC, MyCampaign::CONVERSION_CLICK_ADVANCED],
             true
         );
     }
 
     public function hasClickConversionAdvanced(): bool
     {
-        return Campaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
+        return MyCampaign::CONVERSION_CLICK_ADVANCED === $this->conversion_click;
     }
 }

@@ -44,12 +44,12 @@ use function in_array;
  * @property string creative_size
  * @property string name
  * @property int status
- * @property Campaign campaign
+ * @property MyCampaign campaign
  * @property BannerClassification[] classifications
  * @property int type
  * @mixin Builder
  */
-class Banner extends Model
+class MyBanner extends Model
 {
     public const TYPE_IMAGE = 0;
 
@@ -165,7 +165,7 @@ class Banner extends Model
 
     public function campaign(): BelongsTo
     {
-        return $this->belongsTo(Campaign::class);
+        return $this->belongsTo(MyCampaign::class);
     }
 
     protected function toArrayExtras($array)
@@ -194,7 +194,7 @@ class Banner extends Model
 
     public static function fetchBannersNotClassifiedByClassifier(string $classifier, ?array $bannerIds): Collection
     {
-        $builder = Banner::whereDoesntHave(
+        $builder = MyBanner::whereDoesntHave(
             'classifications',
             function ($query) use ($classifier) {
                 $query->where('classifier', $classifier);

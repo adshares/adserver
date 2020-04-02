@@ -36,7 +36,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * @property Collection|Campaign[] campaigns
+ * @property Collection|MyCampaign[] campaigns
  * @property int id
  * @property string email
  * @property DateTime|null email_confirmed_at
@@ -241,7 +241,7 @@ class User extends Authenticatable
 
     public function campaigns(): HasMany
     {
-        return $this->hasMany(Campaign::class);
+        return $this->hasMany(MyCampaign::class);
     }
 
     public function getBalance(): int
