@@ -214,6 +214,11 @@ class User extends Authenticatable
         return self::find($id);
     }
 
+    public static function fetchByIds(array $ids): Collection
+    {
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
+
     public static function fetchByUuid(string $uuid): ?self
     {
         return self::where('uuid', hex2bin($uuid))->first();

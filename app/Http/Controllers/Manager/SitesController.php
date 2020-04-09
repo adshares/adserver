@@ -26,9 +26,9 @@ use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Publisher\SiteCodeConfig;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Common\Application\Dto\DomainRank;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -275,6 +275,11 @@ class SitesController extends Controller
         $response = new SizesResponse($siteId);
 
         return self::json($response);
+    }
+
+    public function readSiteRank(Site $site): JsonResponse
+    {
+        return self::json(new DomainRank($site->rank, $site->info));
     }
 
     /**

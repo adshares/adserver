@@ -23,15 +23,18 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Http\Utils;
+use Adshares\Common\Application\Dto\DomainRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use InvalidArgumentException;
 use function config;
 use function GuzzleHttp\json_decode;
 use function sprintf;
@@ -46,6 +49,37 @@ final class GuzzleAdUserClient implements AdUser
     public function __construct(Client $client)
     {
         $this->client = $client;
+    }
+
+    public function fetchDomainRank(string $domain): DomainRank
+    {
+        $path = self::API_PATH.'/domain/'.urlencode($domain);
+        try {
+            $response = $this->client->get($path);
+            $body = json_decode((string)$response->getBody());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Cannot decode response from the AdUser for (%s)', $domain)
+            );
+        } catch (RequestException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    '{"url": "%s", "path": "%s",  "message": "%s"}',
+                    (string)$this->client->getConfig('base_uri'),
+                    $path,
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        if (!isset($body->rank) || !isset($body->info) || !is_numeric($body->rank)
+            || !in_array($body->info, self::PAGE_INFOS)) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Unexpected response format from the AdUser for (%s)', $domain)
+            );
+        }
+
+        return new DomainRank($body->rank, $body->info);
     }
 
     public function fetchTargetingOptions(): Taxonomy

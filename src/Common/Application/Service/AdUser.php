@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
+use Adshares\Common\Application\Dto\DomainRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -46,6 +47,19 @@ interface AdUser
     public const PAGE_INFO_POOR_TRAFFIC = 'poor-traffic';
     public const PAGE_INFO_POOR_CONTENT = 'poor-content';
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
+
+    public const PAGE_INFOS = [
+        AdUser::PAGE_INFO_OK,
+        AdUser::PAGE_INFO_UNKNOWN,
+        AdUser::PAGE_INFO_HIGH_IVR,
+        AdUser::PAGE_INFO_HIGH_CTR,
+        AdUser::PAGE_INFO_LOW_CTR,
+        AdUser::PAGE_INFO_POOR_TRAFFIC,
+        AdUser::PAGE_INFO_POOR_CONTENT,
+        AdUser::PAGE_INFO_SUSPICIOUS_DOMAIN,
+    ];
+
+    public function fetchDomainRank(string $domain): DomainRank;
 
     public function fetchTargetingOptions(): Taxonomy;
 

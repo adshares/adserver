@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Mock\Client;
 
+use Adshares\Common\Application\Dto\DomainRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
@@ -34,6 +35,11 @@ use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
+    public function fetchDomainRank(string $domain): DomainRank
+    {
+        return new DomainRank(1, AdUser::PAGE_INFO_OK);
+    }
+
     public function fetchTargetingOptions(): Taxonomy
     {
         $path = base_path('tests/app/targeting_schema.json');

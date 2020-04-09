@@ -60,6 +60,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.sites.add');
     Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])
         ->name('app.sites.sizes');
+    Route::get('sites/{site}/rank', [SitesController::class, 'readSiteRank']);
     Route::get('sites/{site}', [SitesController::class, 'read'])
         ->name('app.sites.read');
     Route::patch('sites/{site}', [SitesController::class, 'update'])
