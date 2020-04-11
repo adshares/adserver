@@ -32,10 +32,13 @@ class AddRankToSites extends Migration
         Schema::table(
             'sites',
             function (Blueprint $table) {
+                $table->string('url', 1024);
                 $table->decimal('rank', 3, 2)->default(0);
                 $table->enum('info', AdUser::PAGE_INFOS)->index()->default(AdUser::PAGE_INFO_UNKNOWN);
             }
         );
+
+        DB::update('UPDATE `sites` SET `url` = CONCAT("https://", `domain`) WHERE `domain` <> ""');
 
         Config::upsertDateTime(Config::SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD, new DateTime());
     }
@@ -47,7 +50,7 @@ class AddRankToSites extends Migration
         Schema::table(
             'sites',
             function (Blueprint $table) {
-                $table->dropColumn(['rank', 'info']);
+                $table->dropColumn(['url', 'rank', 'info']);
             }
         );
     }

@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Http\Utils;
-use Adshares\Common\Application\Dto\DomainRank;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
@@ -34,6 +34,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use function config;
 use function GuzzleHttp\json_decode;
@@ -51,15 +52,16 @@ final class GuzzleAdUserClient implements AdUser
         $this->client = $client;
     }
 
-    public function fetchDomainRank(string $domain): DomainRank
+    public function fetchPageRank(string $url): PageRank
     {
-        $path = self::API_PATH.'/domain/'.urlencode($domain);
+        $path = self::API_PATH.'/page-rank/'.urlencode($url);
+
         try {
             $response = $this->client->get($path);
             $body = json_decode((string)$response->getBody());
         } catch (InvalidArgumentException $invalidArgumentException) {
             throw new UnexpectedClientResponseException(
-                sprintf('Cannot decode response from the AdUser for (%s)', $domain)
+                sprintf('Cannot decode response from the AdUser for (%s)', $url)
             );
         } catch (RequestException $exception) {
             throw new RuntimeException(
@@ -75,11 +77,41 @@ final class GuzzleAdUserClient implements AdUser
         if (!isset($body->rank) || !isset($body->info) || !is_numeric($body->rank)
             || !in_array($body->info, self::PAGE_INFOS)) {
             throw new UnexpectedClientResponseException(
-                sprintf('Unexpected response format from the AdUser for (%s)', $domain)
+                sprintf('Unexpected response format from the AdUser for (%s)', $url)
             );
         }
 
-        return new DomainRank($body->rank, $body->info);
+        return new PageRank($body->rank, $body->info);
+    }
+
+    public function fetchPageRankBatch(array $urls): array
+    {
+        $path = self::API_PATH.'/page-rank';
+
+        try {
+            $response = $this->client->post(
+                $path,
+                [
+                    RequestOptions::JSON => ['urls' => $urls],
+                ]
+            );
+            $body = json_decode((string)$response->getBody(), true);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Cannot decode response from the AdUser for (%s)', join(',', $urls))
+            );
+        } catch (RequestException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    '{"url": "%s", "path": "%s",  "message": "%s"}',
+                    (string)$this->client->getConfig('base_uri'),
+                    $path,
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        return $body;
     }
 
     public function fetchTargetingOptions(): Taxonomy

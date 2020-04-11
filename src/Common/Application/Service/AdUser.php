@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
-use Adshares\Common\Application\Dto\DomainRank;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -59,7 +59,9 @@ interface AdUser
         AdUser::PAGE_INFO_SUSPICIOUS_DOMAIN,
     ];
 
-    public function fetchDomainRank(string $domain): DomainRank;
+    public function fetchPageRank(string $url): PageRank;
+
+    public function fetchPageRankBatch(array $urls): array;
 
     public function fetchTargetingOptions(): Taxonomy;
 

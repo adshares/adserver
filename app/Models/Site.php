@@ -25,7 +25,7 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
-use Adshares\Common\Application\Dto\DomainRank;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,6 +44,7 @@ use function in_array;
  * @property int user_id
  * @property string name
  * @property string domain
+ * @property string url
  * @property float rank
  * @property string info
  * @property int status
@@ -84,7 +85,6 @@ class Site extends Model
 
     public static $rules = [
         'name' => 'required|max:64',
-        'domain' => 'required|regex:/^.+\..+$/|max:255',
         'primary_language' => 'required|max:2',
         'status' => 'required|numeric',
     ];
@@ -97,11 +97,13 @@ class Site extends Model
         'site_excludes' => 'json',
         'require_classified' => 'boolean',
         'exclude_unclassified' => 'boolean',
+        'rank' => 'float',
     ];
 
     protected $fillable = [
         'name',
         'domain',
+        'url',
         'status',
         'primary_language',
         'filtering',
@@ -218,10 +220,10 @@ class Site extends Model
         $this->status = $status;
     }
 
-    public function updateWithDomainRank(DomainRank $domainRank): void
+    public function updateWithPageRank(PageRank $pageRank): void
     {
-        $this->rank = $domainRank->getRank();
-        $this->info = $domainRank->getInfo();
+        $this->rank = $pageRank->getRank();
+        $this->info = $pageRank->getInfo();
         $this->save();
     }
 }

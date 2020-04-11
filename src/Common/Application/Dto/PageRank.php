@@ -22,9 +22,10 @@ declare(strict_types = 1);
 
 namespace Adshares\Common\Application\Dto;
 
+use Adshares\Common\Application\Service\AdUser;
 use Illuminate\Contracts\Support\Arrayable;
 
-class DomainRank implements Arrayable
+class PageRank implements Arrayable
 {
     /** @var float */
     private $rank;
@@ -36,6 +37,11 @@ class DomainRank implements Arrayable
     {
         $this->rank = $rank;
         $this->info = $info;
+    }
+    
+    public static function default(): self
+    {
+        return new self(0, AdUser::PAGE_INFO_UNKNOWN);
     }
 
     public function getRank(): float

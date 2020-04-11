@@ -27,6 +27,7 @@ use Adshares\Adserver\Mail\SiteVerified;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
@@ -37,7 +38,7 @@ use Illuminate\Support\Facades\Mail;
 
 class SiteRankUpdateCommand extends BaseCommand
 {
-    private const CHUNK_SIZE = 500;
+    private const CHUNK_SIZE = 200;
 
     protected $signature = 'ops:supply:site-rank:update {--A|all : Update all sites}';
 
@@ -97,34 +98,56 @@ class SiteRankUpdateCommand extends BaseCommand
 
     private function update(Collection $sites): void
     {
-        DB::beginTransaction();
-        foreach ($sites as $site) {
+        $urls = [];
+        foreach ($sites as $index => $site) {
+            $url = $site->url;
+
             /** @var $site Site */
-            if (!$site->domain) {
+            if (!$url) {
+                continue;
+            }
+            $urls[$index] = $url;
+        }
+
+        try {
+            $results = $this->adUser->fetchPageRankBatch($urls);
+        } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
+            $this->error($unexpectedClientResponseException->getMessage());
+
+            return;
+        } catch (RuntimeException $exception) {
+            $this->warn($exception->getMessage());
+
+            return;
+        }
+
+        DB::beginTransaction();
+        foreach ($results as $index => $result) {
+            $site = $sites->get($index);
+            if (isset($result['error'])) {
+                $this->warn(sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error']));
+
                 continue;
             }
 
-            try {
-                $domainRank = $this->adUser->fetchDomainRank($site->domain);
-                if ($domainRank->getRank() !== $site->rank || $domainRank->getInfo() !== $site->info) {
-                    if (AdUser::PAGE_INFO_UNKNOWN === $site->info
-                        && AdUser::PAGE_INFO_UNKNOWN !== $domainRank->getInfo()
-                        && $site->created_at > $this->notificationDateTimeThreshold) {
-                        $this->mails[$site->user_id][] = [
-                            'name' => $site->name,
-                            'url' => $this->siteBaseUrl.$site->id,
-                        ];
-                    }
+            if (!isset($result['rank']) || !isset($result['info'])) {
+                $this->warn(sprintf('Missing `rank` or `info` for an URL (%s) from site id (%d)', $site->url, $site->id));
 
-                    $site->updateWithDomainRank($domainRank);
+                continue;
+            }
+
+            $pageRank = new PageRank($result['rank'], $result['info']);
+            if ($pageRank->getRank() !== $site->rank || $pageRank->getInfo() !== $site->info) {
+                if (AdUser::PAGE_INFO_UNKNOWN === $site->info
+                    && AdUser::PAGE_INFO_UNKNOWN !== $pageRank->getInfo()
+                    && $site->created_at > $this->notificationDateTimeThreshold) {
+                    $this->mails[$site->user_id][] = [
+                        'name' => $site->name,
+                        'url' => $this->siteBaseUrl.$site->id,
+                    ];
                 }
-            } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
-                DB::rollBack();
-                $this->error($unexpectedClientResponseException->getMessage());
 
-                return;
-            } catch (RuntimeException $exception) {
-                $this->warn($exception->getMessage());
+                $site->updateWithPageRank($pageRank);
             }
         }
         DB::commit();
