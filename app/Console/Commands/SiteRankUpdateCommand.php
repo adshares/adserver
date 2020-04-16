@@ -125,13 +125,17 @@ class SiteRankUpdateCommand extends BaseCommand
         foreach ($results as $index => $result) {
             $site = $sites->get($index);
             if (isset($result['error'])) {
-                $this->warn(sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error']));
+                $this->warn(
+                    sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error'])
+                );
 
                 continue;
             }
 
             if (!isset($result['rank']) || !isset($result['info'])) {
-                $this->warn(sprintf('Missing `rank` or `info` for an URL (%s) from site id (%d)', $site->url, $site->id));
+                $this->warn(
+                    sprintf('Missing `rank` or `info` for an URL (%s) from site id (%d)', $site->url, $site->id)
+                );
 
                 continue;
             }
