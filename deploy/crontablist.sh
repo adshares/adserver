@@ -60,6 +60,14 @@ echo -n "*/5 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:classification:request"
 echo ""
 
+echo -n "0-45/5,55 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:update"
+echo ""
+
+echo -n "50 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:update --all"
+echo ""
+
 echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
