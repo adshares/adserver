@@ -47,6 +47,7 @@ interface AdUser
     public const PAGE_INFO_POOR_TRAFFIC = 'poor-traffic';
     public const PAGE_INFO_POOR_CONTENT = 'poor-content';
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
+    public const PAGE_INFO_NOT_WORKING = 'not-working';
 
     public const PAGE_INFOS = [
         AdUser::PAGE_INFO_OK,
@@ -57,6 +58,7 @@ interface AdUser
         AdUser::PAGE_INFO_POOR_TRAFFIC,
         AdUser::PAGE_INFO_POOR_CONTENT,
         AdUser::PAGE_INFO_SUSPICIOUS_DOMAIN,
+        AdUser::PAGE_INFO_NOT_WORKING
     ];
 
     public function fetchPageRank(string $url): PageRank;
