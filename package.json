@@ -16,10 +16,10 @@
   "devDependencies": {
     "axios": "^0.18",
     "bootstrap": "^4.3",
-    "popper.js": "^1.14",
     "cross-env": "^5.2",
     "jquery": "^3.4",
     "laravel-mix": "^4.0",
-    "lodash": "^4.17.13"
+    "lodash": "^4.17.13",
+    "popper.js": "^1.14"
   }
 }
