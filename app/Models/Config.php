@@ -76,6 +76,8 @@ class Config extends Model
 
     public const BONUS_NEW_USER_AMOUNT = 'bonus-new-users-amount';
 
+    public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';
+
     private const ADMIN_SETTINGS_DEFAULTS = [
         self::OPERATOR_TX_FEE => '',
         self::OPERATOR_RX_FEE => '',

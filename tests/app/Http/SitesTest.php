@@ -24,6 +24,8 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Mock\Client\DummyAdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -36,6 +38,8 @@ class SitesTest extends TestCase
     const SITE_STRUCTURE = [
         'id',
         'name',
+        'domain',
+        'url',
         'filtering',
         'adUnits' => [
             '*' => [
@@ -139,13 +143,13 @@ class SitesTest extends TestCase
             [
                 "status" => 0,
                 "name" => "nameA",
-                "domain" => "example.com",
+                "url" => "https://example.com",
                 "primaryLanguage" => "pl",
             ],
             [
                 'status' => 1,
                 "name" => "nameB",
-                "domain" => "example.com",
+                "url" => "https://example.com",
                 "primaryLanguage" => "en",
             ],
         ];
@@ -459,7 +463,7 @@ JSON
     },
     "status": 0,
     "name": "nameA",
-    "domain": "example.com",
+    "url": "https://example.com",
     "primaryLanguage": "pl",
     "adUnits": [
       {
@@ -478,6 +482,18 @@ JSON
                 return [array_merge($default, $preset), $preset];
             },
             $presets
+        );
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
+            }
         );
     }
 }

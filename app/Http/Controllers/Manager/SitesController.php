@@ -23,12 +23,15 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
+use Adshares\Adserver\Jobs\AdUserRegisterUrl;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Publisher\SiteCodeConfig;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -53,9 +56,19 @@ class SitesController extends Controller
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        $input = $request->input('site');
+        $url = $request->input('site.url');
+        if (!SiteValidator::isUrlValid($url)) {
+            throw new UnprocessableEntityHttpException('Invalid URL');
+        }
+        $domain = DomainReader::domain($url);
+        if (!SiteValidator::isDomainValid($domain)) {
+            throw new UnprocessableEntityHttpException('Invalid domain');
+        }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
+
+        $input = $request->input('site');
+        $input['domain'] = $domain;
 
         DB::beginTransaction();
 
@@ -68,6 +81,8 @@ class SitesController extends Controller
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
             }
+
+            AdUserRegisterUrl::dispatch($url);
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -116,6 +131,20 @@ class SitesController extends Controller
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
+        $updateDomainAndUrl = false;
+        if (isset($input['url'])) {
+            $url = $input['url'];
+            if (!SiteValidator::isUrlValid($url)) {
+                throw new UnprocessableEntityHttpException('Invalid URL');
+            }
+            $domain = DomainReader::domain($url);
+            if (!SiteValidator::isDomainValid($domain)) {
+                throw new UnprocessableEntityHttpException('Invalid domain');
+            }
+
+            $input['domain'] = $domain;
+            $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+        }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
 
@@ -128,6 +157,11 @@ class SitesController extends Controller
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
+
+            if ($updateDomainAndUrl) {
+                $site->updateWithPageRank(PageRank::default());
+                AdUserRegisterUrl::dispatch($input['url']);
             }
         } catch (Exception $exception) {
             DB::rollBack();
@@ -275,6 +309,11 @@ class SitesController extends Controller
         $response = new SizesResponse($siteId);
 
         return self::json($response);
+    }
+
+    public function readSiteRank(Site $site): JsonResponse
+    {
+        return self::json(new PageRank($site->rank, $site->info));
     }
 
     /**

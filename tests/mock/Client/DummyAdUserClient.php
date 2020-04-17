@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Mock\Client;
 
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
@@ -34,6 +35,25 @@ use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
+    public function fetchPageRank(string $url): PageRank
+    {
+        return new PageRank(1, AdUser::PAGE_INFO_OK);
+    }
+
+    public function fetchPageRankBatch(array $urls): array
+    {
+        $result = [];
+
+        foreach ($urls as $id => $url) {
+            $result[$id] = [
+                'rank' => 1,
+                'info' => AdUser::PAGE_INFO_OK,
+            ];
+        }
+        
+        return $result;
+    }
+
     public function fetchTargetingOptions(): Taxonomy
     {
         $path = base_path('tests/app/targeting_schema.json');

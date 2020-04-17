@@ -18,15 +18,31 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Site;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Mail;
 
-$factory->define(Site::class, function (Faker $faker) {
-    return [
-        'name' => $faker->words(2, true),
-        'domain' => 'example.com',
-        'url' => 'https://example.com',
-        'primary_language' => $faker->languageCode,
-        'status' => Site::STATUS_ACTIVE,
-    ];
-});
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
+
+class SiteVerified extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    /** @var array */
+    private $sites;
+
+    public function __construct(array $sites)
+    {
+        $this->sites = $sites;
+        $this->subject(1 == count($sites) ? 'Site verified' : 'Sites verified');
+    }
+
+    public function build(): Mailable
+    {
+        return $this->markdown('emails.site-verified')->with(
+            [
+                'sites' => $this->sites,
+            ]
+        );
+    }
+}

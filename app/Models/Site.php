@@ -25,19 +25,28 @@ use Adshares\Adserver\Models\Traits\AutomateMutators;
 use Adshares\Adserver\Models\Traits\BinHex;
 use Adshares\Adserver\Models\Traits\Ownership;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
+use Adshares\Common\Application\Dto\PageRank;
+use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use function in_array;
 
 /**
  * @property int id
  * @property string uuid
+ * @property Carbon created_at
+ * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property int user_id
  * @property string name
  * @property string domain
+ * @property string url
+ * @property float rank
+ * @property string info
  * @property int status
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
@@ -76,7 +85,6 @@ class Site extends Model
 
     public static $rules = [
         'name' => 'required|max:64',
-        'domain' => 'required|regex:/^.+\..+$/|max:255',
         'primary_language' => 'required|max:2',
         'status' => 'required|numeric',
     ];
@@ -89,11 +97,13 @@ class Site extends Model
         'site_excludes' => 'json',
         'require_classified' => 'boolean',
         'exclude_unclassified' => 'boolean',
+        'rank' => 'float',
     ];
 
     protected $fillable = [
         'name',
         'domain',
+        'url',
         'status',
         'primary_language',
         'filtering',
@@ -106,6 +116,8 @@ class Site extends Model
         'zones',
         'require_classified',
         'exclude_unclassified',
+        'rank',
+        'info',
     ];
 
     protected $appends = [
@@ -182,6 +194,23 @@ class Site extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
+    public static function fetchAll(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    {
+        return self::getSitesChunkBuilder($previousChunkLastId, $limit)->get();
+    }
+
+    public static function fetchInVerification(int $previousChunkLastId = 0, int $limit = PHP_INT_MAX): Collection
+    {
+        return self::getSitesChunkBuilder($previousChunkLastId, $limit)
+            ->where('info', AdUser::PAGE_INFO_UNKNOWN)
+            ->get();
+    }
+
+    private static function getSitesChunkBuilder(int $previousChunkLastId, int $limit): Builder
+    {
+        return self::where('id', '>', $previousChunkLastId)->limit($limit);
+    }
+
     public function changeStatus(int $status): void
     {
         if (!in_array($status, self::ALLOWED_STATUSES, true)) {
@@ -189,5 +218,12 @@ class Site extends Model
         }
 
         $this->status = $status;
+    }
+
+    public function updateWithPageRank(PageRank $pageRank): void
+    {
+        $this->rank = $pageRank->getRank();
+        $this->info = $pageRank->getInfo();
+        $this->save();
     }
 }
