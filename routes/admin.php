@@ -38,6 +38,9 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('privacy', [AdminController::class, 'getPrivacyPolicy']);
     Route::put('privacy', [AdminController::class, 'putPrivacyPolicy']);
 
+    Route::patch('panel-placeholders', [AdminController::class, 'patchPanelPlaceholders']);
+    Route::get('index/update-time', [AdminController::class, 'getIndexUpdateTime']);
+
     Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
 
     Route::get('users', [UsersController::class, 'browse']);

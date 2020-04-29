@@ -46,6 +46,7 @@ Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fet
 
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
+Route::get('/panel/placeholders', [InfoController::class, 'getPanelPlaceholders']);
 
 Route::get('/newsletter/unsubscribe', [SettingsController::class, 'newsletterUnsubscribe'])->name('newsletter-unsubscribe');
 

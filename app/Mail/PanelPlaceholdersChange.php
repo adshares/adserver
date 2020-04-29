@@ -18,23 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Http\Requests;
+namespace Adshares\Adserver\Mail;
 
-use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\Config;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
-class UpdateRegulation extends FormRequest
+class PanelPlaceholdersChange extends Mailable
 {
-    public function rules(): array
-    {
-        return [
-            'content' => sprintf('required|string|max:%d', PanelPlaceholder::MAXIMUM_CONTENT_LENGTH),
-        ];
-    }
+    use Queueable, SerializesModels;
 
-    public function toString(): string
+    public function build(): Mailable
     {
-        $values = $this->validated()['content'];
+        $date = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME)->format('Y-m-d H:i:s');
+        $this->subject('Panel placeholders were changed on '.$date);
 
-        return (string)$values;
+        return $this->markdown('emails.panel-placeholders-change')->with(
+            [
+                'date' => $date,
+            ]
+        );
     }
 }

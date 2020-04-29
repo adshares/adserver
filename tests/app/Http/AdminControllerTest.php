@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,7 +51,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsGet(): void
     {
-        Regulation::addTerms('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $response = $this->getJson(self::URI_TERMS);
@@ -65,7 +65,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsUpdate(): void
     {
-        Regulation::addTerms('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $data = ['content' => 'content'];
@@ -94,7 +94,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyGet(): void
     {
-        Regulation::addPrivacyPolicy('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $response = $this->getJson(self::URI_PRIVACY_POLICY);
@@ -108,7 +108,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyUpdate(): void
     {
-        Regulation::addPrivacyPolicy('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $data = ['content' => 'content'];
