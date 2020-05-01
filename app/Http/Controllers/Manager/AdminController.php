@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\UpdateAdminSettings;
 use Adshares\Adserver\Http\Requests\UpdateRegulation;
@@ -34,6 +35,8 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
+use DateTimeImmutable;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -43,6 +46,8 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class AdminController extends Controller
 {
+    private const EMAIL_NOTIFICATION_DELAY_IN_MINUTES = 5;
+
     /** @var LicenseVault */
     private $licenseVault;
 
@@ -143,8 +148,30 @@ class AdminController extends Controller
             $regulations[] = PanelPlaceholder::construct($type, $content);
         }
 
-        PanelPlaceholder::register($regulations);
-        Mail::to(config('app.adshares_operator_email'))->send(new PanelPlaceholdersChange());
+        DB::beginTransaction();
+
+        try {
+            $registerDateTime = new DateTimeImmutable();
+            $previousEmailSendDateTime = Config::fetchDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME);
+
+            PanelPlaceholder::register($regulations);
+            Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, $registerDateTime);
+
+            if ($previousEmailSendDateTime <= $registerDateTime) {
+                $emailSendDateTime =
+                    $registerDateTime->modify(sprintf('+%d minutes', self::EMAIL_NOTIFICATION_DELAY_IN_MINUTES));
+                Config::upsertDateTime(Config::PANEL_PLACEHOLDER_NOTIFICATION_TIME, $emailSendDateTime);
+                Mail::to(config('app.adshares_operator_email'))
+                    ->bcc(config('app.adshares_support_email'))
+                    ->later($emailSendDateTime, new PanelPlaceholdersChange());
+            }
+        } catch (Exception $exception) {
+            DB::rollBack();
+
+            throw $exception;
+        }
+
+        DB::commit();
 
         return new JsonResponse([], Response::HTTP_NO_CONTENT);
     }

@@ -76,6 +76,8 @@ class Config extends Model
 
     public const BONUS_NEW_USER_AMOUNT = 'bonus-new-users-amount';
 
+    public const PANEL_PLACEHOLDER_NOTIFICATION_TIME = 'panel-placeholder-notification-time';
+
     public const PANEL_PLACEHOLDER_UPDATE_TIME = 'panel-placeholder-update-time';
 
     public const SITE_VERIFICATION_NOTIFICATION_TIME_THRESHOLD = 'site-verification-time-threshold';

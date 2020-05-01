@@ -108,7 +108,6 @@ class PanelPlaceholder extends Model
             foreach ($regulations as $regulation) {
                 $regulation->save();
             }
-            Config::upsertDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME, new DateTime());
         } catch (QueryException $queryException) {
             DB::rollBack();
 
