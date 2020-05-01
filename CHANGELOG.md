@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Storing sites' information (page rank) in database
+- Setting panel placeholders with an e-mail notification
 
 ## [1.6.3] - 2020-03-03
 ### Added
