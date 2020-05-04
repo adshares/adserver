@@ -20,7 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Http;
 
-use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -51,7 +51,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsGet(): void
     {
-        Regulation::addTerms('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $response = $this->getJson(self::URI_TERMS);
@@ -65,7 +65,7 @@ final class AdminControllerTest extends TestCase
 
     public function testTermsUpdate(): void
     {
-        Regulation::addTerms('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_TERMS, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $data = ['content' => 'content'];
@@ -94,7 +94,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyGet(): void
     {
-        Regulation::addPrivacyPolicy('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $response = $this->getJson(self::URI_PRIVACY_POLICY);
@@ -108,7 +108,7 @@ final class AdminControllerTest extends TestCase
 
     public function testPrivacyPolicyUpdate(): void
     {
-        Regulation::addPrivacyPolicy('old content');
+        PanelPlaceholder::register(PanelPlaceholder::construct(PanelPlaceholder::TYPE_PRIVACY_POLICY, 'old content'));
         $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
 
         $data = ['content' => 'content'];
@@ -155,57 +155,6 @@ final class AdminControllerTest extends TestCase
                     'publisherCommission' => 0.01,
                 ],
         ]);
-    }
-
-    /** @deprecated */
-    public function testSettingsStructureOLD(): void
-    {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-
-        $response = $this->get(self::URI_SETTINGS);
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson([
-            'settings' =>
-                [
-                    'hotwalletMinValue' => 500000000000000,
-                    'hotwalletMaxValue' => 2000000000000000,
-                    'hotwalletIsActive' => 0,
-                    'hotwalletAddress' => '',
-                    'adserverName' => 'AdServer',
-                    'technicalEmail' => 'mail@example.com',
-                    'supportEmail' => 'mail@example.com',
-                    'advertiserCommission' => 0.01,
-                    'publisherCommission' => 0.01,
-                ],
-        ]);
-    }
-
-    /** @deprecated */
-    public function testSettingsModificationsOLD(): void
-    {
-        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
-
-        $updatedValues = [
-            'settings' =>
-                [
-                    'hotwalletMinValue' => 200,
-                    'hotwalletMaxValue' => 500,
-                    'hotwalletIsActive' => 1,
-                    'hotwalletAddress' => '0000-00000000-XXXX',
-                    'adserverName' => 'AdServer2',
-                    'technicalEmail' => 'mail@example.com2',
-                    'supportEmail' => 'mail@example.com3',
-                    'advertiserCommission' => 0.05,
-                    'publisherCommission' => 0.06,
-                ],
-        ];
-
-        $response = $this->putJson(self::URI_SETTINGS, $updatedValues);
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
-
-        $response = $this->get(self::URI_SETTINGS);
-        $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson($updatedValues);
     }
 
     public function testSettingsModification(): void
