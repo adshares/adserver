@@ -59,10 +59,12 @@ use function hex2bin;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
+ * @property BidStrategy bidStrategy
  * @property Collection conversions
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property int bid_strategy_id
  * @property array classifications
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
@@ -246,6 +248,11 @@ class Campaign extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
+    }
+
+    public function bidStrategy(): BelongsTo
+    {
+        return $this->belongsTo(BidStrategy::class);
     }
 
     public function conversions(): HasMany

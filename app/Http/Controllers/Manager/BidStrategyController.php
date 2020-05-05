@@ -1,0 +1,121 @@
+<?php declare(strict_types = 1);
+/**
+ * Copyright (c) 2018 Adshares sp. z o.o.
+ *
+ * This file is part of AdServer
+ *
+ * AdServer is free software: you can redistribute and/or modify it
+ * under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * AdServer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with AdServer. If not, see <https://www.gnu.org/licenses/>
+ */
+
+namespace Adshares\Adserver\Http\Controllers\Manager;
+
+use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\BidStrategyRequest;
+use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\User;
+use Exception;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+
+class BidStrategyController extends Controller
+{
+    public function getBidStrategy(): JsonResponse
+    {
+        return self::json(BidStrategy::fetchForUser(Auth::user()->id));
+    }
+
+    public function putBidStrategy(BidStrategyRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $input = $request->toArray();
+
+        DB::beginTransaction();
+
+        try {
+            $bidStrategy =
+                BidStrategy::register($input['name'], $user->isAdmin() ? BidStrategy::ADMINISTRATOR_ID : $user->id);
+            $bidStrategyDetails = [];
+            foreach ($input['details'] as $detail) {
+                $bidStrategyDetails[] = BidStrategyDetail::create($detail['category'], (float)$detail['rank']);
+            }
+            $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::debug(
+                sprintf(
+                    'BidStrategy (%s) could not be added (%s).',
+                    $input['name'],
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        return self::json([], Response::HTTP_CREATED);
+    }
+
+    public function patchBidStrategy(int $bidStrategyId, BidStrategyRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $bidStrategy = BidStrategy::fetchById($bidStrategyId);
+
+        if (null === $bidStrategy) {
+            throw new NotFoundHttpException(
+                sprintf('BidStrategy (%d) does not exist.', $bidStrategyId)
+            );
+        }
+        if ($bidStrategy->user_id !== $user->id
+            && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
+                && $user->isAdmin())) {
+            throw new AuthenticationException(
+                sprintf('BidStrategy (%d) could not be edited.', $bidStrategyId)
+            );
+        }
+
+        $input = $request->toArray();
+
+        DB::beginTransaction();
+
+        try {
+            $bidStrategy->name = $input['name'];
+            $bidStrategy->save();
+            $bidStrategy->bidStrategyDetails()->delete();
+            $bidStrategyDetails = [];
+            foreach ($input['details'] as $detail) {
+                $bidStrategyDetails[] = BidStrategyDetail::create($detail['category'], (float)$detail['rank']);
+            }
+            $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::debug(
+                sprintf(
+                    'BidStrategy (%s) could not be edited (%s).',
+                    $input['name'],
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        return self::json([], Response::HTTP_NO_CONTENT);
+    }
+}

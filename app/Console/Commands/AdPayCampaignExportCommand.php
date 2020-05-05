@@ -22,6 +22,8 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
+use Adshares\Adserver\Console\Locker;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
@@ -34,7 +36,17 @@ class AdPayCampaignExportCommand extends BaseCommand
 
     protected $description = 'Exports campaign data to AdPay';
 
-    public function handle(AdPay $adPay): void
+    /** @var AdPay */
+    private $adPay;
+
+    public function __construct(Locker $locker, AdPay $adPay)
+    {
+        $this->adPay = $adPay;
+
+        parent::__construct($locker);
+    }
+
+    public function handle(): void
     {
         if (!$this->lock()) {
             $this->info('Command '.$this->signature.' already running');
@@ -44,6 +56,28 @@ class AdPayCampaignExportCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
+        $this->exportBidStrategies();
+        $this->exportCampaigns();
+
+        $this->info('Finish command '.$this->signature);
+    }
+
+    private function exportBidStrategies(): void
+    {
+        $now = new DateTime();
+        $dateFrom = Config::fetchDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME);
+
+        $bigStrategies = BidStrategy::fetchForExport($dateFrom);
+        $this->info(sprintf('Found %d bid strategies to export.', count($bigStrategies)));
+        if (count($bigStrategies) > 0) {
+            $this->adPay->updateBigStrategies($bigStrategies->all());
+        }
+
+        Config::upsertDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME, $now);
+    }
+
+    private function exportCampaigns(): void
+    {
         $now = new DateTime();
         $dateFrom = Config::fetchDateTime(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
 
@@ -54,7 +88,7 @@ class AdPayCampaignExportCommand extends BaseCommand
         $this->info(sprintf('Found %d updated campaigns to export.', count($updatedCampaigns)));
         if (count($updatedCampaigns) > 0) {
             $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
-            $adPay->updateCampaign($campaigns);
+            $this->adPay->updateCampaign($campaigns);
         }
 
         $deletedCampaigns =
@@ -65,11 +99,9 @@ class AdPayCampaignExportCommand extends BaseCommand
         $this->info(sprintf('Found %d deleted campaigns to export.', count($deletedCampaigns)));
         if (count($deletedCampaigns) > 0) {
             $campaignIds = DemandCampaignMapper::mapCampaignCollectionToCampaignIds($deletedCampaigns);
-            $adPay->deleteCampaign($campaignIds);
+            $this->adPay->deleteCampaign($campaignIds);
         }
 
         Config::upsertDateTime(Config::ADPAY_CAMPAIGN_EXPORT_TIME, $now);
-
-        $this->info('Finish command '.$this->signature);
     }
 }

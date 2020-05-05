@@ -46,6 +46,8 @@ class Config extends Model
 
     public const LICENCE_ACCOUNT = 'licence-account';
 
+    public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
+
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
     public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
