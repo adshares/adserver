@@ -167,7 +167,6 @@ class SupplyController extends Controller
     {
         $params = [
             config('app.serve_base_url'),
-            config('app.aduser_base_url'),
             '.' . config('app.adserver_id'),
         ];
 
@@ -179,7 +178,6 @@ class SupplyController extends Controller
                 echo str_replace(
                     [
                         '{{ ORIGIN }}',
-                        '{{ ADUSER }}',
                         '{{ SELECTOR }}',
                     ],
                     $params,
