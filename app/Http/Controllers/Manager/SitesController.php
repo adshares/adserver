@@ -56,10 +56,10 @@ class SitesController extends Controller
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        $url = $request->input('site.url');
-        if (!SiteValidator::isUrlValid($url)) {
+        if (!SiteValidator::isUrlValid($request->input('site.url'))) {
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
+        $url = (string)$request->input('site.url');
         $domain = DomainReader::domain($url);
         if (!SiteValidator::isDomainValid($domain)) {
             throw new UnprocessableEntityHttpException('Invalid domain');
@@ -133,10 +133,10 @@ class SitesController extends Controller
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
         $updateDomainAndUrl = false;
         if (isset($input['url'])) {
-            $url = $input['url'];
-            if (!SiteValidator::isUrlValid($url)) {
+            if (!SiteValidator::isUrlValid($input['url'])) {
                 throw new UnprocessableEntityHttpException('Invalid URL');
             }
+            $url = (string)$input['url'];
             $domain = DomainReader::domain($url);
             if (!SiteValidator::isDomainValid($domain)) {
                 throw new UnprocessableEntityHttpException('Invalid domain');
