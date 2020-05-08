@@ -36,7 +36,7 @@ class BidStrategyControllerTest extends TestCase
 
     private const STRUCTURE_CHECK = [
         [
-            'id',
+            'uuid',
             'name',
             'details' => [
                 '*' => [
@@ -96,12 +96,12 @@ class BidStrategyControllerTest extends TestCase
         $this->actingAs($user, 'api');
 
         $bidStrategy = BidStrategy::register('test', $user->id);
-        $bidStrategyId = $bidStrategy->id;
+        $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyId, self::DATA);
+        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_NO_CONTENT);
 
-        $bidStrategyEdited = BidStrategy::fetchById($bidStrategyId)->toArray();
+        $bidStrategyEdited = BidStrategy::fetchByPublicId($bidStrategyPublicId)->toArray();
         self::assertEquals(self::DATA['name'], $bidStrategyEdited['name']);
         self::assertEquals(self::DATA['details'], $bidStrategyEdited['details']);
     }
@@ -113,9 +113,9 @@ class BidStrategyControllerTest extends TestCase
         $this->actingAs($user, 'api');
 
         $bidStrategy = BidStrategy::register('test', $user->id + 1);
-        $bidStrategyId = $bidStrategy->id;
+        $bidStrategyPublicId = $bidStrategy->uuid;
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyId, self::DATA);
+        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
     }
 
@@ -125,10 +125,22 @@ class BidStrategyControllerTest extends TestCase
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $bidStrategyId = 1000;
+        $bidStrategyPublicId = '0123456789abcdef0123456789abcdef';
 
-        $response = $this->patchJson(self::URI.'/'.$bidStrategyId, self::DATA);
+        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testEditInvalidBidStrategy(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $bidStrategyInvalidPublicId = 1000;
+
+        $response = $this->patchJson(self::URI.'/'.$bidStrategyInvalidPublicId, self::DATA);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     /**

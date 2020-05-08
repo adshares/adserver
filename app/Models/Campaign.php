@@ -59,12 +59,11 @@ use function hex2bin;
  * @property array|null|string targeting_requires
  * @property array|null|string targeting_excludes
  * @property Banner[]|Collection banners
- * @property BidStrategy bidStrategy
  * @property Collection conversions
  * @property User user
  * @property string secret
  * @property int conversion_click
- * @property int bid_strategy_id
+ * @property string bid_strategy_uuid
  * @property array classifications
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
@@ -149,12 +148,14 @@ class Campaign extends Model
         'secret',
         'conversion_click',
         'conversion_click_link',
+        'bid_strategy_uuid',
     ];
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
+        'bid_strategy_uuid' => 'BinHex',
     ];
 
     protected $appends = [
@@ -248,11 +249,6 @@ class Campaign extends Model
     public function banners(): HasMany
     {
         return $this->hasMany(Banner::class);
-    }
-
-    public function bidStrategy(): BelongsTo
-    {
-        return $this->belongsTo(BidStrategy::class);
     }
 
     public function conversions(): HasMany

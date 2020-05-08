@@ -21,6 +21,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Console\Commands;
 
+use Adshares\Adserver\Client\Mapper\AdPay\DemandBidStrategyMapper;
 use Adshares\Adserver\Client\Mapper\AdPay\DemandCampaignMapper;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\BidStrategy;
@@ -70,7 +71,7 @@ class AdPayCampaignExportCommand extends BaseCommand
         $bigStrategies = BidStrategy::fetchForExport($dateFrom);
         $this->info(sprintf('Found %d bid strategies to export.', count($bigStrategies)));
         if (count($bigStrategies) > 0) {
-            $this->adPay->updateBigStrategies($bigStrategies->all());
+            $this->adPay->updateBigStrategies(DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies));
         }
 
         Config::upsertDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME, $now);

@@ -18,10 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class CreateBidStrategyTables extends Migration
@@ -32,11 +33,23 @@ class CreateBidStrategyTables extends Migration
             'bid_strategy',
             function (Blueprint $table) {
                 $table->bigIncrements('id');
+                $table->binary('uuid');
                 $table->bigInteger('user_id')->index();
                 $table->string('name');
                 $table->timestamps();
 
                 $table->index('updated_at');
+            }
+        );
+
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE bid_strategy MODIFY uuid VARBINARY(16) NOT NULL');
+        }
+
+        Schema::table(
+            'bid_strategy',
+            function (Blueprint $table) {
+                $table->unique('uuid');
             }
         );
 
@@ -55,10 +68,12 @@ class CreateBidStrategyTables extends Migration
             }
         );
 
+        $bidStrategyUuid = hex2bin(UuidStringGenerator::v4());
         $now = new DateTime();
         DB::insert(
-            'INSERT INTO bid_strategy (user_id,name,created_at,updated_at) VALUES (?,?,?,?)',
+            'INSERT INTO bid_strategy (uuid,user_id,name,created_at,updated_at) VALUES (?,?,?,?,?)',
             [
+                $bidStrategyUuid,
                 BidStrategy::ADMINISTRATOR_ID,
                 "Server Default",
                 $now,
@@ -66,15 +81,18 @@ class CreateBidStrategyTables extends Migration
             ]
         );
 
-        $row = DB::table('bid_strategy')->select(['id'])->first();
-        $bidStrategyId = $row->id;
-
         Schema::table(
             'campaigns',
-            function (Blueprint $table) use ($bidStrategyId) {
-                $table->unsignedBigInteger('bid_strategy_id')->default($bidStrategyId);
+            function (Blueprint $table) {
+                $table->binary('bid_strategy_uuid');
             }
         );
+
+        if (DB::isMySql()) {
+            DB::statement('ALTER TABLE campaigns MODIFY bid_strategy_uuid VARBINARY(16) NOT NULL');
+        }
+        DB::update('UPDATE campaigns SET bid_strategy_uuid=?', [$bidStrategyUuid]);
+
         // todo change update time for all campaigns to force export to adpay
     }
 
@@ -83,7 +101,7 @@ class CreateBidStrategyTables extends Migration
         Schema::table(
             'campaigns',
             function (Blueprint $table) {
-                $table->dropColumn('bid_strategy_id');
+                $table->dropColumn('bid_strategy_uuid');
             }
         );
         Schema::dropIfExists('bid_strategy_details');

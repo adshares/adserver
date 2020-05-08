@@ -51,6 +51,7 @@ class DemandCampaignMapper
                     'banners' => self::extractBanners($campaign),
                     'conversions' => self::processConversions($campaign->conversions),
                     'filters' => self::processTargeting($campaignArray['targeting']),
+                    'bid_strategy_id' => $campaign->bid_strategy_uuid,
                 ];
             }
         )->toArray();

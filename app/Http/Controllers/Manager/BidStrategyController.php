@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\BidStrategyRequest;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\User;
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class BidStrategyController extends Controller
 {
@@ -45,13 +47,15 @@ class BidStrategyController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        $isAdmin = $user->isAdmin();
+
         $input = $request->toArray();
 
         DB::beginTransaction();
 
         try {
             $bidStrategy =
-                BidStrategy::register($input['name'], $user->isAdmin() ? BidStrategy::ADMINISTRATOR_ID : $user->id);
+                BidStrategy::register($input['name'], $isAdmin ? BidStrategy::ADMINISTRATOR_ID : $user->id);
             $bidStrategyDetails = [];
             foreach ($input['details'] as $detail) {
                 $bidStrategyDetails[] = BidStrategyDetail::create($detail['category'], (float)$detail['rank']);
@@ -72,22 +76,28 @@ class BidStrategyController extends Controller
         return self::json([], Response::HTTP_CREATED);
     }
 
-    public function patchBidStrategy(int $bidStrategyId, BidStrategyRequest $request): JsonResponse
+    public function patchBidStrategy(string $bidStrategyPublicId, BidStrategyRequest $request): JsonResponse
     {
+        if (!Utils::isUuidValid($bidStrategyPublicId)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Invalid id (%s)', $bidStrategyPublicId)
+            );
+        }
+
         /** @var User $user */
         $user = Auth::user();
-        $bidStrategy = BidStrategy::fetchById($bidStrategyId);
+        $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
 
         if (null === $bidStrategy) {
             throw new NotFoundHttpException(
-                sprintf('BidStrategy (%d) does not exist.', $bidStrategyId)
+                sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId)
             );
         }
         if ($bidStrategy->user_id !== $user->id
             && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
                 && $user->isAdmin())) {
             throw new AuthenticationException(
-                sprintf('BidStrategy (%d) could not be edited.', $bidStrategyId)
+                sprintf('BidStrategy (%s) could not be edited.', $bidStrategyPublicId)
             );
         }
 

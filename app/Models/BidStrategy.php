@@ -20,6 +20,9 @@
 
 namespace Adshares\Adserver\Models;
 
+use Adshares\Adserver\Events\GenerateUUID;
+use Adshares\Adserver\Models\Traits\AutomateMutators;
+use Adshares\Adserver\Models\Traits\BinHex;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -29,6 +32,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property int id
+ * @property string uuid
  * @property int user_id
  * @property string name
  * @property Carbon created_at
@@ -39,23 +43,34 @@ use Illuminate\Support\Carbon;
  */
 class BidStrategy extends Model
 {
+    use AutomateMutators;
+    use BinHex;
+
     public const ADMINISTRATOR_ID = 0;
 
     protected $table = 'bid_strategy';
+
+    protected $appends = [
+        'details',
+    ];
+
+    protected $dispatchesEvents = [
+        'creating' => GenerateUUID::class,
+    ];
 
     protected $fillable = [
         'name',
         'user_id',
     ];
 
-    protected $visible = [
-        'id',
-        'details',
-        'name',
+    protected $traitAutomate = [
+        'uuid' => 'BinHex',
     ];
 
-    protected $appends = [
+    protected $visible = [
         'details',
+        'name',
+        'uuid',
     ];
 
     public static function register(string $name, int $userId): self
@@ -71,9 +86,9 @@ class BidStrategy extends Model
         return $model;
     }
 
-    public static function fetchById(int $id): ?self
+    public static function fetchByPublicId(string $publicId): ?self
     {
-        return self::find($id);
+        return self::where('uuid', hex2bin($publicId))->first();
     }
 
     public static function fetchForExport(DateTime $dateFrom): Collection
