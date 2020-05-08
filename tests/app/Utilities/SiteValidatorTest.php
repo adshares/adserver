@@ -83,10 +83,14 @@ class SiteValidatorTest extends TestCase
             [''],
             [new StdClass()],
             [new ToStringClass('')],
+            ['//example.com'],
             ['https://example.com/path'],
             ['https://example.com?query=true'],
             ['https://example.com#fragment'],
             ['https://example.com/path?query=true#fragment'],
+            ['https://login@example.com'],
+            ['https://login:password@example.com'],
+            ['https://example.com:8080'],
         ];
     }
 
@@ -107,12 +111,14 @@ class SiteValidatorTest extends TestCase
             [''],
             [new StdClass()],
             [new ToStringClass('')],
-            ['http://example.com'],
+            ['//example.com'],
             ['https://example.com'],
             ['https://example.com/path'],
             ['https://example.com?query=true'],
             ['https://example.com#fragment'],
             ['https://example.com/path?query=true#fragment'],
+            ['login@example.com'],
+            ['login:password@example.com'],
         ];
     }
 }

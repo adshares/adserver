@@ -31,10 +31,8 @@ class SiteValidator
     private const URL_LENGTH_MAX = 1024;
 
     private const URL_PATTERN = '~^
-        https?://                                                                        # protocol
-        (((?:[\_\.\pL\pN-]|%%[0-9A-Fa-f]{2})+:)?((?:[\_\.\pL\pN-]|%%[0-9A-Fa-f]{2})+)@)? # basic auth
-        ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)                         # a domain name
-        (:[0-9]+)?                                                                       # a port (optional)
+        https?://                                                # protocol
+        ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
     $~ixu';
 
     /**
