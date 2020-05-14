@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Storing sites' information (page rank) in database
 - Setting panel placeholders with an e-mail notification
+- Send an email notification once the banner was classified
 ### Removed
 - AdUser url from find.js
 
