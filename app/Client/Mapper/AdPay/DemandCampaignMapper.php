@@ -35,14 +35,14 @@ class DemandCampaignMapper
     {
         return $campaigns->map(
             function (Campaign $campaign) {
-                $campaignArray = $campaign->toArray();
+                $basicInformation = $campaign->basic_information;
 
                 return [
                     'id' => $campaign->uuid,
                     'advertiser_id' => Campaign::fetchAdvertiserId($campaign->id),
-                    'budget' => $campaignArray['basic_information']['budget'],
-                    'max_cpc' => $campaignArray['basic_information']['max_cpc'],
-                    'max_cpm' => $campaignArray['basic_information']['max_cpm'],
+                    'budget' => $basicInformation['budget'],
+                    'max_cpc' => $basicInformation['max_cpc'],
+                    'max_cpm' => $basicInformation['max_cpm'],
                     'time_start' => DateTime::createFromFormat(DateTime::ATOM, $campaign->time_start)->getTimestamp(),
                     'time_end' => null !== $campaign->time_end ? DateTime::createFromFormat(
                         DateTime::ATOM,
@@ -50,7 +50,7 @@ class DemandCampaignMapper
                     )->getTimestamp() : null,
                     'banners' => self::extractBanners($campaign),
                     'conversions' => self::processConversions($campaign->conversions),
-                    'filters' => self::processTargeting($campaignArray['targeting']),
+                    'filters' => self::processTargeting($campaign->targeting),
                     'bid_strategy_id' => $campaign->bid_strategy_uuid,
                 ];
             }

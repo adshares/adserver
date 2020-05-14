@@ -64,7 +64,9 @@ use function hex2bin;
  * @property string secret
  * @property int conversion_click
  * @property string bid_strategy_uuid
+ * @property array basic_information
  * @property array classifications
+ * @property array targeting
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder

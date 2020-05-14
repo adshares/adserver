@@ -33,6 +33,8 @@ use function count;
 
 class AdPayCampaignExportCommand extends BaseCommand
 {
+    private const BID_STRATEGY_CHUNK_SIZE = 50;
+
     protected $signature = 'ops:adpay:campaign:export';
 
     protected $description = 'Exports campaign data to AdPay';
@@ -68,11 +70,19 @@ class AdPayCampaignExportCommand extends BaseCommand
         $now = new DateTime();
         $dateFrom = Config::fetchDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME);
 
-        $bigStrategies = BidStrategy::fetchForExport($dateFrom);
-        $this->info(sprintf('Found %d bid strategies to export.', count($bigStrategies)));
-        if (count($bigStrategies) > 0) {
-            $this->adPay->updateBigStrategies(DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies));
-        }
+        $offset = 0;
+        $loopCount = 0;
+        do {
+            $bigStrategies = BidStrategy::fetchForExport($dateFrom, self::BID_STRATEGY_CHUNK_SIZE, $offset);
+            $bidStrategiesCount = $bigStrategies->count();
+            $this->info(sprintf('(%d) Found %d bid strategies to export.', ++$loopCount, $bidStrategiesCount));
+
+            if ($bidStrategiesCount > 0) {
+                $this->adPay->updateBigStrategies(DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies));
+            }
+
+            $offset += $bidStrategiesCount;
+        } while ($bidStrategiesCount === self::BID_STRATEGY_CHUNK_SIZE);
 
         Config::upsertDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME, $now);
     }

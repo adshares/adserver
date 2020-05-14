@@ -91,9 +91,9 @@ class BidStrategy extends Model
         return self::where('uuid', hex2bin($publicId))->first();
     }
 
-    public static function fetchForExport(DateTime $dateFrom): Collection
+    public static function fetchForExport(DateTime $dateFrom, int $limit, int $offset = 0): Collection
     {
-        return self::where('updated_at', '>=', $dateFrom)->get();
+        return self::where('updated_at', '>=', $dateFrom)->limit($limit)->offset($offset)->get();
     }
 
     public static function fetchForUser(int $userId): Collection
