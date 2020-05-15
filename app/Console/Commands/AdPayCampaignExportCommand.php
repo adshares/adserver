@@ -33,7 +33,9 @@ use function count;
 
 class AdPayCampaignExportCommand extends BaseCommand
 {
-    private const BID_STRATEGY_CHUNK_SIZE = 50;
+    private const BID_STRATEGY_CHUNK_SIZE = 100;
+
+    private const CAMPAIGN_CHUNK_SIZE = 100;
 
     protected $signature = 'ops:adpay:campaign:export';
 
@@ -92,15 +94,24 @@ class AdPayCampaignExportCommand extends BaseCommand
         $now = new DateTime();
         $dateFrom = Config::fetchDateTime(Config::ADPAY_CAMPAIGN_EXPORT_TIME);
 
-        $updatedCampaigns =
-            Campaign::where('updated_at', '>=', $dateFrom)->where('status', Campaign::STATUS_ACTIVE)->with(
-                'conversions'
-            )->get();
-        $this->info(sprintf('Found %d updated campaigns to export.', count($updatedCampaigns)));
-        if (count($updatedCampaigns) > 0) {
-            $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
-            $this->adPay->updateCampaign($campaigns);
-        }
+        $offset = 0;
+        $loopCount = 0;
+        do {
+            $updatedCampaigns =
+                Campaign::where('updated_at', '>=', $dateFrom)->where('status', Campaign::STATUS_ACTIVE)->with(
+                    'conversions'
+                )->limit(self::CAMPAIGN_CHUNK_SIZE)->offset($offset)->get();
+            $campaignCount = $updatedCampaigns->count();
+            $this->info(sprintf('(%d) Found %d updated campaigns to export.', ++$loopCount, $campaignCount));
+
+            if ($campaignCount > 0) {
+                $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
+                $this->adPay->updateCampaign($campaigns);
+            }
+            
+            $offset += $campaignCount;
+        } while ($campaignCount === self::CAMPAIGN_CHUNK_SIZE);
+
 
         $deletedCampaigns =
             Campaign::withTrashed()

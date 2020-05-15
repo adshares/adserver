@@ -20,6 +20,7 @@
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Utilities\UuidStringGenerator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -75,7 +76,7 @@ class CreateBidStrategyTables extends Migration
             [
                 $bidStrategyUuid,
                 BidStrategy::ADMINISTRATOR_ID,
-                "Server Default",
+                'Server Default',
                 $now,
                 $now,
             ]
@@ -92,8 +93,7 @@ class CreateBidStrategyTables extends Migration
             DB::statement('ALTER TABLE campaigns MODIFY bid_strategy_uuid VARBINARY(16) NOT NULL');
         }
         DB::update('UPDATE campaigns SET bid_strategy_uuid=?', [$bidStrategyUuid]);
-
-        // todo change update time for all campaigns to force export to adpay
+        DB::delete('DELETE FROM configs WHERE `key`=?', [Config::ADPAY_CAMPAIGN_EXPORT_TIME]);
     }
 
     public function down(): void
