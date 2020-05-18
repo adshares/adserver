@@ -80,7 +80,9 @@ class AdPayCampaignExportCommand extends BaseCommand
             $this->info(sprintf('(%d) Found %d bid strategies to export.', ++$loopCount, $bidStrategiesCount));
 
             if ($bidStrategiesCount > 0) {
-                $this->adPay->updateBigStrategies(DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies));
+                $this->adPay->updateBigStrategies(
+                    DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies)
+                );
             }
 
             $offset += $bidStrategiesCount;
@@ -108,10 +110,9 @@ class AdPayCampaignExportCommand extends BaseCommand
                 $campaigns = DemandCampaignMapper::mapCampaignCollectionToCampaignArray($updatedCampaigns);
                 $this->adPay->updateCampaign($campaigns);
             }
-            
+
             $offset += $campaignCount;
         } while ($campaignCount === self::CAMPAIGN_CHUNK_SIZE);
-
 
         $deletedCampaigns =
             Campaign::withTrashed()

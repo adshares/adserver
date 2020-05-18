@@ -33,6 +33,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -51,16 +52,16 @@ class BidStrategyController extends Controller
 
         $input = $request->toArray();
 
-        DB::beginTransaction();
-
         try {
-            $bidStrategy =
-                BidStrategy::register($input['name'], $isAdmin ? BidStrategy::ADMINISTRATOR_ID : $user->id);
+            DB::beginTransaction();
+
+            $bidStrategy = BidStrategy::register($input['name'], $isAdmin ? BidStrategy::ADMINISTRATOR_ID : $user->id);
             $bidStrategyDetails = [];
             foreach ($input['details'] as $detail) {
                 $bidStrategyDetails[] = BidStrategyDetail::create($detail['category'], (float)$detail['rank']);
             }
             $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
+
             DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
@@ -71,9 +72,11 @@ class BidStrategyController extends Controller
                     $exception->getMessage()
                 )
             );
+
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy');
         }
 
-        return self::json([], Response::HTTP_CREATED);
+        return self::json(['uuid' => $bidStrategy->uuid], Response::HTTP_CREATED);
     }
 
     public function patchBidStrategy(string $bidStrategyPublicId, BidStrategyRequest $request): JsonResponse
@@ -103,9 +106,9 @@ class BidStrategyController extends Controller
 
         $input = $request->toArray();
 
-        DB::beginTransaction();
-
         try {
+            DB::beginTransaction();
+
             $bidStrategy->name = $input['name'];
             $bidStrategy->save();
             $bidStrategy->bidStrategyDetails()->delete();
@@ -114,6 +117,7 @@ class BidStrategyController extends Controller
                 $bidStrategyDetails[] = BidStrategyDetail::create($detail['category'], (float)$detail['rank']);
             }
             $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
+
             DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
@@ -124,6 +128,8 @@ class BidStrategyController extends Controller
                     $exception->getMessage()
                 )
             );
+
+            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy');
         }
 
         return self::json([], Response::HTTP_NO_CONTENT);

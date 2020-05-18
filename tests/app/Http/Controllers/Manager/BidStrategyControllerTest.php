@@ -27,6 +27,8 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 class BidStrategyControllerTest extends TestCase
 {
@@ -141,6 +143,33 @@ class BidStrategyControllerTest extends TestCase
 
         $response = $this->patchJson(self::URI.'/'.$bidStrategyInvalidPublicId, self::DATA);
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testDbConnectionErrorWhileAddingBidStrategy(): void
+    {
+        DB::shouldReceive('beginTransaction')->andThrow(new RuntimeException());
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->putJson(self::URI, self::DATA);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testDbConnectionErrorWhileEditingBidStrategy(): void
+    {
+        DB::shouldReceive('beginTransaction')->andThrow(new RuntimeException());
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     /**
