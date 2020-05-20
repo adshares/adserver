@@ -25,11 +25,11 @@ use Adshares\Adserver\Http\Requests\BidStrategyRequest;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Exception;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Response;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,6 +39,36 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class BidStrategyController extends Controller
 {
+    public function getBidStrategyUuidDefault(): JsonResponse
+    {
+        return self::json(['uuid' => Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT)]);
+    }
+
+    public function putBidStrategyUuidDefault(Request $request): JsonResponse
+    {
+        $bidStrategyPublicId = $request->input('uuid');
+        if (!Utils::isUuidValid($bidStrategyPublicId)) {
+            throw new UnprocessableEntityHttpException(
+                sprintf('Invalid id (%s)', $bidStrategyPublicId)
+            );
+        }
+
+        $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
+        if (null === $bidStrategy) {
+            throw new NotFoundHttpException(sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId));
+        }
+        if (BidStrategy::ADMINISTRATOR_ID !== $bidStrategy->user_id) {
+            throw new HttpException(
+                JsonResponse::HTTP_FORBIDDEN,
+                sprintf('Cannot set bid strategy uuid (%s) as default', $bidStrategyPublicId)
+            );
+        }
+
+        Config::upsertByKey(Config::BID_STRATEGY_UUID_DEFAULT, $bidStrategyPublicId);
+
+        return self::json([], JsonResponse::HTTP_NO_CONTENT);
+    }
+
     public function getBidStrategy(): JsonResponse
     {
         return self::json(BidStrategy::fetchForUser(Auth::user()->id));
@@ -66,25 +96,19 @@ class BidStrategyController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::debug(
-                sprintf(
-                    'BidStrategy (%s) could not be added (%s).',
-                    $input['name'],
-                    $exception->getMessage()
-                )
+                sprintf('BidStrategy (%s) could not be added (%s).', $input['name'], $exception->getMessage())
             );
 
-            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy');
+            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy');
         }
 
-        return self::json(['uuid' => $bidStrategy->uuid], Response::HTTP_CREATED);
+        return self::json(['uuid' => $bidStrategy->uuid], JsonResponse::HTTP_CREATED);
     }
 
     public function patchBidStrategy(string $bidStrategyPublicId, BidStrategyRequest $request): JsonResponse
     {
         if (!Utils::isUuidValid($bidStrategyPublicId)) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Invalid id (%s)', $bidStrategyPublicId)
-            );
+            throw new UnprocessableEntityHttpException(sprintf('Invalid id (%s)', $bidStrategyPublicId));
         }
 
         /** @var User $user */
@@ -92,14 +116,13 @@ class BidStrategyController extends Controller
         $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
 
         if (null === $bidStrategy) {
-            throw new NotFoundHttpException(
-                sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId)
-            );
+            throw new NotFoundHttpException(sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId));
         }
         if ($bidStrategy->user_id !== $user->id
             && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
                 && $user->isAdmin())) {
-            throw new AuthenticationException(
+            throw new HttpException(
+                JsonResponse::HTTP_UNAUTHORIZED,
                 sprintf('BidStrategy (%s) could not be edited.', $bidStrategyPublicId)
             );
         }
@@ -122,16 +145,12 @@ class BidStrategyController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::debug(
-                sprintf(
-                    'BidStrategy (%s) could not be edited (%s).',
-                    $input['name'],
-                    $exception->getMessage()
-                )
+                sprintf('BidStrategy (%s) could not be edited (%s).', $input['name'], $exception->getMessage())
             );
 
-            throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy');
+            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy');
         }
 
-        return self::json([], Response::HTTP_NO_CONTENT);
+        return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }
 }

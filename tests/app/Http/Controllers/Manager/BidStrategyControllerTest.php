@@ -35,6 +35,8 @@ class BidStrategyControllerTest extends TestCase
     use RefreshDatabase;
 
     private const URI = '/api/campaigns/bid-strategy';
+    private const URI_UUID_GET = '/api/campaigns/bid-strategy/uuid-default';
+    private const URI_UUID_PUT = '/admin/campaigns/bid-strategy/uuid-default';
 
     private const STRUCTURE_CHECK = [
         [
@@ -223,5 +225,78 @@ class BidStrategyControllerTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    public function testGetDefaultUuid(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI_UUID_GET);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['uuid']);
+    }
+
+    public function testPutDefaultUuidValid(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $responsePut = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $responsePut->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $responseGet = $this->getJson(self::URI_UUID_GET);
+        $responseGet->assertStatus(Response::HTTP_OK);
+        $responseGet->assertJsonStructure(['uuid']);
+        self::assertEquals($bidStrategyPublicId, $responseGet->json('uuid'));
+    }
+
+    public function testPutDefaultUuidInvalid(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->put(self::URI_UUID_PUT, ['uuid' => '1234']);
+
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testPutDefaultUuidNotExisting(): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->put(self::URI_UUID_PUT, ['uuid' => '00000000000000000000000000000000']);
+
+        $response->assertStatus(Response::HTTP_NOT_FOUND);
+    }
+
+    public function testPutDefaultUuidForbidden(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 0]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testPutDefaultUuidOtherUser(): void
+    {
+        /** @var User $userAdmin */
+        $userAdmin = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($userAdmin, 'api');
+        /** @var User $userOther */
+        $userOther = factory(User::class)->create(['is_admin' => 0]);
+        $bidStrategy = BidStrategy::register('test', $userOther->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 }

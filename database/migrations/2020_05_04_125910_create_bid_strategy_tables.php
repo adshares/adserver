@@ -69,17 +69,16 @@ class CreateBidStrategyTables extends Migration
             }
         );
 
-        $bidStrategyUuid = hex2bin(UuidStringGenerator::v4());
+        $bidStrategyUuidHexadecimal = UuidStringGenerator::v4();
+        $bidStrategyUuidBinary = hex2bin($bidStrategyUuidHexadecimal);
         $now = new DateTime();
         DB::insert(
             'INSERT INTO bid_strategy (uuid,user_id,name,created_at,updated_at) VALUES (?,?,?,?,?)',
-            [
-                $bidStrategyUuid,
-                BidStrategy::ADMINISTRATOR_ID,
-                'Server Default',
-                $now,
-                $now,
-            ]
+            [$bidStrategyUuidBinary, BidStrategy::ADMINISTRATOR_ID, 'Server Default', $now, $now]
+        );
+        DB::insert(
+            'INSERT INTO configs (`key`, value, created_at, updated_at) VALUES (?,?,?,?)',
+            [Config::BID_STRATEGY_UUID_DEFAULT, $bidStrategyUuidHexadecimal, $now, $now]
         );
 
         Schema::table(
@@ -92,7 +91,7 @@ class CreateBidStrategyTables extends Migration
         if (DB::isMySql()) {
             DB::statement('ALTER TABLE campaigns MODIFY bid_strategy_uuid VARBINARY(16) NOT NULL');
         }
-        DB::update('UPDATE campaigns SET bid_strategy_uuid=?', [$bidStrategyUuid]);
+        DB::update('UPDATE campaigns SET bid_strategy_uuid=?', [$bidStrategyUuidBinary]);
         DB::delete('DELETE FROM configs WHERE `key`=?', [Config::ADPAY_CAMPAIGN_EXPORT_TIME]);
     }
 
@@ -104,6 +103,7 @@ class CreateBidStrategyTables extends Migration
                 $table->dropColumn('bid_strategy_uuid');
             }
         );
+        DB::delete('DELETE FROM configs WHERE `key`=?', [Config::BID_STRATEGY_UUID_DEFAULT]);
         Schema::dropIfExists('bid_strategy_details');
         Schema::dropIfExists('bid_strategy');
     }
