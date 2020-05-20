@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use function count;
+use function sprintf;
 
 class AdPayCampaignExportCommand extends BaseCommand
 {
