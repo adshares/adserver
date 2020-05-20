@@ -263,9 +263,9 @@ final class CampaignsControllerTest extends TestCase
     public function budgetVsResponseWhenCreatingCampaign(): array
     {
         return [
-            [1e11, Response::HTTP_CREATED],
-            [0, Response::HTTP_CREATED],
-            [-11, Response::HTTP_BAD_REQUEST],
+            'positive budget' => [1e11, Response::HTTP_CREATED],
+            'no budget' => [0, Response::HTTP_CREATED],
+            'negative budget' => [-11, Response::HTTP_BAD_REQUEST],
         ];
     }
 

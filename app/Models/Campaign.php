@@ -133,6 +133,7 @@ class Campaign extends Model
         'classification_status',
         'classification_tags',
         'conversion_click',
+        'bid_strategy_uuid',
     ];
 
     protected $visible = [
