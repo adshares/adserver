@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Storing sites' information (page rank) in database
 - Setting panel placeholders with an e-mail notification
+### Fixed
+- Retry ads transaction after error while processing demand payments
 ### Removed
 - AdUser url from find.js
 

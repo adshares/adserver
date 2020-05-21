@@ -28,6 +28,7 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\Console\Exception\LogicException;
 
 class DemandProcessPayments extends BaseCommand
@@ -49,7 +50,7 @@ class DemandProcessPayments extends BaseCommand
         $this->info('Start command '.$this->getName());
 
         PaymentReport::fillMissingReports();
-        $lastAvailableTimestamp = $this->getLastAvailableTimestamp();
+        $lastAvailableTimestamp = self::getLastAvailableTimestamp();
         $isRecalculationNeeded = null !== $this->option('ids');
         $reports = $this->fetchPaymentReports();
 
@@ -108,18 +109,9 @@ class DemandProcessPayments extends BaseCommand
                 }
                 $report->setPrepared();
             }
-
-            if ($report->isPrepared()) {
-                try {
-                    Artisan::call(DemandSendPayments::COMMAND_SIGNATURE, [], $this->getOutput());
-                } catch (LogicException $logicException) {
-                    $this->warn(sprintf('Command %s is locked', DemandSendPayments::COMMAND_SIGNATURE));
-
-                    continue;
-                }
-                $report->setDone();
-            }
         }
+
+        $this->sendPayments($reports);
 
         try {
             Artisan::call(
@@ -172,16 +164,48 @@ class DemandProcessPayments extends BaseCommand
         return new DateTime('@'.$timestampFrom);
     }
 
-    private function getLastAvailableTimestamp(): int
+    private static function getLastAvailableTimestamp(): int
     {
-        return $this->getLastExportedEventTimestamp() - PaymentReport::MIN_INTERVAL;
+        return self::getLastExportedEventTimestamp() - PaymentReport::MIN_INTERVAL;
     }
 
-    private function getLastExportedEventTimestamp(): int
+    private static function getLastExportedEventTimestamp(): int
     {
         return min(
             Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_EVENT_TIME)->getTimestamp(),
             Config::fetchDateTime(Config::ADPAY_LAST_EXPORTED_CONVERSION_TIME)->getTimestamp()
         );
+    }
+
+    private function sendPayments(Collection $reports): void
+    {
+        $preparedReports = $reports->filter(function($report) {
+            /** @var PaymentReport $report */
+            return $report->isPrepared();
+        });
+
+        if ($preparedReports->count() === 0) {
+            return;
+        }
+
+        DB::beginTransaction();
+
+        /** @var PaymentReport $report */
+        foreach ($preparedReports as $report) {
+            $report->setDone();
+        }
+
+        try {
+            $sendStatus = Artisan::call(DemandSendPayments::COMMAND_SIGNATURE, [], $this->getOutput());
+
+            if (DemandSendPayments::STATUS_OK === $sendStatus) {
+                DB::commit();
+            } else {
+                DB::rollBack();
+            }
+        } catch (LogicException $logicException) {
+            DB::rollBack();
+            $this->warn(sprintf('Command %s is locked', DemandSendPayments::COMMAND_SIGNATURE));
+        }
     }
 }
