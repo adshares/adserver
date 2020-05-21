@@ -18,7 +18,6 @@
  */
 
 var serverOrigin = '{{ ORIGIN }}';
-var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
 
@@ -414,7 +413,7 @@ var getRandId = function(bytes) {
 }
 
 var aduserPixel = function (impressionId) {
-    if (!aduserOrigin) return;
+    if (!serverOrigin) return;
     var prefix = serverOrigin + '/supply/register?iid=';
     var url = prefix + impressionId;
 

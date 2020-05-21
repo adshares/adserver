@@ -31,13 +31,8 @@ class SiteValidator
     private const URL_LENGTH_MAX = 1024;
 
     private const URL_PATTERN = '~^
-        https?://                                                                        # protocol
-        (((?:[\_\.\pL\pN-]|%%[0-9A-Fa-f]{2})+:)?((?:[\_\.\pL\pN-]|%%[0-9A-Fa-f]{2})+)@)? # basic auth
-        ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)                         # a domain name
-        (:[0-9]+)?                                                                       # a port (optional)
-        (?:/ (?:[\pL\pN\-._\~!$&\'()*+,;=:@]|%%[0-9A-Fa-f]{2})* )*                       # a path
-        (?:\? (?:[\pL\pN\-._\~!$&\'\[\]()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?                # a query (optional)
-        (?:\# (?:[\pL\pN\-._\~!$&\'()*+,;=:@/?]|%%[0-9A-Fa-f]{2})* )?                    # a fragment (optional)
+        https?://                                                # protocol
+        ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
     $~ixu';
 
     /**
@@ -58,7 +53,7 @@ class SiteValidator
         }
 
         $value = (string)$value;
-        if ('' === $value && strlen($value) > self::URL_LENGTH_MAX) {
+        if ('' === $value || strlen($value) > self::URL_LENGTH_MAX) {
             return false;
         }
 
@@ -76,7 +71,7 @@ class SiteValidator
         }
 
         $value = (string)$value;
-        if ('' === $value && strlen($value) > self::DOMAIN_LENGTH_MAX) {
+        if ('' === $value || strlen($value) > self::DOMAIN_LENGTH_MAX) {
             return false;
         }
 
