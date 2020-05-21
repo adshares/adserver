@@ -74,7 +74,7 @@ class UniqueIdTest extends TestCase
 
         self::assertTrue($uniqueId1->equals($uniqueId1));
         self::assertTrue($uniqueId1->equals($uniqueId2));
-        self::assertTrue($uniqueId2->equals($uniqueId2));
+        self::assertTrue($uniqueId2->equals($uniqueId1));
     }
 
     /** @test */
@@ -84,6 +84,6 @@ class UniqueIdTest extends TestCase
         $uniqueId2 = UniqueIdentifierFactory::fromString('a355a5ac-09cb-45d6-9f75-5dd298b3b863');
 
         self::assertFalse($uniqueId1->equals($uniqueId2));
-        self::assertFalse($uniqueId2->equals($uniqueId2));
+        self::assertFalse($uniqueId2->equals($uniqueId1));
     }
 }
