@@ -179,10 +179,12 @@ class DemandProcessPayments extends BaseCommand
 
     private function sendPayments(Collection $reports): void
     {
-        $preparedReports = $reports->filter(function($report) {
-            /** @var PaymentReport $report */
-            return $report->isPrepared();
-        });
+        $preparedReports = $reports->filter(
+            function ($report) {
+                /** @var PaymentReport $report */
+                return $report->isPrepared();
+            }
+        );
 
         if ($preparedReports->count() === 0) {
             return;
