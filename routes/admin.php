@@ -45,4 +45,7 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::get('users', [UsersController::class, 'browse']);
     Route::get('publishers', [UsersController::class, 'publishers']);
+
+    Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
+    Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
 });

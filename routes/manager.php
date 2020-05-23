@@ -56,6 +56,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])
         ->name('app.campaigns.disable_classify');
 
+    Route::post('sites/domain/verify', [SitesController::class, 'verifyDomain']);
     Route::post('sites', [SitesController::class, 'create'])
         ->name('app.sites.add');
     Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])

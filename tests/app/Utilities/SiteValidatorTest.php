@@ -91,6 +91,7 @@ class SiteValidatorTest extends TestCase
             ['https://login@example.com'],
             ['https://login:password@example.com'],
             ['https://example.com:8080'],
+            ['https://.example.com'],
         ];
     }
 
@@ -119,6 +120,7 @@ class SiteValidatorTest extends TestCase
             ['https://example.com/path?query=true#fragment'],
             ['login@example.com'],
             ['login:password@example.com'],
+            ['.example.com'],
         ];
     }
 }

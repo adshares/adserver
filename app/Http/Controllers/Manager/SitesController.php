@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Jobs\AdUserRegisterUrl;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
@@ -41,6 +42,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
@@ -61,9 +63,8 @@ class SitesController extends Controller
         }
         $url = (string)$request->input('site.url');
         $domain = DomainReader::domain($url);
-        if (!SiteValidator::isDomainValid($domain)) {
-            throw new UnprocessableEntityHttpException('Invalid domain');
-        }
+        self::validateDomain($domain);
+
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
 
@@ -138,9 +139,7 @@ class SitesController extends Controller
             }
             $url = (string)$input['url'];
             $domain = DomainReader::domain($url);
-            if (!SiteValidator::isDomainValid($domain)) {
-                throw new UnprocessableEntityHttpException('Invalid domain');
-            }
+            self::validateDomain($domain);
 
             $input['domain'] = $domain;
             $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
@@ -367,6 +366,30 @@ class SitesController extends Controller
             if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
                 throw new UnprocessableEntityHttpException('Invalid size.');
             }
+        }
+    }
+
+    public function verifyDomain(Request $request): JsonResponse
+    {
+        $domain = $request->get('domain');
+        if (null === $domain) {
+            throw new BadRequestHttpException('Field `domain` is required.');
+        }
+        self::validateDomain($domain);
+
+        return self::json(
+            ['code' => Response::HTTP_OK, 'message' => 'Valid domain.'],
+            Response::HTTP_OK
+        );
+    }
+
+    private static function validateDomain(string $domain): void
+    {
+        if (!SiteValidator::isDomainValid($domain)) {
+            throw new UnprocessableEntityHttpException('Invalid domain.');
+        }
+        if (SitesRejectedDomain::isDomainRejected($domain)) {
+            throw new UnprocessableEntityHttpException('Domain rejected.');
         }
     }
 }

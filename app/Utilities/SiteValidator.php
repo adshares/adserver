@@ -25,6 +25,7 @@ class SiteValidator
     private const DOMAIN_LENGTH_MAX = 255;
 
     private const DOMAIN_PATTERN = '~^
+        [^\.]                                                    # do not allow domains starting with a dot
         ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?)
     $~ixu';
 
@@ -32,6 +33,7 @@ class SiteValidator
 
     private const URL_PATTERN = '~^
         https?://                                                # protocol
+        [^\.]                                                    # do not allow domains starting with a dot
         ([\pL\pN\pS\-\_\.])+(\.?([\pL\pN]|xn\-\-[\pL\pN-]+)+\.?) # a domain name
     $~ixu';
 
