@@ -149,7 +149,8 @@ class BidStrategyControllerTest extends TestCase
 
     public function testDbConnectionErrorWhileAddingBidStrategy(): void
     {
-        DB::shouldReceive('beginTransaction')->andThrow(new RuntimeException());
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException());
         DB::shouldReceive('rollback')->andReturnUndefined();
 
         $this->actingAs(factory(User::class)->create(), 'api');
@@ -160,7 +161,8 @@ class BidStrategyControllerTest extends TestCase
 
     public function testDbConnectionErrorWhileEditingBidStrategy(): void
     {
-        DB::shouldReceive('beginTransaction')->andThrow(new RuntimeException());
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException());
         DB::shouldReceive('rollback')->andReturnUndefined();
 
         /** @var User $user */

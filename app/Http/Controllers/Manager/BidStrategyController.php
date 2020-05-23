@@ -82,9 +82,9 @@ class BidStrategyController extends Controller
 
         $input = $request->toArray();
 
-        try {
-            DB::beginTransaction();
+        DB::beginTransaction();
 
+        try {
             $bidStrategy = BidStrategy::register($input['name'], $isAdmin ? BidStrategy::ADMINISTRATOR_ID : $user->id);
             $bidStrategyDetails = [];
             foreach ($input['details'] as $detail) {
@@ -129,9 +129,9 @@ class BidStrategyController extends Controller
 
         $input = $request->toArray();
 
-        try {
-            DB::beginTransaction();
+        DB::beginTransaction();
 
+        try {
             $bidStrategy->name = $input['name'];
             $bidStrategy->save();
             $bidStrategy->bidStrategyDetails()->delete();
