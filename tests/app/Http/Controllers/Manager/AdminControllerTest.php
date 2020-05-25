@@ -213,7 +213,7 @@ final class AdminControllerTest extends TestCase
 
     /**
      * @dataProvider invalidRejectedDomainsProvider
-     * 
+     *
      * @param array $data
      * @param int $expectedStatus
      */
