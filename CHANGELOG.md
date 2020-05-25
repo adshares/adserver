@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rejecting site's domains
 ### Changed
 - Do not allow site's domain starts with a dot
+### Fixed
+- Retry ads transaction after error while processing demand payments
 ### Removed
 - AdUser url from find.js
 
