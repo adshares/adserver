@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Storing sites' information (page rank) in database
 - Setting panel placeholders with an e-mail notification
 - Rejecting site's domains
+- Send an email notification once the banner was classified
 ### Changed
 - Do not allow site's domain starts with a dot
 ### Fixed
