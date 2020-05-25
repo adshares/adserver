@@ -515,7 +515,11 @@ JSON
         return [
             [['invalid' => 1], Response::HTTP_BAD_REQUEST, 'Field `domain` is required.'],
             [['domain' => 1], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
-            [['domain' => 'example.rejected.com'], Response::HTTP_UNPROCESSABLE_ENTITY, 'Domain rejected.'],
+            [
+                ['domain' => 'example.rejected.com'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+            ],
             [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
         ];
     }

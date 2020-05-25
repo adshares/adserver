@@ -389,7 +389,9 @@ class SitesController extends Controller
             throw new UnprocessableEntityHttpException('Invalid domain.');
         }
         if (SitesRejectedDomain::isDomainRejected($domain)) {
-            throw new UnprocessableEntityHttpException('Domain rejected.');
+            throw new UnprocessableEntityHttpException(
+                'The subdomain '.$domain.' is not supported. Please use your own domain.'
+            );
         }
     }
 }
