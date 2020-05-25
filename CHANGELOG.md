@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bid strategies
 - Storing sites' information (page rank) in database
 - Setting panel placeholders with an e-mail notification
+- Rejecting site's domains
+### Changed
+- Do not allow site's domain starts with a dot
 ### Removed
 - AdUser url from find.js
 

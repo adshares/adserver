@@ -18,9 +18,10 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Tests\TestCase;
@@ -29,13 +30,15 @@ use Adshares\Mock\Client\DummyAdUserClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 
-class SitesTest extends TestCase
+class SitesControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     private const URI = '/api/sites';
 
-    const SITE_STRUCTURE = [
+    private const URI_DOMAIN_VERIFY = '/api/sites/domain/validate';
+
+    private const SITE_STRUCTURE = [
         'id',
         'name',
         'domain',
@@ -56,13 +59,18 @@ class SitesTest extends TestCase
         'primaryLanguage',
     ];
 
-    const BASIC_SITE_STRUCTURE = [
+    private const BASIC_SITE_STRUCTURE = [
         'id',
         'name',
         'status',
         'primaryLanguage',
         'filtering',
         'adUnits',
+    ];
+
+    private const DOMAIN_VERIFY_STRUCTURE = [
+        'code',
+        'message',
     ];
 
     public function testEmptyDb()
@@ -483,6 +491,38 @@ JSON
             },
             $presets
         );
+    }
+
+    /**
+     * @dataProvider verifyDomainProvider
+     *
+     * @param array $data
+     * @param int $expectedStatus
+     * @param string $expectedMessage
+     */
+    public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        SitesRejectedDomain::upsert('rejected.com');
+
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
+        $response->assertStatus($expectedStatus)->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals($expectedMessage, $response->json('message'));
+    }
+
+    public function verifyDomainProvider(): array
+    {
+        return [
+            [['invalid' => 1], Response::HTTP_BAD_REQUEST, 'Field `domain` is required.'],
+            [['domain' => 1], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
+            [
+                ['domain' => 'example.rejected.com'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+            ],
+            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
+        ];
     }
 
     protected function setUp(): void

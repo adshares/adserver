@@ -48,4 +48,7 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('publishers', [UsersController::class, 'publishers']);
 
     Route::put('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'putBidStrategyUuidDefault']);
+
+    Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
+    Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
 });

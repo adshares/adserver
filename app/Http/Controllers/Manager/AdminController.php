@@ -31,7 +31,9 @@ use Adshares\Adserver\Http\Response\SettingsResponse;
 use Adshares\Adserver\Mail\PanelPlaceholdersChange;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\UserLedgerEntry;
+use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
@@ -39,8 +41,11 @@ use DateTimeImmutable;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -181,5 +186,51 @@ class AdminController extends Controller
         return self::json([
             'index_update_time' => Config::fetchDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME)->format(DateTime::ATOM),
         ]);
+    }
+
+    public function getRejectedDomains(): JsonResponse
+    {
+        return self::json(['domains' => SitesRejectedDomain::fetchAll()->pluck('domain')]);
+    }
+
+    public function putRejectedDomains(Request $request): JsonResponse
+    {
+        $domains = $request->get('domains');
+
+        if (!is_array($domains)) {
+            throw new BadRequestHttpException('Field `domains` must be an array');
+        }
+
+        foreach ($domains as $domain) {
+            if (!SiteValidator::isDomainValid($domain)) {
+                throw new UnprocessableEntityHttpException("Invalid domain ($domain)");
+            }
+        }
+
+        $databaseDomains = SitesRejectedDomain::fetchAll();
+        $databaseDomainsToDeleteIds = [];
+        /** @var SitesRejectedDomain $databaseDomain */
+        foreach ($databaseDomains as $databaseDomain) {
+            if (!in_array($databaseDomain->domain, $domains)) {
+                $databaseDomainsToDeleteIds[] = $databaseDomain->id;
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            SitesRejectedDomain::deleteByIds($databaseDomainsToDeleteIds);
+            foreach ($domains as $domain) {
+                SitesRejectedDomain::upsert((string)$domain);
+            }
+            DB::commit();
+        } catch (Exception $exception) {
+            DB::rollBack();
+            Log::info(sprintf('Domains cannot be rejected (%s).', $exception->getMessage()));
+
+            throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add domains');
+        }
+
+        return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }
 }
