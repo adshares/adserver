@@ -64,4 +64,26 @@ class UniqueIdTest extends TestCase
 
         UniqueIdentifierFactory::fromString('invalid uuid');
     }
+
+    /** @test */
+    public function equals(): void
+    {
+        $uuid = 'b355a5ac-09cb-45d6-9f75-5dd298b3b862';
+        $uniqueId1 = UniqueIdentifierFactory::fromString($uuid);
+        $uniqueId2 = UniqueIdentifierFactory::fromString($uuid);
+
+        self::assertTrue($uniqueId1->equals($uniqueId1));
+        self::assertTrue($uniqueId1->equals($uniqueId2));
+        self::assertTrue($uniqueId2->equals($uniqueId1));
+    }
+
+    /** @test */
+    public function notEquals(): void
+    {
+        $uniqueId1 = UniqueIdentifierFactory::fromString('b355a5ac-09cb-45d6-9f75-5dd298b3b862');
+        $uniqueId2 = UniqueIdentifierFactory::fromString('a355a5ac-09cb-45d6-9f75-5dd298b3b863');
+
+        self::assertFalse($uniqueId1->equals($uniqueId2));
+        self::assertFalse($uniqueId2->equals($uniqueId1));
+    }
 }

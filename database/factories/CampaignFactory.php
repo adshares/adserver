@@ -34,5 +34,6 @@ $factory->define(Campaign::class, function (Faker $faker) {
         'targeting_requires' => [],
         'classification_status' => 0,
         'classification_tags' => null,
+        'bid_strategy_uuid' => '00000000000000000000000000000000',
     ];
 });

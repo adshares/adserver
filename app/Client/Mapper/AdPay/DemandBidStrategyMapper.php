@@ -20,29 +20,23 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Demand\Application\Service;
+namespace Adshares\Adserver\Client\Mapper\AdPay;
 
-use Adshares\Demand\Application\Dto\AdPayEvents;
+use Adshares\Adserver\Models\BidStrategy;
+use Illuminate\Support\Collection;
 
-interface AdPay
+class DemandBidStrategyMapper
 {
-    public function updateBigStrategies(array $bidStrategies): void;
-
-    public function updateCampaign(array $campaigns): void;
-
-    public function deleteCampaign(array $campaignIds): void;
-
-    public function addViews(AdPayEvents $events): void;
-
-    public function addClicks(AdPayEvents $events): void;
-
-    public function addConversions(AdPayEvents $events): void;
-
-    public function getPayments(
-        int $timestamp,
-        bool $recalculate = false,
-        bool $force = false,
-        ?int $limit = null,
-        ?int $offset = null
-    ): array;
+    public static function mapBidStrategyCollectionToArray(Collection $bidStrategies): array
+    {
+        return $bidStrategies->map(
+            function (BidStrategy $bidStrategy) {
+                return [
+                    'id' => $bidStrategy->uuid,
+                    'name' => $bidStrategy->name,
+                    'details' => $bidStrategy->bidStrategyDetails->toArray(),
+                ];
+            }
+        )->toArray();
+    }
 }

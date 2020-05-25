@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Utilities;
 
 use Adshares\Adserver\Utilities\AdsUtils;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 final class AdsUtilsTest extends TestCase
 {
@@ -95,5 +96,77 @@ final class AdsUtilsTest extends TestCase
             ['0001-00000000-XXXX', '0002-00000000-XXXX', 860402936314359351, 860402936314358],
             ['0001-00000000-XXXX', '0002-00000000-XXXX', 1505185149556105113, 1505185149556104],
         ];
+    }
+
+    public function testEncodeTxId(): void
+    {
+        $input = '00010000F01F0001';
+        $expected = '0001:0000F01F:0001';
+
+        self::assertEquals($expected, AdsUtils::encodeTxId($input));
+    }
+
+    public function testDecodeTxId(): void
+    {
+        $input = '0001:0000F01F:0001';
+        $expected = '00010000F01F0001';
+
+        self::assertEquals($expected, AdsUtils::decodeTxId($input));
+    }
+
+    public function testDecodeTxIdInvalid(): void
+    {
+        $input = 'invalid';
+
+        self::assertNull(AdsUtils::decodeTxId($input));
+    }
+
+    public function testDecodeAddress(): void
+    {
+        $input = '0001-00000028-3E05';
+        $expected = '000100000028';
+
+        self::assertEquals($expected, AdsUtils::decodeAddress($input));
+    }
+
+    public function testDecodeAddressInvalid(): void
+    {
+        $input = 'invalid';
+
+        self::assertNull(AdsUtils::decodeAddress($input));
+    }
+
+    public function testNormalizeAddress(): void
+    {
+        $input = '0001000000283E05';
+        $expected = '0001-00000028-3E05';
+
+        self::assertEquals($expected, AdsUtils::normalizeAddress($input));
+    }
+
+    public function testNormalizeAddressInvalid(): void
+    {
+        $input = 'invalid';
+
+        $this->expectException(RuntimeException::class);
+
+        AdsUtils::normalizeAddress($input);
+    }
+
+    public function testNormalizeTxid(): void
+    {
+        $input = '00010000F01F0001';
+        $expected = '0001:0000F01F:0001';
+
+        self::assertEquals($expected, AdsUtils::normalizeTxid($input));
+    }
+
+    public function testNormalizeTxidInvalid(): void
+    {
+        $input = 'invalid';
+
+        $this->expectException(RuntimeException::class);
+
+        AdsUtils::normalizeTxid($input);
     }
 }

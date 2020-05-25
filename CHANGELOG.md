@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Bid strategies
 - Storing sites' information (page rank) in database
 - Setting panel placeholders with an e-mail notification
 ### Removed

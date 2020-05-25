@@ -46,6 +46,10 @@ class Config extends Model
 
     public const LICENCE_ACCOUNT = 'licence-account';
 
+    public const BID_STRATEGY_UUID_DEFAULT = 'bid-strategy-uuid-default';
+
+    public const ADPAY_BID_STRATEGY_EXPORT_TIME = 'adpay-bid-strategy-export';
+
     public const ADPAY_CAMPAIGN_EXPORT_TIME = 'adpay-campaign-export';
 
     public const ADPAY_LAST_EXPORTED_CONVERSION_TIME = 'adpay-last-conversion-time';
@@ -186,7 +190,7 @@ class Config extends Model
         return (string)self::fetchByKeyOrFail($key)->value;
     }
 
-    private static function upsertByKey(string $key, string $value): void
+    public static function upsertByKey(string $key, string $value): void
     {
         $config = self::fetchByKey($key);
 

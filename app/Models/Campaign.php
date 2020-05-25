@@ -63,7 +63,10 @@ use function hex2bin;
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property string bid_strategy_uuid
+ * @property array basic_information
  * @property array classifications
+ * @property array targeting
  * @method static Builder where(string $string, int $campaignId)
  * @method static Builder groupBy(string...$groups)
  * @mixin Builder
@@ -130,6 +133,7 @@ class Campaign extends Model
         'classification_status',
         'classification_tags',
         'conversion_click',
+        'bid_strategy_uuid',
     ];
 
     protected $visible = [
@@ -147,12 +151,14 @@ class Campaign extends Model
         'secret',
         'conversion_click',
         'conversion_click_link',
+        'bid_strategy_uuid',
     ];
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
+        'bid_strategy_uuid' => 'BinHex',
     ];
 
     protected $appends = [
