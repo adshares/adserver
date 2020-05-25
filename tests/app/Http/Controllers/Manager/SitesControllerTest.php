@@ -36,7 +36,7 @@ class SitesControllerTest extends TestCase
 
     private const URI = '/api/sites';
 
-    private const URI_DOMAIN_VERIFY = '/api/sites/domain/verify';
+    private const URI_DOMAIN_VERIFY = '/api/sites/domain/validate';
 
     private const SITE_STRUCTURE = [
         'id',
@@ -520,6 +520,7 @@ JSON
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 'The subdomain example.rejected.com is not supported. Please use your own domain.',
             ],
+            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
             [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
         ];
     }

@@ -71,7 +71,16 @@ class SitesRejectedDomain extends Model
     public static function isDomainRejected(string $domain): bool
     {
         $domainParts = explode('.', $domain);
+        if (!$domainParts) {
+            return true;
+        }
         $domainPartsCount = count($domainParts);
+        if ($domainPartsCount < 2) {
+            return false;
+        }
+
+        array_shift($domainParts);
+        --$domainPartsCount;
 
         $domains = [];
         for ($i = 0; $i < $domainPartsCount; $i++) {
