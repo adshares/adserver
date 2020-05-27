@@ -20,6 +20,7 @@
 
 declare(strict_types = 1);
 
+use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
@@ -33,6 +34,11 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::get('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'getBidStrategyUuidDefault']);
+    Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
+    Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
+    Route::patch('campaigns/bid-strategy/{bid_strategy_public_id}', [BidStrategyController::class, 'patchBidStrategy']);
+
     Route::get('campaigns', [CampaignsController::class, 'browse'])
         ->name('app.campaigns.browse');
     Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])
@@ -56,6 +62,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])
         ->name('app.campaigns.disable_classify');
 
+    Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
     Route::post('sites', [SitesController::class, 'create'])
         ->name('app.sites.add');
     Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])

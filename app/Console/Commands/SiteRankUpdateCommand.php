@@ -40,6 +40,8 @@ class SiteRankUpdateCommand extends BaseCommand
 {
     private const CHUNK_SIZE = 200;
 
+    private const EMAIL_NOTIFICATION_RANK_MINIMAL = 0.1;
+
     protected $signature = 'ops:supply:site-rank:update {--A|all : Update all sites}';
 
     protected $description = "Updates sites' rank";
@@ -144,6 +146,7 @@ class SiteRankUpdateCommand extends BaseCommand
             if ($pageRank->getRank() !== $site->rank || $pageRank->getInfo() !== $site->info) {
                 if (AdUser::PAGE_INFO_UNKNOWN === $site->info
                     && AdUser::PAGE_INFO_UNKNOWN !== $pageRank->getInfo()
+                    && $pageRank->getRank() >= self::EMAIL_NOTIFICATION_RANK_MINIMAL
                     && $site->created_at > $this->notificationDateTimeThreshold) {
                     $this->mails[$site->user_id][] = [
                         'name' => $site->name,
@@ -159,6 +162,10 @@ class SiteRankUpdateCommand extends BaseCommand
 
     private function sendEmails(): void
     {
+        if (empty($this->mails)) {
+            return;
+        }
+
         $userIds = array_keys($this->mails);
         $users = User::fetchByIds($userIds);
 

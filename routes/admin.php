@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 use Adshares\Adserver\Http\Controllers\Manager\AdminController;
 use Adshares\Adserver\Http\Controllers\Manager\AuthController;
+use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\UsersController;
 use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
@@ -45,4 +46,9 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
 
     Route::get('users', [UsersController::class, 'browse']);
     Route::get('publishers', [UsersController::class, 'publishers']);
+
+    Route::put('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'putBidStrategyUuidDefault']);
+
+    Route::get('rejected-domains', [AdminController::class, 'getRejectedDomains']);
+    Route::put('rejected-domains', [AdminController::class, 'putRejectedDomains']);
 });

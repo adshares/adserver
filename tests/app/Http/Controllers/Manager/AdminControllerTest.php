@@ -18,13 +18,16 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\PanelPlaceholder;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Exception\RuntimeException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use function json_decode;
 
 final class AdminControllerTest extends TestCase
@@ -37,8 +40,14 @@ final class AdminControllerTest extends TestCase
 
     private const URI_SETTINGS = '/admin/settings';
 
+    private const URI_REJECTED_DOMAINS = '/admin/rejected-domains';
+
     private const REGULATION_RESPONSE_STRUCTURE = [
         'content',
+    ];
+
+    private const REJECTED_DOMAINS_STRUCTURE = [
+        'domains',
     ];
 
     public function testTermsGetWhileEmpty(): void
@@ -182,5 +191,90 @@ final class AdminControllerTest extends TestCase
         $response = $this->get(self::URI_SETTINGS);
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson($updatedValues);
+    }
+
+    public function testRejectedDomainsGet(): void
+    {
+        $domains = ['example1.com', 'example2.com'];
+        foreach ($domains as $domain) {
+            SitesRejectedDomain::upsert($domain);
+        }
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->getJson(self::URI_REJECTED_DOMAINS);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(self::REJECTED_DOMAINS_STRUCTURE);
+
+        $responseDomains = $response->json(['domains']);
+
+        self::assertCount(2, $responseDomains);
+        self::assertEquals($domains, $responseDomains);
+    }
+
+    /**
+     * @dataProvider invalidRejectedDomainsProvider
+     *
+     * @param array $data
+     * @param int $expectedStatus
+     */
+    public function testRejectedDomainsPutInvalid(array $data, int $expectedStatus): void
+    {
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->putJson(self::URI_REJECTED_DOMAINS, $data);
+        $response->assertStatus($expectedStatus);
+    }
+    
+    public function invalidRejectedDomainsProvider(): array
+    {
+        return [
+            [
+                [],
+                Response::HTTP_BAD_REQUEST,
+            ],
+            [
+                ['domains' => 'example.com'],
+                Response::HTTP_BAD_REQUEST,
+            ],
+            [
+                ['domains' => ['']],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            [
+                ['domains' => [1]],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+        ];
+    }
+
+    public function testRejectedDomainsPutDbConnectionError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => []]);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testRejectedDomainsPutValid(): void
+    {
+        $initDomains = ['example1.com', 'example2.com'];
+        $inputDomains = ['example2.com', 'example3.com'];
+        foreach ($initDomains as $domain) {
+            SitesRejectedDomain::upsert($domain);
+        }
+        $this->actingAs(factory(User::class)->create(['is_admin' => 1]), 'api');
+
+        $response = $this->putJson(self::URI_REJECTED_DOMAINS, ['domains' => $inputDomains]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $databaseDomains = SitesRejectedDomain::all();
+        self::assertCount(2, $databaseDomains);
+        self::assertEquals($inputDomains, $databaseDomains->pluck('domain')->all());
+        $deletedDomains = SitesRejectedDomain::onlyTrashed()->get();
+        self::assertCount(1, $deletedDomains);
+        self::assertEquals('example1.com', $deletedDomains->first()->domain);
     }
 }

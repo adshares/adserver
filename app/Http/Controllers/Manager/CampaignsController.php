@@ -26,6 +26,8 @@ use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
+use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
 use Adshares\Adserver\Repository\CampaignRepository;
@@ -124,7 +126,8 @@ class CampaignsController extends Controller
     {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
-        } catch (ExchangeRateNotAvailableException $exception) {
+            $bidStrategyUuid = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
+        } catch (ExchangeRateNotAvailableException|ConfigException $exception) {
             return self::json([], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
@@ -135,6 +138,7 @@ class CampaignsController extends Controller
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
         $input['user_id'] = Auth::user()->id;
+        $input['bid_strategy_uuid'] = $bidStrategyUuid;
 
         $campaign = new Campaign($input);
 
