@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\Requests\BidStrategyRequest;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\User;
 use Exception;
@@ -46,6 +47,7 @@ class BidStrategyController extends Controller
 
     public function putBidStrategyUuidDefault(Request $request): JsonResponse
     {
+        $previousBidStrategyPublicId = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
         $bidStrategyPublicId = $request->input('uuid');
         if (!Utils::isUuidValid($bidStrategyPublicId)) {
             throw new UnprocessableEntityHttpException(
@@ -64,7 +66,19 @@ class BidStrategyController extends Controller
             );
         }
 
-        Config::upsertByKey(Config::BID_STRATEGY_UUID_DEFAULT, $bidStrategyPublicId);
+        if ($bidStrategyPublicId != $previousBidStrategyPublicId) {
+            DB::beginTransaction();
+            try {
+                Config::upsertByKey(Config::BID_STRATEGY_UUID_DEFAULT, $bidStrategyPublicId);
+                Campaign::updateBidStrategyUuid($bidStrategyPublicId, $previousBidStrategyPublicId);
+                DB::commit();
+            } catch (Exception $exception) {
+                DB::rollBack();
+                Log::debug(sprintf('Default BidStrategy could not be changed (%s).', $exception->getMessage()));
+
+                throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot change default bid strategy');
+            }
+        }
 
         return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }

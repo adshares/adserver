@@ -406,6 +406,14 @@ class Campaign extends Model
         return true;
     }
 
+    public static function updateBidStrategyUuid(string $newBidStrategyUuid, string $previousBidStrategyUuid): void
+    {
+        DB::update(
+            'UPDATE campaigns SET bid_strategy_uuid=? WHERE bid_strategy_uuid=?',
+            [hex2bin($newBidStrategyUuid), hex2bin($previousBidStrategyUuid)]
+        );
+    }
+
     private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
         if ($this->time_end !== null
