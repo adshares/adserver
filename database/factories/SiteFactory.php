@@ -28,5 +28,7 @@ $factory->define(Site::class, function (Faker $faker) {
         'url' => 'https://example.com',
         'primary_language' => $faker->languageCode,
         'status' => Site::STATUS_ACTIVE,
+        'rank' => 1,
+        'info' => 'ok',
     ];
 });

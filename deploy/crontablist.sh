@@ -68,6 +68,10 @@ echo -n "50 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:update --all"
 echo ""
 
+echo -n "54 18 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:reassess"
+echo ""
+
 echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""

@@ -47,6 +47,7 @@ use function in_array;
  * @property string url
  * @property float rank
  * @property string info
+ * @property Carbon reassess_available_at
  * @property int status
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
@@ -118,6 +119,7 @@ class Site extends Model
         'exclude_unclassified',
         'rank',
         'info',
+        'reassess_available_at',
     ];
 
     protected $appends = [
@@ -128,6 +130,10 @@ class Site extends Model
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
+    ];
+
+    protected $dates = [
+        'reassess_available_at',
     ];
 
     protected $dispatchesEvents = [
