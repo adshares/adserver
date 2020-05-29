@@ -186,7 +186,7 @@ class SiteRankReassessRequestCommandTest extends TestCase
      * @dataProvider adUserExceptionProvider
      *
      * @param Exception $exception
-     */    
+     */
     public function testAdUserException(Exception $exception): void
     {
         self::insertStatsForTooManyViews();
@@ -261,7 +261,7 @@ class SiteRankReassessRequestCommandTest extends TestCase
             'url' => 'https://example.com',
             'views' => 100000,
         ];
-        DB::shouldReceive('select')->andReturns([$row],[],[]);
+        DB::shouldReceive('select')->andReturns([$row], [], []);
         DB::shouldReceive('beginTransaction')->andReturnUndefined();
         DB::shouldReceive('update')->andThrow(new RuntimeException('test-exception'));
         DB::shouldReceive('commit')->never();

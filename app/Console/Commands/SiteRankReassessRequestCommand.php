@@ -181,7 +181,13 @@ SQL;
                 }
 
                 if (!isset($result['status'])) {
-                    $this->warn(sprintf('Missing `status` for an URL (%s) from site id (%d)', $urls[$index]['url'], $ids[$index]));
+                    $this->warn(
+                        sprintf(
+                            'Missing `status` for an URL (%s) from site id (%d)',
+                            $urls[$index]['url'],
+                            $ids[$index]
+                        )
+                    );
 
                     continue;
                 }
@@ -189,13 +195,21 @@ SQL;
                 $status = $result['status'];
 
                 if (AdUser::REASSESSMENT_STATE_INVALID_URL === $status) {
-                    $this->warn(sprintf('Invalid URL error for an URL (%s) from site id (%d)', $urls[$index]['url'], $ids[$index]));
+                    $this->warn(
+                        sprintf(
+                            'Invalid URL error for an URL (%s) from site id (%d)',
+                            $urls[$index]['url'],
+                            $ids[$index]
+                        )
+                    );
 
                     continue;
                 }
 
                 if (AdUser::REASSESSMENT_STATE_NOT_REGISTERED === $status) {
-                    $this->warn(sprintf('Not registered URL (%s) from site id (%d)', $urls[$index]['url'], $ids[$index]));
+                    $this->warn(
+                        sprintf('Not registered URL (%s) from site id (%d)', $urls[$index]['url'], $ids[$index])
+                    );
 
                     continue;
                 }
@@ -209,8 +223,10 @@ SQL;
                     ]
                 )) {
                     if (isset($result['reassess_available_at'])) {
-                        $date =
-                            DateTimeImmutable::createFromFormat(DateTimeImmutable::ATOM, $result['reassess_available_at']);
+                        $date = DateTimeImmutable::createFromFormat(
+                            DateTimeImmutable::ATOM,
+                            $result['reassess_available_at']
+                        );
                         if (!$date) {
                             $this->warn(
                                 sprintf(
@@ -227,13 +243,18 @@ SQL;
                         $date = self::getNextReassessmentDate();
                     }
 
-                    DB::update('UPDATE sites SET reassess_available_at=? WHERE id=?',[$date, $ids[$index]]);
+                    DB::update('UPDATE sites SET reassess_available_at=? WHERE id=?', [$date, $ids[$index]]);
 
                     continue;
                 }
 
                 $this->warn(
-                    sprintf('Unknown `status` (%s) for an URL (%s) from site id (%d)', $status, $urls[$index]['url'], $id)
+                    sprintf(
+                        'Unknown `status` (%s) for an URL (%s) from site id (%d)',
+                        $status,
+                        $urls[$index]['url'],
+                        $ids[$index]
+                    )
                 );
             }
             DB::commit();
