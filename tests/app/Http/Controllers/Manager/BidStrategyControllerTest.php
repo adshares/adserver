@@ -301,4 +301,20 @@ class BidStrategyControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
+
+    public function testPutDefaultUuidDbConnectionError(): void
+    {
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException());
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        /** @var User $user */
+        $user = factory(User::class)->create(['is_admin' => 1]);
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', BidStrategy::ADMINISTRATOR_ID);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
 }
