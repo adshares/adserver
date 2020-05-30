@@ -49,6 +49,12 @@ interface AdUser
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
     public const PAGE_INFO_NOT_WORKING = 'not-working';
 
+    public const REASSESSMENT_STATE_INVALID_URL = 'invalid URL';
+    public const REASSESSMENT_STATE_PROCESSING = 'processing';
+    public const REASSESSMENT_STATE_LOCKED = 'locked';
+    public const REASSESSMENT_STATE_ACCEPTED = 'accepted';
+    public const REASSESSMENT_STATE_NOT_REGISTERED = 'not registered';
+
     public const PAGE_INFOS = [
         AdUser::PAGE_INFO_OK,
         AdUser::PAGE_INFO_UNKNOWN,
@@ -68,4 +74,6 @@ interface AdUser
     public function fetchTargetingOptions(): Taxonomy;
 
     public function getUserContext(ImpressionContext $context): UserContext;
+
+    public function reassessPageRankBatch(array $urls): array;
 }

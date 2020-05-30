@@ -86,8 +86,11 @@ final class GuzzleAdUserClient implements AdUser
 
     public function fetchPageRankBatch(array $urls): array
     {
-        $path = self::API_PATH.'/page-rank';
+        return $this->postUrls(self::API_PATH.'/page-rank', $urls);
+    }
 
+    private function postUrls(string $path, array $urls): array
+    {
         try {
             $response = $this->client->post(
                 $path,
@@ -169,5 +172,10 @@ final class GuzzleAdUserClient implements AdUser
                 Utils::hexUuidFromBase64UrlWithChecksum($partialContext->trackingId())
             );
         }
+    }
+
+    public function reassessPageRankBatch(array $urls): array
+    {
+        return $this->postUrls(self::API_PATH.'/reassessment', $urls);
     }
 }

@@ -67,4 +67,17 @@ final class DummyAdUserClient implements AdUser
     {
         throw new RuntimeException('Method getUserContext() not implemented');
     }
+
+    public function reassessPageRankBatch(array $urls): array
+    {
+        $result = [];
+
+        foreach ($urls as $id => $urlData) {
+            $result[$id] = [
+                'status' => AdUser::REASSESSMENT_STATE_ACCEPTED,
+            ];
+        }
+
+        return $result;
+    }
 }

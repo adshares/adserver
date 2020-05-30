@@ -40,6 +40,18 @@ final class ClassifierExternalKeywordsSerializerTest extends TestCase
         $this->assertEquals($expectedSerialized, $serialized);
     }
 
+    public function testSerializationEmpty(): void
+    {
+        $expectedSerialized = '{"category":[],"type":"image"}';
+        $keywords = [
+            'category' => [],
+            'type' => 'image',
+        ];
+        $serialized = ClassifierExternalKeywordsSerializer::serialize($keywords);
+
+        $this->assertEquals($expectedSerialized, $serialized);
+    }
+
     public function keywordsProvider(): array
     {
         return [
