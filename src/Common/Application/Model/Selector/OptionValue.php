@@ -32,13 +32,17 @@ final class OptionValue
     /** @var string */
     private $value;
 
+    /** @var array */
+    private $options;
+
     /** @var string|null */
     private $description;
 
-    public function __construct(string $label, string $value, ?string $description = null)
+    public function __construct(string $label, string $value, array $options = [], ?string $description = null)
     {
         $this->label = $label;
         $this->value = $value;
+        $this->options = $options;
         $this->description = $description;
     }
 
@@ -48,6 +52,13 @@ final class OptionValue
             'label' => $this->label,
             'value' => str_replace('-', '_', $this->value),
         ];
+
+        if ($this->options) {
+            foreach ($this->options as $option) {
+                /** @var $option OptionValue */
+                $array['values'][] = $option->toArray();
+            }
+        }
 
         if ($this->description) {
             $array['description'] = $this->description;
