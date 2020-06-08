@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Jobs\AdUserRegisterUrl;
@@ -33,6 +34,7 @@ use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -47,11 +49,17 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
+    /** @var ConfigurationRepository */
+    private $configurationRepository;
+
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
 
-    public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
-    {
+    public function __construct(
+        ConfigurationRepository $configurationRepository,
+        SiteClassificationUpdater $siteClassificationUpdater
+    ) {
+        $this->configurationRepository = $configurationRepository;
         $this->siteClassificationUpdater = $siteClassificationUpdater;
     }
 
@@ -61,6 +69,7 @@ class SitesController extends Controller
         if (!SiteValidator::isUrlValid($request->input('site.url'))) {
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
+        $categories = $this->validateAndProcessCategories($request->input('site.categories'));
         $url = (string)$request->input('site.url');
         $domain = DomainReader::domain($url);
         self::validateDomain($domain);
@@ -69,6 +78,7 @@ class SitesController extends Controller
         $this->validateInputZones($inputZones);
 
         $input = $request->input('site');
+        $input['categories'] = $categories;
         $input['domain'] = $domain;
 
         DB::beginTransaction();
@@ -393,5 +403,24 @@ class SitesController extends Controller
                 'The subdomain '.$domain.' is not supported. Please use your own domain.'
             );
         }
+    }
+
+    private function validateAndProcessCategories($categories): array
+    {
+        if (!$categories) {
+            throw new UnprocessableEntityHttpException('Field `categories` is required.');
+        }
+        if (!is_array($categories)) {
+            throw new UnprocessableEntityHttpException('Field `categories` must be an array.');
+        }
+
+        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+        $targeting = $targetingProcessor->processTargeting(['site' => ['category' => $categories]]);
+
+        if (!$targeting) {
+            throw new UnprocessableEntityHttpException('Field categories[] must match targeting taxonomy');
+        }
+
+        return $targeting['site']['category'];
     }
 }
