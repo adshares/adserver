@@ -102,13 +102,17 @@ class SiteRankUpdateCommand extends BaseCommand
     {
         $urls = [];
         foreach ($sites as $index => $site) {
+            /** @var Site $site */
             $url = $site->url;
+            $categories = $site->categories;
 
-            /** @var $site Site */
-            if (!$url) {
+            if (!$url || !$categories) {
                 continue;
             }
-            $urls[$index] = $url;
+            $urls[$index] = [
+                'url' => $url,
+                'categories' => $categories,
+            ];
         }
 
         try {
