@@ -19,6 +19,7 @@
  */
 
 use Adshares\Adserver\Models\Site;
+use Adshares\Common\Application\Service\AdUser;
 use Faker\Generator as Faker;
 
 $factory->define(Site::class, function (Faker $faker) {
@@ -29,6 +30,7 @@ $factory->define(Site::class, function (Faker $faker) {
         'primary_language' => $faker->languageCode,
         'status' => Site::STATUS_ACTIVE,
         'rank' => 1,
-        'info' => 'ok',
+        'info' => AdUser::PAGE_INFO_OK,
+        'categories' => ['unknown'],
     ];
 });

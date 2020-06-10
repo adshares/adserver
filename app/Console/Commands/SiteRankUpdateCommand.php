@@ -115,6 +115,10 @@ class SiteRankUpdateCommand extends BaseCommand
             ];
         }
 
+        if (empty($urls)) {
+            return;
+        }
+
         try {
             $results = $this->adUser->fetchPageRankBatch($urls);
         } catch (UnexpectedClientResponseException $unexpectedClientResponseException) {
@@ -130,6 +134,12 @@ class SiteRankUpdateCommand extends BaseCommand
         DB::beginTransaction();
         foreach ($results as $index => $result) {
             $site = $sites->get($index);
+            if (null === $site) {
+                $this->warn(sprintf('Invalid index (%s) in response', $index));
+
+                continue;
+            }
+
             if (isset($result['error'])) {
                 $this->warn(
                     sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error'])
