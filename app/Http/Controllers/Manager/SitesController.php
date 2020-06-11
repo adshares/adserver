@@ -282,19 +282,6 @@ class SitesController extends Controller
         return self::json($sites);
     }
 
-    public function count(): JsonResponse
-    {
-        $siteCount = [
-            'totalEarnings' => 0,
-            'totalClicks' => 0,
-            'totalImpressions' => 0,
-            'averagePageRPM' => 0,
-            'averageCPC' => 0,
-        ];
-
-        return self::json($siteCount, 200);
-    }
-
     public function changeStatus(Site $site, Request $request): JsonResponse
     {
         if (!$request->has('site.status')) {
@@ -323,28 +310,6 @@ class SitesController extends Controller
     public function readSiteRank(Site $site): JsonResponse
     {
         return self::json(new PageRank($site->rank, $site->info));
-    }
-
-    /**
-     * @deprecated This function is deprecated and will be removed in the future.
-     * Use sitesCodes instead.
-     * @see sitesCodes replacement for this function
-     *
-     * @param Site $site
-     * @param GetSiteCode $request
-     *
-     * @return JsonResponse
-     */
-    public function sitesCode(Site $site, GetSiteCode $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = Auth::user();
-
-        if (!$user->isEmailConfirmed) {
-            return self::json(['code' => 'Confirm e-mail to get code']);
-        }
-
-        return self::json(['code' => SiteCodeGenerator::generateAsSingleString($site, $request->toConfig())]);
     }
 
     public function sitesCodes(Site $site, GetSiteCode $request): JsonResponse

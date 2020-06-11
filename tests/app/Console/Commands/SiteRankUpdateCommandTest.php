@@ -55,7 +55,8 @@ class SiteRankUpdateCommandTest extends TestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
     }
 
-    public function testUpdateSitesInVerification(): void {
+    public function testUpdateSitesInVerification(): void
+    {
         $siteInVerification = factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
         factory(Site::class)->create();
 
@@ -84,7 +85,8 @@ class SiteRankUpdateCommandTest extends TestCase
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
     }
 
-    public function testUpdateSitesAll(): void {
+    public function testUpdateSitesAll(): void
+    {
         $siteInVerification = factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN]);
         $siteVerified = factory(Site::class)->create();
 
@@ -213,25 +215,4 @@ class SiteRankUpdateCommandTest extends TestCase
         self::assertEquals(1, $dbSite->rank);
         self::assertEquals(AdUser::PAGE_INFO_OK, $dbSite->info);
     }
-//    public function testDbConnectionError(): void
-//    {
-//        $row = (object)[
-//            'id' => '1',
-//            'url' => 'https://example.com',
-//            'views' => 100000,
-//        ];
-//        DB::shouldReceive('select')->andReturns([$row], [], []);
-//        DB::shouldReceive('beginTransaction')->andReturnUndefined();
-//        DB::shouldReceive('update')->andThrow(new RuntimeException('test-exception'));
-//        DB::shouldReceive('commit')->never();
-//        DB::shouldReceive('rollback')->andReturnUndefined();
-//
-//        $adUser = $this->createMock(AdUser::class);
-//        $adUser->expects(self::once())
-//            ->method('reassessPageRankBatch')
-//            ->willReturn([['status' => AdUser::REASSESSMENT_STATE_ACCEPTED]]);
-//        $this->instance(AdUser::class, $adUser);
-//
-//        $this->artisan(self::SIGNATURE)->assertExitCode(0);
-//    }
 }
