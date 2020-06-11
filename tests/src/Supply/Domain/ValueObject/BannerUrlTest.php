@@ -54,6 +54,7 @@ final class BannerUrlTest extends TestCase
     {
         return [
             ['http://example.com', 'http://example.com', 'http://example.com', self::VALID],
+            ['//example.com', '//example.com', '//example.com', self::VALID],
             ['http:/example.com', 'http://example.com', 'http://example.com', self::INVALID],
             ['http://example.com', 'http/example.com', 'http://example.com', self::INVALID],
             ['http://example.com', 'http://example.com', 'http/example.com', self::INVALID],

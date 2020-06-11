@@ -26,11 +26,10 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Tests\TestCase;
-use Adshares\Common\Application\Factory\TaxonomyFactory;
-use Adshares\Common\Application\Model\Selector;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
@@ -762,20 +761,6 @@ JSON
             }
         );
 
-        $this->instance(ConfigurationRepository::class, $this->createConfigurationRepositoryMock());
-    }
-
-    private function createConfigurationRepositoryMock(): ConfigurationRepository
-    {
-        $path = base_path('tests/mock/targeting_schema_v3.json');
-        $var = file_get_contents($path);
-        $decodedTaxonomy = json_decode($var, true);
-        $taxonomy = TaxonomyFactory::fromArray($decodedTaxonomy);
-        $options = Selector::fromTaxonomy($taxonomy);
-
-        $mock = $this->createMock(ConfigurationRepository::class);
-        $mock->method('fetchTargetingOptions')->willReturn($options);
-
-        return $mock;
+        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

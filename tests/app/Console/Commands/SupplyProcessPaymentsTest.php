@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\NetworkCase;
@@ -45,6 +46,8 @@ class SupplyProcessPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const SIGNATURE = 'ops:supply:payments:process';
+
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
 
     private const TX_ID_SEND_ONE = '0001:00000083:0001';
@@ -65,7 +68,7 @@ class SupplyProcessPaymentsTest extends TestCase
         $adsPayment->tx_time = $createdAt->modify('-8 minutes');
         $adsPayment->save();
 
-        $this->artisan('ops:supply:payments:process')->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_RESERVED, AdsPayment::all()->first()->status);
     }
@@ -80,7 +83,7 @@ class SupplyProcessPaymentsTest extends TestCase
         $adsPayment->tx_time = new DateTimeImmutable('-8 minutes');
         $adsPayment->save();
 
-        $this->artisan('ops:supply:payments:process')->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
@@ -111,7 +114,7 @@ class SupplyProcessPaymentsTest extends TestCase
             }
         );
 
-        $this->artisan('ops:supply:payments:process')->assertExitCode(0);
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
     }
@@ -179,7 +182,7 @@ class SupplyProcessPaymentsTest extends TestCase
             }
         );
 
-        $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
 
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
@@ -274,13 +277,22 @@ class SupplyProcessPaymentsTest extends TestCase
             }
         );
 
-        $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT_CANDIDATE, AdsPayment::all()->first()->status);
 
-        $this->artisan('ops:supply:payments:process', ['--chunkSize' => 500])->assertExitCode(0);
+        $this->artisan(self::SIGNATURE, ['--chunkSize' => 500])->assertExitCode(0);
         $this->assertEquals(AdsPayment::STATUS_EVENT_PAYMENT, AdsPayment::all()->first()->status);
         $this->assertEquals($totalAmount, NetworkCasePayment::sum('total_amount'));
         $this->assertEquals($licenseFee, NetworkPayment::sum('amount'));
         $this->assertGreaterThan(0, NetworkCaseLogsHourlyMeta::fetchInvalid()->count());
+    }
+
+    public function testLock(): void
+    {
+        $lockerMock = $this->createMock(Locker::class);
+        $lockerMock->expects(self::once())->method('lock')->willReturn(false);
+        $this->instance(Locker::class, $lockerMock);
+
+        $this->artisan(self::SIGNATURE)->assertExitCode(0);
     }
 }
