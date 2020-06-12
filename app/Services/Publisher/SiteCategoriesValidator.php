@@ -34,7 +34,8 @@ class SiteCategoriesValidator
     /** @var TargetingProcessor */
     private $targetingProcessor;
 
-    public function __construct(ConfigurationRepository $configurationRepository) {
+    public function __construct(ConfigurationRepository $configurationRepository)
+    {
         $this->configurationRepository = $configurationRepository;
     }
 

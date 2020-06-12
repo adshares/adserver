@@ -177,7 +177,7 @@ class SiteRankUpdateCommand extends BaseCommand
                 $site->updateWithPageRank($pageRank);
             }
             if (isset($result['categories'])) {
-                try{
+                try {
                     $categories = $this->siteCategoriesValidator->processCategories($result['categories']);
                     $site->updateCategories($categories);
                 } catch (InvalidArgumentException $exception) {
