@@ -13,8 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rejecting site's domains
 - Send an email notification once the banner was classified
 - Reassessment of distinctive sites
+- Sites' categories
 ### Changed
 - Do not allow site's domain starts with a dot
+- Taxonomy processing, allow multiple levels
 ### Fixed
 - Retry ads transaction after error while processing demand payments
 ### Removed
