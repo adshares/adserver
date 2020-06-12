@@ -28,15 +28,22 @@ use Adshares\Common\Exception\InvalidArgumentException;
 
 class SiteCategoriesValidator
 {
+    /** @var ConfigurationRepository */
+    private $configurationRepository;
+    
     /** @var TargetingProcessor */
     private $targetingProcessor;
 
     public function __construct(ConfigurationRepository $configurationRepository) {
-        $this->targetingProcessor = new TargetingProcessor($configurationRepository->fetchTargetingOptions());
+        $this->configurationRepository = $configurationRepository;
     }
 
     public function processCategories($categories): array
     {
+        if (!$this->targetingProcessor) {
+            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+        }
+
         if (!$categories) {
             throw new InvalidArgumentException('Field `categories` is required.');
         }
