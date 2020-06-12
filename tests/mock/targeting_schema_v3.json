@@ -1767,6 +1767,46 @@
         "type": "dict",
         "data": [
           {
+            "label": "Adult",
+            "value": "adult"
+          },
+          {
+            "label": "Crypto",
+            "value": "crypto",
+            "values": [
+              {
+                "label": "Faucets",
+                "value": "faucets"
+              },
+              {
+                "label": "Others",
+                "value": "others"
+              }
+            ]
+          },
+          {
+            "label": "Health",
+            "value": "health",
+            "values": [
+              {
+                "label": "Supplements",
+                "value": "supplements"
+              },
+              {
+                "label": "Diets",
+                "value": "diets"
+              }
+            ]
+          },
+          {
+            "label": "Movies",
+            "value": "movies"
+          },
+          {
+            "label": "Pay to Click",
+            "value": "paytoclick"
+          },
+          {
             "label": "Unknown",
             "value": "unknown"
           }

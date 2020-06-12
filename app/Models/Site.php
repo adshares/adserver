@@ -236,4 +236,10 @@ class Site extends Model
         $this->info = $pageRank->getInfo();
         $this->save();
     }
+
+    public function updateCategories(array $categories): void
+    {
+        $this->categories = $categories;
+        $this->save();
+    }
 }

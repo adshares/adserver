@@ -27,7 +27,9 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\RuntimeException;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,7 +77,8 @@ class SiteRankUpdateCommandTest extends TestCase
                     [
                         'rank' => 0,
                         'info' => AdUser::PAGE_INFO_UNKNOWN,
-                    ]
+                        'categories' => ['unknown'],
+                    ],
                 ]
             );
         $this->instance(AdUser::class, $adUser);
@@ -109,13 +112,15 @@ class SiteRankUpdateCommandTest extends TestCase
                     [
                         'rank' => 0,
                         'info' => AdUser::PAGE_INFO_UNKNOWN,
-                    ]
+                        'categories' => ['unknown'],
+                    ],
                 ],
                 [
                     [
                         'rank' => 1,
                         'info' => AdUser::PAGE_INFO_OK,
-                    ]
+                        'categories' => ['adult'],
+                    ],
                 ]
             );
         $this->instance(AdUser::class, $adUser);
@@ -173,10 +178,20 @@ class SiteRankUpdateCommandTest extends TestCase
     {
         return [
             'invalid URL' => [[['error' => 'Invalid URL']]],
-            'invalid index' => [['100' => ['rank' => 0.02, 'info' => AdUser::PAGE_INFO_OK]]],
+            'invalid index' => [
+                [
+                    '100' => [
+                        'rank' => 0.02,
+                        'info' => AdUser::PAGE_INFO_OK,
+                        'categories' => ['unknown'],
+                    ],
+                ],
+            ],
             'missing rank' => [[['info' => AdUser::PAGE_INFO_OK]]],
             'missing info' => [[['rank' => 0.02]]],
-            'ok' => [[['rank' => 0.02, 'info' => AdUser::PAGE_INFO_OK]]],
+            'ok' => [[['rank' => 0.02, 'info' => AdUser::PAGE_INFO_OK, 'categories' => ['unknown']]]],
+            'ok without categories' => [[['rank' => 0.02, 'info' => AdUser::PAGE_INFO_OK]]],
+            'ok with invalid categories' => [[['rank' => 0.02, 'info' => AdUser::PAGE_INFO_OK, 'categories' => ['0']]]],
         ];
     }
 
@@ -185,8 +200,7 @@ class SiteRankUpdateCommandTest extends TestCase
         factory(Site::class)->create(['info' => AdUser::PAGE_INFO_UNKNOWN, 'categories' => null]);
 
         $adUser = $this->createMock(AdUser::class);
-        $adUser->expects(self::never())
-            ->method('fetchPageRankBatch');
+        $adUser->expects(self::never())->method('fetchPageRankBatch');
         $this->instance(AdUser::class, $adUser);
 
         $this->artisan(self::SIGNATURE)->assertExitCode(0);
@@ -214,5 +228,12 @@ class SiteRankUpdateCommandTest extends TestCase
         $dbSite = Site::find($site->id);
         self::assertEquals(1, $dbSite->rank);
         self::assertEquals(AdUser::PAGE_INFO_OK, $dbSite->info);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -49,17 +50,17 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
-    /** @var ConfigurationRepository */
-    private $configurationRepository;
+    /** @var SiteCategoriesValidator */
+    private $siteCategoriesValidator;
 
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
 
     public function __construct(
-        ConfigurationRepository $configurationRepository,
+        SiteCategoriesValidator $siteCategoriesValidator,
         SiteClassificationUpdater $siteClassificationUpdater
     ) {
-        $this->configurationRepository = $configurationRepository;
+        $this->siteCategoriesValidator = $siteCategoriesValidator;
         $this->siteClassificationUpdater = $siteClassificationUpdater;
     }
 
@@ -69,7 +70,11 @@ class SitesController extends Controller
         if (!SiteValidator::isUrlValid($request->input('site.url'))) {
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
-        $categories = $this->validateAndProcessCategories($request->input('site.categories'));
+        try {
+            $categories = $this->siteCategoriesValidator->processCategories($request->input('site.categories'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $url = (string)$request->input('site.url');
         $domain = DomainReader::domain($url);
         self::validateDomain($domain);
@@ -368,24 +373,5 @@ class SitesController extends Controller
                 'The subdomain '.$domain.' is not supported. Please use your own domain.'
             );
         }
-    }
-
-    private function validateAndProcessCategories($categories): array
-    {
-        if (!$categories) {
-            throw new UnprocessableEntityHttpException('Field `categories` is required.');
-        }
-        if (!is_array($categories)) {
-            throw new UnprocessableEntityHttpException('Field `categories` must be an array.');
-        }
-
-        $targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
-        $targeting = $targetingProcessor->processTargeting(['site' => ['category' => $categories]]);
-
-        if (!$targeting) {
-            throw new UnprocessableEntityHttpException('Field categories[] must match targeting taxonomy');
-        }
-
-        return $targeting['site']['category'];
     }
 }
