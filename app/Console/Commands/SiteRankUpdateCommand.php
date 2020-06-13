@@ -27,8 +27,10 @@ use Adshares\Adserver\Mail\SiteVerified;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTime;
@@ -49,6 +51,9 @@ class SiteRankUpdateCommand extends BaseCommand
     /** @var AdUser */
     private $adUser;
 
+    /** @var SiteCategoriesValidator */
+    private $siteCategoriesValidator;
+
     /** @var string */
     private $siteBaseUrl;
 
@@ -58,11 +63,12 @@ class SiteRankUpdateCommand extends BaseCommand
     /** @var DateTime */
     private $notificationDateTimeThreshold;
 
-    public function __construct(Locker $locker, AdUser $adUser)
+    public function __construct(Locker $locker, AdUser $adUser, SiteCategoriesValidator $siteCategoriesValidator)
     {
         parent::__construct($locker);
 
         $this->adUser = $adUser;
+        $this->siteCategoriesValidator = $siteCategoriesValidator;
     }
 
     public function handle(): void
@@ -102,13 +108,21 @@ class SiteRankUpdateCommand extends BaseCommand
     {
         $urls = [];
         foreach ($sites as $index => $site) {
+            /** @var Site $site */
             $url = $site->url;
+            $categories = $site->categories;
 
-            /** @var $site Site */
-            if (!$url) {
+            if (!$url || !$categories) {
                 continue;
             }
-            $urls[$index] = $url;
+            $urls[$index] = [
+                'url' => $url,
+                'categories' => $categories,
+            ];
+        }
+
+        if (empty($urls)) {
+            return;
         }
 
         try {
@@ -126,6 +140,12 @@ class SiteRankUpdateCommand extends BaseCommand
         DB::beginTransaction();
         foreach ($results as $index => $result) {
             $site = $sites->get($index);
+            if (null === $site) {
+                $this->warn(sprintf('Invalid index (%s) in response', $index));
+
+                continue;
+            }
+
             if (isset($result['error'])) {
                 $this->warn(
                     sprintf('Error for an URL (%s) from site id (%d) (%s)', $site->url, $site->id, $result['error'])
@@ -155,6 +175,20 @@ class SiteRankUpdateCommand extends BaseCommand
                 }
 
                 $site->updateWithPageRank($pageRank);
+            }
+            if (isset($result['categories'])) {
+                try {
+                    $categories = $this->siteCategoriesValidator->processCategories($result['categories']);
+                    $site->updateCategories($categories);
+                } catch (InvalidArgumentException $exception) {
+                    $this->warn(
+                        sprintf(
+                            'Invalid `categories` for an URL (%s) from site id (%d). Check targeting taxonomy.',
+                            $site->url,
+                            $site->id
+                        )
+                    );
+                }
             }
         }
         DB::commit();

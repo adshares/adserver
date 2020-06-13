@@ -82,4 +82,12 @@ class BroadcastableUrlTest extends TestCase
 
         return strtoupper($hex);
     }
+    
+    public function testToString(): void
+    {
+        $string = 'https://example.com';
+        $broadcastableUrl = new BroadcastableUrl(new Url($string));
+
+        self::assertEquals($string, (string)$broadcastableUrl);
+    }
 }

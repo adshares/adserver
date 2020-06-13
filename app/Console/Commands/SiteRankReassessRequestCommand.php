@@ -206,6 +206,18 @@ SQL;
                     continue;
                 }
 
+                if (AdUser::REASSESSMENT_STATE_ERROR === $status) {
+                    $this->warn(
+                        sprintf(
+                            'Reassessment did not complete for an URL (%s) from site id (%d)',
+                            $urls[$index]['url'],
+                            $ids[$index]
+                        )
+                    );
+
+                    continue;
+                }
+
                 if (AdUser::REASSESSMENT_STATE_NOT_REGISTERED === $status) {
                     $this->warn(
                         sprintf('Not registered URL (%s) from site id (%d)', $urls[$index]['url'], $ids[$index])

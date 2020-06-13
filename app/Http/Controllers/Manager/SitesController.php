@@ -21,6 +21,7 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Jobs\AdUserRegisterUrl;
@@ -28,11 +29,13 @@ use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
+use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -47,11 +50,17 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
+    /** @var SiteCategoriesValidator */
+    private $siteCategoriesValidator;
+
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
 
-    public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
-    {
+    public function __construct(
+        SiteCategoriesValidator $siteCategoriesValidator,
+        SiteClassificationUpdater $siteClassificationUpdater
+    ) {
+        $this->siteCategoriesValidator = $siteCategoriesValidator;
         $this->siteClassificationUpdater = $siteClassificationUpdater;
     }
 
@@ -61,6 +70,11 @@ class SitesController extends Controller
         if (!SiteValidator::isUrlValid($request->input('site.url'))) {
             throw new UnprocessableEntityHttpException('Invalid URL');
         }
+        try {
+            $categories = $this->siteCategoriesValidator->processCategories($request->input('site.categories'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
         $url = (string)$request->input('site.url');
         $domain = DomainReader::domain($url);
         self::validateDomain($domain);
@@ -69,6 +83,7 @@ class SitesController extends Controller
         $this->validateInputZones($inputZones);
 
         $input = $request->input('site');
+        $input['categories'] = $categories;
         $input['domain'] = $domain;
 
         DB::beginTransaction();
@@ -272,19 +287,6 @@ class SitesController extends Controller
         return self::json($sites);
     }
 
-    public function count(): JsonResponse
-    {
-        $siteCount = [
-            'totalEarnings' => 0,
-            'totalClicks' => 0,
-            'totalImpressions' => 0,
-            'averagePageRPM' => 0,
-            'averageCPC' => 0,
-        ];
-
-        return self::json($siteCount, 200);
-    }
-
     public function changeStatus(Site $site, Request $request): JsonResponse
     {
         if (!$request->has('site.status')) {
@@ -313,28 +315,6 @@ class SitesController extends Controller
     public function readSiteRank(Site $site): JsonResponse
     {
         return self::json(new PageRank($site->rank, $site->info));
-    }
-
-    /**
-     * @deprecated This function is deprecated and will be removed in the future.
-     * Use sitesCodes instead.
-     * @see sitesCodes replacement for this function
-     *
-     * @param Site $site
-     * @param GetSiteCode $request
-     *
-     * @return JsonResponse
-     */
-    public function sitesCode(Site $site, GetSiteCode $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = Auth::user();
-
-        if (!$user->isEmailConfirmed) {
-            return self::json(['code' => 'Confirm e-mail to get code']);
-        }
-
-        return self::json(['code' => SiteCodeGenerator::generateAsSingleString($site, $request->toConfig())]);
     }
 
     public function sitesCodes(Site $site, GetSiteCode $request): JsonResponse

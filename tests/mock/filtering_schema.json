@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "name": "simple",
+    "version": "0.1.0"
+  },
+  "data": [
+    {
+      "key": "category",
+      "label": "Category",
+      "values": [
+        {
+          "key": "adult",
+          "label": "Adult",
+          "description": "NSFW, nudity, pornography"
+        },
+        {
+          "key": "annoying",
+          "label": "Annoying",
+          "description": "Sounds, flashing, disturbing"
+        },
+        {
+          "key": "crypto",
+          "label": "Crypto",
+          "description": "Cryptocurrencies, exchanges, wallets"
+        },
+        {
+          "key": "drugs",
+          "label": "Supplements",
+          "description": "Medicines, dietary supplement"
+        },
+        {
+          "key": "gambling",
+          "label": "Gambling",
+          "description": "Sports betting, casinos, lottery"
+        },
+        {
+          "key": "investment",
+          "label": "Investment",
+          "description": "HYIPs, ICO\/IEO, crowdfunding"
+        },
+        {
+          "key": "malware",
+          "label": "Software",
+          "description": "Software download, extensions"
+        },
+        {
+          "key": "safe",
+          "label": "Mainstream",
+          "description": "Safe content"
+        }
+      ]
+    }
+  ]
+}

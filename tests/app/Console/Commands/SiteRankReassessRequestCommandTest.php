@@ -240,6 +240,7 @@ class SiteRankReassessRequestCommandTest extends TestCase
             'missing status' => [[[]]],
             'unknown status' => [[['status' => 'OK']]],
             'invalid URL' => [[['status' => AdUser::REASSESSMENT_STATE_INVALID_URL]]],
+            'error' => [[['status' => AdUser::REASSESSMENT_STATE_ERROR]]],
             'not registered' => [[['status' => AdUser::REASSESSMENT_STATE_NOT_REGISTERED]]],
             'processing' => [[['status' => AdUser::REASSESSMENT_STATE_PROCESSING]], true],
             'locked with invalid date' => [[[

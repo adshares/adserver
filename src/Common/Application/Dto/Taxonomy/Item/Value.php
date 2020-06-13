@@ -32,16 +32,31 @@ final class Value
     private $label;
     /** @var string|null */
     private $description;
+    /** @var array */
+    private $values;
 
-    public function __construct(string $value, string $label, ?string $description = null)
+    public function __construct(string $value, string $label, array $values, ?string $description = null)
     {
         $this->value = $value;
         $this->label = $label;
         $this->description = $description;
+        $this->values = $values;
     }
 
     public function toOptionValue(): OptionValue
     {
-        return new OptionValue($this->label, $this->value, $this->description);
+        if ($this->values) {
+            $options = array_map(
+                function ($value) {
+                    /** @var $value Value */
+                    return $value->toOptionValue();
+                },
+                $this->values
+            );
+        } else {
+            $options = [];
+        }
+
+        return new OptionValue($this->label, $this->value, $options, $this->description);
     }
 }

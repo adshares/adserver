@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -17,20 +17,22 @@
  * You should have received a copy of the GNU General Public License
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
-
 declare(strict_types = 1);
 
-namespace Adshares\Common\Application\Service;
+namespace Adshares\Adserver\Tests\Utilities;
 
-use Adshares\Common\Application\Model\Selector;
+use Adshares\Adserver\Utilities\UuidStringGenerator;
+use PHPUnit\Framework\TestCase;
 
-interface ConfigurationRepository
+class UuidStringGeneratorTest extends TestCase
 {
-    public function storeTargetingOptions(Selector $options): void;
+    public function testV4(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $uuid = UuidStringGenerator::v4();
 
-    public function storeFilteringOptions(Selector $options): void;
-
-    public function fetchTargetingOptions(): Selector;
-
-    public function fetchFilteringOptions(): Selector;
+            self::assertSame(1, preg_match('/^[0-9a-f]{32}$/', $uuid), 'Invalid uuid: '.$uuid);
+            self::assertSame('4', substr($uuid, 12, 1), 'Invalid version in uuid: '.$uuid);
+        }
+    }
 }

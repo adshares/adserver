@@ -53,6 +53,7 @@ interface AdUser
     public const REASSESSMENT_STATE_PROCESSING = 'processing';
     public const REASSESSMENT_STATE_LOCKED = 'locked';
     public const REASSESSMENT_STATE_ACCEPTED = 'accepted';
+    public const REASSESSMENT_STATE_ERROR = 'error';
     public const REASSESSMENT_STATE_NOT_REGISTERED = 'not registered';
 
     public const PAGE_INFOS = [

@@ -91,10 +91,6 @@ final class Item
         return $this->fromGroup();
     }
 
-    public function toSelector(): Selector
-    {
-    }
-
     private function fromDictionary(): Option
     {
         $values = array_map(function (Value $listItemValue) {
