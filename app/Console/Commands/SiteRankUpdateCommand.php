@@ -110,7 +110,7 @@ class SiteRankUpdateCommand extends BaseCommand
         foreach ($sites as $index => $site) {
             /** @var Site $site */
             $url = $site->url;
-            $categories = $site->categories;
+            $categories = $site->categories ?? $site->categories_by_user;
 
             if (!$url || !$categories) {
                 continue;

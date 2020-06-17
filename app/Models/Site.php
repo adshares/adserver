@@ -52,6 +52,7 @@ use function in_array;
  * @property array|null|string site_requires
  * @property array|null|string site_excludes
  * @property array|null categories
+ * @property array|null categories_by_user
  * @property bool $require_classified deprecated
  * @property bool $exclude_unclassified deprecated
  * @property Zone[]|Collection zones
@@ -101,6 +102,7 @@ class Site extends Model
         'exclude_unclassified' => 'boolean',
         'rank' => 'float',
         'categories' => 'json',
+        'categories_by_user' => 'json',
     ];
 
     protected $fillable = [
@@ -110,7 +112,7 @@ class Site extends Model
         'status',
         'primary_language',
         'filtering',
-        'categories',
+        'categories_by_user',
     ];
 
     protected $hidden = [
@@ -124,6 +126,7 @@ class Site extends Model
         'info',
         'reassess_available_at',
         'categories',
+        'categories_by_user',
     ];
 
     protected $appends = [

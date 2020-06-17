@@ -21,7 +21,6 @@
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Jobs\AdUserRegisterUrl;
@@ -35,7 +34,6 @@ use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Dto\PageRank;
-use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -83,7 +81,8 @@ class SitesController extends Controller
         $this->validateInputZones($inputZones);
 
         $input = $request->input('site');
-        $input['categories'] = $categories;
+        unset($input['categories']);
+        $input['categories_by_user'] = $categories;
         $input['domain'] = $domain;
 
         DB::beginTransaction();
