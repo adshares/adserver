@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Response\Stats;
 
@@ -69,14 +69,14 @@ abstract class ReportResponse
     {
         return sprintf(
             'report_%s.xlsx',
-            strtolower(preg_replace('[^a-zA-Z0-9_-]', '_', $this->name))
+            strtolower(preg_replace('/[^a-zA-Z0-9_-]/', '_', $this->name))
         );
     }
 
     private function prepareHeaders(string $filename): array
     {
         return [
-            'Content-type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename='.$filename,
             'Pragma' => 'no-cache',
             'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',

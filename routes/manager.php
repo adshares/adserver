@@ -34,6 +34,14 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::get(
+        'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
+        [BidStrategyController::class, 'getBidStrategySpreadsheet']
+    );
+    Route::post(
+        'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
+        [BidStrategyController::class, 'putBidStrategySpreadsheet']
+    );
     Route::get('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'getBidStrategyUuidDefault']);
     Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
     Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
