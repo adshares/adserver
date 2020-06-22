@@ -323,7 +323,8 @@ class BidStrategyController extends Controller
             && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
                 && $user->isAdmin())) {
             throw new HttpException(
-                JsonResponse::HTTP_UNAUTHORIZED, sprintf('BidStrategy (%s) could not be edited.', $bidStrategyPublicId)
+                JsonResponse::HTTP_UNAUTHORIZED,
+                sprintf('BidStrategy (%s) could not be edited.', $bidStrategyPublicId)
             );
         }
 
