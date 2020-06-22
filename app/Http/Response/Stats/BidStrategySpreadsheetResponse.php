@@ -121,23 +121,16 @@ class BidStrategySpreadsheetResponse
 
             $x = 1;
             $y = 1;
-            $formats = $fills = $colors = [];
+            $fills = $colors = [];
 
             foreach ($this->columns() as $column => $prop) {
                 $sheet->setCellValueByColumnAndRow($x, $y, $column);
                 $headerStyle = $sheet->getStyleByColumnAndRow($x, $y);
                 $headerStyle->getFont()->setBold(true);
 
-                if (!empty($prop['width'])) {
-                    $sheet->getColumnDimensionByColumn($x)->setWidth($prop['width']);
-                } else {
-                    $sheet->getColumnDimensionByColumn($x)->setAutoSize(true);
-                }
+                $sheet->getColumnDimensionByColumn($x)->setAutoSize(true);
                 if (!empty($prop['comment'])) {
                     $sheet->getCommentByColumnAndRow($x, $y)->getText()->createTextRun($prop['comment']);
-                }
-                if (!empty($prop['format'])) {
-                    $formats[$x] = $prop['format'];
                 }
                 if (!empty($prop['fill'])) {
                     $fills[$x] = $prop['fill'];
@@ -169,9 +162,6 @@ class BidStrategySpreadsheetResponse
                 foreach ($this->columns() as $column => $prop) {
                     $cellStyle = $sheet->getStyleByColumnAndRow($x, 2, $x, $y);
 
-                    if (!empty($formats[$x])) {
-                        $cellStyle->getNumberFormat()->setFormatCode($formats[$x]);
-                    }
                     if (!empty($fills[$x])) {
                         $cellStyle->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($fills[$x]);
                     }
