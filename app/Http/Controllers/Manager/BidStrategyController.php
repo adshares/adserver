@@ -129,8 +129,8 @@ class BidStrategyController extends Controller
         if (null === ($file = $request->file('file'))) {
             throw new BadRequestHttpException('File is required');
         }
-        if (!in_array($mime = $file->getMimeType(), self::MIME_TYPE_SPREADSHEET, true)) {
-            throw new UnprocessableEntityHttpException('Unsupported mime type');
+        if (!in_array($mimeType = $file->getMimeType(), self::MIME_TYPE_SPREADSHEET, true)) {
+            throw new UnprocessableEntityHttpException(sprintf('Unsupported mime type (%s)', $mimeType));
         }
 
         $pathName = $file->getPathname();
