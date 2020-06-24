@@ -23,11 +23,20 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\BidStrategy;
+use Adshares\Adserver\Models\BidStrategyDetail;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
+use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use RuntimeException;
 
 class BidStrategyControllerTest extends TestCase
@@ -35,7 +44,9 @@ class BidStrategyControllerTest extends TestCase
     use RefreshDatabase;
 
     private const URI = '/api/campaigns/bid-strategy';
+
     private const URI_UUID_GET = '/api/campaigns/bid-strategy/uuid-default';
+
     private const URI_UUID_PUT = '/admin/campaigns/bid-strategy/uuid-default';
 
     private const STRUCTURE_CHECK = [
@@ -316,5 +327,204 @@ class BidStrategyControllerTest extends TestCase
 
         $response = $this->put(self::URI_UUID_PUT, ['uuid' => $bidStrategyPublicId]);
         $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    public function testDownloadSpreadsheet(): void
+    {
+        $bidStrategyName = 'test';
+        $bidStrategyCategory = 'user:country:af';
+        $bidStrategyRank = 0.3;
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id);
+        $bidStrategy->bidStrategyDetails()->save(BidStrategyDetail::create($bidStrategyCategory, $bidStrategyRank));
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->get(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet');
+        $response->assertStatus(Response::HTTP_OK);
+        $fileName = 'test.xlsx';
+        Storage::put($fileName, $response->streamedContent());
+        $fileNameWithPath = Storage::path('').$fileName;
+        $reader = IOFactory::createReaderForFile($fileNameWithPath);
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($fileNameWithPath);
+
+        $sheets = $spreadsheet->getAllSheets();
+        $sheetsCount = count($sheets);
+        $mainSheet = $sheets[0];
+        $name = $mainSheet->getCellByColumnAndRow(2, 1)->getValue();
+
+        self::assertEquals($bidStrategyName, $name);
+
+        $bidStrategyDetails = [];
+        for ($i = 1; $i < $sheetsCount; $i++) {
+            $sheet = $sheets[$i];
+            $row = 2;
+
+            while (null !== ($value = $sheet->getCellByColumnAndRow(3, $row)->getValue())) {
+                if (100 !== $value) {
+                    $category = $sheet->getCellByColumnAndRow(1, $row)->getValue();
+                    $bidStrategyDetails[] = [
+                        'category' => $category,
+                        'rank' => (float)$value / 100,
+                    ];
+                }
+
+                ++$row;
+            }
+        }
+
+        self::assertCount(1, $bidStrategyDetails);
+        self::assertEquals($bidStrategyCategory, $bidStrategyDetails[0]['category']);
+        self::assertEquals($bidStrategyRank, $bidStrategyDetails[0]['rank']);
+
+        Storage::delete($fileName);
+    }
+
+    public function testUploadSpreadsheetMissingFile(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+
+        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet');
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+    }
+
+    public function testUploadSpreadsheetInvalidMimeType(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+        $file = UploadedFile::fake()->image('avatar.jpg');
+
+        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function testUploadSpreadsheetDbConnectionError(): void
+    {
+        $bidStrategyName = 'test-bis';
+        $bidStrategyCategory = 'user:country:af';
+        $bidStrategyRank = 0.3;
+        $bidStrategyData = [[$bidStrategyCategory, $bidStrategyRank * 100]];
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+        $fileName = 'text.xlsx';
+        $fileNameWithPath = Storage::path('').$fileName;
+        $this->generateXlsx($fileNameWithPath, $bidStrategyName, $bidStrategyData);
+        $file = new UploadedFile(
+            $fileNameWithPath,
+            $fileName,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        DB::shouldReceive('beginTransaction')->andReturnUndefined();
+        DB::shouldReceive('commit')->andThrow(new RuntimeException('test-exception'));
+        DB::shouldReceive('rollback')->andReturnUndefined();
+
+        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+
+        Storage::delete($fileName);
+    }
+
+    public function testUploadSpreadsheetValid(): void
+    {
+        $bidStrategyName = 'test-bis';
+        $bidStrategyCategory = 'user:country:af';
+        $bidStrategyRank = 0.3;
+        $bidStrategyData = [[$bidStrategyCategory, $bidStrategyRank * 100]];
+
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategyPublicId = $bidStrategy->uuid;
+        $fileName = 'text.xlsx';
+        $fileNameWithPath = Storage::path('').$fileName;
+        $this->generateXlsx($fileNameWithPath, $bidStrategyName, $bidStrategyData);
+        $file = new UploadedFile(
+            $fileNameWithPath,
+            $fileName,
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->post(self::URI.'/'.$bidStrategyPublicId.'/spreadsheet', ['file' => $file]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+
+        $updatedBidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
+        $updatedBidStrategyDetails = $updatedBidStrategy->bidStrategyDetails;
+        self::assertEquals($bidStrategyName, $updatedBidStrategy->name);
+        self::assertCount(1, $updatedBidStrategyDetails);
+        self::assertEquals($bidStrategyCategory, $updatedBidStrategyDetails->first()->category);
+        self::assertEquals($bidStrategyRank, $updatedBidStrategyDetails->first()->rank);
+
+        Storage::delete($fileName);
+    }
+
+    private function generateXlsx(string $fileName, string $bidStrategyName, array $bidStrategyData): void
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $data = [
+            ['Name', $bidStrategyName],
+            ['Created', (new DateTimeImmutable())->format(DateTimeImmutable::ATOM)],
+        ];
+
+        $y = 1;
+        foreach ($data as $row) {
+            $x = 1;
+            foreach ($row as $cellValue) {
+                $sheet->setCellValueByColumnAndRow($x, $y, $cellValue);
+                ++$x;
+            }
+
+            ++$y;
+        }
+
+        $sheet = $spreadsheet->createSheet();
+        $data = [
+            ['Id', 'Category', 'Value [%]'],
+        ];
+
+        foreach ($bidStrategyData as $entry) {
+            $data[] = [$entry[0], '', $entry[1]];
+        }
+
+        $y = 1;
+        foreach ($data as $row) {
+            $x = 1;
+            foreach ($row as $cellValue) {
+                $sheet->setCellValueByColumnAndRow($x, $y, $cellValue);
+
+                ++$x;
+            }
+            ++$y;
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($fileName);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

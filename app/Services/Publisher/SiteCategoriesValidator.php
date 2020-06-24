@@ -41,10 +41,6 @@ class SiteCategoriesValidator
 
     public function processCategories($categories): array
     {
-        if (!$this->targetingProcessor) {
-            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
-        }
-
         if (!$categories) {
             throw new InvalidArgumentException('Field `categories` is required.');
         }
@@ -52,6 +48,9 @@ class SiteCategoriesValidator
             throw new InvalidArgumentException('Field `categories` must be an array.');
         }
 
+        if (!$this->targetingProcessor) {
+            $this->targetingProcessor = new TargetingProcessor($this->configurationRepository->fetchTargetingOptions());
+        }
         $targeting = $this->targetingProcessor->processTargeting(['site' => ['category' => $categories]]);
 
         if (!$targeting) {
