@@ -96,8 +96,6 @@ class SitesController extends Controller
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
             }
-
-            AdUserRegisterUrl::dispatch($url);
         } catch (Exception $exception) {
             DB::rollBack();
             throw $exception;
@@ -174,7 +172,6 @@ class SitesController extends Controller
 
             if ($updateDomainAndUrl) {
                 $site->updateWithPageRank(PageRank::default());
-                AdUserRegisterUrl::dispatch($input['url']);
             }
         } catch (Exception $exception) {
             DB::rollBack();
