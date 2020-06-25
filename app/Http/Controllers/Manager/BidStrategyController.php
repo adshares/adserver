@@ -73,20 +73,15 @@ class BidStrategyController extends Controller
         $previousBidStrategyPublicId = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
         $bidStrategyPublicId = $request->input('uuid');
         if (!Utils::isUuidValid($bidStrategyPublicId)) {
-            throw new UnprocessableEntityHttpException(
-                sprintf('Invalid id (%s)', $bidStrategyPublicId)
-            );
+            throw new UnprocessableEntityHttpException(sprintf('Invalid id (%s)', $bidStrategyPublicId));
         }
 
         $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
         if (null === $bidStrategy) {
-            throw new NotFoundHttpException(sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId));
+            throw new NotFoundHttpException('Bid strategy does not exist.');
         }
         if (BidStrategy::ADMINISTRATOR_ID !== $bidStrategy->user_id) {
-            throw new HttpException(
-                JsonResponse::HTTP_FORBIDDEN,
-                sprintf('Cannot set bid strategy uuid (%s) as default.', $bidStrategyPublicId)
-            );
+            throw new HttpException(JsonResponse::HTTP_FORBIDDEN, 'Cannot set bid strategy as default.');
         }
 
         if ($bidStrategyPublicId != $previousBidStrategyPublicId) {
@@ -97,7 +92,7 @@ class BidStrategyController extends Controller
                 DB::commit();
             } catch (Exception $exception) {
                 DB::rollBack();
-                Log::debug(sprintf('Default BidStrategy could not be changed (%s).', $exception->getMessage()));
+                Log::debug(sprintf('Default Bid strategy could not be changed (%s).', $exception->getMessage()));
 
                 throw new HttpException(
                     JsonResponse::HTTP_INTERNAL_SERVER_ERROR,
@@ -267,7 +262,7 @@ class BidStrategyController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::debug(
-                sprintf('BidStrategy (%s) could not be added (%s).', $input['name'], $exception->getMessage())
+                sprintf('Bid strategy (%s) could not be added (%s).', $input['name'], $exception->getMessage())
             );
 
             throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot add bid strategy.');
@@ -311,7 +306,7 @@ class BidStrategyController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::debug(
-                sprintf('BidStrategy (%d) could not be deleted (%s).', $bidStrategy->id, $exception->getMessage())
+                sprintf('Bid strategy (%d) could not be deleted (%s).', $bidStrategy->id, $exception->getMessage())
             );
 
             throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot delete bid strategy.');
@@ -331,14 +326,13 @@ class BidStrategyController extends Controller
         $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyPublicId);
 
         if (null === $bidStrategy) {
-            throw new NotFoundHttpException(sprintf('BidStrategy (%s) does not exist.', $bidStrategyPublicId));
+            throw new NotFoundHttpException('Bid strategy does not exist.');
         }
         if ($bidStrategy->user_id !== $user->id
             && !($bidStrategy->user_id === BidStrategy::ADMINISTRATOR_ID
                 && $user->isAdmin())) {
-            throw new HttpException(
-                JsonResponse::HTTP_UNAUTHORIZED,
-                sprintf('BidStrategy (%s) could not be accessed.', $bidStrategyPublicId)
+            throw new UnprocessableEntityHttpException(
+                sprintf('Bid strategy (%s) could not be accessed.', $bidStrategy->name)
             );
         }
 
@@ -359,7 +353,7 @@ class BidStrategyController extends Controller
         } catch (Exception $exception) {
             DB::rollBack();
             Log::debug(
-                sprintf('BidStrategy (%d) could not be edited (%s).', $bidStrategy->id, $exception->getMessage())
+                sprintf('Bid strategy (%d) could not be edited (%s).', $bidStrategy->id, $exception->getMessage())
             );
 
             throw new HttpException(JsonResponse::HTTP_INTERNAL_SERVER_ERROR, 'Cannot edit bid strategy.');
