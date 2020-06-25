@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int id
@@ -30,10 +32,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string category
  * @property float rank
  * @property BidStrategy bidStrategy
+ * @property Carbon|null deleted_at
  * @mixin Builder
  */
 class BidStrategyDetail extends Model
 {
+    use SoftDeletes;
+
     public $timestamps = false;
 
     protected $casts = [
