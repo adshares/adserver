@@ -416,9 +416,9 @@ class Campaign extends Model
     public static function isBidStrategyUsed(string $bidStrategyUuid): bool
     {
         return null !== DB::selectOne(
-                'SELECT 1 FROM campaigns WHERE bid_strategy_uuid=? AND deleted_at IS NULL LIMIT 1',
-                [hex2bin($bidStrategyUuid)]
-            );
+            'SELECT 1 FROM campaigns WHERE bid_strategy_uuid=? AND deleted_at IS NULL LIMIT 1',
+            [hex2bin($bidStrategyUuid)]
+        );
     }
 
     private function getBudgetForCurrentDateTime(): AdvertiserBudget

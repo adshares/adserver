@@ -60,16 +60,14 @@ final class DemandBidStrategyMapperTest extends TestCase
     public function testMappingIds(): void
     {
         $expected = [
-            [
-                '0123456789abcdef0123456789abcdef',
-            ],
+            '0123456789abcdef0123456789abcdef',
         ];
 
         $bidStrategyDetail = new BidStrategyDetail();
         $bidStrategyDetail->category = 'user:country:st';
         $bidStrategyDetail->rank = 0.3;
         $bidStrategy = new BidStrategy();
-        $bidStrategy->uuid = $expected[0][0];
+        $bidStrategy->uuid = $expected[0];
         $bidStrategy->name = 'name';
         $bidStrategy->bidStrategyDetails = new Collection([$bidStrategyDetail]);
         $collection = new Collection([$bidStrategy]);
