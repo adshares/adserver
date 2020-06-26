@@ -26,9 +26,9 @@ use Adshares\Demand\Application\Dto\AdPayEvents;
 
 interface AdPay
 {
-    public function updateBigStrategies(array $bidStrategies): void;
+    public function updateBidStrategies(array $bidStrategies): void;
 
-    public function deleteBigStrategies(array $bidStrategyIds): void;
+    public function deleteBidStrategies(array $bidStrategyIds): void;
 
     public function updateCampaign(array $campaigns): void;
 

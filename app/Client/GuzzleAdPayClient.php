@@ -55,7 +55,7 @@ class GuzzleAdPayClient implements AdPay
         $this->client = $client;
     }
 
-    public function updateBigStrategies(array $bidStrategies): void
+    public function updateBidStrategies(array $bidStrategies): void
     {
         try {
             $this->client->post(
@@ -77,7 +77,7 @@ class GuzzleAdPayClient implements AdPay
         }
     }
 
-    public function deleteBigStrategies(array $bidStrategyIds): void
+    public function deleteBidStrategies(array $bidStrategyIds): void
     {
         try {
             $this->client->delete(

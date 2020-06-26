@@ -25,8 +25,8 @@ namespace Adshares\Adserver\Tests\Client\Mapper\AdPay;
 use Adshares\Adserver\Client\Mapper\AdPay\DemandBidStrategyMapper;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\TestCase;
 
 final class DemandBidStrategyMapperTest extends TestCase
 {
