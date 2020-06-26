@@ -28,6 +28,8 @@ interface AdPay
 {
     public function updateBigStrategies(array $bidStrategies): void;
 
+    public function deleteBigStrategies(array $bidStrategyIds): void;
+
     public function updateCampaign(array $campaigns): void;
 
     public function deleteCampaign(array $campaignIds): void;

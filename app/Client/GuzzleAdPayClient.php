@@ -77,6 +77,28 @@ class GuzzleAdPayClient implements AdPay
         }
     }
 
+    public function deleteBigStrategies(array $bidStrategyIds): void
+    {
+        try {
+            $this->client->delete(
+                self::URI_BID_STRATEGIES,
+                [
+                    RequestOptions::JSON => ['bid_strategies' => $bidStrategyIds],
+                ]
+            );
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADPAY] Delete bid strategies from %s failed (%s).',
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+    }
+
     public function updateCampaign(array $campaigns): void
     {
         try {
