@@ -145,8 +145,6 @@ class BidStrategyController extends Controller
 
         $sheets = $spreadsheet->getAllSheets();
         $sheetsCount = count($sheets);
-        $mainSheet = $sheets[0];
-        $name = $mainSheet->getCellByColumnAndRow(2, 1)->getValue();
 
         $bidStrategyDetails = [];
         for ($i = 1; $i < $sheetsCount; $i++) {
@@ -163,7 +161,7 @@ class BidStrategyController extends Controller
             }
         }
 
-        $this->editBidStrategy($bidStrategy, $name, $bidStrategyDetails);
+        $this->editBidStrategy($bidStrategy, null, $bidStrategyDetails);
 
         return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }
@@ -339,13 +337,15 @@ class BidStrategyController extends Controller
         return $bidStrategy;
     }
 
-    private function editBidStrategy(BidStrategy $bidStrategy, string $name, array $bidStrategyDetails): void
+    private function editBidStrategy(BidStrategy $bidStrategy, ?string $name, array $bidStrategyDetails): void
     {
         DB::beginTransaction();
 
         try {
-            $bidStrategy->name = $name;
-            $bidStrategy->save();
+            if (null !== $name) {
+                $bidStrategy->name = $name;
+                $bidStrategy->save();
+            }
             $bidStrategy->bidStrategyDetails()->forceDelete();
             $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
 
