@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -37,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @property string name
  * @property Carbon created_at
  * @property Carbon updated_at
+ * @property Carbon|null deleted_at
  * @property Collection bidStrategyDetails
  * @property Collection campaigns
  * @mixin Builder
@@ -45,6 +47,7 @@ class BidStrategy extends Model
 {
     use AutomateMutators;
     use BinHex;
+    use SoftDeletes;
 
     public const ADMINISTRATOR_ID = 0;
 
@@ -84,6 +87,11 @@ class BidStrategy extends Model
         $model->save();
 
         return $model;
+    }
+
+    public static function countByUserId(int $userId): int
+    {
+        return self::where('user_id', $userId)->count();
     }
 
     public static function fetchByPublicId(string $publicId): ?self

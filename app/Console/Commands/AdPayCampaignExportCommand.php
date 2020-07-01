@@ -81,13 +81,20 @@ class AdPayCampaignExportCommand extends BaseCommand
             $this->info(sprintf('(%d) Found %d bid strategies to export.', ++$loopCount, $bidStrategiesCount));
 
             if ($bidStrategiesCount > 0) {
-                $this->adPay->updateBigStrategies(
+                $this->adPay->updateBidStrategies(
                     DemandBidStrategyMapper::mapBidStrategyCollectionToArray($bigStrategies)
                 );
             }
 
             $offset += $bidStrategiesCount;
         } while ($bidStrategiesCount === self::BID_STRATEGY_CHUNK_SIZE);
+
+        $deletedBidStrategies = BidStrategy::onlyTrashed()->where('updated_at', '>=', $dateFrom)->get();
+        $this->info(sprintf('Found %d deleted bid strategies to export.', count($deletedBidStrategies)));
+        if (count($deletedBidStrategies) > 0) {
+            $bidStrategyIds = DemandBidStrategyMapper::mapBidStrategyCollectionToIds($deletedBidStrategies);
+            $this->adPay->deleteBidStrategies($bidStrategyIds);
+        }
 
         Config::upsertDateTime(Config::ADPAY_BID_STRATEGY_EXPORT_TIME, $now);
     }

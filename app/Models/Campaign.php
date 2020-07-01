@@ -68,7 +68,6 @@ use function hex2bin;
  * @property array classifications
  * @property array targeting
  * @method static Builder where(string $string, int $campaignId)
- * @method static Builder groupBy(string...$groups)
  * @mixin Builder
  */
 class Campaign extends Model
@@ -411,6 +410,14 @@ class Campaign extends Model
         DB::update(
             'UPDATE campaigns SET bid_strategy_uuid=? WHERE bid_strategy_uuid=?',
             [hex2bin($newBidStrategyUuid), hex2bin($previousBidStrategyUuid)]
+        );
+    }
+
+    public static function isBidStrategyUsed(string $bidStrategyUuid): bool
+    {
+        return null !== DB::selectOne(
+            'SELECT 1 FROM campaigns WHERE bid_strategy_uuid=? AND deleted_at IS NULL LIMIT 1',
+            [hex2bin($bidStrategyUuid)]
         );
     }
 

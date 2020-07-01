@@ -131,7 +131,7 @@ class BidStrategyControllerTest extends TestCase
         $bidStrategyPublicId = $bidStrategy->uuid;
 
         $response = $this->patchJson(self::URI.'/'.$bidStrategyPublicId, self::DATA);
-        $response->assertStatus(Response::HTTP_UNAUTHORIZED);
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testEditNotExistingBidStrategy(): void

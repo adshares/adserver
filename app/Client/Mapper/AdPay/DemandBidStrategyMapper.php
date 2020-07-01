@@ -39,4 +39,15 @@ class DemandBidStrategyMapper
             }
         )->toArray();
     }
+
+    public static function mapBidStrategyCollectionToIds(Collection $bidStrategies): array
+    {
+        $bidStrategyIds = [];
+        foreach ($bidStrategies as $bidStrategy) {
+            /** @var $bidStrategy BidStrategy */
+            $bidStrategyIds[] = $bidStrategy->uuid;
+        }
+
+        return $bidStrategyIds;
+    }
 }

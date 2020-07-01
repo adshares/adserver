@@ -46,6 +46,7 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
     Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
     Route::patch('campaigns/bid-strategy/{bid_strategy_public_id}', [BidStrategyController::class, 'patchBidStrategy']);
+    Route::delete('campaigns/bid-strategy/{bid_strategy_public_id}', [BidStrategyController::class, 'deleteBidStrategy']);
 
     Route::get('campaigns', [CampaignsController::class, 'browse'])
         ->name('app.campaigns.browse');

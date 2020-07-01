@@ -25,12 +25,12 @@ namespace Adshares\Adserver\Tests\Client\Mapper\AdPay;
 use Adshares\Adserver\Client\Mapper\AdPay\DemandBidStrategyMapper;
 use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\BidStrategyDetail;
+use Adshares\Adserver\Tests\TestCase;
 use Illuminate\Support\Collection;
-use PHPUnit\Framework\TestCase;
 
 final class DemandBidStrategyMapperTest extends TestCase
 {
-    public function testMapping(): void
+    public function testMappingArray(): void
     {
         $expected = [
             [
@@ -55,5 +55,23 @@ final class DemandBidStrategyMapperTest extends TestCase
         $collection = new Collection([$bidStrategy]);
 
         self::assertEquals($expected, DemandBidStrategyMapper::mapBidStrategyCollectionToArray($collection));
+    }
+
+    public function testMappingIds(): void
+    {
+        $expected = [
+            '0123456789abcdef0123456789abcdef',
+        ];
+
+        $bidStrategyDetail = new BidStrategyDetail();
+        $bidStrategyDetail->category = 'user:country:st';
+        $bidStrategyDetail->rank = 0.3;
+        $bidStrategy = new BidStrategy();
+        $bidStrategy->uuid = $expected[0];
+        $bidStrategy->name = 'name';
+        $bidStrategy->bidStrategyDetails = new Collection([$bidStrategyDetail]);
+        $collection = new Collection([$bidStrategy]);
+
+        self::assertEquals($expected, DemandBidStrategyMapper::mapBidStrategyCollectionToIds($collection));
     }
 }
