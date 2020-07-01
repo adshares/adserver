@@ -76,11 +76,20 @@ class BidStrategyControllerTest extends TestCase
         ],
     ];
 
-    public function testInitialBidStrategy(): void
+    public function testInitialBidStrategyWithoutDefault(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
         $response = $this->getJson(self::URI);
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonCount(0);
+    }
+
+    public function testInitialBidStrategyWithDefault(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->getJson(self::URI.'?attach-default=true');
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJsonStructure(self::STRUCTURE_CHECK);
         $response->assertJsonCount(1);
@@ -96,12 +105,24 @@ class BidStrategyControllerTest extends TestCase
         $responseGet = $this->getJson(self::URI);
         $responseGet->assertStatus(Response::HTTP_OK);
         $responseGet->assertJsonStructure(self::STRUCTURE_CHECK);
-        $responseGet->assertJsonCount(2);
+        $responseGet->assertJsonCount(1);
 
         $content = json_decode($responseGet->getContent(), true);
-        $entry = $content[1];
+        $entry = $content[0];
         self::assertEquals(self::DATA['name'], $entry['name']);
         self::assertEquals(self::DATA['details'], $entry['details']);
+    }
+
+    public function testAddBidStrategyReachLimit(): void
+    {
+        $limit = 20;
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        factory(BidStrategy::class)->times($limit)->create(['user_id' => $user->id]);
+
+        $responsePut = $this->putJson(self::URI, self::DATA);
+        $responsePut->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 
     public function testEditOwnBidStrategy(): void
@@ -443,7 +464,7 @@ class BidStrategyControllerTest extends TestCase
 
     public function testUploadSpreadsheetValid(): void
     {
-        $bidStrategyName = 'test-bis';
+        $bidStrategyName = 'test';
         $bidStrategyCategory = 'user:country:af';
         $bidStrategyRank = 0.3;
         $bidStrategyData = [[$bidStrategyCategory, $bidStrategyRank * 100]];
@@ -451,7 +472,7 @@ class BidStrategyControllerTest extends TestCase
         /** @var User $user */
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
-        $bidStrategy = BidStrategy::register('test', $user->id);
+        $bidStrategy = BidStrategy::register($bidStrategyName, $user->id);
         $bidStrategyPublicId = $bidStrategy->uuid;
         $fileName = 'text.xlsx';
         $fileNameWithPath = Storage::path('').$fileName;

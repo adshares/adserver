@@ -106,7 +106,7 @@ class BidStrategy extends Model
 
     public static function fetchForUser(int $userId): Collection
     {
-        return self::whereIn('user_id', [self::ADMINISTRATOR_ID, $userId])->get();
+        return self::where('user_id', $userId)->get();
     }
 
     public function bidStrategyDetails(): HasMany
