@@ -251,7 +251,7 @@ class ClassificationController extends Controller
         $users = User::fetchByIds($this->notifyUserIds);
 
         foreach ($users as $user) {
-            Mail::to($user->email)->send(new BannerClassified());
+            Mail::to($user->email)->queue(new BannerClassified());
         }
     }
 }
