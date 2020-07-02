@@ -32,13 +32,13 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\ViewModel\OptionsSelector;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Exception;
-use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Reader\Exception as PhpSpreadsheetException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Reader\Exception as PhpSpreadsheetException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -104,9 +104,22 @@ class BidStrategyController extends Controller
         return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }
 
-    public function getBidStrategy(): JsonResponse
+    public function getBidStrategy(Request $request): JsonResponse
     {
-        return self::json(BidStrategy::fetchForUser(Auth::user()->id));
+        $attachDefault = filter_var($request->input('attach-default', false), FILTER_VALIDATE_BOOLEAN);
+        /** @var User $user */
+        $user = Auth::user();
+        $userId = $user->isAdmin() ? BidStrategy::ADMINISTRATOR_ID : $user->id;
+
+        $bidStrategyCollection = BidStrategy::fetchForUser($userId);
+
+        if ($attachDefault) {
+            $defaultBidStrategyPublicId = Config::fetchStringOrFail(Config::BID_STRATEGY_UUID_DEFAULT);
+            $defaultBidStrategy = BidStrategy::fetchByPublicId($defaultBidStrategyPublicId);
+            $bidStrategyCollection->push($defaultBidStrategy);
+        }
+
+        return self::json($bidStrategyCollection);
     }
 
     public function getBidStrategySpreadsheet(string $bidStrategyPublicId): StreamedResponse
@@ -145,8 +158,6 @@ class BidStrategyController extends Controller
 
         $sheets = $spreadsheet->getAllSheets();
         $sheetsCount = count($sheets);
-        $mainSheet = $sheets[0];
-        $name = $mainSheet->getCellByColumnAndRow(2, 1)->getValue();
 
         $bidStrategyDetails = [];
         for ($i = 1; $i < $sheetsCount; $i++) {
@@ -163,7 +174,7 @@ class BidStrategyController extends Controller
             }
         }
 
-        $this->editBidStrategy($bidStrategy, $name, $bidStrategyDetails);
+        $this->editBidStrategy($bidStrategy, null, $bidStrategyDetails);
 
         return self::json([], JsonResponse::HTTP_NO_CONTENT);
     }
@@ -339,13 +350,15 @@ class BidStrategyController extends Controller
         return $bidStrategy;
     }
 
-    private function editBidStrategy(BidStrategy $bidStrategy, string $name, array $bidStrategyDetails): void
+    private function editBidStrategy(BidStrategy $bidStrategy, ?string $name, array $bidStrategyDetails): void
     {
         DB::beginTransaction();
 
         try {
-            $bidStrategy->name = $name;
-            $bidStrategy->save();
+            if (null !== $name) {
+                $bidStrategy->name = $name;
+                $bidStrategy->save();
+            }
             $bidStrategy->bidStrategyDetails()->forceDelete();
             $bidStrategy->bidStrategyDetails()->saveMany($bidStrategyDetails);
 

@@ -22,14 +22,17 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
+use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\Notification;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Demand\BannerClassificationCreator;
@@ -53,6 +56,7 @@ use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use function response;
 use function strrpos;
 
@@ -190,7 +194,8 @@ class CampaignsController extends Controller
             $bannerModel = new Banner();
             $bannerModel->name = $banner['name'];
             $bannerModel->status = Banner::STATUS_ACTIVE;
-            $bannerModel->creative_size = Banner::size($banner['creative_size']);
+            $size = Banner::size($banner['creative_size']);
+            $bannerModel->creative_size = $size;
             $bannerModel->creative_type = Banner::type($banner['type']);
 
             try {
@@ -203,8 +208,10 @@ class CampaignsController extends Controller
                         break;
                     case Banner::TYPE_DIRECT_LINK:
                     default:
-                        $content =
-                            empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'];
+                        $content = self::decorateUrlWithSize(
+                            empty($banner['creative_contents']) ? $campaignLandingUrl : $banner['creative_contents'],
+                            $size
+                        );
                         break;
                 }
             } catch (RuntimeException $exception) {
@@ -226,6 +233,14 @@ class CampaignsController extends Controller
         }
 
         return $banners;
+    }
+
+    private static function decorateUrlWithSize(string $url, string $size): string
+    {
+        $sizeSuffix = '#'.$size;
+        $length = strlen($sizeSuffix);
+
+        return (substr($url, -$length) === $sizeSuffix) ? $url : $url.$sizeSuffix;
     }
 
     private function prepareConversionsFromInput(array $input): array
@@ -271,6 +286,21 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
+        if (array_key_exists('bid_strategy_uuid', $input)) {
+            $bidStrategyUuid = $input['bid_strategy_uuid'] ?? null;
+            if (!Utils::isUuidValid($bidStrategyUuid)) {
+                throw new UnprocessableEntityHttpException(sprintf('Invalid bid strategy id (%s)', $bidStrategyUuid));
+            }
+
+            /** @var User $user */
+            $user = Auth::user();
+            $bidStrategy = BidStrategy::fetchByPublicId($bidStrategyUuid);
+
+            if (null === $bidStrategy
+                || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)) {
+                throw new UnprocessableEntityHttpException('Bid strategy could not be accessed.');
+            }
+        }
         $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
 
         $campaign = $this->campaignRepository->fetchCampaignById($campaignId);
@@ -287,11 +317,13 @@ class CampaignsController extends Controller
             $bannerFromInput = $banners->firstWhere('uuid', $banner->uuid);
 
             if ($bannerFromInput) {
-                $banner->name = $bannerFromInput['name'] ?? $bannerFromInput->creative_size;
+                $banner->name = $bannerFromInput['name'] ?? $bannerFromInput['creative_size'];
                 if ($banner->creative_type === Banner::TEXT_TYPE_DIRECT_LINK) {
-                    $banner->creative_contents =
+                    $banner->creative_contents = self::decorateUrlWithSize(
                         empty($bannerFromInput['creative_contents']) ? $campaign->landing_url
-                            : $bannerFromInput['creative_contents'];
+                            : $bannerFromInput['creative_contents'],
+                        $banner->creative_size
+                    );
                 }
                 $bannersToUpdate[] = $banner;
 
