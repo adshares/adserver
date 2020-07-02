@@ -23,7 +23,9 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\BidStrategy;
 use Adshares\Adserver\Models\Campaign;
+use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
@@ -33,6 +35,7 @@ use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use function factory;
 
 final class CampaignsControllerTest extends TestCase
@@ -355,5 +358,84 @@ final class CampaignsControllerTest extends TestCase
             'direct deal, has only crypto' => [1e11, true, 1e11, 0, Campaign::STATUS_ACTIVE],
             'direct deal, has only bonus' => [1e11, true, 0, 1e11, Campaign::STATUS_DRAFT],
         ];
+    }
+
+    public function testUpdateBidStrategyValid(): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        $defaultBidStrategyUuid = BidStrategy::first()->uuid;
+
+        $campaignInputData = $this->campaignInputData();
+        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+        $previousBidStrategyUuid = Campaign::find($id)->bid_strategy_uuid;
+        self::assertEquals($defaultBidStrategyUuid, $previousBidStrategyUuid);
+
+        /** @var BidStrategy $bidStrategy */
+        $bidStrategy = factory(BidStrategy::class)->create(['user_id' => $user->id]);
+        $campaignInputDataUpdated = array_merge(
+            $campaignInputData,
+            [
+                'bid_strategy' => [
+                    'name' => $bidStrategy->name,
+                    'uuid' => $bidStrategy->uuid,
+                ],
+            ]
+        );
+        $response = $this->patchJson(self::URI.'/'.$id, ['campaign' => $campaignInputDataUpdated]);
+        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $currentBidStrategyUuid = Campaign::find($id)->bid_strategy_uuid;
+        self::assertNotEquals($previousBidStrategyUuid, $currentBidStrategyUuid);
+    }
+
+    /**
+     * @dataProvider updateBidStrategyInvalidProvider
+     *
+     * @param array $bidStrategyData
+     */
+    public function testUpdateBidStrategyInvalid(array $bidStrategyData): void
+    {
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaignInputData = $this->campaignInputData();
+        $response = $this->postJson(self::URI, ['campaign' => $campaignInputData]);
+        $response->assertStatus(Response::HTTP_CREATED);
+
+        $id = $this->getIdFromLocation($response->headers->get('Location'));
+
+        $response = $this->patchJson(
+            self::URI.'/'.$id,
+            ['campaign' => array_merge($campaignInputData, $bidStrategyData)]
+        );
+        $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function updateBidStrategyInvalidProvider(): array
+    {
+        return [
+            'null' => [['bid_strategy' => null]],
+            'invalid type' => [['bid_strategy' => 1]],
+            'empty' => [['bid_strategy' => []]],
+            'no uuid' => [['bid_strategy' => ['name' => 'bid1']]],
+            'invalid uuid type' => [['bid_strategy' => ['name' => 'bid1', 'uuid' => 1]]],
+            'invalid uuid' => [['bid_strategy' => ['name' => 'bid1', 'uuid' => '0123456789abcdef']]],
+            'not existing uuid' => [
+                ['bid_strategy' => ['name' => 'bid1', 'uuid' => '0123456789abcdef0123456789abcdef']],
+            ],
+        ];
+    }
+
+    public function testAddCampaignInvalidSetupMissingDefaultBidStrategy(): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        DB::delete('DELETE FROM configs WHERE `key`=?', [Config::BID_STRATEGY_UUID_DEFAULT]);
+
+        $response = $this->postJson(self::URI, ['campaign' => $this->campaignInputData()]);
+        $response->assertStatus(Response::HTTP_SERVICE_UNAVAILABLE);
     }
 }

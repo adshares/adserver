@@ -150,7 +150,7 @@ class Campaign extends Model
         'secret',
         'conversion_click',
         'conversion_click_link',
-        'bid_strategy_uuid',
+        'bid_strategy',
     ];
 
     protected $traitAutomate = [
@@ -165,6 +165,7 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
+        'bid_strategy',
     ];
 
     public static function suspendAllForUserId(int $userId): int
@@ -270,6 +271,16 @@ class Campaign extends Model
         }
 
         return $this->banners;
+    }
+
+    public function getBidStrategyAttribute(): array
+    {
+        $uuid = $this->bid_strategy_uuid;
+
+        return [
+            'name' => BidStrategy::fetchByPublicId($uuid)->name,
+            'uuid' => $uuid,
+        ];
     }
 
     public function getConversionClickLinkAttribute(): ?string
