@@ -235,7 +235,7 @@ SQL;
         $zoneId = $context['page']['zone'] ?? null;
         $siteId = DomainReader::domain($context['page']['url'] ?? '');
 
-        if($request->query->get('logonly')) {
+        if ($request->query->get('logonly')) {
             $response = new Response();
         } else {
             $url = $this->replaceLandingUrlPlaceholders(
