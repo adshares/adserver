@@ -200,7 +200,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkClick(Request $request, string $bannerId)
     {
         $this->validateEventRequest($request);
 

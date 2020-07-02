@@ -215,7 +215,7 @@ SQL;
         return $response;
     }
 
-    public function click(Request $request, string $bannerId): RedirectResponse
+    public function click(Request $request, string $bannerId)
     {
         $banner = $this->getBanner($bannerId);
 
@@ -235,16 +235,20 @@ SQL;
         $zoneId = $context['page']['zone'] ?? null;
         $siteId = DomainReader::domain($context['page']['url'] ?? '');
 
-        $url = $this->replaceLandingUrlPlaceholders(
-            $url,
-            $caseId,
-            $bannerId,
-            $publisherId,
-            $payTo,
-            $siteId,
-            $zoneId ?: ''
-        );
-        $response = new RedirectResponse($url);
+        if($request->query->get('logonly')) {
+            $response = new Response();
+        } else {
+            $url = $this->replaceLandingUrlPlaceholders(
+                $url,
+                $caseId,
+                $bannerId,
+                $publisherId,
+                $payTo,
+                $siteId,
+                $zoneId ?: ''
+            );
+            $response = new RedirectResponse($url);
+        }
         $response->send();
 
         $impressionId = $request->query->get('iid');

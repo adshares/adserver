@@ -31,3 +31,12 @@ var $isset = function (value) {
 var $pick = function (value, ifnull) {
     return $isset(value) ? value : ifnull;
 };
+
+
+function ancestor(HTMLobj){
+    while(HTMLobj.parentElement){HTMLobj=HTMLobj.parentElement}
+    return HTMLobj;
+}
+function inTheDOM(obj){
+    return obj.isConnected !== undefined ? obj.isConnected : (ancestor(obj)===document.documentElement);
+}
