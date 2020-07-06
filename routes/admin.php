@@ -45,6 +45,7 @@ Route::middleware([Kernel::ADMIN_ACCESS, Kernel::JSON_API])->group(function () {
     Route::get('impersonation/{user}', [AuthController::class, 'impersonate']);
 
     Route::get('users', [UsersController::class, 'browse']);
+    Route::get('advertisers', [UsersController::class, 'advertisers']);
     Route::get('publishers', [UsersController::class, 'publishers']);
 
     Route::put('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'putBidStrategyUuidDefault']);
