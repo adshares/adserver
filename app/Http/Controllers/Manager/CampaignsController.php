@@ -286,8 +286,9 @@ class CampaignsController extends Controller
         $ads = $request->input('campaign.ads');
         $banners = Collection::make($ads);
 
-        if (array_key_exists('bid_strategy_uuid', $input)) {
-            $bidStrategyUuid = $input['bid_strategy_uuid'] ?? null;
+        unset($input['bid_strategy_uuid']);
+        if (array_key_exists('bid_strategy', $input)) {
+            $bidStrategyUuid = $input['bid_strategy']['uuid'] ?? null;
             if (!Utils::isUuidValid($bidStrategyUuid)) {
                 throw new UnprocessableEntityHttpException(sprintf('Invalid bid strategy id (%s)', $bidStrategyUuid));
             }
@@ -300,6 +301,8 @@ class CampaignsController extends Controller
                 || ($bidStrategy->user_id !== $user->id && $bidStrategy->user_id !== BidStrategy::ADMINISTRATOR_ID)) {
                 throw new UnprocessableEntityHttpException('Bid strategy could not be accessed.');
             }
+
+            $input['bid_strategy_uuid'] = $bidStrategyUuid;
         }
         $conversions = $this->prepareConversionsFromInput($input['conversions'] ?? []);
 

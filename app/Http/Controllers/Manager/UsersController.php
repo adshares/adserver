@@ -24,8 +24,10 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\User;
+use Adshares\Adserver\Utilities\DomainReader;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -74,6 +76,164 @@ class UsersController extends Controller
         return User::paginate();
     }
 
+    public function advertisers(Request $request): JsonResponse
+    {
+        if (strtolower((string)$request->get('g')) === 'user') {
+            $emailColumn = 'u.email';
+            $landingUrlColumn = 'GROUP_CONCAT(DISTINCT c.landing_url SEPARATOR ", ")';
+            $groupBy = $emailColumn;
+        } else {
+            $emailColumn = 'GROUP_CONCAT(DISTINCT u.email SEPARATOR ", ")';
+            $landingUrlColumn = 'c.landing_url';
+            $groupBy = $landingUrlColumn;
+        }
+
+        if (strtolower((string)$request->get('i')) === 'day') {
+            $interval = 1;
+        } else {
+            $interval = 7;
+        }
+
+        $viewsLimit = (int)$request->get('l', self::MIN_DAY_VIEWS);
+        $query = '%'.$request->get('q', '').'%';
+
+        $advertisers =
+            DB::select(
+                $q = sprintf(
+                    'SELECT 
+                    GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
+                    %s AS email,
+                    %s AS landing_url,
+                    SUM(IFNULL(lc.views, 0)) AS current_views,
+                    SUM(IFNULL(lc.views_all, 0)) AS current_views_all,
+                    SUM(IFNULL(lc.views_unique, 0)) AS current_views_unique,
+                    SUM(IFNULL(lc.clicks, 0)) AS current_clicks,
+                    SUM(IFNULL(lc.cost, 0)) AS current_cost,
+                    SUM(IFNULL(lp.views, 0)) AS last_views,
+                    SUM(IFNULL(lp.views_all, 0)) AS last_views_all,
+                    SUM(IFNULL(lp.views_unique, 0)) AS last_views_unique,
+                    SUM(IFNULL(lp.clicks, 0)) AS last_clicks,
+                    SUM(IFNULL(lp.cost, 0)) AS last_cost
+                FROM campaigns c
+                LEFT JOIN users u ON u.id = c.user_id
+                LEFT JOIN (
+                    SELECT
+                        l.campaign_id,
+                        SUM(l.cost_payment) AS cost,
+                        SUM(l.views_all) AS views_all,
+                        SUM(l.views) AS views,
+                        SUM(l.views_unique) AS views_unique,
+                        SUM(l.clicks) AS clicks
+                    FROM event_logs_hourly_stats l
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL 2 HOUR
+                    GROUP BY l.campaign_id
+                ) lc ON lc.campaign_id = c.uuid
+                LEFT JOIN (
+                    SELECT
+                        l.campaign_id,
+                        SUM(l.cost_payment) AS cost,
+                        SUM(l.views_all) AS views_all,
+                        SUM(l.views) AS views,
+                        SUM(l.views_unique) AS views_unique,
+                        SUM(l.clicks) AS clicks
+                    FROM event_logs_hourly_stats l
+                    WHERE l.hour_timestamp BETWEEN NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                        AND NOW() - INTERVAL %d DAY - INTERVAL 2 HOUR
+                    GROUP BY l.campaign_id
+                ) lp ON lp.campaign_id = c.uuid
+                WHERE c.deleted_at IS NULL AND c.status = %d AND (c.landing_url LIKE ? OR u.email LIKE ?)
+                GROUP BY %s
+                HAVING current_views >= ? OR last_views >= ?
+                ',
+                    $emailColumn,
+                    $landingUrlColumn,
+                    $interval,
+                    $interval * 2,
+                    $interval,
+                    Campaign::STATUS_ACTIVE,
+                    $groupBy
+                ),
+                [
+                    $query,
+                    $query,
+                    $viewsLimit * $interval,
+                    $viewsLimit * $interval,
+                ]
+            );
+
+        $data = array_map(
+            function ($row) {
+                $currentCtr = $row->current_clicks / max(1, $row->current_views);
+                $lastCtr = $row->last_clicks / max(1, $row->last_views);
+                $currentCpm = (int)($row->current_cost / max(1, $row->current_views) * 1000);
+                $lastCpm = (int)($row->last_cost / max(1, $row->last_views) * 1000);
+                $currentCpc = (int)($row->current_cost / max(1, $row->current_clicks));
+                $lastCpc = (int)($row->last_cost / max(1, $row->last_clicks));
+
+                $domain = join(
+                    ', ',
+                    array_unique(
+                        array_map(
+                            function ($url) {
+                                return DomainReader::domain($url);
+                            },
+                            explode(', ', $row->landing_url)
+                        )
+                    )
+                );
+
+                return [
+                    'user_ids' => $this->extractUserIds($row->user_ids),
+                    'email' => $row->email,
+                    'domain' => $domain,
+                    'views' => (int)$row->current_views,
+                    'viewsDiff' => $row->current_views - $row->last_views,
+                    'viewsChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_views - $row->last_views) / ($row->last_views == 0 ? 1 : $row->last_views)
+                    ),
+                    'viewsUnique' => (int)$row->current_views_unique,
+                    'viewsUniqueDiff' => $row->current_views_unique - $row->last_views_unique,
+                    'viewsUniqueChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_views_unique - $row->last_views_unique)
+                        / ($row->last_views_unique == 0 ? 1 : $row->last_views_unique)
+                    ),
+                    'clicks' => (int)$row->current_clicks,
+                    'clicksDiff' => $row->current_clicks - $row->last_clicks,
+                    'clicksChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_clicks - $row->last_clicks) / ($row->last_clicks == 0 ? 1 : $row->last_clicks)
+                    ),
+                    'ctr' => $currentCtr,
+                    'ctrDiff' => $currentCtr - $lastCtr,
+                    'ctrChange' => min(self::MAX_CHANGE, ($currentCtr - $lastCtr) / ($lastCtr == 0 ? 1 : $lastCtr)),
+                    'cost' => (int)$row->current_cost,
+                    'costDiff' => $row->current_cost - $row->last_cost,
+                    'costChange' => min(
+                        self::MAX_CHANGE,
+                        ($row->current_cost - $row->last_cost) / ($row->last_cost == 0 ? 1
+                            : $row->last_cost)
+                    ),
+                    'cpm' => $currentCpm,
+                    'cpmDiff' => $currentCpm - $lastCpm,
+                    'cpmChange' => min(self::MAX_CHANGE, ($currentCpm - $lastCpm) / ($lastCpm == 0 ? 1 : $lastCpm)),
+                    'cpc' => $currentCpc,
+                    'cpcDiff' => $currentCpc - $lastCpc,
+                    'cpcChange' => min(self::MAX_CHANGE, ($currentCpc - $lastCpc) / ($lastCpc == 0 ? 1 : $lastCpc)),
+                ];
+            },
+            $advertisers
+        );
+
+        $result = [
+            'data' => $data,
+        ];
+
+        return self::json($result);
+    }
+
     public function publishers(Request $request): JsonResponse
     {
         if (strtolower((string)$request->get('g')) === 'user') {
@@ -99,6 +259,7 @@ class UsersController extends Controller
             DB::select(
                 $q = sprintf(
                     'SELECT 
+                    GROUP_CONCAT(DISTINCT u.id SEPARATOR ",") AS user_ids,
                     %s AS email,
                     %s AS domain,
                     SUM(IFNULL(lc.views, 0)) AS current_views,
@@ -167,6 +328,7 @@ class UsersController extends Controller
                 $lastRpm = (int)($row->last_revenue / max(1, $row->last_views) * 1000);
 
                 return [
+                    'user_ids' => $this->extractUserIds($row->user_ids),
                     'email' => $row->email,
                     'domain' => $row->domain,
                     'views' => (int)$row->current_views,
@@ -207,5 +369,15 @@ class UsersController extends Controller
         ];
 
         return self::json($result);
+    }
+
+    private function extractUserIds(string $concatenatedUserIds): array
+    {
+        return array_map(
+            function ($userId) {
+                return (int)$userId;
+            },
+            explode(',', $concatenatedUserIds)
+        );
     }
 }
