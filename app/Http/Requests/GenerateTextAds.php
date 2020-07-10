@@ -34,6 +34,7 @@ class GenerateTextAds extends FormRequest
         return [
             'text_ad_source.title' => 'required|string|max:'.self::TITLE_MAX_LENGTH,
             'text_ad_source.text' => 'nullable|string|max:'.self::TEXT_MAX_LENGTH,
+            'text_ad_source.url' => 'required|url',
             'sizes' => 'required|array',
             'sizes.*' => new SizeRule(),
         ];

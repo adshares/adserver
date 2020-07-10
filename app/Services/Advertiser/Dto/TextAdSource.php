@@ -33,6 +33,9 @@ class TextAdSource implements Arrayable
     /** @var string|null */
     private $text;
 
+    /** @var string */
+    private $url;
+
     public function __construct($data)
     {
         if (!is_array($data)) {
@@ -44,9 +47,16 @@ class TextAdSource implements Arrayable
         if (!is_string($data['title'])) {
             throw new InvalidArgumentException('Text ad title must be a string.');
         }
+        if (!isset($data['url'])) {
+            throw new InvalidArgumentException('Text ad url is required.');
+        }
+        if (!is_string($data['url'])) {
+            throw new InvalidArgumentException('Text ad url must be a string.');
+        }
 
         $this->title = $data['title'];
         $this->text = $data['text'] ?? null;
+        $this->url = $data['url'];
     }
 
     public function getTitle(): string
@@ -59,11 +69,17 @@ class TextAdSource implements Arrayable
         return $this->text ?? '';
     }
 
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
     public function toArray(): array
     {
         return [
             'title' => $this->getTitle(),
             'text' => $this->getText(),
+            'url' => $this->getUrl(),
         ];
     }
 }
