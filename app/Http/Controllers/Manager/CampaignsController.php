@@ -151,7 +151,12 @@ class CampaignsController extends Controller
             $banners = $this->prepareBannersFromInput($input['ads'], $campaign->landing_url);
         }
         if (isset($input['conversions']) && count($input['conversions']) > 0) {
-            $conversions = $this->prepareConversionsFromInput($input['conversions']);
+            foreach ($this->prepareConversionsFromInput($input['conversions']) as $conversionInput) {
+                $conversion = new ConversionDefinition();
+                $conversion->fill($conversionInput);
+
+                $conversions[] = $conversion;
+            }
         }
 
         $this->campaignRepository->save($campaign, $banners, $conversions);

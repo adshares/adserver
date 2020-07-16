@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Taxonomy processing, allow multiple levels
 ### Fixed
 - Retry ads transaction after error while processing demand payments
+- Adding campaign with conversions
 ### Removed
 - AdUser url from find.js
 
