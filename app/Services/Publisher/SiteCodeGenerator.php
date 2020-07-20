@@ -18,7 +18,7 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace Adshares\Adserver\Services\Publisher;
 
@@ -29,11 +29,13 @@ use Adshares\Supply\Domain\ValueObject\Size;
 
 class SiteCodeGenerator
 {
-    private const CODE_TEMPLATE_DISPLAY = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
-    .'style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto">{{fallback}}</div>';
+    private const CODE_TEMPLATE_DISPLAY
+        = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
+        . 'style="width:{{width}}px;height:{{height}}px;display: inline-block;margin: 0 auto">{{fallback}}</div>';
 
-    private const CODE_TEMPLATE_POP = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
-    .'style="display: none">{{fallback}}</div>';
+    private const CODE_TEMPLATE_POP
+        = '<div class="{{selectorClass}}" {{dataOptions}}data-zone="{{zoneId}}" '
+        . 'style="display: none">{{fallback}}</div>';
 
     public static function generateAsSingleString(Site $site, ?SiteCodeConfig $config = null): string
     {
@@ -49,13 +51,14 @@ class SiteCodeGenerator
             $zoneCode = self::getZoneCode($zone, $config);
 
             if (Size::TYPE_POP === $zone->type) {
-                $popsCodes[] = "<!-- {$zone->name} -->\n".$zoneCode;
+                $popsCodes[] = "<!-- {$zone->name} -->\n" . $zoneCode;
             } else {
-                $displayCodes[] = "<!-- {$zone->name} {$zone->size} -->\n".$zoneCode;
+                $displayCodes[] = "<!-- {$zone->name} {$zone->size} -->\n" . $zoneCode;
             }
         }
 
-        $code = <<<CODE
+        $code
+            = <<<CODE
 <!-- Common code for all ad units, should be inserted into head section -->
 {$commonCode}
 <!-- End of common code -->
@@ -63,7 +66,8 @@ CODE;
 
         if (count($popsCodes) > 0) {
             $popsCodes = join("\n\n", $popsCodes);
-            $code .= <<<CODE
+            $code
+                .= <<<CODE
 
 
 <!-- Code for pops -->
@@ -74,7 +78,8 @@ CODE;
 
         if (count($displayCodes) > 0) {
             $displayCodes = join("\n\n", $displayCodes);
-            $code .= <<<CODE
+            $code
+                .= <<<CODE
 
 
 <!-- Code for ad units -->
@@ -100,19 +105,19 @@ CODE;
             if (Size::TYPE_POP === $zone->type) {
                 $popsCodes[] = [
                     'label' => $zone->name,
-                    'code' => $zoneCode,
+                    'code'  => $zoneCode,
                 ];
             } else {
                 $displayCodes[] = [
                     'label' => "{$zone->name} {$zone->size}",
-                    'code' => $zoneCode,
+                    'code'  => $zoneCode,
                 ];
             }
         }
 
         return [
-            'common' => self::getCommonCode($config),
-            'pops' => $popsCodes,
+            'common'   => self::getCommonCode($config),
+            'pops'     => $popsCodes,
             'ad_units' => $displayCodes,
         ];
     }
@@ -120,9 +125,27 @@ CODE;
     public static function getCommonCode(?SiteCodeConfig $config = null): string
     {
         $proxyMainJs = $config !== null && $config->isUserResponsibleForMainJsProxy();
-        $scriptUrl = $proxyMainJs ? '/main.js' : (new SecureUrl(route('supply-find.js')))->toString();
+        if (config('app.main_js_tld') && !$proxyMainJs) {
+            $params = [
+                config('app.main_js_tld'),
+                config('app.adserver_id'),
+            ];
+            $jsPath = public_path('-/main.js');
 
-        return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
+            return "<script type=\"text/javascript\">" . str_replace(
+                    [
+                        '{{ TLD }}',
+                        '{{ SELECTOR }}',
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                ) . "</script>";
+        } else {
+
+            $scriptUrl = $proxyMainJs ? '/main.js' : (new SecureUrl(route('supply-find.js')))->toString();
+
+            return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
+        }
     }
 
     public static function getZoneCode(Zone $zone, ?SiteCodeConfig $config = null): string
@@ -131,10 +154,10 @@ CODE;
             return strtr(
                 self::CODE_TEMPLATE_POP,
                 [
-                    '{{zoneId}}' => $zone->uuid,
+                    '{{zoneId}}'        => $zone->uuid,
                     '{{selectorClass}}' => config('app.adserver_id'),
-                    '{{dataOptions}}' => self::getDataOptionsForPops($config),
-                    '{{fallback}}' => self::getFallback($config),
+                    '{{dataOptions}}'   => self::getDataOptionsForPops($config),
+                    '{{fallback}}'      => self::getFallback($config),
                 ]
             );
         }
@@ -142,12 +165,12 @@ CODE;
         $size = Size::toDimensions($zone->size);
 
         $replaceArr = [
-            '{{zoneId}}' => $zone->uuid,
-            '{{width}}' => $size[0],
-            '{{height}}' => $size[1],
+            '{{zoneId}}'        => $zone->uuid,
+            '{{width}}'         => $size[0],
+            '{{height}}'        => $size[1],
             '{{selectorClass}}' => config('app.adserver_id'),
-            '{{dataOptions}}' => self::getDataOptions($config),
-            '{{fallback}}' => self::getFallback($config),
+            '{{dataOptions}}'   => self::getDataOptions($config),
+            '{{fallback}}'      => self::getFallback($config),
         ];
 
         return strtr(self::CODE_TEMPLATE_DISPLAY, $replaceArr);
@@ -164,7 +187,7 @@ CODE;
             $options[] = 'adblock_only';
         }
         if (null !== $config->getMinCpm()) {
-            $options[] = 'min_cpm='.$config->getMinCpm();
+            $options[] = 'min_cpm=' . $config->getMinCpm();
         }
 
         if (empty($options)) {
@@ -181,9 +204,9 @@ CODE;
         $siteCodeConfigPops = null === $config ? new SiteCodeConfigPops() : $config->getConfigPops();
 
         $options = [
-            'count='.$siteCodeConfigPops->getCount(),
-            'interval='.$siteCodeConfigPops->getInterval(),
-            'burst='.$siteCodeConfigPops->getBurst(),
+            'count=' . $siteCodeConfigPops->getCount(),
+            'interval=' . $siteCodeConfigPops->getInterval(),
+            'burst=' . $siteCodeConfigPops->getBurst(),
         ];
 
         if (null !== $config) {
@@ -191,7 +214,7 @@ CODE;
                 $options[] = 'adblock_only';
             }
             if (null !== $config->getMinCpm()) {
-                $options[] = 'min_cpm='.$config->getMinCpm();
+                $options[] = 'min_cpm=' . $config->getMinCpm();
             }
         }
 
@@ -221,7 +244,7 @@ CODE;
             return '';
         }
 
-        $fallback = join("\n", $options)."\n";
+        $fallback = join("\n", $options) . "\n";
 
         return "\n\t<!--backfill\n{$fallback}\t-->\n";
     }

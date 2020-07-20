@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
@@ -166,7 +167,7 @@ class SupplyController extends Controller
     public function findScript(): StreamedResponse
     {
         $params = [
-            config('app.serve_base_url'),
+            config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
             '.' . config('app.adserver_id'),
         ];
 
