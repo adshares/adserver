@@ -23,9 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Services\Advertiser;
 
 use Adshares\Adserver\Services\Advertiser\Dto\TextAdSource;
+use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Supply\Domain\ValueObject\Size;
 
 class TextAdsGenerator
 {
+    private const TEXT_AD_VIEW = 'advertiser.text-ad';
+
     /** @var TextAdSource */
     private $source;
 
@@ -36,18 +40,29 @@ class TextAdsGenerator
 
     public function generate(string $size): string
     {
-        $content = <<<HTML
-<!DOCTYPE html>
-<head>
-  <meta content="utf-8">
-  <title>Adshares</title>
-</head>
-<body>
-<h1>:title</h1>
-<div>:text</div>
-</body>
-HTML;
+        [$width, $height] = Size::toDimensions($size);
 
-        return str_replace([':title', ':text'], [$this->source->getTitle(), $this->source->getText()], $content);
+        return view(
+            $this->getView($size),
+            [
+                'domain' => DomainReader::domain($this->source->getUrl()),
+                'height' => $height,
+                'loopCount' => max(1, (int)floor($height / ($width >= 700 ? 70 : ($width > 160 ? 101 : 130)))),
+                'text' => $this->source->getText(),
+                'title' => $this->source->getTitle(),
+                'width' => $width,
+            ]
+        )->render();
+    }
+
+    private function getView(string $size): string
+    {
+        $viewForSize = self::TEXT_AD_VIEW.'-'.$size;
+
+        if (view()->exists($viewForSize)) {
+            return $viewForSize;
+        }
+
+        return self::TEXT_AD_VIEW;
     }
 }
