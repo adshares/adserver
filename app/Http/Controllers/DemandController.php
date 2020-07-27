@@ -366,8 +366,8 @@ SQL;
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString(),
-                'view_script_url' => (new SecureUrl(url('-/view.js')))->toString(),
+                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()),
+                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(url('-/view.js')))->toString()),
                 'aduser_url' => $adUserUrl,
             ]
         ));
