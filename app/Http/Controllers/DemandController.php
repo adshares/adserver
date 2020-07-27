@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -521,17 +522,19 @@ SQL;
                 $bannerPublicId = $bannerArray['uuid'];
                 $checksum = $bannerArray['creative_sha1'];
 
+
+
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => SecureUrl::change(
+                    'serve_url' => ServeDomain::changeUrlHost(SecureUrl::change(
                         route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                         $request
-                    ),
-                    'click_url' => SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request),
-                    'view_url' => SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    )),
+                    'click_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request)),
+                    'view_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request)),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
