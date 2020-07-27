@@ -297,23 +297,23 @@ class GuzzleAdSelectClient implements AdSelect
                         'size'          => $banner->size,
                         'serve_url'     => $banner->serve_url,
                         'creative_sha1' => $banner->checksum,
-                        'click_url'     => SecureUrl::change(
-                            route(
+                        'click_url'     =>  ServeDomain::changeUrlHost(SecureUrl::change(
+                           route(
                                 'log-network-click',
                                 [
                                     'id' => $banner->uuid,
                                     'r'  => Utils::urlSafeBase64Encode($banner->click_url),
                                 ]
-                            )
+                            ))
                         ),
-                        'view_url'      => SecureUrl::change(
+                        'view_url'      => ServeDomain::changeUrlHost(SecureUrl::change(
                             route(
                                 'log-network-view',
                                 [
                                     'id' => $banner->uuid,
                                     'r'  => Utils::urlSafeBase64Encode($banner->view_url),
                                 ]
-                            )
+                            ))
                         ),
                         'rpm'           => $item['rpm'],
                     ];
