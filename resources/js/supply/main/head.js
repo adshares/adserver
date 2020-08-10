@@ -6,7 +6,7 @@
         ];
 
         if(hash) {
-            for(let i=0;i<hash.length;i++)
+            for(let i=0;i<=hash.length-1;i++)
             {
                 seed = (seed * hash.charCodeAt(i)) % 0xffffffff;
             }
@@ -19,7 +19,7 @@
         {
             let tmp = [];
             let prev = null;
-            for(let i=0;i<parts;i++) {
+            for(let i=0;i<=parts-1;i++) {
                 let set;
                 if(prev === null)
                 {
@@ -55,6 +55,6 @@
     } else {
         let script = document.createElement('script');
         script.src = 'https://' + domain + '/main.js';
-        document.body.appendChild(script);
+        (document.body || document.head).appendChild(script);
     }
 })(typeof document !== 'undefined' ? document : null);
