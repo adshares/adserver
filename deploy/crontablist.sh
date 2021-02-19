@@ -116,5 +116,13 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
 }
 
 echo -n "5 */1 * * * "
-echo -n "php ${SERVICE_DIR}/artisan ops:events:clear"
+echo -n "php ${SERVICE_DIR}/artisan ops:events:clear --period=P7D"
+echo ""
+
+echo -n "12 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:targeting-options:update"
+echo ""
+
+echo -n "12 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:filtering-options:update"
 echo ""
