@@ -22,14 +22,17 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Client\ClassifierExternalClient;
 use Adshares\Adserver\Http\Controller;
+use Adshares\Adserver\Mail\BannerClassified;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -39,8 +42,12 @@ class ClassificationController extends Controller
 {
     /** @var ClassifierExternalRepository */
     private $classifierRepository;
+
     /** @var ClassifierExternalSignatureVerifier */
     private $signatureVerifier;
+
+    /** @var array */
+    private $notifyUserIds = [];
 
     public function __construct(
         ClassifierExternalRepository $classifierRepository,
@@ -66,6 +73,7 @@ class ClassificationController extends Controller
         $banners = Banner::fetchBannerByPublicIds($bannerPublicIds)->keyBy('uuid');
 
         foreach ($inputs as $input) {
+            /** @var $banner Banner */
             if (null === ($banner = $banners->get($input['id']))
                 || null === ($classification =
                     BannerClassification::fetchByBannerIdAndClassifier($banner->id, $classifier))) {
@@ -155,7 +163,13 @@ class ClassificationController extends Controller
             }
 
             $classification->classified($keywords, $signature, $signedAt);
+            $userId = $banner->campaign->user_id;
+            if (!in_array($userId, $this->notifyUserIds)) {
+                $this->notifyUserIds[] = $userId;
+            }
         }
+
+        $this->sendMails();
 
         if ($isAnySignatureInvalid) {
             return self::json(['message' => 'Invalid signature'], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -225,6 +239,19 @@ class ClassificationController extends Controller
 
                 throw new UnprocessableEntityHttpException('Missing timestamp');
             }
+        }
+    }
+
+    private function sendMails(): void
+    {
+        if (empty($this->notifyUserIds)) {
+            return;
+        }
+
+        $users = User::fetchByIds($this->notifyUserIds);
+
+        foreach ($users as $user) {
+            Mail::to($user->email)->queue(new BannerClassified());
         }
     }
 }

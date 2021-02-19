@@ -68,4 +68,12 @@ class UrlTest extends TestCase
             ['adshares.net'],
         ];
     }
+
+    public function testToString(): void
+    {
+        $string = 'https://example.com';
+        $url = new Url($string);
+
+        self::assertEquals($string, (string)$url);
+    }
 }

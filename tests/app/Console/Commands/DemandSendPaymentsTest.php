@@ -23,10 +23,13 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\Response\GetTransactionResponse;
+use Adshares\Adserver\Console\Commands\DemandSendPayments;
+use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
 use Adshares\Adserver\Tests\Console\TestCase;
 use Adshares\Common\Application\Service\Ads;
+use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
@@ -35,11 +38,24 @@ class DemandSendPaymentsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function testZero(): void
+    public function testNoPayments(): void
     {
         $this->artisan('ops:demand:payments:send')
             ->expectsOutput('Found 0 sendable payments.')
             ->assertExitCode(0);
+    }
+
+    public function testZeroPayment(): void
+    {
+        factory(Payment::class)->create(['state' => Payment::STATE_NEW, 'fee' => 0]);
+
+        $this->artisan('ops:demand:payments:send')
+            ->expectsOutput('Found 0 sendable payments.')
+            ->assertExitCode(0);
+
+        $payments = Payment::all();
+        self::assertCount(1, $payments);
+        self::assertEquals(Payment::STATE_SENT, $payments->first()->state);
     }
 
     public function testHandle(): void
@@ -76,6 +92,38 @@ class DemandSendPaymentsTest extends TestCase
         $payments->each(function (Payment $payment) {
             self::assertEquals(Payment::STATE_SENT, $payment->state);
         });
+    }
+
+    public function testLock(): void
+    {
+        $lockerMock = $this->createMock(Locker::class);
+        $lockerMock->expects(self::once())->method('lock')->willReturn(false);
+        $this->instance(Locker::class, $lockerMock);
+
+        $this->artisan('ops:demand:payments:send')->assertExitCode(DemandSendPayments::STATUS_LOCKED);
+    }
+
+    public function testAdsError(): void
+    {
+        factory(Payment::class)->create(['state' => Payment::STATE_NEW, 'fee' => 1]);
+
+        $this->app->bind(
+            Ads::class,
+            function () {
+                $ads = $this->createMock(Ads::class);
+                $ads->method('sendPayments')->willThrowException(new AdsException('test-exception'));
+
+                return $ads;
+            }
+        );
+
+        $this->artisan('ops:demand:payments:send')
+            ->expectsOutput('Found 1 sendable payments.')
+            ->assertExitCode(DemandSendPayments::STATUS_ERROR_ADS);
+
+        $payments = Payment::all();
+        self::assertCount(1, $payments);
+        self::assertEquals(Payment::STATE_NEW, $payments->first()->state);
     }
 
     private function getRawData(): array

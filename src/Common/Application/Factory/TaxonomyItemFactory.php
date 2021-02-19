@@ -97,6 +97,8 @@ final class TaxonomyItemFactory
             unset($value['key']);
         }
 
-        return new Value($value['value'], $value['label'], $value['description'] ?? null);
+        $values = isset($value['values']) ? self::mapValues($value['values']) : [];
+
+        return new Value($value['value'], $value['label'], $values, $value['description'] ?? null);
     }
 }

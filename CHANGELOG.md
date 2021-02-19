@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Bid strategies
+- Storing sites' information (page rank) in database
+- Setting panel placeholders with an e-mail notification
+- Rejecting site's domains
+- Send an email notification once the banner was classified
+- Reassessment of distinctive sites
+- Sites' categories
+### Changed
+- Do not allow site's domain starts with a dot
+- Taxonomy processing, allow multiple levels
+### Fixed
+- Retry ads transaction after error while processing demand payments
+- Adding campaign with conversions
+### Removed
+- AdUser url from find.js
 
 ## [1.6.3] - 2020-03-03
 ### Added

@@ -100,6 +100,11 @@ class TargetingProcessor
         foreach ($schema as $availableValue) {
             $value = $availableValue['value'];
             $availableValues[$value] = $value;
+            
+            if (isset($availableValue['values'])) {
+                $availableValues =
+                    array_merge($availableValues, $this->extractAvailableValuesByValue($availableValue['values']));
+            }
         }
 
         return $availableValues;

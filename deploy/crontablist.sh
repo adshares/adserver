@@ -60,6 +60,18 @@ echo -n "*/5 * * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:demand:classification:request"
 echo ""
 
+echo -n "0-45/5,55 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:update"
+echo ""
+
+echo -n "50 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:update --all"
+echo ""
+
+echo -n "54 18 * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:supply:site-rank:reassess"
+echo ""
+
 echo -n "0 0 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:license:fetch"
 echo ""
@@ -104,5 +116,13 @@ test ${SKIP_HOST_FETCHING:-0} -eq 0 && \
 }
 
 echo -n "5 */1 * * * "
-echo -n "php ${SERVICE_DIR}/artisan ops:events:clear"
+echo -n "php ${SERVICE_DIR}/artisan ops:events:clear --period=P7D"
+echo ""
+
+echo -n "12 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:targeting-options:update"
+echo ""
+
+echo -n "12 * * * * "
+echo -n "php ${SERVICE_DIR}/artisan ops:filtering-options:update"
 echo ""

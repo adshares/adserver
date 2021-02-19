@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Mock\Client;
 
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
@@ -34,9 +35,28 @@ use function GuzzleHttp\json_decode;
 
 final class DummyAdUserClient implements AdUser
 {
+    public function fetchPageRank(string $url): PageRank
+    {
+        return new PageRank(1, AdUser::PAGE_INFO_OK);
+    }
+
+    public function fetchPageRankBatch(array $urls): array
+    {
+        $result = [];
+
+        foreach ($urls as $id => $url) {
+            $result[$id] = [
+                'rank' => 1,
+                'info' => AdUser::PAGE_INFO_OK,
+            ];
+        }
+        
+        return $result;
+    }
+
     public function fetchTargetingOptions(): Taxonomy
     {
-        $path = base_path('tests/app/targeting_schema.json');
+        $path = base_path('tests/mock/targeting_schema.json');
         $var = file_get_contents($path);
         $taxonomy = json_decode($var, true);
 
@@ -46,5 +66,18 @@ final class DummyAdUserClient implements AdUser
     public function getUserContext(ImpressionContext $context): UserContext
     {
         throw new RuntimeException('Method getUserContext() not implemented');
+    }
+
+    public function reassessPageRankBatch(array $urls): array
+    {
+        $result = [];
+
+        foreach ($urls as $id => $urlData) {
+            $result[$id] = [
+                'status' => AdUser::REASSESSMENT_STATE_ACCEPTED,
+            ];
+        }
+
+        return $result;
     }
 }

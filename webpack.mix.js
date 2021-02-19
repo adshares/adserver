@@ -67,5 +67,9 @@ mix.babel([
     'resources/js/footer/*',
 ], 'public/-/banner.js');
 
+mix.babel([
+    'resources/js/supply/main/*',
+], 'public/-/main.js');
+
 
 mix.copyDirectory('resources/img', 'public/img');

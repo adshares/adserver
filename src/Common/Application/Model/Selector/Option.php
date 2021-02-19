@@ -122,11 +122,6 @@ final class Option
 
     public function isViewable(): bool
     {
-//        if ($this->allowInput) {
-//            //TODO: remove when front ready
-//            return false;
-//        }
-
         if ($this->type === self::TYPE_GROUP) {
             return !$this->subSelector->isEmpty();
         }

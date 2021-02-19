@@ -30,16 +30,22 @@ class DemandSendPayments extends BaseCommand
 {
     public const COMMAND_SIGNATURE = 'ops:demand:payments:send';
 
+    public const STATUS_OK = 0;
+
+    public const STATUS_LOCKED = 1;
+
+    public const STATUS_ERROR_ADS = 2;
+
     protected $signature = self::COMMAND_SIGNATURE;
 
     protected $description = 'Sends payments to supply adservers and license server';
 
-    public function handle(Ads $ads): void
+    public function handle(Ads $ads): int
     {
         if (!$this->lock()) {
             $this->info('Command '.self::COMMAND_SIGNATURE.' already running');
 
-            return;
+            return self::STATUS_LOCKED;
         }
 
         $this->info('Start command '.self::COMMAND_SIGNATURE);
@@ -61,7 +67,7 @@ class DemandSendPayments extends BaseCommand
         if (!$paymentCount) {
             $this->release();
 
-            return;
+            return self::STATUS_OK;
         }
 
         $this->info("Sending $paymentCount payments from ".config('app.adshares_address').'.');
@@ -78,7 +84,7 @@ class DemandSendPayments extends BaseCommand
             );
             $this->release();
 
-            return;
+            return self::STATUS_ERROR_ADS;
         }
 
         $payments->each(function (Payment $payment) use ($tx) {
@@ -100,5 +106,7 @@ class DemandSendPayments extends BaseCommand
         $this->info("Spent {$tx->getDeduct()} clicks, including a {$tx->getFee()} clicks network fee.");
         $this->info("TransactionId: {$tx->getId()}");
         $this->release();
+
+        return self::STATUS_OK;
     }
 }

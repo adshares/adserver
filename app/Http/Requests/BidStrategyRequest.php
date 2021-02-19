@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2019 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,22 +18,22 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Models\Traits;
+namespace Adshares\Adserver\Http\Requests;
 
-/**
- *  store money balance
- */
-trait Money
+class BidStrategyRequest extends FormRequest
 {
-    public function moneyMutator($key, $value)
+    public function rules(): array
     {
-        $this->attributes[$key] = $value;
+        return [
+            'name' => 'required|string|max:255',
+            'details' => 'present|array',
+            'details.*.category' => 'required|string|max:267',
+            'details.*.rank' => 'required|numeric|min:0|max:1',
+        ];
     }
 
-    public function moneyAccessor($value)
+    public function toArray(): array
     {
-        return $value === null ? null : $value;
+        return $this->validated();
     }
-
-    // TODO: this is just tmp mock, should be processed to Money class (Currency)
 }

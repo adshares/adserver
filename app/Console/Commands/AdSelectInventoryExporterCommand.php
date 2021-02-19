@@ -64,9 +64,6 @@ class AdSelectInventoryExporterCommand extends BaseCommand
 
         $this->info('Started exporting inventory to AdSelect.');
 
-        // @todo use it when $from, $to functionality will be implemented
-        // $from = Config::fetchAdSelectInventoryExportTime();
-
         $activeCampaigns = $this->campaignRepository->fetchActiveCampaigns();
         $deletedCampaigns = $this->campaignRepository->fetchCampaignsToDelete();
 

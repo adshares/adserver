@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\NetworkVectorsMeta;
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Adserver\Utilities\SqlUtils;
@@ -166,8 +167,7 @@ class SupplyController extends Controller
     public function findScript(): StreamedResponse
     {
         $params = [
-            config('app.serve_base_url'),
-            config('app.aduser_base_url'),
+            config('app.main_js_tld') ? ServeDomain::current() : config('app.serve_base_url'),
             '.' . config('app.adserver_id'),
         ];
 
@@ -179,7 +179,6 @@ class SupplyController extends Controller
                 echo str_replace(
                     [
                         '{{ ORIGIN }}',
-                        '{{ ADUSER }}',
                         '{{ SELECTOR }}',
                     ],
                     $params,
@@ -202,7 +201,7 @@ class SupplyController extends Controller
         return $response;
     }
 
-    public function logNetworkClick(Request $request, string $bannerId): RedirectResponse
+    public function logNetworkClick(Request $request, string $bannerId)
     {
         $this->validateEventRequest($request);
 

@@ -33,15 +33,6 @@ class UpdateAdminSettings extends FormRequest
         $input = $this->all();
         $settings = $input['settings'];
 
-        //TODO: remove when front done
-        $settings['cold_wallet_is_active'] = $settings['cold_wallet_is_active'] ?? $settings['hotwallet_is_active'];
-        $settings['cold_wallet_address'] = $settings['cold_wallet_address'] ?? $settings['hotwallet_address'];
-        unset(
-            $settings['hotwallet_is_active'],
-            $settings['hotwallet_address']
-        );
-        //TODO: ^^^
-
         $isColdWalletActive = (bool)$settings['cold_wallet_is_active'];
 
         if ($isColdWalletActive === false) {

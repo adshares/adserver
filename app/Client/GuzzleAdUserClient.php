@@ -23,15 +23,19 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client;
 
 use Adshares\Adserver\Http\Utils;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Common\Application\Factory\TaxonomyFactory;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
+use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\RequestOptions;
+use InvalidArgumentException;
 use function config;
 use function GuzzleHttp\json_decode;
 use function sprintf;
@@ -46,6 +50,71 @@ final class GuzzleAdUserClient implements AdUser
     public function __construct(Client $client)
     {
         $this->client = $client;
+    }
+
+    public function fetchPageRank(string $url): PageRank
+    {
+        $path = self::API_PATH.'/page-rank/'.urlencode($url);
+
+        try {
+            $response = $this->client->get($path);
+            $body = json_decode((string)$response->getBody());
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Cannot decode response from the AdUser for (%s)', $url)
+            );
+        } catch (RequestException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    '{"url": "%s", "path": "%s",  "message": "%s"}',
+                    (string)$this->client->getConfig('base_uri'),
+                    $path,
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        if (!isset($body->rank) || !isset($body->info) || !is_numeric($body->rank)
+            || !in_array($body->info, self::PAGE_INFOS)) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Unexpected response format from the AdUser for (%s)', $url)
+            );
+        }
+
+        return new PageRank($body->rank, $body->info);
+    }
+
+    public function fetchPageRankBatch(array $urls): array
+    {
+        return $this->postUrls(self::API_PATH.'/page-rank', $urls);
+    }
+
+    private function postUrls(string $path, array $urls): array
+    {
+        try {
+            $response = $this->client->post(
+                $path,
+                [
+                    RequestOptions::JSON => ['urls' => $urls],
+                ]
+            );
+            $body = json_decode((string)$response->getBody(), true);
+        } catch (InvalidArgumentException $invalidArgumentException) {
+            throw new UnexpectedClientResponseException(
+                sprintf('Cannot decode response from the AdUser for (%s)', join(',', $urls))
+            );
+        } catch (RequestException $exception) {
+            throw new RuntimeException(
+                sprintf(
+                    '{"url": "%s", "path": "%s",  "message": "%s"}',
+                    (string)$this->client->getConfig('base_uri'),
+                    $path,
+                    $exception->getMessage()
+                )
+            );
+        }
+
+        return $body;
     }
 
     public function fetchTargetingOptions(): Taxonomy
@@ -103,5 +172,10 @@ final class GuzzleAdUserClient implements AdUser
                 Utils::hexUuidFromBase64UrlWithChecksum($partialContext->trackingId())
             );
         }
+    }
+
+    public function reassessPageRankBatch(array $urls): array
+    {
+        return $this->postUrls(self::API_PATH.'/reassessment', $urls);
     }
 }

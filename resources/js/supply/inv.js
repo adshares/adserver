@@ -108,12 +108,19 @@ var proxyScript = '' +
     '    }' +
     '});';
 
+function createIframeFromSrc(data, domInsertCallback) {
+    var iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation");
+    prepareIframe(iframe);
+    iframe.src = data.iframe_src;
+    domInsertCallback(iframe);
+}
+
 function createIframeFromData(data, domInsertCallback) {
     var iframe = document.createElement('iframe');
     if (!iframeDataUri) {
         iframe.src = 'about:blank';
         iframe.setAttribute('sandbox', "allow-scripts allow-same-origin");
-
 
         iframe.onload = function() {
             var fn = function (contents) {

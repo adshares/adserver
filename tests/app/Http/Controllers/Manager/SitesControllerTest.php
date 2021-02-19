@@ -18,24 +18,37 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-namespace Adshares\Adserver\Tests\Http;
+namespace Adshares\Adserver\Tests\Http\Controllers\Manager;
 
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
+use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
 use Adshares\Adserver\Tests\TestCase;
+use Adshares\Common\Application\Service\AdUser;
+use Adshares\Common\Application\Service\ConfigurationRepository;
+use Adshares\Mock\Client\DummyAdUserClient;
+use Adshares\Mock\Repository\DummyConfigurationRepository;
+use DateTimeImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use function GuzzleHttp\json_decode;
 
-class SitesTest extends TestCase
+class SitesControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     private const URI = '/api/sites';
 
-    const SITE_STRUCTURE = [
+    private const URI_DOMAIN_VERIFY = '/api/sites/domain/validate';
+
+    private const SITE_STRUCTURE = [
         'id',
         'name',
+        'domain',
+        'url',
         'filtering',
         'adUnits' => [
             '*' => [
@@ -52,7 +65,7 @@ class SitesTest extends TestCase
         'primaryLanguage',
     ];
 
-    const BASIC_SITE_STRUCTURE = [
+    private const BASIC_SITE_STRUCTURE = [
         'id',
         'name',
         'status',
@@ -61,7 +74,21 @@ class SitesTest extends TestCase
         'adUnits',
     ];
 
-    public function testEmptyDb()
+    private const DOMAIN_VERIFY_STRUCTURE = [
+        'code',
+        'message',
+    ];
+
+    private const RANK_STRUCTURE = [
+        'rank',
+        'info',
+    ];
+
+    private const SIZES_STRUCTURE = [
+        'sizes' => [],
+    ];
+
+    public function testEmptyDb(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -76,7 +103,7 @@ class SitesTest extends TestCase
     /**
      * @dataProvider creationDataProvider
      */
-    public function testCreateSite($data, $preset)
+    public function testCreateSite($data, $preset): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');
 
@@ -103,7 +130,7 @@ class SitesTest extends TestCase
             ->assertJsonCount(0, 'filtering.excludes');
     }
 
-    private function getIdFromLocation($location)
+    private function getIdFromLocation($location): string
     {
         $matches = [];
         $this->assertSame(1, preg_match('/(\d+)$/', $location, $matches));
@@ -111,7 +138,7 @@ class SitesTest extends TestCase
         return $matches[1];
     }
 
-    public function testCreateMultipleSites()
+    public function testCreateMultipleSites(): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
@@ -139,13 +166,13 @@ class SitesTest extends TestCase
             [
                 "status" => 0,
                 "name" => "nameA",
-                "domain" => "example.com",
+                "url" => "https://example.com",
                 "primaryLanguage" => "pl",
             ],
             [
                 'status' => 1,
                 "name" => "nameB",
-                "domain" => "example.com",
+                "url" => "https://example.com",
                 "primaryLanguage" => "en",
             ],
         ];
@@ -168,6 +195,9 @@ class SitesTest extends TestCase
         "name": "ssss",
         "size": "300x250"
       }
+    ],
+    "categories": [
+      "unknown"
     ]
   }
 JSON
@@ -183,10 +213,148 @@ JSON
         );
     }
 
+    public function testCreateSiteError(): void
+    {
+        $siteClassificationUpdater = $this->createMock(SiteClassificationUpdater::class);
+        $siteClassificationUpdater->method('addClassificationToFiltering')
+            ->willThrowException(new RuntimeException('test-exception'));
+        $this->instance(SiteClassificationUpdater::class, $siteClassificationUpdater);
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['site' => self::simpleSiteData()]);
+
+        $response->assertStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * @dataProvider createSiteUnprocessableProvider
+     *
+     * @param array $siteData
+     * @param int $expectedStatus
+     */
+    public function testCreateSiteUnprocessable(array $siteData, int $expectedStatus): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+
+        $response = $this->postJson(self::URI, ['site' => $siteData]);
+
+        $response->assertStatus($expectedStatus);
+    }
+
+    public function createSiteUnprocessableProvider(): array
+    {
+        return [
+            'no data' => [[], Response::HTTP_UNPROCESSABLE_ENTITY],
+            'correct' => [self::simpleSiteData(), Response::HTTP_CREATED],
+            'missing name' => [self::simpleSiteData([], 'name'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'missing language' => [self::simpleSiteData([], 'primaryLanguage'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid language' => [
+                self::simpleSiteData(['primaryLanguage' => 'English']),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'missing status' => [self::simpleSiteData([], 'status'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'missing url' => [self::simpleSiteData([], 'url'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid url' => [self::simpleSiteData(['url' => 'example']), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid ad units type' => [
+                self::simpleSiteData(['adUnits' => 'adUnits']),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid ad unit, missing name' => [
+                self::simpleSiteData(['adUnits' => [self::simpleAdUnit([], 'name')]]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid ad unit, invalid name type' => [
+                self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['name' => ['name']])]]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid ad unit, missing size' => [
+                self::simpleSiteData(['adUnits' => [self::simpleAdUnit([], 'size')]]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid ad unit, invalid size type' => [
+                self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['size' => ['300x250']])]]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'invalid ad unit, invalid size' => [
+                self::simpleSiteData(['adUnits' => [self::simpleAdUnit(['size' => 'invalid'])]]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'missing categories' => [self::simpleSiteData([], 'categories'), Response::HTTP_UNPROCESSABLE_ENTITY],
+            'invalid categories type' => [
+                self::simpleSiteData(['categories' => 'unknown']),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+            'not allowed categories' => [
+                self::simpleSiteData(['categories' => ['good']]),
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            ],
+        ];
+    }
+
+    private static function simpleSiteData(array $mergeData = [], string $remove = null): array
+    {
+        $siteData = array_merge(
+            [
+                'status' => 2,
+                'name' => 'example.com',
+                'url' => 'https://example.com',
+                'primaryLanguage' => 'en',
+                'requireClassified' => false,
+                'excludeUnclassified' => true,
+                'filtering' => [
+                    'requires' => [],
+                    'excludes' => [
+                        'test_classifier:category' => [
+                            'annoying',
+                        ],
+                    ],
+                ],
+                'adUnits' => [
+                    self::simpleAdUnit(),
+                ],
+                'categories' => [
+                    'unknown',
+                ],
+            ],
+            $mergeData
+        );
+
+        if ($remove !== null) {
+            unset($siteData[$remove]);
+        }
+
+        return $siteData;
+    }
+
+    private static function simpleAdUnit(array $mergeData = [], string $remove = null): array
+    {
+        $adUnit = array_merge(
+            [
+                'name' => 'Medium Rectangle',
+                'type' => 'display',
+                'size' => '300x250',
+                'label' => 'Medium Rectangle',
+                'tags' => [
+                    'Desktop',
+                    'best',
+                ],
+                'status' => 1,
+                'id' => null,
+            ],
+            $mergeData
+        );
+
+        if ($remove !== null) {
+            unset($adUnit[$remove]);
+        }
+
+        return $adUnit;
+    }
+
     /**
      * @dataProvider updateDataProvider
      */
-    public function testUpdateSite($data)
+    public function testUpdateSite($data): void
     {
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
@@ -459,13 +627,16 @@ JSON
     },
     "status": 0,
     "name": "nameA",
-    "domain": "example.com",
+    "url": "https://example.com",
     "primaryLanguage": "pl",
     "adUnits": [
       {
         "name": "name",
         "size": "300x250"
       }
+    ],
+    "categories": [
+      "unknown"
     ]
   }
 JSON
@@ -479,5 +650,117 @@ JSON
             },
             $presets
         );
+    }
+
+    /**
+     * @dataProvider verifyDomainProvider
+     *
+     * @param array $data
+     * @param int $expectedStatus
+     * @param string $expectedMessage
+     */
+    public function testVerifyDomain(array $data, int $expectedStatus, string $expectedMessage): void
+    {
+        $this->actingAs(factory(User::class)->create(), 'api');
+        SitesRejectedDomain::upsert('rejected.com');
+
+        $response = $this->postJson(self::URI_DOMAIN_VERIFY, $data);
+        $response->assertStatus($expectedStatus)->assertJsonStructure(self::DOMAIN_VERIFY_STRUCTURE);
+        self::assertEquals($expectedMessage, $response->json('message'));
+    }
+
+    public function verifyDomainProvider(): array
+    {
+        return [
+            [['invalid' => 1], Response::HTTP_BAD_REQUEST, 'Field `domain` is required.'],
+            [['domain' => 1], Response::HTTP_UNPROCESSABLE_ENTITY, 'Invalid domain.'],
+            [
+                ['domain' => 'example.rejected.com'],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                'The subdomain example.rejected.com is not supported. Please use your own domain.',
+            ],
+            [['domain' => 'rejected.com'], Response::HTTP_OK, 'Valid domain.'],
+            [['domain' => 'example.com'], Response::HTTP_OK, 'Valid domain.'],
+        ];
+    }
+
+    public function testSiteCodesOk(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create(['email_confirmed_at' => new DateTimeImmutable('-1 hour')]);
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $response = $this->getJson('/api/sites/'.$site->id.'/codes');
+
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(['codes']);
+    }
+
+    public function testSiteCodesForbidden(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $response = $this->getJson('/api/sites/'.$site->id.'/codes');
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function testSiteSizes(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(['user_id' => $user->id]);
+
+        $sizes = ['300x250', '336x280', '728x90'];
+        foreach ($sizes as $size) {
+            factory(Zone::class)->create(['site_id' => $site->id, 'size' => $size]);
+        }
+
+        $response = $this->getJson('/api/sites/sizes/'.$site->id);
+
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::SIZES_STRUCTURE);
+        self::assertEquals($sizes, $response->json('sizes'));
+    }
+
+    public function testSiteRank(): void
+    {
+        /** @var User $user */
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+        /** @var Site $site */
+        $site = factory(Site::class)->create(
+            [
+                'user_id' => $user->id,
+                'rank' => 0.2,
+                'info' => AdUser::PAGE_INFO_LOW_CTR,
+            ]
+        );
+
+        $response = $this->getJson('/api/sites/'.$site->id.'/rank');
+
+        $response->assertStatus(Response::HTTP_OK)->assertJsonStructure(self::RANK_STRUCTURE);
+        self::assertEquals(0.2, $response->json('rank'));
+        self::assertEquals(AdUser::PAGE_INFO_LOW_CTR, $response->json('info'));
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->app->bind(
+            AdUser::class,
+            static function () {
+                return new DummyAdUserClient();
+            }
+        );
+
+        $this->instance(ConfigurationRepository::class, new DummyConfigurationRepository());
     }
 }

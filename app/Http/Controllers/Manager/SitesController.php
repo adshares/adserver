@@ -23,12 +23,17 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
+use Adshares\Adserver\Jobs\AdUserRegisterUrl;
 use Adshares\Adserver\Models\Site;
+use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Services\Publisher\SiteCodeConfig;
+use Adshares\Adserver\Services\Publisher\SiteCategoriesValidator;
 use Adshares\Adserver\Services\Publisher\SiteCodeGenerator;
 use Adshares\Adserver\Services\Supply\SiteClassificationUpdater;
+use Adshares\Adserver\Utilities\DomainReader;
+use Adshares\Adserver\Utilities\SiteValidator;
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Supply\Domain\ValueObject\Size;
 use Closure;
@@ -38,24 +43,47 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class SitesController extends Controller
 {
+    /** @var SiteCategoriesValidator */
+    private $siteCategoriesValidator;
+
     /** @var SiteClassificationUpdater */
     private $siteClassificationUpdater;
 
-    public function __construct(SiteClassificationUpdater $siteClassificationUpdater)
-    {
+    public function __construct(
+        SiteCategoriesValidator $siteCategoriesValidator,
+        SiteClassificationUpdater $siteClassificationUpdater
+    ) {
+        $this->siteCategoriesValidator = $siteCategoriesValidator;
         $this->siteClassificationUpdater = $siteClassificationUpdater;
     }
 
     public function create(Request $request): JsonResponse
     {
         $this->validateRequestObject($request, 'site', Site::$rules);
-        $input = $request->input('site');
+        if (!SiteValidator::isUrlValid($request->input('site.url'))) {
+            throw new UnprocessableEntityHttpException('Invalid URL');
+        }
+        try {
+            $categories = $this->siteCategoriesValidator->processCategories($request->input('site.categories'));
+        } catch (InvalidArgumentException $exception) {
+            throw new UnprocessableEntityHttpException($exception->getMessage());
+        }
+        $url = (string)$request->input('site.url');
+        $domain = DomainReader::domain($url);
+        self::validateDomain($domain);
+
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
+
+        $input = $request->input('site');
+        unset($input['categories']);
+        $input['categories_by_user'] = $categories;
+        $input['domain'] = $domain;
 
         DB::beginTransaction();
 
@@ -116,6 +144,18 @@ class SitesController extends Controller
     {
         $input = $request->input('site');
         $this->validateRequestObject($request, 'site', array_intersect_key(Site::$rules, $input));
+        $updateDomainAndUrl = false;
+        if (isset($input['url'])) {
+            if (!SiteValidator::isUrlValid($input['url'])) {
+                throw new UnprocessableEntityHttpException('Invalid URL');
+            }
+            $url = (string)$input['url'];
+            $domain = DomainReader::domain($url);
+            self::validateDomain($domain);
+
+            $input['domain'] = $domain;
+            $updateDomainAndUrl = $site->domain !== $domain || $site->url !== $url;
+        }
         $inputZones = $request->input('site.ad_units');
         $this->validateInputZones($inputZones);
 
@@ -128,6 +168,10 @@ class SitesController extends Controller
 
             if ($inputZones) {
                 $site->zones()->createMany($this->processInputZones($site, $inputZones));
+            }
+
+            if ($updateDomainAndUrl) {
+                $site->updateWithPageRank(PageRank::default());
             }
         } catch (Exception $exception) {
             DB::rollBack();
@@ -239,19 +283,6 @@ class SitesController extends Controller
         return self::json($sites);
     }
 
-    public function count(): JsonResponse
-    {
-        $siteCount = [
-            'totalEarnings' => 0,
-            'totalClicks' => 0,
-            'totalImpressions' => 0,
-            'averagePageRPM' => 0,
-            'averageCPC' => 0,
-        ];
-
-        return self::json($siteCount, 200);
-    }
-
     public function changeStatus(Site $site, Request $request): JsonResponse
     {
         if (!$request->has('site.status')) {
@@ -277,26 +308,9 @@ class SitesController extends Controller
         return self::json($response);
     }
 
-    /**
-     * @deprecated This function is deprecated and will be removed in the future.
-     * Use sitesCodes instead.
-     * @see sitesCodes replacement for this function
-     *
-     * @param Site $site
-     * @param GetSiteCode $request
-     *
-     * @return JsonResponse
-     */
-    public function sitesCode(Site $site, GetSiteCode $request): JsonResponse
+    public function readSiteRank(Site $site): JsonResponse
     {
-        /** @var User $user */
-        $user = Auth::user();
-
-        if (!$user->isEmailConfirmed) {
-            return self::json(['code' => 'Confirm e-mail to get code']);
-        }
-
-        return self::json(['code' => SiteCodeGenerator::generateAsSingleString($site, $request->toConfig())]);
+        return self::json(new PageRank($site->rank, $site->info));
     }
 
     public function sitesCodes(Site $site, GetSiteCode $request): JsonResponse
@@ -328,6 +342,32 @@ class SitesController extends Controller
             if (!isset($inputZone['size']) || !is_string($inputZone['size']) || !Size::isValid($inputZone['size'])) {
                 throw new UnprocessableEntityHttpException('Invalid size.');
             }
+        }
+    }
+
+    public function verifyDomain(Request $request): JsonResponse
+    {
+        $domain = $request->get('domain');
+        if (null === $domain) {
+            throw new BadRequestHttpException('Field `domain` is required.');
+        }
+        self::validateDomain($domain);
+
+        return self::json(
+            ['code' => Response::HTTP_OK, 'message' => 'Valid domain.'],
+            Response::HTTP_OK
+        );
+    }
+
+    private static function validateDomain(string $domain): void
+    {
+        if (!SiteValidator::isDomainValid($domain)) {
+            throw new UnprocessableEntityHttpException('Invalid domain.');
+        }
+        if (SitesRejectedDomain::isDomainRejected($domain)) {
+            throw new UnprocessableEntityHttpException(
+                'The subdomain '.$domain.' is not supported. Please use your own domain.'
+            );
         }
     }
 }

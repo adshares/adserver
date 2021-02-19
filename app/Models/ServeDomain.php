@@ -49,6 +49,16 @@ class ServeDomain extends Model
         $serveDomain->save();
     }
 
+    public static function changeUrlHost(string $url): string
+    {
+        return preg_replace('#([a-z]+\:\/\/)(.*?)/#i', self::current() . '/', $url);
+    }
+
+    public static function current(): string
+    {
+        return ServeDomain::orderBy('id', 'DESC')->first()->base_url;
+    }
+
     public static function fetch(): array
     {
         return ServeDomain::orderBy('updated_at', 'DESC')->get()->pluck('base_url')->toArray();

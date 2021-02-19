@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
@@ -215,7 +216,7 @@ SQL;
         return $response;
     }
 
-    public function click(Request $request, string $bannerId): RedirectResponse
+    public function click(Request $request, string $bannerId)
     {
         $banner = $this->getBanner($bannerId);
 
@@ -235,16 +236,20 @@ SQL;
         $zoneId = $context['page']['zone'] ?? null;
         $siteId = DomainReader::domain($context['page']['url'] ?? '');
 
-        $url = $this->replaceLandingUrlPlaceholders(
-            $url,
-            $caseId,
-            $bannerId,
-            $publisherId,
-            $payTo,
-            $siteId,
-            $zoneId ?: ''
-        );
-        $response = new RedirectResponse($url);
+        if ($request->query->get('logonly')) {
+            $response = new Response();
+        } else {
+            $url = $this->replaceLandingUrlPlaceholders(
+                $url,
+                $caseId,
+                $bannerId,
+                $publisherId,
+                $payTo,
+                $siteId,
+                $zoneId ?: ''
+            );
+            $response = new RedirectResponse($url);
+        }
         $response->send();
 
         $impressionId = $request->query->get('iid');
@@ -361,8 +366,8 @@ SQL;
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => (new SecureUrl(route('banner-context', ['id' => $eventId])))->toString(),
-                'view_script_url' => (new SecureUrl(url('-/view.js')))->toString(),
+                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()),
+                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(url('-/view.js')))->toString()),
                 'aduser_url' => $adUserUrl,
             ]
         ));
@@ -517,17 +522,19 @@ SQL;
                 $bannerPublicId = $bannerArray['uuid'];
                 $checksum = $bannerArray['creative_sha1'];
 
+
+
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => SecureUrl::change(
+                    'serve_url' => ServeDomain::changeUrlHost(SecureUrl::change(
                         route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
                         $request
-                    ),
-                    'click_url' => SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request),
-                    'view_url' => SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request),
+                    )),
+                    'click_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request)),
+                    'view_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request)),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }

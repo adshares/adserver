@@ -37,26 +37,20 @@ class AdPayCampaignExportCommandTest extends TestCase
 
     public function testHandle(): void
     {
+        $adPayMock = $this->createMock(AdPay::class);
+        $adPayMock->expects(self::once())->method('updateCampaign')->will(
+            self::assertCampaignCount(1)
+        );
+        $adPayMock->expects(self::once())->method('deleteCampaign')->will(
+            self::assertCampaignCount(2)
+        );
+        $this->instance(AdPay::class, $adPayMock);
+
         $user = factory(User::class)->create();
         factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
         factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
         factory(Campaign::class)->create(
             ['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE, 'deleted_at' => new DateTime()]
-        );
-
-        $this->app->bind(
-            AdPay::class,
-            function () {
-                $adPayService = $this->createMock(AdPay::class);
-                $adPayService->expects(self::once())->method('updateCampaign')->will(
-                    self::assertCampaignCount(1)
-                );
-                $adPayService->expects(self::once())->method('deleteCampaign')->will(
-                    self::assertCampaignCount(2)
-                );
-
-                return $adPayService;
-            }
         );
 
         $this->artisan('ops:adpay:campaign:export')
@@ -74,16 +68,10 @@ class AdPayCampaignExportCommandTest extends TestCase
 
     public function testHandleEmptyDb(): void
     {
-        $this->app->bind(
-            AdPay::class,
-            function () {
-                $adPayService = $this->createMock(AdPay::class);
-                $adPayService->expects(self::never())->method('updateCampaign');
-                $adPayService->expects(self::never())->method('deleteCampaign');
-
-                return $adPayService;
-            }
-        );
+        $adPayMock = $this->createMock(AdPay::class);
+        $adPayMock->expects(self::never())->method('updateCampaign');
+        $adPayMock->expects(self::never())->method('deleteCampaign');
+        $this->instance(AdPay::class, $adPayMock);
 
         $this->artisan('ops:adpay:campaign:export')
             ->assertExitCode(0);

@@ -20,14 +20,14 @@
 
 namespace Adshares\Adserver\Http\Requests;
 
-use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Models\PanelPlaceholder;
 
 class UpdateRegulation extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'content' => sprintf('required|string|max:%d', Regulation::MAXIMUM_CONTENT_LENGTH),
+            'content' => sprintf('required|string|max:%d', PanelPlaceholder::MAXIMUM_CONTENT_LENGTH),
         ];
     }
 

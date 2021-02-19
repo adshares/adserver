@@ -122,9 +122,6 @@ class SettingsResponse implements Arrayable
             'adserver_name' => $this->adserverName,
             'technical_email' => $this->technicalEmail->toString(),
             'support_email' => $this->supportEmail->toString(),
-            //TODO: remove when front done
-            'hotwallet_is_active' => $this->coldWalletIsActive,
-            'hotwallet_address' => $this->coldWalletAddress->toString(),
             'bonus_new_users_enabled' => $this->bonusEnabled,
             'bonus_new_users_amount' => $this->bonusAmount,
         ];

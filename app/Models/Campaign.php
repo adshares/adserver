@@ -63,9 +63,11 @@ use function hex2bin;
  * @property User user
  * @property string secret
  * @property int conversion_click
+ * @property string bid_strategy_uuid
+ * @property array basic_information
  * @property array classifications
+ * @property array targeting
  * @method static Builder where(string $string, int $campaignId)
- * @method static Builder groupBy(string...$groups)
  * @mixin Builder
  */
 class Campaign extends Model
@@ -130,6 +132,7 @@ class Campaign extends Model
         'classification_status',
         'classification_tags',
         'conversion_click',
+        'bid_strategy_uuid',
     ];
 
     protected $visible = [
@@ -147,12 +150,14 @@ class Campaign extends Model
         'secret',
         'conversion_click',
         'conversion_click_link',
+        'bid_strategy',
     ];
 
     protected $traitAutomate = [
         'uuid' => 'BinHex',
         'time_start' => 'DateAtom',
         'time_end' => 'DateAtom',
+        'bid_strategy_uuid' => 'BinHex',
     ];
 
     protected $appends = [
@@ -160,6 +165,7 @@ class Campaign extends Model
         'basic_information',
         'targeting',
         'ads',
+        'bid_strategy',
     ];
 
     public static function suspendAllForUserId(int $userId): int
@@ -265,6 +271,16 @@ class Campaign extends Model
         }
 
         return $this->banners;
+    }
+
+    public function getBidStrategyAttribute(): array
+    {
+        $uuid = $this->bid_strategy_uuid;
+
+        return [
+            'name' => BidStrategy::fetchByPublicId($uuid)->name,
+            'uuid' => $uuid,
+        ];
     }
 
     public function getConversionClickLinkAttribute(): ?string
@@ -398,6 +414,22 @@ class Campaign extends Model
         DB::commit();
 
         return true;
+    }
+
+    public static function updateBidStrategyUuid(string $newBidStrategyUuid, string $previousBidStrategyUuid): void
+    {
+        DB::update(
+            'UPDATE campaigns SET bid_strategy_uuid=? WHERE bid_strategy_uuid=?',
+            [hex2bin($newBidStrategyUuid), hex2bin($previousBidStrategyUuid)]
+        );
+    }
+
+    public static function isBidStrategyUsed(string $bidStrategyUuid): bool
+    {
+        return null !== DB::selectOne(
+            'SELECT 1 FROM campaigns WHERE bid_strategy_uuid=? AND deleted_at IS NULL LIMIT 1',
+            [hex2bin($bidStrategyUuid)]
+        );
     }
 
     private function getBudgetForCurrentDateTime(): AdvertiserBudget

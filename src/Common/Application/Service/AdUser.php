@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace Adshares\Common\Application\Service;
 
+use Adshares\Common\Application\Dto\PageRank;
 use Adshares\Common\Application\Dto\Taxonomy;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Dto\UserContext;
@@ -46,8 +47,34 @@ interface AdUser
     public const PAGE_INFO_POOR_TRAFFIC = 'poor-traffic';
     public const PAGE_INFO_POOR_CONTENT = 'poor-content';
     public const PAGE_INFO_SUSPICIOUS_DOMAIN = 'suspicious-domain';
+    public const PAGE_INFO_NOT_WORKING = 'not-working';
+
+    public const REASSESSMENT_STATE_INVALID_URL = 'invalid URL';
+    public const REASSESSMENT_STATE_PROCESSING = 'processing';
+    public const REASSESSMENT_STATE_LOCKED = 'locked';
+    public const REASSESSMENT_STATE_ACCEPTED = 'accepted';
+    public const REASSESSMENT_STATE_ERROR = 'error';
+    public const REASSESSMENT_STATE_NOT_REGISTERED = 'not registered';
+
+    public const PAGE_INFOS = [
+        AdUser::PAGE_INFO_OK,
+        AdUser::PAGE_INFO_UNKNOWN,
+        AdUser::PAGE_INFO_HIGH_IVR,
+        AdUser::PAGE_INFO_HIGH_CTR,
+        AdUser::PAGE_INFO_LOW_CTR,
+        AdUser::PAGE_INFO_POOR_TRAFFIC,
+        AdUser::PAGE_INFO_POOR_CONTENT,
+        AdUser::PAGE_INFO_SUSPICIOUS_DOMAIN,
+        AdUser::PAGE_INFO_NOT_WORKING
+    ];
+
+    public function fetchPageRank(string $url): PageRank;
+
+    public function fetchPageRankBatch(array $urls): array;
 
     public function fetchTargetingOptions(): Taxonomy;
 
     public function getUserContext(ImpressionContext $context): UserContext;
+
+    public function reassessPageRankBatch(array $urls): array;
 }

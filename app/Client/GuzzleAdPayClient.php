@@ -35,6 +35,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class GuzzleAdPayClient implements AdPay
 {
+    private const URI_BID_STRATEGIES = '/api/v1/bid-strategies';
+
     private const URI_CAMPAIGNS = '/api/v1/campaigns';
 
     private const URI_PAYMENTS_TEMPLATE = '/api/v1/payments/%d';
@@ -51,6 +53,50 @@ class GuzzleAdPayClient implements AdPay
     public function __construct(Client $client)
     {
         $this->client = $client;
+    }
+
+    public function updateBidStrategies(array $bidStrategies): void
+    {
+        try {
+            $this->client->post(
+                self::URI_BID_STRATEGIES,
+                [
+                    RequestOptions::JSON => ['bid_strategies' => $bidStrategies],
+                ]
+            );
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADPAY] Update bid strategies on %s failed (%s).',
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
+    }
+
+    public function deleteBidStrategies(array $bidStrategyIds): void
+    {
+        try {
+            $this->client->delete(
+                self::URI_BID_STRATEGIES,
+                [
+                    RequestOptions::JSON => ['bid_strategies' => $bidStrategyIds],
+                ]
+            );
+        } catch (RequestException $exception) {
+            throw new UnexpectedClientResponseException(
+                sprintf(
+                    '[ADPAY] Delete bid strategies from %s failed (%s).',
+                    $this->client->getConfig()['base_uri'],
+                    $exception->getMessage()
+                ),
+                $exception->getCode(),
+                $exception
+            );
+        }
     }
 
     public function updateCampaign(array $campaigns): void

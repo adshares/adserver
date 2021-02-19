@@ -18,7 +18,6 @@
  */
 
 var serverOrigin = '{{ ORIGIN }}';
-var aduserOrigin = '{{ ADUSER }}';
 var selectorClass = '{{ SELECTOR }}';
 
 
@@ -110,8 +109,21 @@ var prepareElement = function (context, banner, element, contextParam) {
 
     if (element.tagName == 'IFRAME') {
 
-        prepareIframe(element);
+        if(banner.type == 'direct') {
+            var monitor = setInterval(function(){
+                if(!inTheDOM(element)) {
+                    clearInterval(monitor);
+                }
+                var act = document.activeElement;
+                if(act && act == element){
+                    clearInterval(monitor);
+                    addTrackingImage(addUrlParam(context.click_url, 'logonly', 1));
+                    element.blur();
+                }
+            }, 100);
+        }
 
+        prepareIframe(element);
         addListener(window, 'message', function (event) {
             if (event.source == element.contentWindow && event.data) {
                 var data, isString = typeof event.data == "string";
@@ -414,7 +426,7 @@ var getRandId = function(bytes) {
 }
 
 var aduserPixel = function (impressionId) {
-    if (!aduserOrigin) return;
+    if (!serverOrigin) return;
     var prefix = serverOrigin + '/supply/register?iid=';
     var url = prefix + impressionId;
 
@@ -732,6 +744,10 @@ var addTrackingImage = function (url) {
 
 var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId)
 {
+    var hashPos = url.indexOf('#');
+    if(hashPos != -1) {
+        url = url.substr(0, hashPos);
+    }
     if(url.indexOf('{cid}') === -1) {
         url = addUrlParam(url, 'cid', caseId);
     } else {
@@ -742,7 +758,8 @@ var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, si
         .replace('{pid}', publisherId)
         .replace('{aid}', serverId)
         .replace('{sid}', siteId)
-        .replace('{zid}', zoneId);
+        .replace('{zid}', zoneId)
+        .replace('{rand}', Math.random().toString().substr(2));
 };
 var getDomain = function(url)
 {
@@ -838,20 +855,25 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serve_url;
                     }
                     url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
-                    addPopCandidate([banner.size,
-                        url,
-                        $pick(zone_options.count, 1),
-                        $pick(zone_options.interval, 1),
-                        $pick(zone_options.burst, 1),
-                        function () {
-                            dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
-                        }], banner.rpm
-                    );
+
+                    if(banner.size == 'pop-up' || banner.size == 'pop-under') {
+                        addPopCandidate([banner.size,
+                            url,
+                            $pick(zone_options.count, 1),
+                            $pick(zone_options.interval, 1),
+                            $pick(zone_options.burst, 1),
+                            function () {
+                                dwmthACL.push(addTrackingIframe(context.view_url).contentWindow);
+                            }], banner.rpm
+                        );
+                    } else {
+                        data.iframe_src = url;
+                        caller = createIframeFromSrc;
+                    }
 
                 });
-                return;
             }
-            caller(data, function (element) {
+            caller && caller(data, function (element) {
                 if(!banner.destElement) {
                     console.log('warning: no element to replace');
                     return;
@@ -864,7 +886,7 @@ var fetchBanner = function (banner, context, zone_options) {
 
         var displayIfVisible = function()
         {
-            if (banner.type == 'direct' || !banner.destElement) {
+            if ((banner.type == 'direct' && (banner.size == 'pop-up' || banner.size == 'pop-under')) || !banner.destElement) {
                 displayBanner();
             } else {
                 if (isVisible(banner.destElement)) {

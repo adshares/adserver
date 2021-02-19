@@ -26,9 +26,9 @@ use Adshares\Common\Application\Model\Selector;
 
 interface ConfigurationRepository
 {
-    public function storeTargetingOptions(Selector $options);
+    public function storeTargetingOptions(Selector $options): void;
 
-    public function storeFilteringOptions(Selector $options);
+    public function storeFilteringOptions(Selector $options): void;
 
     public function fetchTargetingOptions(): Selector;
 

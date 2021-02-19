@@ -24,10 +24,14 @@ namespace Adshares\Adserver\Http\Controllers;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Response\InfoResponse;
-use Adshares\Adserver\Models\Regulation;
+use Adshares\Adserver\Models\PanelPlaceholder;
 use Adshares\Adserver\Repository\Common\MySqlServerStatisticsRepository;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 class InfoController extends Controller
 {
@@ -60,15 +64,38 @@ class InfoController extends Controller
 
     public function privacyPolicy(): View
     {
-        $data = Regulation::fetchPrivacyPolicy()->toArray();
-
-        return view('info/policy', $data);
+        return $this->regulation(PanelPlaceholder::TYPE_PRIVACY_POLICY);
     }
 
     public function terms(): View
     {
-        $data = Regulation::fetchTerms()->toArray();
+        return $this->regulation(PanelPlaceholder::TYPE_TERMS);
+    }
+
+    private function regulation(string $type): View
+    {
+        $regulation = PanelPlaceholder::fetchByType($type);
+        $data = null === $regulation ? [] : $regulation->toArray();
 
         return view('info/policy', $data);
+    }
+
+    public function getPanelPlaceholders(Request $request): JsonResponse
+    {
+        $inputTypes = $request->input('types', PanelPlaceholder::TYPES_ALLOWED);
+
+        if (!is_array($inputTypes)) {
+            throw new BadRequestHttpException('Field types must be a non-empty array');
+        }
+
+        $types = array_intersect($inputTypes, PanelPlaceholder::TYPES_ALLOWED);
+
+        if (count($types) !== count($inputTypes)) {
+            throw new UnprocessableEntityHttpException('Invalid types');
+        }
+
+        $regulations = PanelPlaceholder::fetchByTypes($types)->keyBy(PanelPlaceholder::FIELD_TYPE)->toArray();
+
+        return self::json($regulations);
     }
 }

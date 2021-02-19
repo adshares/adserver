@@ -20,6 +20,7 @@
 
 declare(strict_types = 1);
 
+use Adshares\Adserver\Http\Controllers\Manager\BidStrategyController;
 use Adshares\Adserver\Http\Controllers\Manager\CampaignsController;
 use Adshares\Adserver\Http\Controllers\Manager\ClassifierController;
 use Adshares\Adserver\Http\Controllers\Manager\ConfigController;
@@ -33,6 +34,20 @@ use Adshares\Adserver\Http\Kernel;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
+    Route::get(
+        'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
+        [BidStrategyController::class, 'getBidStrategySpreadsheet']
+    );
+    Route::post(
+        'campaigns/bid-strategy/{bid_strategy_public_id}/spreadsheet',
+        [BidStrategyController::class, 'putBidStrategySpreadsheet']
+    );
+    Route::get('campaigns/bid-strategy/uuid-default', [BidStrategyController::class, 'getBidStrategyUuidDefault']);
+    Route::get('campaigns/bid-strategy', [BidStrategyController::class, 'getBidStrategy']);
+    Route::put('campaigns/bid-strategy', [BidStrategyController::class, 'putBidStrategy']);
+    Route::patch('campaigns/bid-strategy/{bid_strategy_public_id}', [BidStrategyController::class, 'patchBidStrategy']);
+    Route::delete('campaigns/bid-strategy/{bid_strategy_public_id}', [BidStrategyController::class, 'deleteBidStrategy']);
+
     Route::get('campaigns', [CampaignsController::class, 'browse'])
         ->name('app.campaigns.browse');
     Route::get('campaigns/{campaign_id}', [CampaignsController::class, 'read'])
@@ -56,10 +71,12 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
     Route::delete('campaigns/{campaign_id}/classify', [CampaignsController::class, 'disableClassify'])
         ->name('app.campaigns.disable_classify');
 
+    Route::post('sites/domain/validate', [SitesController::class, 'verifyDomain']);
     Route::post('sites', [SitesController::class, 'create'])
         ->name('app.sites.add');
     Route::get('sites/sizes/{site_id?}', [SitesController::class, 'readSitesSizes'])
         ->name('app.sites.sizes');
+    Route::get('sites/{site}/rank', [SitesController::class, 'readSiteRank']);
     Route::get('sites/{site}', [SitesController::class, 'read'])
         ->name('app.sites.read');
     Route::patch('sites/{site}', [SitesController::class, 'update'])
@@ -68,11 +85,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.sites.delete');
     Route::get('sites', [SitesController::class, 'list'])
         ->name('app.sites.browse');
-    Route::get('sites/count', [SitesController::class, 'count'])
-        ->name('app.sites.count');
     Route::put('sites/{site}/status', [SitesController::class, 'changeStatus'])
         ->name('app.sites.change_status');
-    Route::get('sites/{site}/code', [SitesController::class, 'sitesCode']);//deprecated
     Route::get('sites/{site}/codes', [SitesController::class, 'sitesCodes'])
         ->name('app.sites.code');
 
