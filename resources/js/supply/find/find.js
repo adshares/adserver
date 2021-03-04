@@ -70,6 +70,20 @@ var encodeZones = function (zone_data) {
     return UrlSafeBase64Encode(result.join(ZONE_GLUE)); // url safe encoding
 };
 
+
+var insertedElements = [];
+var logInsertedElement = function(el) {
+    if(insertedElements.length === 0) {
+        addListener(window, 'beforeunload', function (event) {
+            var x;
+            while (x = insertedElements.pop()) {
+                x.parentElement && x.parentElement.removeChild(x);
+            }
+        });
+    }
+    insertedElements.push(el);
+}
+
 var dwmthACL = [];
 var dwmthURLS = [];
 
@@ -99,7 +113,10 @@ var replaceTag = function (oldTag, newTag) {
         }
     }, 0);
     // ios 12 fix
+
+    logInsertedElement(newTag);
 };
+
 
 var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
@@ -117,6 +134,7 @@ var prepareElement = function (context, banner, element, contextParam) {
             clickOverlay.setAttribute('target', '_blank');
             div.insertBefore(clickOverlay, infoBox);
         }
+
 
         prepareIframe(element);
         addListener(window, 'message', function (event) {
