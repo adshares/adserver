@@ -103,6 +103,7 @@ var replaceTag = function (oldTag, newTag) {
 
 var prepareElement = function (context, banner, element, contextParam) {
     var div = document.createElement('div');
+    var clickOverlay;
 
     var infoBox = prepareInfoBox(context, banner, contextParam);
     div.appendChild(infoBox);
@@ -110,20 +111,11 @@ var prepareElement = function (context, banner, element, contextParam) {
     if (element.tagName == 'IFRAME') {
 
         if(banner.type == 'direct') {
-            var monitor = setInterval(function(){
-                if(!inTheDOM(element)) {
-                    clearInterval(monitor);
-                }
-                var act = document.activeElement;
-                if(act && act == element){
-                    clearInterval(monitor);
-                    // if (!winOpen(context.click_url, '_blank')) {
-                    //     topwin.location.href = context.click_url;
-                    // }
-                    addTrackingImage(addUrlParam(context.click_url, 'logonly', 1));
-                    element.blur();
-                }
-            }, 100);
+            clickOverlay =document.createElement('a');
+            clickOverlay.style.cssText = "display:block; position: absolute !important; top: 0px !important; left: 0px !important; right: 0px !important; bottom: 0px !important";
+            clickOverlay.setAttribute('href', context.click_url);
+            clickOverlay.setAttribute('target', '_blank');
+            div.insertBefore(clickOverlay, infoBox);
         }
 
         prepareIframe(element);
@@ -136,6 +128,9 @@ var prepareElement = function (context, banner, element, contextParam) {
                     data = event.data;
                 }
                 if (data.dwmthLoad) {
+                    if(clickOverlay) { // ad is aware of mechanics
+                        div.removeChild(clickOverlay);
+                    }
                     var msg = {dwmthLoad: 1, data: context};
 
                     event.source.postMessage(isString ? JSON.stringify(msg) : msg, '*');
