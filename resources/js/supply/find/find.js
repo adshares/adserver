@@ -117,7 +117,10 @@ var prepareElement = function (context, banner, element, contextParam) {
                 var act = document.activeElement;
                 if(act && act == element){
                     clearInterval(monitor);
-                    addTrackingImage(addUrlParam(context.click_url, 'logonly', 1));
+                    if (!winOpen(url, '_blank')) {
+                        topwin.location.href = url;
+                    }
+                    //addTrackingImage(addUrlParam(context.click_url, 'logonly', 1));
                     element.blur();
                 }
             }, 100);
