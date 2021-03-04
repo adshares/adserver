@@ -127,14 +127,13 @@ var prepareElement = function (context, banner, element, contextParam) {
 
     if (element.tagName == 'IFRAME') {
 
-        if(banner.type == 'direct') {
-            clickOverlay =document.createElement('a');
+        if(banner.type == 'direct' && !context.skip_overlay) {
+            clickOverlay = document.createElement('a');
             clickOverlay.style.cssText = "display:block; position: absolute !important; top: 0px !important; left: 0px !important; right: 0px !important; bottom: 0px !important";
             clickOverlay.setAttribute('href', context.click_url);
             clickOverlay.setAttribute('target', '_blank');
             div.insertBefore(clickOverlay, infoBox);
         }
-
 
         prepareIframe(element);
         addListener(window, 'message', function (event) {
@@ -870,6 +869,7 @@ var fetchBanner = function (banner, context, zone_options) {
                     if(url.length > 1024) {
                         url = banner.serve_url;
                     }
+                    context.skip_overlay = (url.indexOf('#dwmth') != -1);
                     url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
 
                     if(banner.size == 'pop-up' || banner.size == 'pop-under') {
