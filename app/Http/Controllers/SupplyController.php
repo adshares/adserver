@@ -110,6 +110,8 @@ class SupplyController extends Controller
             return self::json([]);
         }
 
+        $zones = array_slice($zones, 0, config('app.max_page_zones'));
+
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }

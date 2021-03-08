@@ -139,6 +139,7 @@ return [
     'exchange_api_url' => env('EXCHANGE_API_URL'),
     'exchange_api_key' => env('EXCHANGE_API_KEY'),
     'exchange_api_secret' => env('EXCHANGE_API_SECRET'),
+    'max_page_zones' => (int)env('MAX_PAGE_ZONES', 4),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
