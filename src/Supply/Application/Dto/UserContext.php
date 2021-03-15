@@ -111,6 +111,11 @@ final class UserContext
         return $this->keywords;
     }
 
+    public function country(): ?string
+    {
+        return $this->keywords['user']['country'] ?? null;
+    }
+
     public function humanScore(): float
     {
         return $this->humanScore;
