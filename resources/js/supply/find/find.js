@@ -442,19 +442,20 @@ var getRandId = function(bytes) {
 
 var aduserPixel = function (impressionId) {
     if (!serverOrigin) return;
-    var prefix = serverOrigin + '/supply/register?iid=';
-    var url = prefix + impressionId;
+    var path = '/supply/register?iid=';
+    var url = serverOrigin + path + impressionId;
 
-    if(dwmthURLS[url]) return;
+    if(dwmthURLS[url]) return false;
     // adusers from other find.js
-    var tags = document.querySelectorAll('iframe[src^="' + prefix + '"]');
+    var tags = document.querySelectorAll('iframe[src*="' + path + '"]');
     if(tags.length) {
-        return;
+        return false;
     }
     var iframe = createIframeFromUrl(url);
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
     dwmthURLS[url] = 1;
+    return true;
 };
 
 var createIframeFromUrl = function createIframeFromUrl(url, doc) {
@@ -644,7 +645,9 @@ var bannerLoaded = function() {
 };
 
 domReady(function () {
-    aduserPixel(getImpressionId());
+    if(!aduserPixel(getImpressionId())) {
+        return;
+    }
     getActiveZones(function(zones, params) {
         var data = encodeZones(params);
 
