@@ -760,10 +760,23 @@ var addTrackingImage = function (url) {
     return img;
 };
 
+var mapInt = function(hex, min)
+{
+    var short = hex.substr(0, 8);
+    if(short.charAt(0) > '7') {
+        short = '7' + short.substr(1);
+    }
+    var r = parseInt(short, 16);
+    if(min && r < min) {
+        r += 1*min;
+    }
+    return r;
+}
+
 var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId)
 {
     var hashPos = url.indexOf('#');
-    if(hashPos != -1) {
+    if(hashPos !== -1) {
         url = url.substr(0, hashPos);
     }
     if(url.indexOf('{cid}') === -1) {
@@ -777,6 +790,7 @@ var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, si
         .replace('{aid}', serverId)
         .replace('{sid}', siteId)
         .replace('{zid}', zoneId)
+        .replace('{zid:int}', mapInt(zoneId, 100000))
         .replace('{rand}', Math.random().toString().substr(2));
 };
 var getDomain = function(url)
