@@ -773,7 +773,7 @@ var mapInt = function(hex, min)
     return r;
 }
 
-var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId)
+var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId, keywords)
 {
     var hashPos = url.indexOf('#');
     if(hashPos !== -1) {
@@ -791,6 +791,7 @@ var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, si
         .replace('{sid}', siteId)
         .replace('{zid}', zoneId)
         .replace('{zid:int}', mapInt(zoneId, 100000))
+        .replace('{kwd}', keywords)
         .replace('{rand}', Math.random().toString().substr(2));
 };
 var getDomain = function(url)
@@ -887,7 +888,7 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serve_url;
                     }
                     context.skip_overlay = (url.indexOf('#dwmth') != -1);
-                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
+                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id, context.page.keywords);
 
                     if(banner.size == 'pop-up' || banner.size == 'pop-under') {
                         addPopCandidate([banner.size,
