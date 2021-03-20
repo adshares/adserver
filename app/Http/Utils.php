@@ -199,7 +199,7 @@ class Utils
                 new DateTime('+ 1 month'),
                 '/',
                 $request->getHost(),
-                config('app.banner_force_https'),
+                config('app.banner_force_https') || $request->isSecure(),
                 true,
                 false,
                 'none'
