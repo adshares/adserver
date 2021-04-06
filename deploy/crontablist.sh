@@ -92,6 +92,12 @@ echo -n "45 */3 * * * "
 echo -n "php ${SERVICE_DIR}/artisan ops:targeting-reach:fetch"
 echo ""
 
+echo -n "35 4 * * * "
+echo -n "find ${SERVICE_DIR}/storage/app/public -maxdepth 1 -type f -name '*.csv' -mtime +10 -delete"
+echo -n " && "
+echo -n "php ${SERVICE_DIR}/artisan ops:statistics:backup"
+echo ""
+
 test ${SKIP_COLD_WALLET:-0} -eq 0 && \
 {
     echo -n "*/30 * * * * "
