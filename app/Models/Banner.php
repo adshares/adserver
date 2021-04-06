@@ -157,7 +157,7 @@ class Banner extends Model
     public static function size(string $size): string
     {
         if (!Size::isValid($size)) {
-            throw new \RuntimeException(sprintf('Wrong image size.'));
+            throw new \RuntimeException(sprintf('Wrong image size %s.', $size));
         }
 
         return $size;
