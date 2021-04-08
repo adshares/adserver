@@ -442,19 +442,20 @@ var getRandId = function(bytes) {
 
 var aduserPixel = function (impressionId) {
     if (!serverOrigin) return;
-    var prefix = serverOrigin + '/supply/register?iid=';
-    var url = prefix + impressionId;
+    var path = '/supply/register?iid=';
+    var url = serverOrigin + path + impressionId;
 
-    if(dwmthURLS[url]) return;
+    if(dwmthURLS[url]) return false;
     // adusers from other find.js
-    var tags = document.querySelectorAll('iframe[src^="' + prefix + '"]');
+    var tags = document.querySelectorAll('iframe[src*="' + path + '"]');
     if(tags.length) {
-        return;
+        return false;
     }
     var iframe = createIframeFromUrl(url);
     document.body.appendChild(iframe);
     dwmthACL.push(iframe.contentWindow);
     dwmthURLS[url] = 1;
+    return true;
 };
 
 var createIframeFromUrl = function createIframeFromUrl(url, doc) {
@@ -644,7 +645,9 @@ var bannerLoaded = function() {
 };
 
 domReady(function () {
-    aduserPixel(getImpressionId());
+    if(!aduserPixel(getImpressionId())) {
+        return;
+    }
     getActiveZones(function(zones, params) {
         var data = encodeZones(params);
 
@@ -757,10 +760,23 @@ var addTrackingImage = function (url) {
     return img;
 };
 
-var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId)
+var mapInt = function(hex, min)
+{
+    var short = hex.substr(0, 8);
+    if(short.charAt(0) > '7') {
+        short = '7' + short.substr(1);
+    }
+    var r = parseInt(short, 16);
+    if(min && r < min) {
+        r += 1*min;
+    }
+    return r;
+}
+
+var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, siteId, zoneId, keywords)
 {
     var hashPos = url.indexOf('#');
-    if(hashPos != -1) {
+    if(hashPos !== -1) {
         url = url.substr(0, hashPos);
     }
     if(url.indexOf('{cid}') === -1) {
@@ -774,6 +790,8 @@ var fillPlaceholders = function(url, caseId, bannerId, publisherId, serverId, si
         .replace('{aid}', serverId)
         .replace('{sid}', siteId)
         .replace('{zid}', zoneId)
+        .replace('{zid:int}', mapInt(zoneId, 100000))
+        .replace('{kwd}', keywords)
         .replace('{rand}', Math.random().toString().substr(2));
 };
 var getDomain = function(url)
@@ -870,7 +888,7 @@ var fetchBanner = function (banner, context, zone_options) {
                         url = banner.serve_url;
                     }
                     context.skip_overlay = (url.indexOf('#dwmth') != -1);
-                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id);
+                    url = fillPlaceholders(url, context.cid, banner.id, banner.publisher_id, banner.pay_to, getDomain(context.page.url), banner.zone_id, context.page.keywords);
 
                     if(banner.size == 'pop-up' || banner.size == 'pop-under') {
                         addPopCandidate([banner.size,

@@ -304,6 +304,9 @@ class AdPayEventExportCommand extends BaseCommand
 
             $timeStart = $dateFromTemporary->modify('+1 second');
             $timeEnd = $dateToTemporary;
+            if($timeStart > $timeEnd) {
+                $timeEnd = $timeStart;
+            }
 
             $views = DemandEventMapper::mapEventCollectionToArray(
                 $eventsToExport->filter(
