@@ -198,7 +198,7 @@ class GuzzleAdSelectClient implements AdSelect
                 }
             }
 
-            if ($sitesMap[$siteId]['active'] && $pageDomain && $pageDomain === $sitesMap[$siteId]['domain']) {
+            if ($sitesMap[$siteId]['active'] && (!config('app.check_zone_domain') || $pageDomain && $pageDomain === $sitesMap[$siteId]['domain'])) {
                 $zoneMap[$zone->uuid] = $zone;
             }
         }
