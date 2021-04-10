@@ -109,8 +109,11 @@ return [
     'adpay_endpoint' => env('ADPAY_ENDPOINT'),
     'adselect_endpoint' => env('ADSELECT_ENDPOINT'),
     'x_adselect_version' => env('X_ADSELECT_VERSION', 'php'),
+
     'banner_force_https' => (bool)env('BANNER_FORCE_HTTPS', true),
     'check_zone_domain' => (bool)env('CHECK_ZONE_DOMAIN', false),
+    'allow_zone_in_iframe' => (bool)env('ALLOW_ZONE_IN_IFRAME', true),
+
     'campaign_min_budget' => (int)env('CAMPAIGN_MIN_BUDGET',5000000000),
     'campaign_min_cpm' => (int)env('CAMPAIGN_MIN_CPM',5000000000),
     'campaign_min_cpa' => (int)env('CAMPAIGN_MIN_CPA',1000000000),

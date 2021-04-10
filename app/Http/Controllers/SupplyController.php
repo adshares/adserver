@@ -61,8 +61,6 @@ class SupplyController extends Controller
 {
     private const UNACCEPTABLE_PAGE_RANK = 0.0;
 
-    private const CPA_ONLY_PAGE_RANK = -1.0;
-
     public function find(
         Request $request,
         AdUser $contextProvider,
@@ -115,8 +113,8 @@ class SupplyController extends Controller
         if ($this->isPageBlacklisted($decodedQueryData['page']['url'] ?? '')) {
             throw new BadRequestHttpException('Site not accepted');
         }
-        if ($decodedQueryData['page']['frame'] ?? false) {
-            throw new BadRequestHttpException('Site not accepted.');
+        if (!config('app.allow_zone_in_iframe') && ($decodedQueryData['page']['frame'] ?? false)) {
+            throw new BadRequestHttpException('Cannot run in iframe');
         }
         if ($decodedQueryData['page']['pop'] ?? false) {
             if (DomainReader::domain($decodedQueryData['page']['ref'] ?? '')
@@ -144,7 +142,7 @@ class SupplyController extends Controller
         $userContext = $contextProvider->getUserContext($impressionContext);
 
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
-            if ($userContext->pageRank() == self::CPA_ONLY_PAGE_RANK) {
+            if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
                 foreach ($zones as &$zone) {
                     $zone['options']['cpa_only'] = true;
                 }
