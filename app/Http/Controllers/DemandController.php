@@ -421,12 +421,6 @@ SQL;
         try {
             $event = EventLog::fetchOneByEventId($eventId);
             $event->our_context = $decodedContext;
-            if (!$event->domain && isset($event->their_context)) {
-                $event->domain = EventLog::getDomainFromContext($event->their_context);
-            }
-            if (!$event->domain && isset($decodedContext->url)) {
-                $event->domain = DomainReader::domain($decodedContext->url);
-            }
             $event->save();
         } catch (ModelNotFoundException $e) {
             Log::warning($e->getMessage());
