@@ -44,6 +44,8 @@ Route::get('/stats/supply/statistics', [StatisticsGlobalController::class, 'fetc
 Route::get('/stats/supply/domains', [StatisticsGlobalController::class, 'fetchSupplyDomains']);
 Route::get('/stats/supply/zones/sizes', [StatisticsGlobalController::class, 'fetchSupplyZonesSizes']);
 
+Route::get('/stats/server/{date}', [StatisticsGlobalController::class, 'fetchServerStatisticsAsFile']);
+
 Route::get('/policies/privacy.html', [InfoController::class, 'privacyPolicy']);
 Route::get('/policies/terms.html', [InfoController::class, 'terms']);
 Route::get('/panel/placeholders', [InfoController::class, 'getPanelPlaceholders']);

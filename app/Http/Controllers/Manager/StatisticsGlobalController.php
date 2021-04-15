@@ -18,15 +18,19 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
-use Illuminate\Http\Request;
 use Adshares\Adserver\Repository\Common\TotalFeeReader;
 use Adshares\Adserver\Repository\Demand\MySqlDemandServerStatisticsRepository;
 use Adshares\Adserver\Repository\Supply\MySqlSupplyServerStatisticsRepository;
+use Adshares\Common\Exception\InvalidArgumentException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class StatisticsGlobalController extends Controller
 {
@@ -89,9 +93,23 @@ class StatisticsGlobalController extends Controller
         return $this->supplyRepository->fetchDomains($totalFee, $days, $offset);
     }
 
-
     public function fetchSupplyZonesSizes()
     {
         return $this->supplyRepository->fetchZonesSizes();
+    }
+
+    public function fetchServerStatisticsAsFile(string $date): StreamedResponse
+    {
+        if (1 !== preg_match('/^[0-9]{8}$/', $date)) {
+            throw new InvalidArgumentException('Date must be passed in Ymd format e.g. 20210328');
+        }
+
+        $file = $date.'_statistics.csv';
+
+        if (!Storage::disk('public')->exists($file)) {
+            throw new NotFoundHttpException('No statistics for date '.$date);
+        }
+
+        return Storage::disk('public')->download($file);
     }
 }
