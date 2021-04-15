@@ -141,6 +141,10 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
+        if($userContext->isCrawler()) {
+            return self::json([]);
+        }
+
         if ($userContext->pageRank() <= self::UNACCEPTABLE_PAGE_RANK) {
             if ($userContext->pageRank() == Aduser::CPA_ONLY_PAGE_RANK) {
                 foreach ($zones as &$zone) {
