@@ -313,7 +313,7 @@ SQL;
         return null;
     }
 
-    private static function getDomainFromContext(array $context): ?string
+    public static function getDomainFromContext(array $context): ?string
     {
         $domain = isset($context['site']['domain']) ? DomainReader::domain($context['site']['domain']) : null;
 
