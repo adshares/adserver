@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\GetSiteCode;
 use Adshares\Adserver\Http\Response\Site\SizesResponse;
 use Adshares\Adserver\Jobs\AdUserRegisterUrl;
+use Adshares\Adserver\Mail\Crm\SiteAdded;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\SitesRejectedDomain;
 use Adshares\Adserver\Models\User;
@@ -42,6 +43,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -89,7 +91,8 @@ class SitesController extends Controller
 
         try {
             $site = Site::create($input);
-            $site->user_id = Auth::user()->id;
+            $user = Auth::user();
+            $site->user_id = $user->id;
             $site->save();
             $this->siteClassificationUpdater->addClassificationToFiltering($site);
 
@@ -102,6 +105,8 @@ class SitesController extends Controller
         }
 
         DB::commit();
+
+        $this->sendCrmMailOnSiteAdded($user, $site);
 
         return self::json([], Response::HTTP_CREATED)->header('Location', route('app.sites.read', ['site' => $site]));
     }
@@ -367,6 +372,15 @@ class SitesController extends Controller
         if (SitesRejectedDomain::isDomainRejected($domain)) {
             throw new UnprocessableEntityHttpException(
                 'The subdomain '.$domain.' is not supported. Please use your own domain.'
+            );
+        }
+    }
+
+    private function sendCrmMailOnSiteAdded(User $user, Site $site): void
+    {
+        if (config('app.crm_mail_address_on_site_added')) {
+            Mail::to(config('app.crm_mail_address_on_site_added'))->queue(
+                new SiteAdded($user->uuid, $user->email, $site)
             );
         }
     }
