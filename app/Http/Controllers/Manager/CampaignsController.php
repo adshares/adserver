@@ -24,6 +24,7 @@ use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Http\Requests\Campaign\TargetingProcessor;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Jobs\ClassifyCampaign;
+use Adshares\Adserver\Mail\Crm\CampaignCreated;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\BidStrategy;
@@ -50,6 +51,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response as ResponseFacade;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
@@ -141,7 +143,8 @@ class CampaignsController extends Controller
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
-        $input['user_id'] = Auth::user()->id;
+        $user = Auth::user();
+        $input['user_id'] = $user->id;
         $input['bid_strategy_uuid'] = $bidStrategyUuid;
 
         $campaign = new Campaign($input);
@@ -168,6 +171,8 @@ class CampaignsController extends Controller
         }
 
         $this->createBannerClassificationsForCampaign($campaign);
+
+        $this->sendCrmMailOnCampaignCreated($user, $campaign);
 
         return self::json($campaign->toArray(), Response::HTTP_CREATED)->header(
             'Location',
@@ -560,5 +565,14 @@ class CampaignsController extends Controller
         }
 
         $this->bannerClassificationCreator->create($classifierName, $bannerIds->toArray());
+    }
+
+    private function sendCrmMailOnCampaignCreated(User $user, Campaign $campaign): void
+    {
+        if (config('app.crm_mail_address_on_campaign_created')) {
+            Mail::to(config('app.crm_mail_address_on_campaign_created'))->queue(
+                new CampaignCreated($user->uuid, $user->email, $campaign)
+            );
+        }
     }
 }

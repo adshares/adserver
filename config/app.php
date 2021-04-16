@@ -144,6 +144,9 @@ return [
     'exchange_api_key' => env('EXCHANGE_API_KEY'),
     'exchange_api_secret' => env('EXCHANGE_API_SECRET'),
     'max_page_zones' => (int)env('MAX_PAGE_ZONES', 4),
+    'crm_mail_address_on_user_registered' => env('CRM_MAIL_ADDRESS_ON_USER_REGISTERED'),
+    'crm_mail_address_on_campaign_created' => env('CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED'),
+    'crm_mail_address_on_site_added' => env('CRM_MAIL_ADDRESS_ON_SITE_ADDED'),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

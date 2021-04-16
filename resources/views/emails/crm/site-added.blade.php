@@ -1,0 +1,9 @@
+userId={{ $userUuid }}
+email={{ $email }}
+adserverName={{ config('app.name') }}
+adserverId={{ config('app.adserver_id') }}
+publisher=true
+websiteUrl={{ $site->url }}
+websiteName={{ $site->name }}
+category={{ $categories }}
+contentLanguage={{ $site->primary_language }}

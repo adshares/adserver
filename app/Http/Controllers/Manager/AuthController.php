@@ -22,16 +22,17 @@ namespace Adshares\Adserver\Http\Controllers\Manager;
 
 use Adshares\Adserver\Http\Controller;
 use Adshares\Adserver\Mail\AuthRecovery;
+use Adshares\Adserver\Mail\Crm\UserRegistered;
 use Adshares\Adserver\Mail\UserEmailActivate;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm1Old;
 use Adshares\Adserver\Mail\UserEmailChangeConfirm2New;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\Token;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Services\NowPayments;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Feature;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
+use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -95,6 +96,8 @@ class AuthController extends Controller
         if (Feature::enabled(Feature::BONUS_NEW_USERS)) {
             $user->awardBonus(Config::fetchInt(Config::BONUS_NEW_USER_AMOUNT));
         }
+
+        $this->sendCrmMailOnUserRegistered($user);
 
         return self::json($user->toArray());
     }
@@ -379,5 +382,14 @@ class AuthController extends Controller
         DB::commit();
 
         return self::json($user->toArray());
+    }
+
+    private function sendCrmMailOnUserRegistered(User $user): void
+    {
+        if (config('app.crm_mail_address_on_user_registered')) {
+            Mail::to(config('app.crm_mail_address_on_user_registered'))->queue(
+                new UserRegistered($user->uuid, $user->email, ($user->created_at ?: new DateTime())->format('d/m/Y'))
+            );
+        }
     }
 }

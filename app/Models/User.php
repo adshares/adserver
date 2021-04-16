@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
@@ -39,6 +40,7 @@ use Illuminate\Support\Facades\Hash;
  * @property Collection|Campaign[] campaigns
  * @property int id
  * @property string email
+ * @property Carbon|null created_at
  * @property DateTime|null email_confirmed_at
  * @property string uuid
  * @property string referral_id
