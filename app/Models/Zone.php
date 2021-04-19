@@ -116,14 +116,14 @@ class Zone extends Model
 
     public static function findByPublicIds(array $publicIds): Collection
     {
-        $binUniquePublicIds = array_unique(
-            array_map(
-                function (string $item) {
-                    return hex2bin($item);
-                },
-                $publicIds
-            )
-        );
+        $ids = [];
+        foreach($publicIds as $id) {
+            $binId = @hex2bin($id);
+            if($binId !== false) {
+                $ids[] = $binId;
+            }
+        }
+        $binUniquePublicIds = array_unique($ids);
 
         return self::whereIn('uuid', $binUniquePublicIds)->get();
     }
