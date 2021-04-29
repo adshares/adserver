@@ -132,6 +132,12 @@ class AdPayPaymentReportProcessor
             throw new RuntimeException('Invalid conversion value');
         }
 
+        if (!$conversion->event) {
+            Log::warning(sprintf('Cannot find conversion event'));
+            $conversion->setValueAndStatus(0, $this->exchangeRateValue, 0, $status);
+            return;
+        }
+
         $advertiserPublicId = $conversion->event->advertiser_id;
 
         if (!$this->isUser($advertiserPublicId)) {
