@@ -24,7 +24,14 @@ var isEdge = !isIE && !!window.StyleMedia;
 // Chrome on iOs has bug with blob url in iframe.src
 var isCriOS = !navigator.userAgent || !navigator.userAgent.match || navigator.userAgent.match('CriOS');
 
-var isFirefox = navigator.userAgent.toLowerCase().indexOf('firefox') > -1;
+var __ua = navigator.userAgent.toLowerCase();
+var isFirefox = __ua.indexOf('firefox') > -1;
+
+var isIphoneSafari = __ua.indexOf('iphone') && __ua.indexOf('safari');
+var iOSVersion = (function () {
+    var v = (navigator.appVersion).match(/OS (\d+)_(\d+)_?(\d+)?/);
+    return v ? [parseInt(v[1], 10), parseInt(v[2], 10), parseInt(v[3] || 0, 10)] : [0];
+})();
 
 var tmp = new XMLHttpRequest();
 supportBinaryFetch = !isIE || tmp.upload;
@@ -32,7 +39,7 @@ supportBinaryFetch = !isIE || tmp.upload;
 // IE does not accept blob url for iframe
 var iframeDataUri = !isIE && !isEdge;
 
-var requestBlob = window.Blob && window.FileReader && FileReader.prototype.hasOwnProperty('readAsBinaryString')
+var requestBlob = !(isIphoneSafari && iOSVersion[0] >= 14) && window.Blob && window.FileReader && FileReader.prototype.hasOwnProperty('readAsBinaryString')
         && (FileReader.prototype.hasOwnProperty('readAsDataURL') || window.URL && URL.createObjectURL);
 
 function getDataURI(data, callback) {
