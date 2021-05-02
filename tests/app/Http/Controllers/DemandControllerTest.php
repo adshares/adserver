@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
@@ -104,6 +105,7 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryList(): void
     {
+        factory(ServeDomain::class)->create();
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
