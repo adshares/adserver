@@ -143,6 +143,7 @@ class CampaignsController extends Controller
         $status = $input['basic_information']['status'];
 
         $input['basic_information']['status'] = Campaign::STATUS_DRAFT;
+        /** @var User $user */
         $user = Auth::user();
         $input['user_id'] = $user->id;
         $input['bid_strategy_uuid'] = $bidStrategyUuid;
@@ -441,6 +442,11 @@ class CampaignsController extends Controller
 
         $status = (int)$request->input('campaign.status');
 
+        return $this->changeCampaignStatus($campaign, $status);
+    }
+
+    private function changeCampaignStatus(Campaign $campaign, int $status): JsonResponse
+    {
         try {
             $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
         } catch (ExchangeRateNotAvailableException $exception) {
@@ -456,6 +462,14 @@ class CampaignsController extends Controller
         $this->createBannerClassificationsForCampaign($campaign);
 
         return self::json([], Response::HTTP_NO_CONTENT);
+    }
+
+    public function activateOutdatedCampaign(Campaign $campaign): JsonResponse
+    {
+        $campaign->time_end = null;
+        $campaign->status = Campaign::STATUS_SUSPENDED;
+
+        return $this->changeCampaignStatus($campaign, Campaign::STATUS_ACTIVE);
     }
 
     public function changeBannerStatus(Request $request, int $campaignId, int $bannerId): JsonResponse

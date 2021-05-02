@@ -351,6 +351,10 @@ class Campaign extends Model
             return false;
         }
 
+        if ($status === self::STATUS_ACTIVE && $this->isOutdated()) {
+            return false;
+        }
+
         if ($status === self::STATUS_ACTIVE && !$this->checkBudget()) {
             $status = self::STATUS_INACTIVE;
         }
@@ -451,6 +455,11 @@ class Campaign extends Model
     public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
+    }
+
+    public function isOutdated(): bool
+    {
+        return $this->time_end !== null && DateTime::createFromFormat(DateTime::ATOM, $this->time_end) < new DateTime();
     }
 
     public function hasClickConversion(): bool
