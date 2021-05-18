@@ -84,6 +84,7 @@ class WalletController extends Controller
     private const FIELD_BTC = 'btc';
 
     private const FIELD_NOW_PAYMENTS = 'now_payments';
+    private const FIELD_UNWRAPPERS = 'unwrappers';
 
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
@@ -405,9 +406,21 @@ class WalletController extends Controller
 
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS => $address->toString(),
-            self::FIELD_MESSAGE => $message,
+            self::FIELD_ADDRESS      => $address->toString(),
+            self::FIELD_MESSAGE      => $message,
             self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
+            self::FIELD_UNWRAPPERS   => [
+                [
+                    'chain_id'    => 1,
+                    'network_name'    => 'Ethereum',
+                    'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
+                ],
+                [
+                    'chain_id'    => 56,
+                    'network_name'    => 'Binance Smart Chain',
+                    'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
+                ]
+            ]
         ];
 
         return self::json($resp);
