@@ -39,6 +39,7 @@ class ZipToHtml
         'googleapis.com',
         'gstatic.com',
         'code.createjs.com',
+        '2mdn.net',
     ];
 
     private const MAX_ZIPPED_SIZE = 512 * 1024;
