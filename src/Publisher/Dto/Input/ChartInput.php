@@ -24,6 +24,7 @@ namespace Adshares\Publisher\Dto\Input;
 
 use Adshares\Publisher\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 use function in_array;
 
 final class ChartInput
@@ -89,8 +90,8 @@ final class ChartInput
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
-                $dateStart->format(DateTime::ATOM),
-                $dateEnd->format(DateTime::ATOM)
+                $dateStart->format(DateTimeInterface::ATOM),
+                $dateEnd->format(DateTimeInterface::ATOM)
             ));
         }
 

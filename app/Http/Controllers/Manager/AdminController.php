@@ -36,8 +36,8 @@ use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Utilities\SiteValidator;
 use Adshares\Common\Application\Service\LicenseVault;
 use Adshares\Common\Exception\RuntimeException;
-use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -184,7 +184,8 @@ class AdminController extends Controller
     public function getIndexUpdateTime(): JsonResponse
     {
         return self::json([
-            'index_update_time' => Config::fetchDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME)->format(DateTime::ATOM),
+            'index_update_time' => Config::fetchDateTime(Config::PANEL_PLACEHOLDER_UPDATE_TIME)
+                ->format(DateTimeInterface::ATOM),
         ]);
     }
 

@@ -34,6 +34,7 @@ use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdPayEventExportCommandTest extends TestCase
@@ -68,7 +69,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventView();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -99,7 +100,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventClick();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -121,7 +122,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventConversion();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }

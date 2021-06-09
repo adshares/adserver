@@ -73,8 +73,8 @@ class DemandPreparePayments extends BaseCommand
             throw new InvalidArgumentException(
                 sprintf(
                     '[DemandPreparePayments] Invalid period from (%s) to (%s)',
-                    $from->format(DateTime::ATOM),
-                    $to->format(DateTime::ATOM)
+                    $from->format(DateTimeInterface::ATOM),
+                    $to->format(DateTimeInterface::ATOM)
                 )
             );
         }

@@ -27,6 +27,7 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\ConversionDefinition;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Support\Collection;
 
 class DemandCampaignMapper
@@ -43,9 +44,9 @@ class DemandCampaignMapper
                     'budget' => $basicInformation['budget'],
                     'max_cpc' => $basicInformation['max_cpc'],
                     'max_cpm' => $basicInformation['max_cpm'],
-                    'time_start' => DateTime::createFromFormat(DateTime::ATOM, $campaign->time_start)->getTimestamp(),
+                    'time_start' => DateTime::createFromFormat(DateTimeInterface::ATOM, $campaign->time_start)->getTimestamp(),
                     'time_end' => null !== $campaign->time_end ? DateTime::createFromFormat(
-                        DateTime::ATOM,
+                        DateTimeInterface::ATOM,
                         $campaign->time_end
                     )->getTimestamp() : null,
                     'banners' => self::extractBanners($campaign),

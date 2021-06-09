@@ -152,7 +152,7 @@ class StatsController extends Controller
 
     private function createDateTime(string $dateInISO8601Format): ?DateTime
     {
-        $date = DateTime::createFromFormat(DateTime::ATOM, $dateInISO8601Format);
+        $date = DateTime::createFromFormat(DateTimeInterface::ATOM, $dateInISO8601Format);
 
         if (!$date) {
             return null;

@@ -885,8 +885,8 @@ SQL;
             throw new MissingEventsException(
                 sprintf(
                     'No events in range from %s to %s',
-                    $dateStart->format(DateTime::ATOM),
-                    $dateEnd->format(DateTime::ATOM)
+                    $dateStart->format(DateTimeInterface::ATOM),
+                    $dateEnd->format(DateTimeInterface::ATOM)
                 )
             );
         }
@@ -1117,7 +1117,7 @@ SQL;
                     break;
             }
 
-            $d = $date->format(DateTime::ATOM);
+            $d = $date->format(DateTimeInterface::ATOM);
             $formattedResult[$d] = (int)$row->c;
         }
 
@@ -1134,12 +1134,12 @@ SQL;
         $date = self::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
 
         while ($date < $dateEnd) {
-            $dates[] = $date->format(DateTime::ATOM);
+            $dates[] = $date->format(DateTimeInterface::ATOM);
             self::advanceDateTime($resolution, $date);
         }
 
         if (empty($dates)) {
-            $dates[] = $date->format(DateTime::ATOM);
+            $dates[] = $date->format(DateTimeInterface::ATOM);
         }
 
         $result = [];
