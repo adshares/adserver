@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Common\Exception\RuntimeException;
 use Adshares\Supply\Application\Service\AdSelect;
 use DateTime;
+use DateTimeInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Illuminate\Support\Collection;
 use function count;
@@ -173,7 +174,7 @@ class AdSelectCaseExporter
         $case = NetworkCase::where('created_at', '>=', $periodStart)->first();
 
         if (null === $case) {
-            throw new RuntimeException(sprintf('No case since %s', $periodStart->format(DateTime::ATOM)));
+            throw new RuntimeException(sprintf('No case since %s', $periodStart->format(DateTimeInterface::ATOM)));
         }
 
         return $case->id;
@@ -191,7 +192,7 @@ class AdSelectCaseExporter
         $caseClick = NetworkCaseClick::where('created_at', '>=', $periodStart)->first();
 
         if (null === $caseClick) {
-            throw new RuntimeException(sprintf('No click since %s', $periodStart->format(DateTime::ATOM)));
+            throw new RuntimeException(sprintf('No click since %s', $periodStart->format(DateTimeInterface::ATOM)));
         }
 
         return $caseClick->id;
@@ -209,7 +210,7 @@ class AdSelectCaseExporter
         $payment = NetworkCasePayment::where('pay_time', '>=', $periodStart)->first();
 
         if (null === $payment) {
-            throw new RuntimeException(sprintf('No payment since %s', $periodStart->format(DateTime::ATOM)));
+            throw new RuntimeException(sprintf('No payment since %s', $periodStart->format(DateTimeInterface::ATOM)));
         }
 
         return $payment->id;

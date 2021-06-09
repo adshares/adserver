@@ -26,7 +26,6 @@ use Adshares\Adserver\Exceptions\Publisher\MissingCasesException;
 use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkCaseLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
-use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
@@ -130,8 +129,8 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
         $this->info(
             sprintf(
                 '[Aggregate statistics] Processes network events from %s to %s',
-                $from->format(DateTime::ATOM),
-                $to->format(DateTime::ATOM)
+                $from->format(DateTimeInterface::ATOM),
+                $to->format(DateTimeInterface::ATOM)
             )
         );
 
@@ -139,8 +138,8 @@ class AggregateCaseStatisticsPublisherCommand extends BaseCommand
             throw new MissingCasesException(
                 sprintf(
                     '[Aggregate statistics] There are no cases from %s to %s',
-                    $from->format(DateTime::ATOM),
-                    $to->format(DateTime::ATOM)
+                    $from->format(DateTimeInterface::ATOM),
+                    $to->format(DateTimeInterface::ATOM)
                 )
             );
         }

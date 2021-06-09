@@ -22,6 +22,7 @@ namespace Adshares\Adserver\Mail\Crm;
 
 use Adshares\Adserver\Models\Campaign;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -63,6 +64,6 @@ class CampaignCreated extends Mailable
 
     private function changeDateFormat(string $date): string
     {
-        return DateTime::createFromFormat(DateTime::ATOM, $date)->format('d/m/Y H:i:s');
+        return DateTime::createFromFormat(DateTimeInterface::ATOM, $date)->format('d/m/Y H:i:s');
     }
 }

@@ -38,6 +38,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -504,8 +505,8 @@ class WalletController extends Controller
             [
                 self::FIELD_TYPES => 'array',
                 self::FIELD_TYPES.'.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
-                self::FIELD_DATE_FROM => 'date_format:'.DateTime::ATOM,
-                self::FIELD_DATE_TO => 'date_format:'.DateTime::ATOM,
+                self::FIELD_DATE_FROM => 'date_format:'.DateTimeInterface::ATOM,
+                self::FIELD_DATE_TO => 'date_format:'.DateTimeInterface::ATOM,
                 self::FIELD_LIMIT => ['integer', 'min:1'],
                 self::FIELD_OFFSET => ['integer', 'min:0'],
             ]
@@ -514,12 +515,12 @@ class WalletController extends Controller
         $types = $request->input(self::FIELD_TYPES, []);
         $from =
             null !== $request->input(self::FIELD_DATE_FROM) ? DateTime::createFromFormat(
-                DateTime::ATOM,
+                DateTimeInterface::ATOM,
                 $request->input(self::FIELD_DATE_FROM)
             ) : null;
         $to =
             null !== $request->input(self::FIELD_DATE_TO) ? DateTime::createFromFormat(
-                DateTime::ATOM,
+                DateTimeInterface::ATOM,
                 $request->input(self::FIELD_DATE_TO)
             ) : null;
         $limit = $request->input(self::FIELD_LIMIT, 10);

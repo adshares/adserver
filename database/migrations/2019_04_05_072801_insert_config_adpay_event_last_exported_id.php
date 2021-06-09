@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
 
 class InsertConfigAdpayEventLastExportedId extends Migration
@@ -41,7 +40,7 @@ class InsertConfigAdpayEventLastExportedId extends Migration
             return;
         }
 
-        $date = DateTime::createFromFormat(DateTime::ATOM, $adpayEventExportTime->value);
+        $date = DateTime::createFromFormat(DateTimeInterface::ATOM, $adpayEventExportTime->value);
         $event = DB::table('event_logs')->where('created_at', '<=', $date)->orderByDesc('id')->first();
         DB::table('configs')->updateOrInsert(
             [

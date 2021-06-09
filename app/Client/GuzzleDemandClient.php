@@ -41,6 +41,7 @@ use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseExcept
 use Adshares\Supply\Domain\Factory\CampaignFactory;
 use Adshares\Supply\Domain\Model\CampaignCollection;
 use DateTime;
+use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\RequestException;
@@ -139,7 +140,7 @@ final class GuzzleDemandClient implements DemandClient
         $date = new DateTime();
         $signature = $this->signatureVerifier->create($privateKey, $transactionId, $accountAddress, $date);
 
-        $dateFormatted = $date->format(DateTime::ATOM);
+        $dateFormatted = $date->format(DateTimeInterface::ATOM);
 
         $endpoint = str_replace(
             [
@@ -249,15 +250,15 @@ final class GuzzleDemandClient implements DemandClient
         array $bannerDemandIdsToSupplyIds
     ): array {
         $data['demand_id'] = Uuid::fromString($data['id']);
-        $data['date_start'] = DateTime::createFromFormat(DateTime::ATOM, $data['date_start']);
-        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTime::ATOM, $data['date_end']) : null;
+        $data['date_start'] = DateTime::createFromFormat(DateTimeInterface::ATOM, $data['date_start']);
+        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTimeInterface::ATOM, $data['date_end']) : null;
 
         $data['source_campaign'] = [
             'host' => $sourceHost,
             'address' => $sourceAddress,
             'version' => self::VERSION,
-            'created_at' => DateTime::createFromFormat(DateTime::ATOM, $data['created_at']),
-            'updated_at' => DateTime::createFromFormat(DateTime::ATOM, $data['updated_at']),
+            'created_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['created_at']),
+            'updated_at' => DateTime::createFromFormat(DateTimeInterface::ATOM, $data['updated_at']),
         ];
 
         $classifiersRequired = $this->classifierRepository->fetchRequiredClassifiersNames();
@@ -360,7 +361,7 @@ final class GuzzleDemandClient implements DemandClient
                     (string)$classifier,
                     $classificationItem['signature'],
                     $checksum,
-                    DateTime::createFromFormat(DateTime::ATOM, $classificationItem['signed_at'])->getTimestamp(),
+                    DateTime::createFromFormat(DateTimeInterface::ATOM, $classificationItem['signed_at'])->getTimestamp(),
                     $classificationItem['keywords'] ?? []
                 )) {
                 $invalidClassifiers[] = $classifier;

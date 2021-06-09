@@ -28,6 +28,7 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -46,8 +47,8 @@ final class StatsControllerTest extends TestCase
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
-        $dateStart = (new DateTime())->format(DateTime::ATOM);
-        $dateEnd = (new DateTime())->modify('-1 hour')->format(DateTime::ATOM);
+        $dateStart = (new DateTime())->format(DateTimeInterface::ATOM);
+        $dateEnd = (new DateTime())->modify('-1 hour')->format(DateTimeInterface::ATOM);
         $url = sprintf('%s/view/hour/%s/%s', self::ADVERTISER_CHART_URI, $dateStart, $dateEnd);
         $response = $this->getJson($url);
 
@@ -77,8 +78,8 @@ final class StatsControllerTest extends TestCase
                 self::ADVERTISER_CHART_URI,
                 $type,
                 $resolution,
-                $dateStart->format(DateTime::ATOM),
-                $dateEnd->format(DateTime::ATOM)
+                $dateStart->format(DateTimeInterface::ATOM),
+                $dateEnd->format(DateTimeInterface::ATOM)
             );
 
             $methodNameMapper = [
@@ -119,8 +120,8 @@ final class StatsControllerTest extends TestCase
         $url = sprintf(
             '%s/%s/%s',
             self::ADVERTISER_STATS_URI,
-            $dateStart->format(DateTime::ATOM),
-            $dateEnd->format(DateTime::ATOM)
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM)
         );
 
         $response = $this->getJson($url);

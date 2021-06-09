@@ -22,13 +22,13 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Logging;
 
-use DateTime;
+use DateTimeInterface;
 use Monolog\Formatter\LineFormatter;
 
 class CustomizeFormatter
 {
     const FORMAT = "[%datetime%] adserver %level_name% %message% %context% %extra%\n";
-    const DATE_FORMAT = DateTime::ATOM;
+    const DATE_FORMAT = DateTimeInterface::ATOM;
 
     /**
      * Customize the given logger instance.

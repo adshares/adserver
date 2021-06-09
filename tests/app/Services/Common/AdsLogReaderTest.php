@@ -31,6 +31,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Tests\TestCase;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 final class AdsLogReaderTest extends TestCase
@@ -68,7 +69,7 @@ final class AdsLogReaderTest extends TestCase
         (new AdsLogReader($adsClient))->parseLog();
 
         $from = Config::where('key', Config::ADS_LOG_START)->first();
-        $expectedDate = (new DateTime('@1539606265'))->format(DateTime::ATOM);
+        $expectedDate = (new DateTime('@1539606265'))->format(DateTimeInterface::ATOM);
         $this->assertEquals($expectedDate, $from->value);
         $this->assertEquals(12, AdsPayment::all()->count());
         $this->assertEquals(12, AdsPayment::where('status', AdsPayment::STATUS_NEW)->count());
