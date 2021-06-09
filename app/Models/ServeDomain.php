@@ -26,6 +26,9 @@ use DateTime;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string base_url
+ */
 class ServeDomain extends Model
 {
     use SoftDeletes;

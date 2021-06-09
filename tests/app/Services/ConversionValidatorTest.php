@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Utilities;
+namespace Adshares\Adserver\Tests\Services;
 
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Services\ConversionValidator;

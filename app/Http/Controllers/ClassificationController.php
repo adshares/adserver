@@ -29,6 +29,7 @@ use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Repository\Common\ClassifierExternalRepository;
 use Adshares\Adserver\Services\Common\ClassifierExternalSignatureVerifier;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -127,8 +128,8 @@ class ClassificationController extends Controller
                         .'%s <= %s',
                         $input['id'],
                         $classifier,
-                        $signedAt->format(DateTime::ATOM),
-                        $classification->signed_at->format(DateTime::ATOM)
+                        $signedAt->format(DateTimeInterface::ATOM),
+                        $classification->signed_at->format(DateTimeInterface::ATOM)
                     )
                 );
 
