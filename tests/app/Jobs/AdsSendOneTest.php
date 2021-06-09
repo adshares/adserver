@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Models;
+namespace Adshares\Adserver\Tests\Jobs;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Adserver\Jobs\AdsSendOne;

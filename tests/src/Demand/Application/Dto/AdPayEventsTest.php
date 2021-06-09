@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Tests\Demand\Application\Service;
+namespace Adshares\Tests\Demand\Application\Dto;
 
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use DateTime;
