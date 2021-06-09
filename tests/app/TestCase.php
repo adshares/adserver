@@ -20,6 +20,7 @@
 
 namespace Adshares\Adserver\Tests;
 
+use Adshares\Adserver\Facades\DB;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -38,5 +39,7 @@ abstract class TestCase extends BaseTestCase
                 return new DummyExchangeRateRepository();
             }
         );
+
+        DB::statement(sprintf("SET time_zone = '%s'", config('app.timezone')));
     }
 }
