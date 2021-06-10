@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -33,15 +33,12 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use function factory;
 
 final class CampaignsControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const URI = '/api/campaigns';
 
     public function testBrowseCampaignRequestWhenNoCampaigns(): void

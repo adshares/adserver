@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,13 +23,10 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
 final class UserLedgerEntryTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testBalance(): void
     {
         /** @var User $user */

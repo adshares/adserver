@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,13 +25,10 @@ namespace Adshares\Tests\Common;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Feature;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
 class FeatureTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const FEATURE_KEY = 'feature';
 
     public function testEnabled(): void

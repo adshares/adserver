@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,7 +27,7 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
@@ -35,15 +35,12 @@ use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 use function json_decode;
 use function random_int;
 
-class AdPayGetPaymentsTest extends TestCase
+class AdPayGetPaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testHandle(): void
     {
         $dummyExchangeRateRepository = new DummyExchangeRateRepository();

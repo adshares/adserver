@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,12 +32,9 @@ use Adshares\Adserver\Services\Common\AdsLogReader;
 use Adshares\Adserver\Tests\TestCase;
 use DateTime;
 use DateTimeInterface;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 final class AdsLogReaderTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testAdsTxInConsecutiveCalls(): void
     {
         $adsClient = $this->createMock(AdsClient::class);

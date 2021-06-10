@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -31,15 +31,12 @@ use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Client\DummyAdUserClient;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use function GuzzleHttp\json_decode;
 
 class SitesControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const URI = '/api/sites';
 
     private const URI_DOMAIN_VERIFY = '/api/sites/domain/validate';
