@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,7 +20,6 @@
 
 namespace Adshares\Adserver\Tests;
 
-use Adshares\Adserver\Facades\DB;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use Adshares\Mock\Client\DummyExchangeRateRepository;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -28,6 +27,7 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
+    use RefreshDatabase;
 
     protected function setUp()
     {
@@ -39,7 +39,5 @@ abstract class TestCase extends BaseTestCase
                 return new DummyExchangeRateRepository();
             }
         );
-
-        DB::statement(sprintf("SET time_zone = '%s'", config('app.timezone')));
     }
 }

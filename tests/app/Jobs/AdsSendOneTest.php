@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,13 +27,10 @@ use Adshares\Adserver\Jobs\AdsSendOne;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
 class AdsSendOneTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testNegativeBalance(): void
     {
         $mockAdsClient = $this->createMock(AdsClient::class);

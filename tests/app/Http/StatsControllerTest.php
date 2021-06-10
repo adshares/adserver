@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,23 +23,18 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Http;
 
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\CreatesApplication;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
 use DateTimeInterface;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 
 final class StatsControllerTest extends TestCase
 {
-    use CreatesApplication;
-    use RefreshDatabase;
-
     private const ADVERTISER_CHART_URI = '/api/campaigns/stats/chart';
 
-    private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table';
+    private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table2';
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
@@ -107,7 +102,7 @@ final class StatsControllerTest extends TestCase
 
     public function testAdvertiserStats(): void
     {
-        $this->markTestSkipped('DummyStatsRepository should use faker');
+//        $this->markTestSkipped('DummyStatsRepository should use faker');
 
         $repository = new DummyStatsRepository();
         $user = factory(User::class)->create();

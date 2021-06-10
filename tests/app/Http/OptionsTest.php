@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,12 +27,9 @@ use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Mock\Client\DummyAdClassifyClient;
 use Adshares\Mock\Client\DummyAdUserClient;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class OptionsTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testTargeting(): void
     {
         $this->actingAs(factory(User::class)->create(), 'api');

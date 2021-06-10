@@ -27,22 +27,19 @@ use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection as SupportCollection;
 use function array_merge;
 use function factory;
 use function json_decode;
 
-class DemandBlockPaymentsTest extends TestCase
+class DemandBlockPaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     /** @var array */
     private $calculations = [];
 

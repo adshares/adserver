@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,16 +20,13 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
-final class InventoryImporterCommandTest extends TestCase
+final class InventoryImporterCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     /**
      * @runInSeparateProcess
      * @preserveGlobalState disabled
