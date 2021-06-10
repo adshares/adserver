@@ -54,11 +54,4 @@ class UpdateOptionsTest extends ConsoleTestCase
         $this->artisan('ops:filtering-options:update')
             ->assertExitCode(0);
     }
-
-    /** @test */
-    public function remember(): void
-    {
-        $this->markTestIncomplete('Options storage NOT implemented');
-        self::assertTrue(false);
-    }
 }

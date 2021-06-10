@@ -22,6 +22,7 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Repository\StatsRepository;
@@ -102,12 +103,12 @@ final class StatsControllerTest extends TestCase
 
     public function testAdvertiserStats(): void
     {
-//        $this->markTestSkipped('DummyStatsRepository should use faker');
-
         $repository = new DummyStatsRepository();
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email' => DummyStatsRepository::USER_EMAIL]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
+
+        factory(Campaign::class)->create(['user_id' => $user->id]);
 
         $dateStart = new DateTime();
         $dateEnd = new DateTime();
@@ -121,7 +122,11 @@ final class StatsControllerTest extends TestCase
 
         $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson($repository->fetchStats($user->uuid, $dateStart, $dateEnd)->toArray());
+
+        $response->assertJson([
+            'total' => $repository->fetchStatsTotal($user->uuid, $dateStart, $dateEnd)->toArray(),
+            'data' => $repository->fetchStats($user->uuid, $dateStart, $dateEnd)->toArray(),
+        ]);
     }
 
     public function providerDataForAdvertiserChart(): array

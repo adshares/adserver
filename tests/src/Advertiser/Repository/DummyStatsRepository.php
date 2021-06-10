@@ -243,6 +243,9 @@ class DummyStatsRepository implements StatsRepository
         }
 
         $campaigns = $user->campaigns;
+        if ($campaigns->isEmpty()) {
+            return new DataCollection([]);
+        }
 
         $campaignId = $campaigns[0]->id;
         $campaignName = $campaigns[0]->name;

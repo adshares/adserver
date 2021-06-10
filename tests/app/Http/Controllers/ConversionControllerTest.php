@@ -71,7 +71,9 @@ final class ConversionControllerTest extends TestCase
         $cookies = [
             'tid' => Utils::urlSafeBase64Encode(hex2bin($event->tracking_id)),
         ];
-        $response = $this->call('get', $url, [], $cookies);
+        ob_start();
+        $response = $this->call('GET', $url, [], $cookies);
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
 
