@@ -28,7 +28,6 @@ use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCase;
-use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;

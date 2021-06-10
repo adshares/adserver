@@ -25,7 +25,7 @@ namespace Adshares\Adserver\Tests\Console;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Tests\TestCase;
 
-class ConsoleTestCase extends TestCase
+abstract class ConsoleTestCase extends TestCase
 {
     protected function setUp()
     {

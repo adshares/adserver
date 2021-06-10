@@ -1,7 +1,8 @@
 {
     "require": {
-        "php": "^7.2",
+        "php": "^7.4",
         "ext-apcu": "*",
+        "ext-curl": "*",
         "ext-dom": "*",
         "ext-fileinfo": "*",
         "ext-gd": "*",
@@ -9,6 +10,7 @@
         "ext-json": "*",
         "ext-libxml": "*",
         "ext-openssl": "*",
+        "ext-pdo_mysql": "*",
         "ext-sodium": "*",
         "ext-zip": "*",
         "adshares/ads-client": "^1",
