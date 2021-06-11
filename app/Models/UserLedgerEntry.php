@@ -145,19 +145,6 @@ class UserLedgerEntry extends Model
         'user_id' => 'int',
     ];
 
-//    public static function boot()
-//    {
-//        self::saved(
-//            function ($model) {
-//
-//                // if self::TYPE_BONUS_INCOME or self::TYPE_BONUS_EXPENSE
-//                // if self::STATUS_ACCEPTED or self::AWAITING_PAYMENTS and amount < 0
-//
-//                User::find($this->user_id)->update(['balance' => DB::raw('balance + ' . $this->amount)]);
-//            }
-//        );
-//    }
-
     public static function waitingPayments(): int
     {
         return (int)self::queryModificationForAwaitingPayments(self::query())
