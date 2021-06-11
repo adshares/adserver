@@ -44,7 +44,10 @@ class DemandCampaignMapper
                     'budget' => $basicInformation['budget'],
                     'max_cpc' => $basicInformation['max_cpc'],
                     'max_cpm' => $basicInformation['max_cpm'],
-                    'time_start' => DateTime::createFromFormat(DateTimeInterface::ATOM, $campaign->time_start)->getTimestamp(),
+                    'time_start' => DateTime::createFromFormat(
+                        DateTimeInterface::ATOM,
+                        $campaign->time_start
+                    )->getTimestamp(),
                     'time_end' => null !== $campaign->time_end ? DateTime::createFromFormat(
                         DateTimeInterface::ATOM,
                         $campaign->time_end
