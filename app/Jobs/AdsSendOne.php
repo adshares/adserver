@@ -100,7 +100,7 @@ class AdsSendOne implements ShouldQueue
         }
 
         try {
-            if (UserLedgerEntry::getWalletBalanceByUserId($this->userLedger->user_id) < 0) {
+            if ($this->userLedger->user->getWalletBalance() < 0) {
                 $this->rejectTransactionDueToNegativeBalance();
 
                 return;

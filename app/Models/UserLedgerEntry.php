@@ -25,6 +25,7 @@ use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as DatabaseBuilder;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +46,7 @@ use const PHP_INT_MAX;
  * @property string address_to
  * @property string currency
  * @property int currency_amount
+ * @property User user
  */
 class UserLedgerEntry extends Model
 {
@@ -143,6 +145,19 @@ class UserLedgerEntry extends Model
         'user_id' => 'int',
     ];
 
+//    public static function boot()
+//    {
+//        self::saved(
+//            function ($model) {
+//
+//                // if self::TYPE_BONUS_INCOME or self::TYPE_BONUS_EXPENSE
+//                // if self::STATUS_ACCEPTED or self::AWAITING_PAYMENTS and amount < 0
+//
+//                User::find($this->user_id)->update(['balance' => DB::raw('balance + ' . $this->amount)]);
+//            }
+//        );
+//    }
+
     public static function waitingPayments(): int
     {
         return (int)self::queryModificationForAwaitingPayments(self::query())
@@ -205,58 +220,37 @@ class UserLedgerEntry extends Model
             ->sum('amount');
     }
 
+    /**
+     * @deprecated
+     */
     public static function getBalanceByUserId(int $userId): int
     {
-        $amount = (int)self::queryForEntriesRelevantForBalanceByUserId($userId)
+        return (int)self::queryForEntriesRelevantForBalance()
+            ->where('user_id', $userId)
             ->sum('amount');
-
-//        if ($amount < 0) {
-//            throw new UserLedgerException("Negative Balance ($amount)");
-//        }
-
-        return $amount;
     }
 
+    /**
+     * @deprecated
+     */
     public static function getWalletBalanceByUserId(int $userId): int
     {
-        $amount = (int)self::queryForEntriesRelevantForWalletBalanceByUserId($userId)
+        DB::connection()->enableQueryLog();
+         (int)self::queryForEntriesRelevantForWalletBalance()
+            ->where('user_id', $userId)
             ->sum('amount');
-
-//        if ($amount < 0) {
-//            throw new UserLedgerException('Negative Balance');
-//        }
-
-        return $amount;
+        dump(DB::getQueryLog());
+        exit;
     }
 
+    /**
+     * @deprecated
+     */
     public static function getBonusBalanceByUserId(int $userId): int
     {
-        $amount = (int)self::queryForEntriesRelevantForBonusBalanceByUserId($userId)
+        return (int)self::queryForEntriesRelevantForBonusBalance()
+            ->where('user_id', $userId)
             ->sum('amount');
-
-//        if ($amount < 0) {
-//            throw new UserLedgerException('Negative Balance');
-//        }
-
-        return $amount;
-    }
-
-    public static function queryForEntriesRelevantForBalanceByUserId(int $userId): Builder
-    {
-        return self::queryForEntriesRelevantForBalance()
-            ->where('user_id', $userId);
-    }
-
-    public static function queryForEntriesRelevantForWalletBalanceByUserId(int $userId): Builder
-    {
-        return self::queryForEntriesRelevantForWalletBalance()
-            ->where('user_id', $userId);
-    }
-
-    public static function queryForEntriesRelevantForBonusBalanceByUserId(int $userId): Builder
-    {
-        return self::queryForEntriesRelevantForBonusBalance()
-            ->where('user_id', $userId);
     }
 
     public static function construct(
@@ -338,8 +332,9 @@ class UserLedgerEntry extends Model
             );
         }
 
-        $bonusableAmount = (int)max(min($total, $maxBonus, self::getBonusBalanceByUserId($userId)), 0);
-        $payableAmount = (int)max(min($total - $bonusableAmount, self::getWalletBalanceByUserId($userId)), 0);
+        $user = User::findOrFail($userId);
+        $bonusableAmount = (int)max(min($total, $maxBonus, $user->getBonusBalance()), 0);
+        $payableAmount = (int)max(min($total - $bonusableAmount, $user->getWalletBalance()), 0);
 
         if ($total > $bonusableAmount + $payableAmount) {
             throw new InvalidArgumentException(
@@ -416,6 +411,11 @@ class UserLedgerEntry extends Model
         $obj->save();
 
         return $obj;
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function setStatusAttribute(int $status): void
