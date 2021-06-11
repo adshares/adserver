@@ -235,12 +235,9 @@ class UserLedgerEntry extends Model
      */
     public static function getWalletBalanceByUserId(int $userId): int
     {
-        DB::connection()->enableQueryLog();
-         (int)self::queryForEntriesRelevantForWalletBalance()
+        return (int)self::queryForEntriesRelevantForWalletBalance()
             ->where('user_id', $userId)
             ->sum('amount');
-        dump(DB::getQueryLog());
-        exit;
     }
 
     /**
