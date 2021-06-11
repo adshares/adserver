@@ -413,11 +413,13 @@ class WalletController extends Controller
                 [
                     'chain_id'    => 1,
                     'network_name'    => 'Ethereum',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
                     'chain_id'    => 56,
                     'network_name'    => 'Binance Smart Chain',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
             ]

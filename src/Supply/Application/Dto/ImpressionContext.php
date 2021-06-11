@@ -127,7 +127,10 @@ final class ImpressionContext
             $trackingId = $this->hexUuidFromBase64UrlWithChecksum($this->trackingId());
             $userId = $this->userId();
             $params[] = [
-                'keywords' => array_merge(AbstractFilterMapper::generateNestedStructure(['site' => $this->site]), AbstractFilterMapper::generateNestedStructure($this->user['keywords'])),
+                'keywords' => array_merge(
+                    AbstractFilterMapper::generateNestedStructure(['site' => $this->site]),
+                    AbstractFilterMapper::generateNestedStructure($this->user['keywords'])
+                ),
                 'banner_size' => $zone->size,
                 'publisher_id' => $siteMap['publisher_id'],
                 'site_id' => $siteMap['uuid'],

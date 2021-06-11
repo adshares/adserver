@@ -133,15 +133,14 @@ CODE;
             $jsPath = public_path('-/main.js');
 
             return "<script type=\"text/javascript\">" . str_replace(
-                    [
-                        '{{ TLD }}',
-                        '{{ SELECTOR }}',
-                    ],
-                    $params,
-                    file_get_contents($jsPath)
-                ) . "</script>";
+                [
+                    '{{ TLD }}',
+                    '{{ SELECTOR }}',
+                ],
+                $params,
+                file_get_contents($jsPath)
+            ) . "</script>";
         } else {
-
             $scriptUrl = $proxyMainJs ? '/main.js' : (new SecureUrl(route('supply-find.js')))->toString();
 
             return "<script type=\"text/javascript\" src=\"{$scriptUrl}\" async></script>";
