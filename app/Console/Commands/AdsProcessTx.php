@@ -285,7 +285,7 @@ class AdsProcessTx extends BaseCommand
     {
         $exchangeRate = $this->exchangeRateReader->fetchExchangeRate();
 
-        $balance = UserLedgerEntry::getBalanceByUserId($user->id);
+        $balance = $user->getBalance();
         $campaigns = $user->campaigns;
 
         $requiredBudget = $campaigns->filter(function (Campaign $campaign) {

@@ -33,9 +33,9 @@ final class UserLedgerEntryTest extends TestCase
         $user = factory(User::class)->create();
         $this->createAllEntries($user);
 
-        self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
-        self::assertEquals(-325, UserLedgerEntry::getWalletBalanceByUserId($user->id));
-        self::assertEquals(130, UserLedgerEntry::getBonusBalanceByUserId($user->id));
+        self::assertEquals(-195, $user->getBalance());
+        self::assertEquals(-325, $user->getWalletBalance());
+        self::assertEquals(130, $user->getBonusBalance());
     }
 
     public function testBalanceForAllUsers(): void
@@ -147,15 +147,15 @@ final class UserLedgerEntryTest extends TestCase
 
         UserLedgerEntry::pushBlockedToProcessing();
 
-        self::assertEquals(-195, UserLedgerEntry::getBalanceByUserId($user->id));
-        self::assertEquals(-325, UserLedgerEntry::getWalletBalanceByUserId($user->id));
-        self::assertEquals(130, UserLedgerEntry::getBonusBalanceByUserId($user->id));
+        self::assertEquals(-195, $user->getBalance());
+        self::assertEquals(-325, $user->getWalletBalance());
+        self::assertEquals(130, $user->getBonusBalance());
 
         UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(-145, UserLedgerEntry::getBalanceByUserId($user->id));
-        self::assertEquals(-295, UserLedgerEntry::getWalletBalanceByUserId($user->id));
-        self::assertEquals(150, UserLedgerEntry::getBonusBalanceByUserId($user->id));
+        self::assertEquals(-145, $user->getBalance());
+        self::assertEquals(-295, $user->getWalletBalance());
+        self::assertEquals(150, $user->getBonusBalance());
     }
 
     public function testBalanceRemoval(): void
@@ -166,9 +166,9 @@ final class UserLedgerEntryTest extends TestCase
 
         UserLedgerEntry::removeProcessingExpenses();
 
-        self::assertEquals(-170, UserLedgerEntry::getBalanceByUserId($user->id));
-        self::assertEquals(-310, UserLedgerEntry::getWalletBalanceByUserId($user->id));
-        self::assertEquals(140, UserLedgerEntry::getBonusBalanceByUserId($user->id));
+        self::assertEquals(-170, $user->getBalance());
+        self::assertEquals(-310, $user->getWalletBalance());
+        self::assertEquals(140, $user->getBonusBalance());
     }
 
     private function createSomeEntries(User $user): void
