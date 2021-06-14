@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,19 +27,17 @@ use Adshares\Adserver\Models\Conversion;
 use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Common\Domain\ValueObject\Uuid;
 use Adshares\Demand\Application\Dto\AdPayEvents;
 use Adshares\Demand\Application\Service\AdPay;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use DateTimeInterface;
 
-class AdPayEventExportCommandTest extends TestCase
+class AdPayEventExportCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testEmptyDb(): void
     {
         $adPay = $this->createMock(AdPay::class);
@@ -68,7 +66,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventView();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -99,7 +97,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventClick();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }
@@ -121,7 +119,7 @@ class AdPayEventExportCommandTest extends TestCase
         $this->instance(AdPay::class, $adPay);
 
         $event = $this->insertEventConversion();
-        $eventDate = $event->created_at->format(DateTime::ATOM);
+        $eventDate = $event->created_at->format(DateTimeInterface::ATOM);
 
         $this->artisan('ops:adpay:event:export', ['--from' => $eventDate, '--to' => $eventDate])->assertExitCode(0);
     }

@@ -19,7 +19,6 @@
  */
 
 use Adshares\Adserver\Facades\DB;
-use Adshares\Adserver\Models\Config;
 use Illuminate\Database\Migrations\Migration;
 
 class ChangeConfigEntryForAdselectExport extends Migration
@@ -38,7 +37,7 @@ class ChangeConfigEntryForAdselectExport extends Migration
             return;
         }
 
-        $dateTime = DateTime::createFromFormat(DateTime::ATOM, $adselectPaymentExportDate->value);
+        $dateTime = DateTime::createFromFormat(DateTimeInterface::ATOM, $adselectPaymentExportDate->value);
         $dateTimeCutoff = (clone $dateTime)->modify('-7 days');
 
         $adsPaymentId = DB::table('network_event_logs')
@@ -87,7 +86,7 @@ class ChangeConfigEntryForAdselectExport extends Migration
             ->where('key', self::ADSELECT_LAST_EXPORTED_ADS_PAYMENT_ID)
             ->update(
                 [
-                    'value' => $dateTime->format(DateTime::ATOM),
+                    'value' => $dateTime->format(DateTimeInterface::ATOM),
                     'updated_at' => new DateTime(),
                 ]
             );

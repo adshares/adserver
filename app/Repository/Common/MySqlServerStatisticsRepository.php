@@ -31,20 +31,27 @@ class MySqlServerStatisticsRepository
     {
         $result = DB::select(
             <<<SQL
-SELECT (SELECT COUNT(*) AS count FROM users WHERE deleted_at IS NULL and updated_at > NOW() - INTERVAL 3 MONTH)         AS users,
+ SELECT 
+       (SELECT COUNT(*) AS count
+        FROM users
+        WHERE deleted_at IS NULL
+          AND updated_at > NOW() - INTERVAL 3 MONTH
+       ) AS users,
        (SELECT COUNT(*) AS count
         FROM campaigns
         WHERE status = 2
           AND deleted_at IS NULL
           AND time_start <= NOW()
-          AND (time_end IS NULL OR time_end > NOW()))                                AS campaigns,
-       (SELECT COUNT(*) FROM (SELECT            
-          SUBSTRING_INDEX(e.domain, "www.", -1) AS count, SUM(e.views) AS views
-        FROM event_logs_hourly e
+          AND (time_end IS NULL OR time_end > NOW())
+       ) AS campaigns,
+       (SELECT COUNT(*) FROM (
+          SELECT SUBSTRING_INDEX(e.domain, "www.", -1) AS count, SUM(e.views) AS views
+          FROM event_logs_hourly e
           WHERE e.hour_timestamp < DATE(NOW()) - INTERVAL 0 DAY
             AND e.hour_timestamp >= DATE(NOW()) - INTERVAL 1 DAY
             AND e.domain != '' GROUP BY 1
-        ) d WHERE d.views > 100) AS sites;
+          ) d WHERE d.views > 100
+       ) AS sites;
 SQL
         );
 

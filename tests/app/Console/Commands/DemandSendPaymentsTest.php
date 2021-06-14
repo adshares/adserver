@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,17 +27,14 @@ use Adshares\Adserver\Console\Commands\DemandSendPayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\Ads;
 use Adshares\Common\Application\Service\Exception\AdsException;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function factory;
 
-class DemandSendPaymentsTest extends TestCase
+class DemandSendPaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testNoPayments(): void
     {
         $this->artisan('ops:demand:payments:send')

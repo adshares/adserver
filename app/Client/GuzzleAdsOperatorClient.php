@@ -27,6 +27,7 @@ use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableException;
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
+use DateTimeInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
@@ -73,7 +74,7 @@ final class GuzzleAdsOperatorClient implements ExchangeRateRepository
     {
         return str_replace(
             ['{date}', '{currency}'],
-            [$dateTime->format(DateTime::ATOM), $currency],
+            [$dateTime->format(DateTimeInterface::ATOM), $currency],
             self::GET_ENDPOINT
         );
     }

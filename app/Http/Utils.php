@@ -73,7 +73,7 @@ class Utils
             $context = null;
         }
 
-        if($context['page']['frame']) {
+        if ($context['page']['frame']) {
             $context['page']['frame_url'] = $context['page']['url'];
             $context['page']['url'] = $context['page']['ref'];
             $context['page']['ref'] = '';

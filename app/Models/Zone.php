@@ -117,9 +117,9 @@ class Zone extends Model
     public static function findByPublicIds(array $publicIds): Collection
     {
         $ids = [];
-        foreach($publicIds as $id) {
+        foreach ($publicIds as $id) {
             $binId = @hex2bin($id);
-            if($binId !== false) {
+            if ($binId !== false) {
                 $ids[] = $binId;
             }
         }

@@ -29,6 +29,7 @@ use Adshares\Common\Application\Service\Exception\ExchangeRateNotAvailableExcept
 use Adshares\Common\Application\Service\ExchangeRateRepository;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Log;
 
@@ -70,7 +71,7 @@ class ExchangeRateReader
             Log::warning(
                 sprintf(
                     '[ExchangeRateReader] Cannot fetch exchange rate for %s: %s',
-                    $dateTimeForComputation->format(DateTime::ATOM),
+                    $dateTimeForComputation->format(DateTimeInterface::ATOM),
                     $exception->getMessage()
                 )
             );

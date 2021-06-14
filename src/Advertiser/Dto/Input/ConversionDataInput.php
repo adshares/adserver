@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Advertiser\Dto\Input;
 
 use DateTime;
+use DateTimeInterface;
 
 class ConversionDataInput
 {
@@ -47,8 +48,8 @@ class ConversionDataInput
         if ($dateEnd < $dateStart) {
             throw new InvalidInputException(sprintf(
                 'Start date (%s) must be earlier than end date (%s).',
-                $dateStart->format(DateTime::ATOM),
-                $dateEnd->format(DateTime::ATOM)
+                $dateStart->format(DateTimeInterface::ATOM),
+                $dateEnd->format(DateTimeInterface::ATOM)
             ));
         }
 

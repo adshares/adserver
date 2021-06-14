@@ -26,7 +26,7 @@ use Faker\Generator as Faker;
 $factory->define(NetworkCampaign::class, function (Faker $faker) {
     return [
         'uuid' => $faker->uuid,
-        'source_address' => '0001-00000001-0001',
+        'source_address' => '0001-00000001-8B4E',
         'demand_campaign_id' => $faker->uuid,
         'publisher_id' => $faker->uuid,
         'source_host' => $faker->url,

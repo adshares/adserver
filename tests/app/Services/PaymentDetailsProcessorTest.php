@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,7 +20,7 @@
 
 declare(strict_types = 1);
 
-namespace Adshares\Adserver\Tests\Utilities;
+namespace Adshares\Adserver\Tests\Services;
 
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCase;
@@ -35,12 +35,9 @@ use Adshares\Common\Domain\ValueObject\AccountId;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 final class PaymentDetailsProcessorTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const LICENSE_FEE = 0.01;
 
     private const OPERATOR_FEE = 0.01;

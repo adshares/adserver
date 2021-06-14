@@ -23,6 +23,7 @@ namespace Adshares\Adserver\Tests\Utilities;
 
 use Adshares\Adserver\Utilities\DateUtils;
 use DateTime;
+use DateTimeInterface;
 use PHPUnit\Framework\TestCase;
 
 final class DateUtilsTest extends TestCase
@@ -65,8 +66,8 @@ final class DateUtilsTest extends TestCase
         $this->assertEquals(
             $areTheSameHour,
             DateUtils::areTheSameHour(
-                DateTime::createFromFormat(DateTime::ATOM, $date1),
-                DateTime::createFromFormat(DateTime::ATOM, $date2)
+                DateTime::createFromFormat(DateTimeInterface::ATOM, $date1),
+                DateTime::createFromFormat(DateTimeInterface::ATOM, $date2)
             )
         );
     }
@@ -128,7 +129,7 @@ final class DateUtilsTest extends TestCase
         foreach ($table as $row) {
             $convertedRow = [];
             foreach ($row as $item) {
-                $convertedRow[] = DateTime::createFromFormat(DateTime::ATOM, $item);
+                $convertedRow[] = DateTime::createFromFormat(DateTimeInterface::ATOM, $item);
             }
             $convertedTable[] = $convertedRow;
         }

@@ -38,6 +38,7 @@ use Adshares\Common\Domain\ValueObject\SecureUrl;
 use Adshares\Common\Exception\InvalidArgumentException;
 use Adshares\Common\Infrastructure\Service\ExchangeRateReader;
 use DateTime;
+use DateTimeInterface;
 use DateTimeZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -84,6 +85,7 @@ class WalletController extends Controller
     private const FIELD_BTC = 'btc';
 
     private const FIELD_NOW_PAYMENTS = 'now_payments';
+    private const FIELD_UNWRAPPERS = 'unwrappers';
 
     private const FIELD_NOW_PAYMENTS_URL = 'now_payments_url';
 
@@ -141,8 +143,7 @@ class WalletController extends Controller
 
         if (null === $amount) {
             //calculate max available amount
-            $userId = Auth::user()->id;
-            $balance = UserLedgerEntry::getWalletBalanceByUserId($userId);
+            $balance = Auth::user()->getWalletBalance();
             $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
@@ -268,7 +269,7 @@ class WalletController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
+        if ($user->getWalletBalance() < $total) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -328,7 +329,7 @@ class WalletController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $amount) {
+        if ($user->getWalletBalance() < $amount) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -405,9 +406,23 @@ class WalletController extends Controller
 
         $message = str_pad($uuid, 64, '0', STR_PAD_LEFT);
         $resp = [
-            self::FIELD_ADDRESS => $address->toString(),
-            self::FIELD_MESSAGE => $message,
+            self::FIELD_ADDRESS      => $address->toString(),
+            self::FIELD_MESSAGE      => $message,
             self::FIELD_NOW_PAYMENTS => $nowPayments->info(),
+            self::FIELD_UNWRAPPERS   => [
+                [
+                    'chain_id'    => 1,
+                    'network_name'    => 'Ethereum',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
+                    'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
+                ],
+                [
+                    'chain_id'    => 56,
+                    'network_name'    => 'Binance Smart Chain',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
+                    'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
+                ]
+            ]
         ];
 
         return self::json($resp);
@@ -491,8 +506,8 @@ class WalletController extends Controller
             [
                 self::FIELD_TYPES => 'array',
                 self::FIELD_TYPES.'.*' => ['integer', Rule::in(UserLedgerEntry::ALLOWED_TYPE_LIST)],
-                self::FIELD_DATE_FROM => 'date_format:'.DateTime::ATOM,
-                self::FIELD_DATE_TO => 'date_format:'.DateTime::ATOM,
+                self::FIELD_DATE_FROM => 'date_format:'.DateTimeInterface::ATOM,
+                self::FIELD_DATE_TO => 'date_format:'.DateTimeInterface::ATOM,
                 self::FIELD_LIMIT => ['integer', 'min:1'],
                 self::FIELD_OFFSET => ['integer', 'min:0'],
             ]
@@ -501,12 +516,12 @@ class WalletController extends Controller
         $types = $request->input(self::FIELD_TYPES, []);
         $from =
             null !== $request->input(self::FIELD_DATE_FROM) ? DateTime::createFromFormat(
-                DateTime::ATOM,
+                DateTimeInterface::ATOM,
                 $request->input(self::FIELD_DATE_FROM)
             ) : null;
         $to =
             null !== $request->input(self::FIELD_DATE_TO) ? DateTime::createFromFormat(
-                DateTime::ATOM,
+                DateTimeInterface::ATOM,
                 $request->input(self::FIELD_DATE_TO)
             ) : null;
         $limit = $request->input(self::FIELD_LIMIT, 10);
