@@ -25,12 +25,12 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Mockery;
 
+/**
+ * @runTestsInSeparateProcesses
+ * @preserveGlobalState disabled
+ */
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
-    /**
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
     public function testNoHosts(): void
     {
         $mockNetworkHost = Mockery::mock('alias:Adshares\Adserver\Models\NetworkHost');
@@ -40,10 +40,6 @@ final class InventoryImporterCommandTest extends ConsoleTestCase
         $this->artisan('ops:demand:inventory:import')->assertExitCode(0);
     }
 
-    /**
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
     public function testNonExistentHosts(): void
     {
         $sourceAddress = '0001-00000001-8B4E';
