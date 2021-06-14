@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -21,8 +21,11 @@
 use Adshares\Adserver\Models\ServeDomain;
 use Faker\Generator as Faker;
 
-$factory->define(ServeDomain::class, function (Faker $faker) {
-    return [
-        'base_url' => $faker->url,
-    ];
-});
+$factory->define(
+    ServeDomain::class,
+    function (Faker $faker) {
+        return [
+            'base_url' => 'http://'.$faker->domainName,
+        ];
+    }
+);
