@@ -25,9 +25,6 @@ use Adshares\Supply\Domain\Repository\CampaignRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Mockery;
 
-/**
- * @runTestsInSeparateProcesses
- */
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
     public function testNoHosts(): void
