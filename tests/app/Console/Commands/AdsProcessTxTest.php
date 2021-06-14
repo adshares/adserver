@@ -31,7 +31,6 @@ use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Mock\Client\DummyAdSelectClient;
@@ -59,6 +58,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
+        /** @var User $user */
         $user = factory(User::class)->create();
         $user->uuid = '00000000000000000000000000000123';
         $user->save();
@@ -68,8 +68,7 @@ class AdsProcessTxTest extends ConsoleTestCase
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
-        $amount = UserLedgerEntry::getBalanceByUserId($user->id);
-        $this->assertEquals($depositAmount, $amount);
+        $this->assertEquals($depositAmount, $user->getBalance());
     }
 
     public function testAdsProcessDepositWithoutUser(): void

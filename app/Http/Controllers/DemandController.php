@@ -367,8 +367,12 @@ SQL;
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()),
-                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(url('-/view.js')))->toString()),
+                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                    route('banner-context', ['id' => $eventId])
+                ))->toString()),
+                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                    url('-/view.js')
+                ))->toString()),
                 'aduser_url' => $adUserUrl,
             ]
         ));
@@ -533,12 +537,15 @@ SQL;
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => ServeDomain::changeUrlHost(SecureUrl::change(
-                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
-                        $request
-                    )),
-                    'click_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request)),
-                    'view_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request)),
+                    'serve_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)])
+                    ))->toString()),
+                    'click_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-click', ['id' => $bannerPublicId])
+                    ))->toString()),
+                    'view_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-view', ['id' => $bannerPublicId])
+                    ))->toString()),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }

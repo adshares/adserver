@@ -141,7 +141,7 @@ class SupplyController extends Controller
         $impressionContext = Utils::getPartialImpressionContext($request, $data, $tid);
         $userContext = $contextProvider->getUserContext($impressionContext);
 
-        if($userContext->isCrawler()) {
+        if ($userContext->isCrawler()) {
             return self::json([]);
         }
 

@@ -251,7 +251,10 @@ final class GuzzleDemandClient implements DemandClient
     ): array {
         $data['demand_id'] = Uuid::fromString($data['id']);
         $data['date_start'] = DateTime::createFromFormat(DateTimeInterface::ATOM, $data['date_start']);
-        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(DateTimeInterface::ATOM, $data['date_end']) : null;
+        $data['date_end'] = $data['date_end'] ? DateTime::createFromFormat(
+            DateTimeInterface::ATOM,
+            $data['date_end']
+        ) : null;
 
         $data['source_campaign'] = [
             'host' => $sourceHost,
@@ -361,7 +364,10 @@ final class GuzzleDemandClient implements DemandClient
                     (string)$classifier,
                     $classificationItem['signature'],
                     $checksum,
-                    DateTime::createFromFormat(DateTimeInterface::ATOM, $classificationItem['signed_at'])->getTimestamp(),
+                    DateTime::createFromFormat(
+                        DateTimeInterface::ATOM,
+                        $classificationItem['signed_at']
+                    )->getTimestamp(),
                     $classificationItem['keywords'] ?? []
                 )) {
                 $invalidClassifiers[] = $classifier;

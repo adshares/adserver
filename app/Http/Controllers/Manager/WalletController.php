@@ -143,8 +143,7 @@ class WalletController extends Controller
 
         if (null === $amount) {
             //calculate max available amount
-            $userId = Auth::user()->id;
-            $balance = UserLedgerEntry::getWalletBalanceByUserId($userId);
+            $balance = Auth::user()->getWalletBalance();
             $amount = AdsUtils::calculateAmount($addressFrom, $addressTo, $balance);
         }
 
@@ -270,7 +269,7 @@ class WalletController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $total) {
+        if ($user->getWalletBalance() < $total) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -330,7 +329,7 @@ class WalletController extends Controller
         /** @var User $user */
         $user = Auth::user();
 
-        if (UserLedgerEntry::getWalletBalanceByUserId($user->id) < $amount) {
+        if ($user->getWalletBalance() < $amount) {
             return self::json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -414,11 +413,13 @@ class WalletController extends Controller
                 [
                     'chain_id'    => 1,
                     'network_name'    => 'Ethereum',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ],
                 [
                     'chain_id'    => 56,
                     'network_name'    => 'Binance Smart Chain',
+                    // phpcs:ignore PHPCompatibility.PHP.ValidIntegers.HexNumericStringFound
                     'contract_address' => '0xcfcEcFe2bD2FED07A9145222E8a7ad9Cf1Ccd22A',
                 ]
             ]
