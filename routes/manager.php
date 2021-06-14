@@ -58,6 +58,8 @@ Route::middleware([Kernel::USER_ACCESS, Kernel::JSON_API])->group(function () {
         ->name('app.campaigns.edit');
     Route::put('campaigns/{campaign}/status', [CampaignsController::class, 'changeStatus'])
         ->name('app.campaigns.change_status');
+    Route::patch('campaigns/{campaign}/activate-outdated', [CampaignsController::class, 'activateOutdatedCampaign'])
+        ->name('app.campaigns.activate_outdated');
     Route::put('campaigns/{campaign_id}/banner/{banner_id}/status', [CampaignsController::class, 'changeBannerStatus'])
         ->name('app.campaigns.change_banner_status');
     Route::delete('campaigns/{campaign_id}', [CampaignsController::class, 'delete'])
