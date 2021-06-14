@@ -27,7 +27,6 @@ use Mockery;
 
 /**
  * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
  */
 final class InventoryImporterCommandTest extends ConsoleTestCase
 {
