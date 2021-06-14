@@ -25,14 +25,15 @@ namespace Adshares\Adserver\Tests\Models;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Tests\TestCase;
 use DateTime;
+use DateTimeInterface;
 
 class CampaignTest extends TestCase
 {
     /**
      * @dataProvider campaignTimeEndProvider
-     * 
+     *
      * @param bool $expectedResult
-     * @param string $timeEnd
+     * @param string|null $timeEnd
      */
     public function testCampaignOutdated(bool $expectedResult, ?string $timeEnd): void
     {
@@ -46,9 +47,9 @@ class CampaignTest extends TestCase
     {
         return [
             [false, null],
-            [false, (new DateTime('+1 hour'))->format(DateTime::ATOM)],
-            [true, (new DateTime())->format(DateTime::ATOM)],
-            [true, (new DateTime('-1 hour'))->format(DateTime::ATOM)],
+            [false, (new DateTime('+1 hour'))->format(DateTimeInterface::ATOM)],
+            [true, (new DateTime())->format(DateTimeInterface::ATOM)],
+            [true, (new DateTime('-1 hour'))->format(DateTimeInterface::ATOM)],
         ];
     }
 }
