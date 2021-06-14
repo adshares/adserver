@@ -31,7 +31,6 @@ use Adshares\Adserver\Models\NetworkCase;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
 use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Mock\Client\DummyAdSelectClient;
