@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Extend outdated campaign
+### Changed
+- Remove an unnecessary data from the context
 
 ## [1.7.0] - 2021-06-01
 ### Added
