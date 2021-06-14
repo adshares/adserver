@@ -153,7 +153,7 @@ class Config extends Model
             return clone $default;
         }
 
-        $object = DateTime::createFromFormat(DateTime::ATOM, $dateString);
+        $object = DateTime::createFromFormat(DateTimeInterface::ATOM, $dateString);
 
         if ($object === false) {
             throw new RuntimeException(sprintf('Failed converting "%s" to DateTime', (string)$object));

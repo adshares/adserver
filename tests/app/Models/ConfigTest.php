@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,13 +27,11 @@ use Adshares\Adserver\Models\ConfigException;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use DateTimeInterface;
 use function factory;
 
 class ConfigTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const TEST_KEY = 'test-key';
 
     /** @test */
@@ -43,7 +41,7 @@ class ConfigTest extends TestCase
 
         factory(Config::class)->create([
             'key' => self::TEST_KEY,
-            'value' => $dateTime->format(DateTime::ATOM),
+            'value' => $dateTime->format(DateTimeInterface::ATOM),
         ]);
 
         self::assertEquals($dateTime, Config::fetchDateTime(self::TEST_KEY));

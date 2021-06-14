@@ -28,9 +28,9 @@ use Adshares\Adserver\Client\Mapper\AdSelect\CaseMapper;
 use Adshares\Adserver\Client\Mapper\AdSelect\CasePaymentMapper;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\NetworkBanner;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\Site;
 use Adshares\Adserver\Models\Zone;
-use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Utilities\AdsUtils;
 use Adshares\Adserver\Utilities\DomainReader;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
@@ -198,7 +198,10 @@ class GuzzleAdSelectClient implements AdSelect
                 }
             }
 
-            if ($sitesMap[$siteId]['active'] && (!config('app.check_zone_domain') || $pageDomain && $pageDomain === $sitesMap[$siteId]['domain'])) {
+            if ($sitesMap[$siteId]['active'] && (
+                !config('app.check_zone_domain')
+                || $pageDomain && $pageDomain === $sitesMap[$siteId]['domain']
+            )) {
                 $zoneMap[$zone->uuid] = $zone;
             }
         }
@@ -299,14 +302,14 @@ class GuzzleAdSelectClient implements AdSelect
                         'serve_url'     => $banner->serve_url,
                         'creative_sha1' => $banner->checksum,
                         'click_url'     =>  ServeDomain::changeUrlHost(SecureUrl::change(
-                           route(
+                            route(
                                 'log-network-click',
                                 [
                                     'id' => $banner->uuid,
                                     'r'  => Utils::urlSafeBase64Encode($banner->click_url),
                                 ]
-                            ))
-                        ),
+                            )
+                        )),
                         'view_url'      => ServeDomain::changeUrlHost(SecureUrl::change(
                             route(
                                 'log-network-view',
@@ -314,8 +317,8 @@ class GuzzleAdSelectClient implements AdSelect
                                     'id' => $banner->uuid,
                                     'r'  => Utils::urlSafeBase64Encode($banner->view_url),
                                 ]
-                            ))
-                        ),
+                            )
+                        )),
                         'rpm'           => $item['rpm'],
                     ];
                 }

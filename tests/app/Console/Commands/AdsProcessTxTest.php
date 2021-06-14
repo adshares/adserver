@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,25 +28,20 @@ use Adshares\Ads\Response\GetTransactionResponse;
 use Adshares\Adserver\Console\Commands\AdsProcessTx;
 use Adshares\Adserver\Models\AdsPayment;
 use Adshares\Adserver\Models\NetworkCase;
-use Adshares\Adserver\Models\NetworkCasePayment;
 use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Models\UserLedgerEntry;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Mock\Client\DummyDemandClient;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Exception;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\MockObject\Stub\ConsecutiveCalls;
 
-class AdsProcessTxTest extends TestCase
+class AdsProcessTxTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     private const TX_ID_CONNECTION = '0001:00000608:0002';
 
     private const TX_ID_SEND_MANY = '0001:00000085:0001';
@@ -63,6 +58,7 @@ class AdsProcessTxTest extends TestCase
         $adsTx->address = '0001-00000000-9B6F';
         $adsTx->save();
 
+        /** @var User $user */
         $user = factory(User::class)->create();
         $user->uuid = '00000000000000000000000000000123';
         $user->save();
@@ -72,8 +68,7 @@ class AdsProcessTxTest extends TestCase
         $this->artisan('ads:process-tx')->assertExitCode(AdsProcessTx::EXIT_CODE_SUCCESS);
 
         $this->assertEquals(AdsPayment::STATUS_USER_DEPOSIT, AdsPayment::all()->first()->status);
-        $amount = UserLedgerEntry::getBalanceByUserId($user->id);
-        $this->assertEquals($depositAmount, $amount);
+        $this->assertEquals($depositAmount, $user->getBalance());
     }
 
     public function testAdsProcessDepositWithoutUser(): void

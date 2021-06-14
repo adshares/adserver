@@ -23,6 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Common\Domain\ValueObject;
 
 use DateTime;
+use DateTimeInterface;
 
 class License
 {
@@ -77,8 +78,8 @@ class License
             'id' => $this->id,
             'type' => $this->type,
             'status' => $this->status,
-            'dateStart' => $this->dateStart->format(DateTime::ATOM),
-            'dateEnd' => $this->dateEnd->format(DateTime::ATOM),
+            'dateStart' => $this->dateStart->format(DateTimeInterface::ATOM),
+            'dateEnd' => $this->dateEnd->format(DateTimeInterface::ATOM),
             'owner' => $this->owner,
             'paymentAddress' => $this->paymentAddress->toString(),
             'fixedFee' => $this->fixedFee->getValue(),

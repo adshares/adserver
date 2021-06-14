@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,12 +24,9 @@ namespace Adshares\Adserver\Tests\Models;
 
 use Adshares\Adserver\Models\SupplyBlacklistedDomain;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class SupplyBlacklistedDomainTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testBlacklistedExampleCom(): void
     {
         SupplyBlacklistedDomain::register('example.com');

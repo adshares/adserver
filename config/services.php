@@ -18,6 +18,8 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+use Adshares\Adserver\Models\User;
+
 return [
 
     /*
@@ -48,7 +50,7 @@ return [
     ],
 
     'stripe' => [
-        'model' => Adshares\Adserver\User::class,
+        'model' => User::class,
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],

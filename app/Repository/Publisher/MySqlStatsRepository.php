@@ -796,7 +796,7 @@ class MySqlStatsRepository implements StatsRepository
                     break;
             }
 
-            $d = $date->format(DateTime::ATOM);
+            $d = $date->format(DateTimeInterface::ATOM);
             $formattedResult[$d] = (int)$row->c;
         }
 
@@ -813,12 +813,12 @@ class MySqlStatsRepository implements StatsRepository
         $date = self::createSanitizedStartDate($dateTimeZone, $resolution, $dateStart);
 
         while ($date < $dateEnd) {
-            $dates[] = $date->format(DateTime::ATOM);
+            $dates[] = $date->format(DateTimeInterface::ATOM);
             self::advanceDateTime($resolution, $date);
         }
 
         if (empty($dates)) {
-            $dates[] = $date->format(DateTime::ATOM);
+            $dates[] = $date->format(DateTimeInterface::ATOM);
         }
 
         $result = [];

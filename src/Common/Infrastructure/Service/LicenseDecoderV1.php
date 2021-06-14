@@ -28,6 +28,7 @@ use Adshares\Common\Domain\ValueObject\Commission;
 use Adshares\Common\Domain\ValueObject\License;
 use Adshares\Common\Exception\RuntimeException;
 use DateTime;
+use DateTimeInterface;
 use function base64_decode;
 use function hash_equals;
 use function hash_hmac;
@@ -76,8 +77,8 @@ class LicenseDecoderV1 implements LicenseDecoder
             (string)config('app.license_id'),
             $data['type'],
             $data['status'],
-            DateTime::createFromFormat(DateTime::ATOM, $data['beginDate']),
-            DateTime::createFromFormat(DateTime::ATOM, $data['endDate']),
+            DateTime::createFromFormat(DateTimeInterface::ATOM, $data['beginDate']),
+            DateTime::createFromFormat(DateTimeInterface::ATOM, $data['endDate']),
             $data['owner'],
             new AccountId($data['paymentAddress']),
             new Commission($data['fixedFee']),

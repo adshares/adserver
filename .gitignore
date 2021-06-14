@@ -27,6 +27,7 @@ public/info.json
 phpunit.xml
 
 *.env
+*.env.testing
 *.override.*
 !*.dist
 

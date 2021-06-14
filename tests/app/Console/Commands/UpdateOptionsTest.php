@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,12 +22,12 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Client\DummyAdClassifyClient;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Application\Service\AdClassify;
 use Adshares\Common\Application\Service\AdUser;
 use Adshares\Mock\Client\DummyAdUserClient;
 
-class UpdateOptionsTest extends TestCase
+class UpdateOptionsTest extends ConsoleTestCase
 {
     public function testTargetingOptionsUpdate(): void
     {
@@ -53,12 +53,5 @@ class UpdateOptionsTest extends TestCase
 
         $this->artisan('ops:filtering-options:update')
             ->assertExitCode(0);
-    }
-
-    /** @test */
-    public function remember(): void
-    {
-        $this->markTestIncomplete('Options storage NOT implemented');
-        self::assertTrue(false);
     }
 }

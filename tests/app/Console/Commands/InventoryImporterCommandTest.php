@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,40 +20,21 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Models\NetworkCampaign;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Domain\Repository\CampaignRepository;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
+use Adshares\Supply\Domain\ValueObject\Status;
 
-final class InventoryImporterCommandTest extends TestCase
+final class InventoryImporterCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
-    /**
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
     public function testNoHosts(): void
     {
-        $mockNetworkHost = Mockery::mock('alias:Adshares\Adserver\Models\NetworkHost');
-        $mockNetworkHost->shouldReceive('findNonExistentHostsAddresses')->andReturn([]);
-        $mockNetworkHost->shouldReceive('fetchHosts')->andReturn(new Collection());
-
         $this->artisan('ops:demand:inventory:import')->assertExitCode(0);
     }
 
-    /**
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
     public function testNonExistentHosts(): void
     {
-        $sourceAddress = '0001-00000001-8B4E';
-
-        $mockNetworkHost = Mockery::mock('alias:Adshares\Adserver\Models\NetworkHost');
-        $mockNetworkHost->shouldReceive('findNonExistentHostsAddresses')->andReturn([$sourceAddress]);
-        $mockNetworkHost->shouldReceive('fetchHosts')->andReturn(new Collection());
+        factory(NetworkCampaign::class)->create(['status' => Status::STATUS_ACTIVE]);
 
         $campaignRepository = $this->createMock(CampaignRepository::class);
         $campaignRepository->expects($this->once())->method('markedAsDeletedBySourceAddress');

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,9 +22,9 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Ads\AdsClient;
 use Adshares\Ads\Response\GetAccountResponse;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 
-class AdsMeTest extends TestCase
+class AdsMeTest extends ConsoleTestCase
 {
     public function testAdsMe()
     {

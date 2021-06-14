@@ -26,6 +26,7 @@ use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
 use Adshares\Common\Exception\InvalidArgumentException;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -92,8 +93,8 @@ class DemandProcessPayments extends BaseCommand
 
             if ($report->isUpdated()) {
                 $preparePaymentsParameters = [
-                    '--from' => (new DateTime('@'.$timestamp))->format(DateTime::ATOM),
-                    '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTime::ATOM),
+                    '--from' => (new DateTime('@'.$timestamp))->format(DateTimeInterface::ATOM),
+                    '--to' => (new DateTime('@'.($timestamp + 3599)))->format(DateTimeInterface::ATOM),
                 ];
 
                 try {

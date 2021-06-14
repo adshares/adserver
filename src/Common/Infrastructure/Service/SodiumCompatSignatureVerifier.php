@@ -25,6 +25,7 @@ namespace Adshares\Common\Infrastructure\Service;
 use Adshares\Common\Application\Service\Exception\SignatureVerifierException;
 use Adshares\Common\Application\Service\SignatureVerifier;
 use DateTime;
+use DateTimeInterface;
 use SodiumException;
 use function hex2bin;
 
@@ -48,7 +49,7 @@ class SodiumCompatSignatureVerifier implements SignatureVerifier
                 'Cannot create a signature (txid: %s, address: %s, date: %s).',
                 $transactionId,
                 $accountAddress,
-                $date->format(DateTime::ATOM)
+                $date->format(DateTimeInterface::ATOM)
             ));
         }
     }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -20,14 +20,11 @@
 
 namespace Adshares\Adserver\Tests\Console\Commands;
 
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Supply\Application\Service\AdSelect;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class AdSelectInventoryExporterCommandTest extends TestCase
+class AdSelectInventoryExporterCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testExport(): void
     {
         $this->app->bind(AdSelect::class, function () {

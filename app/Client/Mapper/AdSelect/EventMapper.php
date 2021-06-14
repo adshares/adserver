@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\AbstractFilterMapper;
 use DateTime;
+use DateTimeInterface;
 use stdClass;
 
 class EventMapper
@@ -47,7 +48,7 @@ class EventMapper
             'type' => $event['event_type'],
             'zone_id' => $event['zone_id'],
             'case_id' => $event['case_id'],
-            'time' => DateTime::createFromFormat('Y-m-d H:i:s', $event['created_at'])->format(DateTime::ATOM),
+            'time' => DateTime::createFromFormat('Y-m-d H:i:s', $event['created_at'])->format(DateTimeInterface::ATOM),
         ];
 
         return $mappedEvent;

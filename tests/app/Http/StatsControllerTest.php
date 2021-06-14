@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -22,23 +22,20 @@ declare(strict_types = 1);
 
 namespace Adshares\Adserver\Tests\Http;
 
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\CreatesApplication;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Advertiser\Repository\StatsRepository;
 use Adshares\Tests\Advertiser\Repository\DummyStatsRepository;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use DateTimeInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 final class StatsControllerTest extends TestCase
 {
-    use CreatesApplication;
-    use RefreshDatabase;
-
     private const ADVERTISER_CHART_URI = '/api/campaigns/stats/chart';
 
-    private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table';
+    private const ADVERTISER_STATS_URI = '/api/campaigns/stats/table2';
 
     public function testAdvertiserChartWhenViewTypeAndHourResolutionAndDateEndIsEarlierThanDateStart(): void
     {
@@ -46,8 +43,8 @@ final class StatsControllerTest extends TestCase
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
 
-        $dateStart = (new DateTime())->format(DateTime::ATOM);
-        $dateEnd = (new DateTime())->modify('-1 hour')->format(DateTime::ATOM);
+        $dateStart = (new DateTime())->format(DateTimeInterface::ATOM);
+        $dateEnd = (new DateTime())->modify('-1 hour')->format(DateTimeInterface::ATOM);
         $url = sprintf('%s/view/hour/%s/%s', self::ADVERTISER_CHART_URI, $dateStart, $dateEnd);
         $response = $this->getJson($url);
 
@@ -77,8 +74,8 @@ final class StatsControllerTest extends TestCase
                 self::ADVERTISER_CHART_URI,
                 $type,
                 $resolution,
-                $dateStart->format(DateTime::ATOM),
-                $dateEnd->format(DateTime::ATOM)
+                $dateStart->format(DateTimeInterface::ATOM),
+                $dateEnd->format(DateTimeInterface::ATOM)
             );
 
             $methodNameMapper = [
@@ -106,12 +103,12 @@ final class StatsControllerTest extends TestCase
 
     public function testAdvertiserStats(): void
     {
-        $this->markTestSkipped('DummyStatsRepository should use faker');
-
         $repository = new DummyStatsRepository();
-        $user = factory(User::class)->create();
+        $user = factory(User::class)->create(['email' => DummyStatsRepository::USER_EMAIL]);
         $user->is_advertiser = 1;
         $this->actingAs($user, 'api');
+
+        factory(Campaign::class)->create(['user_id' => $user->id]);
 
         $dateStart = new DateTime();
         $dateEnd = new DateTime();
@@ -119,13 +116,17 @@ final class StatsControllerTest extends TestCase
         $url = sprintf(
             '%s/%s/%s',
             self::ADVERTISER_STATS_URI,
-            $dateStart->format(DateTime::ATOM),
-            $dateEnd->format(DateTime::ATOM)
+            $dateStart->format(DateTimeInterface::ATOM),
+            $dateEnd->format(DateTimeInterface::ATOM)
         );
 
         $response = $this->getJson($url);
         $response->assertStatus(Response::HTTP_OK);
-        $response->assertJson($repository->fetchStats($user->uuid, $dateStart, $dateEnd)->toArray());
+
+        $response->assertJson([
+            'total' => $repository->fetchStatsTotal($user->uuid, $dateStart, $dateEnd)->toArray(),
+            'data' => $repository->fetchStats($user->uuid, $dateStart, $dateEnd)->toArray(),
+        ]);
     }
 
     public function providerDataForAdvertiserChart(): array
