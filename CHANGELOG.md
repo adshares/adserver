@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.7.0] - 2021-06-01
 ### Added
 - Bid strategies
 - Storing sites' information (page rank) in database
@@ -420,7 +422,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0]
 
-[Unreleased]: https://github.com/adshares/adserver/compare/v1.6.3...develop
+[Unreleased]: https://github.com/adshares/adserver/compare/v1.7.0...develop
+[1.7.0]: https://github.com/adshares/adserver/compare/v1.6.3...v1.7.0
 [1.6.3]: https://github.com/adshares/adserver/compare/v1.6.2...v1.6.3
 [1.6.2]: https://github.com/adshares/adserver/compare/v1.6.1...v1.6.2
 [1.6.1]: https://github.com/adshares/adserver/compare/v1.6.0...v1.6.1
