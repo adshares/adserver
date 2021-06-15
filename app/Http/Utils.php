@@ -73,7 +73,7 @@ class Utils
             $context = null;
         }
 
-        if($context['page']['frame']) {
+        if ($context['page']['frame']) {
             $context['page']['frame_url'] = $context['page']['url'];
             $context['page']['url'] = $context['page']['ref'];
             $context['page']['ref'] = '';
@@ -82,10 +82,11 @@ class Utils
         return [
             'site'   => self::getSiteContext($request, $context),
             'device' => [
-                'ua'      => $request->userAgent(),
                 'ip'      => $request->ip(),
-                'ips'     => $request->ips(),
-                'headers' => $request->headers->all(),
+                'headers' => [
+                    'referer' => $request->header('referer'),
+                    'user-agent' => $request->header('user-agent'),
+                ],
             ],
         ];
     }

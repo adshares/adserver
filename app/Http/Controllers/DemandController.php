@@ -38,6 +38,7 @@ use Adshares\Common\Exception\RuntimeException;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -366,8 +367,12 @@ SQL;
         $response->setContent(view(
             'demand/view-event',
             [
-                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(route('banner-context', ['id' => $eventId])))->toString()),
-                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(url('-/view.js')))->toString()),
+                'log_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                    route('banner-context', ['id' => $eventId])
+                ))->toString()),
+                'view_script_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                    url('-/view.js')
+                ))->toString()),
                 'aduser_url' => $adUserUrl,
             ]
         ));
@@ -444,7 +449,7 @@ SQL;
     ): JsonResponse {
         $transactionIdDecoded = AdsUtils::decodeTxId($transactionId);
         $accountAddressDecoded = AdsUtils::decodeAddress($accountAddress);
-        $datetime = DateTime::createFromFormat(DateTime::ATOM, $date);
+        $datetime = DateTime::createFromFormat(DateTimeInterface::ATOM, $date);
 
         if ($transactionIdDecoded === null || $accountAddressDecoded === null) {
             throw new BadRequestHttpException('Input data are invalid.');
@@ -532,12 +537,15 @@ SQL;
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => ServeDomain::changeUrlHost(SecureUrl::change(
-                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)]),
-                        $request
-                    )),
-                    'click_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-click', ['id' => $bannerPublicId]), $request)),
-                    'view_url' => ServeDomain::changeUrlHost(SecureUrl::change(route('banner-view', ['id' => $bannerPublicId]), $request)),
+                    'serve_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)])
+                    ))->toString()),
+                    'click_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-click', ['id' => $bannerPublicId])
+                    ))->toString()),
+                    'view_url' => ServeDomain::changeUrlHost((new SecureUrl(
+                        route('banner-view', ['id' => $bannerPublicId])
+                    ))->toString()),
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
@@ -547,8 +555,8 @@ SQL;
                 'landing_url' => $campaign->landing_url,
                 'date_start' => $campaign->time_start,
                 'date_end' => $campaign->time_end,
-                'created_at' => $campaign->created_at->format(DateTime::ATOM),
-                'updated_at' => $campaign->updated_at->format(DateTime::ATOM),
+                'created_at' => $campaign->created_at->format(DateTimeInterface::ATOM),
+                'updated_at' => $campaign->updated_at->format(DateTimeInterface::ATOM),
                 'max_cpc' => $campaign->max_cpc,
                 'max_cpm' => $campaign->max_cpm,
                 'budget' => $this->calculateBudgetAfterFees($campaign->budget, $licenceTxFee, $operatorTxFee),

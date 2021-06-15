@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,15 +24,12 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\AccountId;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class DemandPreparePaymentsTest extends TestCase
+class DemandPreparePaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testZero(): void
     {
         $this->artisan('ops:demand:payments:prepare')

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -32,12 +32,9 @@ use Adshares\Mock\Client\DummyAdSelectClient;
 use Adshares\Supply\Application\Dto\ImpressionContext;
 use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Domain\ValueObject\Status;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class AdSelectTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testFindBanners(): void
     {
         $this->app->bind(

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -24,17 +24,14 @@ namespace Adshares\Adserver\Tests\Console\Commands;
 
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Demand\Application\Service\AdPay;
 use DateTime;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\MockObject\Stub;
 use function factory;
 
-class AdPayCampaignExportCommandTest extends TestCase
+class AdPayCampaignExportCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     public function testHandle(): void
     {
         $adPayMock = $this->createMock(AdPay::class);

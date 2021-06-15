@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,17 +26,15 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\Payment;
+use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 use function uniqid;
 
 final class DemandControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const PAYMENT_DETAIL_URL = '/payment-details';
 
     private const INVENTORY_LIST_URL = '/adshares/inventory/list';
@@ -104,6 +102,7 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryList(): void
     {
+        factory(ServeDomain::class)->create();
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
@@ -125,6 +124,7 @@ final class DemandControllerTest extends TestCase
         $activeBannersCount = 1;
 
         $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertSuccessful();
         $content = json_decode($response->getContent(), true);
 
         $this->assertCount($activeCampaignsCount, $content);

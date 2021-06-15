@@ -35,6 +35,7 @@ use Adshares\Supply\Application\Dto\ImpressionContextException;
 use Adshares\Supply\Application\Dto\UserContext;
 use DateTime;
 use DateTimeImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 use function ceil;
@@ -187,8 +188,8 @@ class AdPayEventExportCommand extends BaseCommand
             $this->error(
                 sprintf(
                     '[AdPayEventExport] Invalid events range from %s (exclusive) to %s (inclusive)',
-                    $dateFrom->format(DateTime::ATOM),
-                    $dateTo->format(DateTime::ATOM)
+                    $dateFrom->format(DateTimeInterface::ATOM),
+                    $dateTo->format(DateTimeInterface::ATOM)
                 )
             );
 
@@ -220,8 +221,8 @@ class AdPayEventExportCommand extends BaseCommand
             $this->error(
                 sprintf(
                     '[AdPayEventExport] Invalid conversions range from %s (exclusive) to %s (inclusive)',
-                    $dateFrom->format(DateTime::ATOM),
-                    $dateTo->format(DateTime::ATOM)
+                    $dateFrom->format(DateTimeInterface::ATOM),
+                    $dateTo->format(DateTimeInterface::ATOM)
                 )
             );
 
@@ -253,8 +254,8 @@ class AdPayEventExportCommand extends BaseCommand
         $this->info(
             sprintf(
                 '[AdPayEventExport] Exporting events from %s (exclusive) to %s (inclusive)',
-                $dateFrom->format(DateTime::ATOM),
-                $dateTo->format(DateTime::ATOM)
+                $dateFrom->format(DateTimeInterface::ATOM),
+                $dateTo->format(DateTimeInterface::ATOM)
             )
         );
 
@@ -279,7 +280,7 @@ class AdPayEventExportCommand extends BaseCommand
             if ($dateToTemporary > $dateTo) {
                 $dateToTemporary = $dateTo;
             }
-            
+
             if ($dateFromTemporary >= $dateToTemporary) {
                 break;
             }
@@ -294,8 +295,8 @@ class AdPayEventExportCommand extends BaseCommand
                     '[AdPayEventExport] Pack [%d]. Events to export: %d (%s -> %s, %s s)',
                     $pack + 1,
                     count($eventsToExport),
-                    $dateFromTemporary->format(DateTime::ATOM),
-                    $dateToTemporary->format(DateTime::ATOM),
+                    $dateFromTemporary->format(DateTimeInterface::ATOM),
+                    $dateToTemporary->format(DateTimeInterface::ATOM),
                     $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
                 )
             );
@@ -304,7 +305,7 @@ class AdPayEventExportCommand extends BaseCommand
 
             $timeStart = $dateFromTemporary->modify('+1 second');
             $timeEnd = $dateToTemporary;
-            if($timeStart > $timeEnd) {
+            if ($timeStart > $timeEnd) {
                 $timeEnd = $timeStart;
             }
 
@@ -343,8 +344,8 @@ class AdPayEventExportCommand extends BaseCommand
         $this->info(
             sprintf(
                 '[AdPayEventExport] Exporting conversions from %s (exclusive) to %s (inclusive)',
-                $dateFrom->format(DateTime::ATOM),
-                $dateTo->format(DateTime::ATOM)
+                $dateFrom->format(DateTimeInterface::ATOM),
+                $dateTo->format(DateTimeInterface::ATOM)
             )
         );
 
@@ -385,8 +386,8 @@ class AdPayEventExportCommand extends BaseCommand
                     '[AdPayEventExport] Pack [%d]. Conversions to export: %d (%s -> %s, %s s)',
                     $pack + 1,
                     count($conversionsToExport),
-                    $dateFromTemporary->format(DateTime::ATOM),
-                    $dateToTemporary->format(DateTime::ATOM),
+                    $dateFromTemporary->format(DateTimeInterface::ATOM),
+                    $dateToTemporary->format(DateTimeInterface::ATOM),
                     $dateToTemporary->getTimestamp() - $dateFromTemporary->getTimestamp()
                 )
             );

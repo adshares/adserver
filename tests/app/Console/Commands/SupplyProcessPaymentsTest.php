@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -30,7 +30,7 @@ use Adshares\Adserver\Models\NetworkHost;
 use Adshares\Adserver\Models\NetworkImpression;
 use Adshares\Adserver\Models\NetworkPayment;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Common\Domain\ValueObject\NullUrl;
 use Adshares\Common\Infrastructure\Service\LicenseReader;
 use Adshares\Mock\Client\DummyAdSelectClient;
@@ -39,13 +39,10 @@ use Adshares\Supply\Application\Service\AdSelect;
 use Adshares\Supply\Application\Service\DemandClient;
 use Adshares\Supply\Application\Service\Exception\UnexpectedClientResponseException;
 use DateTimeImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 
-class SupplyProcessPaymentsTest extends TestCase
+class SupplyProcessPaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     private const SIGNATURE = 'ops:supply:payments:process';
 
     private const TX_ID_SEND_MANY = '0001:00000085:0001';

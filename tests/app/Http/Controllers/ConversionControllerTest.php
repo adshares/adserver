@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -28,13 +28,10 @@ use Adshares\Adserver\Models\ConversionDefinition;
 use Adshares\Adserver\Models\EventLog;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\HttpFoundation\Response;
 
 final class ConversionControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function testConversion(): void
     {
         $user = factory(User::class)->create();
@@ -74,7 +71,9 @@ final class ConversionControllerTest extends TestCase
         $cookies = [
             'tid' => Utils::urlSafeBase64Encode(hex2bin($event->tracking_id)),
         ];
-        $response = $this->call('get', $url, [], $cookies);
+        ob_start();
+        $response = $this->call('GET', $url, [], $cookies);
+        ob_get_clean();
 
         $response->assertStatus(Response::HTTP_OK);
 

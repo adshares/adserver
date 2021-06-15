@@ -23,7 +23,7 @@ declare(strict_types = 1);
 namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Models\NetworkCaseClick;
-use DateTime;
+use DateTimeInterface;
 
 class CaseClickMapper
 {
@@ -32,7 +32,7 @@ class CaseClickMapper
         return [
             'id' => $click->id,
             'case_id' => $click->network_case_id,
-            'created_at' => $click->created_at->format(DateTime::ATOM),
+            'created_at' => $click->created_at->format(DateTimeInterface::ATOM),
         ];
     }
 }

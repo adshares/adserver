@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -26,15 +26,12 @@ use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
 use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\User;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use function implode;
 
-class BannerClassificationsCreateCommandTest extends TestCase
+class BannerClassificationsCreateCommandTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     private const CLASSIFIER_NAME = 'test_classifier';
 
     public function testCreateBannerClassifications(): void

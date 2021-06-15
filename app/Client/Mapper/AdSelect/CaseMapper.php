@@ -24,7 +24,7 @@ namespace Adshares\Adserver\Client\Mapper\AdSelect;
 
 use Adshares\Adserver\Client\Mapper\JsonValueMapper;
 use Adshares\Adserver\Models\NetworkCase;
-use DateTime;
+use DateTimeInterface;
 
 class CaseMapper
 {
@@ -32,7 +32,7 @@ class CaseMapper
     {
         return [
             'id' => $caseWithImpression->id,
-            'created_at' => $caseWithImpression->created_at->format(DateTime::ATOM),
+            'created_at' => $caseWithImpression->created_at->format(DateTimeInterface::ATOM),
             'publisher_id' => $caseWithImpression->publisher_id,
             'site_id' => $caseWithImpression->site_id,
             'zone_id' => $caseWithImpression->zone_id,

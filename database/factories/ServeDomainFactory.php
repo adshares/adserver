@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -18,28 +18,14 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-declare(strict_types = 1);
+use Adshares\Adserver\Models\ServeDomain;
+use Faker\Generator as Faker;
 
-namespace Adshares\Adserver\Logging;
-
-use DateTimeInterface;
-use Monolog\Formatter\LineFormatter;
-
-class CustomizeFormatter
-{
-    const FORMAT = "[%datetime%] adserver %level_name% %message% %context% %extra%\n";
-    const DATE_FORMAT = DateTimeInterface::ATOM;
-
-    /**
-     * Customize the given logger instance.
-     *
-     * @param  \Illuminate\Log\Logger  $logger
-     * @return void
-     */
-    public function __invoke($logger)
-    {
-        foreach ($logger->getHandlers() as $handler) {
-            $handler->setFormatter(new LineFormatter(self::FORMAT, self::DATE_FORMAT, true, true));
-        }
+$factory->define(
+    ServeDomain::class,
+    function (Faker $faker) {
+        return [
+            'base_url' => 'http://'.$faker->domainName,
+        ];
     }
-}
+);

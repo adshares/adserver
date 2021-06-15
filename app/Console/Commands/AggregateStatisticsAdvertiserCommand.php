@@ -28,6 +28,7 @@ use Adshares\Adserver\Models\EventLogsHourlyMeta;
 use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Advertiser\Repository\StatsRepository;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -143,8 +144,8 @@ class AggregateStatisticsAdvertiserCommand extends BaseCommand
         $this->info(
             sprintf(
                 '[Aggregate statistics] Processes events from %s to %s',
-                $from->format(DateTime::ATOM),
-                $to->format(DateTime::ATOM)
+                $from->format(DateTimeInterface::ATOM),
+                $to->format(DateTimeInterface::ATOM)
             )
         );
 

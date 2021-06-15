@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -27,17 +27,14 @@ use Adshares\Adserver\Console\Commands\DemandSendPayments;
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\PaymentReport;
-use Adshares\Adserver\Tests\Console\TestCase;
+use Adshares\Adserver\Tests\Console\ConsoleTestCase;
 use Adshares\Mock\Console\Kernel as KernelMock;
 use DateTime;
 use Illuminate\Contracts\Console\Kernel;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Symfony\Component\Console\Exception\LogicException;
 
-class DemandProcessPaymentsTest extends TestCase
+class DemandProcessPaymentsTest extends ConsoleTestCase
 {
-    use RefreshDatabase;
-
     private const SIGNATURE = 'ops:demand:payments:process';
 
     public function testNoExportedEvents(): void

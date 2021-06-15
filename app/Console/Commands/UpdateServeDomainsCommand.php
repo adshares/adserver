@@ -51,14 +51,17 @@ class UpdateServeDomainsCommand extends BaseCommand
                 config('app.adserver_id'),
             ];
             $process = new Process(
-                ['nodejs'], null, null, str_replace(
-                [
-                    '{{ TLD }}',
-                    '{{ SELECTOR }}',
-                ],
-                $params,
-                file_get_contents($jsPath)
-            )
+                ['nodejs'],
+                null,
+                null,
+                str_replace(
+                    [
+                        '{{ TLD }}',
+                        '{{ SELECTOR }}',
+                    ],
+                    $params,
+                    file_get_contents($jsPath)
+                )
             );
 
             if ($process->run() === 0) {

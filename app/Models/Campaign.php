@@ -30,6 +30,7 @@ use Adshares\Adserver\Utilities\DateUtils;
 use Adshares\Common\Application\Dto\ExchangeRate;
 use Adshares\Common\Domain\ValueObject\SecureUrl;
 use DateTime;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -351,6 +352,10 @@ class Campaign extends Model
             return false;
         }
 
+        if ($status === self::STATUS_ACTIVE && $this->isOutdated()) {
+            return false;
+        }
+
         if ($status === self::STATUS_ACTIVE && !$this->checkBudget()) {
             $status = self::STATUS_INACTIVE;
         }
@@ -435,7 +440,7 @@ class Campaign extends Model
     private function getBudgetForCurrentDateTime(): AdvertiserBudget
     {
         if ($this->time_end !== null
-            && DateTime::createFromFormat(DateTime::ATOM, $this->time_end)
+            && DateTime::createFromFormat(DateTimeInterface::ATOM, $this->time_end)
             < DateUtils::getDateTimeRoundedToCurrentHour()) {
             return new AdvertiserBudget();
         }
@@ -451,6 +456,11 @@ class Campaign extends Model
     public function isDirectDeal(): bool
     {
         return isset($this->targeting_requires['site']['domain']);
+    }
+
+    public function isOutdated(): bool
+    {
+        return $this->time_end !== null && DateTime::createFromFormat(DateTime::ATOM, $this->time_end) < new DateTime();
     }
 
     public function hasClickConversion(): bool

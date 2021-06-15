@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018-2019 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -29,7 +29,6 @@ use Adshares\Adserver\Tests\TestCase;
 use Adshares\Common\Application\Service\ConfigurationRepository;
 use Adshares\Mock\Repository\DummyConfigurationRepository;
 use DateTimeImmutable;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -41,8 +40,6 @@ use RuntimeException;
 
 class BidStrategyControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private const URI = '/api/campaigns/bid-strategy';
 
     private const URI_UUID_GET = '/api/campaigns/bid-strategy/uuid-default';
