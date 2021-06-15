@@ -35,6 +35,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function config;
 use function GuzzleHttp\json_decode;
@@ -164,6 +165,7 @@ final class GuzzleAdUserClient implements AdUser
 
             return UserContext::fromAdUserArray($body);
         } catch (GuzzleException $exception) {
+            Log::error(sprintf('[ADUSER] error: %s', $exception->getMessage()));
             return new UserContext(
                 $partialContext->keywords(),
                 AdUser::HUMAN_SCORE_ON_CONNECTION_ERROR,
