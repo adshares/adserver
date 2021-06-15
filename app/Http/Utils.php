@@ -84,8 +84,8 @@ class Utils
             'device' => [
                 'ip'      => $request->ip(),
                 'headers' => [
-                    'referer' => $request->header('referer'),
-                    'user-agent' => $request->header('user-agent'),
+                    'referer' => [$request->header('referer')],
+                    'user-agent' => [$request->header('user-agent')],
                 ],
             ],
         ];
