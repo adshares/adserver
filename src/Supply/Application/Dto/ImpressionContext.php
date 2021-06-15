@@ -189,7 +189,7 @@ final class ImpressionContext
     {
         $headers = array_map(
             function ($items) {
-                return is_array($items) ? reset($items) : $items;
+                return array_shift($items) ?? $items;
             },
             $this->device['headers'] ?? []
         );
