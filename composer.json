@@ -20,7 +20,7 @@
         "doctrine/dbal": "2.9.*",
         "fideloper/proxy": "^4.0",
         "guzzlehttp/guzzle": "^6.3",
-        "laravel/framework": "5.7.*",
+        "laravel/framework": "6.20.*",
         "laravel/tinker": "^1.0",
         "paragonie/sodium_compat": "^1.8",
         "phpoffice/phpspreadsheet": "^1.6",
