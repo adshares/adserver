@@ -148,6 +148,9 @@ return [
     'crm_mail_address_on_user_registered' => env('CRM_MAIL_ADDRESS_ON_USER_REGISTERED'),
     'crm_mail_address_on_campaign_created' => env('CRM_MAIL_ADDRESS_ON_CAMPAIGN_CREATED'),
     'crm_mail_address_on_site_added' => env('CRM_MAIL_ADDRESS_ON_SITE_ADDED'),
+    'cdn_provider' => env('CDN_PROVIDER'),
+    'skynet_api_url' => env('SKYNET_API_URL'),
+    'skynet_api_key' => env('SKYNET_API_KEY'),
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers
