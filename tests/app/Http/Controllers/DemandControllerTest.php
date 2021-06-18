@@ -174,6 +174,7 @@ final class DemandControllerTest extends TestCase
         $bannerActive = factory(Banner::class)->create(
             [
                 'uuid' => '123abc',
+                'creative_sha1' => '829c3804401b0727f70f73d4415e162400cbe57b',
                 'creative_contents' => 'dummy',
                 'campaign_id' => $campaignActive->id,
                 'status' => Banner::STATUS_ACTIVE,
@@ -191,5 +192,20 @@ final class DemandControllerTest extends TestCase
         $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
         $this->assertEquals('829c3804401b0727f70f73d4415e162400cbe57b', $content[0]['banners'][0]['checksum']);
         $this->assertEquals('http://foo.com/file.png', $content[0]['banners'][0]['serve_url']);
+
+        //change content
+        $bannerActive->creative_contents = 'foo content';
+        $bannerActive->saveOrFail();
+
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertSuccessful();
+        $content = json_decode($response->getContent(), true);
+
+        $this->assertCount(1, $content);
+        $this->assertEquals($campaignActive->uuid, $content[0]['id']);
+        $this->assertCount(1, $content[0]['banners']);
+        $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
+        $this->assertEquals('ec097bb2a51eb70410d13bbe94ef0319680accb6', $content[0]['banners'][0]['checksum']);
+        $this->assertEquals('https://example.com/serve/x123abc.doc?v=ec09', $content[0]['banners'][0]['serve_url']);
     }
 }

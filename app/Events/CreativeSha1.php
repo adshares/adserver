@@ -33,6 +33,7 @@ class CreativeSha1
     {
         if ($model->creative_sha1 !== ($sha1 = sha1($model->creative_contents))) {
             $model->creative_sha1 = $sha1;
+            $model->cdn_url = null;
             $model->classifications()->delete();
         }
     }
