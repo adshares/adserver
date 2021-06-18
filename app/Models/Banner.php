@@ -47,6 +47,7 @@ use function in_array;
  * @property Campaign campaign
  * @property BannerClassification[] classifications
  * @property int type
+ * @property string|null cdn_url
  * @mixin Builder
  */
 class Banner extends Model

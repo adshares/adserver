@@ -102,21 +102,44 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryList(): void
     {
-        factory(ServeDomain::class)->create();
+        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');
 
-        $campaignDraft = factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_DRAFT]);
-        $campaignInactive =
-            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_INACTIVE]);
-        $campaignActive =
-            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_ACTIVE]);
-        $campaignSuspended =
-            factory(Campaign::class)->create(['user_id' => $user->id, 'status' => Campaign::STATUS_SUSPENDED]);
+        $campaignDraft = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_DRAFT,
+            ]
+        );
+        $campaignInactive = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_INACTIVE,
+            ]
+        );
+        $campaignActive = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+        $campaignSuspended = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_SUSPENDED,
+            ]
+        );
         $activeCampaignsCount = 1;
 
-        $bannerActive =
-            factory(Banner::class)->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_ACTIVE]);
+        $bannerActive = factory(Banner::class)->create(
+            [
+                'uuid' => '123abc',
+                'creative_contents' => 'dummy',
+                'campaign_id' => $campaignActive->id,
+                'status' => Banner::STATUS_ACTIVE,
+            ]
+        );
         factory(Banner::class)->create(['campaign_id' => $campaignActive->id, 'status' => Banner::STATUS_INACTIVE]);
         factory(Banner::class)->create(['campaign_id' => $campaignDraft->id]);
         factory(Banner::class)->create(['campaign_id' => $campaignInactive->id]);
@@ -131,5 +154,42 @@ final class DemandControllerTest extends TestCase
         $this->assertEquals($campaignActive->uuid, $content[0]['id']);
         $this->assertCount($activeBannersCount, $content[0]['banners']);
         $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
+        $this->assertEquals('829c3804401b0727f70f73d4415e162400cbe57b', $content[0]['banners'][0]['checksum']);
+        $this->assertEquals('https://example.com/serve/x123abc.doc?v=829c', $content[0]['banners'][0]['serve_url']);
+    }
+
+    public function testInventoryListWithCdn(): void
+    {
+        factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
+        $user = factory(User::class)->create();
+        $this->actingAs($user, 'api');
+
+        $campaignActive = factory(Campaign::class)->create(
+            [
+                'user_id' => $user->id,
+                'status' => Campaign::STATUS_ACTIVE,
+            ]
+        );
+
+        $bannerActive = factory(Banner::class)->create(
+            [
+                'uuid' => '123abc',
+                'creative_contents' => 'dummy',
+                'campaign_id' => $campaignActive->id,
+                'status' => Banner::STATUS_ACTIVE,
+                'cdn_url' => 'http://foo.com/file.png'
+            ]
+        );
+
+        $response = $this->getJson(self::INVENTORY_LIST_URL);
+        $response->assertSuccessful();
+        $content = json_decode($response->getContent(), true);
+
+        $this->assertCount(1, $content);
+        $this->assertEquals($campaignActive->uuid, $content[0]['id']);
+        $this->assertCount(1, $content[0]['banners']);
+        $this->assertEquals($bannerActive->uuid, $content[0]['banners'][0]['id']);
+        $this->assertEquals('829c3804401b0727f70f73d4415e162400cbe57b', $content[0]['banners'][0]['checksum']);
+        $this->assertEquals('http://foo.com/file.png', $content[0]['banners'][0]['serve_url']);
     }
 }
