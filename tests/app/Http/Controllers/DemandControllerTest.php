@@ -30,6 +30,7 @@ use Adshares\Adserver\Models\ServeDomain;
 use Adshares\Adserver\Models\User;
 use Adshares\Adserver\Tests\TestCase;
 use Adshares\Demand\Application\Service\PaymentDetailsVerify;
+use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
 use function uniqid;
 
@@ -160,6 +161,7 @@ final class DemandControllerTest extends TestCase
 
     public function testInventoryListWithCdn(): void
     {
+        Config::set('app.cdn_provider', 'skynet');
         factory(ServeDomain::class)->create(['base_url' => 'https://example.com']);
         $user = factory(User::class)->create();
         $this->actingAs($user, 'api');

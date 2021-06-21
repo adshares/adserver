@@ -21,12 +21,15 @@
 namespace Adshares\Adserver\Services\Cdn;
 
 use Adshares\Adserver\Models\Banner;
+use GuzzleHttp\Client;
 
 final class SkynetCdn extends CdnProvider
 {
     private string $apiUrl;
 
     private string $apiKey;
+
+    private static ?Client $client = null;
 
     public function __construct(string $apiUrl, string $apiKey)
     {
@@ -36,6 +39,49 @@ final class SkynetCdn extends CdnProvider
 
     public function uploadBanner(Banner $banner): string
     {
-        return 'https://siasky.net/AAB_C3U9BS5cNCPkPkgY6wnyI6LrD2BgBbXCj1SE6ulr-w';
+        if (Banner::TEXT_TYPE_HTML === $banner->creative_type) {
+            $mime = 'text/html';
+        } elseif (Banner::TEXT_TYPE_IMAGE === $banner->creative_type) {
+            $mime = 'image/png';
+        } else {
+            $mime = 'text/plain';
+        }
+
+        $client = $this->getClient();
+        $response = $client->post(
+            '/skynet/skyfile',
+            [
+                'multipart' => [
+                    [
+                        'name' => 'file',
+                        'filename' => sprintf('x%s.doc', $banner->uuid),
+                        'headers' => ['Content-Type' => $mime],
+                        'contents' => $banner->creative_contents,
+                    ],
+                ],
+            ]
+        );
+
+        $content = json_decode($response->getBody()->getContents());
+
+        return sprintf('%s/%s', $this->apiUrl, $content->skylink);
+    }
+
+    private function getClient(): Client
+    {
+        if (null === self::$client) {
+            self::$client = new Client(
+                [
+                    'headers' => [
+                        'Cache-Control' => 'no-cache',
+                        'Cookie' => sprintf('skynet-jwt=%s', $this->apiKey),
+                    ],
+                    'base_uri' => $this->apiUrl,
+                    'timeout' => 5,
+                ]
+            );
+        }
+
+        return self::$client;
     }
 }

@@ -517,6 +517,7 @@ SQL;
             }
         }
         $bannerClassifications = BannerClassification::fetchClassifiedByBannerIds($bannerIds);
+        $cdnEnabled = !empty(config('app.cdn_provider'));
 
         /** @var Campaign $campaign */
         foreach ($activeCampaigns as $campaign) {
@@ -533,7 +534,7 @@ SQL;
                 $bannerPublicId = $bannerArray['uuid'];
                 $checksum = $bannerArray['creative_sha1'];
 
-                $serveUrl = $bannerArray['cdn_url'] ?? ServeDomain::changeUrlHost((new SecureUrl(
+                $serveUrl = ($cdnEnabled ? $bannerArray['cdn_url'] : null) ?? ServeDomain::changeUrlHost((new SecureUrl(
                     route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)])
                 ))->toString());
                 $clickUrl = ServeDomain::changeUrlHost((new SecureUrl(
