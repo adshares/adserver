@@ -18,27 +18,11 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
+namespace Adshares\Adserver\Services\Cdn;
+
 use Adshares\Adserver\Models\Banner;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
 
-$factory->define(
-    Banner::class,
-    function (Faker $faker) {
-        $size = $faker->randomKey(Size::SIZE_INFOS);
-        $type =
-            Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
-                ? Banner::TEXT_TYPE_DIRECT_LINK
-                : $faker->randomElement(
-                [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]
-            );
-
-        return [
-            'creative_contents' => $faker->sha1,
-            'creative_type' => $type,
-            'creative_size' => $size,
-            'name' => $faker->word,
-            'status' => Banner::STATUS_ACTIVE,
-        ];
-    }
-);
+abstract class CdnProvider
+{
+    abstract public function uploadBanner(Banner $banner): string;
+}

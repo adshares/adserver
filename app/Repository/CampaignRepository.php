@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -23,6 +23,8 @@ namespace Adshares\Adserver\Repository;
 use Adshares\Adserver\Facades\DB;
 use Adshares\Adserver\Models\Campaign;
 use DateTime;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
 class CampaignRepository
 {
@@ -31,7 +33,7 @@ class CampaignRepository
         return (new Campaign())->with('conversions')->get();
     }
 
-    public function fetchActiveCampaigns()
+    public function fetchActiveCampaigns(): Collection
     {
         $query = Campaign::where('status', Campaign::STATUS_ACTIVE);
 
@@ -43,6 +45,11 @@ class CampaignRepository
         );
 
         return $query->get();
+    }
+
+    public function fetchCampaignByIds(array $campaignIds): Collection
+    {
+        return Campaign::whereIn('id', $campaignIds)->get();
     }
 
     public function fetchCampaignById(int $campaignId): Campaign

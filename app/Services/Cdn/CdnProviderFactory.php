@@ -18,27 +18,26 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Banner;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+namespace Adshares\Adserver\Services\Cdn;
 
-$factory->define(
-    Banner::class,
-    function (Faker $faker) {
-        $size = $faker->randomKey(Size::SIZE_INFOS);
-        $type =
-            Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
-                ? Banner::TEXT_TYPE_DIRECT_LINK
-                : $faker->randomElement(
-                [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]
-            );
+use RuntimeException;
 
-        return [
-            'creative_contents' => $faker->sha1,
-            'creative_type' => $type,
-            'creative_size' => $size,
-            'name' => $faker->word,
-            'status' => Banner::STATUS_ACTIVE,
-        ];
+final class CdnProviderFactory
+{
+    public const SKYNET_PROVIDER = 'skynet';
+
+    public static function getProvider(?string $name = null): ?CdnProvider
+    {
+        $name = $name ?? config('app.cdn_provider');
+        if (empty($name)) {
+            return null;
+        }
+
+        switch ($name) {
+            case self::SKYNET_PROVIDER:
+                return new SkynetCdn(config('app.skynet_api_url'), config('app.skynet_api_key'));
+            default:
+                throw new RuntimeException(sprintf('Unknown CDN provider "%s"', $name));
+        }
     }
-);
+}

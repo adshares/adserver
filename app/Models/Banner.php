@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -47,6 +47,7 @@ use function in_array;
  * @property Campaign campaign
  * @property BannerClassification[] classifications
  * @property int type
+ * @property string|null cdn_url
  * @mixin Builder
  */
 class Banner extends Model

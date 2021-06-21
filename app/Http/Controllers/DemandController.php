@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2018 Adshares sp. z o.o.
+ * Copyright (c) 2018-2021 Adshares sp. z o.o.
  *
  * This file is part of AdServer
  *
@@ -25,6 +25,7 @@ use Adshares\Adserver\Http\GzippedStreamedResponse;
 use Adshares\Adserver\Http\Utils;
 use Adshares\Adserver\Models\Banner;
 use Adshares\Adserver\Models\BannerClassification;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Models\Config;
 use Adshares\Adserver\Models\EventConversionLog;
 use Adshares\Adserver\Models\EventLog;
@@ -516,10 +517,13 @@ SQL;
             }
         }
         $bannerClassifications = BannerClassification::fetchClassifiedByBannerIds($bannerIds);
+        $cdnEnabled = !empty(config('app.cdn_provider'));
 
+        /** @var Campaign $campaign */
         foreach ($activeCampaigns as $campaign) {
             $banners = [];
 
+            /** @var Banner $banner */
             foreach ($campaign->ads as $banner) {
                 $bannerArray = $banner->toArray();
 
@@ -530,22 +534,24 @@ SQL;
                 $bannerPublicId = $bannerArray['uuid'];
                 $checksum = $bannerArray['creative_sha1'];
 
-
+                $serveUrl = ($cdnEnabled ? $bannerArray['cdn_url'] : null) ?? ServeDomain::changeUrlHost((new SecureUrl(
+                    route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)])
+                ))->toString());
+                $clickUrl = ServeDomain::changeUrlHost((new SecureUrl(
+                    route('banner-click', ['id' => $bannerPublicId])
+                ))->toString());
+                $viewUrl = ServeDomain::changeUrlHost((new SecureUrl(
+                    route('banner-view', ['id' => $bannerPublicId])
+                ))->toString());
 
                 $banners[] = [
                     'id' => $bannerArray['uuid'],
                     'size' => $bannerArray['creative_size'],
                     'type' => $bannerArray['creative_type'],
                     'checksum' => $checksum,
-                    'serve_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                        route('banner-serve', ['id' => $bannerPublicId, 'v' => substr($checksum, 0, 4)])
-                    ))->toString()),
-                    'click_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                        route('banner-click', ['id' => $bannerPublicId])
-                    ))->toString()),
-                    'view_url' => ServeDomain::changeUrlHost((new SecureUrl(
-                        route('banner-view', ['id' => $bannerPublicId])
-                    ))->toString()),
+                    'serve_url' => $serveUrl,
+                    'click_url' => $clickUrl,
+                    'view_url' => $viewUrl,
                     'classification' => $bannerClassifications[$banner->id] ?? new stdClass(),
                 ];
             }
