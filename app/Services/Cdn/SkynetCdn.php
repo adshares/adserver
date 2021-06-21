@@ -77,7 +77,7 @@ final class SkynetCdn extends CdnProvider
                         'Cookie' => sprintf('skynet-jwt=%s', $this->apiKey),
                     ],
                     'base_uri' => $this->apiUrl,
-                    'timeout' => 5,
+                    'timeout' => 10,
                 ]
             );
         }
