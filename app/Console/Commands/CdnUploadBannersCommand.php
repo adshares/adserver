@@ -70,7 +70,6 @@ class CdnUploadBannersCommand extends BaseCommand
                 Log::error($exception->getMessage());
                 $this->error(sprintf('ERROR: %s', $exception->getMessage()));
             }
-            break;
         }
 
         $this->info('Finish command '.$this->signature);
