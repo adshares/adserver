@@ -26,9 +26,9 @@ final class CdnProviderFactory
 {
     public const SKYNET_PROVIDER = 'skynet';
 
-    public static function getProvider(): ?CdnProvider
+    public static function getProvider(?string $name = null): ?CdnProvider
     {
-        $name = config('app.cdn_provider');
+        $name = $name ?? config('app.cdn_provider');
         if (empty($name)) {
             return null;
         }

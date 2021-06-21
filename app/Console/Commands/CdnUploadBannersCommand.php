@@ -24,6 +24,7 @@ namespace Adshares\Adserver\Console\Commands;
 
 use Adshares\Adserver\Console\Locker;
 use Adshares\Adserver\Models\Banner;
+use Adshares\Adserver\Models\Campaign;
 use Adshares\Adserver\Repository\CampaignRepository;
 use Adshares\Adserver\Services\Cdn\CdnProviderFactory;
 use Exception;
@@ -31,7 +32,7 @@ use Illuminate\Support\Facades\Log;
 
 class CdnUploadBannersCommand extends BaseCommand
 {
-    protected $signature = 'ops:demand:cdn:upload {--campaignIds=} {--f|force}';
+    protected $signature = 'ops:demand:cdn:upload {provider?} {--campaignIds=} {--f|force}';
 
     protected $description = 'Upload banners to CDN';
 
@@ -51,7 +52,7 @@ class CdnUploadBannersCommand extends BaseCommand
 
         $this->info('Start command '.$this->signature);
 
-        $cdn = CdnProviderFactory::getProvider();
+        $cdn = CdnProviderFactory::getProvider($this->argument('provider'));
         if (null === $cdn) {
             $this->warn('There is no CDN provider');
             return;
@@ -85,6 +86,7 @@ class CdnUploadBannersCommand extends BaseCommand
             : $campaignRepository->fetchActiveCampaigns();
 
         $banners = [];
+        /** @var Campaign $campaign */
         foreach ($campaigns as $campaign) {
             $builder = $campaign->banners();
             if (!$this->option('force')) {
