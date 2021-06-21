@@ -18,27 +18,23 @@
  * along with AdServer. If not, see <https://www.gnu.org/licenses/>
  */
 
-use Adshares\Adserver\Models\Banner;
-use Adshares\Supply\Domain\ValueObject\Size;
-use Faker\Generator as Faker;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
-$factory->define(
-    Banner::class,
-    function (Faker $faker) {
-        $size = $faker->randomKey(Size::SIZE_INFOS);
-        $type =
-            Size::TYPE_POP === Size::SIZE_INFOS[$size]['type']
-                ? Banner::TEXT_TYPE_DIRECT_LINK
-                : $faker->randomElement(
-                [Banner::TEXT_TYPE_IMAGE, Banner::TEXT_TYPE_HTML]
-            );
-
-        return [
-            'creative_contents' => $faker->sha1,
-            'creative_type' => $type,
-            'creative_size' => $size,
-            'name' => $faker->word,
-            'status' => Banner::STATUS_ACTIVE,
-        ];
+class AddCdnUrlToBanners extends Migration
+{
+    public function up()
+    {
+        Schema::table('banners', function (Blueprint $table) {
+            $table->string('cdn_url', 1024)->nullable(true);
+        });
     }
-);
+
+    public function down()
+    {
+        Schema::table('banners', function (Blueprint $table) {
+            $table->dropColumn('cdn_url');
+        });
+    }
+}
