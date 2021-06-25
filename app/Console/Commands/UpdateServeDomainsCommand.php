@@ -28,7 +28,7 @@ use Symfony\Component\Process\Process;
 
 class UpdateServeDomainsCommand extends BaseCommand
 {
-    protected $signature = 'ops:serve-domains:update';
+    protected $signature = 'ops:serve-domains:update  {--l|list-domains=}';
 
     protected $description = 'Updates the serve domain registry';
 
@@ -47,28 +47,56 @@ class UpdateServeDomainsCommand extends BaseCommand
         if ($main_js_tld) {
             $jsPath = public_path('-/main.js');
             $params = [
-                config('app.main_js_tld'),
+                $main_js_tld,
                 config('app.adserver_id'),
             ];
-            $process = new Process(
-                ['nodejs'],
-                null,
-                null,
-                str_replace(
-                    [
-                        '{{ TLD }}',
-                        '{{ SELECTOR }}',
-                    ],
-                    $params,
-                    file_get_contents($jsPath)
-                )
+            $jsCode = str_replace(
+                [
+                    '{{ TLD }}',
+                    '{{ SELECTOR }}',
+                ],
+                $params,
+                file_get_contents($jsPath)
             );
 
-            if ($process->run() === 0) {
-                $url = trim($process->getOutput());
-                ServeDomain::upsert($url);
+            if($n = $this->option("list-domains")) {
+                $interval = 24 * 3600 * 14;
+
+                $x = time();
+                $x -= $x % $interval;
+
+                for($i=0;$i<$n;$i++) {
+                    $y = $x + $i * $interval;
+
+                    $process = new Process(
+                        ['nodejs'],
+                        null,
+                        null,
+                        str_replace_first('new Date()', 'new Date('. ($y*1000) .')', $jsCode)
+                    );
+
+                    if ($process->run() === 0) {
+                        $url = trim($process->getOutput());
+                    } else {
+                        throw new RuntimeException($process->getErrorOutput());
+                    }
+
+                    printf("%s - %s %s\n", date("d.m.Y", $y), date("d.m.Y", $y+$interval), $url);
+                }
             } else {
-                throw new RuntimeException($process->getErrorOutput());
+                $process = new Process(
+                    ['nodejs'],
+                    null,
+                    null,
+                    $jsCode
+                );
+
+                if ($process->run() === 0) {
+                    $url = trim($process->getOutput());
+                    ServeDomain::upsert($url);
+                } else {
+                    throw new RuntimeException($process->getErrorOutput());
+                }
             }
         } else {
             ServeDomain::upsert((string)config('app.serve_base_url'));
