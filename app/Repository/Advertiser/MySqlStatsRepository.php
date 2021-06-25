@@ -1057,22 +1057,25 @@ SQL;
     private function executeQuery(string $query, DateTimeInterface $dateStart, array $bindings = []): array
     {
         $dateTimeZone = new DateTimeZone($dateStart->format('O'));
-        $this->setDbSessionTimezone($dateTimeZone);
+        $tz = $this->setDbSessionTimezone($dateTimeZone);
         $queryResult = DB::select($query, $bindings);
-        $this->unsetDbSessionTimeZone();
+        if($tz) {
+            $this->unsetDbSessionTimeZone($tz);
+        }
 
         return $queryResult;
     }
 
-    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): void
+    private function setDbSessionTimezone(DateTimeZone $dateTimeZone): string
     {
-        DB::statement('SET @tmp_time_zone = (SELECT @@session.time_zone)');
+        $tz = DB::selectOne('SELECT @@session.time_zone AS tz');
         DB::statement(sprintf("SET time_zone = '%s'", $dateTimeZone->getName()));
+        return $tz->tz ?? '';
     }
 
-    private function unsetDbSessionTimeZone(): void
+    private function unsetDbSessionTimeZone($tz): void
     {
-        DB::statement('SET time_zone = (SELECT @tmp_time_zone)');
+        DB::statement('SET time_zone = ?', [$tz]);
     }
 
     private static function concatenateDateColumns(DateTimeZone $dateTimeZone, array $result, string $resolution): array
